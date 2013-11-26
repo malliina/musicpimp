@@ -1,0 +1,7 @@
+APP_NAME=musicpimp
+APP_HOME=/opt/musicpimp
+APP_USER=musicpimp
+JAVA_OPTS="-Dmusicpimp.home=/opt/musicpimp -Dlogger.resource=prod-logger.xml"
+JAVA_CMD=/usr/bin/java
+PID_FILE=/var/run/musicpimp.pid
+MAIN_CLASS=com.mle.musicpimp.Starter

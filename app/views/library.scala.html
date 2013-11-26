@@ -1,0 +1,54 @@
+@(relativePath: java.nio.file.Path, col1: Seq[models.MusicItemInfo], col2: Seq[models.MusicItemInfo], col3: Seq[models.MusicItemInfo])
+
+@import models._
+
+@indexMain("library") {
+    <div class="page-header">
+        <h1>Library <small>@relativePath</small></h1>
+    </div>
+    <div class="row">
+        @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
+        @renderColumn(col2)
+        @renderColumn(col3)
+    </div>
+    @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty){
+        <p class="lead">The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">Music Folders</a>.</p>
+    }
+    <script src="@routes.Assets.at("js/json.js")"></script>
+    <script src="@routes.Assets.at("js/library.js")"></script>
+}
+@renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
+    <div class="@columnSpan(onlyColumn)">
+        <ul class="list-unstyled">
+            @items.map {f =>
+                @if(f.dir){
+                    <li>@renderDir(f)</li>
+                }else{
+                    <li>@renderSong(f) @f.title</li>
+                }
+            }
+        </ul>
+    </div>
+}
+@renderDir(dir: MusicItemInfo)={
+    <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
+}
+@renderSong(song: MusicItemInfo) = {
+    <div class="btn-group">
+        <a class="btn btn-default btn-xs" href="#" onclick="return play('@song.id');"><i class="glyphicon glyphicon-play"></i> Play</a>
+        <a class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+        <ul class="dropdown-menu">
+            <li><a href="#" onclick="return add('@song.id');"><i class="glyphicon glyphicon-plus"></i> Add to playlist</a></li>
+            <li><a href="@routes.Rest.download(song.id)"><i class="glyphicon glyphicon-download"></i> Download</a></li>
+            <li><a href="#" onclick="return webPlay('@song.id');"><i class="glyphicon glyphicon-play"></i> Play in browser</a></li>
+            <li><a href="#" onclick="return webAdd('@song.id');"><i class="glyphicon glyphicon-plus"></i> Add to browser</a></li>
+        </ul>
+    </div>
+}
+@columnSpan(onlyColumn: Boolean) = {
+    @if(onlyColumn) {
+        col-md-10
+    } else {
+        col-md-4
+    }
+}

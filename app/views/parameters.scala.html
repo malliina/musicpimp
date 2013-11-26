@@ -1,0 +1,28 @@
+@(uploadPath: String)
+
+@import helper._
+@implicitFieldConstructor = @{
+    FieldConstructor(twitterBootstrapInput.f)
+}
+
+@indexMain("settings") {
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+            <table class="table">
+                <caption>Settings</caption>
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Upload path</td>
+                        <td>@uploadPath</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

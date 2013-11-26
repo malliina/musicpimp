@@ -1,0 +1,12 @@
+.idea/
+.idea/*
+*.iml
+lib_managed/
+target/
+.idea_modules/
+*.test
+*.pem
+credentials.txt
+*.log
+*.data
+settings.json

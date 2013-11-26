@@ -1,0 +1,6 @@
+@(logEntries: Iterable[String])
+
+@manage("logs") {
+    <h2>Logs</h2>
+    @logTable(logEntries)
+}

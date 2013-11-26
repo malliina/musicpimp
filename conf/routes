@@ -1,0 +1,42 @@
+# Web specific
+GET         /                              controllers.Website.rootLibrary
+GET         /player                        controllers.Website.player
+GET         /popupPlayer                   controllers.Website.popupPlayer
+GET         /settings                      controllers.Website.settings
+GET         /account                       controllers.Website.account
+GET         /logs                          controllers.Website.logs
+GET         /about                         controllers.Website.about
+GET         /manage                        controllers.Website.manage
+GET         /login                         controllers.Website.login
+GET         /logout                        controllers.Website.logout
+POST        /authenticate                  controllers.Website.formAuthenticate
+POST        /changePassword                controllers.Website.changePassword
+GET         /parameters                    controllers.Website.parameters
+# Player
+GET         /playback                      controllers.Rest.status
+POST        /playback                      controllers.Rest.playback
+POST        /playback/uploads              controllers.Rest.playUploadedFile
+POST        /playback/track                controllers.Rest.track
+POST        /playback/stream               controllers.Rest.stream
+GET         /webplay                       controllers.Rest.webStatus
+POST        /webplay                       controllers.Rest.webPlayback
+POST        /playlist                      controllers.Rest.playlist
+POST        /playlist/uploads              controllers.Rest.addUpload
+GET         /webplaylist                   controllers.Rest.webPlaylist
+# Library
+GET         /folders                       controllers.Rest.rootLibrary
+GET         /folders/*folder               controllers.Rest.library(folder)
+GET         /downloads/*id                 controllers.Rest.download(id)
+GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
+POST        /rootfolders                   controllers.Website.newFolder
+POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
+# WebSockets
+GET         /ws/playback                   controllers.ServerWS.subscribe
+GET         /ws/webplay                    controllers.WebPlayerController.subscribe
+# Miscellaneous
+GET         /ping                          controllers.Rest.ping
+GET         /pingauth                      controllers.Rest.pingAuth
+# Maps static resources from the /public folder to the /assets URL path
+GET         /assets/*file                  controllers.Assets.at(path = "/public", file)
+
+

@@ -1,0 +1,13 @@
+@(folders:Seq[String], newFolderForm: Form[String])
+
+@import helper._
+@implicitFieldConstructor = @{
+    FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
+}
+
+@manage("folders") {
+    <div class="col-md-6">
+        @editFolders(folders,newFolderForm)
+    </div>
+}
+

@@ -1,0 +1,12 @@
+@(wsUrl: String)(implicit request: RequestHeader)
+
+<script type="text/javascript" charset="utf-8">
+    $(function () {
+        var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
+        webSocket = new WS("@(wsUrl)?f=json");
+        webSocket.onopen = onconnect;
+        webSocket.onmessage = onmessage;
+        webSocket.onclose = onclose;
+        webSocket.onerror = onerror;
+    });
+</script>

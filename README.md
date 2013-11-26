@@ -1,0 +1,1 @@
+This is the MusicPimp server software for Windows/Linux desktops. Check http://www.musicpimp.org for details.

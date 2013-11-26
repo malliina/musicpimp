@@ -1,0 +1,14 @@
+@(username: String, helloForm: Form[(String, String, String)])(implicit flash: Flash)
+
+@import helper._
+    @implicitFieldConstructor = @{
+        FieldConstructor(twitterBootstrapInput.f)
+    }
+
+@manage("account") {
+    <div class="row">
+        <div class="col-md-4">
+            @changePassword(username, helloForm)
+        </div>
+    </div>
+}

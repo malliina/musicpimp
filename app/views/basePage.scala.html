@@ -1,0 +1,26 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>@title</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shortcut icon" href="@routes.Assets.at("img/guitar-18x16.png")">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
+        <style>
+            body {
+                background: url("@routes.Assets.at("img/guitar.png")") no-repeat center;
+            }
+        </style>
+        <!-- For playback and volume sliders -->
+        <link rel="stylesheet" href="@routes.Assets.at("css/jquery-ui.min.css")"/>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <section>
+        @content
+        </section>
+    </body>
+</html>
