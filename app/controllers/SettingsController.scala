@@ -6,6 +6,9 @@ import views._
 import java.nio.file.{Paths, Files}
 import com.mle.musicpimp.library.{Library, Settings}
 import com.mle.util.Log
+import play.api.libs.json.Json._
+import net.glxn.qrgen.QRCode
+import play.api.libs.iteratee.Enumerator
 
 
 /**
@@ -16,9 +19,9 @@ trait SettingsController extends Secured with HtmlController with PimpAccountCon
     "path" -> nonEmptyText.verifying("Not a directory.", validateDirectory _)
   )
 
-  def validateDirectory(dir: String) = Files.isDirectory(Paths get dir)
-
   def settings = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
+
+
 
   def newFolder = PimpAction(implicit req => {
     newFolderForm.bindFromRequest.fold(
@@ -40,6 +43,8 @@ trait SettingsController extends Secured with HtmlController with PimpAccountCon
     log info s"Removed folder from music library: $folder"
     onFoldersChanged
   }
+
+  def validateDirectory(dir: String) = Files.isDirectory(Paths get dir)
 
   private def onFoldersChanged = {
     Library.rootFolders = Settings.read

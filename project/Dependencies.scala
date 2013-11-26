@@ -21,4 +21,5 @@ object Dependencies {
   val httpVersion = "4.3"
   val httpClient = httpGroup % "httpclient" % httpVersion
   val httpMime = httpGroup % "httpmime" % httpVersion
+  val qrGen = "net.glxn" % "qrgen" % "1.3"
 }

@@ -2,7 +2,7 @@ package models
 
 import play.api.libs.iteratee.Concurrent
 import play.api.mvc.RequestHeader
-import controllers.{routes, PimpRequest, WebSocketsController}
+import controllers.{routes, PimpRequest, RequestHelpers}
 import com.mle.musicpimp.json.JsonFormats
 import com.mle.util.Log
 import play.api.http.MimeTypes
@@ -17,7 +17,7 @@ import play.api.http.MimeTypes
  * @param user the authenticated username
  */
 case class ClientInfo[T](channel: Concurrent.Channel[T], request: RequestHeader, user: String) extends Log {
-  val protocol = if (WebSocketsController.isHttps(request)) "wss" else "ws"
+  val protocol = if (RequestHelpers.isHttps(request)) "wss" else "ws"
   val remoteAddress = request.remoteAddress
   val describe = s"$protocol://$user@$remoteAddress"
   /**

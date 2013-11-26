@@ -11,6 +11,7 @@ import sbtbuildinfo.Plugin._
 import sbt._
 import sbt.Keys._
 import Dependencies._
+import com.mle.sbt.FileImplicits._
 
 object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
@@ -46,7 +47,7 @@ object PimpBuild extends Build {
         utilActor, utilRmi, scalaTest,
         utilDep, h2, slick,
         httpClient, httpMime, play.Project.filters,
-        utilPlay),
+        utilPlay, qrGen),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?

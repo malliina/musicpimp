@@ -13,6 +13,7 @@ object Website
   extends Secured
   with HtmlController
   with SettingsController
+  with ConnectController
   with LibraryController
   with PimpAccountController
   with Logs
