@@ -10,7 +10,7 @@ import play.api.libs.json.{Json, JsValue}
 import com.mle.audio.meta.{MediaInfo, SongTags, SongMeta}
 import com.mle.musicpimp.library.{Library, TrackInfo}
 import com.mle.musicpimp.beam.BeamCommand
-import com.mle.http.MultipartRequest
+import com.mle.http.TrustAllMultipartRequest
 import org.apache.http.HttpResponse
 import com.mle.play.controllers.{OneFileUploadRequest, AuthRequest, BaseController}
 import java.net.UnknownHostException
@@ -73,18 +73,18 @@ object Rest
       valid = cmd => {
         try {
           val (response, duration) = measureTime(beam(cmd))
-          response.map(resp => {
-            // relays the response code of the request to the beam endpoint to the client
-            val statusCode = resp.getStatusLine.getStatusCode
-            log info s"Completed track upload in: $duration ms, relaying response: $statusCode"
-            if (statusCode == 200) {
-              new Status(statusCode)(Json.obj("msg" -> Json.toJson("thank you")))
-            } else {
-              new Status(statusCode)
-            }
-          }).getOrElse {
-            BadRequest(JsonMessages.failure(s"Unable to find track in library with ID: ${cmd.track}"))
-          }
+          response.fold(
+            errorMsg => BadRequest(JsonMessages.failure(errorMsg)),
+            httpResponse => {
+              // relays the response code of the request to the beam endpoint to the client
+              val statusCode = httpResponse.getStatusLine.getStatusCode
+              log info s"Completed track upload in: $duration ms, relaying response: $statusCode"
+              if (statusCode == 200) {
+                new Status(statusCode)(Json.obj("msg" -> Json.toJson("thank you")))
+              } else {
+                new Status(statusCode)
+              }
+            })
         } catch {
           case uhe: UnknownHostException =>
             NotFound(JsonMessages.failure(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}"))
@@ -100,19 +100,23 @@ object Rest
    *
    * @param cmd beam details
    */
-  private def beam(cmd: BeamCommand): Option[HttpResponse] = {
-    val uri = cmd.uri
-    Util.using(new MultipartRequest(uri))(req => {
-      req.setAuth(cmd.username, cmd.password)
-      // TODO catch exception if toAbsolute does not find the track, return appropriate response
-      Library.toAbsolute(cmd.track).map(file => {
-        req addFile file
-        val response = req.execute()
-        log info s"Uploaded file: $file, bytes: ${Files.size(file)} to: $uri"
-        response
+  private def beam(cmd: BeamCommand): Either[String, HttpResponse] =
+    try {
+      val uri = cmd.uri
+      Util.using(new TrustAllMultipartRequest(uri))(req => {
+        req.setAuth(cmd.username, cmd.password)
+        Library.toAbsolute(cmd.track).map(file => {
+          req addFile file
+          val response = req.execute()
+          log info s"Uploaded file: $file, bytes: ${Files.size(file)} to: $uri"
+          Right(response)
+        }).getOrElse(Left(s"Unable to find track with id: ${cmd.track}"))
       })
-    })
-  }
+    } catch {
+      case e: Throwable =>
+        log.warn("Unable to beam", e)
+        Left("An error occurred while MusicBeaming. Please check your settings or try again later.")
+    }
 
   def addUpload = UploadedSongAction(MusicPlayer.playlist.add)
 
