@@ -10,4 +10,3 @@ credentials.txt
 *.log
 *.data
 settings.json
-conf/application.conf
