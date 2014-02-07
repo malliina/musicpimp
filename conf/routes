@@ -5,7 +5,7 @@ GET         /popupPlayer                   controllers.Website.popupPlayer
 GET         /settings                      controllers.Website.settings
 GET         /account                       controllers.Website.account
 GET         /connect                       controllers.Website.connect
-GET         /image                      controllers.Website.image
+GET         /image                         controllers.Website.image
 GET         /logs                          controllers.Website.logs
 GET         /about                         controllers.Website.about
 GET         /manage                        controllers.Website.manage

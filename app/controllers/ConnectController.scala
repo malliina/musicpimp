@@ -52,6 +52,7 @@ object ConnectController {
     type Protocol = Value
     val http, https, ws, wss = Value
   }
+
 }
 
 case class Coordinate(protocol: Protocols.Protocol, hosts: Seq[String], port: Int, username: String)

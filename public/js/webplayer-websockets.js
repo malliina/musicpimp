@@ -97,7 +97,7 @@ var onmessage = function (payload) {
             case "play":
                 setPlaylist([json.track]);
                 playlistPos = 0;
-                playTrack(json);
+                playTrack(json.track);
                 break;
             case "add":
                 appendTrack(json.track);
