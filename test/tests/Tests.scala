@@ -1,13 +1,9 @@
-package com.mle.musicpimp.tests
+package tests
 
 import com.mle.util.Log
 import org.scalatest.FunSuite
 
-import java.util.UUID
-import org.apache.commons.codec.binary.Base64
 import play.api.libs.json.Json
-import java.nio.file.Paths
-import com.mle.audio.PlayerStates
 
 /**
  * @author Michael
@@ -20,7 +16,7 @@ class Tests extends FunSuite with Log {
     val arr = "a:b".split(":")
     arr match {
       case Array(a, b) => assert(a === "a")
-      case _ => assert(condition = false)
+      case _ => assert(1 === 2)
     }
   }
   test("for comp.") {

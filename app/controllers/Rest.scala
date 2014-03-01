@@ -162,10 +162,11 @@ object Rest
   private def JsonAckAction(jsonHandler: AuthRequest[JsValue] => Unit): EssentialAction =
     AckPimpAction(parse.json)(jsonHandler)
 
-  private def UploadedSongAction(songAction: TrackInfo => Unit) = MetaUploadAction(implicit req => {
-    songAction(req.track)
-    AckResponse
-  })
+  private def UploadedSongAction(songAction: TrackInfo => Unit) =
+    MetaUploadAction(implicit req => {
+      songAction(req.track)
+      AckResponse
+    })
 
   private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
     HeadPimpUploadAction(request => {

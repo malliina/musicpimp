@@ -1,4 +1,5 @@
 import com.mle.musicpimp.BuildInfo
+import com.mle.musicpimp.log.PimpLog
 import com.mle.play.json.JsonMessages
 import com.mle.util.{FileUtilities, Log}
 import controllers.PimpContentController
@@ -16,7 +17,7 @@ object Global extends WithFilters(new GzipFilter()) with Log {
     super.onStart(app)
     FileUtilities init "musicpimp"
     val version = BuildInfo.version
-    log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}"
+    log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
   }
 
   override def onError(request: RequestHeader, ex: Throwable): Future[SimpleResult] =

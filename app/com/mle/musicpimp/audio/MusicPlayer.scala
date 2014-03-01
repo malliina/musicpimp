@@ -40,11 +40,9 @@ object MusicPlayer
     val previousGain = player.map(_.gain)
     val previousMute = player.map(_.mute)
     close()
+    // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
     player = Some(new PimpJavaSoundPlayer(track) {
-      def onEndOfMedia() {
-        log debug "EOM"
-        nextTrack()
-      }
+      def onEndOfMedia(): Unit = nextTrack()
     })
     // maintains the gain & mute status as they were in the previous track
     // if there was no previous gain, there was no previous track,
