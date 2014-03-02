@@ -34,7 +34,7 @@ trait LibraryController extends Secured with Log {
     respondWith("", Paths get "", items)
   })
 
-  private def respondWith(folderId: String, path: Path, contents: Folder) = {
+  private def respondWith(folderId: String, path: Path, contents: Folder)(implicit request: RequestHeader) = {
     def collection = MusicCollection.fromFolder(folderId, path, contents)
     respond(
       html = Website.toHtml(collection),
