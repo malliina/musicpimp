@@ -18,7 +18,7 @@ object PimpBuild extends Build {
     .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.2.0",
+    version := "2.2.1",
     scalaVersion := "2.10.3",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -56,7 +56,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "34db2c8e-77a9-428c-a681-553fd02da930",
+      WinKeys.productGuid := "78970c41-97f7-46f4-ae0b-ef287dd96565",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",

@@ -20,10 +20,7 @@ trait LibraryController extends Secured with Log {
   def library(folderId: String) = PimpAction(implicit request => {
     val path = Library relativePath folderId
     Library.items(path).map(items => {
-      respond(
-        html = Website.display(folderId, path, items),
-        json = Json.toJson(MusicCollection.fromFolder(folderId, path, items))
-      )
+      respondWith(folderId, path, items)
     }).getOrElse {
       pimpResult(
         html = NotFound,
@@ -34,11 +31,16 @@ trait LibraryController extends Secured with Log {
 
   def rootLibrary = PimpAction(implicit request => {
     def items = Library.musicItems
-    respond(
-      html = Website.display("", Paths get "", items),
-      json = Json.toJson(MusicCollection.fromFolder("", Paths get "", items))
-    )
+    respondWith("", Paths get "", items)
   })
+
+  private def respondWith(folderId: String, path: Path, contents: Folder) = {
+    def collection = MusicCollection.fromFolder(folderId, path, contents)
+    respond(
+      html = Website.toHtml(collection),
+      json = Json.toJson(collection)
+    )
+  }
 
   /**
    * Responds with the song with the given ID.
@@ -88,12 +90,11 @@ trait LibraryController extends Secured with Log {
   def supplyForPlayback(trackId: String) =
     download(trackId, r => r)
 
-
-  def display(id: String, relativePath: Path, contents: Folder): Html = {
-    val itemsColl = MusicCollection.fromFolder(id, relativePath, contents)
-    val allItems = itemsColl.dirs ++ itemsColl.songs
+  def toHtml(contents: MusicCollection): Html = {
+    //    val itemsColl = MusicCollection.fromFolder(id, relativePath, contents)
+    val allItems = contents.dirs ++ contents.songs
     val (col1, col2, col3) = columnize(allItems)
-    html.library(relativePath, col1, col2, col3)
+    html.library(contents.path, col1, col2, col3)
   }
 
   private def columnize[T](items: Seq[T]) = {
