@@ -56,7 +56,6 @@ object MusicPlayer
    * @throws LineUnavailableException
    */
   private def initTrack(track: TrackInfo) {
-    throw new LineUnavailableException("test")
     val previousGain = player.map(_.gain)
     val previousMute = player.map(_.mute)
     close()
