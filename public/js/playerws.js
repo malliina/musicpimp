@@ -97,7 +97,10 @@ var updateTrack = function (track) {
     updateTimeAndDuration(zeroPos, track.duration)
 };
 var onStatus = function (json) {
-    updateTrack(json.track);
+    var title = json.track.title;
+    if (title && title.length > 0) {
+        updateTrack(json.track);
+    }
     $('#pos').html(json.position.toHHMMSS());
     $("#volume").slider("option", "value", json.volume);
     isMute = json.mute;
