@@ -37,14 +37,14 @@ trait BasePlaylist[T]
     }
   }
 
-  def current =
+  def current: Option[T] =
     if (index >= 0 && songList.size > index) {
       Some(songs(index))
     } else {
       None
     }
 
-  def next =
+  def next: Option[T] =
     if (songs.size > pos + 1) {
       pos += 1
       onPlaylistIndexChanged(index)
@@ -53,7 +53,7 @@ trait BasePlaylist[T]
       None
     }
 
-  def prev =
+  def prev: Option[T] =
     if (pos > 0 && songs.size > pos - 1) {
       pos -= 1
       onPlaylistIndexChanged(index)
@@ -62,7 +62,7 @@ trait BasePlaylist[T]
       None
     }
 
-  def add(song: T) {
+  def add(song: T): Unit = {
     songs += song
     onPlaylistModified(songList)
   }

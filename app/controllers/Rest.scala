@@ -39,6 +39,7 @@ object Rest
   def pingAuth = PimpAction(req => NoCacheOk(JsonMessages.Version))
 
   def playback = JsonAckAction(req => {
+    // LineUnavailableException may propagate here if playback cannot be started
     JsonMessageHandler.onPlaybackCommand(req.body)
   })
 

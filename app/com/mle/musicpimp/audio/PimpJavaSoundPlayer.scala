@@ -1,13 +1,13 @@
 package com.mle.musicpimp.audio
 
-import com.mle.audio.javasound.JavaSoundPlayer
 import com.mle.musicpimp.library.TrackInfo
+import com.mle.audio.javasound.JavaSoundPlayer
 
 /**
  *
  * @author mle
  */
-abstract class PimpJavaSoundPlayer(val track: TrackInfo)
+class PimpJavaSoundPlayer(val track: TrackInfo)
   extends JavaSoundPlayer(track.meta.media)
   with PimpPlayer {
   val meta = track.meta

@@ -149,8 +149,6 @@ class PimpWebPlayer(val user: String)
     sendCommand(SKIP, playlist.index)
   }
 
-  def onEndOfMedia() {}
-
   def status = {
     import StatusEvent._
     val track = playlist.current getOrElse TrackInfo.empty

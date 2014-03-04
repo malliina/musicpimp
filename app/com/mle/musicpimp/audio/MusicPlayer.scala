@@ -8,8 +8,10 @@ import com.mle.util.Log
 import scala.Some
 import scala.concurrent.duration.Duration
 import com.mle.musicpimp.library.TrackInfo
-import play.api.libs.json.JsValue
 import com.mle.musicpimp.json.{JsonSendah, JsonMessages}
+import scala.util.{Failure, Try}
+import akka.actor.Status.Success
+import javax.sound.sampled.LineUnavailableException
 
 /**
  * @author Michael
@@ -22,31 +24,50 @@ object MusicPlayer
 
   val playlist: PimpPlaylist = new PimpPlaylist
 
+  var errorOpt: Option[Throwable] = None
+
+  /**
+   * Every time the track changes, a new [[PimpJavaSoundPlayer]] is used.
+   */
   private var player: Option[PimpJavaSoundPlayer] = None
 
   def underLying = player
 
-  def reset(track: TrackInfo) {
+  def reset(track: TrackInfo): Unit = {
     playlist set track
     playlist.current.foreach(playTrack)
+
   }
 
   def playTrack(songMeta: TrackInfo): Unit = {
-    initTrack(songMeta)
-    play()
+    errorOpt = None
+    Try(initTrack(songMeta)) match {
+      case Failure(t) =>
+        log.warn(s"Unable to play track ${songMeta.id}", t)
+        errorOpt = Some(t)
+      case _ =>
+        play()
+    }
   }
 
-  def initTrack(track: TrackInfo) {
+  /**
+   *
+   * @param track
+   * @throws LineUnavailableException
+   */
+  private def initTrack(track: TrackInfo) {
+    throw new LineUnavailableException("test")
     val previousGain = player.map(_.gain)
     val previousMute = player.map(_.mute)
     close()
+    val newPlayer = new PimpJavaSoundPlayer(track) {
+      override def onEndOfMedia(): Unit = nextTrack()
+    }
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
-    player = Some(new PimpJavaSoundPlayer(track) {
-      def onEndOfMedia(): Unit = nextTrack()
-    })
-    // maintains the gain & mute status as they were in the previous track
-    // if there was no previous gain, there was no previous track,
-    // so we send the current volume as an initial value
+    player = Some(newPlayer)
+    // Maintains the gain & mute status as they were in the previous track.
+    // If there was no previous gain, there was no previous track,
+    // so we send the current volume as an initial value.
     previousGain map gain getOrElse sendCurrentVolume()
     previousMute foreach mute
 

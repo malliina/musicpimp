@@ -69,7 +69,7 @@ trait JsonMessageHandler extends Log {
     })
   }
 
-  def onPlaybackCommand(jsonCmd: JsValue) {
+  def onPlaybackCommand(jsonCmd: JsValue): Unit = {
     log debug s"Got message: $jsonCmd"
     withCmd(jsonCmd)(cmd => cmd.command match {
       case RESUME =>
