@@ -2,10 +2,9 @@
 
 @basePlayer(feedback) {
     <p class="lead">Playing on server. Click to open the browser player instead: <a href="@routes.Website.popupPlayer()"
-    onclick="return !window.open(this.href, 'MusicPimp Web Player', 'scrollbars=yes,width=500,height=400')"
+    onclick="return ! window.open ( this.href, 'MusicPimp Web Player', 'scrollbars=yes,width=500,height=400' )"
     target="_blank"
     class="btn btn-lg btn-primary">Open browser player</a></p>
-    <script src="@routes.Assets.at("js/json.js")"></script>
-    <script src="@routes.Assets.at("js/playerws.js")"></script>
+    @util.script("json.js", "playerws.js")
     @wsopen(ServerWS.wsUrl(request))
 }

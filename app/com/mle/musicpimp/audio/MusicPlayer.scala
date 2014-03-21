@@ -28,6 +28,7 @@ object MusicPlayer
 
   /**
    * Every time the track changes, a new [[PimpJavaSoundPlayer]] is used.
+   * - Well, why?
    */
   private var player: Option[PimpJavaSoundPlayer] = None
 
@@ -36,7 +37,6 @@ object MusicPlayer
   def reset(track: TrackInfo): Unit = {
     playlist set track
     playlist.current.foreach(playTrack)
-
   }
 
   def playTrack(songMeta: TrackInfo): Unit = {
@@ -126,7 +126,7 @@ object MusicPlayer
   }
 
   def close() {
-    player.foreach(_.close())
+    player.foreach(p => p.close())
   }
 
   def position = player.map(_.position) getOrElse Duration.fromNanos(0)

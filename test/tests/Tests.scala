@@ -1,9 +1,11 @@
 package tests
 
-import com.mle.util.Log
+import com.mle.util.{FileUtilities, Log}
 import org.scalatest.FunSuite
 
 import play.api.libs.json.Json
+import java.nio.file.Paths
+import com.mle.musicpimp.library.Library
 
 /**
  * @author Michael
@@ -11,6 +13,13 @@ import play.api.libs.json.Json
 class Tests extends FunSuite with Log {
   test("can run test") {
 
+  }
+  test("paths") {
+    val root = Paths get "a/b/c"
+    val rel = Paths get ""
+    val combined = root resolve rel
+    println(combined)
+    assert(root.toAbsolutePath.toString === combined.toAbsolutePath.toString)
   }
   test("deconstruct array") {
     val arr = "a:b".split(":")
@@ -35,5 +44,21 @@ class Tests extends FunSuite with Log {
     val readV = Json.parse(jsString)
     val list = (readV \ "folders").as[Seq[String]]
     assert(in === list)
+  }
+  test("serialize Option") {
+    import Json._
+    val jsValue = stringify(toJson(Some(42)))
+    val none = stringify(toJson(Option.empty[Int]))
+    assert(jsValue === "42")
+    assert(none === "null")
+  }
+  test("can recurse library contents") {
+    val all = Library.all(Paths.get(""))
+    val out = Paths get "out.txt"
+    FileUtilities.writerTo(out)(writer => {
+      val strings = all.map(pair => pair._1.toString + ": " + pair._2)
+      strings.foreach(writer.println)
+    })
+    println(s"Wrote to ${out.toAbsolutePath}")
   }
 }

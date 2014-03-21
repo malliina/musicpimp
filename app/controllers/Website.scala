@@ -24,7 +24,7 @@ object Website
     val hasAudioDevice = AudioSystem.getMixerInfo.size > 0
     val feedback: Option[String] =
       if (!hasAudioDevice) {
-        Some("Unable to find audio hardware. Playback on this machine is likely to fail.")
+        Some("Unable to access audio hardware. Playback on this machine is likely to fail.")
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }

@@ -26,6 +26,7 @@ object PimpBuild extends Build {
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/")
   )
+
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
     WinPlugin.windowsSettings ++
     LinuxPlugin.rpmSettings ++
@@ -47,7 +48,7 @@ object PimpBuild extends Build {
         utilActor, utilRmi, scalaTest,
         utilDep, h2, slick,
         httpClient, httpMime, play.Project.filters,
-        utilPlay, qrGen),
+        utilPlay, utilBase, qrGen, cron4j),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
@@ -77,8 +78,9 @@ object Dependencies {
   val utilVersion = "0.7.1"
   val newUtilVersion = "1.2.0"
   val utilGroup = "com.github.malliina"
-  val utilDep = utilGroup %% "util" % newUtilVersion
-  val utilPlay = utilGroup %% "util-play" % newUtilVersion
+  val utilDep = utilGroup %% "util" % "1.2.1"
+  val utilBase = utilGroup %% "util-base" % "0.0.6"
+  val utilPlay = utilGroup %% "util-play" % "1.2.1"
   val utilActor = utilGroup %% "util-actor" % utilVersion
   val utilRmi = utilGroup %% "util-rmi" % utilVersion
   val scalaTest = "org.scalatest" %% "scalatest" % "2.0" % "test"
@@ -96,4 +98,5 @@ object Dependencies {
   val httpClient = httpGroup % "httpclient" % httpVersion
   val httpMime = httpGroup % "httpmime" % httpVersion
   val qrGen = "net.glxn" % "qrgen" % "1.3"
+  val cron4j = "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"
 }

@@ -1,0 +1,52 @@
+@(clocks: Seq[com.mle.musicpimp.scheduler.ClockPlayback])
+@import com.mle.musicpimp.scheduler.ClockPlayback
+
+@manage("alarms") {
+    @bs.headerRow("Alarms")
+    @bs.bsRowColumn("col-md-12") {
+        <table class="table table-hover table-striped">
+            <thead>
+               @headers2()
+            </thead>
+            <tbody>
+                @clocks.map(toRow2)
+            </tbody>
+        </table>
+    }
+    @bs.bsRowColumn("col-md-12"){
+        <a href="@routes.Alarms.newAlarm()">Add alarm</a>
+    }
+    @util.script("scheduler.js")
+}
+
+    @headers() = {
+        <tr><th>Media</th><th>Schedule</th><th>Enabled</th><th>Actions</th></tr>
+    }
+    @toRow(ap: ClockPlayback) = {
+        <tr><td>@ap.job.trackInfo.title</td><td>@ap.when.describe</td><td>@yesOrNo(ap.enabled)</td><td>@actions(ap.id.getOrElse("nonexistent"))</td></tr>
+    }
+    @headers2() = {
+        <tr><th>Description</th><th>Enabled</th><th>Actions</th></tr>
+    }
+    @toRow2(ap: ClockPlayback) = {
+        <tr><td>@ap.describe</td><td class="@danger(!ap.enabled)">@yesOrNo(ap.enabled)</td><td>@actions(ap.id.getOrElse("nonexistent"))</td></tr>
+    }
+    @actions(id: String)= {
+        <div class="btn-group">
+            <a class="btn btn-default btn-sm" href="@routes.Alarms.editAlarm(id)"><i class="glyphicon glyphicon-edit"></i> Edit</a>
+            <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                <li><a href="#" onclick="deleteAP('@id')"><i class="glyphicon glyphicon-remove"></i> Delete</a></li>
+                <li><a href="#" onclick="runAP('@id')"><i class="glyphicon glyphicon-play"></i> Play</a></li>
+                <li><a href="#" onclick="stopPlayback()"><i class="glyphicon glyphicon-stop"></i> Stop</a></li>
+            </ul>
+        </div>
+    }
+    @yesOrNo(bool:Boolean)= {
+        @(if(bool) "Yes" else "No")
+    }
+    @danger(bool:Boolean) = {
+        @(if(bool) "danger" else "")
+    }
+
+

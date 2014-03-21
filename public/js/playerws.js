@@ -3,7 +3,8 @@ var webSocket;
 var isMute = false;
 
 var onconnect = function () {
-    send(statusJson());
+    // update: sends status only after welcome message
+//    send(statusJson());
 };
 // user input handlers
 var stop = function () {
@@ -44,6 +45,9 @@ var onmessage = function (payload) {
     var json = jQuery.parseJSON(payload.data);
     var eventType = json.event;
     switch (eventType) {
+        case "welcome":
+            send(statusJson());
+            break;
         case "time_updated":
             updateTime(json.pos_seconds);
             break;

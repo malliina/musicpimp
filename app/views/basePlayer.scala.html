@@ -1,26 +1,16 @@
 @(feedback: Option[String])(scripts: Html)(implicit request: RequestHeader)
 
 @indexMain("player") {
-    <div class="row">
-        <div class="col-md-9">
-            <div class="page-header">
-                <h1>Player</h1>
-            </div>
-        </div>
-    </div>
+    @bs.headerRow("Player", "col-md-9")
     @feedback.map { msg =>
-        <div class="row">
-            <div class="col-md-9">
-                <p class="lead alert">@msg</p>
-            </div>
-        </div>
+        @bs.bsRowColumn("col-md-9") {
+            <p class="lead alert">@msg</p>
+        }
     }
-    <div class="row">
-        <div class="col-md-6">
-            <p id="notracktext" class="lead">No track. Play one from
-                the <a href="@routes.Rest.rootLibrary()">library</a> or stream from a mobile device.</p>
-        </div>
-    </div>
+    @bs.bsRowColumn("col-md-6"){
+        <p id="notracktext" class="lead">No track. Play one from
+            the <a href="@routes.Rest.rootLibrary()">library</a> or stream from a mobile device.</p>
+    }
     <div class="row">
         @playerControls()
         <div class="col-md-3">

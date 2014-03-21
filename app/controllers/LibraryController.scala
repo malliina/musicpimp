@@ -30,7 +30,7 @@ trait LibraryController extends Secured with Log {
   })
 
   def rootLibrary = PimpAction(implicit request => {
-    def items = Library.musicItems
+    def items = Library.rootItems
     respondWith("", Paths get "", items)
   })
 
@@ -89,6 +89,12 @@ trait LibraryController extends Secured with Log {
    */
   def supplyForPlayback(trackId: String) =
     download(trackId, r => r)
+
+  def meta(id: String) = PimpAction {
+    Library.findMeta(id)
+      .map(track => Ok(Json.toJson(track)))
+      .getOrElse(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))
+  }
 
   def toHtml(contents: MusicCollection): Html = {
     //    val itemsColl = MusicCollection.fromFolder(id, relativePath, contents)

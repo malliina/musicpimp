@@ -1,0 +1,9 @@
+@(field: Field, label: String, placeHolder: String = "", typeName: String = "text", inputWidth: String = "col-sm-10", moreClasses: Seq[String] = Seq.empty, defaultValue: String = "")
+<div class="form-group @if(field.hasErrors) {has-error}">
+    @bs.label(label, field.name)
+<div class="@inputWidth">
+    @bs.input(field, typeName, placeHolder, moreClasses, defaultValue)
+    @bs.helpSpan(field)
+</div>
+</div>
+

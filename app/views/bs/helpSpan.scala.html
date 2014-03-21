@@ -1,0 +1,6 @@
+@(field: Field)
+<span class="help-block">@{
+    field.error.map {
+        error => Messages(error.message, error.args: _*)
+    }
+}</span>

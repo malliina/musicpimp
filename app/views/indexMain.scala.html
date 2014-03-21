@@ -1,5 +1,5 @@
 @(tabName: String)(content: Html)
-@basePage("MusicPimp") {
+    @basePage("MusicPimp") {
         <div class="navbar navbar-default navbar-static-top">
             <div class="container">
                 <div class="navbar-header">
@@ -12,20 +12,23 @@
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav">
-                        <li class="@("active".when(tabName == "library"))"><a href="@routes.Rest.rootLibrary()"><i class="glyphicon glyphicon-list"></i> Library</a></li>
-                        <li class="@("active".when(tabName == "player"))"><a href="@routes.Website.player()"><i class="glyphicon glyphicon-music"></i> Player</a></li>
+                        @navItem("Library", routes.Rest.rootLibrary(), "list")
+                        @navItem("Player", routes.Website.player(), "music")
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li class="@("active".when(tabName == "manage"))"><a href="@routes.Website.manage()"><i class="glyphicon glyphicon-wrench"></i> Manage</a></li>
-                        <li class="@("active".when(tabName == "about"))"><a href="@routes.Website.about()"><i class="glyphicon glyphicon-globe"></i> About</a></li>
+                        @navItem("Manage", routes.Website.manage(), "wrench")
+                        @navItem("About", routes.Website.about(), "globe")
                         <li><a href="@routes.Website.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
                     </ul>
                 </div>
             </div>
         </div>
-    <section>
-        <div class="container">
+        <section>
+            <div class="container">
             @content
-        </div>
-    </section>
-}
+            </div>
+        </section>
+    }
+    @navItem(title: String, href: Call, glyphSuffix: String) = {
+    @bs.navItem(title, title.toLowerCase, tabName, href, glyphSuffix)
+    }

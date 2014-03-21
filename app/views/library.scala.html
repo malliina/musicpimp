@@ -14,8 +14,7 @@
     @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty){
         <p class="lead">The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">Music Folders</a>.</p>
     }
-    <script src="@routes.Assets.at("js/json.js")"></script>
-    <script src="@routes.Assets.at("js/library.js")"></script>
+    @util.script("json.js", "library.js")
 }
 @renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
     <div class="@columnSpan(onlyColumn)">

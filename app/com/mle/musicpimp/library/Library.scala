@@ -1,60 +1,71 @@
 package com.mle.musicpimp.library
 
-import com.mle.util.{Util, Log}
+import com.mle.util.{Utils, Log}
 import java.nio.file.{AccessDeniedException, Paths, Files, Path}
 import java.net.{URLEncoder, URLDecoder}
 import com.mle.audio.meta.SongMeta
 import java.io.FileNotFoundException
+import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException
 
 /**
  * An item is either a song or a folder.
  *
  * @author Michael
  */
-trait Library extends Log {
+trait Library extends MusicLibrary with Log {
   var rootFolders: Seq[Path] = Settings.read
 
-  //  def loadLibrary: Map[String, Folder] = {
-  //    val root = musicItems
-  //    root.dirs.foldLeft(Map("" -> root))((acc, subDir) => acc ++ subFolders(subDir))
-  //  }
+  def rootItems: Folder =
+    mergeContents(
+      rootFolders
+        .filter(Files.isDirectory(_))
+        .map(f => PathInfo(Paths get "", f)))
 
-  // recursive
-  //  private def subFolders(dir: Path): Map[String, Folder] = {
-  //    val items = itemsInRelative(dir)
-  //    items.dirs.foldLeft(Map(encode(dir) -> items))((acc, subDir) => acc ++ subFolders(subDir))
-  //  }
-
-  def items(relative: Path): Option[Folder] =
-    findPathInfo(relative).map(items)
-
-  def items(pathInfo: PathInfo): Folder =
-    tryReadFolder(FileUtils.listFiles(pathInfo.absolute, pathInfo.root))
-
-  def musicItems =
-    rootFolders
-      .filter(Files.isDirectory(_))
-      .map(f => tryReadFolder(FileUtils.listFiles(f, f)))
-      .foldLeft(Folder.empty)(_ ++ _)
-
-  def findPathInfo(relative: Path): Option[PathInfo] = {
-    rootFolders.find(root => Files.exists(root resolve relative)).map(root => {
-      PathInfo(relative, root)
-    })
+  def items(relative: Path): Option[Folder] = {
+    val sources = findPathInfo2(relative)
+    if (sources.isEmpty) {
+      None
+    } else {
+      Some(mergeContents(sources))
+    }
   }
 
-  def pathInfo(relative: Path): PathInfo = findPathInfo(relative)
-    .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))
+  def all(root: Path): Map[Path, Folder] = {
+    def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
+      if (folder.dirs.isEmpty) {
+        acc
+      } else {
+        Map(folder.dirs
+          .flatMap(dir => items(dir).toSeq
+          .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
+      }
+    }
+    def recurse2(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
+      if (folder.dirs.isEmpty) {
+        acc
+      } else {
+        Map((for {
+          dir <- folder.dirs
+          subFolder <- items(dir).toSeq
+          pair <- recurse2(subFolder, acc.updated(dir, subFolder))
+        } yield pair): _*)
+      }
+    }
+    //    val tmp = Map(items(root).toSeq.flatMap(f => recurse(f, Map(Paths.get("") -> f))): _*)
+    //    val rootContent = rootItems
+    //    recurse(rootContent, Map(Paths.get("") -> rootContent))
+    Map(items(root).toSeq.flatMap(f => recurse(f, Map(Paths.get("") -> f))): _*)
+  }
 
-  /**
-   * Some folders might have unsuitable permissions, throwing an exception
-   * when a read attempt is made. Suppresses such AccessDeniedExceptions.
-   *
-   * @param f function that returns folder contents
-   * @return the folder, or an empty folder if the folder could not be read
-   */
-  private def tryReadFolder(f: => Folder): Folder =
-    Util.optionally[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
+  def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
+
+  def allTracks(root: Path) = all(root).map(pair => pair._1 -> pair._2.files)
+
+  def tracksRecursive(root: Path) = allTracks(root).values.flatten
+
+  def songPathsRecursive = all().flatMap(pair => pair._2.files)
+
+  def tracksRecursive: Iterable[TrackInfo] = (songPathsRecursive map findMeta).flatten
 
   /**
    * This method has a bug.
@@ -65,18 +76,31 @@ trait Library extends Log {
   def toAbsolute(trackId: String): Option[Path] =
     findPathInfo(relativePath(trackId)).map(_.absolute)
 
-  def relativePath(itemId: String) = {
+  def relativePath(itemId: String): Path = {
     val decodedId = URLDecoder.decode(itemId, "UTF-8")
     Paths get decodedId
   }
 
-  def metaFor(song: Path): TrackInfo = {
+  def meta(song: Path): TrackInfo = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
     new TrackInfo(encode(song), meta)
   }
 
-  def metaFor(itemId: String): TrackInfo = Library metaFor relativePath(itemId)
+  def meta(itemId: String): TrackInfo =
+    Library meta relativePath(itemId)
+
+  def findMeta(relative: Path): Option[TrackInfo] =
+    findPathInfo(relative).flatMap(pi => {
+      Utils.opt[TrackInfo, InvalidAudioFrameException] {
+        // TODO util-audio may throw InvalidAudioFrameException
+        val meta = SongMeta.fromPath(pi.absolute, pi.root)
+        new TrackInfo(encode(relative), meta)
+      }
+    })
+
+  def findMeta(id: String): Option[TrackInfo] =
+    findMeta(relativePath(id))
 
   /**
    * Generates a URL-safe ID of the given music item.
@@ -87,6 +111,35 @@ trait Library extends Log {
    * @return the id
    */
   def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
+
+  private def mergeContents(sources: Seq[PathInfo]): Folder =
+    sources.map(items).foldLeft(Folder.empty)(_ ++ _)
+
+  private def items(pathInfo: PathInfo): Folder =
+    tryReadFolder(FileUtils.listFiles(pathInfo.absolute, pathInfo.root))
+
+  private def findPathInfo(relative: Path): Option[PathInfo] = {
+    rootFolders.find(root => Files.isReadable(root resolve relative))
+      .map(root => PathInfo(relative, root))
+  }
+
+  private def findPathInfo2(relative: Path): Seq[PathInfo] = {
+    rootFolders.filter(root => Files.isReadable(root resolve relative))
+      .map(root => PathInfo(relative, root))
+  }
+
+  private def pathInfo(relative: Path): PathInfo = findPathInfo(relative)
+    .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))
+
+  /**
+   * Some folders might have unsuitable permissions, throwing an exception
+   * when a read attempt is made. Suppresses such AccessDeniedExceptions.
+   *
+   * @param f function that returns folder contents
+   * @return the folder, or an empty folder if the folder could not be read
+   */
+  private def tryReadFolder(f: => Folder): Folder =
+    Utils.opt[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
 }
 
 object Library extends Library

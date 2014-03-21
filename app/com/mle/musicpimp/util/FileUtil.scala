@@ -1,7 +1,7 @@
 package com.mle.musicpimp.util
 
 import java.nio.file.{Files, Path}
-import com.mle.util.{Util, Log, FileUtilities}
+import com.mle.util.{Utils, Util, Log, FileUtilities}
 import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
 
 /**
@@ -36,7 +36,7 @@ object FileUtil extends Log {
     }
 
   def trySetPermissions(file: Path, perms: java.util.Set[PosixFilePermission]) =
-    Util.optionally[Unit, UnsupportedOperationException] {
+    Utils.opt[Unit, UnsupportedOperationException] {
       Files setPosixFilePermissions(file, perms)
     }
 

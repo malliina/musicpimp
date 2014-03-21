@@ -6,7 +6,7 @@ import java.net.InetSocketAddress
 import play.core.server.NettyServer
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.Channel
-import com.mle.util.{Util, Log}
+import com.mle.util.{Utils, Util, Log}
 
 object RequestHelpers extends Log {
   /**
@@ -26,7 +26,7 @@ object RequestHelpers extends Log {
 
   def portFromHost(req: RequestHeader): Option[Int] = {
     val maybeSuffix = req.host.dropWhile(_ != ':')
-    if (maybeSuffix.size > 1) Util.optionally[Int, NumberFormatException](maybeSuffix.tail.toInt)
+    if (maybeSuffix.size > 1) Utils.opt[Int, NumberFormatException](maybeSuffix.tail.toInt)
     else None
   }
 

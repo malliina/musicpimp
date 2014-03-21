@@ -21,8 +21,6 @@ trait SettingsController extends Secured with HtmlController with PimpAccountCon
 
   def settings = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
 
-
-
   def newFolder = PimpAction(implicit req => {
     newFolderForm.bindFromRequest.fold(
       formWithErrors => {

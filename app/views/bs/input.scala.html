@@ -1,0 +1,8 @@
+@(field: Field, typeName: String, placeHolder: String = "", moreClasses: Seq[String] = Seq.empty, defaultValue: String = "")
+<input
+type="@typeName"
+class="form-control@moreClasses.mkString(" ", " ", "")"
+id="@field.id"
+name="@field.name"
+value="@field.value.getOrElse(defaultValue)"
+placeholder="@placeHolder">

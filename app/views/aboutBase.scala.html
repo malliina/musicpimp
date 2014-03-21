@@ -1,83 +1,77 @@
 @()
 
 @indexMain("about") {
-    <div class="row">
-        <div class="col-md-6">
-            <div class="page-header">
-                <h1>About</h1>
-            </div>
-            <p class="lead">MusicPimp @com.mle.musicpimp.BuildInfo.version</p>
-            <p>Developed by Michael Skogberg.</p>
-            <p>Check out <a href="http://www.musicpimp.org">www.musicpimp.org</a> for the latest documentation.</p>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-8">
-            <h3>Third Party Software</h3>
-            <p>This app uses the following third party software:</p>
-            <div class="panel-group" id="accordion">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <span class="accordion-toggle">
-                                Scala, licensed under the
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                                    Scala License
-                            </a>
-                        </span>
-                    </div>
-                    <div id="collapseOne" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.SCALA</pre>
-                        </div>
-                    </div>
+    @bs.headerRow("About", "col-md-6")
+    @bs.bsRowColumn("col-md-8") {
+        <p class="lead">MusicPimp @com.mle.musicpimp.BuildInfo.version</p>
+        <p>Developed by Michael Skogberg.</p>
+        <p>Check out <a href="http://www.musicpimp.org">www.musicpimp.org</a> for the latest documentation.</p>
+    }
+    @bs.bsRowColumn("col-md-8") {
+        <h3>Third Party Software</h3>
+        <p>This app uses the following third party software:</p>
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="accordion-toggle">
+                        Scala, licensed under the
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                            Scala License
+                        </a>
+                    </span>
                 </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <span class="accordion-toggle">
-                                software licensed under the
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
-                                    MIT License
-                            </a>
-                        </span>
-                    </div>
-                    <div id="collapseTwo" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.MIT</pre>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <span class="accordion-toggle">
-                                software licensed under
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
-                                    Apache License 2.0
-                            </a>
-                        </span>
-                    </div>
-                    <div id="collapseThree" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.APACHE</pre>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <span class="accordion-toggle">
-                                Tritonus plugins, licensed under the
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseFour">
-                                    GNU Lesser General Public License (LGPL)
-                            </a>
-                        </span>
-                    </div>
-                    <div id="collapseFour" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.LGPL</pre>
-                        </div>
+                <div id="collapseOne" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <pre class="pre-scrollable">@models.Licenses.SCALA</pre>
                     </div>
                 </div>
             </div>
-            <p>... and icons by <a href="http://glyphicons.com/">Glyphicons</a>.</p>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="accordion-toggle">
+                        software licensed under the
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                            MIT License
+                        </a>
+                    </span>
+                </div>
+                <div id="collapseTwo" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <pre class="pre-scrollable">@models.Licenses.MIT</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="accordion-toggle">
+                        software licensed under
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
+                            Apache License 2.0
+                        </a>
+                    </span>
+                </div>
+                <div id="collapseThree" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <pre class="pre-scrollable">@models.Licenses.APACHE</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <span class="accordion-toggle">
+                        Tritonus plugins, licensed under the
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseFour">
+                            GNU Lesser General Public License (LGPL)
+                        </a>
+                    </span>
+                </div>
+                <div id="collapseFour" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        <pre class="pre-scrollable">@models.Licenses.LGPL</pre>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
+        <p>... and icons by <a href="http://glyphicons.com/">Glyphicons</a>.</p>
+    }
 }

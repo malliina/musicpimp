@@ -25,7 +25,7 @@ object MusicCollection {
 
   def fromFolder(id: String, path: Path, folder: Folder) = {
     val dirs = folder.dirs map toFolder
-    val songs = folder.files map Library.metaFor
+    val songs = folder.files map Library.meta
     MusicCollection(id, path, dirs, songs)
   }
 

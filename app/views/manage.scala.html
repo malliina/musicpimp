@@ -1,13 +1,16 @@
 @(tab: String)(content: Html)
 
-@indexMain("manage") {
-    <ul class="nav nav-tabs">
-        <li class="@("active".when(tab == "folders"))"><a href="@routes.Website.settings()"><i class="glyphicon glyphicon-folder-open"></i> Music Folders</a></li>
-        <li class="@("active".when(tab == "account"))"><a href="@routes.Website.account()"><i class="glyphicon glyphicon-user"></i> Account</a></li>
-        @*<li class="@("active".when(tab == "connect"))"><a href="@routes.Website.connect()"> Connect</a></li>*@
-        <li class="@("active".when(tab == "logs"))"><a href="@routes.Website.logs()"><i class="glyphicon glyphicon-list"></i> Logs</a></li>
-    </ul>
-    <section>
-    @content
-    </section>
-}
+    @indexMain("manage") {
+        <ul class="nav nav-tabs">
+            @navItem("Music Folders", "folders", routes.Website.settings(), "folder-open")
+            @navItem("Account", "account", routes.Website.account(), "user")
+            @navItem("Alarms", "alarms", routes.Alarms.alarms(), "list")
+            @navItem("Logs", "logs", routes.Website.logs(), "list")
+        </ul>
+        <section>
+        @content
+        </section>
+    }
+    @navItem(title: String, tabName: String, href: Call, glyphIcon: String) = {
+    @bs.navItem(title, tabName, tab, href, glyphIcon)
+    }

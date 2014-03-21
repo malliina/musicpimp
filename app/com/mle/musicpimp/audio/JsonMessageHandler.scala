@@ -30,7 +30,7 @@ trait JsonMessageHandler extends Log {
       case TIME_UPDATED =>
         userPlayer(_.position = cmd.value.seconds)
       case TRACK_CHANGED =>
-        userPlayer(_.notifyTrackChanged(Library metaFor cmd.track))
+        userPlayer(_.notifyTrackChanged(Library meta cmd.track))
       case VOLUME_CHANGED =>
         userPlayer(_.notifyVolumeChanged(cmd.value))
       case PLAYLIST_INDEX_CHANGED =>
@@ -70,7 +70,7 @@ trait JsonMessageHandler extends Log {
   }
 
   def onPlaybackCommand(jsonCmd: JsValue): Unit = {
-    log debug s"Got message: $jsonCmd"
+    log info s"Got message: $jsonCmd"
     withCmd(jsonCmd)(cmd => cmd.command match {
       case RESUME =>
         MusicPlayer.play()
@@ -90,12 +90,12 @@ trait JsonMessageHandler extends Log {
         MusicPlayer.seek(pos.toDouble seconds)
       case PLAY =>
         val track = cmd.track
-        MusicPlayer.reset(Library metaFor track)
+        MusicPlayer.reset(Library meta track)
       case SKIP =>
         MusicPlayer skip cmd.value
       case ADD =>
         val track = cmd.track
-        MusicPlayer.playlist.add(Library metaFor track)
+        MusicPlayer.playlist.add(Library meta track)
       case REMOVE =>
         MusicPlayer.playlist delete cmd.value
       case anythingElse =>
@@ -108,7 +108,7 @@ trait JsonMessageHandler extends Log {
   }
 
   private def newTrackInfo(trackId: String) =
-    Library metaFor trackId
+    Library meta trackId
 }
 
 object JsonMessageHandler extends JsonMessageHandler

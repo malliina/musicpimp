@@ -30,11 +30,20 @@ GET         /folders                       controllers.Rest.rootLibrary
 GET         /folders/*folder               controllers.Rest.library(folder)
 GET         /downloads/*id                 controllers.Rest.download(id)
 GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
+GET         /tracks/meta/*id               controllers.Rest.meta(id)
 POST        /rootfolders                   controllers.Website.newFolder
 POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
+GET         /tracks                        controllers.Alarms.tracks
+GET         /pathsOnly                     controllers.Alarms.paths
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.subscribe
 GET         /ws/webplay                    controllers.WebPlayerController.subscribe
+# Alarms
+GET         /alarms                        controllers.Alarms.alarms
+POST        /alarms                        controllers.Alarms.handleJson
+GET         /alarms/editor                 controllers.Alarms.newAlarm
+GET         /alarms/editor/*id             controllers.Alarms.editAlarm(id)
+POST        /alarms/editor/add             controllers.Alarms.newClock
 # Miscellaneous
 GET         /ping                          controllers.Rest.ping
 GET         /pingauth                      controllers.Rest.pingAuth

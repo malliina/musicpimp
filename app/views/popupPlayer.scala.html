@@ -3,21 +3,16 @@
 @basePage("MusicPimp Web Player") {
     <audio id="player" src="">You need to update your browser to support this feature.</audio>
     @playerRow()
-    <div class="row">
-        <div class="col-md-6">
-            <ol id="playlist">
-            </ol>
+    @bs.bsRowColumn("col-md-6") {
+        <ol id="playlist">
+        </ol>
+    }
+    @bs.bsRowColumn("col-md-6") {
+        <div class="alert alert-info">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Note</strong> For uninterrupted browser playback, please keep this window open.
         </div>
-    </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="alert alert-info">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                <strong>Note</strong> For uninterrupted browser playback, please keep this window open.
-            </div>
-        </div>
-    </div>
-    <script src="@routes.Assets.at("js/json.js")"></script>
-    <script src="@routes.Assets.at("js/webplayer-websockets.js")"></script>
+    }
+    @util.script("json.ws", "webplayer-websockets.js")
     @wsopen(WebPlayerController.wsUrl(request))
 }

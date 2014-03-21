@@ -62,7 +62,6 @@ object Rest
     val start = System.currentTimeMillis()
     val ret = f
     val end = System.currentTimeMillis()
-    end - start
     (ret, end - start)
   }
 

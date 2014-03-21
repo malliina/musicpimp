@@ -6,9 +6,7 @@
     }
 
 @manage("account") {
-    <div class="row">
-        <div class="col-md-4">
-            @changePassword(username, helloForm)
-        </div>
-    </div>
+    @bs.bsRowColumn("col-md-4") {
+        @changePassword(username, helloForm)
+    }
 }
