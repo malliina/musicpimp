@@ -1,13 +1,12 @@
-@(folders:Seq[String], newFolderForm: Form[String])
+@(folders: Seq[String], newFolderForm: Form[String])
 
-@import helper._
-@implicitFieldConstructor = @{
-    FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
-}
+    @import helper._
+    @implicitFieldConstructor = @{
+        FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
+    }
 
-@manage("folders") {
-    <div class="col-md-6">
-        @editFolders(folders,newFolderForm)
-    </div>
-}
+    @manage("folders") {
+        @bs.headerRow("Music Folders", "col-md-8")
+        @editFolders(folders, newFolderForm)
+    }
 

@@ -1,7 +1,7 @@
 @(logEntries: Iterable[String], errorMsg: Option[String] = None)
 
 @manage("logs") {
-    <h2>Logs</h2>
+    @bs.headerRow("Logs")
     @errorMsg.map {msg =>
         <p class="lead">@msg</p>
     }

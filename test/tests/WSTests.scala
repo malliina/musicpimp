@@ -2,7 +2,7 @@ package tests
 
 import org.scalatest.FunSuite
 import play.api.libs.ws.WS
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import concurrent.Await
 import play.api.mvc.Controller
 import java.net.URLEncoder

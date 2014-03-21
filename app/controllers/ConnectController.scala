@@ -9,7 +9,7 @@ import com.mle.play.controllers.AuthRequest
 import play.api.libs.json.Json
 import com.mle.musicpimp.json.SimpleFormat
 import controllers.ConnectController.Protocols
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import java.net.NetworkInterface
 import collection.JavaConversions._
 import play.api.mvc.RequestHeader

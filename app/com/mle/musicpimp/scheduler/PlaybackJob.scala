@@ -6,9 +6,9 @@ import com.mle.util.Log
 import com.mle.push.{PushUrl, PushUrls, MPNS}
 import play.api.libs.ws.Response
 import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.concurrent.FutureImplicits._
-import com.mle.musicpimp.library.{TrackInfo, Library}
+import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.json.SimpleFormat
 
@@ -18,6 +18,7 @@ import com.mle.musicpimp.json.SimpleFormat
  */
 case class PlaybackJob(track: String) extends Job with Log {
   val trackInfo = Library.meta(track)
+
   def describe: String = s"Plays ${trackInfo.title}"
 
   def toastTo(url: PushUrl): Future[Response] =

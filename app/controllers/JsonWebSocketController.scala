@@ -2,7 +2,7 @@ package controllers
 
 import play.api.libs.json.JsValue
 import models.ClientInfo
-import play.api.mvc.{Call, Request, Controller, RequestHeader}
+import play.api.mvc.{Call, Controller, RequestHeader}
 import play.api.libs.iteratee.Concurrent.Channel
 import com.mle.play.ws.WebSocketController
 import play.api.mvc.WebSocket.FrameFormatter

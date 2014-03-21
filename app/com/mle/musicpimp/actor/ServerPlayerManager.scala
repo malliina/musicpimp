@@ -6,7 +6,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import com.mle.util.Log
 import akka.pattern.gracefulStop
-import ExecutionContext.Implicits.global
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 
 /**
  * @author Michael

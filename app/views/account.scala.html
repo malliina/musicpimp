@@ -6,6 +6,7 @@
     }
 
 @manage("account") {
+    @bs.headerRow("Account", "col-md-4")
     @bs.bsRowColumn("col-md-4") {
         @changePassword(username, helloForm)
     }

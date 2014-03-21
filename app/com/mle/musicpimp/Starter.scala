@@ -8,13 +8,11 @@ import com.mle.rmi.{RmiClient, RmiUtil, RmiServer}
 import com.mle.util.{Log, Util, FileUtilities, Scheduling}
 import collection.JavaConversions._
 import scala.concurrent.future
-import scala.concurrent.ExecutionContext.Implicits.global
 import util.FileUtil
 import play.core.StaticApplication
 import java.rmi.ConnectException
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration._
-import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 /**
@@ -109,14 +107,14 @@ object Starter extends Log {
     println("Threads in total: " + threads.size())
   }
 
-  def test() {
-    future {
-      var loop = true
-      while (loop) {
-        printThreads()
-        val line = Console.readLine("Press enter to print threads, q followed by enter to quit")
-        loop = "q" != line
-      }
-    }
-  }
+//  def test() {
+//    future {
+//      var loop = true
+//      while (loop) {
+//        printThreads()
+//        val line = Console.readLine("Press enter to print threads, q followed by enter to quit")
+//        loop = "q" != line
+//      }
+//    }
+//  }
 }
