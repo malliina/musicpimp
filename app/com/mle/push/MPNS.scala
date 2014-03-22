@@ -48,7 +48,7 @@ trait MPNS extends Log{
    */
   def toastMessage(text1: String, text2: String, deepLink: String, silent: Boolean): Elem = {
     val silenceElement = if(silent) <wp:Sound Silent="true"/> else NodeSeq.Empty
-    // payloads must be on same line of xml, do not let formatting cock it up
+    // payloads must be on same line of xml, do not let formatting mess it up
     <wp:Notification xmlns:wp="WPNotification">
       <wp:Toast>
         <wp:Text1>{text1}</wp:Text1>
