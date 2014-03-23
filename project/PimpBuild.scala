@@ -75,7 +75,6 @@ object PimpBuild extends Build {
 }
 
 object Dependencies {
-  val newUtilVersion = "1.2.0"
   val utilGroup = "com.github.malliina"
   val utilDep = utilGroup %% "util" % "1.2.3"
   val utilPlay = utilGroup %% "util-play" % "1.2.1"
