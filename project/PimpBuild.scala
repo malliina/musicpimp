@@ -18,7 +18,7 @@ object PimpBuild extends Build {
     .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.2.2",
+    version := "2.2.3",
     scalaVersion := "2.10.3",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -48,7 +48,7 @@ object PimpBuild extends Build {
         utilActor, utilRmi, scalaTest,
         utilDep, h2, slick,
         httpClient, httpMime, play.Project.filters,
-        utilPlay, utilBase, qrGen, cron4j),
+        utilPlay, qrGen, cron4j),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
@@ -75,14 +75,12 @@ object PimpBuild extends Build {
 }
 
 object Dependencies {
-  val utilVersion = "0.7.1"
   val newUtilVersion = "1.2.0"
   val utilGroup = "com.github.malliina"
-  val utilDep = utilGroup %% "util" % "1.2.1"
-  val utilBase = utilGroup %% "util-base" % "0.0.6"
+  val utilDep = utilGroup %% "util" % "1.2.3"
   val utilPlay = utilGroup %% "util-play" % "1.2.1"
-  val utilActor = utilGroup %% "util-actor" % utilVersion
-  val utilRmi = utilGroup %% "util-rmi" % utilVersion
+  val utilActor = utilGroup %% "util-actor" % "0.7.1"
+  val utilRmi = utilGroup %% "util-rmi" % "1.2.3"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.0" % "test"
   val jodaTime = "joda-time" % "joda-time" % "2.1"
   val jodaConvert = "org.joda" % "joda-convert" % "1.3"
