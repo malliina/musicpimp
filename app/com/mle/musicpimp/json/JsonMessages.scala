@@ -31,7 +31,7 @@ trait JsonMessages extends Log {
 
   // POS and POS_SECONDS are deprecated
   def timeUpdated(newTime: Duration) =
-    event(TIME_UPDATED, POSITION -> newTime.toSeconds, POS -> newTime.readable, POS_SECONDS -> newTime.toSeconds)
+    event(TIME_UPDATED, POSITION -> newTime.toSeconds)
 
   def volumeChanged(newVolume: Int) =
     event(VOLUME_CHANGED, VOLUME -> newVolume)
@@ -45,7 +45,7 @@ trait JsonMessages extends Log {
   def playlistIndexChanged(newIndex: Int) =
     event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex)
 
-  def playStateChanged(newState: PlayState.Value) =
+  def playStateChanged(newState: PlayerStates.Value) =
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject = {

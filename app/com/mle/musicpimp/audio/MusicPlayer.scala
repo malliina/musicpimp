@@ -10,8 +10,6 @@ import scala.concurrent.duration.Duration
 import com.mle.musicpimp.library.TrackInfo
 import com.mle.musicpimp.json.{JsonSendah, JsonMessages}
 import scala.util.{Failure, Try}
-import akka.actor.Status.Success
-import javax.sound.sampled.LineUnavailableException
 
 /**
  * @author Michael
@@ -59,10 +57,14 @@ object MusicPlayer
     val previousGain = player.map(_.gain)
     val previousMute = player.map(_.mute)
     close()
-    val newPlayer = new PimpJavaSoundPlayer(track) {
-      override def onEndOfMedia(): Unit = nextTrack()
-    }
+    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
+    val newPlayer = new PimpJavaSoundPlayer(track) {
+      override def onEndOfMedia(): Unit = {
+        log.info(s"End of media for ${track.title}")
+        nextTrack()
+      }
+    }
     player = Some(newPlayer)
     // Maintains the gain & mute status as they were in the previous track.
     // If there was no previous gain, there was no previous track,
@@ -76,7 +78,7 @@ object MusicPlayer
   def play() {
     player.foreach(p => {
       p.play()
-      send(JsonMessages.playStateChanged(PlayState.Playing))
+      send(JsonMessages.playStateChanged(PlayerStates.Started))
       ServerPlayerManager.playbackPoller ! Restart
     })
   }
@@ -84,7 +86,7 @@ object MusicPlayer
   def stop() {
     player.foreach(p => {
       p.stop()
-      send(JsonMessages.playStateChanged(PlayState.Stopped))
+      send(JsonMessages.playStateChanged(PlayerStates.Stopped)) //PlayState.Stopped))
     })
     ServerPlayerManager.playbackPoller ! Stop
   }
@@ -125,11 +127,15 @@ object MusicPlayer
     })
   }
 
-  def close() {
-    player.foreach(p => p.close())
-  }
+  def close(): Unit = player.foreach(p => p.close())
 
-  def position = player.map(_.position) getOrElse Duration.fromNanos(0)
+  def position = player.map(p => {
+    log.info(s"Returning player position of ${p.position}")
+    p.position
+  }) getOrElse {
+    log.info(s"Unable to obtain position because no player is initialized, defaulting to 0.")
+    Duration.fromNanos(0)
+  }
 
   def status: StatusEvent = player.map(p => StatusEvent(
     p.track,

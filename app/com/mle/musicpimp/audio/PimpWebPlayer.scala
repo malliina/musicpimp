@@ -50,21 +50,14 @@ class PimpWebPlayer(val user: String)
     state match {
       case PlayerStates.Started => play()
       case PlayerStates.Stopped => stop()
-      case PlayerStates.Closed => send(playStateChanged(PlayState.NoMedia))
+      case PlayerStates.Closed => send(playStateChanged(PlayerStates.NoMedia))
       case _ => ()
     }
   }
 
   def notifyPlayStateChanged(newState: PlayerStates.PlayerState) {
     state = newState
-    send(playStateChanged(toPlayState(newState)))
-  }
-
-  private def toPlayState(playerState: PlayerStates.PlayerState) = playerState match {
-    case PlayerStates.Started => PlayState.Playing
-    case PlayerStates.Stopped => PlayState.Stopped
-    case PlayerStates.NoMedia => PlayState.NoMedia
-    case anythingElse => PlayState.Stopped
+    send(playStateChanged(newState))
   }
 
   def play() {
@@ -72,7 +65,7 @@ class PimpWebPlayer(val user: String)
   }
 
   def notifyPlaying() {
-    send(playStateChanged(PlayState.Playing))
+    send(playStateChanged(PlayerStates.Started))
   }
 
   def stop() {
@@ -80,7 +73,7 @@ class PimpWebPlayer(val user: String)
   }
 
   def notifyStopped() {
-    send(playStateChanged(PlayState.Stopped))
+    send(playStateChanged(PlayerStates.Stopped))
   }
 
   def position = pos

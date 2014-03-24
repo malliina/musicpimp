@@ -49,7 +49,7 @@ var onmessage = function (payload) {
             send(statusJson());
             break;
         case "time_updated":
-            updateTime(json.pos_seconds);
+            updateTime(json.position);
             break;
         case "track_changed":
             updateTrack(json.track);

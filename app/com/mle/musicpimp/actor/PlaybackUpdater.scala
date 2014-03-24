@@ -51,12 +51,12 @@ class PlaybackUpdatePoller()
   with Log {
   var previousPos = -1L
   def OnUpdate() {
-//    log debug s"Broadcasting: $event"
     val pos = MusicPlayer.position
+    log info s"Broadcasting: $pos"
     val posSeconds = pos.toSeconds
     if(posSeconds != previousPos){
+      send(JsonMessages.timeUpdated(pos))
       previousPos = posSeconds
-      send(JsonMessages.timeUpdated(MusicPlayer.position))
     }
   }
 }

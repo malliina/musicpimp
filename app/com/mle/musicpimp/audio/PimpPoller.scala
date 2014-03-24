@@ -15,7 +15,5 @@ abstract class PimpPoller(pollInterval: Duration) extends AutoCloseable {
 
   def OnUpdate()
 
-  def close() {
-    task.cancel(true)
-  }
+  def close(): Unit = task.cancel(true)
 }
