@@ -4,7 +4,7 @@ import com.mle.audio._
 import com.mle.musicpimp.actor.ServerPlayerManager
 import com.mle.actor.Messages.Stop
 import com.mle.musicpimp.actor.Messages.Restart
-import com.mle.util.Log
+import com.mle.util.{Utils, Util, Log}
 import scala.Some
 import scala.concurrent.duration.Duration
 import com.mle.musicpimp.library.TrackInfo
@@ -55,8 +55,9 @@ object MusicPlayer
    * @throws LineUnavailableException
    */
   private def initTrack(track: TrackInfo) {
-    val previousVolume = player.map(_.volume)
-    val previousMute = player.map(_.mute)
+    val previousVolume: Option[Int] = Try(player.map(_.volume)).toOption.flatten
+    //      Utils.opt[Option[Int], IllegalArgumentException](player.map(_.volume)).flatten
+    val previousMute: Option[Boolean] = Try(player.map(_.mute)).toOption.flatten
     close()
     log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
