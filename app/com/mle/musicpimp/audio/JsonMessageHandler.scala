@@ -84,7 +84,7 @@ trait JsonMessageHandler extends Log {
         MusicPlayer.mute(cmd.boolValue)
       case VOLUME =>
         val vol = cmd.value
-        MusicPlayer.gain(vol.toFloat / 100)
+        MusicPlayer.volume(vol)
       case SEEK =>
         val pos = cmd.value
         MusicPlayer.seek(pos.toDouble seconds)

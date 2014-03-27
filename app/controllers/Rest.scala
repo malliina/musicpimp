@@ -179,7 +179,7 @@ object Rest
       val meta = SongMeta(MediaInfo.fromPath(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
       val track = new TrackInfo("", meta)
       val user = request.user
-      log info s"User: ${request.user} from: ${request.remoteAddress} uploaded ${meta.media.bytes} bytes to: ${meta.media.uri}"
+      log info s"User: ${request.user} from: ${request.remoteAddress} uploaded ${meta.media.size.toBytes} bytes to: ${meta.media.uri}"
       f(new TrackUploadRequest(track, file, user, request))
     })
 }

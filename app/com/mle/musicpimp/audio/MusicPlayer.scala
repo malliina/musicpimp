@@ -20,6 +20,7 @@ object MusicPlayer
   with JsonSendah
   with Log {
 
+  private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
 
   var errorOpt: Option[Throwable] = None
@@ -54,7 +55,7 @@ object MusicPlayer
    * @throws LineUnavailableException
    */
   private def initTrack(track: TrackInfo) {
-    val previousGain = player.map(_.gain)
+    val previousVolume = player.map(_.volume)
     val previousMute = player.map(_.mute)
     close()
     log.info(s"Closed track, now initializing: ${track.title}")
@@ -66,10 +67,15 @@ object MusicPlayer
       }
     }
     player = Some(newPlayer)
+
     // Maintains the gain & mute status as they were in the previous track.
     // If there was no previous gain, there was no previous track,
-    // so we send the current volume as an initial value.
-    previousGain map gain getOrElse sendCurrentVolume()
+    // so we set the default volume.
+    val volumeChanged = setVolume(previousVolume getOrElse defaultVolume)
+    // ensures the volume message is always sent
+    if (!volumeChanged) {
+      sendCurrentVolume()
+    }
     previousMute foreach mute
 
     send(JsonMessages.trackChanged(track))
@@ -98,20 +104,22 @@ object MusicPlayer
     })
   }
 
-  def gain(level: Float) {
-    player.filter(_.gain != level).foreach(p => {
-      p.gain(level)
+  def volume(level: Int): Unit = setVolume(level)
+
+  /**
+   *
+   * @param level new volume
+   * @return true if the volume was changed, false otherwise
+   */
+  def setVolume(level: Int): Boolean =
+    player.filter(_.volume != level).map(p => {
+      p.volume = level
       sendVolumeChanged(level)
-    })
-  }
+    }).isDefined
 
-  def sendVolumeChanged(level: Float) {
-    send(JsonMessages.volumeChanged((level * 100).toInt))
-  }
+  def sendVolumeChanged(level: Int) = send(JsonMessages.volumeChanged(level))
 
-  def sendCurrentVolume() {
-    sendVolumeChanged(player.map(_.gain) getOrElse 0f)
-  }
+  def sendCurrentVolume() = sendVolumeChanged(player.map(_.volume) getOrElse 0)
 
   def mute(mute: Boolean) {
     player.filter(_.mute != mute).foreach(p => {
@@ -141,7 +149,7 @@ object MusicPlayer
     p.track,
     p.state,
     p.position,
-    (p.gain * 100).toInt,
+    p.volume,
     p.mute,
     playlist.songList,
     playlist.index
@@ -158,7 +166,7 @@ object MusicPlayer
         state = p.state,
         position = p.position,
         duration = p.duration,
-        gain = p.gain,
+        gain = 1.0f * p.volume / 100,
         mute = p.mute,
         playlist = playlist.songList,
         index = playlist.index

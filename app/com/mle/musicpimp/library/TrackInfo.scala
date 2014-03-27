@@ -8,6 +8,7 @@ import play.api.libs.json.{JsValue, Writes}
 import com.mle.util.Log
 import java.net.URI
 import scala.concurrent.duration._
+import com.mle.storage.StorageSize
 
 /**
  *
@@ -26,14 +27,14 @@ object TrackInfo extends Log {
       ALBUM -> o.meta.tags.album,
       DURATION -> o.meta.media.duration.toSeconds,
       DURATION_SECONDS -> o.meta.media.duration.toSeconds,
-      SIZE -> o.meta.media.bytes
+      SIZE -> o.meta.media.size.toBytes
     )
   }
 
   val empty = new TrackInfo(
     id = "",
     meta = SongMeta(
-      MediaInfo(new URI("http://www.musicpimp.org/"), 0 seconds, 0),
+      MediaInfo(new URI("http://www.musicpimp.org/"), 0 seconds, StorageSize.empty),
       tags = new SongTags("", "", "")
     ))
 }

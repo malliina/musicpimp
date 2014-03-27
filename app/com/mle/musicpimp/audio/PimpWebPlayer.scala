@@ -60,21 +60,13 @@ class PimpWebPlayer(val user: String)
     send(playStateChanged(newState))
   }
 
-  def play() {
-    sendCommand(RESUME)
-  }
+  def play() = sendCommand(RESUME)
 
-  def notifyPlaying() {
-    send(playStateChanged(PlayerStates.Started))
-  }
+  def notifyPlaying() = send(playStateChanged(PlayerStates.Started))
 
-  def stop() {
-    sendCommand(STOP)
-  }
+  def stop() = sendCommand(STOP)
 
-  def notifyStopped() {
-    send(playStateChanged(PlayerStates.Stopped))
-  }
+  def notifyStopped() = send(playStateChanged(PlayerStates.Stopped))
 
   def position = pos
 
@@ -96,9 +88,7 @@ class PimpWebPlayer(val user: String)
     sendCommand(VOLUME, volumeValue)
   }
 
-  def gain(newGain: Float) {
-    gain = newGain
-  }
+  def gain(newGain: Float): Unit = gain = newGain
 
   def notifyVolumeChanged(newVolume: Int) {
     currentVolume = newVolume
@@ -107,9 +97,9 @@ class PimpWebPlayer(val user: String)
 
   def volume = currentVolume
 
-  def volume_=(newVolume: Int) {
-    gain = 1.0f * newVolume / 100
-  }
+  def volume_=(newVolume: Int): Unit = gain = 1.0f * newVolume / 100
+
+  def volume(newVolume: Int): Unit = volume = newVolume
 
   def mute = isMuted
 
