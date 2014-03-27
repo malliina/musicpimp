@@ -137,13 +137,11 @@ object MusicPlayer
 
   def close(): Unit = player.foreach(p => p.close())
 
-  def position = player.map(p => {
-    log.info(s"Returning player position of ${p.position}")
-    p.position
-  }) getOrElse {
-    log.info(s"Unable to obtain position because no player is initialized, defaulting to 0.")
-    Duration.fromNanos(0)
-  }
+  def position =
+    player.map(_.position).getOrElse {
+      log.info(s"Unable to obtain position because no player is initialized, defaulting to 0.")
+      Duration.fromNanos(0)
+    }
 
   def status: StatusEvent = player.map(p => StatusEvent(
     p.track,
