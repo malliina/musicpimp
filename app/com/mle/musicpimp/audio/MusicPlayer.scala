@@ -50,14 +50,26 @@ object MusicPlayer
   }
 
   /**
+   * If the player exists, first tries `first`, and if that fails exceptionally, falls back to `fallback`.
+   *
+   * @param first first attempt
+   * @param fallback           optional fallback value
+   * @tparam T desired result
+   * @return a result wrapped in an [[Option]]
+   */
+  def tryWithFallback[T](first: PimpJavaSoundPlayer => T, fallback: PimpJavaSoundPlayer => Option[T]): Option[T] =
+    player.map(p => Try(first(p)).toOption.orElse(fallback(p))).flatten
+
+  /**
    *
    * @param track
    * @throws LineUnavailableException
    */
   private def initTrack(track: TrackInfo) {
-    val previousVolume: Option[Int] = Try(player.map(_.volume)).toOption.flatten
-    //      Utils.opt[Option[Int], IllegalArgumentException](player.map(_.volume)).flatten
-    val previousMute: Option[Boolean] = Try(player.map(_.mute)).toOption.flatten
+    // if the player exists, tries to obtain the volume; if it fails, falls back to the cached volume
+    val previousVolume: Option[Int] = tryWithFallback(_.volume, _.cachedVolume)
+    //      player.map(p => Try(p.volume).toOption.orElse(p.cachedVolume)).flatten
+    val previousMute: Option[Boolean] = tryWithFallback(_.mute, _.cachedMute)
     close()
     log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
