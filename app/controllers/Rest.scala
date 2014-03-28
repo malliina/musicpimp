@@ -19,9 +19,6 @@ import java.net.UnknownHostException
  *
  * @author mle
  */
-class TrackUploadRequest[A](val track: TrackInfo, file: Path, user: String, request: Request[A])
-  extends OneFileUploadRequest(file, user, request)
-
 object Rest
   extends Secured
   with BaseController
@@ -38,20 +35,12 @@ object Rest
   //  })
   def pingAuth = PimpAction(req => NoCacheOk(JsonMessages.Version))
 
-  def playback = JsonAckAction(req => {
-    val json = req.body
-    log info s"User: ${req.user} from: ${req.remoteAddress} said: $json"
-    // LineUnavailableException may propagate here if playback cannot be started
-    JsonMessageHandler.onPlaybackCommand(json)
-  })
 
-  def webPlayback = JsonAckAction(req => {
-    JsonMessageHandler.onClientMessage(req.user, req.body)
-  })
+  def playback = JsonAckAction(PlaybackMessageHandler.onJson)
 
-  def playlist = JsonAckAction(req => {
-    JsonMessageHandler.onPlaybackCommand(req.body)
-  })
+  def webPlayback = JsonAckAction(WebPlayerMessageHandler.onJson)
+
+  def playlist = JsonAckAction(PlaybackMessageHandler.onJson)
 
   def track = UploadedSongAction(setPlaylist)
 
@@ -184,4 +173,7 @@ object Rest
       log info s"User: ${request.user} from: ${request.remoteAddress} uploaded ${meta.media.size.toBytes} bytes to: ${meta.media.uri}"
       f(new TrackUploadRequest(track, file, user, request))
     })
+
+  class TrackUploadRequest[A](val track: TrackInfo, file: Path, user: String, request: Request[A])
+    extends OneFileUploadRequest(file, user, request)
 }

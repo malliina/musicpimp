@@ -5,6 +5,8 @@ import com.mle.musicpimp.json.JsonStrings._
 import play.api.libs.json.{JsObject, Json, JsValue}
 import com.mle.musicpimp.actor.Messages.ChannelJson
 import com.mle.play.json.JsonMessages
+import com.mle.musicpimp.audio.JsonHandlerBase
+import com.mle.play.RequestInfo
 
 /**
  *
@@ -13,14 +15,16 @@ import com.mle.play.json.JsonMessages
 trait ActorJsonWebSocketController extends JsonWebSocketController {
   override val welcomeMessage: Option[Message] = Some(JsonMessages.welcome)
 
+  def messageHandler: JsonHandlerBase
+
   def actorManager: ActorManager[Client]
 
   def status(client: Client): JsValue
 
   override def onMessage(msg: Message, client: Client) {
-    log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
     (msg \ CMD).asOpt[String].map {
       case STATUS =>
+        log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
         val statusJson = status(client)
         val event = Json.obj(EVENT -> STATUS) ++ statusJson.as[JsObject]
         actorManager.king ! ChannelJson(client.channel, event)
@@ -29,7 +33,9 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
     }.getOrElse(log warn s"Unknown message: $msg")
   }
 
-  def handleMessage(message: Message, client: Client)
+  def handleMessage(message: Message, client: Client): Unit = {
+    messageHandler.onJson(message, RequestInfo(client.user, client.request))
+  }
 
   def onConnect(client: Client): Unit = actorManager connect client
 

@@ -1,8 +1,8 @@
 package controllers
 
-import play.api.mvc.{Call, RequestHeader}
+import play.api.mvc.Call
 import com.mle.musicpimp.actor.WebPlayerManager
-import com.mle.musicpimp.audio.{JsonMessageHandler, WebPlayback}
+import com.mle.musicpimp.audio.{JsonHandlerBase, WebPlayerMessageHandler, WebPlayback}
 import com.mle.util.Log
 import play.api.libs.json.JsValue
 import com.mle.musicpimp.json.JsonFormats
@@ -13,6 +13,7 @@ import com.mle.musicpimp.json.JsonFormats
  */
 trait WebPlayerController extends ActorJsonWebSocketController with Log {
   override val actorManager = WebPlayerManager
+  override val messageHandler: JsonHandlerBase = WebPlayerMessageHandler
 
   def status(client: Client): JsValue = {
     val player = WebPlayback.player(client.user)
@@ -20,10 +21,6 @@ trait WebPlayerController extends ActorJsonWebSocketController with Log {
       case JsonFormats.JSONv17 => player.statusEvent17
       case _ => player.statusEvent
     }
-  }
-
-  def handleMessage(message: Message, client: Client) {
-    JsonMessageHandler.onClientMessage(client.user, message)
   }
 
   def subscribeCall: Call = routes.WebPlayerController.subscribe()

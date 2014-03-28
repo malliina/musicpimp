@@ -1,28 +1,20 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.json.JsonStrings
 import play.api.libs.json.JsValue
+import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
-import com.mle.util.Log
-import JsonStrings._
-import scala.concurrent.duration._
-import java.util.concurrent.TimeUnit
 import com.mle.audio.PlayerStates
+import scala.concurrent.duration.Duration
+import java.util.concurrent.TimeUnit
+import concurrent.duration.DurationInt
+
 
 /**
  *
- * @author Michael
+ * @author mle
  */
-
-trait JsonMessageHandler extends Log {
-  def withCmd[T](json: JsValue)(f: JsonCmd => T): T =
-    f(new JsonCmd(json))
-
-  /**
-   * Handles messages sent by web players.
-   *
-   */
-  def onClientMessage(user: String, msg: JsValue) {
+object WebPlayerMessageHandler extends JsonHandlerBase {
+  override protected def handleMessage(msg: JsValue, user: String): Unit = {
     def userPlayer(op: PimpWebPlayer => Unit) {
       webPlayer(user, op)
     }
@@ -69,48 +61,9 @@ trait JsonMessageHandler extends Log {
     })
   }
 
-  def onPlaybackCommand(jsonCmd: JsValue): Unit = {
-    log info s"Got message: $jsonCmd"
-    withCmd(jsonCmd)(cmd => cmd.command match {
-      case RESUME =>
-        MusicPlayer.play()
-      case STOP =>
-        MusicPlayer.stop()
-      case NEXT =>
-        MusicPlayer.nextTrack()
-      case PREV =>
-        MusicPlayer.previousTrack()
-      case MUTE =>
-        MusicPlayer.mute(cmd.boolValue)
-      case VOLUME =>
-        val vol = cmd.value
-        MusicPlayer.volume(vol)
-      case SEEK =>
-        val pos = cmd.value
-        MusicPlayer.seek(pos.toDouble seconds)
-      case PLAY =>
-        val track = cmd.track
-        log.info(s"Resetting library with track: $track")
-        MusicPlayer.reset(Library meta track)
-        log.info("Reset done")
-      case SKIP =>
-        MusicPlayer skip cmd.value
-      case ADD =>
-        val track = cmd.track
-        MusicPlayer.playlist.add(Library meta track)
-      case REMOVE =>
-        MusicPlayer.playlist delete cmd.value
-      case anythingElse =>
-        log error s"Invalid JSON: $jsonCmd"
-    })
-  }
-
-  def webPlayer(user: String, op: PimpWebPlayer => Unit) {
+  def webPlayer(user: String, op: PimpWebPlayer => Unit): Unit =
     WebPlayback.execute(user, op)
-  }
 
   private def newTrackInfo(trackId: String) =
     Library meta trackId
 }
-
-object JsonMessageHandler extends JsonMessageHandler

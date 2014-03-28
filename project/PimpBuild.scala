@@ -18,7 +18,7 @@ object PimpBuild extends Build {
     .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.2.12",
+    version := "2.2.13",
     scalaVersion := "2.10.3",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,

@@ -1,11 +1,11 @@
 package controllers
 
 import com.mle.musicpimp.actor.ServerPlayerManager
-import com.mle.musicpimp.audio.{MusicPlayer, JsonMessageHandler}
+import com.mle.musicpimp.audio._
 import com.mle.util.Log
-import play.api.mvc.{Call, RequestHeader}
 import play.api.libs.json.Json._
 import com.mle.musicpimp.json.JsonFormats
+import play.api.mvc.Call
 
 /**
  *
@@ -13,15 +13,13 @@ import com.mle.musicpimp.json.JsonFormats
  */
 trait ServerWS extends ActorJsonWebSocketController with Log {
   override val actorManager = ServerPlayerManager
+  override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
 
   override def status(client: Client) = client.apiVersion match {
     case JsonFormats.JSONv17 => toJson(MusicPlayer.status17)
     case _ => toJson(MusicPlayer.status)
   }
 
-  def handleMessage(message: Message, client: Client) {
-    JsonMessageHandler.onPlaybackCommand(message)
-  }
   def subscribeCall: Call = routes.ServerWS.subscribe()
 }
 
