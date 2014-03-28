@@ -71,7 +71,7 @@ object MusicPlayer
     //      player.map(p => Try(p.volume).toOption.orElse(p.cachedVolume)).flatten
     val previousMute: Option[Boolean] = tryWithFallback(_.mute, _.cachedMute)
     close()
-    log.info(s"Closed track, now initializing: ${track.title}")
+//    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
     val newPlayer = new PimpJavaSoundPlayer(track) {
       override def onEndOfMedia(): Unit = {
