@@ -42,9 +42,11 @@ object Alarms
     )
   })
 
-  def handleJson = PimpParsedAction(parse.json) {
-    jsonRequest => onRequest(jsonRequest.body)
-  }
+  def handleJson = PimpParsedAction(parse.json)(jsonRequest => {
+    val json = jsonRequest.body
+    log info s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
+    onRequest(jsonRequest.body)
+  })
 
   def tracks = PimpAction(implicit request => {
     val tracks = Library.tracksRecursive

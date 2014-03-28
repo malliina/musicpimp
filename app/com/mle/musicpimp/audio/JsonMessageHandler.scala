@@ -70,7 +70,7 @@ trait JsonMessageHandler extends Log {
   }
 
   def onPlaybackCommand(jsonCmd: JsValue): Unit = {
-    log debug s"Got message: $jsonCmd"
+    log info s"Got message: $jsonCmd"
     withCmd(jsonCmd)(cmd => cmd.command match {
       case RESUME =>
         MusicPlayer.play()
@@ -90,7 +90,9 @@ trait JsonMessageHandler extends Log {
         MusicPlayer.seek(pos.toDouble seconds)
       case PLAY =>
         val track = cmd.track
+        log.info(s"Resetting library with track: $track")
         MusicPlayer.reset(Library meta track)
+        log.info("Reset done")
       case SKIP =>
         MusicPlayer skip cmd.value
       case ADD =>
