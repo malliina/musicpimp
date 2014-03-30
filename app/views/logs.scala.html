@@ -1,9 +1,17 @@
-@(logEntries: Iterable[String], errorMsg: Option[String] = None)
+@(errorMsg: Option[String] = None)(implicit request: RequestHeader)
 
 @manage("logs") {
     @bs.headerRow("Logs")
-    @errorMsg.map {msg =>
+    @errorMsg.map { msg =>
         <p class="lead">@msg</p>
     }
-    @logTable(logEntries)
+    <table class="table table-striped table-hover table-responsive">
+        <thead>
+            <tr><th>Time</th><th>Message</th><th>Logger</th><th>Thread</th><th>Level</th></tr>
+        </thead>
+        <tbody id="logTableBody">
+        </tbody>
+    </table>
+    <script src="@routes.Assets.at("js/rx.js")"></script>
+    @wsopen(Website.wsUrl)
 }

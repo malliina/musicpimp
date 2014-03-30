@@ -81,6 +81,8 @@ trait JsonStrings {
   //  val SKIPPED = "skipped"
 
   val REMOVE = "remove"
+
+  val SUBSCRIBE = "subscribe"
 }
 
 object JsonStrings extends JsonStrings

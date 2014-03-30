@@ -42,7 +42,7 @@ trait AlarmEditor extends Secured with SchedulerStrings {
   def newAlarm = clockAction(clockForm)
 
   def editAlarm(id: String, fb: Option[String] = None) = {
-    APManager.find(id).map(clockForm.fill)
+    ScheduledPlaybackService.find(id).map(clockForm.fill)
       .map(clockAction(_, fb))
       .getOrElse(PimpAction(NotFound(s"Unknown ID: $id")))
   }
@@ -53,7 +53,7 @@ trait AlarmEditor extends Secured with SchedulerStrings {
   def newClock() = formSubmission(clockForm)(
     err => views.html.alarmEditor(err),
     (form, ap) => {
-      APManager.save(ap)
+      ScheduledPlaybackService.save(ap)
       Ok(views.html.alarmEditor(form, Some("Saved.")))
     })
 

@@ -38,6 +38,7 @@ GET         /pathsOnly                     controllers.Alarms.paths
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.subscribe
 GET         /ws/webplay                    controllers.WebPlayerController.subscribe
+GET         /ws/logs                       controllers.Website.openLogSocket
 # Alarms
 GET         /alarms                        controllers.Alarms.alarms
 POST        /alarms                        controllers.Alarms.handleJson

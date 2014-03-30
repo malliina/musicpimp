@@ -11,15 +11,22 @@ import java.util.UUID
  *
  * @author mle
  */
-trait APManager extends Log {
+trait ScheduledPlaybackService extends Log {
   private val s: IScheduler = Cron4jScheduler
   private val clockAPs = new PlaybackScheduler[ClockSchedule, ClockPlayback](s)
 
   val persistFile = FileUtilities.basePath / "schedules.json"
 
+  /**
+   * Loads and initializes the saved schedules.
+   *
+   * You will typically want to call this on program startup.
+   */
+  def init(): Unit = ()
+
   start()
 
-  def start(): Unit = {
+  private def start(): Unit = {
     s.start()
     readConf().filter(_.enabled).foreach(clockAPs.schedule)
   }
@@ -83,5 +90,5 @@ trait APManager extends Log {
   private def randomID = UUID.randomUUID().toString
 }
 
-object APManager extends APManager
+object ScheduledPlaybackService extends ScheduledPlaybackService
 

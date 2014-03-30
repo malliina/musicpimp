@@ -4,7 +4,7 @@ import play.api.libs.json.{JsSuccess, JsError, JsResult, JsValue}
 import com.mle.util.Log
 import com.mle.push.{PushUrl, PushUrls}
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
-import com.mle.musicpimp.scheduler.{APManager, ClockPlayback}
+import com.mle.musicpimp.scheduler.{ScheduledPlaybackService, ClockPlayback}
 import com.mle.musicpimp.audio.MusicPlayer
 
 /**
@@ -56,9 +56,9 @@ trait JsonHandler extends SchedulerStrings with Log {
   }
 
   private def handleCommand(cmd: Command): Unit = cmd match {
-    case Save(ap) => APManager.save(ap)
-    case Delete(id) => APManager.remove(id)
-    case Start(id) => APManager.find(id).foreach(_.job.run())
+    case Save(ap) => ScheduledPlaybackService.save(ap)
+    case Delete(id) => ScheduledPlaybackService.remove(id)
+    case Start(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
     case StopPlayback => musicPlayer.stop()
     case AddPushUrl(url) => PushUrls.add(url)
     case RemovePushUrl(url) => PushUrls.get().find(_.url == url).foreach(PushUrls.remove)

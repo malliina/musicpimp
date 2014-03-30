@@ -18,8 +18,8 @@ object PimpBuild extends Build {
     .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.3.2",
-    scalaVersion := "2.10.3",
+    version := "2.3.3",
+    scalaVersion := "2.10.4",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
@@ -46,7 +46,7 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         utilActor, utilRmi, scalaTest,
-        utilDep, h2, slick,
+        utilDep,playRx,
         httpClient, httpMime, play.Project.filters,
         utilPlay, qrGen, cron4j),
       mainClass := Some("com.mle.musicpimp.Starter"),
@@ -75,17 +75,18 @@ object PimpBuild extends Build {
 }
 
 object Dependencies {
-  val utilGroup = "com.github.malliina"
-  val utilDep = utilGroup %% "util" % "1.2.3"
-  val utilPlay = utilGroup %% "util-play" % "1.2.1"
-  val utilActor = utilGroup %% "util-actor" % "0.7.1"
-  val utilRmi = utilGroup %% "util-rmi" % "1.2.3"
+  val mleGroup = "com.github.malliina"
+  val utilDep = mleGroup %% "util" % "1.2.3"
+  val utilPlay = mleGroup %% "util-play" % "1.2.1"
+  val utilActor = mleGroup %% "util-actor" % "1.2.3"
+  val utilRmi = mleGroup %% "util-rmi" % "1.2.3"
+  val playRx = mleGroup %% "logback-rx" % "0.0.3"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.0" % "test"
-  val jodaTime = "joda-time" % "joda-time" % "2.1"
-  val jodaConvert = "org.joda" % "joda-convert" % "1.3"
+//  val jodaTime = "joda-time" % "joda-time" % "2.1"
+//  val jodaConvert = "org.joda" % "joda-convert" % "1.3"
   val jAudioTagger = "org" % "jaudiotagger" % "2.0.3"
-  val h2 = "com.h2database" % "h2" % "1.3.173"
-  val slick = "com.typesafe.slick" %% "slick" % "1.0.1"
+//  val h2 = "com.h2database" % "h2" % "1.3.173"
+//  val slick = "com.typesafe.slick" %% "slick" % "1.0.1"
   //  val playExtras = "com.typesafe.play.extras" %% "iteratees-extras" % "1.0.1"
   // used by play but play has an open-ended version [3.1.4)
   // force this instead to speed up build

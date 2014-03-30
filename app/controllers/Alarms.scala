@@ -4,7 +4,7 @@ import play.api.libs.json.{Writes, JsResult, JsValue, Json}
 import com.mle.util.Log
 import com.mle.musicpimp.scheduler.json.JsonHandler
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
-import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, APManager}
+import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.json.{JsonStrings, JsonMessages}
 import play.api.libs.json.Json._
@@ -35,7 +35,7 @@ object Alarms
   }
 
   def alarms = PimpAction(implicit request => {
-    def content = APManager.status
+    def content = ScheduledPlaybackService.status
     respond(
       html = views.html.alarms(content),
       json = Json.toJson(content)

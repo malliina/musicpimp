@@ -2,20 +2,25 @@ package tests
 
 import org.scalatest.FunSuite
 import play.api.libs.ws.WS
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import concurrent.Await
+import scala.concurrent.{ExecutionContext, Await}
 import play.api.mvc.Controller
 import java.net.URLEncoder
 import play.api.libs.json._
 import concurrent.duration._
 import com.mle.musicpimp.beam.BeamCommand
+import java.util.concurrent.Executors
+
 
 /**
  * @author Michael
  */
 class WSTests extends FunSuite with Controller {
+  implicit val testContext: ExecutionContext =
+    ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
+
   private def encode(input: String) = URLEncoder.encode(input, "UTF-8")
 
+  // This test fails because OAuth is nowadays required. Fix later.
   test("can download album cover from discogs") {
     val artist = "Iron Maiden"
     val album = "Powerslave"
@@ -26,7 +31,8 @@ class WSTests extends FunSuite with Controller {
     // http://api.discogs.com/image/R-90-5245462-1388609959-3809.jpeg
     val operation =
       WS.url(uri).get().map(_.json)
-        .map(json => (json \ "results" \\ "thumb").head).map(Json.stringify)
+        .map(json => (json \ "results" \\ "thumb").head)
+        .map(Json.stringify)
         .flatMap(str => WS.url(str.tail.init).get())
     val response = Await.result(operation, 5 seconds)
     assert(response.status === 200)

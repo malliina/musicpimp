@@ -11,13 +11,7 @@ import java.nio.file.Files
  * @author mle
  */
 trait Logs extends HtmlController {
-  def logs = {
-    val page =
-      toEither(loadLogEntries).fold(
-        entries => html.logs(entries),
-        msg => html.logs(Seq.empty, Some(msg)))
-    navigate(page)
-  }
+  def logs = navigate(implicit req => html.logs())
 
   def loadLogEntries = PimpLog.usingLog(_.toSeq.reverse.take(1000))
 
@@ -31,4 +25,6 @@ trait Logs extends HtmlController {
       case t: Throwable =>
         Right(s"Cannot display logs. ${t.getMessage}")
     }
+
+
 }

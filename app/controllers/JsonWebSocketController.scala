@@ -33,9 +33,6 @@ trait JsonWebSocketController extends WebSocketController with Controller with S
   def wsUrl(implicit request: RequestHeader) =
     subscribeCall.webSocketURL(secure = RequestHelpers.isHttps(request))
 
-  //  def isIEMobile(request: RequestHeader) =
-  //    request.headers.get(USER_AGENT).map(_.contains("IEMobile"))
-
   override def newClient(user: String, channel: Channel[Message])(implicit request: RequestHeader) =
     ClientInfo(channel, request, user)
 }
