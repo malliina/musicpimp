@@ -1,4 +1,7 @@
 <configuration>
+    <appender name="RX" class="com.mle.logbackrx.BasicBoundedReplayRxAppender">
+        <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
+    </appender>
     <appender name="PIMPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.dir:-${musicpimp.home}}/musicpimp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -12,7 +15,7 @@
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level %msg%n</pattern>
         </encoder>
     </appender>
     <logger name="play" level="INFO"/>
@@ -22,5 +25,6 @@
     <logger name="javazoom" level="WARN" additivity="false"/>
     <root level="INFO">
         <appender-ref ref="PIMPLOG"/>
+        <appender-ref ref="RX"/>
     </root>
 </configuration>

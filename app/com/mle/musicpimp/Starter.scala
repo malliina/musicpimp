@@ -13,6 +13,7 @@ import play.core.StaticApplication
 import java.rmi.ConnectException
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext.Implicits.global
+import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 
 
 /**
@@ -40,6 +41,7 @@ object Starter extends Log {
   }
 
   def start() {
+    //    LogbackUtils.installAppender(RxLogbackAppender)
     log info "Starting MusicPimp ..."
     RmiUtil.initSecurityPolicy()
     rmiServer = Some(new RmiServer() {
@@ -83,6 +85,7 @@ object Starter extends Log {
       ServerPlayerManager.shutdown()
       WebPlayerManager.shutdown()
       Scheduling.shutdown()
+      ScheduledPlaybackService.stop()
       nettyServer foreach (server => {
         server.allChannels.close().await(2, TimeUnit.SECONDS)
         server.stop()
@@ -107,14 +110,14 @@ object Starter extends Log {
     println("Threads in total: " + threads.size())
   }
 
-//  def test() {
-//    future {
-//      var loop = true
-//      while (loop) {
-//        printThreads()
-//        val line = Console.readLine("Press enter to print threads, q followed by enter to quit")
-//        loop = "q" != line
-//      }
-//    }
-//  }
+  //  def test() {
+  //    future {
+  //      var loop = true
+  //      while (loop) {
+  //        printThreads()
+  //        val line = Console.readLine("Press enter to print threads, q followed by enter to quit")
+  //        loop = "q" != line
+  //      }
+  //    }
+  //  }
 }

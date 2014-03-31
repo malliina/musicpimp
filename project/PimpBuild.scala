@@ -18,7 +18,7 @@ object PimpBuild extends Build {
     .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.3.3",
+    version := "2.3.4",
     scalaVersion := "2.10.4",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -57,7 +57,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "779698da-37d2-445b-a5bb-5736a8c88f76",
+      WinKeys.productGuid := "69b5faa9-5007-407d-be38-a6bb052252d2",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
@@ -76,21 +76,13 @@ object PimpBuild extends Build {
 
 object Dependencies {
   val mleGroup = "com.github.malliina"
-  val utilDep = mleGroup %% "util" % "1.2.3"
-  val utilPlay = mleGroup %% "util-play" % "1.2.1"
-  val utilActor = mleGroup %% "util-actor" % "1.2.3"
-  val utilRmi = mleGroup %% "util-rmi" % "1.2.3"
-  val playRx = mleGroup %% "logback-rx" % "0.0.3"
+  val utilDep = mleGroup %% "util" % "1.3.0"
+  val utilPlay = mleGroup %% "util-play" % "1.3.0"
+  val utilActor = mleGroup %% "util-actor" % "1.3.0"
+  val utilRmi = mleGroup %% "util-rmi" % "1.3.0"
+  val playRx = mleGroup %% "logback-rx" % "0.0.4"
   val scalaTest = "org.scalatest" %% "scalatest" % "2.0" % "test"
-//  val jodaTime = "joda-time" % "joda-time" % "2.1"
-//  val jodaConvert = "org.joda" % "joda-convert" % "1.3"
   val jAudioTagger = "org" % "jaudiotagger" % "2.0.3"
-//  val h2 = "com.h2database" % "h2" % "1.3.173"
-//  val slick = "com.typesafe.slick" %% "slick" % "1.0.1"
-  //  val playExtras = "com.typesafe.play.extras" %% "iteratees-extras" % "1.0.1"
-  // used by play but play has an open-ended version [3.1.4)
-  // force this instead to speed up build
-  val ebeanOrm = "org.avaje.ebeanorm" % "avaje-ebeanorm-agent" % "3.2.1"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.3"
   val httpClient = httpGroup % "httpclient" % httpVersion

@@ -5,10 +5,6 @@ import com.mle.util.Log
 import javax.sound.sampled.{LineUnavailableException, AudioSystem}
 import com.mle.musicpimp.library.Settings
 import com.mle.musicpimp.audio.MusicPlayer
-import rx.lang.scala.Observable
-import com.mle.logbackrx.LogEvent
-import play.api.mvc.Call
-import com.mle.musicpimp.log.RxLogbackAppender
 
 /**
  *
@@ -21,13 +17,8 @@ object Website
   with ConnectController
   with LibraryController
   with PimpAccountController
-  with StreamingLogController
-  with Logs
+  with PimpLogController
   with Log {
-
-  override def subscribeCall: Call = routes.Website.openLogSocket
-
-  override def logEvents: Observable[LogEvent] = RxLogbackAppender.logEvents
 
   def player = navigate(implicit req => {
     val hasAudioDevice = AudioSystem.getMixerInfo.size > 0

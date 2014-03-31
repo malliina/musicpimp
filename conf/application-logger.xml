@@ -1,4 +1,7 @@
 <configuration>
+    <appender name="RX" class="com.mle.logbackrx.BasicBoundedReplayRxAppender">
+        <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
+    </appender>
     <appender name="PIMPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${musicpimp.home}/logs/musicpimp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -11,7 +14,7 @@
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -20,12 +23,6 @@
             <!--<pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>-->
         </encoder>
     </appender>
-    <!--<logger name="com.mle" level="info">-->
-        <!--<appender-ref ref="PIMPLOG"/>-->
-    <!--</logger>-->
-    <!--<logger name="controllers" level="info">-->
-        <!--<appender-ref ref="PIMPLOG"/>-->
-    <!--</logger>-->
     <logger name="play" level="INFO"/>
     <logger name="application" level="INFO"/>
     <logger name="com" level="INFO"/>
@@ -34,5 +31,6 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="PIMPLOG"/>
+        <appender-ref ref="RX"/>
     </root>
 </configuration>
