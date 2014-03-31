@@ -15,10 +15,9 @@ import com.mle.sbt.FileImplicits._
 
 object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
-    .dependsOn(RootProject(uri("git://github.com/malliina/util-audio.git")))
 
   lazy val commonSettings = Seq(
-    version := "2.3.4",
+    version := "2.3.5",
     scalaVersion := "2.10.4",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -46,9 +45,10 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         utilActor, utilRmi, scalaTest,
-        utilDep,playRx,
+        utilDep, playRx,
         httpClient, httpMime, play.Project.filters,
-        utilPlay, qrGen, cron4j),
+        utilPlay, qrGen, cron4j,
+        mleGroup %% "util-audio" % "1.2.1"),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
