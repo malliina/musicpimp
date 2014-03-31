@@ -12,7 +12,9 @@ import play.api.libs.json.{Json, JsValue}
  * @author mle
  */
 trait PimpLogController extends StreamingLogController with HtmlController {
-  override val logEvents: Observable[JsValue] = appenderOpt.map(_.logEvents.map(e => Json.toJson(e))).getOrElse(Observable.empty)
+  override val logEvents: Observable[JsValue] = appenderOpt
+    .map(_.logEvents.map(e => Json.toJson(e)))
+    .getOrElse(Observable.empty)
 
   def feedback =
     if (appenderOpt.isEmpty) {
@@ -24,10 +26,7 @@ trait PimpLogController extends StreamingLogController with HtmlController {
 
   override def subscribeCall: Call = routes.Website.openLogSocket
 
-  def logs = navigate(implicit req => {
-    //    appenderOpt.foreach(_.logEvents.subscribe(e => println(e)))
-    html.logs(feedback)
-  })
+  def logs = navigate(implicit req => html.logs(feedback))
 }
 
 object PimpLogController {
