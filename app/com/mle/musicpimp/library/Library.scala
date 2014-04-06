@@ -1,6 +1,6 @@
 package com.mle.musicpimp.library
 
-import com.mle.util.{Utils, Log}
+import com.mle.util.{FileUtilities, Utils, Log}
 import java.nio.file.{AccessDeniedException, Paths, Files, Path}
 import java.net.{URLEncoder, URLDecoder}
 import com.mle.audio.meta.SongMeta
@@ -71,10 +71,14 @@ trait Library extends MusicLibrary with Log {
    * This method has a bug.
    *
    * @param trackId the music item id
-   * @return the absolute path to the music item id
+   * @return the absolute path to the music item id, or None if no such track exists
    */
-  def toAbsolute(trackId: String): Option[Path] =
+  def findAbsolute(trackId: String): Option[Path] =
     findPathInfo(relativePath(trackId)).map(_.absolute)
+
+  def suggestAbsolute(path: Path): Option[Path] = rootFolders.headOption.map(_ resolve path)
+
+  def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 
   def relativePath(itemId: String): Path = {
     val decodedId = URLDecoder.decode(itemId, "UTF-8")
@@ -91,16 +95,28 @@ trait Library extends MusicLibrary with Log {
     Library meta relativePath(itemId)
 
   def findMeta(relative: Path): Option[TrackInfo] =
-    findPathInfo(relative).flatMap(pi => {
-      Utils.opt[TrackInfo, InvalidAudioFrameException] {
-        // TODO util-audio may throw InvalidAudioFrameException
-        val meta = SongMeta.fromPath(pi.absolute, pi.root)
-        new TrackInfo(encode(relative), meta)
-      }
-    })
+    findPathInfo(relative).flatMap(parseMeta)
 
   def findMeta(id: String): Option[TrackInfo] =
     findMeta(relativePath(id))
+
+  def parseMeta(relative: Path, root: Path): Option[TrackInfo] =
+    parseMeta(PathInfo(relative, root))
+
+  def parseMeta(pi: PathInfo): Option[TrackInfo] =
+    Utils.opt[TrackInfo, InvalidAudioFrameException] {
+      val meta = SongMeta.fromPath(pi.absolute, pi.root)
+      new TrackInfo(encode(pi.relative), meta)
+    }
+
+  def findMetaWithTempFallback(id: String) = findMeta(id).orElse(searchTempDir(id))
+
+  def searchTempDir(id: String): Option[TrackInfo] = {
+    val pathInfo = PathInfo(Library.relativePath(id), FileUtilities.tempDir)
+    val absolute = pathInfo.absolute
+    if (Files.exists(absolute) && Files.isReadable(absolute)) Library.parseMeta(pathInfo)
+    else None
+  }
 
   /**
    * Generates a URL-safe ID of the given music item.

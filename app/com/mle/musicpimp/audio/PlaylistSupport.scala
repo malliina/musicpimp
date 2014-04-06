@@ -18,8 +18,7 @@ trait PlaylistSupport[T] {
   def playTrack(song: T)
 
   /**
-   * Skips to the track with the specified index;
-   * playback starts automatically.
+   * Skips to the track with the specified index; playback starts automatically.
    *
    * @param index track index
    * @return the track skipped to
@@ -30,11 +29,9 @@ trait PlaylistSupport[T] {
     playlist.current.map(playTrack)
   }
 
-  def nextTrack() {
-    playlist.next.foreach(playTrack)
-  }
+  def nextTrack() = play(_.next)
 
-  def previousTrack() {
-    playlist.prev.foreach(playTrack)
-  }
+  def previousTrack() = play(_.prev)
+
+  private def play(f: IPlaylist[T] => Option[T]) = f(playlist).foreach(playTrack)
 }

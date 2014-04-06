@@ -7,12 +7,12 @@ import play.api.libs.iteratee.Enumerator
 import com.mle.util.Log
 import com.mle.play.controllers.AuthRequest
 import play.api.libs.json.Json
-import com.mle.musicpimp.json.SimpleFormat
 import controllers.ConnectController.Protocols
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import java.net.NetworkInterface
 import collection.JavaConversions._
 import play.api.mvc.RequestHeader
+import com.mle.play.json.JsonFormats2
 
 /**
  * This code is totally best effort so make sure the user has the final say.
@@ -46,7 +46,7 @@ trait ConnectController extends Secured with HtmlController with Log {
 
 object ConnectController {
 
-  implicit object protoJson extends SimpleFormat[Protocols.Protocol](name => Protocols.withName(name.toLowerCase))
+  implicit object protoJson extends JsonFormats2.SimpleFormat[Protocols.Protocol](name => Protocols.withName(name.toLowerCase))
 
   object Protocols extends Enumeration {
     type Protocol = Value

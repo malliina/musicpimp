@@ -38,16 +38,18 @@ var resume = function () {
 var next = function () {
     if (playlistPos + 1 < playlist.length) {
         playlistPos += 1;
-        playTrack(playlist[playlistPos]);
-        sendValuedJson("playlist_index_changed", playlistPos);
+        playAndSend(pos);
     }
 };
 var prev = function () {
     if (playlistPos > 0 && playlistPos <= playlist.length) {
         playlistPos -= 1;
-        playTrack(playlist[playlistPos]);
-        sendValuedJson("playlist_index_changed", playlistPos);
+        playAndSend(pos);
     }
+};
+var playAndSend = function (pos) {
+    playTrack(playlist[pos]);
+    sendValuedJson("playlist_index_changed", pos);
 };
 var seek = function (pos) {
     playerHtml.currentTime = pos;
@@ -89,7 +91,7 @@ var onmessage = function (payload) {
         var tracks = json.playlist;
         setPlaylist(tracks);
         if (tracks.length > 0) {
-            setTrack(tracks[json.playlist_index]);
+            setTrack(tracks[json.index]);
         }
     } else {
         var cmd = json.cmd;

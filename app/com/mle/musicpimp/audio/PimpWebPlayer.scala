@@ -15,10 +15,10 @@ import play.api.libs.json.JsObject
  */
 class PimpWebPlayer(val user: String)
   extends IPlayer
-  with PlaylistSupport[TrackInfo]
+  with PlaylistSupport[TrackMeta]
   with StateAwarePlayer
   with JsonSender {
-  val playlist: BasePlaylist[TrackInfo] = new PimpWebPlaylist(user)
+  val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user)
   private val DEFAULT_BROWSER_VOLUME = 100
 
   // todo update with event listener
@@ -28,18 +28,18 @@ class PimpWebPlayer(val user: String)
   private var duration: Duration = Duration.fromNanos(0)
   private var isMuted = false
 
-  def setPlaylistAndPlay(song: TrackInfo) {
+  def setPlaylistAndPlay(song: TrackMeta) {
     playlist set song
     volume = currentVolume
   }
 
   def trackChanged() {
     val maybeTrack = playlist.current
-    duration = maybeTrack.map(_.meta.media.duration) getOrElse Duration.fromNanos(0)
+    duration = maybeTrack.map(_.duration) getOrElse Duration.fromNanos(0)
     maybeTrack.map(t => send(JsonMessages.trackChanged(t)))
   }
 
-  def notifyTrackChanged(track: TrackInfo) {
+  def notifyTrackChanged(track: TrackMeta) {
     send(JsonMessages.trackChanged(track))
   }
 
@@ -75,7 +75,7 @@ class PimpWebPlayer(val user: String)
     send(timeUpdated(newPos))
   }
 
-  def seek(pos: Duration) {
+  def seek(pos: Duration): Unit = {
     //    send(timeUpdated(pos))
     sendCommand(SEEK, pos.toSeconds)
   }
@@ -127,8 +127,8 @@ class PimpWebPlayer(val user: String)
     playState = PlayerStates.Closed
   }
 
-  def playTrack(song: TrackInfo) {
-    duration = song.meta.media.duration
+  def playTrack(song: TrackMeta) {
+    duration = song.duration
     sendCommand(SKIP, playlist.index)
   }
 
@@ -146,12 +146,11 @@ class PimpWebPlayer(val user: String)
 
   def status17 = {
     val track = playlist.current getOrElse TrackInfo.empty
-    val tags = track.meta.tags
     StatusEvent17(
       id = track.id,
-      title = tags.title,
-      artist = tags.artist,
-      album = tags.album,
+      title = track.title,
+      artist = track.artist,
+      album = track.album,
       state = state,
       position = pos,
       duration = duration,

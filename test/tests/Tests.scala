@@ -18,7 +18,6 @@ class Tests extends FunSuite with Log {
     val root = Paths get "a/b/c"
     val rel = Paths get ""
     val combined = root resolve rel
-    println(combined)
     assert(root.toAbsolutePath.toString === combined.toAbsolutePath.toString)
   }
   test("deconstruct array") {
@@ -51,14 +50,5 @@ class Tests extends FunSuite with Log {
     val none = stringify(toJson(Option.empty[Int]))
     assert(jsValue === "42")
     assert(none === "null")
-  }
-  test("can recurse library contents") {
-    val all = Library.all(Paths.get(""))
-    val out = Paths get "out.txt"
-    FileUtilities.writerTo(out)(writer => {
-      val strings = all.map(pair => pair._1.toString + ": " + pair._2)
-      strings.foreach(writer.println)
-    })
-    println(s"Wrote to ${out.toAbsolutePath}")
   }
 }

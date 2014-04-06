@@ -8,8 +8,9 @@ import javax.sound.sampled.AudioSystem
  * @author mle
  */
 class AudioTests extends FunSuite {
-  test("audio devices") {
+  test("has audio device") {
     val status = AudioSystem.getMixerInfo.map(i => s"Name: ${i.getName}, Description: ${i.getDescription}, Version: ${i.getVersion}")
-    status foreach println
+    //    status foreach println
+    assert(status.size > 0)
   }
 }

@@ -18,11 +18,12 @@ trait PimpContentController extends Controller with Log {
 
   import JsonFormats._
 
-  def pimpResponse(html: => SimpleResult, json17: => JsValue, json18: => JsValue)(implicit request: RequestHeader): SimpleResult = {
+  def pimpResponse(html: => SimpleResult, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): SimpleResult = {
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(JSONv17) => Ok(json17)
-      case Some(JSONv18) => Ok(json18)
+      case Some(JSONv18) => Ok(latest)
+//      case Some(JSONv24) => Ok(latest)
       case Some(other) =>
         log.warn(s"Client requests unknown response format: $other")
         NotAcceptable
@@ -63,24 +64,23 @@ trait PimpContentController extends Controller with Log {
 
 object PimpContentController extends PimpContentController
 
-object PimpRequest {
+object PimpRequest extends Log {
 
   import JsonFormats._
 
   /**
-   * If the client accepts MimeTypes.JSON, v17 is temporarily returned for API
-   * compatibility during transition to a versioned API. Eventually it should
-   * return the latest API version (and clients should not use it but instead
-   * explicitly specify a version.)
-   *
-   * @param request
-   * @return
+   * @param request the request
+   * @return the desired format of the response to `request`.
    */
-  def requestedResponseFormat(request: RequestHeader): Option[String] =
+  def requestedResponseFormat(request: RequestHeader): Option[String] = {
+    //    log.info(s"Headers: ${PlayUtils.headersString(request)}")
     if (request.getQueryString("f").map(_ == "json").isDefined) Some(latest)
     else if (request accepts MimeTypes.HTML) Some(MimeTypes.HTML)
     else if (request accepts anyJson) Some(latest)
-    else if (request accepts JSONv18) Some(JSONv18)
-    else if ((request accepts JSONv17) || (request accepts MimeTypes.JSON)) Some(JSONv17)
+    else if (request accepts JSONv17) Some(JSONv17)
+    else if ((request accepts JSONv18) || (request accepts MimeTypes.JSON)) Some(JSONv18)
+//    else if ((request accepts JSONv24) || (request accepts MimeTypes.JSON)) Some(JSONv24)
     else None
+  }
+
 }

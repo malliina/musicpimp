@@ -1,14 +1,18 @@
 package controllers
 
 import play.api.mvc._
-import com.mle.util.{Utils, Util, Log}
+import com.mle.util.{Utils, Log}
 import com.mle.play.controllers.{OneFileUploadRequest, FileUploadRequest, AuthRequest, BaseSecurity}
 import scala.io.BufferedSource
-import java.io.FileNotFoundException
+import java.io.{InputStream, FileNotFoundException}
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.{Files => PlayFiles}
 import java.nio.file.Path
 import play.api.libs.Files.TemporaryFile
+import com.mle.play.streams.StreamParsers
+import com.mle.audio.meta.StreamInfo
+import com.mle.audio.javasound.JavaSoundPlayer
+import scala.concurrent.Future
 
 /**
  * @author mle
@@ -65,8 +69,16 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
   def PimpAction(result: => SimpleResult) =
     PimpParsedAction(parse.anyContent)(_ => result)
 
-  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => SimpleResult) =
-    AuthenticatedAndLogged(user => Action(parser)(req => f(new AuthRequest(user, req))))
+  def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
+    PimpAction(req => {
+      f(req)
+      Ok
+    })
+
+  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
+    PimpUploadAction(req => req.files.headOption
+      .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user, req)))
+      .getOrElse(BadRequest))
 
   def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
     PimpParsedAction(parse.multipartFormData)(req => {
@@ -74,8 +86,6 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
       f(new FileUploadRequest(files, req.user, req))
     })
 
-  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
-    PimpUploadAction(req => req.files.headOption
-      .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user, req)))
-      .getOrElse(BadRequest))
+  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => SimpleResult) =
+    AuthenticatedAndLogged(user => Action(parser)(req => f(new AuthRequest(user, req))))
 }

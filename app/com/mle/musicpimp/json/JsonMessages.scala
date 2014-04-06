@@ -1,7 +1,7 @@
 package com.mle.musicpimp.json
 
 import play.api.libs.json.{JsObject, Json}
-import com.mle.musicpimp.audio.PlayState
+import com.mle.musicpimp.audio.{TrackMeta, PlayState}
 import JsonStrings._
 import com.mle.musicpimp.library.TrackInfo
 import Json._
@@ -26,7 +26,7 @@ trait JsonMessages extends Log {
 
   def exception(e: Throwable) = failure(e.getMessage)
 
-  def trackChanged(track: TrackInfo) =
+  def trackChanged(track: TrackMeta) =
     event(TRACK_CHANGED, TRACK -> toJson(track))
 
   // POS and POS_SECONDS are deprecated
@@ -39,11 +39,11 @@ trait JsonMessages extends Log {
   def muteToggled(newMute: Boolean) =
     event(MUTE_TOGGLED, MUTE -> newMute)
 
-  def playlistModified(newPlaylist: Seq[TrackInfo]) =
+  def playlistModified(newPlaylist: Seq[TrackMeta]) =
     event(PLAYLIST_MODIFIED, PLAYLIST -> toJson(newPlaylist))
 
   def playlistIndexChanged(newIndex: Int) =
-    event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex)
+    event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex, PLAYLIST_INDEXv17v18 -> newIndex)
 
   def playStateChanged(newState: PlayerStates.Value) =
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
@@ -51,6 +51,8 @@ trait JsonMessages extends Log {
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject = {
     obj(EVENT -> eventType) ++ obj(valuePairs: _*)
   }
+
+  def thanks = Json.obj(MSG -> Json.toJson(THANK_YOU))
 }
 
 object JsonMessages extends JsonMessages

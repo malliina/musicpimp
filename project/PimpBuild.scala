@@ -10,14 +10,13 @@ import SbtNativePackager._
 import sbtbuildinfo.Plugin._
 import sbt._
 import sbt.Keys._
-import Dependencies._
 import com.mle.sbt.FileImplicits._
 
 object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.3.5",
+    version := "2.3.6",
     scalaVersion := "2.10.4",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -33,6 +32,9 @@ object PimpBuild extends Build {
     GenericPlugin.confSettings ++
     AzurePlugin.azureSettings
 
+  val mleGroup = "com.github.malliina"
+  val httpGroup = "org.apache.httpcomponents"
+  val httpVersion = "4.3"
   /**
    * Intentionally in this order order: commonSettings ++ playScalaSettings ++ nativePackagingSettings
    *
@@ -44,11 +46,18 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        utilActor, utilRmi, scalaTest,
-        utilDep, playRx,
-        httpClient, httpMime, play.Project.filters,
-        utilPlay, qrGen, cron4j,
-        mleGroup %% "util-audio" % "1.2.1"),
+        "org.scalatest" %% "scalatest" % "2.0" % "test",
+        mleGroup %% "util" % "1.3.0",
+        mleGroup %% "util-actor" % "1.3.0",
+        mleGroup %% "util-rmi" % "1.3.0",
+        mleGroup %% "util-audio" % "1.2.4",
+        mleGroup %% "logback-rx" % "0.0.4",
+        mleGroup %% "util-play" % "1.3.0",
+        httpGroup % "httpclient" % httpVersion,
+        httpGroup % "httpmime" % httpVersion,
+        play.Project.filters,
+        "net.glxn" % "qrgen" % "1.3",
+        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
@@ -57,7 +66,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "86465942-9297-4d5b-beb7-7820cc776b07",
+      WinKeys.productGuid := "63b7bd7d-b179-40bc-afa6-f90dac93aa69",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
@@ -72,21 +81,4 @@ object PimpBuild extends Build {
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
     buildInfoPackage := "com.mle.musicpimp"
   )
-}
-
-object Dependencies {
-  val mleGroup = "com.github.malliina"
-  val utilDep = mleGroup %% "util" % "1.3.0"
-  val utilPlay = mleGroup %% "util-play" % "1.3.0"
-  val utilActor = mleGroup %% "util-actor" % "1.3.0"
-  val utilRmi = mleGroup %% "util-rmi" % "1.3.0"
-  val playRx = mleGroup %% "logback-rx" % "0.0.4"
-  val scalaTest = "org.scalatest" %% "scalatest" % "2.0" % "test"
-  val jAudioTagger = "org" % "jaudiotagger" % "2.0.3"
-  val httpGroup = "org.apache.httpcomponents"
-  val httpVersion = "4.3"
-  val httpClient = httpGroup % "httpclient" % httpVersion
-  val httpMime = httpGroup % "httpmime" % httpVersion
-  val qrGen = "net.glxn" % "qrgen" % "1.3"
-  val cron4j = "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"
 }

@@ -57,7 +57,7 @@ trait LibraryController extends Secured with Log {
    */
   def download(trackId: String, f: SimpleResult => SimpleResult): EssentialAction =
     CustomFailingPimpAction(onDownloadAuthFail)(implicit req => {
-      Library.toAbsolute(URLDecoder.decode(trackId, "UTF-8")).map(path => {
+      Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8")).map(path => {
         f(Ok.sendFile(path.toFile))
       }).getOrElse(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))
     })

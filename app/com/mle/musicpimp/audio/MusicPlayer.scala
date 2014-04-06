@@ -2,27 +2,32 @@ package com.mle.musicpimp.audio
 
 import com.mle.audio._
 import com.mle.musicpimp.actor.ServerPlayerManager
-import com.mle.actor.Messages.Stop
 import com.mle.musicpimp.actor.Messages.Restart
-import com.mle.util.{Utils, Util, Log}
+import com.mle.util.{FileUtilities, Log}
 import scala.Some
 import scala.concurrent.duration.Duration
-import com.mle.musicpimp.library.TrackInfo
 import com.mle.musicpimp.json.{JsonSendah, JsonMessages}
-import scala.util.{Failure, Try}
+import scala.util.{Success, Failure, Try}
+import com.mle.actor.Messages.Stop
+import java.io.IOException
+import com.mle.musicpimp.library.{PathInfo, TrackInfo, Library}
+import java.nio.file.Files
 
 /**
+ * This is a mutable mess. It should be rewritten, maybe using Rx.
+ *
  * @author Michael
  */
 object MusicPlayer
   extends IPlayer
-  with PlaylistSupport[TrackInfo]
+  with PlaylistSupport[TrackMeta]
   with JsonSendah
   with Log {
 
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
 
+  // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
 
   /**
@@ -33,45 +38,53 @@ object MusicPlayer
 
   def underLying = player
 
-  def reset(track: TrackInfo): Unit = {
+  def reset(track: TrackMeta): Unit = {
     playlist set track
     playlist.current.foreach(playTrack)
   }
 
-  def playTrack(songMeta: TrackInfo): Unit = {
-    errorOpt = None
-    Try(initTrack(songMeta)) match {
-      case Failure(t) =>
-        log.warn(s"Unable to play track ${songMeta.id}", t)
-        errorOpt = Some(t)
-      case _ =>
+  def setPlaylistAndPlay(track: TrackMeta): Unit = {
+    playlist set track
+    playTrack(track)
+  }
+
+  override def playTrack(songMeta: TrackMeta): Unit = {
+    val initResult = tryInitTrackWithFallback(songMeta)
+    initResult match {
+      case Success(_) =>
         play()
+      case Failure(t) =>
+        log.warn(s"Unable to play track: ${songMeta.id}", t)
+        errorOpt = Some(t)
     }
   }
 
-  /**
-   * If the player exists, first tries `first`, and if that fails exceptionally, falls back to `fallback`.
-   *
-   * @param first first attempt
-   * @param fallback           optional fallback value
-   * @tparam T desired result
-   * @return a result wrapped in an [[Option]]
-   */
-  def tryWithFallback[T](first: PimpJavaSoundPlayer => T, fallback: PimpJavaSoundPlayer => Option[T]): Option[T] =
-    player.map(p => Try(first(p)).toOption.orElse(fallback(p))).flatten
+  def tryInitTrackWithFallback(track: TrackMeta): Try[Unit] = {
+    errorOpt = None
+    Try(initTrack(track)).recoverWith {
+      case ioe: IOException if Option(ioe.getMessage).exists(_.startsWith("Pipe closed")) =>
+        val id = track.id
+        log.warn(s"Unable to initialize track: $id. The stream is closed.")
+        Library.findMetaWithTempFallback(id)
+          .map(newTrack => Try(initTrack(newTrack)))
+          .getOrElse(Failure(ioe))
+    }
+  }
+
 
   /**
+   * Blocks until an [[javax.sound.sampled.AudioInputStream]] can be created of the media.
    *
    * @param track
    * @throws LineUnavailableException
    */
-  private def initTrack(track: TrackInfo) {
-    // if the player exists, tries to obtain the volume; if it fails, falls back to the cached volume
+  private def initTrack(track: TrackMeta): Unit = {
+    // If the player exists, tries to obtain the volume; if it fails, falls back to the cached volume.
     val previousVolume: Option[Int] = tryWithFallback(_.volume, _.cachedVolume)
-    //      player.map(p => Try(p.volume).toOption.orElse(p.cachedVolume)).flatten
     val previousMute: Option[Boolean] = tryWithFallback(_.mute, _.cachedMute)
     close()
-//    log.info(s"Closed track, now initializing: ${track.title}")
+    player = None
+    //    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
     val newPlayer = new PimpJavaSoundPlayer(track) {
       override def onEndOfMedia(): Unit = {
@@ -82,8 +95,7 @@ object MusicPlayer
     player = Some(newPlayer)
 
     // Maintains the gain & mute status as they were in the previous track.
-    // If there was no previous gain, there was no previous track,
-    // so we set the default volume.
+    // If there was no previous gain, there was no previous track, so we set the default volume.
     val volumeChanged = setVolume(previousVolume getOrElse defaultVolume)
     // ensures the volume message is always sent
     if (!volumeChanged) {
@@ -93,6 +105,17 @@ object MusicPlayer
 
     send(JsonMessages.trackChanged(track))
   }
+
+  /**
+   * If the player exists, first tries `first`, and if that fails exceptionally, falls back to `fallback`.
+   *
+   * @param first first attempt
+   * @param fallback optional fallback value
+   * @tparam T desired result
+   * @return a result wrapped in an [[Option]]
+   */
+  private def tryWithFallback[T](first: PimpJavaSoundPlayer => T, fallback: PimpJavaSoundPlayer => Option[T]): Option[T] =
+    player.map(p => Try(first(p)).toOption.orElse(fallback(p))).flatten
 
   def play() {
     player.foreach(p => {
@@ -105,7 +128,7 @@ object MusicPlayer
   def stop() {
     player.foreach(p => {
       p.stop()
-      send(JsonMessages.playStateChanged(PlayerStates.Stopped)) //PlayState.Stopped))
+      send(JsonMessages.playStateChanged(PlayerStates.Stopped))
     })
     ServerPlayerManager.playbackPoller ! Stop
   }
@@ -118,6 +141,8 @@ object MusicPlayer
   }
 
   def volume(level: Int): Unit = setVolume(level)
+
+  def volume: Option[Int] = player.map(_.volume)
 
   /**
    *
@@ -148,11 +173,14 @@ object MusicPlayer
     })
   }
 
-  def close(): Unit = player.foreach(p => p.close())
+  def close(): Unit = player.foreach(p => {
+    p.close()
+    p.media.stream.close()
+  })
 
   def position =
     player.map(_.position).getOrElse {
-      log.info(s"Unable to obtain position because no player is initialized, defaulting to 0.")
+      log.debug(s"Unable to obtain position because no player is initialized, defaulting to 0.")
       Duration.fromNanos(0)
     }
 
@@ -168,12 +196,12 @@ object MusicPlayer
 
   def status17: StatusEvent17 = {
     player.map(p => {
-      val meta = p.meta
+      val meta = p.track
       StatusEvent17(
         id = p.track.id,
-        title = meta.tags.title,
-        artist = meta.tags.artist,
-        album = meta.tags.album,
+        title = meta.title,
+        artist = meta.artist,
+        album = meta.album,
         state = p.state,
         position = p.position,
         duration = p.duration,

@@ -29,7 +29,8 @@ trait JsonStrings {
   val IS_DIR = "is_dir"
   val ITEMS = "items"
   val PLAYLIST = "playlist"
-  val PLAYLIST_INDEX = "playlist_index"
+  val PLAYLIST_INDEXv17v18 = "playlist_index"
+  val PLAYLIST_INDEX = "index"
   @deprecated("Use POSITION", "1.8.0")
   val POS = "pos"
   val POSITION = "position"
@@ -38,6 +39,8 @@ trait JsonStrings {
   val DURATION = "duration"
   @deprecated("Use DURATION", "1.8.0")
   val DURATION_SECONDS = "duration_seconds"
+  val MSG = "msg"
+  val THANK_YOU = "thank you"
 
   val CMD = "cmd"
   val VALUE = "value"
@@ -83,6 +86,15 @@ trait JsonStrings {
   val REMOVE = "remove"
 
   val SUBSCRIBE = "subscribe"
+
+  val TRACK_HEADER = "Track"
+
+  val JOB = "job"
+  val WHEN = "when"
+  val ENABLED = "enabled"
+//  val HOUR = "hour"
+//  val MINUTE = "minute"
+//  val DAYS = "days"
 }
 
 object JsonStrings extends JsonStrings

@@ -91,6 +91,7 @@ trait BasePlaylist[T]
     clearButDontTell()
     add(song)
     index = 0
+    log.info(s"Playlist set to: $song")
   }
 
   protected def onPlaylistIndexChanged(idx: Int) {

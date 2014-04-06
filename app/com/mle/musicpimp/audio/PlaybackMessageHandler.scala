@@ -4,6 +4,7 @@ import play.api.libs.json.JsValue
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
 import concurrent.duration.DurationDouble
+import scala.util.Try
 
 /**
  *
@@ -30,11 +31,14 @@ object PlaybackMessageHandler extends JsonHandlerBase {
         MusicPlayer.seek(pos.toDouble seconds)
       case PLAY =>
         val track = cmd.track
-//        log.info(s"Resetting library with track: $track")
+        //        log.info(s"Resetting library with track: $track")
         MusicPlayer.reset(Library meta track)
-//        log.info("Reset done")
+      //        log.info("Reset done")
       case SKIP =>
-        MusicPlayer skip cmd.value
+        val index = cmd.value
+        Try(MusicPlayer skip index).recover {
+          case iae: IllegalArgumentException => log.warn(s"Cannot skip to index $index. Reason: ${iae.getMessage}")
+        }
       case ADD =>
         val track = cmd.track
         MusicPlayer.playlist.add(Library meta track)

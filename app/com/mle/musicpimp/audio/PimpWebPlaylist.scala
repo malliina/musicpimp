@@ -1,9 +1,8 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.library.TrackInfo
 import scala.collection.mutable
 import com.mle.musicpimp.json.JsonStrings._
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 import Json._
 import com.mle.musicpimp.json.JsonMessages._
 
@@ -11,33 +10,30 @@ import com.mle.musicpimp.json.JsonMessages._
  *
  * @author mle
  */
-class PimpWebPlaylist(val user: String) extends BasePlaylist[TrackInfo] with JsonSender {
-  val songs = mutable.Buffer.empty[TrackInfo]
+class PimpWebPlaylist(val user: String) extends BasePlaylist[TrackMeta] with JsonSender {
+  override val songs = mutable.Buffer.empty[TrackMeta]
 
-  override def add(song: TrackInfo) {
+  override def add(song: TrackMeta) {
     super.add(song)
     send(obj(CMD -> toJson(ADD), TRACK -> toJson(song)))
   }
 
-  def notifyPlaylistModified() {
+  def notifyPlaylistModified() =
     send(playlistModified(songList))
-  }
 
   override def delete(position: Int) {
     super.delete(position)
     sendCommand(REMOVE, position)
   }
 
-  override def set(song: TrackInfo) {
+  override def set(song: TrackMeta) {
     super.set(song)
     send(obj(CMD -> toJson(PLAY), TRACK -> toJson(song)))
   }
 
-  override protected def onPlaylistIndexChanged(idx: Int) {
+  override protected def onPlaylistIndexChanged(idx: Int) =
     send(playlistIndexChanged(idx))
-  }
 
-  override protected def onPlaylistModified(songs: Seq[TrackInfo]) {
+  override protected def onPlaylistModified(songs: Seq[TrackMeta]) =
     send(playlistModified(songList))
-  }
 }

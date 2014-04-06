@@ -25,7 +25,7 @@ case class StatusEvent17(id: String,
                          duration: Duration,
                          gain: Float,
                          mute: Boolean,
-                         playlist: Seq[TrackInfo],
+                         playlist: Seq[TrackMeta],
                          index: Int)
 
 object StatusEvent17 {
@@ -44,7 +44,7 @@ object StatusEvent17 {
       GAIN -> toJson((o.gain * 100).toInt),
       MUTE -> toJson(o.mute),
       PLAYLIST -> toJson(o.playlist),
-      PLAYLIST_INDEX -> toJson(o.index)
+      PLAYLIST_INDEXv17v18 -> toJson(o.index)
     )
   }
   val empty = StatusEvent17(

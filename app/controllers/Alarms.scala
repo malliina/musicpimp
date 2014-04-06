@@ -6,10 +6,12 @@ import com.mle.musicpimp.scheduler.json.JsonHandler
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.json.{JsonStrings, JsonMessages}
+import com.mle.musicpimp.json.JsonMessages
 import play.api.libs.json.Json._
 import play.api.mvc.Accepting
 import play.api.mvc.SimpleResult
+import com.mle.musicpimp.audio.TrackMeta
+import com.mle.musicpimp.json.JsonStrings._
 
 object Alarms
   extends Secured
@@ -18,19 +20,19 @@ object Alarms
   with SchedulerStrings
   with Log {
 
-  val AcceptsPimp = Accepting("application/vnd.musicpimp.v17+json")
+//  val AcceptsPimp = Accepting("application/vnd.musicpimp.v18+json")
 
   val jobWriter = new Writes[PlaybackJob] {
     override def writes(o: PlaybackJob): JsValue = obj(
-      JsonStrings.TRACK -> toJson(o.trackInfo)
+      TRACK -> toJson(o.trackInfo)
     )
   }
   implicit val alarmWriter = new Writes[ClockPlayback] {
     override def writes(o: ClockPlayback): JsValue = obj(
-      JsonStrings.ID -> toJson(o.id),
-      "job" -> toJson(o.job)(jobWriter),
-      "when" -> toJson(o.when),
-      "enabled" -> toJson(o.enabled)
+      ID -> toJson(o.id),
+      JOB -> toJson(o.job)(jobWriter),
+      WHEN -> toJson(o.when),
+      ENABLED -> toJson(o.enabled)
     )
   }
 
@@ -49,7 +51,7 @@ object Alarms
   })
 
   def tracks = PimpAction(implicit request => {
-    val tracks = Library.tracksRecursive
+    val tracks: Iterable[TrackMeta] = Library.tracksRecursive
     Ok(Json.toJson(tracks))
   })
 
