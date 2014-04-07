@@ -4,15 +4,11 @@ import play.api.mvc._
 import com.mle.util.{Utils, Log}
 import com.mle.play.controllers.{OneFileUploadRequest, FileUploadRequest, AuthRequest, BaseSecurity}
 import scala.io.BufferedSource
-import java.io.{InputStream, FileNotFoundException}
+import java.io.FileNotFoundException
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.{Files => PlayFiles}
 import java.nio.file.Path
 import play.api.libs.Files.TemporaryFile
-import com.mle.play.streams.StreamParsers
-import com.mle.audio.meta.StreamInfo
-import com.mle.audio.javasound.JavaSoundPlayer
-import scala.concurrent.Future
 
 /**
  * @author mle

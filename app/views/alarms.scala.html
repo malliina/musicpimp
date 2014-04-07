@@ -19,12 +19,6 @@
     @util.script("scheduler.js")
 }
 
-    @headers() = {
-        <tr><th>Media</th><th>Schedule</th><th>Enabled</th><th>Actions</th></tr>
-    }
-    @toRow(ap: ClockPlayback) = {
-        <tr><td>@ap.job.trackInfo.title</td><td>@ap.when.describe</td><td>@yesOrNo(ap.enabled)</td><td>@actions(ap.id.getOrElse("nonexistent"))</td></tr>
-    }
     @headers2() = {
         <tr><th>Description</th><th>Enabled</th><th>Actions</th></tr>
     }

@@ -1,12 +1,10 @@
 package com.mle.musicpimp.json
 
 import play.api.libs.json.{JsObject, Json}
-import com.mle.musicpimp.audio.{TrackMeta, PlayState}
+import com.mle.musicpimp.audio.TrackMeta
 import JsonStrings._
-import com.mle.musicpimp.library.TrackInfo
 import Json._
 import scala.concurrent.duration.Duration
-import com.mle.audio.AudioImplicits._
 import com.mle.util.Log
 import com.mle.musicpimp.BuildInfo
 import com.mle.audio.PlayerStates

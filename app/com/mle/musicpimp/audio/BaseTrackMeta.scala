@@ -4,14 +4,13 @@ import scala.concurrent.duration.Duration
 import com.mle.storage.StorageSize
 import java.io.InputStream
 import play.api.libs.json.Json
-import com.mle.musicpimp.audio.TrackMeta.StreamedTrack
 import com.mle.play.json.JsonFormats2
 
 /**
  *
  * @author mle
  */
-case class BaseTrackMeta(id: String, title: String, artist: String, album: String, duration: Duration, size: StorageSize) extends ITrackMeta {
+case class BaseTrackMeta(id: String, title: String, artist: String, album: String, duration: Duration, size: StorageSize) extends TrackMeta {
   def buildTrack(inStream: InputStream) = StreamedTrack(id, title, artist, album, duration, size, inStream)
 }
 

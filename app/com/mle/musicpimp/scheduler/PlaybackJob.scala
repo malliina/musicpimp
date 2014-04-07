@@ -9,7 +9,7 @@ import scala.concurrent.Future
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.concurrent.FutureImplicits._
 import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.audio.{TrackMeta, MusicPlayer}
+import com.mle.musicpimp.audio.{PlayableTrack, MusicPlayer}
 import scala.util.Try
 import com.mle.play.json.JsonFormats2
 
@@ -18,9 +18,11 @@ import com.mle.play.json.JsonFormats2
  * @param track the track to play when this job runs
  */
 case class PlaybackJob(track: String) extends Job with Log {
-  val trackInfo: TrackMeta = Library.meta(track)
+  def trackInfo: Option[PlayableTrack] = Library.findMeta(track)
 
-  def describe: String = s"Plays ${trackInfo.title}"
+  def describe: String = trackInfo
+    .map(t => s"Plays ${t.title}")
+    .getOrElse(s"Unable to find track: $track, please check your settings.")
 
   def toastTo(url: PushUrl): Future[Response] =
     MPNS.toast("MusicPimp", "Tap to stop", s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=${url.tag}", url.silent)(url.url)
@@ -39,20 +41,25 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   override def run(): Unit = {
     Try {
-      val initResult = MusicPlayer.tryInitTrackWithFallback(trackInfo)
-      if (initResult.isSuccess) {
-        //        val percentPerSecond = 5
-        //        MusicPlayer.volume.foreach(vol => {
-        //          val s = Observable.interval(1.second).map(_ + 1).take(100 / percentPerSecond).subscribe(basePercentage => {
-        //            MusicPlayer.volume((1.0 * basePercentage * percentPerSecond * 100 * vol).toInt)
-        //          })
-        //        })
-        MusicPlayer.play()
-        val toasts = PushUrls.get().map(toastAndLog)
-        if (toasts.isEmpty) {
-          log.info(s"No push notification URLs are active, so toasting was skipped.")
+      trackInfo.map(t => {
+        val initResult = MusicPlayer.tryInitTrackWithFallback(t)
+        if (initResult.isSuccess) {
+          //        val percentPerSecond = 5
+          //        MusicPlayer.volume.foreach(vol => {
+          //          val s = Observable.interval(1.second).map(_ + 1).take(100 / percentPerSecond).subscribe(basePercentage => {
+          //            MusicPlayer.volume((1.0 * basePercentage * percentPerSecond * 100 * vol).toInt)
+          //          })
+          //        })
+          MusicPlayer.play()
+          val toasts = PushUrls.get().map(toastAndLog)
+          if (toasts.isEmpty) {
+            log.info(s"No push notification URLs are active, so toasting was skipped.")
+          }
         }
+      }).getOrElse {
+        log.warn(s"Unable to find: $track. Cannot start playback.")
       }
+
     }.recover {
       case t: Throwable => log.warn(s"Failure while running playback job: $describe", t)
     }

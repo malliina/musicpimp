@@ -1,6 +1,6 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.library.TrackInfo
+import com.mle.musicpimp.library.LocalTrack
 import com.mle.audio.PlayerStates
 import scala.concurrent.duration.Duration
 import com.mle.util.Log
@@ -26,7 +26,7 @@ object StatusEvent extends Log {
   implicit val status18writer = Json.writes[StatusEvent]
 
   val empty = StatusEvent(
-    TrackInfo.empty,
+    LocalTrack.empty,
     PlayerStates.Closed,
     position = Duration.fromNanos(0),
     volume = 40,

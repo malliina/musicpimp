@@ -1,15 +1,12 @@
 package com.mle.musicpimp.audio
 
-import com.mle.audio.javasound.JavaSoundPlayer
-import com.mle.audio.meta.{SongTags, StreamInfo}
+import com.mle.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
+import com.mle.musicpimp.library.LocalTrack
 
-/**
- *
- * @author mle
- */
-class PimpJavaSoundPlayer(val track: TrackMeta)
-  extends JavaSoundPlayer(StreamInfo(track.stream, track.duration, track.size))
-  with PimpPlayer {
-  override val tags = SongTags(track.title, track.album, track.artist)
-  //  val meta = track.meta
-}
+class StoragePlayer(val track: LocalTrack)
+  extends BasicJavaSoundPlayer(track.media)
+  with PimpPlayer
+
+class StreamPlayer(val track: StreamedTrack)
+  extends JavaSoundPlayer(track.stream, track.duration, track.size)
+  with PimpPlayer

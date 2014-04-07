@@ -4,10 +4,7 @@ import com.mle.audio.PlayerStates
 import play.api.libs.json.Json._
 import com.mle.audio.AudioImplicits._
 import scala.concurrent.duration.Duration
-import com.mle.audio.meta.SongTags
-import com.mle.util.Log
-import com.mle.musicpimp.library.TrackInfo
-import play.api.libs.json.{Json, JsValue, Writes}
+import play.api.libs.json.{JsValue, Writes}
 import com.mle.musicpimp.json.JsonStrings._
 
 /**

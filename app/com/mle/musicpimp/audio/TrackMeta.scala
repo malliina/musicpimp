@@ -1,29 +1,23 @@
 package com.mle.musicpimp.audio
 
-import java.io.InputStream
-import com.mle.musicpimp.json.JsonStrings._
 import scala.concurrent.duration.Duration
-import play.api.libs.json._
+import com.mle.storage.StorageSize
+import play.api.libs.json.{JsValue, Writes}
 import play.api.libs.json.Json._
-import com.mle.storage._
+import com.mle.musicpimp.json.JsonStrings._
 
-/**
- *
- * @author mle
- */
-trait TrackMeta extends ITrackMeta {
-  /**
-   * Returns an [[InputStream]] of the media of the audio track.
-   *
-   * Calling this method multiple times may not be valid. This method is broken.
-   *
-   * The stream is either opened when this method is called, or it has already been opened. Users of the stream
-   * know when it can be closed and should do so anyway. In other words, client code should treat the returned
-   * stream as if it's opened when this method is called.
-   *
-   * @return an audio stream of the track
-   */
-  def stream: InputStream
+trait TrackMeta {
+  def id: String
+
+  def title: String
+
+  def artist: String
+
+  def album: String
+
+  def duration: Duration
+
+  def size: StorageSize
 }
 
 object TrackMeta {
@@ -37,6 +31,4 @@ object TrackMeta {
       SIZE -> o.size.toBytes
     )
   }
-
-  case class StreamedTrack(id: String, title: String, artist: String, album: String, duration: Duration, size: StorageSize, stream: InputStream) extends TrackMeta
 }

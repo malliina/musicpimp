@@ -8,10 +8,9 @@ import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybac
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.json.JsonMessages
 import play.api.libs.json.Json._
-import play.api.mvc.Accepting
 import play.api.mvc.SimpleResult
-import com.mle.musicpimp.audio.TrackMeta
 import com.mle.musicpimp.json.JsonStrings._
+import com.mle.musicpimp.audio.TrackMeta
 
 object Alarms
   extends Secured
@@ -19,8 +18,6 @@ object Alarms
   with JsonHandler
   with SchedulerStrings
   with Log {
-
-//  val AcceptsPimp = Accepting("application/vnd.musicpimp.v18+json")
 
   val jobWriter = new Writes[PlaybackJob] {
     override def writes(o: PlaybackJob): JsValue = obj(

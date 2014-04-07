@@ -143,20 +143,12 @@ var setTrack = function (track) {
     $("#artist").html(track.artist);
     $("#album").html(track.album);
     $("#volume").slider("value", playerHtml.volume * 100);
-    var dur = track.duration_seconds;
+    var dur = track.duration;
     $("#slider").slider("option", "max", dur);
     $("#duration").html(dur.toHHMMSS());
     send(trackJson("track_changed", track.id));
 };
 var playTrack = function (track) {
-//    var trackSource;
-//    if (navigator.userAgent.indexOf("IEMobile") >= 0) {
-//        trackSource = "tracks/" + track.id;
-//    } else {
-//        trackSource = "tracks/" + track.id;
-//    }
-
-    // does not work on IEMobile, the request made by the audio element will be unauthorized
     setTrack(track);
     play();
 };

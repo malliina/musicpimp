@@ -2,7 +2,7 @@ package com.mle.musicpimp.audio
 
 import com.mle.audio.{PlayerStates, StateAwarePlayer, IPlayer}
 import scala.concurrent.duration.Duration
-import com.mle.musicpimp.library.TrackInfo
+import com.mle.musicpimp.library.LocalTrack
 import com.mle.musicpimp.json.JsonStrings._
 import play.api.libs.json.Json._
 import com.mle.musicpimp.json.JsonMessages._
@@ -134,7 +134,7 @@ class PimpWebPlayer(val user: String)
 
   def status = {
     import StatusEvent._
-    val track = playlist.current getOrElse TrackInfo.empty
+    val track = playlist.current getOrElse LocalTrack.empty
     toJson(StatusEvent(track, state, pos, currentVolume, isMuted, playlist.songList, playlist.index))
   }
 
@@ -145,7 +145,7 @@ class PimpWebPlayer(val user: String)
     obj(EVENT -> toJson(STATUS)) ++ toJson(status17).as[JsObject]
 
   def status17 = {
-    val track = playlist.current getOrElse TrackInfo.empty
+    val track = playlist.current getOrElse LocalTrack.empty
     StatusEvent17(
       id = track.id,
       title = track.title,

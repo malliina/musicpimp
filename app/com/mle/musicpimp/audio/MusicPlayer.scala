@@ -3,15 +3,14 @@ package com.mle.musicpimp.audio
 import com.mle.audio._
 import com.mle.musicpimp.actor.ServerPlayerManager
 import com.mle.musicpimp.actor.Messages.Restart
-import com.mle.util.{FileUtilities, Log}
+import com.mle.util.Log
 import scala.Some
 import scala.concurrent.duration.Duration
 import com.mle.musicpimp.json.{JsonSendah, JsonMessages}
 import scala.util.{Success, Failure, Try}
 import com.mle.actor.Messages.Stop
 import java.io.IOException
-import com.mle.musicpimp.library.{PathInfo, TrackInfo, Library}
-import java.nio.file.Files
+import com.mle.musicpimp.library.Library
 
 /**
  * This is a mutable mess. It should be rewritten, maybe using Rx.
@@ -20,7 +19,7 @@ import java.nio.file.Files
  */
 object MusicPlayer
   extends IPlayer
-  with PlaylistSupport[TrackMeta]
+  with PlaylistSupport[PlayableTrack]
   with JsonSendah
   with Log {
 
@@ -31,24 +30,24 @@ object MusicPlayer
   var errorOpt: Option[Throwable] = None
 
   /**
-   * Every time the track changes, a new [[PimpJavaSoundPlayer]] is used.
+   * Every time the track changes, a new [[PimpPlayer]] is used.
    * - Well, why?
    */
-  private var player: Option[PimpJavaSoundPlayer] = None
+  private var player: Option[PimpPlayer] = None
 
   def underLying = player
 
-  def reset(track: TrackMeta): Unit = {
+  def reset(track: PlayableTrack): Unit = {
     playlist set track
     playlist.current.foreach(playTrack)
   }
 
-  def setPlaylistAndPlay(track: TrackMeta): Unit = {
+  def setPlaylistAndPlay(track: PlayableTrack): Unit = {
     playlist set track
     playTrack(track)
   }
 
-  override def playTrack(songMeta: TrackMeta): Unit = {
+  override def playTrack(songMeta: PlayableTrack): Unit = {
     val initResult = tryInitTrackWithFallback(songMeta)
     initResult match {
       case Success(_) =>
@@ -59,12 +58,12 @@ object MusicPlayer
     }
   }
 
-  def tryInitTrackWithFallback(track: TrackMeta): Try[Unit] = {
+  def tryInitTrackWithFallback(track: PlayableTrack): Try[Unit] = {
     errorOpt = None
     Try(initTrack(track)).recoverWith {
       case ioe: IOException if Option(ioe.getMessage).exists(_.startsWith("Pipe closed")) =>
         val id = track.id
-        log.warn(s"Unable to initialize track: $id. The stream is closed.")
+        log.warn(s"Unable to initialize track: $id. The stream is closed. Trying to reinitialize.")
         Library.findMetaWithTempFallback(id)
           .map(newTrack => Try(initTrack(newTrack)))
           .getOrElse(Failure(ioe))
@@ -78,7 +77,7 @@ object MusicPlayer
    * @param track
    * @throws LineUnavailableException
    */
-  private def initTrack(track: TrackMeta): Unit = {
+  private def initTrack(track: PlayableTrack): Unit = {
     // If the player exists, tries to obtain the volume; if it fails, falls back to the cached volume.
     val previousVolume: Option[Int] = tryWithFallback(_.volume, _.cachedVolume)
     val previousMute: Option[Boolean] = tryWithFallback(_.mute, _.cachedMute)
@@ -86,13 +85,7 @@ object MusicPlayer
     player = None
     //    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
-    val newPlayer = new PimpJavaSoundPlayer(track) {
-      override def onEndOfMedia(): Unit = {
-        log.info(s"End of media for ${track.title}")
-        nextTrack()
-      }
-    }
-    player = Some(newPlayer)
+    player = Some(track.buildPlayer())
 
     // Maintains the gain & mute status as they were in the previous track.
     // If there was no previous gain, there was no previous track, so we set the default volume.
@@ -114,10 +107,14 @@ object MusicPlayer
    * @tparam T desired result
    * @return a result wrapped in an [[Option]]
    */
-  private def tryWithFallback[T](first: PimpJavaSoundPlayer => T, fallback: PimpJavaSoundPlayer => Option[T]): Option[T] =
+  private def tryWithFallback[T](first: PimpPlayer => T, fallback: PimpPlayer => Option[T]): Option[T] =
     player.map(p => Try(first(p)).toOption.orElse(fallback(p))).flatten
 
   def play() {
+    val mustReinitializePlayer = player.exists(_.state == PlayerStates.Closed)
+    if (mustReinitializePlayer) {
+      player = player.map(p => p.track.buildPlayer())
+    }
     player.foreach(p => {
       p.play()
       send(JsonMessages.playStateChanged(PlayerStates.Started))
@@ -134,10 +131,15 @@ object MusicPlayer
   }
 
   def seek(pos: Duration) {
-    player.filter(_.position.toSeconds != pos.toSeconds).foreach(p => {
-      p.seek(pos)
-      send(JsonMessages.timeUpdated(pos))
-    })
+    Try {
+      player.filter(_.position.toSeconds != pos.toSeconds).foreach(p => {
+        p.seek(pos)
+        send(JsonMessages.timeUpdated(pos))
+      })
+    }.recover {
+      case ioe: IOException if ioe.getMessage == "Resetting to invalid mark" =>
+        log.warn(s"Failed to seek to: $pos. Unable to reset stream.")
+    }
   }
 
   def volume(level: Int): Unit = setVolume(level)
@@ -173,10 +175,11 @@ object MusicPlayer
     })
   }
 
-  def close(): Unit = player.foreach(p => {
-    p.close()
-    p.media.stream.close()
-  })
+  def close(): Unit =
+    player.foreach(p => {
+      p.close()
+      p.media.stream.close()
+    })
 
   def position =
     player.map(_.position).getOrElse {

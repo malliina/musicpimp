@@ -65,7 +65,7 @@ trait Library extends MusicLibrary with Log {
 
   def songPathsRecursive = all().flatMap(pair => pair._2.files)
 
-  def tracksRecursive: Iterable[TrackInfo] = (songPathsRecursive map findMeta).flatten
+  def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
 
   /**
    * This method has a bug.
@@ -85,33 +85,33 @@ trait Library extends MusicLibrary with Log {
     Paths get decodedId
   }
 
-  def meta(song: Path): TrackInfo = {
+  def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new TrackInfo(encode(song), meta)
+    new LocalTrack(encode(song), meta)
   }
 
-  def meta(itemId: String): TrackInfo =
+  def meta(itemId: String): LocalTrack =
     Library meta relativePath(itemId)
 
-  def findMeta(relative: Path): Option[TrackInfo] =
+  def findMeta(relative: Path): Option[LocalTrack] =
     findPathInfo(relative).flatMap(parseMeta)
 
-  def findMeta(id: String): Option[TrackInfo] =
+  def findMeta(id: String): Option[LocalTrack] =
     findMeta(relativePath(id))
 
-  def parseMeta(relative: Path, root: Path): Option[TrackInfo] =
+  def parseMeta(relative: Path, root: Path): Option[LocalTrack] =
     parseMeta(PathInfo(relative, root))
 
-  def parseMeta(pi: PathInfo): Option[TrackInfo] =
-    Utils.opt[TrackInfo, InvalidAudioFrameException] {
+  def parseMeta(pi: PathInfo): Option[LocalTrack] =
+    Utils.opt[LocalTrack, InvalidAudioFrameException] {
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      new TrackInfo(encode(pi.relative), meta)
+      new LocalTrack(encode(pi.relative), meta)
     }
 
   def findMetaWithTempFallback(id: String) = findMeta(id).orElse(searchTempDir(id))
 
-  def searchTempDir(id: String): Option[TrackInfo] = {
+  def searchTempDir(id: String): Option[LocalTrack] = {
     val pathInfo = PathInfo(Library.relativePath(id), FileUtilities.tempDir)
     val absolute = pathInfo.absolute
     if (Files.exists(absolute) && Files.isReadable(absolute)) Library.parseMeta(pathInfo)

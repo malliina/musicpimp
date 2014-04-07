@@ -1,7 +1,7 @@
 package com.mle.musicpimp.audio
 
 import scala.collection.mutable
-import com.mle.musicpimp.library.TrackInfo
+import com.mle.musicpimp.library.LocalTrack
 
 /**
  *
@@ -13,7 +13,7 @@ trait WebPlayback {
   def player(user: String) =
     players.getOrElseUpdate(user, new PimpWebPlayer(user))
 
-  def add(user: String, track: TrackInfo) {
+  def add(user: String, track: LocalTrack) {
     val p = player(user)
     p.playlist add track
   }

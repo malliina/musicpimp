@@ -9,7 +9,7 @@ import com.mle.musicpimp.audio.TrackMeta
 /**
  * @author Michael
  */
-case class MusicCollection(id: String, path: Path, dirs: Seq[FolderInfo], songs: Seq[TrackInfo])
+case class MusicCollection(id: String, path: Path, dirs: Seq[FolderInfo], songs: Seq[LocalTrack])
 
 object MusicCollection {
   implicit val writes = new Writes[MusicCollection] {

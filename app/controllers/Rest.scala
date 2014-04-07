@@ -7,8 +7,8 @@ import com.mle.util.{FileUtilities, Utils, Util, Log}
 import com.mle.musicpimp.json.{JsonStrings, JsonMessages}
 import play.api.libs.{Files => PlayFiles}
 import play.api.libs.json.{Json, JsValue}
-import com.mle.audio.meta.{MediaInfo, SongTags, SongMeta}
-import com.mle.musicpimp.library.{Library, TrackInfo}
+import com.mle.audio.meta.{StreamSource, SongTags, SongMeta}
+import com.mle.musicpimp.library.{Library, LocalTrack}
 import com.mle.http.TrustAllMultipartRequest
 import org.apache.http.HttpResponse
 import com.mle.play.controllers.{OneFileUploadRequest, AuthRequest, BaseController}
@@ -17,7 +17,6 @@ import com.mle.play.streams.{Streams, StreamParsers}
 import com.mle.musicpimp.beam.BeamCommand
 import scala.concurrent.Future
 import java.io._
-import play.api.mvc.SimpleResult
 import com.mle.storage.StorageInt
 import com.mle.audio.ExecutionContexts.defaultPlaybackContext
 import play.api.mvc.SimpleResult
@@ -209,7 +208,7 @@ object Rest
   private def JsonAckAction(jsonHandler: AuthRequest[JsValue] => Unit): EssentialAction =
     AckPimpAction(parse.json)(jsonHandler)
 
-  private def UploadedSongAction(songAction: TrackMeta => Unit) =
+  private def UploadedSongAction(songAction: PlayableTrack => Unit) =
     MetaUploadAction(implicit req => {
       songAction(req.track)
       AckResponse
@@ -229,27 +228,22 @@ object Rest
         .getOrElse(requestFile)
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
       val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(Library.findMeta))
-      def trackInfoFromUpload: TrackInfo = {
+      def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
-        val meta = SongMeta(MediaInfo.fromPath(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new TrackInfo("", meta)
+        val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
+        new LocalTrack("", meta)
       }
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
       val user = request.user
       val mediaInfo = track.meta.media
       val fileSize = mediaInfo.size
-      val uri = mediaInfo.uri
-      log info s"User: ${
-        request.user
-      } from: ${
-        request.remoteAddress
-      } uploaded $fileSize to: $uri"
+      log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
       f(new TrackUploadRequest(track, file, user, request))
     })
 
-  class TrackUploadRequest[A](val track: TrackInfo, file: Path, user: String, request: Request[A])
+  class TrackUploadRequest[A](val track: LocalTrack, file: Path, user: String, request: Request[A])
     extends OneFileUploadRequest(file, user, request)
 
 }
@@ -259,38 +253,4 @@ object Rest
 //    log info s"Headers: \n$headers"
 //    NoCacheOk(JsonMessages.Version)
 //  })
-
-//  def streamedPlayback3 = StreamingUploadAction(inStream => {
-//    log.info("Starting streamed playback...")
-//    val dur = 1.minute
-//    val size = 100.megs
-//    log.info("Creating player...")
-//    val player = new JavaSoundPlayer(StreamInfo(inStream, dur, size))
-//    log.info("Calling play...")
-//    player.play()
-//    log.info("Called play")
-//  })
-//
-//  def streamedPlayback2 = {
-//    val out = new PipedOutputStream()
-//    val in = new PipedInputStream(out, 10.megs.toBytes.toInt)
-//
-//    //    Observable.interval(1 second).subscribe(i => {
-//    //      log.info(s"Bytes available: ${in.available()}")
-//    //    })
-//
-//    //    val out = new ByteArrayOutputStream()
-//    log.info("Starting stream...")
-//    //    val in = new PipedInputStream(out)
-//    def onBytes(arr: Array[Byte]) = {
-//      println(s"Writing ${arr.length} bytes")
-//      out.write(arr)
-//      println(s"Wrote ${arr.length} bytes")
-//    }
-//    PimpParsedAction(StreamParsers.multiPartByteStreaming(bytes => onBytes(bytes)))(req => {
-//      log.info("Got file, thanks.")
-//      out.close()
-//      Ok
-//    })
-//  }
 
