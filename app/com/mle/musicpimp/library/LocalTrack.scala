@@ -28,7 +28,7 @@ class LocalTrack(id: String, val meta: SongMeta)
 
   override def toString = id
 
-  override def buildPlayer(): PimpPlayer = new StoragePlayer(this)
+  override def buildPlayer(eom: () => Unit): PimpPlayer = new StoragePlayer(this, eom)
 }
 
 object LocalTrack extends Log {

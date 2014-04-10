@@ -22,7 +22,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   def describe: String = trackInfo
     .map(t => s"Plays ${t.title}")
-    .getOrElse(s"Unable to find track: $track, please check your settings.")
+    .getOrElse(s"Track not found: $track, so cannot play")
 
   def toastTo(url: PushUrl): Future[Response] =
     MPNS.toast("MusicPimp", "Tap to stop", s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=${url.tag}", url.silent)(url.url)

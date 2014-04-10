@@ -85,8 +85,7 @@ object MusicPlayer
     player = None
     //    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
-    player = Some(track.buildPlayer())
-
+    player = Some(track.buildPlayer(() => nextTrack()))
     // Maintains the gain & mute status as they were in the previous track.
     // If there was no previous gain, there was no previous track, so we set the default volume.
     val volumeChanged = setVolume(previousVolume getOrElse defaultVolume)
@@ -113,7 +112,7 @@ object MusicPlayer
   def play() {
     val mustReinitializePlayer = player.exists(_.state == PlayerStates.Closed)
     if (mustReinitializePlayer) {
-      player = player.map(p => p.track.buildPlayer())
+      player = player.map(p => p.track.buildPlayer(() => nextTrack()))
     }
     player.foreach(p => {
       p.play()
