@@ -16,8 +16,8 @@ object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.3.9",
-    scalaVersion := "2.10.4",
+    version := "2.3.10",
+    scalaVersion := "2.11.0",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
@@ -34,7 +34,7 @@ object PimpBuild extends Build {
 
   val mleGroup = "com.github.malliina"
   val httpGroup = "org.apache.httpcomponents"
-  val httpVersion = "4.3"
+  val httpVersion = "4.3.3"
   /**
    * Intentionally in this order order: commonSettings ++ playScalaSettings ++ nativePackagingSettings
    *
@@ -46,7 +46,7 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.0" % "test",
+        "org.scalatest" %% "scalatest" % "2.1.3" % "test",
         mleGroup %% "util" % "1.3.0",
         mleGroup %% "util-actor" % "1.3.0",
         mleGroup %% "util-rmi" % "1.3.0",
@@ -56,7 +56,7 @@ object PimpBuild extends Build {
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         play.Project.filters,
-        "net.glxn" % "qrgen" % "1.3",
+        "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",

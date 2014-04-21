@@ -8,11 +8,13 @@ import sbt.Keys._
 object BuildBuild extends Build {
   // "build.sbt" goes here
   override lazy val settings = super.settings ++ Seq(
-    scalaVersion := "2.10.3",
+    scalaVersion := "2.10.4",
     resolvers ++= Seq(
       "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-      "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"),
-    scalacOptions ++= Seq("-unchecked", "-deprecation")
+      "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
+      Resolver.url("sbt-plugin-snapshots", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)),
+    scalacOptions ++= Seq("-unchecked", "-deprecation"),
+    incOptions := incOptions.value.withNameHashing(true)
   ) ++ sbtPlugins
 
   def sbtPlugins = Seq(
@@ -20,7 +22,7 @@ object BuildBuild extends Build {
     "com.github.malliina" %% "sbt-packager" % "1.2.1",
     "com.github.mpeltonen" % "sbt-idea" % "1.5.1",
     "com.eed3si9n" % "sbt-buildinfo" % "0.3.0",
-    "com.timushev.sbt" % "sbt-updates" % "0.1.2"
+    "com.timushev.sbt" % "sbt-updates" % "0.1.6-SNAPSHOT"
   ) map addSbtPlugin
 
   override lazy val projects = Seq(root)
