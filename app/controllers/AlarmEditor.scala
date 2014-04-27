@@ -2,13 +2,13 @@ package controllers
 
 import play.api.data.{Forms, Form}
 import play.api.data.Forms._
-import play.api.mvc.Request
+import play.api.mvc.{AnyContent, Request, SimpleResult}
 import play.api.http.Writeable
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler._
 import scala.Some
-import play.api.mvc.SimpleResult
 import com.mle.musicpimp.library.Library
+import com.mle.play.controllers.AuthRequest
 
 /**
  *
@@ -57,13 +57,14 @@ trait AlarmEditor extends Secured with SchedulerStrings {
 
   def newClock() = formSubmission(clockForm)(
     err => views.html.alarmEditor(err),
-    (form, ap) => {
+    (req, form, ap) => {
       ScheduledPlaybackService.save(ap)
+      log.info(s"User: ${req.user} from: ${req.remoteAddress} saved alarm: $ap")
       Ok(views.html.alarmEditor(form, Some("Saved.")))
     })
 
-  private def formSubmission[T, C](form: Form[T])(err: Form[T] => C, ok: (Form[T], T) => SimpleResult)(implicit w: Writeable[C]) =
-    PimpAction(implicit request => handle(form)(err, ok))
+  private def formSubmission[T, C](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => SimpleResult)(implicit w: Writeable[C]) =
+    PimpAction(implicit request => handle(form)(err, (form, ap) => ok(request, form, ap)))
 
   private def handle[T, C](form: Form[T])(errorContent: Form[T] => C, okRedir: (Form[T], T) => SimpleResult)(implicit request: Request[_], w: Writeable[C]) = {
     val filledForm = form.bindFromRequest()
