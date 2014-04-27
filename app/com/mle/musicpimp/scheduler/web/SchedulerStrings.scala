@@ -15,6 +15,7 @@ trait SchedulerStrings {
   val ON = "on"
   val OFF = "off"
   val TRACK = "track"
+  val TRACK_ID = "track_id"
 
   val CMD = "cmd"
   val DELETE = "delete"

@@ -1,10 +1,14 @@
 @(feedback: Option[String])(scripts: Html)(implicit request: RequestHeader)
 
 @indexMain("player") {
-    @bs.headerRow("Player", "col-md-9")
+    @bs.bsRowColumn("col-md-9"){
+        <div class="page-header">
+            <h1>Player <small class="pull-right" id="status">Initializing...</small></h1>
+        </div>
+    }
     @feedback.map { msg =>
         @bs.bsRowColumn("col-md-9") {
-            <p class="lead alert">@msg</p>
+            <p class="lead alert" id="feedback">@msg</p>
         }
     }
     @bs.bsRowColumn("col-md-6"){

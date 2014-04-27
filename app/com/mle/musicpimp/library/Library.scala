@@ -51,9 +51,6 @@ trait Library extends MusicLibrary with Log {
         } yield pair): _*)
       }
     }
-    //    val tmp = Map(items(root).toSeq.flatMap(f => recurse(f, Map(Paths.get("") -> f))): _*)
-    //    val rootContent = rootItems
-    //    recurse(rootContent, Map(Paths.get("") -> rootContent))
     Map(items(root).toSeq.flatMap(f => recurse(f, Map(Paths.get("") -> f))): _*)
   }
 

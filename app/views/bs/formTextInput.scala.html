@@ -1,8 +1,8 @@
-@(field: Field, label: String, placeHolder: String = "", typeName: String = "text", inputWidth: String = "col-sm-10", moreClasses: Seq[String] = Seq.empty, defaultValue: String = "")
-<div class="form-group @if(field.hasErrors) {has-error}">
+@(field: Field, label: String, placeHolder: String = "", typeName: String = "text", inputWidth: String = "col-sm-10", inputClasses: Seq[String] = Seq.empty, formGroupClasses:Seq[String] = Seq.empty, defaultValue: String = "")
+<div class="form-group @if(field.hasErrors) {has-error}@formGroupClasses.mkString(" ", " ", "")">
     @bs.label(label, field.name)
 <div class="@inputWidth">
-    @bs.input(field, typeName, placeHolder, moreClasses, defaultValue)
+    @bs.input(field, typeName, placeHolder, inputClasses, defaultValue)
     @bs.helpSpan(field)
 </div>
 </div>

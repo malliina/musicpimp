@@ -3,6 +3,7 @@ var webSocket;
 var isMute = false;
 
 var onconnect = function () {
+    setFeedback("Connected.");
     // update: sends status only after welcome message
 //    send(statusJson());
 };
@@ -75,7 +76,7 @@ var updateTime = function (secs) {
     $("#slider").slider("option", "value", secs);
 };
 var updateDuration = function (secs) {
-    $('#duration').html(secs.toHHMMSS());
+    $("#duration").html(secs.toHHMMSS());
     $("#slider").slider("option", "max", secs);
 };
 var updateTimeAndDuration = function (pos, dur) {
@@ -112,8 +113,11 @@ var onStatus = function (json) {
     updatePlaylist(json.playlist);
 };
 var onclose = function (payload) {
-//    alert('the connection has been closed')
+    setFeedback("The connection has been closed.");
 };
 var onerror = function (payload) {
-    alert('A connection error occurred.')
+    setFeedback("A connection error occurred.");
+};
+var setFeedback = function (fb) {
+    $('#status').html(fb);
 };

@@ -11,6 +11,7 @@ import scala.util.{Success, Failure, Try}
 import com.mle.actor.Messages.Stop
 import java.io.IOException
 import com.mle.musicpimp.library.Library
+import rx.lang.scala.Subscription
 
 /**
  * This is a mutable mess. It should be rewritten, maybe using Rx.
@@ -28,6 +29,9 @@ object MusicPlayer
 
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
+
+  var stateSubscription: Option[Subscription] = None
+  var timeSubscription: Option[Subscription] = None
 
   /**
    * Every time the track changes, a new [[PimpPlayer]] is used.
@@ -85,7 +89,7 @@ object MusicPlayer
     player = None
     //    log.info(s"Closed track, now initializing: ${track.title}")
     // PimpJavaSoundPlayer.ctor throws at least LineUnavailableException if the audio device cannot be initialized
-    player = Some(track.buildPlayer(() => nextTrack()))
+    player = Some(initPlayer(track))
     // Maintains the gain & mute status as they were in the previous track.
     // If there was no previous gain, there was no previous track, so we set the default volume.
     val volumeChanged = setVolume(previousVolume getOrElse defaultVolume)
@@ -112,13 +116,21 @@ object MusicPlayer
   def play() {
     val mustReinitializePlayer = player.exists(_.state == PlayerStates.Closed)
     if (mustReinitializePlayer) {
-      player = player.map(p => p.track.buildPlayer(() => nextTrack()))
+      player = player.map(p => initPlayer(p.track))
     }
     player.foreach(p => {
       p.play()
-      send(JsonMessages.playStateChanged(PlayerStates.Started))
-      ServerPlayerManager.playbackPoller ! Restart
+      //      send(JsonMessages.playStateChanged(PlayerStates.Started))
+//      ServerPlayerManager.playbackPoller ! Restart
     })
+  }
+
+  def initPlayer(track: PlayableTrack): PimpPlayer = {
+    close()
+    val newPlayer = track.buildPlayer(() => nextTrack())
+    stateSubscription = Some(newPlayer.events.subscribe(playerState => send(JsonMessages.playStateChanged(playerState))))
+    timeSubscription = Some(newPlayer.timeUpdates.subscribe(time => send(JsonMessages.timeUpdated(time.position))))
+    newPlayer
   }
 
   def stop() {
@@ -174,11 +186,17 @@ object MusicPlayer
     })
   }
 
-  def close(): Unit =
+  def close(): Unit = {
+    stateSubscription.foreach(_.unsubscribe())
+    stateSubscription = None
+    timeSubscription.foreach(_.unsubscribe())
+    timeSubscription = None
     player.foreach(p => {
       p.close()
       p.media.stream.close()
     })
+  }
+
 
   def position =
     player.map(_.position).getOrElse {

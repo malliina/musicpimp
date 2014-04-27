@@ -8,6 +8,7 @@ import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler._
 import scala.Some
 import play.api.mvc.SimpleResult
+import com.mle.musicpimp.library.Library
 
 /**
  *
@@ -20,16 +21,20 @@ trait AlarmEditor extends Secured with SchedulerStrings {
     MINUTES -> number(min = 0, max = 59),
     DAYS -> Forms.seq(text).verifying("Must select at least one day", _.size > 0),
     TRACK -> nonEmptyText,
+    TRACK_ID -> nonEmptyText,
     ENABLED -> optional(text)
-  )((id, hours, minutes, ds, track, enabledOpt) => {
+  )((id, hours, minutes, ds, _, trackID, enabledOpt) => {
+    //    log.info(s"submitted track with ID: $trackID")
     // converts submitted form data to a case class
-    val (days, enabled, job) = parseDaysEnabledAndJob(ds, enabledOpt, track)
+    val (days, enabled, job) = parseDaysEnabledAndJob(ds, enabledOpt, trackID)
     val s = ClockSchedule(hours, minutes, days)
     ClockPlayback(id, job, s, enabled)
   })(ap => {
     // decomposes a case class to an optional tuple of its constituent values
     val i = ap.when
-    Some((ap.id, i.hour, i.minute, i.days.map(_.shortName), ap.job.track, Some(if (ap.enabled) ON else OFF)))
+    val trackID = ap.job.track
+    val trackTitle = Library.findMeta(trackID).fold(trackID)(_.title)
+    Some((ap.id, i.hour, i.minute, i.days.map(_.shortName), trackTitle, trackID, Some(if (ap.enabled) ON else OFF)))
   }))
 
   private def parseDaysEnabledAndJob(days: Seq[String], enabledOpt: Option[String], track: String): (Seq[WeekDay], Boolean, PlaybackJob) = {
@@ -42,9 +47,9 @@ trait AlarmEditor extends Secured with SchedulerStrings {
   def newAlarm = clockAction(clockForm)
 
   def editAlarm(id: String, fb: Option[String] = None) = {
-    ScheduledPlaybackService.find(id).map(clockForm.fill)
-      .map(clockAction(_, fb))
-      .getOrElse(PimpAction(NotFound(s"Unknown ID: $id")))
+    ScheduledPlaybackService.find(id)
+      .map(clockForm.fill)
+      .fold(ifEmpty = PimpAction(NotFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
   }
 
   private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =

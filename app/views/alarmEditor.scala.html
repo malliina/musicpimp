@@ -1,25 +1,26 @@
 @(form: Form[com.mle.musicpimp.scheduler.ClockPlayback], feedback: Option[String] = None)
-    @import com.mle.musicpimp.scheduler.web.SchedulerStrings
-    @import bs._
+@import com.mle.musicpimp.scheduler.web.SchedulerStrings
+@import bs._
 
-    @manage("alarms") {
-        @headerRow("Edit alarm")
-        @bsRowColumn("col-md-6") {
-            <form action="@routes.Alarms.newClock()" method="POST" class="form-horizontal" role="form">
-                <div class="hidden">
-                @formTextInput(form(SchedulerStrings.ID), "ID")
-                </div>
-                @numberInput(form(SchedulerStrings.HOURS), "Hour", "hh")
-                @numberInput(form(SchedulerStrings.MINUTES), "Minute", "mm")
-                @weekDayCheckBoxes(form(SchedulerStrings.DAYS))
-                @formTextInput(form(SchedulerStrings.TRACK), "Track", "Start typing the name of the track...", "text", "col-sm-10", Seq("selector"))
-                @check(form(SchedulerStrings.ENABLED), "Enabled")
-                @saveButton()
-                @feedback.map { str =>
-                    <p class="lead col-sm-offset-2">@str</p>
-                }
-            </form>
+@manage("alarms") {
+    @headerRow("Edit alarm")
+    @bsRowColumn("col-md-6") {
+        <form action="@routes.Alarms.newClock()" method="POST" class="form-horizontal" role="form">
+            <div class="hidden">
+            @formTextInput(form(SchedulerStrings.ID), "ID")
+            </div>
+            @numberInput(form(SchedulerStrings.HOURS), "Hour", "hh")
+            @numberInput(form(SchedulerStrings.MINUTES), "Minute", "mm")
+            @weekDayCheckBoxes(form(SchedulerStrings.DAYS))
+            @formTextInput(form(SchedulerStrings.TRACK_ID), "Track ID", formGroupClasses = Seq("hidden"))
+            @formTextInput(form(SchedulerStrings.TRACK), "Track", "Start typing the name of the track...", "text", "col-sm-10", Seq("selector"))
+            @check(form(SchedulerStrings.ENABLED), "Enabled")
+            @saveButton()
+            @feedback.map { str =>
+                <p class="lead col-sm-offset-2">@str</p>
+            }
+        </form>
 
-        }
-        @util.script("scheduler.js", "alarm-editor.js")
     }
+    @util.script("scheduler.js", "alarm-editor.js")
+}

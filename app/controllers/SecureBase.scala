@@ -31,25 +31,22 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
     import PimpAccountController._
     Utils.opt[BufferedSource, FileNotFoundException](io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
-      .map(_ == hash(username, password))
-      .getOrElse(username == defaultUser && password == defaultPass)
+      .fold(ifEmpty = username == defaultUser && password == defaultPass)(_ == hash(username, password))
   }
 
   def hash(username: String, password: String) =
     DigestUtils.md5Hex(username + ":" + password)
 
   /**
-   * Authenticates, checks trial, logs authenticated request, executes action, in that order.
+   * Authenticates, logs authenticated request, executes action, in that order.
    *
-   * If authentication fails, logs auth fail message; if the trial has expired,
-   * logs trial expired message but not the authenticated request that never happened.
+   * If authentication fails, logs auth fail message.
    */
   def AuthenticatedAndLogged(f: String => EssentialAction): EssentialAction =
     Authenticated(user => Logged(user, f))
 
   /**
-   * Returns an action with the result specified in <code>onFail</code>
-   * if authentication fails.
+   * Returns an action with the result specified in <code>onFail</code> if authentication fails.
    *
    * @param onFail result to return if authentication fails
    * @param f the action we want to do
