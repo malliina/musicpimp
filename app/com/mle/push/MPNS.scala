@@ -2,17 +2,19 @@ package com.mle.push
 
 import play.api.libs.ws.{Response, WS}
 import play.api.http.HeaderNames._
-import scala.xml.{NodeSeq, XML, Elem, NodeBuffer}
+import scala.xml.{NodeSeq, XML, Elem}
 import scala.concurrent.Future
 import java.io.StringWriter
 import com.mle.util.Log
+
+object MPNS extends MPNS
 
 /**
  *
  * @author mle
  */
-trait MPNS extends Log{
-//  val MessageID = "X-MessageID"
+trait MPNS extends IMPNS with Log {
+  //  val MessageID = "X-MessageID"
   // request headers
   val XNotificationClass = "X-NotificationClass"
   val NotificationType = "X-WindowsPhone-Target"
@@ -34,20 +36,28 @@ trait MPNS extends Log{
     XNotificationClass -> IMMEDIATE)
 
   def toast(text1: String, text2: String, deepLink: String, silent: Boolean): String => Future[Response] =
-    url => send(url, toastMessage(text1, text2, deepLink, silent))
+    url => send(url, toastXml(text1, text2, deepLink, silent))
+
+  def toast(message: ToastMessage): String => Future[Response] =
+    url => send(url, message)
+
+  def send(url: String, message: ToastMessage): Future[Response] = send(url, toastXml(message))
 
   private def send(url: String, xml: Elem): Future[Response] =
     WS.url(url).withHeaders(toastHeaders: _*).post(serialize(xml))
+
+  private def toastXml(message: ToastMessage): Elem =
+    toastXml(message.text1, message.text2, message.deepLink, message.silent)
 
   /**
    *
    * @param text1
    * @param text2
-   * @param deepLink The page to go to in app. For example: /page1.xaml?value1=1234 &amp;value2=9876
+   * @param deepLink The page to go to in app. For example: /page1.xaml?value1=1234&amp;value2=9876
    * @return
    */
-  def toastMessage(text1: String, text2: String, deepLink: String, silent: Boolean): Elem = {
-    val silenceElement = if(silent) <wp:Sound Silent="true"/> else NodeSeq.Empty
+  private def toastXml(text1: String, text2: String, deepLink: String, silent: Boolean): Elem = {
+    val silenceElement = if (silent) <wp:Sound Silent="true"/> else NodeSeq.Empty
     // payloads must be on same line of xml, do not let formatting mess it up
     <wp:Notification xmlns:wp="WPNotification">
       <wp:Toast>
@@ -72,9 +82,14 @@ trait MPNS extends Log{
     // xmlDecl = true prepends this as the first line, as desired: <?xml version="1.0" encoding="utf-8"?>
     XML.write(writer, elem, "UTF-8", xmlDecl = true, doctype = null)
     val str = writer.toString
-//    log.info(str)
+    //    log.info(str)
     str
   }
 }
 
-object MPNS extends MPNS
+trait IMPNS {
+  def send(url: String, message: ToastMessage): Future[Response]
+}
+
+case class ToastMessage(text1: String, text2: String, deepLink: String, silent: Boolean)
+
