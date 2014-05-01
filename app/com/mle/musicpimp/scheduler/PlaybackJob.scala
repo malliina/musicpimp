@@ -20,9 +20,7 @@ import com.mle.play.json.JsonFormats2
 case class PlaybackJob(track: String) extends Job with Log {
   def trackInfo: Option[PlayableTrack] = Library.findMeta(track)
 
-  def describe: String = trackInfo
-    .map(t => s"Plays ${t.title}")
-    .getOrElse(s"Track not found: $track, so cannot play")
+  def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
 
   def toastTo(url: PushUrl): Future[Response] =
     MPNS.toast("MusicPimp", "Tap to stop", s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=${url.tag}", url.silent)(url.url)
@@ -41,7 +39,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   override def run(): Unit = {
     Try {
-      trackInfo.map(t => {
+      trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback."))(t => {
         val initResult = MusicPlayer.tryInitTrackWithFallback(t)
         if (initResult.isSuccess) {
           //        val percentPerSecond = 5
@@ -56,9 +54,7 @@ case class PlaybackJob(track: String) extends Job with Log {
             log.info(s"No push notification URLs are active, so toasting was skipped.")
           }
         }
-      }).getOrElse {
-        log.warn(s"Unable to find: $track. Cannot start playback.")
-      }
+      })
 
     }.recover {
       case t: Throwable => log.warn(s"Failure while running playback job: $describe", t)

@@ -187,7 +187,7 @@ object Rest
   def webPlaylist = PimpAction(req => Ok(Json.toJson(playlistFor(req.user))))
 
   private def playlistFor(user: String): Seq[TrackMeta] =
-    WebPlayback.players.get(user).map(_.playlist.songList) getOrElse Seq.empty
+    WebPlayback.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
   private def AckPimpAction[T](parser: BodyParser[T])(bodyHandler: AuthRequest[T] => Unit): EssentialAction =
     PimpParsedAction(parser)(implicit request => {
@@ -223,9 +223,7 @@ object Rest
       val absolutePathOpt = pathParameterOpt.flatMap(Library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
-      val file = absolutePathOpt
-        .map(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
-        .getOrElse(requestFile)
+      val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
       val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(Library.findMeta))
       def trackInfoFromUpload: LocalTrack = {
