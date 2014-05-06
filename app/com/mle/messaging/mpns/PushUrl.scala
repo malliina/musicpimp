@@ -1,4 +1,4 @@
-package com.mle.push
+package com.mle.messaging.mpns
 
 import play.api.libs.json.Json
 

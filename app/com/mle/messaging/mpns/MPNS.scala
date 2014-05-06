@@ -1,13 +1,13 @@
-package com.mle.push
+package com.mle.messaging.mpns
 
-import play.api.libs.ws.{Response, WS}
 import play.api.http.HeaderNames._
 import scala.xml.{NodeSeq, XML, Elem}
 import scala.concurrent.Future
 import java.io.StringWriter
 import com.mle.util.Log
-
-object MPNS extends MPNS
+import com.ning.http.client.{Response => NingResponse}
+import com.mle.http.AsyncHttp
+import com.mle.util.Utils.executionContext
 
 /**
  *
@@ -30,21 +30,15 @@ trait MPNS extends IMPNS with Log {
 
   val TEXT_XML = "text/xml"
 
-  private val toastHeaders = Seq(
+  private val toastHeaders = Map(
     CONTENT_TYPE -> TEXT_XML,
     NotificationType -> TOAST,
     XNotificationClass -> IMMEDIATE)
 
-  def toast(text1: String, text2: String, deepLink: String, silent: Boolean): String => Future[Response] =
-    url => send(url, toastXml(text1, text2, deepLink, silent))
+  def send(url: String, message: ToastMessage): Future[NingResponse] = send(url, toastXml(message))
 
-  def toast(message: ToastMessage): String => Future[Response] =
-    url => send(url, message)
-
-  def send(url: String, message: ToastMessage): Future[Response] = send(url, toastXml(message))
-
-  private def send(url: String, xml: Elem): Future[Response] =
-    WS.url(url).withHeaders(toastHeaders: _*).post(serialize(xml))
+  protected def send(url: String, xml: Elem): Future[NingResponse] =
+    AsyncHttp.post(url, serialize(xml), toastHeaders)
 
   private def toastXml(message: ToastMessage): Elem =
     toastXml(message.text1, message.text2, message.deepLink, message.silent)
@@ -61,10 +55,15 @@ trait MPNS extends IMPNS with Log {
     // payloads must be on same line of xml, do not let formatting mess it up
     <wp:Notification xmlns:wp="WPNotification">
       <wp:Toast>
-        <wp:Text1>{text1}</wp:Text1>
-        <wp:Text2>{text2}</wp:Text2>
-        <wp:Param>{deepLink}</wp:Param>
-        {silenceElement}
+        <wp:Text1>
+          {text1}
+        </wp:Text1>
+        <wp:Text2>
+          {text2}
+        </wp:Text2>
+        <wp:Param>
+          {deepLink}
+        </wp:Param>{silenceElement}
       </wp:Toast>
     </wp:Notification>
   }
@@ -85,10 +84,17 @@ trait MPNS extends IMPNS with Log {
     //    log.info(str)
     str
   }
+
+  //  def toast(text1: String, text2: String, deepLink: String, silent: Boolean): String => Future[NingResponse] =
+  //    url => send(url, toastXml(text1, text2, deepLink, silent))
+  //  def toast(message: ToastMessage): String => Future[NingResponse] =
+  //    url => send(url, message)
+  //  private def send(url: String, xml: Elem): Future[Response] =
+  //    WS.url(url).withHeaders(toastHeaders: _*).post(serialize(xml))
 }
 
 trait IMPNS {
-  def send(url: String, message: ToastMessage): Future[Response]
+  def send(url: String, message: ToastMessage): Future[NingResponse]
 }
 
 case class ToastMessage(text1: String, text2: String, deepLink: String, silent: Boolean)

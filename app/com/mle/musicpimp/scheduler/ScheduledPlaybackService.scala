@@ -49,8 +49,9 @@ trait ScheduledPlaybackService extends Log {
    * @return
    */
   def save(ap: ClockPlayback): Unit = {
-    val withId: ClockPlayback = ap.id.filter(id => id != "" && id != "null")
-      .map(_ => ap) getOrElse ap.copy(id = Some(randomID))
+    val withId: ClockPlayback = ap.id
+      .filter(id => id != "" && id != "null")
+      .fold(ap.copy(id = Some(randomID)))(_ => ap)
     val idOpt = withId.id
     idOpt.foreach(clockAPs.deschedule)
     save(readConf().filter(_.id != idOpt) ++ Seq(withId))
