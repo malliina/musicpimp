@@ -4,7 +4,7 @@ import play.api.libs.json.Json._
 import play.api.libs.json.Json
 import java.nio.file.{Files, Path}
 import com.mle.util.{Log, FileUtilities}
-import com.mle.util.Implicits._
+import com.mle.util.FileImplicits.StorageFile
 import java.util.UUID
 
 /**

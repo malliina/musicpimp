@@ -6,6 +6,7 @@ import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ScheduledPlaybackService, ClockPlayback}
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.messaging.mpns.{PushUrls, PushUrl}
+import com.mle.messaging.gcm.{GcmUrls, GcmUrl}
 
 /**
  *
@@ -26,6 +27,10 @@ trait JsonHandler extends SchedulerStrings with Log {
   case class AddPushUrl(pushUrl: PushUrl) extends Command
 
   case class RemovePushUrl(id: String) extends Command
+
+  case class AddGcmUrl(gcm: GcmUrl) extends Command
+
+  case class RemoveGcmUrl(id: String) extends Command
 
   case object StopPlayback extends Command
 
@@ -49,6 +54,10 @@ trait JsonHandler extends SchedulerStrings with Log {
         json.validate[PushUrl].map(AddPushUrl)
       case PUSH_REMOVE =>
         parse(URL, RemovePushUrl)
+      case GCM_ADD =>
+        json.validate[GcmUrl].map(AddGcmUrl)
+      case GCM_REMOVE =>
+        parse(URL, RemoveGcmUrl)
       case cmd =>
         log.info(s"Unknown: $json")
         JsError(s"Unknown command: $cmd")
@@ -60,9 +69,10 @@ trait JsonHandler extends SchedulerStrings with Log {
     case Delete(id) => ScheduledPlaybackService.remove(id)
     case Start(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
     case StopPlayback => musicPlayer.stop()
-    case AddPushUrl(url) => PushUrls.add(url)
-    case RemovePushUrl(url) => PushUrls.get().find(_.url == url).foreach(PushUrls.remove)
+    case AddPushUrl(url) => PushUrls add url
+    case RemovePushUrl(url) => PushUrls removeID url
+    case AddGcmUrl(id) => GcmUrls add id
+    case RemoveGcmUrl(id) => GcmUrls removeID id
     case _ => log.warn(s"Unknown command: $cmd")
   }
-
 }

@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.3.10-SNAPSHOT",
+    version := "2.3.10",
     scalaVersion := "2.11.0",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -46,11 +46,11 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.1.3" % "test",
-        mleGroup %% "util" % "1.3.0",
+        "org.scalatest" %% "scalatest" % "2.1.6" % "test",
+        mleGroup %% "util" % "1.3.1",
         mleGroup %% "util-actor" % "1.3.0",
         mleGroup %% "util-rmi" % "1.3.0",
-        mleGroup %% "util-audio" % "1.4.0",
+        mleGroup %% "util-audio" % "1.4.1",
         mleGroup %% "util-play" % "1.3.0",
         mleGroup %% "logback-rx" % "0.0.4",
         httpGroup % "httpclient" % httpVersion,

@@ -1,16 +1,15 @@
 package com.mle.musicpimp.log
 
-import com.mle.log.LogLoader
 import java.nio.file.Paths
-import com.mle.util.Implicits._
+import com.mle.util.FileImplicits.StorageFile
 import com.mle.util.FileUtilities
 
 /**
  *
  * @author mle
  */
-trait PimpLog extends LogLoader {
-  val logDir = sys.props.get("log.dir").map(str => Paths.get(str)) getOrElse FileUtilities.basePath
+trait PimpLog {
+  val logDir = sys.props.get("log.dir").fold(FileUtilities.basePath)(str => Paths.get(str))
 
   def logFile = logDir / "musicpimp.log"
 }

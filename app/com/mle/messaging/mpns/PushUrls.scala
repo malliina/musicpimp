@@ -8,9 +8,17 @@ import play.api.libs.json.Format
  *
  * @author mle
  */
-object PushUrls extends PushSet[PushUrl]("push.json")
+object PushUrls extends PushSet[PushUrl]("push.json") {
+  override protected def id(elem: PushUrl): String = elem.url
+}
 
-abstract class PushSet[T](file: String)(implicit format: Format[T]) extends FileBackedSet[T](FileUtilities pathTo file) with LoggingList[T]
+abstract class PushSet[T](file: String)(implicit format: Format[T]) extends FileBackedSet[T](FileUtilities pathTo file) with LoggingList[T] {
+  protected def id(elem: T): String
+
+  def withID(elemID: String): Option[T] = get().find(e => id(e) == elemID)
+
+  def removeID(id: String) = withID(id).foreach(remove)
+}
 
 trait LoggingList[T] extends PersistentList[T] with Log {
   abstract override def add(item: T): Boolean = {

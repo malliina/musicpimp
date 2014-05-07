@@ -23,8 +23,6 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
 
-  def toastTo(url: PushUrl): Future[Response] = MPNSClient.send(url)
-
   def sendMPNS(url: PushUrl): Future[Unit] = MPNSClient.sendLogged(url)
 
   def sendGcm(url: GcmUrl): Future[Unit] = GcmClient.sendLogged(url)
