@@ -32,6 +32,7 @@ trait SchedulerStrings {
   val GCM_ADD = "gcm_add"
   val GCM_REMOVE = "gcm_remove"
   val URL = "url"
+  val TAG = "tag"
 }
 
 object SchedulerStrings extends SchedulerStrings

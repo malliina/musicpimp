@@ -73,7 +73,7 @@ trait Library extends MusicLibrary with Log {
   def findAbsolute(trackId: String): Option[Path] =
     findPathInfo(relativePath(trackId)).map(_.absolute)
 
-  def suggestAbsolute(path: Path): Option[Path] = rootFolders.headOption.map(_ resolve path)
+  def suggestAbsolute(relative: Path): Option[Path] = rootFolders.headOption.map(_ resolve relative)
 
   def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 

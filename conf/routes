@@ -18,7 +18,6 @@ GET         /parameters                    controllers.Website.parameters
 GET         /playback                      controllers.Rest.status
 POST        /playback                      controllers.Rest.playback
 POST        /playback/uploads              controllers.Rest.playUploadedFile
-#POST        /playback/track                controllers.Rest.track
 POST        /playback/stream               controllers.Rest.stream
 POST        /playback/server               controllers.Rest.streamedPlayback
 GET         /webplay                       controllers.Rest.webStatus

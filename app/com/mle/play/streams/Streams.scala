@@ -34,7 +34,7 @@ trait Streams {
     })
 
   /**
-   * Closes `outStream` when the [[Iteratee]] is done.
+   * Builds an [[Iteratee]] that writes consumed bytes to all `outStreams`. The streams are closed when the [[Iteratee]] is done.
    *
    * @return an [[Iteratee]] that writes to `outStream`
    */

@@ -22,7 +22,7 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
   def status(client: Client): JsValue
 
   override def onMessage(msg: Message, client: Client) {
-    (msg \ CMD).asOpt[String].map {
+    (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case STATUS =>
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
         val statusJson = status(client)
@@ -30,7 +30,7 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
         actorManager.king ! ChannelJson(client.channel, event)
       case anythingElse =>
         handleMessage(msg, client)
-    }.getOrElse(log warn s"Unknown message: $msg")
+    })
   }
 
   def handleMessage(message: Message, client: Client): Unit = {

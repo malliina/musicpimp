@@ -17,5 +17,12 @@ object PushUrls extends FileSet[PushUrl]("push.json") {
    * @return
    */
   override protected def id(elem: PushUrl): String = elem.tag
+
+  /**
+   * This method is unreliable but a possibly backwards-compatible workaround.
+   *
+   * @param url push url to remove
+   */
+  def removeURL(url: String) = get().find(_.url == url).foreach(elem => removeID(id(elem)))
 }
 

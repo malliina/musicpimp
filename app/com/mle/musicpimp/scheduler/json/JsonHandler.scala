@@ -26,7 +26,9 @@ trait JsonHandler extends SchedulerStrings with Log {
 
   case class AddPushUrl(pushUrl: PushUrl) extends Command
 
-  case class RemovePushUrl(id: String) extends Command
+  case class RemovePushUrl(url: String) extends Command
+
+  case class RemovePushTag(tag: String) extends Command
 
   case class AddGcmUrl(gcm: GcmUrl) extends Command
 
@@ -52,7 +54,7 @@ trait JsonHandler extends SchedulerStrings with Log {
       case PUSH_ADD =>
         json.validate[PushUrl].map(AddPushUrl)
       case PUSH_REMOVE =>
-        parse(URL, RemovePushUrl)
+        (json \ TAG).validate[String].map(RemovePushTag) orElse (json \ URL).validate[String].map(RemovePushUrl)
       case GCM_ADD =>
         json.validate[GcmUrl].map(AddGcmUrl)
       case GCM_REMOVE =>
@@ -69,8 +71,9 @@ trait JsonHandler extends SchedulerStrings with Log {
     case Start(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
     case StopPlayback => musicPlayer.stop()
     case AddPushUrl(url) => PushUrls add url
-    case RemovePushUrl(url) => PushUrls removeID url
-    case AddGcmUrl(id) => GcmUrls add id
+    case RemovePushTag(tag) => PushUrls removeID tag
+    case RemovePushUrl(url) => PushUrls removeURL url
+    case AddGcmUrl(elem) => GcmUrls add elem
     case RemoveGcmUrl(id) => GcmUrls removeID id
     case _ => log.warn(s"Unknown command: $cmd")
   }

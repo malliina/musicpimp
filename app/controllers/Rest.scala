@@ -20,6 +20,7 @@ import java.io._
 import com.mle.storage.StorageInt
 import com.mle.audio.ExecutionContexts.defaultPlaybackContext
 import play.api.mvc.SimpleResult
+import play.api.libs.iteratee.Iteratee
 
 /**
  *
@@ -74,12 +75,24 @@ object Rest
         MusicPlayer.setPlaylistAndPlay(track)
       }))
 
+
+  def canWriteNewFile(file: Path) =
+    try {
+      val createdFile = Files.createFile(file)
+      Files.delete(createdFile)
+      true
+    } catch {
+      case e: Exception => false
+    }
+
   private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
     val relative = Library.relativePath(meta.id)
-    val file = FileUtilities.tempDir resolve relative
-    val (inStream, iteratee) = streamingAndFileWritingIteratee(file)
+    // Saves the streamed media to file if possible
+    val fileOpt = Library.suggestAbsolute(relative).filter(canWriteNewFile) orElse
+      Option(FileUtilities.tempDir resolve relative).filter(canWriteNewFile)
+    val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
     log.info(s"Playing stream of: ${meta.id}")
-    // Run in another thread because setPlaylistAndPlay blocks until the InputStream has
+    // Runs on another thread because setPlaylistAndPlay blocks until the InputStream has
     // enough data. Data will only be made available after this call, when the body of
     // the request is parsed (by this same thread, I guess). This Future will complete
     // when setPlaylistAndPlay returns or when the upload is complete, whichever occurs
@@ -107,7 +120,7 @@ object Rest
    * @param file file to write to
    * @return an [[InputStream]] an an [[play.api.libs.iteratee.Iteratee]]
    */
-  def streamingAndFileWritingIteratee(file: Path) = {
+  def streamingAndFileWritingIteratee(file: Path): (PipedInputStream, Iteratee[Array[Byte], Long]) = {
     Option(file.getParent).foreach(p => Files.createDirectories(p))
     val streamOut = new PipedOutputStream()
     val bufferSize = math.min(10.megs.toBytes.toInt, Int.MaxValue)
