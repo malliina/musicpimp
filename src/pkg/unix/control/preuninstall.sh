@@ -7,6 +7,7 @@ if [ -f /etc/default/${APP_NAME} ] ; then
 fi
 echo -n "Stopping ${APP_NAME}..."
 stopreturn=`service ${APP_NAME} stop 2>/dev/null`
+sleep 1
 # TODO should delete service? [info] musicpimp.noarch: E: preun-without-chkconfig /etc/init.d/musicpimp
 # Deletes user, if it exists
 # echo is a hack so the exit value will be 0

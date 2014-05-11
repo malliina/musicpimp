@@ -14,7 +14,7 @@ abstract class FileSet[T](file: String)(implicit format: Format[T])
 
   override def contains(elem: T, others: Seq[T]): Boolean = others.exists(areSame(elem, _))
 
-  override def filterNot(elem: T, others: Seq[T]): Seq[T] = others.filter(areSame(elem, _))
+  override def filterNot(elem: T, others: Seq[T]): Seq[T] = others.filterNot(areSame(elem, _))
 
   def withID(elemID: String): Option[T] = get().find(e => id(e) == elemID)
 

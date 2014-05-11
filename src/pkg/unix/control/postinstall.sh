@@ -12,7 +12,7 @@ if [ "${user}" = "${APP_USER}" ]; then
     echo -n "User already exists..."
 else
     echo -n "Creating user ${APP_USER}..."
-    useradd -s /bin/false ${APP_USER}
+    useradd -s /bin/bash -m -d ${APP_HOME} ${APP_USER}
     if [ ! $? ]; then
         echo -n "Unable to create user"
         exit 666
