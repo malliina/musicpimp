@@ -1,20 +1,5 @@
 package com.mle.musicpimp.util
 
-import java.nio.file.{Files, Path}
-import play.api.libs.json.Format
-import play.api.libs.json.Json._
-
-trait Distinctness[T] extends PersistentList[T] {
-  abstract override def add(item: T): Boolean = {
-    val saved = load()
-    val alreadyContains = saved.contains(item)
-    if (!alreadyContains) {
-      persist(saved :+ item)
-    }
-    !alreadyContains
-  }
-}
-
 trait PersistentList[T] {
   /**
    *
@@ -31,13 +16,15 @@ trait PersistentList[T] {
    */
   def remove(item: T): Boolean = {
     val saved = load()
-    val remaining = saved.filter(_ != item)
+    val remaining = filterNot(item, saved)
     val changed = saved != remaining
     if (saved != remaining) {
       persist(remaining)
     }
     changed
   }
+
+  def filterNot(elem: T, others: Seq[T]) = others.filter(_ != elem)
 
   def get(): Seq[T] = load()
 

@@ -34,8 +34,7 @@ trait JsonHandler extends SchedulerStrings with Log {
 
   case object StopPlayback extends Command
 
-  def handle(json: JsValue): JsResult[Unit] =
-    parseCommand(json).map(handleCommand)
+  def handle(json: JsValue): JsResult[Unit] = parseCommand(json) map handleCommand
 
   private def parseCommand(json: JsValue): JsResult[Command] = {
     def parse[T](key: String, f: String => T): JsResult[T] =
@@ -57,7 +56,7 @@ trait JsonHandler extends SchedulerStrings with Log {
       case GCM_ADD =>
         json.validate[GcmUrl].map(AddGcmUrl)
       case GCM_REMOVE =>
-        parse(URL, RemoveGcmUrl)
+        parse(ID, RemoveGcmUrl)
       case cmd =>
         log.info(s"Unknown: $json")
         JsError(s"Unknown command: $cmd")

@@ -13,9 +13,8 @@ import com.mle.util.FileUtilities
  * @tparam T type of element
  */
 class FileBackedList[T](file: Path)(implicit val jsonFormat: Format[T]) extends PersistentList[T] {
-  override protected def persist(items: Seq[T]): Unit = {
+  override protected def persist(items: Seq[T]): Unit =
     FileUtilities.stringToFile(stringify(toJson(items)), file)
-  }
 
   override protected def load(): Seq[T] =
     if (Files.isReadable(file)) {
@@ -29,4 +28,4 @@ class FileBackedList[T](file: Path)(implicit val jsonFormat: Format[T]) extends 
 
 class FileBackedSet[T](file: Path)(implicit jsonFormat: Format[T])
   extends FileBackedList[T](file)
-     with Distinctness[T]
+  with Distinctness[T]
