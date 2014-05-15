@@ -7,6 +7,7 @@ import com.mle.musicpimp.actor.Messages.ChannelJson
 import com.mle.play.json.JsonMessages
 import com.mle.musicpimp.audio.JsonHandlerBase
 import com.mle.play.RequestInfo
+import play.api.libs.iteratee.Concurrent
 
 /**
  *
@@ -39,5 +40,8 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
 
   def onConnect(client: Client): Unit = actorManager connect client
 
-  def onDisconnect(client: Client) = actorManager disconnect client
+  def onDisconnect(client: Client) = {
+    log info s"Disconnecting client: $client..."
+    actorManager disconnect client
+  }
 }

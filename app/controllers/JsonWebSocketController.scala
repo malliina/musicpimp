@@ -14,7 +14,7 @@ import play.api.mvc.WebSocket.FrameFormatter
  *
  * @author mle
  */
-trait JsonWebSocketController extends WebSocketController with Controller with Secured {
+trait JsonWebSocketController extends WebSocketController2 with Controller with Secured {
   type Message = JsValue
   type Client = ClientInfo[Message]
 

@@ -2,22 +2,18 @@ package models
 
 import play.api.libs.iteratee.Concurrent
 import play.api.mvc.RequestHeader
-import controllers.{routes, PimpRequest, RequestHelpers}
+import controllers.{PimpRequest, RequestHelpers}
 import com.mle.musicpimp.json.JsonFormats
 import com.mle.util.Log
 import play.api.http.MimeTypes
 
-/**
- *
- * @author mle
- */
 /**
  * @param channel channel used to push messages to the client
  * @param request the request headers from the HTTP request that initiated the WebSocket connection
  * @param user the authenticated username
  */
 case class ClientInfo[T](channel: Concurrent.Channel[T], request: RequestHeader, user: String) extends Log {
-  val protocol = if (RequestHelpers.isHttps(request)) "wss" else "ws"
+  val protocol = if (RequestHelpers isHttps request) "wss" else "ws"
   val remoteAddress = request.remoteAddress
   val describe = s"$protocol://$user@$remoteAddress"
   /**
@@ -40,6 +36,6 @@ case class ClientInfo[T](channel: Concurrent.Channel[T], request: RequestHeader,
   val apiVersion = PimpRequest.requestedResponseFormat(request)
     .filter(_ != MimeTypes.HTML)
     .getOrElse(JsonFormats.JSONv17)
-  log info s"Client connected with API version: $apiVersion"
+  log debug s"Client connected with API version: $apiVersion"
   override val toString = describe
 }
