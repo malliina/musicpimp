@@ -5,7 +5,7 @@ import java.nio.file.{AccessDeniedException, Paths, Files, Path}
 import java.net.{URLEncoder, URLDecoder}
 import com.mle.audio.meta.SongMeta
 import java.io.FileNotFoundException
-import org.jaudiotagger.audio.exceptions.InvalidAudioFrameException
+import org.jaudiotagger.audio.exceptions.{CannotReadException, InvalidAudioFrameException}
 
 /**
  * An item is either a song or a folder.
@@ -101,7 +101,7 @@ trait Library extends MusicLibrary with Log {
     parseMeta(PathInfo(relative, root))
 
   def parseMeta(pi: PathInfo): Option[LocalTrack] =
-    Utils.opt[LocalTrack, InvalidAudioFrameException] {
+    Utils.opt[LocalTrack, Exception] { // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
       new LocalTrack(encode(pi.relative), meta)
     }
