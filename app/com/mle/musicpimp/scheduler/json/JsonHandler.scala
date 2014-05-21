@@ -60,7 +60,7 @@ trait JsonHandler extends SchedulerStrings with Log {
       case GCM_REMOVE =>
         parse(ID, RemoveGcmUrl)
       case cmd =>
-        log.info(s"Unknown: $json")
+        log.warn(s"Unknown JSON: $json")
         JsError(s"Unknown command: $cmd")
     }
   }

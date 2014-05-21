@@ -19,14 +19,12 @@ trait LibraryController extends Secured with Log {
    */
   def library(folderId: String) = PimpAction(implicit request => {
     val path = Library relativePath folderId
-    Library.items(path).map(items => {
+    Library.items(path).fold(pimpResult(
+      html = NotFound,
+      json = NotFound(JsonMessages.failure(s"Unkown folder ID: $folderId"))
+    ))(items => {
       respondWith(folderId, path, items)
-    }).getOrElse {
-      pimpResult(
-        html = NotFound,
-        json = NotFound(JsonMessages.failure(s"Unkown folder ID: $folderId"))
-      )
-    }
+    })
   })
 
   def rootLibrary = PimpAction(implicit request => {
@@ -57,9 +55,10 @@ trait LibraryController extends Secured with Log {
    */
   def download(trackId: String, f: SimpleResult => SimpleResult): EssentialAction =
     CustomFailingPimpAction(onDownloadAuthFail)(implicit req => {
-      Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8")).map(path => {
+      Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
+        .fold(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))(path => {
         f(Ok.sendFile(path.toFile))
-      }).getOrElse(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))
+      })
     })
 
   def onDownloadAuthFail(req: RequestHeader): SimpleResult = {
@@ -91,9 +90,7 @@ trait LibraryController extends Secured with Log {
     download(trackId, r => r)
 
   def meta(id: String) = PimpAction {
-    Library.findMeta(id)
-      .map(track => Ok(Json.toJson(track)))
-      .getOrElse(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))
+    Library.findMeta(id).fold(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))(track => Ok(Json.toJson(track)))
   }
 
   def toHtml(contents: MusicCollection): Html = {
