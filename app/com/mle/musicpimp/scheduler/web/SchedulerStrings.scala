@@ -31,6 +31,8 @@ trait SchedulerStrings {
   val PUSH_REMOVE = "push_remove"
   val GCM_ADD = "gcm_add"
   val GCM_REMOVE = "gcm_remove"
+  val ADM_ADD = "adm_add"
+  val ADM_REMOVE = "adm_remove"
   val URL = "url"
   val TAG = "tag"
 }

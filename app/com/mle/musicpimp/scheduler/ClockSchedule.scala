@@ -16,9 +16,12 @@ case class ClockSchedule(hour: Int, minute: Int, days: Seq[WeekDay]) extends Day
 
   private val daysDescribed = if (days.toSet == WeekDay.EveryDaySet) "every day" else s"on $daysReadable"
 
-  def timeFormatted = maybePrependZero(hour) + ":" + maybePrependZero(minute)
-
+  /**
+   * @return "at 08:00 every day" or "at 07:20 on Monday, Tuesday"
+   */
   def describe: String = s"at $timeFormatted $daysDescribed"
+
+  def timeFormatted = maybePrependZero(hour) + ":" + maybePrependZero(minute)
 
   private def maybePrependZero(i: Int) = if (i < 10) s"0$i" else s"$i"
 }

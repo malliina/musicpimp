@@ -7,12 +7,12 @@ import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.audio.{PlayableTrack, MusicPlayer}
 import scala.util.Try
-import com.mle.messaging.gcm.{GcmUrls, GcmUrl, GcmClient}
+import com.mle.messaging.gcm.{AmazonDevices, GoogleDevices, AndroidDevice, GcmClient}
 import com.mle.messaging.mpns.{MPNSClient, PushUrls, PushUrl}
 import com.mle.play.json.JsonFormats2
 import play.api.libs.json.Json
 import com.mle.concurrent.FutureImplicits.RichFuture
-import com.ning.http.client.Response
+import com.mle.messaging.adm.AdmClient
 
 /**
  *
@@ -25,7 +25,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   def sendMPNS(url: PushUrl): Future[Unit] = MPNSClient.sendLogged(url)
 
-  def sendGcm(url: GcmUrl): Future[Unit] = GcmClient.sendLogged(url)
+  def sendGcm(url: AndroidDevice): Future[Unit] = GcmClient.sendLogged(url)
 
   override def run(): Unit = {
     Try {
@@ -40,8 +40,9 @@ case class PlaybackJob(track: String) extends Job with Log {
           //        })
           MusicPlayer.play()
           val toasts = PushUrls.get().map(MPNSClient.sendLogged)
-          val gcms = GcmUrls.get().map(GcmClient.sendLogged)
-          val messages = toasts ++ gcms
+          val gcms = GoogleDevices.get().map(GcmClient.sendLogged)
+          val adms = AmazonDevices.get().map(AdmClient.sendLogged)
+          val messages = toasts ++ gcms ++ adms
           if (messages.isEmpty) {
             log.info(s"No push notification URLs are active, so no push notifications were sent.")
           }

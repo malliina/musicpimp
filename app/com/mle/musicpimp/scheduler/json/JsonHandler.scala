@@ -6,7 +6,7 @@ import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ScheduledPlaybackService, ClockPlayback}
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.messaging.mpns.{PushUrls, PushUrl}
-import com.mle.messaging.gcm.{GcmUrls, GcmUrl}
+import com.mle.messaging.gcm.{AmazonDevices, GoogleDevices, AndroidDevice}
 
 /**
  *
@@ -24,15 +24,19 @@ trait JsonHandler extends SchedulerStrings with Log {
 
   case class Start(id: String) extends Command
 
-  case class AddPushUrl(pushUrl: PushUrl) extends Command
+  case class AddWindowsDevice(pushUrl: PushUrl) extends Command
 
-  case class RemovePushUrl(url: String) extends Command
+  case class RemoveWindowsDevice(url: String) extends Command
 
   case class RemovePushTag(tag: String) extends Command
 
-  case class AddGcmUrl(gcm: GcmUrl) extends Command
+  case class AddGoogleDevice(dest: AndroidDevice) extends Command
 
-  case class RemoveGcmUrl(id: String) extends Command
+  case class RemoveGoogleDevice(id: String) extends Command
+
+  case class AddAmazonDevice(dest: AndroidDevice) extends Command
+
+  case class RemoveAmazonDevice(id: String) extends Command
 
   case object StopPlayback extends Command
 
@@ -52,13 +56,17 @@ trait JsonHandler extends SchedulerStrings with Log {
       case STOP =>
         JsSuccess(StopPlayback)
       case PUSH_ADD =>
-        json.validate[PushUrl].map(AddPushUrl)
+        json.validate[PushUrl].map(AddWindowsDevice)
       case PUSH_REMOVE =>
-        (json \ TAG).validate[String].map(RemovePushTag) orElse (json \ URL).validate[String].map(RemovePushUrl)
+        (json \ TAG).validate[String].map(RemovePushTag) orElse (json \ URL).validate[String].map(RemoveWindowsDevice)
       case GCM_ADD =>
-        json.validate[GcmUrl].map(AddGcmUrl)
+        json.validate[AndroidDevice].map(AddGoogleDevice)
       case GCM_REMOVE =>
-        parse(ID, RemoveGcmUrl)
+        parse(ID, RemoveGoogleDevice)
+      case ADM_ADD =>
+        json.validate[AndroidDevice].map(AddAmazonDevice)
+      case ADM_REMOVE =>
+        parse(ID, RemoveAmazonDevice)
       case cmd =>
         log.warn(s"Unknown JSON: $json")
         JsError(s"Unknown command: $cmd")
@@ -70,11 +78,13 @@ trait JsonHandler extends SchedulerStrings with Log {
     case Delete(id) => ScheduledPlaybackService.remove(id)
     case Start(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
     case StopPlayback => musicPlayer.stop()
-    case AddPushUrl(url) => PushUrls add url
+    case AddWindowsDevice(device) => PushUrls add device
     case RemovePushTag(tag) => PushUrls removeID tag
-    case RemovePushUrl(url) => PushUrls removeURL url
-    case AddGcmUrl(elem) => GcmUrls add elem
-    case RemoveGcmUrl(id) => GcmUrls removeID id
+    case RemoveWindowsDevice(url) => PushUrls removeURL url
+    case AddGoogleDevice(device) => GoogleDevices add device
+    case RemoveGoogleDevice(id) => GoogleDevices removeID id
+    case AddAmazonDevice(device) => AmazonDevices add device
+    case RemoveAmazonDevice(id) => AmazonDevices removeID id
     case _ => log.warn(s"Unknown command: $cmd")
   }
 }

@@ -1,8 +1,9 @@
 package com.mle.messaging.gcm
 
-import play.api.libs.json.{Json, JsValue, Format, JsResult}
+import play.api.libs.json.Json
 import scala.concurrent.duration.Duration
 import concurrent.duration.DurationLong
+import com.mle.play.json.JsonFormats2
 
 /**
  *
@@ -12,11 +13,7 @@ case class GoogleMessage(registration_ids: Seq[String], data: Map[String, String
 
 object GoogleMessage {
 
-  implicit object durationFormat extends Format[Duration] {
-    override def writes(o: Duration): JsValue = Json.toJson(o.toSeconds)
-
-    override def reads(json: JsValue): JsResult[Duration] = json.validate[Long].map(_.seconds)
-  }
+  implicit val durationFormat = JsonFormats2.durationFormat
 
   implicit val format = Json.format[GoogleMessage]
 }

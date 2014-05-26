@@ -24,16 +24,17 @@ object AsyncHttp {
   val BASIC = "Basic"
   val CONTENT_TYPE = "Content-Type"
   val JSON = "application/json"
+  val WWW_FORM_URL_ENCODED = "application/x-www-form-urlencoded"
 
   def get(url: String)(implicit ec: ExecutionContext): Future[Response] = withClient(_.get(url))
 
   def postJson(url: String, body: JsValue, headers: Map[String, String] = Map.empty)(implicit ec: ExecutionContext): Future[Response] =
-    withHeaders(_.post(url, body), headers)
+    execute(_.post(url, body), headers)
 
   def post(url: String, body: String, headers: Map[String, String] = Map.empty)(implicit ec: ExecutionContext): Future[Response] =
-    withHeaders(_.post(url, body), headers)
+    execute(_.post(url, body), headers)
 
-  private def withHeaders(f: AsyncHttp => RequestBuilder, headers: Map[String, String])(implicit ec: ExecutionContext) =
+  def execute(f: AsyncHttp => RequestBuilder, headers: Map[String, String])(implicit ec: ExecutionContext): Future[Response] =
     withClient(c => {
       val builder = f(c)
       headers.foreach(p => builder.setHeader(p._1, p._2))
@@ -42,29 +43,17 @@ object AsyncHttp {
 
   private def withClient(f: AsyncHttp => RequestBuilder)(implicit ec: ExecutionContext): Future[Response] = {
     val client = new AsyncHttp
-    import client.RichRequestBuilder
-    val builder = f(client)
-    builder.runAndClose()
+    val response = f(client).run()
+    response.onComplete(_ => client.close())
+    response
   }
-}
-
-class AsyncHttp extends Closeable {
-  val client = new AsyncHttpClient()
-
-  def get(url: String): RequestBuilder =
-    client.prepareGet(url)
-
-  def post(url: String, body: JsValue): RequestBuilder =
-    client.preparePost(url)
-      .setHeader(CONTENT_TYPE, JSON)
-      .setBody(Json stringify body)
-
-  def post(url: String, body: String): RequestBuilder =
-    client.preparePost(url).setBody(body)
-
-  def close() = client.close()
 
   implicit class RichRequestBuilder(builder: RequestBuilder) {
+    def addParameters(parameters: (String, String)*) = {
+      parameters.foreach(pair => builder.addParameter(pair._1, pair._2))
+      builder
+    }
+
     def basicAuthHeaderValue(username: String, password: String) = {
       val encodedCredentials = Base64.encode(s"$username:$password".getBytes)
       s"$BASIC $encodedCredentials"
@@ -78,12 +67,6 @@ class AsyncHttp extends Closeable {
       val handler = new PromisingHandler
       builder execute handler
       handler.future
-    }
-
-    def runAndClose()(implicit ec: ExecutionContext): Future[Response] = {
-      val f = run()
-      f.onComplete(_ => close())
-      f
     }
   }
 
@@ -103,4 +86,21 @@ class AsyncHttp extends Closeable {
     def future = promise.future
   }
 
+}
+
+class AsyncHttp extends Closeable {
+  val client = new AsyncHttpClient()
+
+  def get(url: String): RequestBuilder =
+    client.prepareGet(url)
+
+  def post(url: String, body: JsValue): RequestBuilder =
+    client.preparePost(url)
+      .setHeader(CONTENT_TYPE, JSON)
+      .setBody(Json stringify body)
+
+  def post(url: String, body: String): RequestBuilder =
+    client.preparePost(url).setBody(body)
+
+  def close() = client.close()
 }

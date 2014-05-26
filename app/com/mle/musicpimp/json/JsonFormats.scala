@@ -23,7 +23,7 @@ trait JsonFormats {
   val latest = JSONv18
 
   private def versionString(maybeVersion: Option[Int]) = {
-    val versionPart = maybeVersion map (v => s".v$v") getOrElse ""
+    val versionPart = maybeVersion.fold("")(v => s".v$v")
     s"application/vnd.musicpimp$versionPart+json"
   }
 

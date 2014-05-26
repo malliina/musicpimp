@@ -44,11 +44,12 @@ object PimpBuild extends Build {
   lazy val playSettings = commonSettings ++
     play.Project.playScalaSettings ++
     nativePackagingSettings ++
+    net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % "2.1.7" % "test",
         mleGroup %% "util" % "1.3.1",
-        mleGroup %% "util-actor" % "1.3.1",
+        mleGroup %% "util-actor" % "1.3.2",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
         mleGroup %% "util-play" % "1.3.0",
@@ -74,6 +75,7 @@ object PimpBuild extends Build {
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
       WinKeys.forceStopOnUninstall := true
+//      scalaVersion := "2.11.0"
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(
