@@ -10,11 +10,12 @@ import play.api.libs.json.Json
 import com.mle.util.Utils.executionContext
 import com.mle.messaging.PushException
 import concurrent.duration.DurationInt
+import com.mle.util.Log
 
 /**
  * @author Michael
  */
-trait AmazonMessaging {
+trait AmazonMessaging extends Log {
   def clientID: String
 
   def clientSecret: String
@@ -23,8 +24,10 @@ trait AmazonMessaging {
     send(id, AmazonMessage(data, expiresAfter = 60.seconds))
 
   def send(id: String, message: AmazonMessage): Future[Response] = {
+    val body = Json.toJson(message)
+    log.info(s"Sending body: ${Json.stringify(body)}")
     token(clientID, clientSecret).flatMap(t => {
-      AsyncHttp.postJson(s"https://api.amazon.com/messaging/registrations/$id/messages", Json.toJson(message), Map(
+      AsyncHttp.postJson(s"https://api.amazon.com/messaging/registrations/$id/messages", body, Map(
         AUTHORIZATION -> s"Bearer $t",
         AmazonTypeVersion -> AmazonTypeVersionValue,
         AmazonAcceptType -> AmazonAcceptTypeValue
@@ -52,9 +55,6 @@ trait AmazonMessaging {
     }, Map(CONTENT_TYPE -> WWW_FORM_URL_ENCODED))
   }
 
-  //  def accessTokenJson(clientID:String,clientSecret:String)=tokenRequest(clientID,clientSecret)
-  //    .map(r => tryParse(r.getResponseBody))
-  //  def tryParse(content:String):Try[JsValue]= Try(Json parse content)
 }
 
 object AmazonMessaging {
