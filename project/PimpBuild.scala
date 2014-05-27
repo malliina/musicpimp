@@ -67,7 +67,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "2ee737be-bb08-4828-bd0c-5147033b94ef",
+      WinKeys.productGuid := "48a2214c-0eeb-4682-bce0-ace1b922ca6a",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
