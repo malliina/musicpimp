@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.4.0",
+    version := "2.4.1",
     scalaVersion := "2.11.0",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -67,7 +67,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "48a2214c-0eeb-4682-bce0-ace1b922ca6a",
+      WinKeys.productGuid := "903c21b4-4d0e-456a-80c3-acac59e6ead6",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
