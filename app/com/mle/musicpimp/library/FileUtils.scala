@@ -9,15 +9,14 @@ import java.nio.file.attribute.BasicFileAttributes
  */
 object FileUtils extends Log {
   /**
-   * Returns the given files and directories immediately under the specified dir,
-   * i.e. performs a non-recursive search.
+   * Returns the given files and directories immediately under the specified dir, i.e. performs a non-recursive search.
    *
    * The returned paths are relativized against the supplied root.
    *
    * @param dir parent
    * @return Non-recursive files and dirs.
    */
-  def listFiles(dir: Path, root: Path) = {
+  def listFiles(dir: Path, root: Path): Folder = {
     val visitor = new MusicItemVisitor(dir, root)
     Files.walkFileTree(dir, visitor)
     Folder(visitor.dirs, visitor.files)

@@ -6,8 +6,7 @@ import play.api.libs.json.{JsObject, Json, JsValue}
 import com.mle.musicpimp.actor.Messages.ChannelJson
 import com.mle.play.json.JsonMessages
 import com.mle.musicpimp.audio.JsonHandlerBase
-import com.mle.play.RequestInfo
-import play.api.libs.iteratee.Concurrent
+import com.mle.play.http.RequestInfo
 
 /**
  *

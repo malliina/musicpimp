@@ -2,8 +2,8 @@ package com.mle.musicpimp.audio
 
 import play.api.libs.json.JsValue
 import com.mle.util.Log
-import com.mle.play.RequestInfo
 import com.mle.play.controllers.AuthRequest
+import com.mle.play.http.RequestInfo
 
 /**
  *

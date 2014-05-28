@@ -30,7 +30,6 @@ object Rest
   extends Secured
   with BaseController
   with LibraryController
-  with PimpContentController
   with Log {
 
   def ping = Action(NoCache(Ok))

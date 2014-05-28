@@ -4,7 +4,7 @@ import scala.concurrent.duration.Duration
 import com.mle.storage.StorageSize
 import java.io.InputStream
 import play.api.libs.json.Json
-import com.mle.play.json.JsonFormats2
+import com.mle.play.json.JsonFormats
 
 /**
  *
@@ -16,7 +16,7 @@ case class BaseTrackMeta(id: String, title: String, artist: String, album: Strin
 
 object BaseTrackMeta {
   //  val empty = BaseTrackMeta("Unknown id", "Unknown title", "Unknown artist", "Unknown album", 0.seconds, 1.bytes)
-  implicit val dur = JsonFormats2.durationFormat
-  implicit val storage = JsonFormats2.storageSizeFormat
+  implicit val dur = JsonFormats.durationFormat
+  implicit val storage = JsonFormats.storageSizeFormat
   implicit val jsonFormat = Json.format[BaseTrackMeta]
 }

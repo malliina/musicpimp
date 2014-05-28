@@ -5,7 +5,7 @@ import com.mle.audio.PlayerStates
 import scala.concurrent.duration.Duration
 import com.mle.util.Log
 import play.api.libs.json.Json
-import com.mle.play.json.JsonFormats2
+import com.mle.play.json.JsonFormats
 import com.mle.musicpimp.json.PimpJson
 
 /**
@@ -21,7 +21,7 @@ case class StatusEvent(track: TrackMeta,
                        index: Int)
 
 object StatusEvent extends Log {
-  implicit val dur = JsonFormats2.durationFormat
+  implicit val dur = JsonFormats.durationFormat
   implicit val playerState = PimpJson.playStateFormat
   implicit val status18writer = Json.writes[StatusEvent]
 

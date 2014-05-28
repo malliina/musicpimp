@@ -9,7 +9,7 @@ import com.mle.musicpimp.audio.{PlayableTrack, MusicPlayer}
 import scala.util.Try
 import com.mle.messaging.gcm.{AmazonDevices, GoogleDevices, AndroidDevice, GcmClient}
 import com.mle.messaging.mpns.{MPNSClient, PushUrls, PushUrl}
-import com.mle.play.json.JsonFormats2
+import com.mle.play.json.JsonFormats
 import play.api.libs.json.Json
 import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.messaging.adm.AdmClient
@@ -60,7 +60,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 
 object PlaybackJob {
 
-  implicit object pathFormat extends JsonFormats2.SimpleFormat[Path](s => Paths.get(s))
+  implicit object pathFormat extends JsonFormats.SimpleFormat[Path](s => Paths.get(s))
 
   implicit val jsonFormat = Json.format[PlaybackJob]
 }

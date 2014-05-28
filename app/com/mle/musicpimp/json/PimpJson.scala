@@ -1,7 +1,6 @@
 package com.mle.musicpimp.json
 
 import com.mle.audio.PlayerStates
-import com.mle.play.json.JsonFormats2
 
 /**
  *
@@ -9,7 +8,7 @@ import com.mle.play.json.JsonFormats2
  */
 trait PimpJson {
 
-  implicit object playStateFormat extends JsonFormats2.SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
+  implicit object playStateFormat extends com.mle.play.json.JsonFormats.SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
 
 }
 
