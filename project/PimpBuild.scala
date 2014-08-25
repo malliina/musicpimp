@@ -13,11 +13,11 @@ import sbt.Keys._
 import com.mle.sbt.FileImplicits._
 
 object PimpBuild extends Build {
-  lazy val pimpProject = Project("musicpimp", file(".")).settings(playSettings: _*)
+  lazy val pimpProject = Project("musicpimp", file(".")).enablePlugins(play.PlayScala).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
     version := "2.4.1",
-    scalaVersion := "2.11.0",
+    scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
@@ -36,13 +36,10 @@ object PimpBuild extends Build {
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.3.3"
   /**
-   * Intentionally in this order order: commonSettings ++ playScalaSettings ++ nativePackagingSettings
-   *
    * Our packaging settings must override the packaging settings from playScalaSettings. Play 2.2 also
    * uses sbt-native-packager and has some own settings but we don't use those for packaging.
    */
   lazy val playSettings = commonSettings ++
-    play.Project.playScalaSettings ++
     nativePackagingSettings ++
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
