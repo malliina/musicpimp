@@ -226,7 +226,7 @@ object Rest
     }
 
   private def webStatusJson(user: String) = {
-    val player = WebPlayback.players.get(user) getOrElse new PimpWebPlayer(user)
+    val player = WebPlayback.players.getOrElse(user, new PimpWebPlayer(user))
     Json.toJson(player.status)
   }
 
@@ -258,7 +258,7 @@ object Rest
       AckResponse
     })
 
-  private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
+  private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     HeadPimpUploadAction(request => {
       val parameters = request.body.asFormUrlEncoded
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)

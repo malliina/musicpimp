@@ -27,7 +27,7 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param password the supplied password
    * @return true if the credentials are valid, false otherwise
    */
-  def validateCredentials(username: String, password: String): Boolean = {
+  override def validateCredentials(username: String, password: String): Boolean = {
     import PimpAccountController._
     Utils.opt[BufferedSource, FileNotFoundException](io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
@@ -51,15 +51,15 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param onFail result to return if authentication fails
    * @param f the action we want to do
    */
-  def CustomFailingPimpAction(onFail: RequestHeader => SimpleResult)(f: String => SimpleResult) =
+  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: String => Result) =
     Security.Authenticated(req => authenticate(req), req => onFail(req))(user => {
       Logged(user, user => Action(f(user)))
     })
 
-  def PimpAction(f: AuthRequest[AnyContent] => SimpleResult) =
+  def PimpAction(f: AuthRequest[AnyContent] => Result) =
     PimpParsedAction(parse.anyContent)(f)
 
-  def PimpAction(result: => SimpleResult) =
+  def PimpAction(result: => Result) =
     PimpParsedAction(parse.anyContent)(_ => result)
 
   def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
@@ -68,17 +68,17 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
       Ok
     })
 
-  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
+  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     PimpUploadAction(req => req.files.headOption
       .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user, req)))
       .getOrElse(BadRequest))
 
-  def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => SimpleResult) =
+  def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     PimpParsedAction(parse.multipartFormData)(req => {
       val files: Seq[Path] = saveFiles(req)
       f(new FileUploadRequest(files, req.user, req))
     })
 
-  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => SimpleResult) =
+  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) =
     AuthenticatedAndLogged(user => Action(parser)(req => f(new AuthRequest(user, req))))
 }

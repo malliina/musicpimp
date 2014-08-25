@@ -1,14 +1,13 @@
 package controllers
 
-import play.api.data.{Forms, Form}
-import play.api.data.Forms._
-import play.api.mvc.{AnyContent, Request, SimpleResult}
-import play.api.http.Writeable
-import com.mle.musicpimp.scheduler.web.SchedulerStrings
-import com.mle.musicpimp.scheduler._
-import scala.Some
 import com.mle.musicpimp.library.Library
+import com.mle.musicpimp.scheduler._
+import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.play.controllers.AuthRequest
+import play.api.data.Forms._
+import play.api.data.{Form, Forms}
+import play.api.http.Writeable
+import play.api.mvc.{AnyContent, Request, Result}
 
 /**
  *
@@ -39,7 +38,7 @@ trait AlarmEditor extends Secured with SchedulerStrings {
 
   private def parseDaysEnabledAndJob(days: Seq[String], enabledOpt: Option[String], track: String): (Seq[WeekDay], Boolean, PlaybackJob) = {
     val weekDays = days.flatMap(WeekDay.withShortName)
-    val enabled = enabledOpt.exists(_ == SchedulerStrings.ON)
+    val enabled = enabledOpt.contains(SchedulerStrings.ON)
     val job = PlaybackJob(track)
     (weekDays, enabled, job)
   }
@@ -63,10 +62,10 @@ trait AlarmEditor extends Secured with SchedulerStrings {
       Ok(views.html.alarmEditor(form, Some("Saved.")))
     })
 
-  private def formSubmission[T, C](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => SimpleResult)(implicit w: Writeable[C]) =
+  private def formSubmission[T, C](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => Result)(implicit w: Writeable[C]) =
     PimpAction(implicit request => handle(form)(err, (form, ap) => ok(request, form, ap)))
 
-  private def handle[T, C](form: Form[T])(errorContent: Form[T] => C, okRedir: (Form[T], T) => SimpleResult)(implicit request: Request[_], w: Writeable[C]) = {
+  private def handle[T, C](form: Form[T])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result)(implicit request: Request[_], w: Writeable[C]) = {
     val filledForm = form.bindFromRequest()
     filledForm.fold(errors => {
       BadRequest(errorContent(errors))

@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.libs.json.JsValue
-import play.api.mvc.{Controller, SimpleResult, RequestHeader}
+import play.api.mvc.{Result, Controller, SimpleResult, RequestHeader}
 import play.api.http.MimeTypes
 import com.mle.musicpimp.json.JsonFormats
 import com.mle.util.Log
@@ -18,7 +18,7 @@ trait PimpContentController extends Controller with Log {
 
   import JsonFormats._
 
-  def pimpResponse(html: => SimpleResult, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): SimpleResult = {
+  def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(JSONv17) => Ok(json17)
@@ -33,7 +33,7 @@ trait PimpContentController extends Controller with Log {
     }
   }
 
-  def pimpResult(html: => SimpleResult, json: => SimpleResult)(implicit request: RequestHeader): SimpleResult =
+  def pimpResult(html: => Result, json: => Result)(implicit request: RequestHeader): Result =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(format) if format contains "json" => json
@@ -41,17 +41,17 @@ trait PimpContentController extends Controller with Log {
     }
 
   // TODO dry
-  def pimpResult(html: => Future[SimpleResult], json: => SimpleResult)(implicit request: RequestHeader): Future[SimpleResult] =
+  def pimpResult(html: => Future[Result], json: => Result)(implicit request: RequestHeader): Future[Result] =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(format) if format contains "json" => Future.successful(json)
       case _ => Future.successful(NotAcceptable)
     }
 
-  def pimpResponse(html: => SimpleResult, json: => JsValue)(implicit request: RequestHeader): SimpleResult =
+  def pimpResponse(html: => Result, json: => JsValue)(implicit request: RequestHeader): Result =
     pimpResult(html, Ok(json))
 
-  def respond(html: => Html, json: => JsValue, status: Status = Ok)(implicit request: RequestHeader): SimpleResult =
+  def respond(html: => play.twirl.api.Html, json: => JsValue, status: Status = Ok)(implicit request: RequestHeader): Result =
     pimpResult(status(html), status(json))
 
   /**

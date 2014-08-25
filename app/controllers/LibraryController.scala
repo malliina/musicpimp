@@ -53,7 +53,7 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to download
    */
-  def download(trackId: String, f: SimpleResult => SimpleResult): EssentialAction =
+  def download(trackId: String, f: Result => Result): EssentialAction =
     CustomFailingPimpAction(onDownloadAuthFail)(implicit req => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
         .fold(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))(path => {
@@ -61,7 +61,7 @@ trait LibraryController extends Secured with Log {
       })
     })
 
-  def onDownloadAuthFail(req: RequestHeader): SimpleResult = {
+  def onDownloadAuthFail(req: RequestHeader): Result = {
     logUnauthorized(req)
     Unauthorized
   }
@@ -93,7 +93,7 @@ trait LibraryController extends Secured with Log {
     Library.findMeta(id).fold(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))(track => Ok(Json.toJson(track)))
   }
 
-  def toHtml(contents: MusicCollection): Html = {
+  def toHtml(contents: MusicCollection): play.twirl.api.Html = {
     //    val itemsColl = MusicCollection.fromFolder(id, relativePath, contents)
     val allItems = contents.dirs ++ contents.songs
     val (col1, col2, col3) = columnize(allItems)

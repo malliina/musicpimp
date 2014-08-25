@@ -1,16 +1,16 @@
 package controllers
 
-import play.api.libs.json.{Writes, JsResult, JsValue, Json}
-import com.mle.util.Log
+import com.mle.musicpimp.audio.TrackMeta
+import com.mle.musicpimp.json.JsonMessages
+import com.mle.musicpimp.json.JsonStrings._
+import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler.json.JsonHandler
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
-import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.json.JsonMessages
+import com.mle.util.Log
 import play.api.libs.json.Json._
-import play.api.mvc.SimpleResult
-import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.audio.TrackMeta
+import play.api.libs.json.{JsResult, JsValue, Json, Writes}
+import play.api.mvc.Result
 
 object Alarms
   extends Secured
@@ -58,12 +58,12 @@ object Alarms
     Ok(Json.toJson(tracks))
   })
 
-  private def onRequest(json: JsValue): SimpleResult = {
+  private def onRequest(json: JsValue): Result = {
     val jsResult = handle(json)
     simpleResult(json, jsResult)
   }
 
-  private def simpleResult[T](json: JsValue, result: JsResult[T]): SimpleResult = {
+  private def simpleResult[T](json: JsValue, result: JsResult[T]): Result = {
     result.fold(
       errors => BadRequest(JsonMessages.failure(s"Invalid JSON: $json. Errors: $errors.")),
       valid => Ok)

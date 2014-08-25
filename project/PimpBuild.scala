@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).enablePlugins(play.PlayScala).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.4.1",
+    version := "2.4.2",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -44,16 +44,16 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.1.7" % "test",
-        mleGroup %% "util" % "1.3.1",
-        mleGroup %% "util-actor" % "1.3.2",
+        "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+        mleGroup %% "util" % "1.3.2",
+        mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
-        mleGroup %% "util-play" % "1.4.0",
-        mleGroup %% "logback-rx" % "0.0.4",
+        mleGroup %% "util-play" % "1.5.0",
+        mleGroup %% "logback-rx" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        play.Project.filters,
+        play.PlayImport.filters,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"),
       mainClass := Some("com.mle.musicpimp.Starter"),

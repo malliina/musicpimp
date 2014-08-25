@@ -12,7 +12,7 @@ trait Secured extends SecureBase with PimpContentController with Log {
     log warn "Unauthorized request: " + request.path + " from: " + request.remoteAddress
   }
 
-  protected override def onUnauthorized(implicit request: RequestHeader): SimpleResult = {
+  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
     logUnauthorized(request)
     pimpResult(
       html = Redirect(routes.Website.login()),

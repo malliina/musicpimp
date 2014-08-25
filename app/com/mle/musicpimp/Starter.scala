@@ -7,7 +7,7 @@ import java.nio.file.Paths
 import com.mle.rmi.{RmiClient, RmiUtil, RmiServer}
 import com.mle.util.{Log, Util, FileUtilities, Scheduling}
 import collection.JavaConversions._
-import scala.concurrent.future
+import scala.concurrent.Future
 import util.FileUtil
 import play.core.StaticApplication
 import java.rmi.ConnectException
@@ -98,7 +98,7 @@ object Starter extends Log {
        * Likely guilty: play! framework, because if no web requests have
        * been made, the app exits normally without this
        */
-      future(System.exit(0))
+      Future(System.exit(0))
     }
   }
 

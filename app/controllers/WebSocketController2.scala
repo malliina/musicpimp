@@ -1,9 +1,11 @@
 package controllers
-import play.api.mvc.{RequestHeader, WebSocket}
-import play.api.libs.iteratee.{Enumerator, Iteratee, Concurrent}
-import com.mle.util.Log
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import com.mle.play.ws.WebSocketBase
+import com.mle.util.Log
+import play.api.libs.iteratee.{Concurrent, Enumerator, Iteratee}
+import play.api.mvc.{RequestHeader, WebSocket}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  *
@@ -22,10 +24,10 @@ trait WebSocketController2 extends WebSocketBase with Log {
    *
    * @return a websocket connection using messages of type Message
    */
-  def ws(implicit frameFormatter: WebSocket.FrameFormatter[Message]): WebSocket[Message] =
+  def ws(implicit frameFormatter: WebSocket.FrameFormatter[Message]): WebSocket[Message, Message] =
     ws2(welcomeMessage.fold(Enumerator.empty[Message])(Enumerator[Message](_)))
 
-  def ws2(initialEnumerator: Enumerator[Message])(implicit frameFormatter: WebSocket.FrameFormatter[Message]): WebSocket[Message] =
+  def ws2(initialEnumerator: Enumerator[Message])(implicit frameFormatter: WebSocket.FrameFormatter[Message]): WebSocket[Message, Message] =
     WebSocket.using[Message](request => {
       authenticate(request).fold({
         // authentication failed
