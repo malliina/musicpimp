@@ -35,6 +35,7 @@ POST        /rootfolders                   controllers.Website.newFolder
 POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks
 GET         /pathsOnly                     controllers.Alarms.paths
+GET         /search                        controllers.Search.search
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.subscribe
 GET         /ws/webplay                    controllers.WebPlayerController.subscribe

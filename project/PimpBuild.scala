@@ -44,7 +44,8 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+        "org.scalatest" %% "scalatest" % "2.2.2" % "test",
+        "org.scalatestplus" %% "play" % "1.1.0" % "test",
         mleGroup %% "util" % "1.3.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
@@ -55,7 +56,9 @@ object PimpBuild extends Build {
         httpGroup % "httpmime" % httpVersion,
         play.PlayImport.filters,
         "net.glxn" % "qrgen" % "1.4",
-        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5"),
+        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
+        "com.h2database" % "h2" % "1.4.181",
+        "com.typesafe.slick" %% "slick" % "2.1.0"),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
