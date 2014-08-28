@@ -1,7 +1,6 @@
 package tests
 
 import com.mle.musicpimp.db.{DataTrack, PimpDb}
-import controllers.Search
 import org.scalatest.FunSuite
 
 import scala.slick.jdbc.GetResult
@@ -21,13 +20,13 @@ class DatabaseTests extends FunSuite {
   case class Query4(one: String, two: String, three: String, four: String)
 
   test("can create database table, query") {
-    init()
-    PimpDb.database.withSession(implicit session => {
-      initIndex(session)
-      val ts = PimpDb.fullText("Immersion")
-      println(ts)
+    PimpDb.init()
+    PimpDb.withSession(implicit session => {
+      val ts = PimpDb.fullText("dgfhfh")
+      assert(ts.isEmpty)
       val ts2 = PimpDb.fullText("Maiden")
-      println(ts2)
+      assert(ts2.size === 1)
+      assert(ts2.head === PimpDb.testData.head)
     })
   }
 
@@ -37,21 +36,6 @@ class DatabaseTests extends FunSuite {
       val tracks = sql"select * from TRACKS".as[DataTrack].list
       tracks.foreach(track => println(track))
     })
-  }
-
-  def init(): Unit = {
-    PimpDb.database.withSession(implicit session => {
-      createIfNotExists(PimpDb.tracks)
-      PimpDb.tracks ++= Search.testData
-    })
-  }
-
-  def initIndex(implicit session: Session): Unit = {
-    PimpDb.executePlain(
-      "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
-      "CALL FT_INIT();",
-      "CALL FT_CREATE_INDEX('PUBLIC', 'TRACKS', NULL);"
-    )
   }
 
   def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {

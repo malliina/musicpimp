@@ -1,15 +1,17 @@
 package com.mle.musicpimp.library
 
-import java.nio.file.{SimpleFileVisitor, Files, FileVisitResult, Path}
-import com.mle.util.Log
+import java.io.File
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
+
+import com.mle.util.Log
 
 /**
  * @author Michael
  */
 object FileUtils extends Log {
   /**
-   * Returns the given files and directories immediately under the specified dir, i.e. performs a non-recursive search.
+   * Non-recursively lists the paths (files and directories) under `dir`.
    *
    * The returned paths are relativized against the supplied root.
    *
@@ -21,6 +23,16 @@ object FileUtils extends Log {
     Files.walkFileTree(dir, visitor)
     Folder(visitor.dirs, visitor.files)
   }
+
+  /**
+   * http://stackoverflow.com/a/7264833/1863674
+   */
+  def fileTree(f: File): Stream[File] =
+    f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(fileTree) else Stream.empty)
+
+  def pathTree(path: Path): Stream[Path] = fileTree(path.toFile) map (_.toPath)
+
+  def readableFiles(path: Path) = pathTree(path).filter(p => !Files.isDirectory(p) && Files.isReadable(p))
 }
 
 class MusicItemVisitor(val startDir: Path, root: Path)

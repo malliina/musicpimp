@@ -1,11 +1,12 @@
 package com.mle.musicpimp.library
 
-import com.mle.util.{FileUtilities, Utils, Log}
-import java.nio.file.{AccessDeniedException, Paths, Files, Path}
-import java.net.{URLEncoder, URLDecoder}
-import com.mle.audio.meta.SongMeta
 import java.io.FileNotFoundException
-import org.jaudiotagger.audio.exceptions.{CannotReadException, InvalidAudioFrameException}
+import java.net.{URLDecoder, URLEncoder}
+import java.nio.file.{AccessDeniedException, Files, Path, Paths}
+
+import com.mle.audio.meta.SongMeta
+import com.mle.musicpimp.db.DataTrack
+import com.mle.util.{FileUtilities, Log, Utils}
 
 /**
  * An item is either a song or a folder.
@@ -64,6 +65,14 @@ trait Library extends MusicLibrary with Log {
 
   def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
 
+  def tracksStream: Stream[LocalTrack] = rootFolders.toStream
+    .flatMap(path => FileUtils.pathTree(path).filter(_.getFileName.toString endsWith "mp3").map(_.relativize(path)))
+    .map(meta)
+
+  def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
+
+  def toDataTrack(track: LocalTrack) = DataTrack(track.id, track.artist, track.album, track.title)
+
   /**
    * This method has a bug.
    *
@@ -101,7 +110,8 @@ trait Library extends MusicLibrary with Log {
     parseMeta(PathInfo(relative, root))
 
   def parseMeta(pi: PathInfo): Option[LocalTrack] =
-    Utils.opt[LocalTrack, Exception] { // InvalidAudioFrameException, CannotReadException
+    Utils.opt[LocalTrack, Exception] {
+      // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
       new LocalTrack(encode(pi.relative), meta)
     }
@@ -145,8 +155,8 @@ trait Library extends MusicLibrary with Log {
     .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))
 
   /**
-   * Some folders might have unsuitable permissions, throwing an exception
-   * when a read attempt is made. Suppresses such AccessDeniedExceptions.
+   * Some folders might have unsuitable permissions, throwing an exception when a read attempt is made. Suppresses such
+   * AccessDeniedExceptions.
    *
    * @param f function that returns folder contents
    * @return the folder, or an empty folder if the folder could not be read

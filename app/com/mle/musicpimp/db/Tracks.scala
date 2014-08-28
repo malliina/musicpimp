@@ -14,5 +14,5 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 
   def track = column[String]("TRACK")
 
-  def * = (id, artist, album, track) <>(DataTrack.tupled, DataTrack.unapply)
+  def * = (id, artist, album, track) <>((DataTrack.apply _).tupled, DataTrack.unapply)
 }

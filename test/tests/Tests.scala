@@ -5,14 +5,19 @@ import org.scalatest.FunSuite
 
 import play.api.libs.json.Json
 import java.nio.file.Paths
-import com.mle.musicpimp.library.Library
+import com.mle.musicpimp.library.{FileUtils, Library}
+import rx.lang.scala.Observable
 
 /**
  * @author Michael
  */
 class Tests extends FunSuite with Log {
+//  val testPath = Paths get ""
   test("can run test") {
 
+  }
+  test("stream of paths") {
+//    FileUtils.pathTree(testPath).foreach(println)
   }
   test("paths") {
     val root = Paths get "a/b/c"

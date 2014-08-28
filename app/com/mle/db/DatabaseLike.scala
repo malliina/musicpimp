@@ -1,5 +1,7 @@
 package com.mle.db
 
+import com.mle.util.Log
+
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.meta.MTable
 import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery}
@@ -8,24 +10,31 @@ import scala.slick.lifted.AbstractTable
 /**
  * @author Michael
  */
-trait DatabaseLike {
+trait DatabaseLike extends Log {
   def database: Database
 
   def tableQueries: Seq[TableQuery[_ <: Table[_]]]
 
   def init(): Unit = {
     withSession(implicit session => {
+      log info s"Ensuring all tables exist..."
       createIfNotExists(tableQueries: _*)
     })
+    withSession(implicit session => onInit(session))
   }
+
+  def onInit(implicit session: Session): Unit = ()
 
   def withSession[T](f: Session => T) = database withSession f
 
   def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) =
-    MTable.getTables(table.baseTableRow.tableName).list(session).isEmpty
+    MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty
 
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*)(implicit session: Session) =
-    tables.filter(t => !exists(t)(session)).foreach(t => t.ddl.create)
+    tables.filter(t => !exists(t)(session)).foreach(t => {
+      t.ddl.create
+      log info s"Created table: ${t.baseTableRow.tableName}"
+    })
 
   def executePlain(queries: String*) =
     withSession(implicit session => queries.foreach(q => StaticQuery.updateNA(q).execute))

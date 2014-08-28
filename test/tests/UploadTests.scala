@@ -24,7 +24,7 @@ class UploadTests extends FunSuite {
 
   def multiPartUpload(uri: String) {
     //    val file = ensureTestMp3Exists()
-    val file = Paths get "F:\\musik\\BabaYetu.mp3"
+    val file = Paths get "file here"
     using(new MultipartRequest(uri))(req => {
       req.setAuth("admin", "test")
       req addFile file
