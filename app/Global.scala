@@ -4,6 +4,7 @@ import com.mle.musicpimp.db.{Indexer, PimpDb}
 import com.mle.musicpimp.log.PimpLog
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.JsonMessages
 import com.mle.util.{FileUtilities, Log}
 import controllers.PimpContentController
@@ -40,7 +41,7 @@ object Global extends WithFilters(new GzipFilter()) with Log {
     Files.createDirectories(FileUtil.pimpHomeDir)
     ScheduledPlaybackService.init()
     PimpDb.init()
-    Indexer.init()
+    Future(Indexer.init())
     FileUtilities init "musicpimp"
     val version = com.mle.musicpimp.BuildInfo.version
     log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"

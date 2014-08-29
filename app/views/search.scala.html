@@ -1,6 +1,6 @@
 @(query: Option[String], results: Seq[com.mle.musicpimp.db.DataTrack])(implicit request: RequestHeader)
 
-@indexMain("search") {
+@libraryBase("search") {
     @bs.headerRow("Search", "col-md-12")
     @bs.bsRow {
         @util.div("col-md-4") {

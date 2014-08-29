@@ -2,44 +2,46 @@
 
 @import models._
 
-@indexMain("library") {
+@libraryBase("folders") {
     <div class="page-header">
-        <h1>Library <small>@relativePath</small></h1>
+        <h1>Library <small>@relativePath</small> @util.div("col-md-4 pull-right")(searchForm(None, ""))</h1>
     </div>
     <div class="row">
         @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
         @renderColumn(col2)
         @renderColumn(col3)
     </div>
-    @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty){
-        <p class="lead">The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">Music Folders</a>.</p>
+    @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty) {
+        <p class="lead">
+            The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">
+            Music Folders</a>.</p>
     }
     @util.script("json.js", "library.js")
 }
-@renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
-    <div class="@columnSpan(onlyColumn)">
-        <ul class="list-unstyled">
-            @items.map {f =>
-                @if(f.dir){
+    @renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
+        <div class="@columnSpan(onlyColumn)">
+            <ul class="list-unstyled">
+            @items.map { f =>
+                @if(f.dir) {
                     <li>@renderDir(f)</li>
-                }else{
+                } else {
                     <li>@renderSong(f) @f.title</li>
                 }
             }
-        </ul>
-    </div>
-}
-@renderDir(dir: MusicItemInfo)={
-    <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
-}
-@renderSong(song: MusicItemInfo) = {
+            </ul>
+        </div>
+    }
+    @renderDir(dir: MusicItemInfo) = {
+        <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
+    }
+    @renderSong(song: MusicItemInfo) = {
     @trackActions(song.id)
-}
+    }
 
-@columnSpan(onlyColumn: Boolean) = {
+    @columnSpan(onlyColumn: Boolean) = {
     @if(onlyColumn) {
         col-md-10
     } else {
         col-md-4
     }
-}
+    }
