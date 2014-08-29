@@ -3,6 +3,7 @@ package com.mle.musicpimp.util
 import java.nio.file.{Files, Path}
 import com.mle.util.{Utils, Log, FileUtilities}
 import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
+import com.mle.util.FileImplicits.StorageFile
 
 /**
  * @author Michael
@@ -10,6 +11,7 @@ import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
 object FileUtil extends Log {
   val ownerOnlyPermissions = PosixFilePermissions fromString "rw-------"
   val ownerOnlyAttributes = PosixFilePermissions asFileAttribute ownerOnlyPermissions
+  val pimpHomeDir = FileUtilities.userDir / ".musicpimp"
 
   // TODO DRY, this is in util
   def props(file: Path) = {

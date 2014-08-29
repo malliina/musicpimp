@@ -36,10 +36,11 @@ POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks
 GET         /pathsOnly                     controllers.Alarms.paths
 GET         /search                        controllers.Search.search
+GET         /search/ws                     controllers.Search.openSocket
 POST        /search/refresh                controllers.Search.refresh
 # WebSockets
-GET         /ws/playback                   controllers.ServerWS.subscribe
-GET         /ws/webplay                    controllers.WebPlayerController.subscribe
+GET         /ws/playback                   controllers.ServerWS.openSocket
+GET         /ws/webplay                    controllers.WebPlayerController.openSocket
 GET         /ws/logs                       controllers.Website.openLogSocket
 # Alarms
 GET         /alarms                        controllers.Alarms.alarms

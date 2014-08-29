@@ -1,11 +1,10 @@
 package controllers
 
-import play.api.libs.json.JsValue
 import models.ClientInfo
-import play.api.mvc.{Call, Controller, RequestHeader}
 import play.api.libs.iteratee.Concurrent.Channel
-import com.mle.play.ws.WebSocketController
+import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.FrameFormatter
+import play.api.mvc.{Call, Controller, RequestHeader}
 
 /**
  * A websockets controller. Subclasses shall implement onConnect, onMessage and onDisconnect.

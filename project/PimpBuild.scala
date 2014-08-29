@@ -35,6 +35,7 @@ object PimpBuild extends Build {
   val mleGroup = "com.github.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.3.3"
+
   /**
    * Our packaging settings must override the packaging settings from playScalaSettings. Play 2.2 also
    * uses sbt-native-packager and has some own settings but we don't use those for packaging.
@@ -50,7 +51,7 @@ object PimpBuild extends Build {
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
-        mleGroup %% "util-play" % "1.5.0",
+        mleGroup %% "util-play" % "1.5.4-SNAPSHOT",
         mleGroup %% "logback-rx" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,

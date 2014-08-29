@@ -1,23 +1,16 @@
 package controllers
 
-import com.mle.actor.ActorManager
-import com.mle.musicpimp.json.JsonStrings._
-import play.api.libs.json.{JsObject, Json, JsValue}
-import com.mle.musicpimp.actor.Messages.ChannelJson
-import com.mle.play.json.JsonMessages
 import com.mle.musicpimp.audio.JsonHandlerBase
+import com.mle.musicpimp.json.JsonStrings._
 import com.mle.play.http.RequestInfo
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 /**
  *
  * @author mle
  */
-trait ActorJsonWebSocketController extends JsonWebSocketController {
-  override val welcomeMessage: Option[Message] = Some(JsonMessages.welcome)
-
+trait ActorJsonWebSocketController extends PimpSocket {
   def messageHandler: JsonHandlerBase
-
-  def actorManager: ActorManager[Client]
 
   def status(client: Client): JsValue
 
@@ -27,7 +20,7 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
         val statusJson = status(client)
         val event = Json.obj(EVENT -> STATUS) ++ statusJson.as[JsObject]
-        actorManager.king ! ChannelJson(client.channel, event)
+        client.channel push event
       case anythingElse =>
         handleMessage(msg, client)
     })
@@ -35,12 +28,5 @@ trait ActorJsonWebSocketController extends JsonWebSocketController {
 
   def handleMessage(message: Message, client: Client): Unit = {
     messageHandler.onJson(message, RequestInfo(client.user, client.request))
-  }
-
-  def onConnect(client: Client): Unit = actorManager connect client
-
-  def onDisconnect(client: Client) = {
-    log info s"Disconnecting client: $client..."
-    actorManager disconnect client
   }
 }

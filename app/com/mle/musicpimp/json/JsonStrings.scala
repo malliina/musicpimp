@@ -5,6 +5,7 @@ package com.mle.musicpimp.json
  */
 trait JsonStrings {
   val OK = "ok"
+  val PING = "ping"
   val FAILURE = "failure"
   val STATUS = "status"
   val VERSION = "version"
@@ -92,9 +93,13 @@ trait JsonStrings {
   val JOB = "job"
   val WHEN = "when"
   val ENABLED = "enabled"
-//  val HOUR = "hour"
-//  val MINUTE = "minute"
-//  val DAYS = "days"
+  //  val HOUR = "hour"
+  //  val MINUTE = "minute"
+  //  val DAYS = "days"
+
+  // Search
+  val REFRESH = "refresh"
+  val SEARCH_STATUS = "search_status"
 }
 
 object JsonStrings extends JsonStrings

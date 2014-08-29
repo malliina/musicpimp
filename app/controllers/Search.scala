@@ -1,32 +1,49 @@
 package controllers
 
-import com.mle.musicpimp.db.{DataTrack, PimpDb}
+import com.mle.musicpimp.db.{DataTrack, Indexer, PimpDb}
+import com.mle.musicpimp.json.JsonMessages
+import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH}
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.util.Log
 import play.api.libs.json.Json
-import rx.lang.scala.Observable
+import play.api.mvc.Call
+import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
 
 /**
  * @author Michael
  */
-object Search extends Secured with Log {
+object Search extends PimpSocket with Log {
+
+  val socketObserver = Observer[Long](
+    (next: Long) => broadcastStatus(s"Indexing... $next files indexed..."),
+    (t: Throwable) => broadcastStatus(s"Indexing failed."),
+    () => broadcastStatus("Indexing complete."))
+  val loggingObserver = Observer[Long](
+    (next: Long) => log info s"Indexing... $next files indexed...",
+    (t: Throwable) => log.error(s"Indexing failed.", t),
+    () => log info s"Indexing complete.")
+
   def search = PimpAction(implicit req => {
-    val query = req.getQueryString("query").filter(_.nonEmpty)
+    val query = req.getQueryString("term").filter(_.nonEmpty)
     val results = query.fold(Seq.empty[DataTrack])(databaseSearch)
     respond(html = views.html.search(query, results), json = Json.toJson(results))
   })
 
-  def refresh = PimpAction {
-    val observable = PimpDb.refreshIndex()
-    val sub = observable.subscribe(
-      next => log info s"Files handled: $next",
-      err => log.error(s"Refresh error.", err),
-      () => log info s"Refresh complete.")
-    toFuture(observable).onComplete(_ => sub.unsubscribe())
+  def refresh = PimpAction(implicit req => {
+    observeRefresh(loggingObserver)
     Ok
-  }
+  })
+
+  override def welcomeMessage: Option[Search.Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
+
+  override def onMessage(msg: Message, client: Client): Unit =
+    (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
+      case REFRESH =>
+        broadcastStatus("Indexing...")
+        observeRefresh(socketObserver, loggingObserver)
+    })
 
   private def toFuture[T](obs: Observable[T]): Future[Unit] = {
     val p = Promise[Unit]()
@@ -36,7 +53,17 @@ object Search extends Secured with Log {
     ret
   }
 
+  def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
+
+  def observeRefresh(observers: Observer[Long]*) = {
+    val observable = Indexer.index()
+    val subs = observers map observable.subscribe
+    toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
+  }
+
   private def databaseSearch(query: String): Seq[DataTrack] = PimpDb.fullText(query)
+
+  override def openSocketCall: Call = routes.Search.openSocket()
 }
 
 

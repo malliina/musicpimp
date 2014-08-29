@@ -39,7 +39,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
     val remoteAddress = request.remoteAddress
     loginForm.bindFromRequest.fold(
       formWithErrors => {
-        val user = formWithErrors.data.get("username").getOrElse("")
+        val user = formWithErrors.data.getOrElse("username", "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
         BadRequest(html.login(formWithErrors))
       },

@@ -1,5 +1,6 @@
 package controllers
 
+import com.mle.musicpimp.db.Indexer
 import play.api.data.Forms._
 import play.api.data.Form
 import views._
@@ -46,6 +47,7 @@ trait SettingsController extends Secured with HtmlController with PimpAccountCon
 
   private def onFoldersChanged = {
     Library.rootFolders = Settings.read
+    Indexer.index()
     Redirect(routes.Website.settings())
   }
 }

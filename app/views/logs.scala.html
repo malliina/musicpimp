@@ -12,6 +12,6 @@
         <tbody id="logTableBody">
         </tbody>
     </table>
-    <script src="@routes.Assets.at("js/rx.js")"></script>
+    @util.script("rx.js")
     @wsopen(Website.wsUrl)
 }

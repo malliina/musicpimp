@@ -19,6 +19,7 @@ trait JsonMessages extends Log {
   val InvalidParameter = failure(INVALID_PARAMETER)
   val InvalidJson = failure(INVALID_JSON)
   val NoFileInMultipart = failure(NO_FILE_IN_MULTIPART)
+  val Ping = event(PING)
 
   def failure(reason: String) = obj(REASON -> reason)
 
@@ -45,6 +46,8 @@ trait JsonMessages extends Log {
 
   def playStateChanged(newState: PlayerStates.Value) =
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
+
+  def searchStatus(status: String) = event(SEARCH_STATUS, STATUS -> status)
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject = {
     obj(EVENT -> eventType) ++ obj(valuePairs: _*)

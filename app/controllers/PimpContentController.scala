@@ -1,11 +1,11 @@
 package controllers
 
-import play.api.libs.json.JsValue
-import play.api.mvc.{Result, Controller, SimpleResult, RequestHeader}
-import play.api.http.MimeTypes
 import com.mle.musicpimp.json.JsonFormats
 import com.mle.util.Log
-import play.api.templates.Html
+import play.api.http.MimeTypes
+import play.api.libs.json.JsValue
+import play.api.mvc.{Controller, RequestHeader, Result}
+
 import scala.concurrent.Future
 
 /**
@@ -16,14 +16,14 @@ import scala.concurrent.Future
  */
 trait PimpContentController extends Controller with Log {
 
-  import JsonFormats._
+  import com.mle.musicpimp.json.JsonFormats._
 
   def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(JSONv17) => Ok(json17)
       case Some(JSONv18) => Ok(latest)
-//      case Some(JSONv24) => Ok(latest)
+      //      case Some(JSONv24) => Ok(latest)
       case Some(other) =>
         log.warn(s"Client requests unknown response format: $other")
         NotAcceptable
@@ -66,7 +66,7 @@ object PimpContentController extends PimpContentController
 
 object PimpRequest extends Log {
 
-  import JsonFormats._
+  import com.mle.musicpimp.json.JsonFormats._
 
   /**
    * @param request the request
@@ -79,8 +79,28 @@ object PimpRequest extends Log {
     else if (request accepts anyJson) Some(latest)
     else if (request accepts JSONv17) Some(JSONv17)
     else if ((request accepts JSONv18) || (request accepts MimeTypes.JSON)) Some(JSONv18)
-//    else if ((request accepts JSONv24) || (request accepts MimeTypes.JSON)) Some(JSONv24)
+    //    else if ((request accepts JSONv24) || (request accepts MimeTypes.JSON)) Some(JSONv24)
     else None
   }
 
+  /**
+   * The desired format for clients compatible with API version 17 is
+   * incorrectly determined to be HTML, because those clients do not
+   * specify an Accept header in their WebSocket requests thus the server
+   * thinks they are browsers by default. However, the WebSocket API does
+   * not support HTML, only JSON, so we can safely assume they are JSON
+   * clients and since clients newer than version 17 must use the Accept
+   * header, we can conclude that they are API version 17 JSON clients.
+   *
+   * Therefore we can filter out HTML formats as below and default to API
+   * version 17 unless the client explicitly requests otherwise.
+   *
+   * This is a workaround to ensure API compatibility during a transition
+   * period from a non-versioned API to a versioned one. Once the transition
+   * is complete, we should default to the latest API version.
+   */
+  def apiVersion(header: RequestHeader) =
+    PimpRequest.requestedResponseFormat(header)
+      .filter(_ != MimeTypes.HTML)
+      .getOrElse(JsonFormats.JSONv17)
 }

@@ -65,9 +65,10 @@ trait Library extends MusicLibrary with Log {
 
   def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
 
-  def tracksStream: Stream[LocalTrack] = rootFolders.toStream
-    .flatMap(path => FileUtils.pathTree(path).filter(_.getFileName.toString endsWith "mp3").map(_.relativize(path)))
-    .map(meta)
+  def trackFiles: Stream[Path] = rootFolders.toStream
+    .flatMap(root => FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3").map(root.relativize))
+
+  def tracksStream: Stream[LocalTrack] = trackFiles map meta
 
   def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
 

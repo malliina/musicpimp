@@ -1,23 +1,22 @@
 package tests
 
-import com.mle.util.{FileUtilities, Log}
-import org.scalatest.FunSuite
-
-import play.api.libs.json.Json
 import java.nio.file.Paths
-import com.mle.musicpimp.library.{FileUtils, Library}
+
+import com.mle.util.Log
+import org.scalatest.FunSuite
+import play.api.libs.json.Json
 import rx.lang.scala.Observable
 
 /**
  * @author Michael
  */
 class Tests extends FunSuite with Log {
-//  val testPath = Paths get ""
+  //  val testPath = Paths get ""
   test("can run test") {
 
   }
   test("stream of paths") {
-//    FileUtils.pathTree(testPath).foreach(println)
+    //    FileUtils.pathTree(testPath).foreach(println)
   }
   test("paths") {
     val root = Paths get "a/b/c"
@@ -50,7 +49,7 @@ class Tests extends FunSuite with Log {
     assert(in === list)
   }
   test("serialize Option") {
-    import Json._
+    import play.api.libs.json.Json._
     val jsValue = stringify(toJson(Some(42)))
     val none = stringify(toJson(Option.empty[Int]))
     assert(jsValue === "42")
