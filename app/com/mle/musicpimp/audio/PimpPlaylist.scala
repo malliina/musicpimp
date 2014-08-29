@@ -1,13 +1,16 @@
 package com.mle.musicpimp.audio
 
-import collection.mutable
+import com.mle.musicpimp.json.JsonMessages
 import com.mle.util.Log
-import com.mle.musicpimp.json.{JsonMessages, JsonSendah}
+import controllers.ServerWS
+import play.api.libs.json.JsValue
+
+import scala.collection.mutable
 
 /**
  * @author Michael
  */
-class PimpPlaylist extends BasePlaylist[PlayableTrack] with JsonSendah with Log {
+class PimpPlaylist extends BasePlaylist[PlayableTrack] with Log {
   // TODO scala-stm
   val songs = mutable.Buffer.empty[PlayableTrack]
 
@@ -16,4 +19,6 @@ class PimpPlaylist extends BasePlaylist[PlayableTrack] with JsonSendah with Log 
 
   protected override def onPlaylistModified(tracks: Seq[PlayableTrack]) =
     send(JsonMessages.playlistModified(tracks))
+
+  def send(json: JsValue) = ServerWS.broadcast(json)
 }

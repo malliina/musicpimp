@@ -1,28 +1,24 @@
 package com.mle.musicpimp.audio
 
-import com.mle.audio._
-import com.mle.musicpimp.actor.ServerPlayerManager
-import com.mle.musicpimp.actor.Messages.Restart
-import com.mle.util.Log
-import scala.Some
-import scala.concurrent.duration.Duration
-import com.mle.musicpimp.json.{JsonSendah, JsonMessages}
-import scala.util.{Success, Failure, Try}
-import com.mle.actor.Messages.Stop
 import java.io.IOException
+
+import com.mle.audio._
+import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.Library
+import com.mle.util.Log
+import controllers.ServerWS
+import play.api.libs.json.JsValue
 import rx.lang.scala.Subscription
+
+import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success, Try}
 
 /**
  * This is a mutable mess. It should be rewritten, maybe using Rx.
  *
  * @author Michael
  */
-object MusicPlayer
-  extends IPlayer
-  with PlaylistSupport[PlayableTrack]
-  with JsonSendah
-  with Log {
+object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log {
 
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
@@ -98,7 +94,6 @@ object MusicPlayer
       sendCurrentVolume()
     }
     previousMute foreach mute
-
     send(JsonMessages.trackChanged(track))
   }
 
@@ -120,8 +115,6 @@ object MusicPlayer
     }
     player.foreach(p => {
       p.play()
-      //      send(JsonMessages.playStateChanged(PlayerStates.Started))
-//      ServerPlayerManager.playbackPoller ! Restart
     })
   }
 
@@ -138,8 +131,11 @@ object MusicPlayer
       p.stop()
       send(JsonMessages.playStateChanged(PlayerStates.Stopped))
     })
-    ServerPlayerManager.playbackPoller ! Stop
+    //    ServerPlayerManager.playbackPoller ! Stop
   }
+
+  // TODO observables
+  def send(json: JsValue) = ServerWS.broadcast(json)
 
   def seek(pos: Duration) {
     Try {

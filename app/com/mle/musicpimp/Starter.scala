@@ -1,19 +1,20 @@
 package com.mle.musicpimp
 
-import com.mle.musicpimp.actor.{WebPlayerManager, ServerPlayerManager}
-import audio.MusicPlayer
-import play.core.server.NettyServer
 import java.nio.file.Paths
-import com.mle.rmi.{RmiClient, RmiUtil, RmiServer}
-import com.mle.util.{Log, Util, FileUtilities, Scheduling}
-import collection.JavaConversions._
-import scala.concurrent.Future
-import util.FileUtil
-import play.core.StaticApplication
 import java.rmi.ConnectException
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext.Implicits.global
+
+import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
+import com.mle.musicpimp.util.FileUtil
+import com.mle.rmi.{RmiClient, RmiServer, RmiUtil}
+import com.mle.util.{FileUtilities, Log, Scheduling, Util}
+import play.core.StaticApplication
+import play.core.server.NettyServer
+
+import scala.collection.JavaConversions._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 
 /**
@@ -82,8 +83,6 @@ object Starter extends Log {
     log info "Stopping MusicPimp..."
     try {
       MusicPlayer.close()
-      ServerPlayerManager.shutdown()
-      WebPlayerManager.shutdown()
       Scheduling.shutdown()
       ScheduledPlaybackService.stop()
       nettyServer foreach (server => {

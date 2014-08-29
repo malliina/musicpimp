@@ -1,11 +1,10 @@
 package com.mle.musicpimp.audio
 
 import com.mle.musicpimp.json.JsonStrings._
-import play.api.libs.json.{JsValue, Json, Writes}
-import play.api.libs.json.Json._
-import com.mle.musicpimp.actor.WebPlayerManager
-import com.mle.musicpimp.actor.Messages.UserJson
 import com.mle.util.Log
+import controllers.WebPlayerController
+import play.api.libs.json.Json._
+import play.api.libs.json.{JsValue, Json, Writes}
 
 /**
  *
@@ -25,6 +24,6 @@ trait JsonSender extends Log {
 
   protected def send(json: JsValue) {
     log debug s"Sending to: $user: $json"
-    WebPlayerManager.king ! UserJson(user, json)
+    WebPlayerController.unicast(user, json)
   }
 }
