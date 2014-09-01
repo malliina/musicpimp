@@ -72,7 +72,7 @@ trait Library extends MusicLibrary with Log {
 
   def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
 
-  def toDataTrack(track: LocalTrack) = DataTrack(track.id, track.artist, track.album, track.title)
+  def toDataTrack(track: LocalTrack) = DataTrack(track.id, track.title, track.artist, track.album, track.duration, track.size)
 
   /**
    * This method has a bug.
@@ -98,17 +98,13 @@ trait Library extends MusicLibrary with Log {
     new LocalTrack(encode(song), meta)
   }
 
-  def meta(itemId: String): LocalTrack =
-    Library meta relativePath(itemId)
+  def meta(itemId: String): LocalTrack = Library meta relativePath(itemId)
 
-  def findMeta(relative: Path): Option[LocalTrack] =
-    findPathInfo(relative).flatMap(parseMeta)
+  def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative).flatMap(parseMeta)
 
-  def findMeta(id: String): Option[LocalTrack] =
-    findMeta(relativePath(id))
+  def findMeta(id: String): Option[LocalTrack] = findMeta(relativePath(id))
 
-  def parseMeta(relative: Path, root: Path): Option[LocalTrack] =
-    parseMeta(PathInfo(relative, root))
+  def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 
   def parseMeta(pi: PathInfo): Option[LocalTrack] =
     Utils.opt[LocalTrack, Exception] {

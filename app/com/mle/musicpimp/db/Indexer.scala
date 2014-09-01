@@ -20,7 +20,7 @@ import scala.util.Try
  * @author Michael
  */
 object Indexer extends Log {
-  val indexFile = FileUtil.pimpHomeDir / "files.cache"
+  val indexFile = FileUtil.pimpHomeDir / "files4.cache"
   val indexInterval = 6.hours
   indexIfNecessary()
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
@@ -32,15 +32,17 @@ object Indexer extends Log {
     val saved = savedFileCount
     if (actual != saved) {
       log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-      index()
+      index(actual)
     } else {
-      log info s"There are still $savedFileCount files in the library. The index is up-to-date."
+      log info s"There are still $savedFileCount files in the library. No change since last time, not indexing."
       Observable.empty
     }
   }
 
-  def index(): Observable[Long] = {
-    val fileCounter = Observable.from(Future(FileUtilities.stringToFile(currentFileCount.toString, indexFile))).map(_ => 0L)
+  def index(): Observable[Long] = index(currentFileCount)
+
+  def index(count: Int): Observable[Long] = {
+    val fileCounter = Observable.from(Future(FileUtilities.stringToFile(count.toString, indexFile))).map(_ => 0L)
     fileCounter ++ PimpDb.refreshIndex()
   }
 

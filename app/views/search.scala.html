@@ -28,7 +28,7 @@
                 </thead>
                 <tbody>
                 @results.map { row =>
-                    <tr><td>@row.track</td><td>@row.artist</td><td>@row.album</td><th>@trackActions(row.id)</th></tr>
+                    <tr><td>@row.title</td><td>@row.artist</td><td>@row.album</td><th>@trackActions(row.id)</th></tr>
                 }
                 </tbody>
             </table>

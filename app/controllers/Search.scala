@@ -10,11 +10,13 @@ import play.api.mvc.Call
 import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
+import scala.util.Try
 
 /**
  * @author Michael
  */
 object Search extends PimpSocket with Log {
+  val DEFAULT_LIMIT = 1000
 
   val socketObserver = Observer[Long](
     (next: Long) => broadcastStatus(s"Indexing... $next files indexed..."),
@@ -27,7 +29,8 @@ object Search extends PimpSocket with Log {
 
   def search = PimpAction(implicit req => {
     val query = req.getQueryString("term").filter(_.nonEmpty)
-    val results = query.fold(Seq.empty[DataTrack])(databaseSearch)
+    val limit = req.getQueryString("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse DEFAULT_LIMIT
+    val results = query.fold(Seq.empty[DataTrack])(databaseSearch(_, limit))
     respond(html = views.html.search(query, results), json = Json.toJson(results))
   })
 
@@ -36,7 +39,7 @@ object Search extends PimpSocket with Log {
     Ok
   })
 
-  override def welcomeMessage: Option[Search.Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
+  override def welcomeMessage: Option[Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
 
   override def onMessage(msg: Message, client: Client): Unit =
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
@@ -61,7 +64,7 @@ object Search extends PimpSocket with Log {
     toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
   }
 
-  private def databaseSearch(query: String): Seq[DataTrack] = PimpDb.fullText(query)
+  private def databaseSearch(query: String, limit: Int): Seq[DataTrack] = PimpDb.fullText(query, limit)
 
   override def openSocketCall: Call = routes.Search.openSocket()
 }
