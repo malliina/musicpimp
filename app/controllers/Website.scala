@@ -1,10 +1,11 @@
 package controllers
 
-import views.html
-import com.mle.util.Log
-import javax.sound.sampled.{LineUnavailableException, AudioSystem}
-import com.mle.musicpimp.library.Settings
+import javax.sound.sampled.{AudioSystem, LineUnavailableException}
+
 import com.mle.musicpimp.audio.MusicPlayer
+import com.mle.musicpimp.library.Settings
+import com.mle.util.Log
+import views.html
 
 /**
  *

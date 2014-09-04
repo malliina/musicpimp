@@ -1,13 +1,14 @@
 package controllers
 
-import play.api.libs.json.{JsValue, Json}
-import rx.lang.scala.{Subscription, Observable}
-import com.mle.logbackrx.LogEvent
 import java.util.concurrent.ConcurrentHashMap
-import collection.JavaConversions._
-import play.api.mvc.WebSocket.FrameFormatter
-import com.mle.play.json.SimpleCommand
+
 import com.mle.musicpimp.json.JsonStrings
+import com.mle.play.json.SimpleCommand
+import play.api.libs.json.JsValue
+import play.api.mvc.WebSocket.FrameFormatter
+import rx.lang.scala.{Observable, Subscription}
+
+import scala.collection.JavaConversions._
 
 /**
  *

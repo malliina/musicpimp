@@ -1,18 +1,20 @@
 package controllers
 
-import views.html
-import play.api.libs.json.Json._
+import java.net.NetworkInterface
+
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.play.controllers.AuthRequest
+import com.mle.play.json.JsonFormats
+import com.mle.util.Log
+import controllers.ConnectController.Protocols
 import net.glxn.qrgen.QRCode
 import play.api.libs.iteratee.Enumerator
-import com.mle.util.Log
-import com.mle.play.controllers.AuthRequest
 import play.api.libs.json.Json
-import controllers.ConnectController.Protocols
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import java.net.NetworkInterface
-import collection.JavaConversions._
+import play.api.libs.json.Json._
 import play.api.mvc.RequestHeader
-import com.mle.play.json.JsonFormats
+import views.html
+
+import scala.collection.JavaConversions._
 
 /**
  * This code is totally best effort so make sure the user has the final say.

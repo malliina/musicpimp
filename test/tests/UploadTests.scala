@@ -1,11 +1,12 @@
 package tests
 
-import org.scalatest.FunSuite
-import java.nio.file.{Paths, Files, Path}
+import java.nio.file.{Files, Path, Paths}
+
+import com.mle.http.MultipartRequest
+import com.mle.util.Util._
 import com.mle.util.{FileUtilities, Util}
 import org.apache.commons.io.FileUtils
-import com.mle.http.MultipartRequest
-import Util._
+import org.scalatest.FunSuite
 
 /**
  *

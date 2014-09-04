@@ -1,7 +1,8 @@
 package com.mle.musicpimp.library
 
-import com.mle.util.{Log, FileUtilities}
-import java.nio.file.{Files, Paths, Path}
+import java.nio.file.{Files, Path, Paths}
+
+import com.mle.util.{FileUtilities, Log}
 import play.api.libs.json.Json
 
 /**

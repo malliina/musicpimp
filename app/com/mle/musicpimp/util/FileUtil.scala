@@ -1,9 +1,10 @@
 package com.mle.musicpimp.util
 
-import java.nio.file.{Files, Path}
-import com.mle.util.{Utils, Log, FileUtilities}
 import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
+import java.nio.file.{Files, Path}
+
 import com.mle.util.FileImplicits.StorageFile
+import com.mle.util.{FileUtilities, Log, Utils}
 
 /**
  * @author Michael

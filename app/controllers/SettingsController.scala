@@ -1,15 +1,13 @@
 package controllers
 
+import java.nio.file.{Files, Paths}
+
 import com.mle.musicpimp.db.Indexer
-import play.api.data.Forms._
-import play.api.data.Form
-import views._
-import java.nio.file.{Paths, Files}
 import com.mle.musicpimp.library.{Library, Settings}
 import com.mle.util.Log
-import play.api.libs.json.Json._
-import net.glxn.qrgen.QRCode
-import play.api.libs.iteratee.Enumerator
+import play.api.data.Form
+import play.api.data.Forms._
+import views._
 
 
 /**

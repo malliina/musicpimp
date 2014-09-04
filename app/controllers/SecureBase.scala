@@ -1,14 +1,16 @@
 package controllers
 
-import play.api.mvc._
-import com.mle.util.{Utils, Log}
-import com.mle.play.controllers.{OneFileUploadRequest, FileUploadRequest, AuthRequest, BaseSecurity}
-import scala.io.BufferedSource
 import java.io.FileNotFoundException
-import org.apache.commons.codec.digest.DigestUtils
-import play.api.libs.{Files => PlayFiles}
 import java.nio.file.Path
+
+import com.mle.play.controllers.{AuthRequest, BaseSecurity, FileUploadRequest, OneFileUploadRequest}
+import com.mle.util.{Log, Utils}
+import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.Files.TemporaryFile
+import play.api.libs.{Files => PlayFiles}
+import play.api.mvc._
+
+import scala.io.BufferedSource
 
 /**
  * @author mle
@@ -28,7 +30,7 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @return true if the credentials are valid, false otherwise
    */
   override def validateCredentials(username: String, password: String): Boolean = {
-    import PimpAccountController._
+    import controllers.PimpAccountController._
     Utils.opt[BufferedSource, FileNotFoundException](io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
       .fold(ifEmpty = username == defaultUser && password == defaultPass)(_ == hash(username, password))

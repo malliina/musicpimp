@@ -2,7 +2,8 @@ package com.mle.musicpimp.audio
 
 import com.mle.audio.IPlaylist
 import com.mle.util.Log
-import collection.mutable
+
+import scala.collection.mutable
 
 /**
  *

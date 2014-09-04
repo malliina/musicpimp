@@ -1,17 +1,15 @@
+import com.mle.sbt.FileImplicits._
 import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
-import com.mle.sbt.GenericKeys
 import com.mle.sbt.unix.LinuxPlugin
 import com.mle.sbt.win.{WinKeys, WinPlugin}
-import com.mle.sbt.GenericPlugin
-import com.typesafe.sbt.packager.linux
-import com.typesafe.sbt.packager.rpm
-import com.typesafe.sbt.packager.debian
+import com.mle.sbt.{GenericKeys, GenericPlugin}
 import com.typesafe.sbt.SbtNativePackager
-import SbtNativePackager._
-import sbtbuildinfo.Plugin._
-import sbt._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.{linux, rpm}
+import com.typesafe.sbt.web.Import.Assets
 import sbt.Keys._
-import com.mle.sbt.FileImplicits._
+import sbt._
+import sbtbuildinfo.Plugin._
 
 object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).enablePlugins(play.PlayScala).settings(playSettings: _*)
@@ -76,7 +74,12 @@ object PimpBuild extends Build {
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
-      WinKeys.forceStopOnUninstall := true
+      WinKeys.forceStopOnUninstall := true,
+      mappings in(Compile, packageBin) ++= {
+        (unmanagedResourceDirectories in Assets).value flatMap
+          (assetDir => (assetDir ***) pair relativeTo(baseDirectory.value))
+      }
+//      packageBin in Debian :=
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(

@@ -1,9 +1,10 @@
 package com.mle.musicpimp.audio
 
-import play.api.libs.json.JsValue
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
-import concurrent.duration.DurationDouble
+import play.api.libs.json.JsValue
+
+import scala.concurrent.duration.DurationDouble
 import scala.util.Try
 
 /**

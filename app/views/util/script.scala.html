@@ -1,5 +1,5 @@
 @(paths: String*)
-@paths.map { path =>
-    <script src="@routes.Assets.at(s"js/$path")"></script>
-}
+    @paths.map { path =>
+        <script src="@routes.Assets.at(s"js/$path")"></script>
+    }
 

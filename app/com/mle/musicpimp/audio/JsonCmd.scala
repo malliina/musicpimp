@@ -1,7 +1,7 @@
 package com.mle.musicpimp.audio
 
-import play.api.libs.json.JsValue
 import com.mle.musicpimp.json.JsonStrings._
+import play.api.libs.json.JsValue
 
 /**
  *

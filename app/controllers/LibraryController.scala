@@ -1,14 +1,14 @@
 package controllers
 
-import java.nio.file.{Path, Paths}
-import com.mle.musicpimp.library.{Folder, MusicCollection, Library}
-import com.mle.musicpimp.json.JsonMessages
-import com.mle.util.Log
-import views.html
-import play.api.templates.Html
-import play.api.mvc._
 import java.net.URLDecoder
+import java.nio.file.{Path, Paths}
+
+import com.mle.musicpimp.json.JsonMessages
+import com.mle.musicpimp.library.{Folder, Library, MusicCollection}
+import com.mle.util.Log
 import play.api.libs.json.Json
+import play.api.mvc._
+import views.html
 
 /**
  * @author Michael

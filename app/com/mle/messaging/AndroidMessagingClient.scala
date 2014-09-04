@@ -1,9 +1,10 @@
 package com.mle.messaging
 
-import com.mle.messaging.gcm.AndroidDevice
-import scala.concurrent.Future
-import com.ning.http.client.Response
 import com.mle.messaging.PushConstants._
+import com.mle.messaging.gcm.AndroidDevice
+import com.ning.http.client.Response
+
+import scala.concurrent.Future
 
 /**
  * @author Michael

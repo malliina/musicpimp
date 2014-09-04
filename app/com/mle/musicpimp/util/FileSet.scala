@@ -1,7 +1,7 @@
 package com.mle.musicpimp.util
 
-import play.api.libs.json.Format
 import com.mle.util.FileUtilities
+import play.api.libs.json.Format
 
 /**
  * @author Michael

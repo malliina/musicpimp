@@ -1,23 +1,23 @@
 @(relativePath: java.nio.file.Path, col1: Seq[models.MusicItemInfo], col2: Seq[models.MusicItemInfo], col3: Seq[models.MusicItemInfo])
 
-@import models._
+    @import models._
 
-@libraryBase("folders") {
-    <div class="page-header">
-        <h1>Library <small>@relativePath</small> @util.div("col-md-4 pull-right")(searchForm(None, ""))</h1>
-    </div>
-    <div class="row">
-        @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
-        @renderColumn(col2)
-        @renderColumn(col3)
-    </div>
-    @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty) {
-        <p class="lead">
-            The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">
-            Music Folders</a>.</p>
+    @libraryBase("folders") {
+        <div class="page-header">
+            <h1>Library <small>@relativePath</small> @util.div("col-md-4 pull-right")(searchForm(None, ""))</h1>
+        </div>
+        <div class="row">
+            @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
+            @renderColumn(col2)
+            @renderColumn(col3)
+        </div>
+        @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty) {
+            <p class="lead">
+                The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">
+                Music Folders</a>.</p>
+        }
+        @util.script("json.js", "library.js")
     }
-    @util.script("json.js", "library.js")
-}
     @renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
         <div class="@columnSpan(onlyColumn)">
             <ul class="list-unstyled">
@@ -35,13 +35,13 @@
         <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
     }
     @renderSong(song: MusicItemInfo) = {
-    @trackActions(song.id)
+        @trackActions(song.id)
     }
 
     @columnSpan(onlyColumn: Boolean) = {
-    @if(onlyColumn) {
-        col-md-10
-    } else {
-        col-md-4
-    }
+        @if(onlyColumn) {
+            col-md-10
+        } else {
+            col-md-4
+        }
     }

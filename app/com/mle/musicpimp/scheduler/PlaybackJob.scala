@@ -1,18 +1,20 @@
 package com.mle.musicpimp.scheduler
 
 import java.nio.file.{Path, Paths}
-import com.mle.util.Log
-import scala.concurrent.Future
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.audio.{PlayableTrack, MusicPlayer}
-import scala.util.Try
-import com.mle.messaging.gcm.{AmazonDevices, GoogleDevices, AndroidDevice, GcmClient}
-import com.mle.messaging.mpns.{MPNSClient, PushUrls, PushUrl}
-import com.mle.play.json.JsonFormats
-import play.api.libs.json.Json
+
 import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.messaging.adm.AdmClient
+import com.mle.messaging.gcm.{AmazonDevices, AndroidDevice, GcmClient, GoogleDevices}
+import com.mle.messaging.mpns.{MPNSClient, PushUrl, PushUrls}
+import com.mle.musicpimp.audio.{MusicPlayer, PlayableTrack}
+import com.mle.musicpimp.library.Library
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.play.json.JsonFormats
+import com.mle.util.Log
+import play.api.libs.json.Json
+
+import scala.concurrent.Future
+import scala.util.Try
 
 /**
  *

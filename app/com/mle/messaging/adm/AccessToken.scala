@@ -1,8 +1,9 @@
 package com.mle.messaging.adm
 
-import scala.concurrent.duration.Duration
-import play.api.libs.json.Json
 import com.mle.play.json.JsonFormats
+import play.api.libs.json.Json
+
+import scala.concurrent.duration.Duration
 
 /**
  * @author Michael

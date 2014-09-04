@@ -1,12 +1,14 @@
 package com.mle.musicpimp.library
 
-import com.mle.audio.meta.{UriSource, SongTags, SongMeta}
-import models.MusicItemInfo
-import com.mle.util.Log
 import java.net.URI
-import scala.concurrent.duration._
+
+import com.mle.audio.meta.{SongMeta, SongTags, UriSource}
+import com.mle.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
 import com.mle.storage.StorageSize
-import com.mle.musicpimp.audio.{StoragePlayer, PimpPlayer, PlayableTrack}
+import com.mle.util.Log
+import models.MusicItemInfo
+
+import scala.concurrent.duration._
 
 /**
  *

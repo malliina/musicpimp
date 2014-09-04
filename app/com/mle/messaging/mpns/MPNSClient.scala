@@ -1,8 +1,9 @@
 package com.mle.messaging.mpns
 
-import scala.concurrent.Future
-import com.ning.http.client.Response
 import com.mle.messaging.MessagingClient
+import com.ning.http.client.Response
+
+import scala.concurrent.Future
 
 /**
  *

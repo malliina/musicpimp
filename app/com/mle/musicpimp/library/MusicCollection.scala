@@ -1,10 +1,11 @@
 package com.mle.musicpimp.library
 
 import java.nio.file.Path
-import play.api.libs.json.Json._
-import com.mle.musicpimp.json.JsonStrings._
-import play.api.libs.json.{JsValue, Writes}
+
 import com.mle.musicpimp.audio.TrackMeta
+import com.mle.musicpimp.json.JsonStrings._
+import play.api.libs.json.Json._
+import play.api.libs.json.{JsValue, Writes}
 
 /**
  * @author Michael
@@ -14,7 +15,7 @@ case class MusicCollection(id: String, path: Path, dirs: Seq[FolderInfo], songs:
 object MusicCollection {
   implicit val writes = new Writes[MusicCollection] {
     def writes(o: MusicCollection): JsValue = {
-      val tracks:Seq[TrackMeta] = o.songs
+      val tracks: Seq[TrackMeta] = o.songs
       obj(
         FOLDER -> obj(
           ID -> o.id,

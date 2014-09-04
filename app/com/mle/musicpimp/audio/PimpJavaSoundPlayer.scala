@@ -5,7 +5,7 @@ import com.mle.musicpimp.library.LocalTrack
 
 class StoragePlayer(val track: LocalTrack, eom: () => Unit)
   extends BasicJavaSoundPlayer(track.media)
-  with PimpPlayer{
+  with PimpPlayer {
   override def onEndOfMedia(): Unit = eom()
 }
 

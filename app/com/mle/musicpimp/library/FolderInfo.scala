@@ -1,9 +1,10 @@
 package com.mle.musicpimp.library
 
+import java.nio.file.Path
+
+import com.mle.musicpimp.json.JsonStrings._
 import models.MusicItemInfo
 import play.api.libs.json.Json._
-import com.mle.musicpimp.json.JsonStrings._
-import java.nio.file.Path
 import play.api.libs.json.{JsValue, Writes}
 
 /**

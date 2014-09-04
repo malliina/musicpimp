@@ -2,10 +2,10 @@ package com.mle.musicpimp.db
 
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.util.FileImplicits.StorageFile
 import com.mle.util.{FileUtilities, Log}
 import rx.lang.scala.Observable
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong

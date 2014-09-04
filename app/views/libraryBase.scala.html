@@ -1,14 +1,14 @@
 @(tab: String)(content: Html)
 
-@indexMain("library") {
-    <ul class="nav nav-tabs">
-        @navItem("Folders", "folders", routes.Rest.rootLibrary(), "folder-open")
-        @navItem("Search", "search", routes.Search.search(), "search")
-    </ul>
-    <section>
-    @content
-    </section>
-}
+    @indexMain("library") {
+        <ul class="nav nav-tabs">
+            @navItem("Folders", "folders", routes.Rest.rootLibrary(), "folder-open")
+            @navItem("Search", "search", routes.Search.search(), "search")
+        </ul>
+        <section>
+        @content
+        </section>
+    }
     @navItem(title: String, tabName: String, href: Call, glyphIcon: String) = {
-    @bs.navItem(title, tabName, tab, href, glyphIcon)
+        @bs.navItem(title, tabName, tab, href, glyphIcon)
     }

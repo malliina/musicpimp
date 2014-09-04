@@ -1,11 +1,11 @@
 package controllers
 
-import views.html
-import rx.lang.scala.Observable
 import com.mle.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
+import controllers.PimpLogController._
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Call
-import PimpLogController._
-import play.api.libs.json.{Json, JsValue}
+import rx.lang.scala.Observable
+import views.html
 
 /**
  *

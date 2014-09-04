@@ -1,27 +1,27 @@
 @(feedback: Option[String])(scripts: Html)(implicit request: RequestHeader)
 
-@indexMain("player") {
-    @bs.bsRowColumn("col-md-9"){
-        <div class="page-header">
-            <h1>Player <small class="pull-right" id="status">Initializing...</small></h1>
-        </div>
-    }
-    @feedback.map { msg =>
+    @indexMain("player") {
         @bs.bsRowColumn("col-md-9") {
-            <p class="lead alert" id="feedback">@msg</p>
+            <div class="page-header">
+                <h1>Player <small class="pull-right" id="status">Initializing...</small></h1>
+            </div>
         }
-    }
-    @bs.bsRowColumn("col-md-6"){
-        <p id="notracktext" class="lead">No track. Play one from
-            the <a href="@routes.Rest.rootLibrary()">library</a> or stream from a mobile device.</p>
-    }
-    <div class="row">
-        @playerControls()
-        <div class="col-md-3">
-            <h2>Playlist</h2>
-            <ol id="playlist">
-            </ol>
+        @feedback.map { msg =>
+            @bs.bsRowColumn("col-md-9") {
+                <p class="lead alert" id="feedback">@msg</p>
+            }
+        }
+        @bs.bsRowColumn("col-md-6") {
+            <p id="notracktext" class="lead">No track. Play one from
+                the <a href="@routes.Rest.rootLibrary()">library</a> or stream from a mobile device.</p>
+        }
+        <div class="row">
+            @playerControls()
+            <div class="col-md-3">
+                <h2>Playlist</h2>
+                <ol id="playlist">
+                </ol>
+            </div>
         </div>
-    </div>
-    @scripts
-}
+        @scripts
+    }

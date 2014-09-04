@@ -12,13 +12,13 @@ package com.mle.musicpimp.json
 trait JsonFormats {
   val JSONv17 = versionString(Some(17))
   val JSONv18 = versionString(Some(18))
-//  /**
-//   * JSONv18 diff JSONv24:
-//   * key: playlist_index -> index, but playlist_index also remains
-//   *
-//   * Clients accepting v18 are compatible with v24 responses.
-//   */
-//  val JSONv24 = versionString(Some(24))
+  //  /**
+  //   * JSONv18 diff JSONv24:
+  //   * key: playlist_index -> index, but playlist_index also remains
+  //   *
+  //   * Clients accepting v18 are compatible with v24 responses.
+  //   */
+  //  val JSONv24 = versionString(Some(24))
   val anyJson = versionString(None)
   val latest = JSONv18
 

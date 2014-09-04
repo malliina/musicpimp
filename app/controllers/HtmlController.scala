@@ -1,7 +1,6 @@
 package controllers
 
-import play.api.mvc.{RequestHeader, EssentialAction}
-import play.api.templates.Html
+import play.api.mvc.{EssentialAction, RequestHeader}
 
 /**
  *

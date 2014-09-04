@@ -1,9 +1,10 @@
 package com.mle.musicpimp.util
 
 import java.nio.file.{Files, Path}
+
+import com.mle.util.FileUtilities
 import play.api.libs.json.Format
 import play.api.libs.json.Json._
-import com.mle.util.FileUtilities
 
 /**
  * Persists the list to `file` by serializing at every modification. Not thread-safe.

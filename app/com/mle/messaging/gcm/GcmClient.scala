@@ -1,9 +1,6 @@
 package com.mle.messaging.gcm
 
-import com.mle.messaging.{AndroidMessagingClient, MessagingClient, PushConstants}
-import scala.concurrent.Future
-import com.ning.http.client.Response
-import PushConstants._
+import com.mle.messaging.AndroidMessagingClient
 
 /**
  *

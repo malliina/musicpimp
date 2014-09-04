@@ -1,13 +1,14 @@
 package com.mle.musicpimp.scheduler
 
-import play.api.libs.json.{JsResult, JsValue, Format}
 import play.api.libs.json.Json._
+import play.api.libs.json.{Format, JsResult, JsValue}
 
 /**
  *
  * @author mle
  */
 trait JsonHelpers {
+
   /**
    * Json reader/writer. Writes toString and reads as specified by `f`.
    *
@@ -22,4 +23,5 @@ trait JsonHelpers {
   }
 
 }
+
 object JsonHelpers extends JsonHelpers

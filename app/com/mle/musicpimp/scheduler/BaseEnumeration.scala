@@ -9,4 +9,5 @@ abstract class BaseEnumeration extends Enumeration {
     .getOrElse(throw new NoSuchElementException(s"Unknown enumeration name: $name"))
 
   implicit object jsonFromat extends JsonHelpers.SimpleFormat[Value](withNameIgnoreCase)
+
 }

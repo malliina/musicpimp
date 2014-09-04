@@ -1,7 +1,8 @@
 package tests
 
-import org.scalatest.FunSuite
 import javax.sound.sampled.AudioSystem
+
+import org.scalatest.FunSuite
 
 /**
  *

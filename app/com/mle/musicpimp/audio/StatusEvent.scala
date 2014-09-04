@@ -1,12 +1,13 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.library.LocalTrack
 import com.mle.audio.PlayerStates
-import scala.concurrent.duration.Duration
+import com.mle.musicpimp.json.PimpJson
+import com.mle.musicpimp.library.LocalTrack
+import com.mle.play.json.JsonFormats
 import com.mle.util.Log
 import play.api.libs.json.Json
-import com.mle.play.json.JsonFormats
-import com.mle.musicpimp.json.PimpJson
+
+import scala.concurrent.duration.Duration
 
 /**
  *

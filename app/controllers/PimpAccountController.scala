@@ -1,18 +1,17 @@
 package controllers
 
-import views.html
-import play.api.mvc._
-import com.mle.util.{Log, FileUtilities}
-import scala.Some
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.controllers.AccountController
+import com.mle.util.{FileUtilities, Log}
+import play.api.mvc._
+import views.html
 
 /**
  * @author Michael
  */
 trait PimpAccountController extends HtmlController with AccountController with Log {
 
-  import PimpAccountController._
+  import controllers.PimpAccountController._
 
   def account = PimpAction(implicit req =>
     Ok(html.account(req.user, changePasswordForm))

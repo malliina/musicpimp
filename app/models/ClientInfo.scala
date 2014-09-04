@@ -1,11 +1,11 @@
 package models
 
-import play.api.libs.iteratee.Concurrent
-import play.api.mvc.RequestHeader
-import controllers.{PimpRequest, RequestHelpers}
 import com.mle.musicpimp.json.JsonFormats
 import com.mle.util.Log
+import controllers.{PimpRequest, RequestHelpers}
 import play.api.http.MimeTypes
+import play.api.libs.iteratee.Concurrent
+import play.api.mvc.RequestHeader
 
 /**
  * @param channel channel used to push messages to the client

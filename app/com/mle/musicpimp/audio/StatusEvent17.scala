@@ -1,11 +1,12 @@
 package com.mle.musicpimp.audio
 
-import com.mle.audio.PlayerStates
-import play.api.libs.json.Json._
 import com.mle.audio.AudioImplicits._
-import scala.concurrent.duration.Duration
-import play.api.libs.json.{JsValue, Writes}
+import com.mle.audio.PlayerStates
 import com.mle.musicpimp.json.JsonStrings._
+import play.api.libs.json.Json._
+import play.api.libs.json.{JsValue, Writes}
+
+import scala.concurrent.duration.Duration
 
 /**
  * @author Michael

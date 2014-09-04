@@ -1,19 +1,19 @@
 @(loginForm: Form[(String, String)], motd: Option[String] = None)(implicit flash: Flash)
 
 @import helper._
-@implicitFieldConstructor = @{
-    FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
-}
+    @implicitFieldConstructor = @{
+        FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
+    }
 
 @basePage(title = "Welcome") {
     <link rel="stylesheet" href="@routes.Assets.at("css/login.css")"/>
     <div class="container">
-        @bs.bsRowColumn("col-md-4"){
+        @bs.bsRowColumn("col-md-4") {
             @flash.get("feedback").map { message =>
                 <p class="lead"> @message </p>
             }
         }
-        @bs.bsRowColumn("col-md-3"){
+        @bs.bsRowColumn("col-md-3") {
             <form class="form-signin" name="loginForm" action="@routes.Website.formAuthenticate()" method="POST">
                 <h2 class="form-signin-heading">Please sign in</h2>
                 <input type="text" class="form-control" name="username" id="username" placeholder="Username" autofocus>
@@ -21,18 +21,18 @@
                 <button type="submit" id="loginbutton" class="btn btn-lg btn-primary btn-block">Sign in</button>
             </form>
         }
-        @bs.bsRowColumn("col-md-4"){
+        @bs.bsRowColumn("col-md-4") {
             @loginForm.globalError.map { error =>
                 <p class="error">@error.message</p>
             }
         }
-        @bs.bsRowColumn("col-md-4"){
+        @bs.bsRowColumn("col-md-4") {
             @motd.map { message =>
                 <p> @message </p>
             }
         }
     </div>
     <script type="text/javascript" charset="utf-8">
-            $(function () {document.loginForm.username.focus();});
+    $ ( function ( ) { document.loginForm.username.focus ( ) ; } ) ;
     </script>
 }

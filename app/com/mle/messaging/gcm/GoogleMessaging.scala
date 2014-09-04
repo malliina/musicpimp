@@ -1,11 +1,12 @@
 package com.mle.messaging.gcm
 
-import play.api.libs.json.Json
-import com.ning.http.client.Response
-import scala.concurrent.Future
-import com.mle.http.AsyncHttp._
 import com.mle.http.AsyncHttp
+import com.mle.http.AsyncHttp._
 import com.mle.util.Utils.executionContext
+import com.ning.http.client.Response
+import play.api.libs.json.Json
+
+import scala.concurrent.Future
 
 /**
  *
@@ -13,7 +14,7 @@ import com.mle.util.Utils.executionContext
  */
 class GoogleMessaging(apiKey: String) {
 
-  import GoogleMessaging._
+  import com.mle.messaging.gcm.GoogleMessaging._
 
   def send(id: String, data: Map[String, String]): Future[Response] =
     send(GoogleMessage(Seq(id), data))

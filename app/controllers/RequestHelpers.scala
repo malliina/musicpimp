@@ -1,12 +1,13 @@
 package controllers
 
-import play.api.mvc.RequestHeader
-import com.mle.musicpimp.Starter
 import java.net.InetSocketAddress
-import play.core.server.NettyServer
+
+import com.mle.musicpimp.Starter
+import com.mle.util.{Log, Utils}
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.Channel
-import com.mle.util.{Utils, Util, Log}
+import play.api.mvc.RequestHeader
+import play.core.server.NettyServer
 
 object RequestHelpers extends Log {
   /**

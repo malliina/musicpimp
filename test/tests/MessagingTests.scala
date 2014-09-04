@@ -1,9 +1,10 @@
 package tests
 
-import org.scalatest.FunSuite
 import com.mle.messaging.adm.AdmClient
+import org.scalatest.FunSuite
+
 import scala.concurrent.Await
-import concurrent.duration.DurationInt
+import scala.concurrent.duration.DurationInt
 
 /**
  * @author Michael

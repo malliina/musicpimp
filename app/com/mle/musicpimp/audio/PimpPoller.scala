@@ -1,7 +1,8 @@
 package com.mle.musicpimp.audio
 
-import com.mle.util.Scheduling
 import com.mle.util.Implicits.int2timeUnits
+import com.mle.util.Scheduling
+
 import scala.concurrent.duration.Duration
 
 /**

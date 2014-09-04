@@ -1,7 +1,8 @@
 package com.mle.messaging.adm
 
-import scala.concurrent.Future
 import com.mle.messaging.AndroidMessagingClient
+
+import scala.concurrent.Future
 
 /**
  * @author Michael

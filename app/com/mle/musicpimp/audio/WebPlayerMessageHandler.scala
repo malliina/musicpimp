@@ -1,12 +1,13 @@
 package com.mle.musicpimp.audio
 
-import play.api.libs.json.JsValue
+import java.util.concurrent.TimeUnit
+
+import com.mle.audio.PlayerStates
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
-import com.mle.audio.PlayerStates
-import scala.concurrent.duration.Duration
-import java.util.concurrent.TimeUnit
-import concurrent.duration.DurationInt
+import play.api.libs.json.JsValue
+
+import scala.concurrent.duration.{Duration, DurationInt}
 
 
 /**

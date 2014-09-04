@@ -1,13 +1,15 @@
 package com.mle.messaging.mpns
 
-import play.api.http.HeaderNames._
-import scala.xml.{XML, Elem}
-import scala.concurrent.Future
 import java.io.StringWriter
-import com.mle.util.Log
-import com.ning.http.client.{Response => NingResponse}
+
 import com.mle.http.AsyncHttp
+import com.mle.util.Log
 import com.mle.util.Utils.executionContext
+import com.ning.http.client.{Response => NingResponse}
+import play.api.http.HeaderNames._
+
+import scala.concurrent.Future
+import scala.xml.{Elem, XML}
 
 /**
  *

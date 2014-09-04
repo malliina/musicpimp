@@ -1,7 +1,7 @@
 package com.mle.musicpimp.scheduler
 
-import it.sauronsoftware.cron4j.{SchedulingPattern, Scheduler}
 import com.mle.util.Utils
+import it.sauronsoftware.cron4j.{Scheduler, SchedulingPattern}
 
 
 /**

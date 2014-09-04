@@ -1,27 +1,27 @@
 @(folders: Seq[String], newFolderForm: Form[String])
 
-@if(folders.isEmpty) {
-    <p>No music folders have been added.</p>
-}
-@bs.bsRowColumn("col-md-6") {
-    <ul class="list-unstyled">
-    @folders.map { f =>
-        <li>@renderFolder(f)</li>
+    @if(folders.isEmpty) {
+        <p>No music folders have been added.</p>
     }
-    </ul>
-    <form name="newFolderForm" action="@routes.Website.newFolder()" method="POST" class="form-horizontal">
-        <div class="input-group">
-            <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
-            <input class="form-control" id="path" name="path" type="text" placeholder="/opt/music/" required/>
-            <span class="input-group-btn">
-                <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> Add</button>
-            </span>
-        </div>
-        @newFolderForm.errors.map { error =>
-            <p class="error"> @error.message </p>
+    @bs.bsRowColumn("col-md-6") {
+        <ul class="list-unstyled">
+        @folders.map { f =>
+            <li>@renderFolder(f)</li>
         }
-    </form>
-}
+        </ul>
+        <form name="newFolderForm" action="@routes.Website.newFolder()" method="POST" class="form-horizontal">
+            <div class="input-group">
+                <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
+                <input class="form-control" id="path" name="path" type="text" placeholder="/opt/music/" required/>
+                <span class="input-group-btn">
+                    <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> Add</button>
+                </span>
+            </div>
+            @newFolderForm.errors.map { error =>
+                <p class="error"> @error.message </p>
+            }
+        </form>
+    }
 
 
     @renderFolder(folder: String) = {

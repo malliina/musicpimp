@@ -1,9 +1,9 @@
 package com.mle.messaging.gcm
 
-import play.api.libs.json.Json
-import scala.concurrent.duration.Duration
-import concurrent.duration.DurationLong
 import com.mle.play.json.JsonFormats
+import play.api.libs.json.Json
+
+import scala.concurrent.duration.{Duration, DurationLong}
 
 /**
  *

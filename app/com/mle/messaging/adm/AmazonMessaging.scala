@@ -1,16 +1,16 @@
 package com.mle.messaging.adm
 
-import scala.concurrent.Future
-import com.ning.http.client.Response
 import com.mle.http.AsyncHttp
-import com.mle.http.AsyncHttp._
-import AmazonMessaging._
-import AsyncHttp.RichRequestBuilder
-import play.api.libs.json.Json
-import com.mle.util.Utils.executionContext
+import com.mle.http.AsyncHttp.{RichRequestBuilder, _}
 import com.mle.messaging.PushException
-import concurrent.duration.DurationInt
+import com.mle.messaging.adm.AmazonMessaging._
 import com.mle.util.Log
+import com.mle.util.Utils.executionContext
+import com.ning.http.client.Response
+import play.api.libs.json.Json
+
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 /**
  * @author Michael

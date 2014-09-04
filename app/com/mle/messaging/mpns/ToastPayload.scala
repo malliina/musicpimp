@@ -1,6 +1,6 @@
 package com.mle.messaging.mpns
 
-import scala.xml.{NodeSeq, Elem}
+import scala.xml.{Elem, NodeSeq}
 
 /**
  * Do not automatically format this file.
@@ -20,10 +20,15 @@ object ToastPayload {
     // payloads must be on same line of xml, do not let formatting mess it up
     <wp:Notification xmlns:wp="WPNotification">
       <wp:Toast>
-        <wp:Text1>{text1}</wp:Text1>
-        <wp:Text2>{text2}</wp:Text2>
-        <wp:Param>{deepLink}</wp:Param>
-        {silenceElement}
+        <wp:Text1>
+          {text1}
+        </wp:Text1>
+        <wp:Text2>
+          {text2}
+        </wp:Text2>
+        <wp:Param>
+          {deepLink}
+        </wp:Param>{silenceElement}
       </wp:Toast>
     </wp:Notification>
   }

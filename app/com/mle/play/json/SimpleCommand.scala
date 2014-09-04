@@ -3,9 +3,9 @@ package com.mle.play.json
 import play.api.libs.json.Json
 
 /**
-  *
-  * @author mle
-  */
+ *
+ * @author mle
+ */
 case class SimpleCommand(cmd: String)
 
 object SimpleCommand {
