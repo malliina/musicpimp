@@ -5,6 +5,7 @@ import com.mle.sbt.win.{WinKeys, WinPlugin}
 import com.mle.sbt.GenericPlugin
 import com.typesafe.sbt.packager.linux
 import com.typesafe.sbt.packager.rpm
+import com.typesafe.sbt.packager.debian
 import com.typesafe.sbt.SbtNativePackager
 import SbtNativePackager._
 import sbtbuildinfo.Plugin._
@@ -34,7 +35,7 @@ object PimpBuild extends Build {
 
   val mleGroup = "com.github.malliina"
   val httpGroup = "org.apache.httpcomponents"
-  val httpVersion = "4.3.3"
+  val httpVersion = "4.3.5"
 
   /**
    * Our packaging settings must override the packaging settings from playScalaSettings. Play 2.2 also
@@ -46,12 +47,12 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         "org.scalatest" %% "scalatest" % "2.2.2" % "test",
-        "org.scalatestplus" %% "play" % "1.1.0" % "test",
+        "org.scalatestplus" %% "play" % "1.2.0" % "test",
         mleGroup %% "util" % "1.3.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
-        mleGroup %% "util-play" % "1.5.4-SNAPSHOT",
+        mleGroup %% "util-play" % "1.5.5",
         mleGroup %% "logback-rx" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -68,7 +69,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "903c21b4-4d0e-456a-80c3-acac59e6ead6",
+      WinKeys.productGuid := "fd58a442-4edc-4941-9001-a98678a7454b",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
@@ -76,7 +77,6 @@ object PimpBuild extends Build {
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
       WinKeys.forceStopOnUninstall := true
-//      scalaVersion := "2.11.0"
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(
