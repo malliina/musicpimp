@@ -1,17 +1,17 @@
 @(trackID: String)
 <div class="btn-group">
-    <a class="btn btn-default btn-xs" href="#" onclick="return play ( ' @trackID ');"><i class="glyphicon glyphicon-play"></i>
+    <a class="btn btn-default btn-xs" href="#" onclick="return play('@trackID');"><i class="glyphicon glyphicon-play"></i>
         Play</a>
     <a class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
     <ul class="dropdown-menu">
-        <li><a href="#" onclick="return add ( ' @trackID ');"><i class="glyphicon glyphicon-plus"></i>
+        <li><a href="#" onclick="return add('@trackID');"><i class="glyphicon glyphicon-plus"></i>
             Add to playlist</a>
         </li>
         <li><a href="@routes.Rest.download(trackID)"><i class="glyphicon glyphicon-download"></i> Download</a></li>
-        <li><a href="#" onclick="return webPlay ( ' @trackID ');"><i class="glyphicon glyphicon-play"></i>
+        <li><a href="#" onclick="return webPlay('@trackID');"><i class="glyphicon glyphicon-play"></i>
             Play in browser</a>
         </li>
-        <li><a href="#" onclick="return webAdd ( ' @trackID ');"><i class="glyphicon glyphicon-plus"></i>
+        <li><a href="#" onclick="return webAdd('@trackID');"><i class="glyphicon glyphicon-plus"></i>
             Add to browser</a>
         </li>
     </ul>

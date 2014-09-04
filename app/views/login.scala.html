@@ -1,6 +1,6 @@
 @(loginForm: Form[(String, String)], motd: Option[String] = None)(implicit flash: Flash)
 
-@import helper._
+@import views.html.helper._
     @implicitFieldConstructor = @{
         FieldConstructor(twitterBootstrap.twitterBootstrapFieldConstructor.f)
     }
@@ -33,6 +33,6 @@
         }
     </div>
     <script type="text/javascript" charset="utf-8">
-    $ ( function ( ) { document.loginForm.username.focus ( ) ; } ) ;
+    $ ( function () { document.loginForm.username.focus(); } ) ;
     </script>
 }
