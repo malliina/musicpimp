@@ -15,13 +15,15 @@ object PimpBuild extends Build {
   lazy val pimpProject = Project("musicpimp", file(".")).enablePlugins(play.PlayScala).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.5.0",
+    version := "2.5.1",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
-      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/")
+      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/"),
+    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    scalacOptions += "-target:jvm-1.7"
   )
 
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
@@ -67,7 +69,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "fd58a442-4edc-4941-9001-a98678a7454b",
+      WinKeys.productGuid := "1ea05113-49ac-41cb-bb0f-a5b9fbc51386",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
@@ -79,7 +81,7 @@ object PimpBuild extends Build {
         (unmanagedResourceDirectories in Assets).value flatMap
           (assetDir => (assetDir ***) pair relativeTo(baseDirectory.value))
       }
-//      packageBin in Debian :=
+      //      packageBin in Debian :=
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(
