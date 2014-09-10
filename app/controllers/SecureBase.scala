@@ -3,7 +3,7 @@ package controllers
 import java.io.FileNotFoundException
 import java.nio.file.Path
 
-import com.mle.play.controllers.{AuthRequest, BaseSecurity, FileUploadRequest, OneFileUploadRequest}
+import com.mle.play.controllers._
 import com.mle.util.{Log, Utils}
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.Files.TemporaryFile
@@ -16,6 +16,10 @@ import scala.io.BufferedSource
  * @author mle
  */
 trait SecureBase extends PimpContentController with BaseSecurity with Log {
+
+  override def authenticate(implicit request: RequestHeader): Option[AuthResult] =
+    super.authenticate orElse CookieLogin.authenticateFromCookie(request)
+
   /**
    * Validates the supplied credentials.
    *
@@ -36,16 +40,14 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
       .fold(ifEmpty = username == defaultUser && password == defaultPass)(_ == hash(username, password))
   }
 
-  def hash(username: String, password: String) =
-    DigestUtils.md5Hex(username + ":" + password)
+  def hash(username: String, password: String) = DigestUtils.md5Hex(username + ":" + password)
 
   /**
    * Authenticates, logs authenticated request, executes action, in that order.
    *
    * If authentication fails, logs auth fail message.
    */
-  def AuthenticatedAndLogged(f: String => EssentialAction): EssentialAction =
-    Authenticated(user => Logged(user, f))
+  def AuthenticatedAndLogged(f: AuthResult => EssentialAction): EssentialAction = Authenticated(user => Logged(user, f))
 
   /**
    * Returns an action with the result specified in <code>onFail</code> if authentication fails.
@@ -53,16 +55,14 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param onFail result to return if authentication fails
    * @param f the action we want to do
    */
-  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: String => Result) =
+  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: AuthResult => Result) =
     Security.Authenticated(req => authenticate(req), req => onFail(req))(user => {
-      Logged(user, user => Action(f(user)))
+      Logged(user, user => Action(maybeWithCookie(user, f(user))))
     })
 
-  def PimpAction(f: AuthRequest[AnyContent] => Result) =
-    PimpParsedAction(parse.anyContent)(f)
+  def PimpAction(f: AuthRequest[AnyContent] => Result) = PimpParsedAction(parse.anyContent)(req => f(req))
 
-  def PimpAction(result: => Result) =
-    PimpParsedAction(parse.anyContent)(_ => result)
+  def PimpAction(result: => Result) = PimpParsedAction(parse.anyContent)(auth => result)
 
   def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
     PimpAction(req => {
@@ -82,5 +82,14 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
     })
 
   def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) =
-    AuthenticatedAndLogged(user => Action(parser)(req => f(new AuthRequest(user, req))))
+    AuthenticatedAndLogged(user => Action(parser)(req => {
+      val result = f(new AuthRequest(user.user, req, user.cookie))
+      maybeWithCookie(user, result)
+    }))
+
+  private def maybeWithCookie(user: AuthResult, result: Result) =
+    user.cookie.fold(result)(c => {
+      log debug s"Sending updated cookie in response..."
+      result withCookies c withSession (Security.username -> user.user)
+    })
 }

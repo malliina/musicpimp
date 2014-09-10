@@ -3,6 +3,8 @@ package controllers
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.controllers.AccountController
 import com.mle.util.{FileUtilities, Log}
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.mvc._
 import views.html
 
@@ -13,9 +15,19 @@ trait PimpAccountController extends HtmlController with AccountController with L
 
   import controllers.PimpAccountController._
 
+  val FEEDBACK = "feedback"
+
   def account = PimpAction(implicit req =>
     Ok(html.account(req.user, changePasswordForm))
   )
+
+  val rememberMeLoginForm = Form(tuple(
+    userFormKey -> nonEmptyText,
+    passFormKey -> nonEmptyText,
+    rememberMeKey -> optional(text)
+  ) verifying("Invalid credentials.", _ match {
+    case (username, password, _) => validateCredentials(username, password)
+  }))
 
   def login = Action(implicit request => {
     val motd =
@@ -25,27 +37,39 @@ trait PimpAccountController extends HtmlController with AccountController with L
       } else {
         None
       }
-    Ok(html.login(loginForm, motd))
+    Ok(html.login(rememberMeLoginForm, motd))
   })
 
   def logout = AuthAction(implicit request => {
-    Redirect(routes.Website.login()).withNewSession.flashing(
-      "feedback" -> "You have now logged out."
+    // TODO remove the cookie token series, otherwise it will just remain in storage, unused
+    Redirect(routes.Website.login()).withNewSession.discardingCookies(RememberMe.discardingCookie).flashing(
+      FEEDBACK -> "You have now logged out."
     )
   })
 
   def formAuthenticate = Action(implicit request => {
     val remoteAddress = request.remoteAddress
-    loginForm.bindFromRequest.fold(
+    rememberMeLoginForm.bindFromRequest.fold(
       formWithErrors => {
-        val user = formWithErrors.data.getOrElse("username", "")
+        log info s"$formWithErrors"
+        val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
         BadRequest(html.login(formWithErrors))
       },
       credentials => {
-        val user = credentials._1
+        val (user, _, rememberText) = credentials
+        val shouldRemember = rememberText contains "remember"
         log info s"Authentication succeeded for user: $user from: $remoteAddress"
-        Redirect(routes.Website.rootLibrary()).withSession(Security.username -> credentials._1)
+        val result = Redirect(routes.Website.rootLibrary()).withSession(Security.username -> user)
+        if (shouldRemember) {
+          log info s"Remembering auth..."
+          // create token, retrieve cookie
+          val cookie = CookieLogin persistNewCookie user
+          result.withCookies(cookie)
+        } else {
+          log info s"Not remembering!"
+          result
+        }
       }
     )
   })
@@ -61,7 +85,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
         val (_, newPass, _) = success
         setPassword(user, newPass)
         log info s"Password changed for user: $user from: ${request.remoteAddress}"
-        val message = "feedback" -> "Password successfully changed."
+        val message = FEEDBACK -> "Password successfully changed."
         Redirect(routes.Website.account()).flashing(message)
       }
     )

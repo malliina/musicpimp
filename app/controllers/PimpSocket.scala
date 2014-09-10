@@ -1,7 +1,9 @@
 package controllers
 
 import com.mle.musicpimp.json.JsonMessages
+import com.mle.play.controllers.AuthResult
 import com.mle.play.ws.JsonWebSocket
+import play.api.mvc.RequestHeader
 import rx.lang.scala.Observable
 
 import scala.concurrent.duration.DurationLong
@@ -14,4 +16,6 @@ trait PimpSocket extends JsonWebSocket with Secured {
   val pinger = Observable.interval(20.seconds).subscribe(_ => broadcast(JsonMessages.Ping))
 
   override def welcomeMessage: Option[Message] = Some(com.mle.play.json.JsonMessages.welcome)
+
+//  def authenticate(implicit request: RequestHeader): Option[AuthResult] = super.authenticate(request)
 }

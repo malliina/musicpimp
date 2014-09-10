@@ -52,7 +52,7 @@ object PimpBuild extends Build {
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
-        mleGroup %% "util-play" % "1.5.5",
+        mleGroup %% "util-play" % "1.5.6-SNAPSHOT",
         mleGroup %% "logback-rx" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,

@@ -1,5 +1,6 @@
 package controllers
 
+import com.mle.play.controllers.AuthResult
 import com.mle.play.ws.WebSocketBase
 import com.mle.util.Log
 import play.api.libs.iteratee.{Concurrent, Enumerator, Iteratee}
@@ -37,7 +38,7 @@ trait WebSocketController2 extends WebSocketBase with Log {
         (in, out)
       })(user => {
         val (out, channel) = Concurrent.broadcast[Message]
-        val clientInfo: Client = newClient(user, channel)(request)
+        val clientInfo: Client = newClient(user.user, channel)(request)
         // iteratee that eats client messages (input)
         val in = Iteratee.foreach[Message](msg => onMessage(msg, clientInfo))
           .map(_ => onDisconnect(clientInfo))
@@ -49,5 +50,5 @@ trait WebSocketController2 extends WebSocketBase with Log {
 
   def welcomeMessage: Option[Message] = None
 
-  def authenticate(implicit request: RequestHeader): Option[String]
+  def authenticate(implicit request: RequestHeader): Option[AuthResult]
 }
