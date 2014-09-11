@@ -2,9 +2,10 @@ package tests
 
 import java.nio.file.{Files, Path, Paths}
 
+import com.mle.file.FileUtilities
 import com.mle.http.MultipartRequest
+import com.mle.util.Util
 import com.mle.util.Util._
-import com.mle.util.{FileUtilities, Util}
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 

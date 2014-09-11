@@ -1,6 +1,7 @@
 package com.mle.messaging.adm
 
-import com.mle.messaging.AndroidMessagingClient
+import com.mle.push.adm.{AccessToken, AmazonMessaging}
+import com.mle.push.android.AndroidMessagingClient
 
 import scala.concurrent.Future
 

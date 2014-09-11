@@ -6,7 +6,6 @@ import com.mle.sbt.{GenericKeys, GenericPlugin}
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{linux, rpm}
-import com.typesafe.sbt.web.Import.Assets
 import sbt.Keys._
 import sbt._
 import sbtbuildinfo.Plugin._
@@ -46,14 +45,13 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.2.2" % "test",
-        "org.scalatestplus" %% "play" % "1.2.0" % "test",
-        mleGroup %% "util" % "1.3.2",
+        mleGroup %% "util-play" % "1.5.8",
+        mleGroup %% "util" % "1.4.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.1",
-        mleGroup %% "util-play" % "1.5.6-SNAPSHOT",
         mleGroup %% "logback-rx" % "0.1.0",
+        mleGroup %% "mobile-push" % "0.0.5",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         play.PlayImport.filters,
@@ -76,12 +74,7 @@ object PimpBuild extends Build {
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
-      WinKeys.forceStopOnUninstall := true,
-      mappings in(Compile, packageBin) ++= {
-        (unmanagedResourceDirectories in Assets).value flatMap
-          (assetDir => (assetDir ***) pair relativeTo(baseDirectory.value))
-      }
-      //      packageBin in Debian :=
+      WinKeys.forceStopOnUninstall := true
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(

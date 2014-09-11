@@ -2,7 +2,7 @@ package com.mle.musicpimp.util
 
 import java.nio.file.Path
 
-import com.mle.util.FileUtilities
+import com.mle.file.FileUtilities
 import play.api.libs.json.{Reads, Writes}
 
 import scala.util.Try

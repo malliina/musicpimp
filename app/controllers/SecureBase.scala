@@ -3,6 +3,7 @@ package controllers
 import java.io.FileNotFoundException
 import java.nio.file.Path
 
+import com.mle.musicpimp.auth.CookieLogin
 import com.mle.play.controllers._
 import com.mle.util.{Log, Utils}
 import org.apache.commons.codec.digest.DigestUtils

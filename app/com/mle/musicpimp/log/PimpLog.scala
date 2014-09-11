@@ -2,8 +2,7 @@ package com.mle.musicpimp.log
 
 import java.nio.file.Paths
 
-import com.mle.util.FileImplicits.StorageFile
-import com.mle.util.FileUtilities
+import com.mle.file.{FileUtilities, StorageFile}
 
 /**
  *

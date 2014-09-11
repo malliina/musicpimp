@@ -1,6 +1,7 @@
 package com.mle.messaging.mpns
 
-import com.mle.musicpimp.util.FileSet
+import com.mle.io.FileSet
+import com.mle.push.mpns.PushUrl
 
 /**
  *

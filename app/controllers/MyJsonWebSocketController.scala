@@ -9,7 +9,7 @@ import play.api.libs.json.{JsObject, JsValue, Json}
  *
  * @author mle
  */
-trait ActorJsonWebSocketController extends PimpSocket {
+trait MyJsonWebSocketController extends PimpSocket {
   def messageHandler: JsonHandlerBase
 
   def status(client: Client): JsValue

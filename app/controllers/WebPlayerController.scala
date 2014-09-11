@@ -10,7 +10,7 @@ import play.api.mvc.Call
  *
  * @author mle
  */
-trait WebPlayerController extends ActorJsonWebSocketController with Log {
+trait WebPlayerController extends MyJsonWebSocketController with Log {
   override val messageHandler: JsonHandlerBase = WebPlayerMessageHandler
 
   def status(client: Client): JsValue = {

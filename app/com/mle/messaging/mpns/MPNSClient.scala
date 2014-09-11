@@ -1,6 +1,7 @@
 package com.mle.messaging.mpns
 
-import com.mle.messaging.MessagingClient
+import com.mle.push.MessagingClient
+import com.mle.push.mpns.{MPNS, PushUrl, ToastMessage}
 import com.ning.http.client.Response
 
 import scala.concurrent.Future

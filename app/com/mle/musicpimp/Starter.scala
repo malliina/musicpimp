@@ -4,11 +4,12 @@ import java.nio.file.Paths
 import java.rmi.ConnectException
 import java.util.concurrent.TimeUnit
 
+import com.mle.file.FileUtilities
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
 import com.mle.rmi.{RmiClient, RmiServer, RmiUtil}
-import com.mle.util.{FileUtilities, Log, Scheduling, Util}
+import com.mle.util.{Log, Scheduling, Util}
 import play.core.StaticApplication
 import play.core.server.NettyServer
 

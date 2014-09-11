@@ -1,8 +1,10 @@
 package com.mle.messaging.gcm
 
-import com.mle.messaging.AndroidMessagingClient
+import com.mle.push.android.AndroidMessagingClient
+import com.mle.push.gcm.GoogleMessaging
 
 /**
+ *
  *
  * @author mle
  */

@@ -2,16 +2,16 @@ package com.mle.musicpimp.auth
 
 import java.nio.file.Path
 
-import com.mle.musicpimp.util.{FileBackedList, FileUtil}
-import com.mle.util.FileUtilities
+import com.mle.musicpimp.util.FileUtil
+import com.mle.play.auth.{Token, TokenStore}
+import com.mle.play.io.FileBackedList
 
 /**
  * @author Michael
  */
 class Tokens(file: Path) extends FileBackedList[Token](file)
 
-class TokensStore extends controllers.TokenStore {
-  val tokensFile = FileUtilities.pathTo("tokens.json")
+class TokensStore(tokensFile: Path) extends TokenStore {
   FileUtil.trySetOwnerOnlyPermissions(tokensFile)
   val tokens = new Tokens(tokensFile)
 

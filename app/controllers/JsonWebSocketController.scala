@@ -9,7 +9,8 @@ import play.api.mvc.{Call, Controller, RequestHeader}
 /**
  * A websockets controller. Subclasses shall implement onConnect, onMessage and onDisconnect.
  *
- * The WebSockets protocol doesn't handle authentication and authorization, so that's taken care of in the subscribe method.
+ * The WebSockets protocol doesn't handle authentication and authorization, so that's taken care of in the subscribe
+ * method.
  *
  * @author mle
  */

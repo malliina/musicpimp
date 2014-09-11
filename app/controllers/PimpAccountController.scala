@@ -1,8 +1,11 @@
 package controllers
 
+import com.mle.file.FileUtilities
+import com.mle.musicpimp.auth.CookieLogin
 import com.mle.musicpimp.util.FileUtil
+import com.mle.play.auth.RememberMe
 import com.mle.play.controllers.AccountController
-import com.mle.util.{FileUtilities, Log}
+import com.mle.util.Log
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
@@ -51,7 +54,6 @@ trait PimpAccountController extends HtmlController with AccountController with L
     val remoteAddress = request.remoteAddress
     rememberMeLoginForm.bindFromRequest.fold(
       formWithErrors => {
-        log info s"$formWithErrors"
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
         BadRequest(html.login(formWithErrors))
@@ -62,12 +64,11 @@ trait PimpAccountController extends HtmlController with AccountController with L
         log info s"Authentication succeeded for user: $user from: $remoteAddress"
         val result = Redirect(routes.Website.rootLibrary()).withSession(Security.username -> user)
         if (shouldRemember) {
-          log info s"Remembering auth..."
+          log debug s"Remembering auth..."
           // create token, retrieve cookie
           val cookie = CookieLogin persistNewCookie user
           result.withCookies(cookie)
         } else {
-          log info s"Not remembering!"
           result
         }
       }

@@ -6,6 +6,7 @@ import java.nio.file._
 
 import com.mle.audio.ExecutionContexts.defaultPlaybackContext
 import com.mle.audio.meta.{SongMeta, SongTags, StreamSource}
+import com.mle.file.FileUtilities
 import com.mle.http.TrustAllMultipartRequest
 import com.mle.musicpimp.audio._
 import com.mle.musicpimp.beam.BeamCommand
@@ -14,7 +15,7 @@ import com.mle.musicpimp.library.{Library, LocalTrack}
 import com.mle.play.controllers.{AuthRequest, BaseController, OneFileUploadRequest}
 import com.mle.play.streams.{StreamParsers, Streams}
 import com.mle.storage.StorageInt
-import com.mle.util.{FileUtilities, Log, Util, Utils}
+import com.mle.util.{Log, Util, Utils}
 import org.apache.http.HttpResponse
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.{JsValue, Json}

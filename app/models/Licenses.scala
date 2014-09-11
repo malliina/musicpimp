@@ -1,6 +1,6 @@
 package models
 
-import com.mle.util.FileUtilities
+import com.mle.file.FileUtilities
 
 /**
  * @author Michael

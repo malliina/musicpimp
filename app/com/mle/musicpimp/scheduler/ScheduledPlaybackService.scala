@@ -3,8 +3,8 @@ package com.mle.musicpimp.scheduler
 import java.nio.file.{Files, Path}
 import java.util.UUID
 
-import com.mle.util.FileImplicits.StorageFile
-import com.mle.util.{FileUtilities, Log}
+import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.util.Log
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 

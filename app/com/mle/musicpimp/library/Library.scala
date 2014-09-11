@@ -5,8 +5,9 @@ import java.net.{URLDecoder, URLEncoder}
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.mle.audio.meta.SongMeta
+import com.mle.file.FileUtilities
 import com.mle.musicpimp.db.DataTrack
-import com.mle.util.{FileUtilities, Log, Utils}
+import com.mle.util.{Log, Utils}
 
 /**
  * An item is either a song or a folder.

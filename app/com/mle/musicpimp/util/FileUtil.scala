@@ -3,8 +3,8 @@ package com.mle.musicpimp.util
 import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
 import java.nio.file.{Files, Path}
 
-import com.mle.util.FileImplicits.StorageFile
-import com.mle.util.{FileUtilities, Log, Utils}
+import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.util.{Log, Utils}
 
 /**
  * @author Michael
@@ -43,6 +43,5 @@ object FileUtil extends Log {
       Files setPosixFilePermissions(file, perms)
     }
 
-  def trySetOwnerOnlyPermissions(file: Path) =
-    trySetPermissions(file, ownerOnlyPermissions)
+  def trySetOwnerOnlyPermissions(file: Path) = trySetPermissions(file, ownerOnlyPermissions)
 }

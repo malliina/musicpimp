@@ -21,4 +21,7 @@ class FileTests extends FunSuite {
     val threshold = (1.0d * size / minFilesPerSecond).seconds
     assert(duration < 3.seconds || duration < threshold)
   }
+  test("file perms"){
+
+  }
 }
