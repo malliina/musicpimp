@@ -6,6 +6,6 @@
         onclick="return ! window.open (this.href, 'MusicPimp Web Player', 'scrollbars=yes,width=500,height=400')"
         target="_blank"
         class="btn btn-lg btn-primary">Open browser player</a></p>
-        @util.script("json.js", "playerws.js")
+        @util.script2("json.js", "playerws.js")
         @wsopen(ServerWS.wsUrl(request))
     }

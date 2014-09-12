@@ -1,12 +1,12 @@
 @()
-<link rel="stylesheet" href="@routes.Assets.at("css/player.css")">
+@util.css2("player.css")
 <div class="col-md-6">
-    @bs.bsRowColumn("col-md-12") {
+    @bs.rowColumn("col-md-12") {
         <h2 id="title" style="text-align : center ;">No track</h2>
         <h4 id="album" style="text-align : center ;"></h4>
         <h3 id="artist" style="text-align : center ;"></h3>
     }
-    @bs.bsRowColumn("col-md-12") {
+    @bs.rowColumn("col-md-12") {
         <div class="col-md-11">
             <div id="slider"></div>
         </div>
@@ -14,14 +14,14 @@
             <span id="pos"> 00:00 </span> / <span id="duration"> 00:00 </span>
         </div>
         <div class="row col-md-11 text-center">
-            <input type="image" src="@routes.Assets.at("img/transport.rew.png")" onclick="prev ( )"/>
-            <input type="image" src="@routes.Assets.at("img/light/transport.play.png")" onclick="resume ( )"/>
-            <input type="image" src="@routes.Assets.at("img/light/transport.pause.png")" onclick="stop ( )"/>
-            <input type="image" src="@routes.Assets.at("img/light/transport.ff.png")" onclick="next ( )"/>
+            <input type="image" src="@routes.Assets.at("img/transport.rew.png")" onclick="prev()"/>
+            <input type="image" src="@routes.Assets.at("img/light/transport.play.png")" onclick="resume()"/>
+            <input type="image" src="@routes.Assets.at("img/light/transport.pause.png")" onclick="stop()"/>
+            <input type="image" src="@routes.Assets.at("img/light/transport.ff.png")" onclick="next()"/>
         </div>
         <div class="row col-md-11 visible-lg">
             <div class="col-md-3">
-                <input type="image" class="pull-right" src="@routes.Assets.at("img/light/appbar.sound.3.png")" onclick="togglemute ( )"/>
+                <input type="image" class="pull-right" src="@routes.Assets.at("img/light/appbar.sound.3.png")" onclick="togglemute()"/>
             </div>
             <div class="col-md-8">
                 <div class="col-md-12 pull-left" id="volume"></div>
@@ -30,5 +30,5 @@
     }
 </div>
 
-<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-    @util.script("sliders.js")
+@util.script("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js")
+@util.script2("sliders.js")

@@ -16,6 +16,4 @@ trait PimpSocket extends JsonWebSocket with Secured {
   val pinger = Observable.interval(20.seconds).subscribe(_ => broadcast(JsonMessages.Ping))
 
   override def welcomeMessage: Option[Message] = Some(com.mle.play.json.JsonMessages.welcome)
-
-//  def authenticate(implicit request: RequestHeader): Option[AuthResult] = super.authenticate(request)
 }

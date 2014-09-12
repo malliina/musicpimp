@@ -28,6 +28,7 @@ object Search extends PimpSocket with Log {
     () => log info s"Indexing complete.")
 
   def search = PimpAction(implicit req => {
+    println("yo")
     val query = req.getQueryString("term").filter(_.nonEmpty)
     val limit = req.getQueryString("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse DEFAULT_LIMIT
     val results = query.fold(Seq.empty[DataTrack])(databaseSearch(_, limit))

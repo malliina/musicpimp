@@ -113,10 +113,10 @@ var onStatus = function (json) {
     updatePlaylist(json.playlist);
 };
 var onclose = function (payload) {
-    setFeedback("The connection has been closed.");
+    setFeedback("Connection closed.");
 };
 var onerror = function (payload) {
-    setFeedback("A connection error occurred.");
+    setFeedback("Connection error.");
 };
 var setFeedback = function (fb) {
     $('#status').html(fb);

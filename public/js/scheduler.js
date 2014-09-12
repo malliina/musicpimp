@@ -28,7 +28,7 @@ var stopPlayback = function () {
     return postAjax2(simpleCommandJson("stop"), "/alarms");
 };
 var postAjaxFinallyReload = function (json, resource) {
-    postAjax(json, resource).done(function (data) {
+    postAjax(json,resource).done(function (data) {
         // reloads the page
         location.reload(false);
     });
@@ -36,7 +36,7 @@ var postAjaxFinallyReload = function (json, resource) {
     return false;
 };
 var postAjax = function (json, resource) {
-    $.ajax({
+    return $.ajax({
         url: resource,
         type: 'POST',
         contentType: 'application/json',

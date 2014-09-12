@@ -3,7 +3,7 @@
 
     @manage("alarms") {
         @bs.headerRow("Alarms")
-        @bs.bsRowColumn("col-md-12") {
+        @bs.rowColumn("col-md-12") {
             <table class="table table-hover table-striped">
                 <thead>
                 @headers2()
@@ -13,10 +13,10 @@
                 </tbody>
             </table>
         }
-        @bs.bsRowColumn("col-md-12") {
+        @bs.rowColumn("col-md-12") {
             <a href="@routes.Alarms.newAlarm()">Add alarm</a>
         }
-        @util.script("scheduler.js")
+        @util.script2("scheduler.js")
     }
 
     @headers2() = {
@@ -31,9 +31,9 @@
                 Edit</a>
             <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
             <ul class="dropdown-menu">
-                <li><a href="#" onclick="deleteAP ( ' @id ')"><i class="glyphicon glyphicon-remove"></i> Delete</a></li>
-                <li><a href="#" onclick="runAP ( ' @id ')"><i class="glyphicon glyphicon-play"></i> Play</a></li>
-                <li><a href="#" onclick="stopPlayback ( )"><i class="glyphicon glyphicon-stop"></i> Stop</a></li>
+                <li><a href="#" onclick="deleteAP('@id')"><i class="glyphicon glyphicon-remove"></i> Delete</a></li>
+                <li><a href="#" onclick="runAP('@id')"><i class="glyphicon glyphicon-play"></i> Play</a></li>
+                <li><a href="#" onclick="stopPlayback()"><i class="glyphicon glyphicon-stop"></i> Stop</a></li>
             </ul>
         </div>
     }

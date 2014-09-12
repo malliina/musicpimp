@@ -1,5 +1,6 @@
 package controllers
 
+import com.mle.play.json.JsonMessages
 import com.mle.play.ws.WebSocketController
 import models.ClientInfo
 import play.api.libs.iteratee.Concurrent.Channel

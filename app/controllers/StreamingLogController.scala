@@ -20,7 +20,7 @@ trait StreamingLogController extends JsonWebSocketController {
   private val subscriptions: collection.concurrent.Map[Client, Subscription] =
     new ConcurrentHashMap[Client, Subscription]()
 
-  def openLogSocket = ws(FrameFormatter.jsonFrame)
+  def openLogSocket = ws3(FrameFormatter.jsonFrame)
 
   override def onConnect(client: Client): Unit = ()
 

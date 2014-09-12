@@ -27,7 +27,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
   val rememberMeLoginForm = Form(tuple(
     userFormKey -> nonEmptyText,
     passFormKey -> nonEmptyText,
-    rememberMeKey -> optional(text)
+    rememberMeKey -> boolean
   ) verifying("Invalid credentials.", _ match {
     case (username, password, _) => validateCredentials(username, password)
   }))
@@ -59,8 +59,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
         BadRequest(html.login(formWithErrors))
       },
       credentials => {
-        val (user, _, rememberText) = credentials
-        val shouldRemember = rememberText contains "remember"
+        val (user, _, shouldRemember) = credentials
         log info s"Authentication succeeded for user: $user from: $remoteAddress"
         val result = Redirect(routes.Website.rootLibrary()).withSession(Security.username -> user)
         if (shouldRemember) {

@@ -16,7 +16,7 @@
                 The library is empty. To get started, add music folders under <a href="@routes.Website.settings()">
                 Music Folders</a>.</p>
         }
-        @util.script("json.js", "library.js")
+        @util.script2("json.js", "library.js")
     }
     @renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
         <div class="@columnSpan(onlyColumn)">

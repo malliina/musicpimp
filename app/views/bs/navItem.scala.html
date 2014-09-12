@@ -1,3 +1,0 @@
-@(title: String, tabItemName: String, currentTabName: String, href: Call, glyphIcon: String)
-
-<li class="@("active".when(currentTabName == tabItemName))"><a href="@href"><i class="@(s"glyphicon glyphicon-$glyphIcon")"></i> @title</a></li>

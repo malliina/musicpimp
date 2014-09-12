@@ -46,6 +46,7 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         mleGroup %% "util-play" % "1.5.8" withSources(),
+        mleGroup %% "play-base" % "0.1.0",
         mleGroup %% "util" % "1.4.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",

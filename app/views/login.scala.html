@@ -1,4 +1,4 @@
-@(loginForm: Form[(String, String, Option[String])], motd: Option[String] = None)(implicit flash: Flash)
+@(loginForm: Form[(String, String, Boolean)], motd: Option[String] = None)(implicit flash: Flash)
 
 @import views.html.helper._
     @implicitFieldConstructor = @{
@@ -6,30 +6,30 @@
     }
 
 @basePage(title = "Welcome") {
-    <link rel="stylesheet" href="@routes.Assets.at("css/login.css")"/>
+    @util.css2("login.css")
     @util.div("container"){
-        @bs.bsRowColumn("col-md-4") {
+        @bs.rowColumn("col-md-4") {
             @flash.get(Website.FEEDBACK).map { message =>
                 <p class="lead">@message</p>
             }
         }
-        @bs.bsRowColumn("col-md-3") {
+        @bs.rowColumn("col-md-3") {
             <form class="form-signin" name="loginForm" action="@routes.Website.formAuthenticate()" method="POST">
                 <h2 class="form-signin-heading">Please sign in</h2>
-                <input type="text" class="form-control" name="@Website.userFormKey" id="username" placeholder="Username" autofocus>
-                <input type="password" class="form-control" name="password" id="password" placeholder="Password">
+                <input type="text" class="form-control" name="@Website.userFormKey" id="@Website.userFormKey" placeholder="Username" autofocus>
+                <input type="password" class="form-control" name="@Website.passFormKey" id="@Website.passFormKey" placeholder="Password">
                 <label class="checkbox">
-                    <input type="checkbox" value="remember" name="@Website.rememberMeKey" id="remember"> Remember me
+                    <input type="checkbox" value="true" name="@Website.rememberMeKey" id="@Website.rememberMeKey"> Remember me
                 </label>
                 <button type="submit" id="loginbutton" class="btn btn-lg btn-primary btn-block">Sign in</button>
             </form>
         }
-        @bs.bsRowColumn("col-md-4") {
+        @bs.rowColumn("col-md-4") {
             @loginForm.globalError.map { error =>
                 <p class="error">@error.message</p>
             }
         }
-        @bs.bsRowColumn("col-md-4") {
+        @bs.rowColumn("col-md-4") {
             @motd.map { message =>
                 <p> @message </p>
             }

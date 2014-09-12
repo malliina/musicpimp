@@ -5,7 +5,7 @@ import java.nio.file.{Path, Paths}
 import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.musicpimp.messaging.adm.{AdmClient, AmazonDevices}
 import com.mle.musicpimp.messaging.gcm.{GcmClient, GoogleDevices}
-import com.mle.musicpimp.messaging.mpns.{MPNSClient, PushUrls}
+import com.mle.musicpimp.messaging.mpns.{MicrosoftClient, PushUrls}
 import com.mle.musicpimp.audio.{MusicPlayer, PlayableTrack}
 import com.mle.musicpimp.library.Library
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
@@ -27,7 +27,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 
   def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
 
-  def sendMPNS(url: PushUrl): Future[Unit] = MPNSClient.sendLogged(url)
+  def sendMPNS(url: PushUrl): Future[Unit] = MicrosoftClient.sendLogged(url)
 
   def sendGcm(url: AndroidDevice): Future[Unit] = GcmClient.sendLogged(url)
 
@@ -43,7 +43,7 @@ case class PlaybackJob(track: String) extends Job with Log {
           //          })
           //        })
           MusicPlayer.play()
-          val toasts = PushUrls.get().map(MPNSClient.sendLogged)
+          val toasts = PushUrls.get().map(MicrosoftClient.sendLogged)
           val gcms = GoogleDevices.get().map(GcmClient.sendLogged)
           val adms = AmazonDevices.get().map(AdmClient.sendLogged)
           val messages = toasts ++ gcms ++ adms

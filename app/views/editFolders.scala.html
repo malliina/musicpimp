@@ -3,7 +3,7 @@
     @if(folders.isEmpty) {
         <p>No music folders have been added.</p>
     }
-    @bs.bsRowColumn("col-md-6") {
+    @bs.rowColumn("col-md-6") {
         <ul class="list-unstyled">
         @folders.map { f =>
             <li>@renderFolder(f)</li>
