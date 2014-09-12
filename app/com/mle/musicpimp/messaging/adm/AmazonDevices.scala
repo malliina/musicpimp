@@ -1,4 +1,4 @@
-package com.mle.messaging.adm
+package com.mle.musicpimp.messaging.adm
 
 import com.mle.push.android.AndroidDevices
 

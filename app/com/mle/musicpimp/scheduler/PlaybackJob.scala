@@ -3,9 +3,9 @@ package com.mle.musicpimp.scheduler
 import java.nio.file.{Path, Paths}
 
 import com.mle.concurrent.FutureImplicits.RichFuture
-import com.mle.messaging.adm.{AmazonDevices, AdmClient}
-import com.mle.messaging.gcm.{GcmClient, GoogleDevices}
-import com.mle.messaging.mpns.{MPNSClient, PushUrls}
+import com.mle.musicpimp.messaging.adm.{AdmClient, AmazonDevices}
+import com.mle.musicpimp.messaging.gcm.{GcmClient, GoogleDevices}
+import com.mle.musicpimp.messaging.mpns.{MPNSClient, PushUrls}
 import com.mle.musicpimp.audio.{MusicPlayer, PlayableTrack}
 import com.mle.musicpimp.library.Library
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO

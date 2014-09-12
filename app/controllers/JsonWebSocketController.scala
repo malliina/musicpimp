@@ -1,5 +1,6 @@
 package controllers
 
+import com.mle.play.ws.WebSocketController
 import models.ClientInfo
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.json.JsValue
@@ -14,7 +15,7 @@ import play.api.mvc.{Call, Controller, RequestHeader}
  *
  * @author mle
  */
-trait JsonWebSocketController extends WebSocketController2 with Controller with Secured {
+trait JsonWebSocketController extends WebSocketController with Controller with Secured {
   type Message = JsValue
   type Client = ClientInfo[Message]
 
@@ -26,7 +27,7 @@ trait JsonWebSocketController extends WebSocketController2 with Controller with 
    * @return a websocket connection using messages of type Message
    * @throws com.mle.musicpimp.exception.PimpException if authentication fails
    */
-  def subscribe = ws(FrameFormatter.jsonFrame)
+  def subscribe = ws3(FrameFormatter.jsonFrame)
 
   def subscribeCall: Call
 

@@ -12,12 +12,7 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-object Alarms
-  extends Secured
-  with AlarmEditor
-  with JsonHandler
-  with SchedulerStrings
-  with Log {
+object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerStrings with Log {
 
   val jobWriter = new Writes[PlaybackJob] {
     override def writes(o: PlaybackJob): JsValue = obj(

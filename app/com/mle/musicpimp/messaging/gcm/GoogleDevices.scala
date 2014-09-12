@@ -1,4 +1,4 @@
-package com.mle.messaging.gcm
+package com.mle.musicpimp.messaging.gcm
 
 import com.mle.push.android.AndroidDevices
 

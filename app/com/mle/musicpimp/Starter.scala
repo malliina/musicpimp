@@ -8,6 +8,7 @@ import com.mle.file.FileUtilities
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
+import com.mle.play.PlayLifeCycle
 import com.mle.rmi.{RmiClient, RmiServer, RmiUtil}
 import com.mle.util.{Log, Scheduling, Util}
 import play.core.StaticApplication
@@ -109,7 +110,6 @@ object Starter extends Log {
     })
     println("Threads in total: " + threads.size())
   }
-
   //  def test() {
   //    future {
   //      var loop = true

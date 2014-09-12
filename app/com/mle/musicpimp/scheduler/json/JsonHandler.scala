@@ -1,8 +1,8 @@
 package com.mle.musicpimp.scheduler.json
 
-import com.mle.messaging.adm.AmazonDevices
-import com.mle.messaging.gcm.GoogleDevices
-import com.mle.messaging.mpns.PushUrls
+import com.mle.musicpimp.messaging.adm.AmazonDevices
+import com.mle.musicpimp.messaging.gcm.GoogleDevices
+import com.mle.musicpimp.messaging.mpns.PushUrls
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, ScheduledPlaybackService}
