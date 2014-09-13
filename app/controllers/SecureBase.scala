@@ -36,7 +36,7 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    */
   override def validateCredentials(username: String, password: String): Boolean = {
     import controllers.PimpAccountController._
-    Utils.opt[BufferedSource, FileNotFoundException](io.Source.fromFile(passFile.toFile))
+    Utils.opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
       .fold(ifEmpty = username == defaultUser && password == defaultPass)(_ == hash(username, password))
   }

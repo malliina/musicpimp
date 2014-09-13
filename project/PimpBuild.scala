@@ -3,6 +3,7 @@ import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
 import com.mle.sbt.unix.LinuxPlugin
 import com.mle.sbt.win.{WinKeys, WinPlugin}
 import com.mle.sbt.{GenericKeys, GenericPlugin}
+import com.mle.sbtplay.PlayProjects
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{linux, rpm}
@@ -11,10 +12,11 @@ import sbt._
 import sbtbuildinfo.Plugin._
 
 object PimpBuild extends Build {
-  lazy val pimpProject = Project("musicpimp", file(".")).enablePlugins(play.PlayScala).settings(playSettings: _*)
+
+  lazy val pimpProject = PlayProjects.playProject("musicpimp").settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.5.2",
+    version := "2.5.3",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -68,7 +70,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "6d10bd33-595b-470e-ad48-a2f3d7b3e391",
+      WinKeys.productGuid := "bf8204fb-29d5-4ec6-b812-f1370c88ded8",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",

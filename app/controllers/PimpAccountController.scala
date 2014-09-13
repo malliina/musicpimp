@@ -27,7 +27,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
   val rememberMeLoginForm = Form(tuple(
     userFormKey -> nonEmptyText,
     passFormKey -> nonEmptyText,
-    rememberMeKey -> boolean
+    rememberMeKey -> boolean // the checkbox HTML element must have the property 'value="true"'
   ) verifying("Invalid credentials.", _ match {
     case (username, password, _) => validateCredentials(username, password)
   }))
@@ -61,7 +61,8 @@ trait PimpAccountController extends HtmlController with AccountController with L
       credentials => {
         val (user, _, shouldRemember) = credentials
         log info s"Authentication succeeded for user: $user from: $remoteAddress"
-        val result = Redirect(routes.Website.rootLibrary()).withSession(Security.username -> user)
+        val intendedUrl = request.session.get(INTENDED_URI).getOrElse(defaultLoginSuccessPage.url)
+        val result = Redirect(intendedUrl).withSession(Security.username -> user)
         if (shouldRemember) {
           log debug s"Remembering auth..."
           // create token, retrieve cookie
@@ -74,11 +75,13 @@ trait PimpAccountController extends HtmlController with AccountController with L
     )
   })
 
+  def defaultLoginSuccessPage: Call = routes.Website.rootLibrary()
+
   def changePassword = PimpAction(implicit request => {
     val user = request.user
     changePasswordForm.bindFromRequest.fold(
       errors => {
-        log info "" + errors.globalError + ", " + errors.errors
+        //        log info "" + errors.globalError + ", " + errors.errors
         BadRequest(html.account(user, errors))
       },
       success => {
