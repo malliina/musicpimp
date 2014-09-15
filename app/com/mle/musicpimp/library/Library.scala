@@ -10,8 +10,6 @@ import com.mle.musicpimp.db.{DataFolder, DataTrack, PimpDb}
 import com.mle.util.{Log, Utils}
 
 /**
- * An item is either a song or a folder.
- *
  * @author Michael
  */
 trait Library extends MusicLibrary with Log {
@@ -19,27 +17,25 @@ trait Library extends MusicLibrary with Log {
   val emptyPathString = emptyPath.toString
   var rootFolders: Seq[Path] = Settings.read
 
-  def rootItems: Folder =
+  def rootPaths: Folder =
     mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
 
-  def items(relative: Path): Option[Folder] = {
-    val sources = findPathInfo2(relative)
-    if (sources.isEmpty) None
-    else Some(mergeContents(sources))
-  }
+  def rootFolder = MusicFolder.fromFolder("", emptyPath, rootPaths)
 
-  def folder(id: String): Option[MusicCollection] = {
+  def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
+
+  def folderFromFile(id: String): Option[MusicFolder] = {
     val path = relativePath(id)
     val content = items(path)
-    content.map(MusicCollection.fromFolder(id, path, _))
+    content.map(MusicFolder.fromFolder(id, path, _))
   }
 
-  def folder2(id: String): Option[MusicCollection] = {
+  def folderFromDatabase(id: String): Option[MusicFolder] = {
     val path = relativePath(id)
     findPathInfo(path).map(_ => {
       val folder = DataFolder fromPath path
       val (tracks, folders) = PimpDb folder id
-      MusicCollection(folder, folders, tracks)
+      MusicFolder(folder, folders, tracks)
     })
   }
 
@@ -152,6 +148,12 @@ trait Library extends MusicLibrary with Log {
   def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
 
   def decode(id: String) = URLDecoder.decode(id, "UTF-8")
+
+  private def items(relative: Path): Option[Folder] = {
+    val sources = findPathInfo2(relative)
+    if (sources.isEmpty) None
+    else Some(mergeContents(sources))
+  }
 
   private def mergeContents(sources: Seq[PathInfo]): Folder =
     sources.map(items).foldLeft(Folder.empty)(_ ++ _)

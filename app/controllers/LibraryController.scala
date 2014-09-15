@@ -1,10 +1,10 @@
 package controllers
 
 import java.net.URLDecoder
-import java.nio.file.{Path, Paths}
+import java.nio.file.Paths
 
 import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.library.{Folder, Library, MusicCollection}
+import com.mle.musicpimp.library.{Library, MusicFolder}
 import com.mle.util.Log
 import models.MusicColumn
 import play.api.libs.json.Json
@@ -15,30 +15,21 @@ import views.html
  * @author Michael
  */
 trait LibraryController extends Secured with Log {
+  def rootLibrary = PimpAction(implicit request => folderResult(Library.rootFolder))
+
   /**
    * @return an action that provides the contents of the library with the supplied id
    */
-  def library(folderId: String) = lib(folderId)
-
-  def lib(id: String) = contents(Library.items)(id)
-
-  def contents(browser: Path => Option[Folder])(id: String) = PimpAction(implicit request => {
-    val path = Library relativePath id
-    browser(path).fold(pimpResult(
-      html = NotFound,
-      json = NotFound(JsonMessages.failure(s"Unknown folder ID: $id"))
-    ))(items => {
-      respondWith(id, path, items)
-    })
+  def library(folderId: String) = PimpAction(implicit request => {
+    Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items))
   })
 
-  def rootLibrary = PimpAction(implicit request => {
-    def items = Library.rootItems
-    respondWith("", Paths get "", items)
-  })
+  private def folderNotFound(id: String)(implicit request: RequestHeader): Result = pimpResult(
+    html = NotFound,
+    json = NotFound(JsonMessages.failure(s"Unknown folder ID: $id"))
+  )
 
-  private def respondWith(folderId: String, path: Path, contents: Folder)(implicit request: RequestHeader) = {
-    def collection = MusicCollection.fromFolder(folderId, path, contents)
+  private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
     respond(
       html = Website.toHtml(collection),
       json = Json.toJson(collection)
@@ -71,7 +62,6 @@ trait LibraryController extends Secured with Log {
     Unauthorized
   }
 
-
   /**
    * Serves the given track and sets the ACCEPT_RANGES header in the response.
    *
@@ -93,10 +83,12 @@ trait LibraryController extends Secured with Log {
   def supplyForPlayback(trackId: String) = download(trackId, r => r)
 
   def meta(id: String) = PimpAction {
-    Library.findMeta(id).fold(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))(track => Ok(Json.toJson(track)))
+    Library.findMeta(id).fold(trackNotFound(id))(track => Ok(Json.toJson(track)))
   }
 
-  def toHtml(contents: MusicCollection): play.twirl.api.Html = {
+  private def trackNotFound(id:String)=BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id"))
+
+  def toHtml(contents: MusicFolder): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(contents) match {
       case Nil => (MusicColumn.empty, MusicColumn.empty, MusicColumn.empty)
       case h :: Nil => (h, MusicColumn.empty, MusicColumn.empty)
@@ -113,7 +105,7 @@ trait LibraryController extends Secured with Log {
    * @param columns
    * @return at least one column
    */
-  private def columnify(col: MusicCollection, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
+  private def columnify(col: MusicFolder, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
     val tracks = col.tracks
     val folders = col.folders
     val tracksCount = tracks.size
@@ -130,19 +122,4 @@ trait LibraryController extends Secured with Log {
       column :: columnify(remains, minCount, columns - 1)
     }
   }
-
-  private def columnize[T](items: Seq[T]) = {
-    val itemsCount = items.size
-    if (itemsCount < 20) {
-      (items, Nil, Nil)
-    } else {
-      val columnCount = 3
-      val cutoff = itemsCount / columnCount
-      val col1 = items.view(0, cutoff)
-      val col2 = items.view(cutoff, cutoff * 2)
-      val col3 = items.view(cutoff * 2, itemsCount - 1)
-      (col1, col2, col3)
-    }
-  }
-
 }

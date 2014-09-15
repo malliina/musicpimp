@@ -18,6 +18,7 @@ trait FolderMeta {
 }
 
 object FolderMeta {
+  //  implicit val jsonFormat = Json.format[FolderMeta]
   implicit val folderWriter = new Writes[FolderMeta] {
     def writes(f: FolderMeta): JsValue = obj(
       ID -> f.id,
