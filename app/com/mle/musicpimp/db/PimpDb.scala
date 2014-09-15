@@ -24,22 +24,30 @@ object PimpDb extends DatabaseLike with Log {
   val pool = JdbcConnectionPool.create("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", "", "")
   override val database = Database.forDataSource(pool)
   val tracks = TableQuery[Tracks]
+  val folders = TableQuery[Folders]
   val tracksName = tracks.baseTableRow.tableName
-  override val tableQueries = Seq(tracks)
-  implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes))
+  override val tableQueries = Seq(tracks, folders)
+  implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Seq[DataTrack] = {
     log debug s"Querying: $searchTerm"
     queryPlainParam[DataTrack, String](s"SELECT T.* FROM FT_SEARCH_DATA(?,0,0) FT, $tableName T WHERE FT.TABLE='$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;", searchTerm)
   }
 
+  def folder(id: String): (Seq[DataTrack], Seq[DataFolder]) = withSession(implicit s => {
+    val tracksQuery = tracks.filter(_.folder === id)
+    val foldersQuery = folders.filter(_.parent === id)
+    //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
+    (tracksQuery.run, foldersQuery.run)
+  })
+
   def allTracks = withSession(tracks.list(_))
 
-  def trackCount = withSession(s => tracks.size.run(s))
+  def trackCount = withSession(tracks.size.run(_))
 
   def merge(items: Seq[DataTrack]) = withSession(implicit session => {
     val inserts = items map sqlify mkString ","
-    val sql = s"MERGE INTO TRACKS KEY(ID) VALUES $inserts"
+    val sql = s"MERGE INTO $tracksName KEY(ID) VALUES $inserts"
     executePlain(sql)
   })
 
@@ -72,8 +80,15 @@ object PimpDb extends DatabaseLike with Log {
     log info s"Initialized index for table $tableName"
   }
 
-  def dropTracks() = withSession(implicit s => {
-    tracks.ddl.drop
+  def dropAll() = withSession(implicit s => {
+    tableQueries.foreach(t => {
+      if (exists(t)) {
+        PimpDb.executePlain(s"DROP TABLE ${t.baseTableRow.tableName}")
+        // ddl.drop fails if the table has a constraint to something nonexistent
+        //        t.ddl.drop
+      }
+      log info s"Dropped table: ${t.baseTableRow.tableName}"
+    })
     dropIndex(tracksName)
   })
 
@@ -91,12 +106,14 @@ object PimpDb extends DatabaseLike with Log {
       this.synchronized {
         log info "Indexing..."
         withSession(implicit session => {
-          dropTracks()
-          initTable(tracks)
+          dropAll()
+          init()
+          folders ++= Library.folderStream
+          //          initTable(tracks)
           var fileCount = 0L
-          Library.dataTrackStream.grouped(999).foreach(stream => {
-            tracks ++= stream
-            fileCount += stream.size
+          Library.dataTrackStream.grouped(999).foreach(chunk => {
+            tracks ++= chunk
+            fileCount += chunk.size
             obs onNext fileCount
           })
           log info s"Indexed $fileCount files."

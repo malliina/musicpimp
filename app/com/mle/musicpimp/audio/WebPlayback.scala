@@ -14,7 +14,7 @@ trait WebPlayback {
   def player(user: String) =
     players.getOrElseUpdate(user, new PimpWebPlayer(user))
 
-  def add(user: String, track: LocalTrack) {
+  def add(user: String, track: TrackMeta) {
     val p = player(user)
     p.playlist add track
   }

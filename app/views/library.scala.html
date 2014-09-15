@@ -1,6 +1,7 @@
-@(relativePath: java.nio.file.Path, col1: Seq[models.MusicItemInfo], col2: Seq[models.MusicItemInfo], col3: Seq[models.MusicItemInfo])
+@(relativePath: java.nio.file.Path, col1: models.MusicColumn, col2: models.MusicColumn, col3: models.MusicColumn)
 
     @import models._
+    @import com.mle.musicpimp.audio.{FolderMeta,TrackMeta}
 
     @libraryBase("folders") {
         <div class="page-header">
@@ -18,23 +19,22 @@
         }
         @util.script2("json.js", "library.js")
     }
-    @renderColumn(items: Seq[MusicItemInfo], onlyColumn: Boolean = false) = {
+    @renderColumn(col: MusicColumn, onlyColumn: Boolean = false) = {
         <div class="@columnSpan(onlyColumn)">
             <ul class="list-unstyled">
-            @items.map { f =>
-                @if(f.dir) {
-                    <li>@renderDir(f)</li>
-                } else {
-                    <li>@renderSong(f) @f.title</li>
-                }
+            @col.folders.map { f =>
+                <li>@renderDir(f)</li>
+            }
+            @col.tracks.map{ t =>
+                <li>@renderSong(t) @t.title</li>
             }
             </ul>
         </div>
     }
-    @renderDir(dir: MusicItemInfo) = {
+    @renderDir(dir: FolderMeta) = {
         <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
     }
-    @renderSong(song: MusicItemInfo) = {
+    @renderSong(song: TrackMeta) = {
         @trackActions(song.id)
     }
 

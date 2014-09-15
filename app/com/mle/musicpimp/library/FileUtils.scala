@@ -25,12 +25,17 @@ object FileUtils extends Log {
   }
 
   /**
-   * http://stackoverflow.com/a/7264833/1863674
+   * '#::' is cons for [[Stream]]s
+   *
+   * @see http://stackoverflow.com/a/7264833/1863674
+   *
    */
   def fileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(fileTree) else Stream.empty)
 
   def pathTree(path: Path): Stream[Path] = fileTree(path.toFile) map (_.toPath)
+
+  def folders(path: Path): Stream[Path] = pathTree(path).filter(Files.isDirectory(_))
 
   def readableFiles(path: Path) = pathTree(path).filter(p => !Files.isDirectory(p) && Files.isReadable(p))
 }

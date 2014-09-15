@@ -31,11 +31,12 @@ trait DatabaseLike extends Log {
     MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty
 
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*)(implicit session: Session) =
-    tables.filter(t => !exists(t)(session)).foreach(t => initTable(t))
+    tables.reverse.filter(t => !exists(t)(session)).foreach(t => initTable(t))
 
   def initTable[T <: Table[_]](table: TableQuery[T])(implicit session: Session) = {
-    table.ddl.create
-    log info s"Created table: ${table.baseTableRow.tableName}"
+    table.ddl.create(session)
+    val msg = s"Created table: ${table.baseTableRow.tableName}"
+    log info msg
   }
 
   def executePlain(queries: String*) =

@@ -18,6 +18,7 @@ trait JsonStrings {
   val FOLDER = "folder"
   val FOLDERS = "folders"
   val PATH = "path"
+  val PARENT = "parent"
   val TRACKS = "tracks"
   val ID = "id"
   val CONTENTS = "contents"

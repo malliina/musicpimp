@@ -12,16 +12,17 @@ import scala.concurrent.duration.DurationDouble
  * @author Michael
  */
 class FileTests extends FunSuite {
-  val minFilesPerSecond = 5000
+  val minFilesPerSecond = 400
+  val testRoot = Paths get "E:\\musik"
+  Library.rootFolders = Seq(testRoot)
 
   test(s"lists at least $minFilesPerSecond files per second or completes within 3 seconds") {
-    val testRoot = Paths get "E:\\musik"
-    Library.rootFolders = Seq(testRoot)
     val (size, duration) = Utils.timed(Library.trackFiles.size)
     val threshold = (1.0d * size / minFilesPerSecond).seconds
     assert(duration < 3.seconds || duration < threshold)
   }
-  test("file perms"){
-
+  test("folder list") {
+    val folders = Library.folderStream
+    folders foreach println
   }
 }

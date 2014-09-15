@@ -88,9 +88,18 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
       maybeWithCookie(user, result)
     }))
 
-  private def maybeWithCookie(user: AuthResult, result: Result) =
-    user.cookie.fold(result)(c => {
+  /**
+   * Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.
+   * To achieve that, we remember the result of the authentication and then update any cookie, if necessary, in the
+   * response to the request.
+   *
+   * @param auth authentication output
+   * @param result response
+   * @return response, with possibly updated cookies
+   */
+  private def maybeWithCookie(auth: AuthResult, result: Result): Result =
+    auth.cookie.fold(result)(c => {
       log debug s"Sending updated cookie in response..."
-      result withCookies c withSession (Security.username -> user.user)
+      result withCookies c withSession (Security.username -> auth.user)
     })
 }

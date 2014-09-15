@@ -4,6 +4,7 @@ import java.net.URI
 
 import com.mle.audio.meta.{SongMeta, SongTags, UriSource}
 import com.mle.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
+import com.mle.musicpimp.db.DataTrack
 import com.mle.storage.StorageSize
 import com.mle.util.Log
 import models.MusicItemInfo
@@ -31,6 +32,10 @@ class LocalTrack(id: String, val meta: SongMeta)
   override def toString = id
 
   override def buildPlayer(eom: () => Unit): PimpPlayer = new StoragePlayer(this, eom)
+
+//  def path =
+
+//  def toData = DataTrack(id,title,artist,album,)
 }
 
 object LocalTrack extends Log {

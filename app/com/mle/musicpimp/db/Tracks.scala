@@ -9,7 +9,8 @@ import scala.slick.driver.H2Driver.simple._
  * @author Michael
  */
 class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
-  val toTrack: (String, String, String, String, Int, Long) => DataTrack = (i, ar, al, tr, du, si) => DataTrack(i, ar, al, tr, du.seconds, si.bytes)
+  val toTrack: (String, String, String, String, Int, Long, String) => DataTrack =
+    (i, ti, ar, al, du, si, fo) => DataTrack(i, ti, ar, al, du.seconds, si.bytes, fo)
 
   def id = column[String]("ID", O.PrimaryKey)
 
@@ -23,8 +24,24 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 
   def size = column[Long]("SIZE")
 
-  def * = (id, title, artist, album, duration, size) <>((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
+  def folder = column[String]("FOLDER")
 
-  val tmp = DataTrack.apply _
-  //  val tmp2:(String, String, String, String, Duration, StorageSize) => DataTrack =
+  def folderConstraint = foreignKey("FOLDER_FK", folder, PimpDb.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+
+  def * = (id, title, artist, album, duration, size, folder) <>((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
+}
+
+class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
+  def id = column[String]("ID", O.PrimaryKey)
+
+  def title = column[String]("TITLE")
+
+  def path = column[String]("PATH")
+
+  def parent = column[String]("PARENT")
+
+  // foreign key to itself
+  def parentFolder = foreignKey("PARENT_FK", parent, PimpDb.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+
+  def * = (id, title, path, parent) <>((DataFolder.apply _).tupled, DataFolder.unapply)
 }

@@ -6,7 +6,7 @@ import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.mle.audio.meta.SongMeta
 import com.mle.file.FileUtilities
-import com.mle.musicpimp.db.DataTrack
+import com.mle.musicpimp.db.{DataFolder, DataTrack, PimpDb}
 import com.mle.util.{Log, Utils}
 
 /**
@@ -15,21 +15,32 @@ import com.mle.util.{Log, Utils}
  * @author Michael
  */
 trait Library extends MusicLibrary with Log {
+  val emptyPath = Paths get ""
+  val emptyPathString = emptyPath.toString
   var rootFolders: Seq[Path] = Settings.read
 
   def rootItems: Folder =
-    mergeContents(
-      rootFolders
-        .filter(Files.isDirectory(_))
-        .map(f => PathInfo(Paths get "", f)))
+    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
 
   def items(relative: Path): Option[Folder] = {
     val sources = findPathInfo2(relative)
-    if (sources.isEmpty) {
-      None
-    } else {
-      Some(mergeContents(sources))
-    }
+    if (sources.isEmpty) None
+    else Some(mergeContents(sources))
+  }
+
+  def folder(id: String): Option[MusicCollection] = {
+    val path = relativePath(id)
+    val content = items(path)
+    content.map(MusicCollection.fromFolder(id, path, _))
+  }
+
+  def folder2(id: String): Option[MusicCollection] = {
+    val path = relativePath(id)
+    findPathInfo(path).map(_ => {
+      val folder = DataFolder fromPath path
+      val (tracks, folders) = PimpDb folder id
+      MusicCollection(folder, folders, tracks)
+    })
   }
 
   def all(root: Path): Map[Path, Folder] = {
@@ -53,7 +64,7 @@ trait Library extends MusicLibrary with Log {
         } yield pair): _*)
       }
     }
-    Map(items(root).toSeq.flatMap(f => recurse(f, Map(Paths.get("") -> f))): _*)
+    Map(items(root).toSeq.flatMap(f => recurse(f, Map(emptyPath -> f))): _*)
   }
 
   def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
@@ -66,14 +77,24 @@ trait Library extends MusicLibrary with Log {
 
   def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
 
-  def trackFiles: Stream[Path] = rootFolders.toStream
-    .flatMap(root => FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3").map(root.relativize))
+  def trackFiles: Stream[Path] = recursivePaths(root => {
+    FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
+  })
 
-  def tracksStream: Stream[LocalTrack] = trackFiles map meta
+  def tracksStream: Stream[LocalTrack] = trackFiles.distinct map meta
+
+  def folderStream: Stream[DataFolder] = recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
+
+  private def recursivePaths(rootMap: Path => Stream[Path]) =
+    rootFolders.toStream.flatMap(root => rootMap(root).map(root.relativize))
 
   def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
 
-  def toDataTrack(track: LocalTrack) = DataTrack(track.id, track.title, track.artist, track.album, track.duration, track.size)
+  def toDataTrack(track: LocalTrack) = {
+    val id = track.id
+    val path = Option(relativePath(id).getParent) getOrElse emptyPath
+    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encode(path))
+  }
 
   /**
    * This method has a bug.
@@ -81,17 +102,14 @@ trait Library extends MusicLibrary with Log {
    * @param trackId the music item id
    * @return the absolute path to the music item id, or None if no such track exists
    */
-  def findAbsolute(trackId: String): Option[Path] =
-    findPathInfo(relativePath(trackId)).map(_.absolute)
+  def findAbsolute(trackId: String): Option[Path] = findPathInfo(relativePath(trackId)).map(_.absolute)
 
   def suggestAbsolute(relative: Path): Option[Path] = rootFolders.headOption.map(_ resolve relative)
 
   def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 
-  def relativePath(itemId: String): Path = {
-    val decodedId = URLDecoder.decode(itemId, "UTF-8")
-    Paths get decodedId
-  }
+  def relativePath(itemId: String): Path = Paths get decode(itemId)
+
 
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
@@ -132,6 +150,8 @@ trait Library extends MusicLibrary with Log {
    * @return the id
    */
   def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
+
+  def decode(id: String) = URLDecoder.decode(id, "UTF-8")
 
   private def mergeContents(sources: Seq[PathInfo]): Folder =
     sources.map(items).foldLeft(Folder.empty)(_ ++ _)

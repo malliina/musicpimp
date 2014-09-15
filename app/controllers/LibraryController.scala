@@ -6,6 +6,7 @@ import java.nio.file.{Path, Paths}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Folder, Library, MusicCollection}
 import com.mle.util.Log
+import models.MusicColumn
 import play.api.libs.json.Json
 import play.api.mvc._
 import views.html
@@ -17,13 +18,17 @@ trait LibraryController extends Secured with Log {
   /**
    * @return an action that provides the contents of the library with the supplied id
    */
-  def library(folderId: String) = PimpAction(implicit request => {
-    val path = Library relativePath folderId
-    Library.items(path).fold(pimpResult(
+  def library(folderId: String) = lib(folderId)
+
+  def lib(id: String) = contents(Library.items)(id)
+
+  def contents(browser: Path => Option[Folder])(id: String) = PimpAction(implicit request => {
+    val path = Library relativePath id
+    browser(path).fold(pimpResult(
       html = NotFound,
-      json = NotFound(JsonMessages.failure(s"Unkown folder ID: $folderId"))
+      json = NotFound(JsonMessages.failure(s"Unknown folder ID: $id"))
     ))(items => {
-      respondWith(folderId, path, items)
+      respondWith(id, path, items)
     })
   })
 
@@ -75,8 +80,7 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to serve
    */
-  def download(trackId: String): EssentialAction =
-    download(trackId, _.withHeaders(ACCEPT_RANGES -> "bytes"))
+  def download(trackId: String): EssentialAction = download(trackId, _.withHeaders(ACCEPT_RANGES -> "bytes"))
 
   /**
    * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
@@ -86,18 +90,45 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to serve
    */
-  def supplyForPlayback(trackId: String) =
-    download(trackId, r => r)
+  def supplyForPlayback(trackId: String) = download(trackId, r => r)
 
   def meta(id: String) = PimpAction {
     Library.findMeta(id).fold(BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id")))(track => Ok(Json.toJson(track)))
   }
 
   def toHtml(contents: MusicCollection): play.twirl.api.Html = {
-    //    val itemsColl = MusicCollection.fromFolder(id, relativePath, contents)
-    val allItems = contents.dirs ++ contents.songs
-    val (col1, col2, col3) = columnize(allItems)
-    html.library(contents.path, col1, col2, col3)
+    val (col1, col2, col3) = columnify(contents) match {
+      case Nil => (MusicColumn.empty, MusicColumn.empty, MusicColumn.empty)
+      case h :: Nil => (h, MusicColumn.empty, MusicColumn.empty)
+      case f :: s :: Nil => (f, s, MusicColumn.empty)
+      case f :: s :: t :: tail => (f, s, t)
+    }
+    html.library(Paths get contents.folder.path, col1, col2, col3)
+  }
+
+  /**
+   *
+   * @param col
+   * @param minCount
+   * @param columns
+   * @return at least one column
+   */
+  private def columnify(col: MusicCollection, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
+    val tracks = col.tracks
+    val folders = col.folders
+    val tracksCount = tracks.size
+    val foldersCount = folders.size
+    val itemsCount = tracksCount + foldersCount
+    if (itemsCount < minCount || columns == 1) {
+      List(MusicColumn(folders, tracks))
+    } else {
+      val cutoff = itemsCount / columns + 1
+      val takeColumns = math.min(foldersCount, cutoff)
+      val takeTracks = math.max(0, cutoff - foldersCount)
+      val column = MusicColumn(folders take takeColumns, tracks take takeTracks)
+      val remains = col.copy(folders = folders drop takeColumns, tracks = tracks drop takeTracks)
+      column :: columnify(remains, minCount, columns - 1)
+    }
   }
 
   private def columnize[T](items: Seq[T]) = {
