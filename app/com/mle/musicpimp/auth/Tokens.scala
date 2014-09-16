@@ -5,11 +5,14 @@ import java.nio.file.Path
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.auth.{Token, TokenStore}
 import com.mle.play.io.FileBackedList
+import com.mle.util.Utils
 
 /**
  * @author Michael
  */
-class Tokens(file: Path) extends FileBackedList[Token](file)
+class Tokens(file: Path) extends FileBackedList[Token](file) {
+  protected override def load(): Seq[Token] = Utils.opt[Seq[Token], Exception](super.load()) getOrElse Nil
+}
 
 class TokensStore(tokensFile: Path) extends TokenStore {
   FileUtil.trySetOwnerOnlyPermissions(tokensFile)
