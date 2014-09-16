@@ -13,16 +13,31 @@ import com.mle.util.{Log, Utils}
  * @author Michael
  */
 trait Library extends MusicLibrary with Log {
+  val ROOT_ID = ""
   val emptyPath = Paths get ""
-  val emptyPathString = emptyPath.toString
   var rootFolders: Seq[Path] = Settings.read
 
-  def rootPaths: Folder =
-    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
+  def rootFolder = rootFolderFromDatabase
 
-  def rootFolder = MusicFolder.fromFolder("", emptyPath, rootPaths)
+  def rootFolderFromDatabase: MusicFolder = folderFromDatabase(ROOT_ID) getOrElse MusicFolder.empty
 
-  def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
+  def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
+
+  def folder(id: String): Option[MusicFolder] = {
+//    val (result, duration) = Utils.timed(folderFromDatabase(id))
+//    log info s"Loaded folder: $id in $duration"
+//    result
+    folderFromDatabase(id)
+  }
+
+  def folderFromDatabase(id: String): Option[MusicFolder] = {
+    val path = relativePath(id)
+    findPathInfo(path).map(_ => {
+      val thisFolder = DataFolder fromPath path
+      val (tracks, subFolders) = PimpDb folder id
+      MusicFolder(thisFolder, subFolders, tracks)
+    })
+  }
 
   def folderFromFile(id: String): Option[MusicFolder] = {
     val path = relativePath(id)
@@ -30,14 +45,8 @@ trait Library extends MusicLibrary with Log {
     content.map(MusicFolder.fromFolder(id, path, _))
   }
 
-  def folderFromDatabase(id: String): Option[MusicFolder] = {
-    val path = relativePath(id)
-    findPathInfo(path).map(_ => {
-      val folder = DataFolder fromPath path
-      val (tracks, folders) = PimpDb folder id
-      MusicFolder(folder, folders, tracks)
-    })
-  }
+  private def rootPaths: Folder =
+    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
 
   def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {

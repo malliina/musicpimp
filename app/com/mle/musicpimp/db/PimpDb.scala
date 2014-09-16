@@ -21,7 +21,7 @@ object PimpDb extends DatabaseLike with Log {
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-  val pool = JdbcConnectionPool.create("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", "", "")
+  val pool = JdbcConnectionPool.create("jdbc:h2:~/.musicpimp/pimp254;DB_CLOSE_DELAY=-1", "", "")
   override val database = Database.forDataSource(pool)
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
@@ -36,7 +36,8 @@ object PimpDb extends DatabaseLike with Log {
 
   def folder(id: String): (Seq[DataTrack], Seq[DataFolder]) = withSession(implicit s => {
     val tracksQuery = tracks.filter(_.folder === id)
-    val foldersQuery = folders.filter(_.parent === id)
+    // '=!=' is the same as '!=' in slick-lang
+    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     (tracksQuery.run, foldersQuery.run)
   })
@@ -109,9 +110,8 @@ object PimpDb extends DatabaseLike with Log {
           dropAll()
           init()
           folders ++= Library.folderStream
-          //          initTable(tracks)
           var fileCount = 0L
-          Library.dataTrackStream.grouped(999).foreach(chunk => {
+          Library.dataTrackStream.grouped(100).foreach(chunk => {
             tracks ++= chunk
             fileCount += chunk.size
             obs onNext fileCount

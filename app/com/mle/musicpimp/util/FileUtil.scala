@@ -17,7 +17,7 @@ object FileUtil extends Log {
   // TODO DRY, this is in util
   def props(file: Path) = {
     if (Files.exists(file)) {
-      val kvs = io.Source.fromFile(file.toFile).getLines().flatMap(line => {
+      val kvs = scala.io.Source.fromFile(file.toFile).getLines().flatMap(line => {
         val kv = line.split("=", 2)
         if (kv.size >= 2) {
           Some(kv(0) -> kv(1))

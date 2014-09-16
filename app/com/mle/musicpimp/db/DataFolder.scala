@@ -11,8 +11,7 @@ import com.mle.musicpimp.library.Library
 case class DataFolder(id: String, title: String, path: String, parent: String) extends FolderMeta
 
 object DataFolder {
-  //  def fromValues(i:String,ti:String)
-  val root = DataFolder("", "", "", "")
+  val root = DataFolder(Library.ROOT_ID, "", "", Library.ROOT_ID)
 
   def fromPath(p: Path) = DataFolder(Library.encode(p), p.getFileName.toString, p.toString, Library.encode(Option(p.getParent).getOrElse(Library.emptyPath)))
 

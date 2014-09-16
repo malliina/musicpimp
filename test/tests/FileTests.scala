@@ -22,7 +22,7 @@ class FileTests extends FunSuite {
     assert(duration < 3.seconds || duration < threshold)
   }
   test("folder list") {
-    val folders = Library.folderStream
-    folders foreach println
+//    val folders = Library.folderStream
+//    folders foreach println
   }
 }

@@ -4,10 +4,9 @@ import java.net.URI
 
 import com.mle.audio.meta.{SongMeta, SongTags, UriSource}
 import com.mle.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
-import com.mle.musicpimp.db.DataTrack
 import com.mle.storage.StorageSize
 import com.mle.util.Log
-import models.MusicItemInfo
+import models.MusicItem
 
 import scala.concurrent.duration._
 
@@ -15,11 +14,10 @@ import scala.concurrent.duration._
  *
  * @author mle
  */
-class LocalTrack(id: String, val meta: SongMeta)
-  extends MusicItemInfo(meta.tags.title, id, dir = false)
-  with PlayableTrack {
+class LocalTrack(val id: String, val meta: SongMeta) extends MusicItem with PlayableTrack {
 
   val media = meta.media
+  override val title = meta.tags.title
 
   override val size: StorageSize = media.size
 
@@ -32,10 +30,6 @@ class LocalTrack(id: String, val meta: SongMeta)
   override def toString = id
 
   override def buildPlayer(eom: () => Unit): PimpPlayer = new StoragePlayer(this, eom)
-
-//  def path =
-
-//  def toData = DataTrack(id,title,artist,album,)
 }
 
 object LocalTrack extends Log {

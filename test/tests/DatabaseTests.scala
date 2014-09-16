@@ -43,34 +43,34 @@ class DatabaseTests extends FunSuite {
 
 
   test("can insert into database") {
-    PimpDb.dropAll()
-    PimpDb.init()
-    PimpDb.withSession(implicit session => {
-      PimpDb.folders ++= Library.folderStream
+//    PimpDb.dropAll()
+//    PimpDb.init()
+//    PimpDb.withSession(implicit session => {
+//      PimpDb.folders ++= Library.folderStream
       //      PimpDb.folders += DataFolder.root
       //      Library.folderStream.foreach(f => {
       //        println(f)
       //        PimpDb.folders += f
       //      })
       //      PimpDb.folders ++= Library.folderStream
-    })
+//    })
   }
 
   test("can create database table, query") {
-    PimpDb.dropAll()
-    PimpDb.init()
-    PimpDb.withSession(implicit session => {
-      PimpDb.folders ++= testFolders
-      PimpDb.tracks ++= testTracks
-      val ts = PimpDb.fullText("dgfhfh")
-      assert(ts.isEmpty)
-      val ts2 = PimpDb.fullText("Maiden")
-      assert(ts2.size === 1)
-      assert(ts2.head === testTracks.head)
-      val (tracks, folders) = PimpDb.folder(folder2Id)
-      assert(tracks === tracksInFolder2)
-      assert(folders.head === testFolders(3))
-    })
+//    PimpDb.dropAll()
+//    PimpDb.init()
+//    PimpDb.withSession(implicit session => {
+//      PimpDb.folders ++= testFolders
+//      PimpDb.tracks ++= testTracks
+//      val ts = PimpDb.fullText("dgfhfh")
+//      assert(ts.isEmpty)
+//      val ts2 = PimpDb.fullText("Maiden")
+//      assert(ts2.size === 1)
+//      assert(ts2.head === testTracks.head)
+//      val (tracks, folders) = PimpDb.folder(folder2Id)
+//      assert(tracks === tracksInFolder2)
+//      assert(folders.head === testFolders(3))
+//    })
   }
 
   def plainSQL(): Unit = {

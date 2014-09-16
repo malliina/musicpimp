@@ -14,6 +14,7 @@ case class MusicFolder(folder: FolderMeta, folders: Seq[FolderMeta], tracks: Seq
 }
 
 object MusicFolder {
+  val empty = MusicFolder(DataFolder.root, Nil, Nil)
   implicit val format = Json.writes[MusicFolder]
 
   def fromFolder(id: String, path: Path, folder: Folder): MusicFolder = {

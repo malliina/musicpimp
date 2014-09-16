@@ -23,7 +23,7 @@ object Search extends PimpSocket with Log {
     (t: Throwable) => broadcastStatus(s"Indexing failed."),
     () => broadcastStatus("Indexing complete."))
   val loggingObserver = Observer[Long](
-    (next: Long) => log info s"Indexing... $next files indexed...",
+    (next: Long) => log debug s"Indexing... $next files indexed...",
     (t: Throwable) => log.error(s"Indexing failed.", t),
     () => log info s"Indexing complete.")
 
