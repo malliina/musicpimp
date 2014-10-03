@@ -4,7 +4,7 @@ import com.mle.file.FileUtilities
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.file.StorageFile
+import com.mle.rx.Observables
 import com.mle.util.Log
 import rx.lang.scala.Observable
 
@@ -29,25 +29,44 @@ object Indexer extends Log {
   def init() = ()
 
   def indexIfNecessary(): Observable[Long] = {
-    val actual = currentFileCount
+    val actualObs = currentFileCount
+    //    val actual = currentFileCountSync
     val saved = savedFileCount
-    if (actual != saved) {
-      log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-      index(actual)
-    } else {
-      log info s"There are still $savedFileCount files in the library. No change since last time, not indexing."
-      Observable.empty
-    }
+    actualObs flatMap (actual => {
+      if (actual != saved) {
+        log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
+        index(actual)
+      } else {
+        log info s"There are still $savedFileCount files in the library. No change since last time, not indexing."
+        Observable.empty
+      }
+    })
   }
 
-  def index(): Observable[Long] = index(currentFileCount)
+  /**
+   * Indexes the music library.
+   *
+   * Note that this is a hot [[Observable]] for two reasons: we want the indexing to run regardless of whether there are
+   * any subscribers, and we want it to run only once. All subscribers will share the same stream of events.
+   *
+   * I think an observable should be hot when the event stream in itself is side-effecting, whereas normally we
+   * subscribe to cold observables to cause side effects.
+   *
+   * @return a hot [[Observable]] with indexing progress
+   */
+  def index(): Observable[Long] = Observables.hot(currentFileCount flatMap index)
 
-  def index(count: Int): Observable[Long] = {
-    val fileCounter = Observable.from(Future(FileUtilities.stringToFile(count.toString, indexFile))).map(_ => 0L)
+  private def index(count: Int): Observable[Long] = {
+    val fileCounter = futObs(FileUtilities.stringToFile(count.toString, indexFile)).map(_ => 0L)
+    log info s"Indexing with count: $count"
     fileCounter ++ PimpDb.refreshIndex()
   }
 
   private def savedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
 
-  private def currentFileCount = Library.trackFiles.size
+  private def currentFileCountSync = Library.trackFiles.size
+
+  private def currentFileCount: Observable[Int] = futObs(currentFileCountSync)
+
+  private def futObs[T](body: => T) = Observable.from(Future(body))
 }

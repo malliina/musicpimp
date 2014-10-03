@@ -62,9 +62,7 @@ object WebPlayerMessageHandler extends JsonHandlerBase {
     })
   }
 
-  def webPlayer(user: String, op: PimpWebPlayer => Unit): Unit =
-    WebPlayback.execute(user, op)
+  def webPlayer(user: String, op: PimpWebPlayer => Unit): Unit = WebPlayback.execute(user, op)
 
-  private def newTrackInfo(trackId: String) =
-    Library meta trackId
+  private def newTrackInfo(trackId: String) = Library meta trackId
 }

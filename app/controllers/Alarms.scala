@@ -15,9 +15,7 @@ import play.api.mvc.Result
 object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerStrings with Log {
 
   val jobWriter = new Writes[PlaybackJob] {
-    override def writes(o: PlaybackJob): JsValue = obj(
-      TRACK -> toJson(o.trackInfo)
-    )
+    override def writes(o: PlaybackJob): JsValue = obj(TRACK -> toJson(o.trackInfo))
   }
   implicit val alarmWriter = new Writes[ClockPlayback] {
     override def writes(o: ClockPlayback): JsValue = obj(
@@ -29,7 +27,7 @@ object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerSt
   }
 
   def alarms = PimpAction(implicit request => {
-    def content = ScheduledPlaybackService.status
+    def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(
       html = views.html.alarms(content),
       json = Json.toJson(content)
@@ -38,7 +36,7 @@ object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerSt
 
   def handleJson = PimpParsedAction(parse.json)(jsonRequest => {
     val json = jsonRequest.body
-    log info s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
+    log debug s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
     onRequest(json)
   })
 

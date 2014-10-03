@@ -1,6 +1,6 @@
 package models
 
-import com.mle.musicpimp.json.JsonFormats
+import com.mle.musicpimp.json.JsonFormatVersions
 import com.mle.util.Log
 import controllers.{PimpRequest, RequestHelpers}
 import play.api.http.MimeTypes
@@ -35,7 +35,7 @@ case class ClientInfo[T](channel: Concurrent.Channel[T], request: RequestHeader,
    */
   val apiVersion = PimpRequest.requestedResponseFormat(request)
     .filter(_ != MimeTypes.HTML)
-    .getOrElse(JsonFormats.JSONv17)
+    .getOrElse(JsonFormatVersions.JSONv17)
   log debug s"Client connected with API version: $apiVersion"
   override val toString = describe
 }

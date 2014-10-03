@@ -6,6 +6,7 @@ package com.mle.musicpimp.json
 trait JsonStrings {
   val OK = "ok"
   val PING = "ping"
+  val PING_AUTH = "ping_auth"
   val FAILURE = "failure"
   val STATUS = "status"
   val VERSION = "version"
@@ -16,6 +17,7 @@ trait JsonStrings {
   val INVALID_JSON = "Invalid JSON"
   val NO_FILE_IN_MULTIPART = "No file in multipart/form-data"
   val FOLDER = "folder"
+  val ROOT_FOLDER = "root_folder"
   val FOLDERS = "folders"
   val PATH = "path"
   val PARENT = "parent"
@@ -56,6 +58,10 @@ trait JsonStrings {
   val SKIP = "skip"
   val ADD = "add"
   val PLAY = "play"
+
+  val AUTHENTICATE = "authenticate"
+  val USERNAME = "username"
+  val PASSWORD = "password"
 
   val EVENT = "event"
   val TRACK_CHANGED = "track_changed"
@@ -99,8 +105,17 @@ trait JsonStrings {
   //  val DAYS = "days"
 
   // Search
+  val SEARCH = "search"
+  val TERM = "term"
+  val LIMIT = "limit"
   val REFRESH = "refresh"
   val SEARCH_STATUS = "search_status"
+
+  val ALARMS = "alarms"
+  val ALARMS_EDIT = "alarms_edit"
+  val ALARMS_ADD = "alarms_add"
+
+  val BODY = "body"
 }
 
 object JsonStrings extends JsonStrings

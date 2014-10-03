@@ -1,9 +1,9 @@
 package com.mle.musicpimp.scheduler.json
 
+import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.messaging.adm.AmazonDevices
 import com.mle.musicpimp.messaging.gcm.GoogleDevices
 import com.mle.musicpimp.messaging.mpns.PushUrls
-import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, ScheduledPlaybackService}
 import com.mle.push.gcm.AndroidDevice
@@ -49,11 +49,10 @@ trait JsonHandler extends SchedulerStrings with Log {
     def parse[T](key: String, f: String => T): JsResult[T] =
       (json \ key).validate[String].map(f)
 
-    (json \ CMD).validate[String].flatMap {
+    val result = (json \ CMD).validate[String].flatMap {
       case DELETE =>
         parse(ID, Delete)
-      case SAVE =>
-        (json \ AP).validate[ClockPlayback].map(Save)
+      case SAVE => (json \ AP).validate[ClockPlayback].map(Save)
       case START =>
         parse(ID, Start)
       case STOP =>
@@ -71,9 +70,12 @@ trait JsonHandler extends SchedulerStrings with Log {
       case ADM_REMOVE =>
         parse(ID, RemoveAmazonDevice)
       case cmd =>
-        log.warn(s"Unknown JSON: $json")
         JsError(s"Unknown command: $cmd")
     }
+    if (result.isError) {
+      log.warn(s"Invalid JSON: $json")
+    }
+    result
   }
 
   private def handleCommand(cmd: Command): Unit = cmd match {

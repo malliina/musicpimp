@@ -68,8 +68,7 @@ trait LibraryController extends Secured with Log {
   /**
    * Serves the given track and sets the ACCEPT_RANGES header in the response.
    *
-   * The Windows Phone background downloader requires the accept-ranges
-   * header for files over 5 MB.
+   * The Windows Phone background downloader requires the accept-ranges header for files over 5 MB.
    *
    * @param trackId track to serve
    */

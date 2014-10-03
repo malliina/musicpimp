@@ -1,0 +1,41 @@
+@(cloudForm: Form[Option[String]], serverID: Option[String] = None, feedback: Option[String] = None)(implicit request: RequestHeader, flash: Flash)
+
+    @manage("cloud") {
+        @bs.headerRow("Cloud","col-md-12","Connect this server to the cloud.")
+        @bs.rowColumn("col-md-6") {
+            @toggleButton(serverID.map(_ => "Disconnect").getOrElse("Connect"))
+        }
+        @bs.rowColumn("col-md-6") {
+            @serverID.map(connectedHtml)
+        }
+        @bs.rowColumn("col-md-6") {
+            @feedback.map { fb =>
+                <p class="lead error">@fb</p>
+            }
+        }
+        @bs.rowColumn("col-md-6") {
+            @flash.get(Cloud.FEEDBACK).map { message =>
+                <p class="lead">@message</p>
+            }
+        }
+        @bs.rowColumn("col-md-6") {
+            <p>How does this work?</p>
+            <p>This server will open a connection to a machine on the internet. Your mobile device connects to the
+                same machine on the internet and communicates with this server through the machine both parties have
+                connected to. All traffic is encrypted. All music is streamed.</p>
+        }
+    }
+    @toggleButton(title: String) = {
+        <form class="form" name="toggleForm" action="@routes.Cloud.toggle()" method="POST">
+            @if(serverID.isEmpty) {
+                <div class="form-group">
+                    <label for="@Cloud.idFormKey">Desired cloud ID (optional)</label>
+                    <input type="text" class="form-control" id="@Cloud.idFormKey" name="@Cloud.idFormKey" placeholder="Your desired ID or leave empty">
+                </div>
+            }
+            <button type="submit" id="toggleButton" class="btn btn-lg btn-primary btn-block">@title</button>
+        </form>
+    }
+    @connectedHtml(id: String) = {
+        <p class="lead">Connected. You can now access this server using your credentials and this cloud ID: @id</p>
+    }

@@ -20,10 +20,7 @@ trait DatabaseLike extends Log {
       log info s"Ensuring all tables exist..."
       createIfNotExists(tableQueries: _*)
     })
-    withSession(implicit session => onInit(session))
   }
-
-  def onInit(implicit session: Session): Unit = ()
 
   def withSession[T](f: Session => T) = database withSession f
 
@@ -40,13 +37,13 @@ trait DatabaseLike extends Log {
   }
 
   def executePlain(queries: String*) =
-    withSession(implicit session => queries.foreach(q => StaticQuery.updateNA(q).execute))
+    withSession(s => queries.foreach(q => StaticQuery.updateNA(q).execute(s)))
 
   def queryPlain[R](query: String)(implicit rconv: GetResult[R]) =
-    withSession(implicit s => StaticQuery.queryNA[R](query).list)
+    withSession(s => StaticQuery.queryNA[R](query).list(s))
 
   def queryPlainParam[R, P](query: String, param: P)(implicit pconv: SetParameter[P], rconv: GetResult[R]) = {
     val q = StaticQuery.query[P, R](query)
-    withSession(implicit s => q(param).list)
+    withSession(s => q(param).list(s))
   }
 }

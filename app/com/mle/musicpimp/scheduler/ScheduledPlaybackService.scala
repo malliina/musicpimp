@@ -59,6 +59,7 @@ trait ScheduledPlaybackService extends Log {
     if (withId.enabled) {
       clockAPs.schedule(withId)
     }
+    log debug s"Saved scheduled playback: $ap"
   }
 
   def remove(id: String) = {

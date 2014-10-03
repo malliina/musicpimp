@@ -24,9 +24,9 @@ trait Library extends MusicLibrary with Log {
   def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
 
   def folder(id: String): Option[MusicFolder] = {
-//    val (result, duration) = Utils.timed(folderFromDatabase(id))
-//    log info s"Loaded folder: $id in $duration"
-//    result
+    //    val (result, duration) = Utils.timed(folderFromDatabase(id))
+    //    log info s"Loaded folder: $id in $duration"
+    //    result
     folderFromDatabase(id)
   }
 
@@ -115,7 +115,6 @@ trait Library extends MusicLibrary with Log {
 
   def relativePath(itemId: String): Path = Paths get decode(itemId)
 
-
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
@@ -164,8 +163,7 @@ trait Library extends MusicLibrary with Log {
     else Some(mergeContents(sources))
   }
 
-  private def mergeContents(sources: Seq[PathInfo]): Folder =
-    sources.map(items).foldLeft(Folder.empty)(_ ++ _)
+  private def mergeContents(sources: Seq[PathInfo]): Folder = sources.map(items).foldLeft(Folder.empty)(_ ++ _)
 
   private def items(pathInfo: PathInfo): Folder =
     tryReadFolder(FileUtils.listFiles(pathInfo.absolute, pathInfo.root))
@@ -179,6 +177,9 @@ trait Library extends MusicLibrary with Log {
     rootFolders.filter(root => Files.isReadable(root resolve relative))
       .map(root => PathInfo(relative, root))
   }
+
+  // How do I write this correctly?
+  //  private def yo[R[_]](f: Seq[Path] => R[PathInfo]) = f(rootFolders).map(PathInfo(relative,_))
 
   private def pathInfo(relative: Path): PathInfo = findPathInfo(relative)
     .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))

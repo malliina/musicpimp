@@ -1,6 +1,6 @@
 package controllers
 
-import com.mle.musicpimp.json.JsonFormats
+import com.mle.musicpimp.json.JsonFormatVersions
 import com.mle.util.Log
 import play.api.http.MimeTypes
 import play.api.libs.json.JsValue
@@ -16,7 +16,7 @@ import scala.concurrent.Future
  */
 trait PimpContentController extends Controller with Log {
 
-  import com.mle.musicpimp.json.JsonFormats._
+  import com.mle.musicpimp.json.JsonFormatVersions._
 
   def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
     PimpRequest.requestedResponseFormat(request) match {
@@ -66,7 +66,7 @@ object PimpContentController extends PimpContentController
 
 object PimpRequest extends Log {
 
-  import com.mle.musicpimp.json.JsonFormats._
+  import com.mle.musicpimp.json.JsonFormatVersions._
 
   /**
    * @param request the request
@@ -102,5 +102,5 @@ object PimpRequest extends Log {
   def apiVersion(header: RequestHeader) =
     PimpRequest.requestedResponseFormat(header)
       .filter(_ != MimeTypes.HTML)
-      .getOrElse(JsonFormats.JSONv17)
+      .getOrElse(JsonFormatVersions.JSONv17)
 }

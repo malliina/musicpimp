@@ -9,7 +9,7 @@ package com.mle.musicpimp.json
  *
  * @author mle
  */
-trait JsonFormats {
+trait JsonFormatVersions {
   val JSONv17 = versionString(Some(17))
   val JSONv18 = versionString(Some(18))
   //  /**
@@ -29,4 +29,4 @@ trait JsonFormats {
 
 }
 
-object JsonFormats extends JsonFormats
+object JsonFormatVersions extends JsonFormatVersions

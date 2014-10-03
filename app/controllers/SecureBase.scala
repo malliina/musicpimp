@@ -11,6 +11,7 @@ import play.api.libs.Files.TemporaryFile
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.BufferedSource
 
 /**
@@ -86,6 +87,14 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
     AuthenticatedAndLogged(user => Action(parser)(req => {
       val result = f(new AuthRequest(user.user, req, user.cookie))
       maybeWithCookie(user, result)
+    }))
+
+  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) = PimpParsedActionAsync(parse.anyContent)(f)
+
+  def PimpParsedActionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) =
+    AuthenticatedAndLogged(auth => Action.async(parser)(req => {
+      val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))
+      resultFuture.map(r => maybeWithCookie(auth, r))(ExecutionContext.Implicits.global)
     }))
 
   /**

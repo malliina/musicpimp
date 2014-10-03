@@ -1,13 +1,14 @@
 import java.nio.file.Files
 
 import com.mle.file.FileUtilities
+import com.mle.musicpimp.cloud.Clouds
 import com.mle.musicpimp.db.{Indexer, PimpDb}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.log.PimpLog
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.util.{ Log}
+import com.mle.util.Log
 import controllers.PimpContentController
 import play.api.Application
 import play.api.mvc._
@@ -39,11 +40,12 @@ object Global extends WithFilters(new GzipFilter()) with Log {
    */
   override def onStart(app: Application) {
     super.onStart(app)
+    FileUtilities init "musicpimp"
     Files.createDirectories(FileUtil.pimpHomeDir)
     ScheduledPlaybackService.init()
     PimpDb.init()
     Future(Indexer.init())
-    FileUtilities init "musicpimp"
+    Clouds.init()
     val version = com.mle.musicpimp.BuildInfo.version
     log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"
   }

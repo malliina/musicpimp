@@ -18,26 +18,30 @@ import scala.util.Try
 object Search extends PimpSocket with Log {
   val DEFAULT_LIMIT = 1000
 
-  val socketObserver = Observer[Long](
-    (next: Long) => broadcastStatus(s"Indexing... $next files indexed..."),
-    (t: Throwable) => broadcastStatus(s"Indexing failed."),
-    () => broadcastStatus("Indexing complete."))
-  val loggingObserver = Observer[Long](
-    (next: Long) => log debug s"Indexing... $next files indexed...",
-    (t: Throwable) => log.error(s"Indexing failed.", t),
-    () => log info s"Indexing complete.")
+  val socketObserver = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
+  val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.info)
+
+  private def indexingObserver(onNext: String => Unit,
+                               onErr: (String, Throwable) => Unit,
+                               onCompleted: String => Unit) = Observer[Long](
+    (next: Long) => onNext(s"Indexing... $next files indexed..."),
+    (t: Throwable) => onErr("Indexing failed.", t),
+    () => onCompleted(s"Indexed ${PimpDb.trackCount} files."))
 
   def search = PimpAction(implicit req => {
-    val query = req.getQueryString("term").filter(_.nonEmpty)
-    val limit = req.getQueryString("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse DEFAULT_LIMIT
-    val results = query.fold(Seq.empty[DataTrack])(databaseSearch(_, limit))
-    respond(html = views.html.search(query, results), json = Json.toJson(results))
+    def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
+    val term = query("term")
+    val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse DEFAULT_LIMIT
+    val results = term.fold(Seq.empty[DataTrack])(databaseSearch(_, limit))
+    respond(html = views.html.search(term, results), json = Json.toJson(results))
   })
 
   def refresh = PimpAction(implicit req => {
-    observeRefresh(loggingObserver)
+    observeRefresh(loggingObserver, socketObserver)
     Ok
   })
+
+  override def openSocketCall: Call = routes.Search.openSocket()
 
   override def welcomeMessage: Option[Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
 
@@ -45,8 +49,19 @@ object Search extends PimpSocket with Log {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
-        observeRefresh(socketObserver, loggingObserver)
+        observeRefresh(loggingObserver, socketObserver)
     })
+
+  def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
+
+  def observeRefresh(observers: Observer[Long]*) = {
+    log debug s"Got refresh command..."
+    val observable = Indexer.index()
+    val subs = observers map observable.subscribe
+    toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
+  }
+
+  private def databaseSearch(query: String, limit: Int): Seq[DataTrack] = PimpDb.fullText(query, limit)
 
   private def toFuture[T](obs: Observable[T]): Future[Unit] = {
     val p = Promise[Unit]()
@@ -55,18 +70,6 @@ object Search extends PimpSocket with Log {
     ret.onComplete(_ => sub.unsubscribe())
     ret
   }
-
-  def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
-
-  def observeRefresh(observers: Observer[Long]*) = {
-    val observable = Indexer.index()
-    val subs = observers map observable.subscribe
-    toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
-  }
-
-  private def databaseSearch(query: String, limit: Int): Seq[DataTrack] = PimpDb.fullText(query, limit)
-
-  override def openSocketCall: Call = routes.Search.openSocket()
 }
 
 

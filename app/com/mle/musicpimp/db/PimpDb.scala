@@ -3,10 +3,11 @@ package com.mle.musicpimp.db
 import com.mle.db.DatabaseLike
 import com.mle.musicpimp.library.Library
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.rx.Observables
 import com.mle.storage.StorageLong
 import com.mle.util.Log
 import org.h2.jdbcx.JdbcConnectionPool
-import rx.lang.scala.{Observable, Observer, Subject, Subscriber}
+import rx.lang.scala.{Observable, Observer, Subject}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -37,7 +38,7 @@ object PimpDb extends DatabaseLike with Log {
   def folder(id: String): (Seq[DataTrack], Seq[DataFolder]) = withSession(implicit s => {
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' is the same as '!=' in slick-lang
-    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID)
+    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID).sortBy(_.title)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     (tracksQuery.run, foldersQuery.run)
   })
@@ -102,30 +103,21 @@ object PimpDb extends DatabaseLike with Log {
    *
    * @return progress: total amount of files indexed
    */
-  def refreshIndex(): Observable[Long] = {
-    observe[Long](obs => {
-      this.synchronized {
-        log info "Indexing..."
-        withSession(implicit session => {
-          dropAll()
-          init()
-          folders ++= Library.folderStream
-          var fileCount = 0L
-          Library.dataTrackStream.grouped(100).foreach(chunk => {
-            tracks ++= chunk
-            fileCount += chunk.size
-            obs onNext fileCount
-          })
-          log info s"Indexed $fileCount files."
+  def refreshIndex(): Observable[Long] = observe(obs => {
+    this.synchronized {
+      log info "Indexing..."
+      withSession(implicit session => {
+        tracks.delete
+        folders.delete
+        folders ++= Library.folderStream
+        var fileCount = 0L
+        Library.dataTrackStream.grouped(100).foreach(chunk => {
+          tracks ++= chunk
+          fileCount += chunk.size
+          obs onNext fileCount
         })
-      }
-    })
-  }
-
-  def tryObserve[T, U](f: Subscriber[T] => U) = Observable[T](sub => {
-    Try(f(sub)) match {
-      case Success(u) => sub.onCompleted()
-      case Failure(t) => sub onError t
+        log info s"Indexed $fileCount files."
+      })
     }
   })
 

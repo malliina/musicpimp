@@ -12,6 +12,8 @@ import scala.util.Try
  * @author mle
  */
 object PlaybackMessageHandler extends JsonHandlerBase {
+  def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
+
   override protected def handleMessage(msg: JsValue, user: String): Unit = {
     withCmd(msg)(cmd => cmd.command match {
       case RESUME =>
@@ -32,9 +34,7 @@ object PlaybackMessageHandler extends JsonHandlerBase {
         MusicPlayer.seek(pos.toDouble seconds)
       case PLAY =>
         val track = cmd.track
-        //        log.info(s"Resetting library with track: $track")
         MusicPlayer.reset(Library meta track)
-      //        log.info("Reset done")
       case SKIP =>
         val index = cmd.value
         Try(MusicPlayer skip index).recover {

@@ -7,6 +7,8 @@ GET         /account                       controllers.Website.account
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
 GET         /logs                          controllers.Website.logs
+GET         /cloud                         controllers.Cloud.cloud
+POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about
 GET         /manage                        controllers.Website.manage
 GET         /login                         controllers.Website.login
