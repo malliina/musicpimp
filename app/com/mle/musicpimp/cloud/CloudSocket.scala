@@ -2,7 +2,7 @@ package com.mle.musicpimp.cloud
 
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.cloud.CloudConstants.{REGISTERED, REQUEST_ID}
-import com.mle.musicpimp.cloud.CloudSocket.hostPort
+import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.PimpMessages._
 import com.mle.musicpimp.db.PimpDb
 import com.mle.musicpimp.http.TrustAllMultipartRequest
@@ -10,6 +10,7 @@ import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.JsonStrings.{CMD, EVENT}
 import com.mle.rx.Observables
 import com.mle.util.Util
@@ -43,10 +44,17 @@ class CloudSocket(uri: String, username: String, password: String)
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log debug s"Got message: $json"
-    // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
-    ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
-      (parseEvent(json) map handleEvent)) recoverTotal (err => handleError(err, json))
+    log info s"Got message: $json"
+    try {
+      // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
+      ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
+        (parseEvent(json) map handleEvent)) recoverTotal (err => handleError(err, json))
+    } catch {
+      case e: Exception =>
+        (json \ REQUEST_ID).validate[String].map(request => {
+          sendJsonResponse(JsonMessages.failure(s"The MusicPimp server was unable to deal with the request: $json"), request)
+        })
+    }
   }
 
   def parseRequest(json: JsValue): JsResult[(PimpMessage, String)] = {
@@ -123,7 +131,7 @@ class CloudSocket(uri: String, username: String, password: String)
   def sendResponse[T](response: T, request: String)(implicit writer: Writes[T]): Unit =
     sendJsonResponse(Json.toJson(response), request)
 
-  def sendJsonResponse[T](response: JsValue, request: String) = {
+  def sendJsonResponse(response: JsValue, request: String) = {
     val payload = requestJson(request) + (BODY -> response)
     sendLogged(payload, request)
   }
@@ -147,25 +155,29 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def failRegistration(e: Exception) = registrationPromise tryFailure e
 
-  def upload(track: Track, request: String) = {
+  def upload(track: Track, request: String) = Future {
     val trackID = track.id
-    log debug s"Serving: $trackID..."
-    val uploadUri = s"http://$hostPort/track"
+    val uploadUri = s"$httpProtocol://$hostPort/track"
     Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
       req.addHeaders(REQUEST_ID -> request)
       // TODO if the track cannot be found, this should be communicated to the client more elegantly
-      Library.findAbsolute(trackID).map(path => {
+      Library.findAbsolute(trackID).fold(log warn s"Unable to find track: $trackID")(path => {
         req addFile path
+        log info s"Uploading file: $path to: $uploadUri as response to request: $request"
       })
       req.execute()
+      log info s"Upload complete of: $request"
     })
   }
 }
 
 object CloudSocket {
-  val hostPort = "localhost:9000"
+  val hostPort = "cloud.musicpimp.org"
+  val httpProtocol = "https"
+  val socketProtocol = "wss"
+  //  val hostPort = "localhost:9000"
 
-  def build(id: Option[String]) = new CloudSocket(s"ws://$hostPort/servers/ws", id getOrElse "", "pimp")
+  def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws", id getOrElse "", "pimp")
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
