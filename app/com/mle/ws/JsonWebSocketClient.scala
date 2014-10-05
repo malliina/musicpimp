@@ -105,7 +105,11 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
 
   def send[T](message: T)(implicit writer: Writes[T]): Unit = send(Json toJson message)
 
-  def send(json: JsValue): Unit = client send (Json stringify json)
+  def send(json: JsValue): Unit = {
+    val payload = Json stringify json
+    client send payload
+    log info s"Sent: $payload"
+  }
 
   def onMessage(json: JsValue) = ()
 }

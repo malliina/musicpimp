@@ -1,14 +1,13 @@
 package com.mle.musicpimp.json
 
 import com.mle.audio.PlayerStates
-import com.mle.musicpimp.audio.TrackMeta
+import com.mle.musicpimp.audio.{StatusEvent, TrackMeta}
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.util.Log
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.concurrent.duration.Duration
-import com.mle.musicpimp.BuildInfo
 
 /**
  * @author Michael
@@ -49,6 +48,8 @@ trait JsonMessages extends Log {
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
 
   def searchStatus(status: String) = event(SEARCH_STATUS, STATUS -> status)
+
+  def withStatus(json: JsValue): JsValue = event(STATUS) ++ json.as[JsObject]
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject = {
     obj(EVENT -> eventType) ++ obj(valuePairs: _*)

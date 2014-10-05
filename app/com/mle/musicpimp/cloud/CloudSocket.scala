@@ -56,7 +56,7 @@ class CloudSocket(uri: String, username: String, password: String)
       // Hack, responds to a "cmd: "status"" message. All other requests have an ID or require no response.
       // TODO fix this inconsistency.
       if ((json \ REQUEST_ID).asOpt[String].isEmpty && json.asOpt[SimpleCommand].exists(_.cmd == STATUS)) {
-        send(MusicPlayer.status)
+        send(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)))
       } else {
         // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
         ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
