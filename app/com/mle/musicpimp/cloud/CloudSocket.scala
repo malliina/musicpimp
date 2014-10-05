@@ -28,6 +28,7 @@ import scala.util.Try
  */
 class CloudSocket(uri: String, username: String, password: String)
   extends JsonWebSocketClient(uri, username, password) {
+
   private val registrationPromise = Promise[String]()
 
   val registration = registrationPromise.future
@@ -52,13 +53,19 @@ class CloudSocket(uri: String, username: String, password: String)
   override def onMessage(json: JsValue): Unit = {
     log info s"Got message: $json"
     try {
-      // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
-      ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
-        (parseEvent(json) map handleEvent)) recoverTotal (err => handleError(err, json))
+      // Hack, responds to a "cmd: "status"" message. All other requests have an ID or require no response.
+      // TODO fix this inconsistency.
+      if ((json \ REQUEST_ID).asOpt[String].isEmpty && json.asOpt[SimpleCommand].exists(_.cmd == STATUS)) {
+        send(MusicPlayer.status)
+      } else {
+        // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
+        ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
+          (parseEvent(json) map handleEvent)) recoverTotal (err => handleError(err, json))
+      }
     } catch {
       case e: Exception =>
         (json \ REQUEST_ID).validate[String].map(request => {
-          sendJsonResponse(JsonMessages.failure(s"The MusicPimp server was unable to deal with the request: $json"), request)
+          sendJsonResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
         })
     }
   }
