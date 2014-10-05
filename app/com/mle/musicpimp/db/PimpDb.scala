@@ -1,9 +1,7 @@
 package com.mle.musicpimp.db
 
-import com.mle.db.DatabaseLike
 import com.mle.musicpimp.library.Library
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.rx.Observables
 import com.mle.storage.StorageLong
 import com.mle.util.Log
 import org.h2.jdbcx.JdbcConnectionPool
@@ -18,16 +16,15 @@ import scala.util.{Failure, Success, Try}
 /**
  * @author Michael
  */
-object PimpDb extends DatabaseLike with Log {
+object PimpDb extends PimpDatabase with Log {
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
   val pool = JdbcConnectionPool.create("jdbc:h2:~/.musicpimp/pimp254;DB_CLOSE_DELAY=-1", "", "")
   override val database = Database.forDataSource(pool)
-  val tracks = TableQuery[Tracks]
-  val folders = TableQuery[Folders]
+
   val tracksName = tracks.baseTableRow.tableName
-  override val tableQueries = Seq(tracks, folders)
+  override val tableQueries = Seq(tracks, folders, tokens)
   implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Seq[DataTrack] = {
