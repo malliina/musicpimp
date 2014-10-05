@@ -83,7 +83,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
     client setWebSocketFactory factory
   }
 
-  def close(): Unit = client.closeBlocking()
+  def close(): Unit = client.close()
 
   override def onClose(): Unit = ()
 
