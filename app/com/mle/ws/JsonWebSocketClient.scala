@@ -5,7 +5,7 @@ import java.net.URI
 import com.mle.security.SSLUtils
 import com.mle.util.Log
 import org.java_websocket.client.{DefaultSSLWebSocketClientFactory, WebSocketClient}
-import org.java_websocket.drafts.{Draft_10, Draft_17}
+import org.java_websocket.drafts.Draft_10
 import org.java_websocket.handshake.ServerHandshake
 import play.api.libs.json.{JsValue, Json, Writes}
 import rx.lang.scala.{Observable, Subject}
@@ -108,7 +108,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
   def send(json: JsValue): Unit = {
     val payload = Json stringify json
     client send payload
-    log info s"Sent: $payload"
+//    log debug s"Sent: $payload"
   }
 
   def onMessage(json: JsValue) = ()

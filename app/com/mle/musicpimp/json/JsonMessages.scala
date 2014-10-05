@@ -1,7 +1,7 @@
 package com.mle.musicpimp.json
 
 import com.mle.audio.PlayerStates
-import com.mle.musicpimp.audio.{StatusEvent, TrackMeta}
+import com.mle.musicpimp.audio.TrackMeta
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.util.Log
 import play.api.libs.json.Json._
@@ -13,7 +13,7 @@ import scala.concurrent.duration.Duration
  * @author Michael
  */
 trait JsonMessages extends Log {
-  val Version = obj(VERSION -> BuildInfo.version)
+  val Version = obj(VERSION -> com.mle.musicpimp.BuildInfo.version)
   val NoMedia = obj(STATE -> PlayerStates.NoMedia.toString)
   val UnAuthorized = failure(ACCESS_DENIED)
   val InvalidParameter = failure(INVALID_PARAMETER)
