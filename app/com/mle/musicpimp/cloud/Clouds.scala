@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path}
 
 import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.file.FileUtilities
+import com.mle.play.json.SimpleCommand
 import com.mle.util.{Log, Utils}
 import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subscription}
@@ -25,13 +26,13 @@ object Clouds extends Log {
   var successiveFailures = 0
 
   def init() = {
-    connectIfEnabled()
+    ensureConnectedIfEnabled()
     maintainConnectivity()
   }
 
-  def connectIfEnabled() = {
+  def ensureConnectedIfEnabled() = {
     if (isEnabled && !client.isConnected) {
-      connect().recoverAll(t => {
+      connect(loadID()).recoverAll(t => {
         log.warn(s"Unable to connect to the cloud.", t)
         successiveFailures += 1
         if (successiveFailures == MAX_FAILURES) {
@@ -44,7 +45,7 @@ object Clouds extends Log {
   }
 
   def maintainConnectivity() = {
-    poller = Some(timer.subscribe(_ => connectIfEnabled()))
+    poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
   }
 
   def isEnabled = Files exists idFile
@@ -64,18 +65,22 @@ object Clouds extends Log {
 
   def newSocket(id: Option[String]) = CloudSocket build (id orElse loadID())
 
-  def connect(id: Option[String] = None): Future[String] = reg {
+  def connect(id: Option[String]): Future[String] = reg {
     disconnect()
+    log debug s"Connecting as $id..."
     client = newSocket(id)
     maintainConnectivity()
-    client.connect().flatMap(_ => client.registration).map(id => {
+    val ret = client.connectID().map(id => {
       successiveFailures = 0
       saveID(id)
       id
     })
+    ret.recoverAll(t => log.warn("Connection failure", t))
+    ret
   }
 
   def disconnectAndForget() = {
+    Try(client send SimpleCommand(CloudStrings.UNREGISTER))
     disconnect()
     Files.deleteIfExists(idFile)
   }
@@ -83,7 +88,11 @@ object Clouds extends Log {
   def disconnect() = {
     poller.foreach(_.unsubscribe())
     poller = None
+    val wasConnected = client.isConnected
     client.close()
+    if (wasConnected) {
+      log info s"Disconnected from the cloud."
+    }
   }
 
   def registration: Future[String] = reg(Future.failed(CloudSocket.notConnected))

@@ -1,8 +1,8 @@
 package com.mle.musicpimp.cloud
 
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
-import com.mle.musicpimp.cloud.CloudConstants.{REGISTERED, REQUEST_ID}
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
+import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
 import com.mle.musicpimp.db.PimpDb
 import com.mle.musicpimp.http.TrustAllMultipartRequest
@@ -12,6 +12,7 @@ import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.JsonStrings.{CMD, EVENT}
+import com.mle.play.json.SimpleCommand
 import com.mle.rx.Observables
 import com.mle.util.Util
 import com.mle.ws.JsonWebSocketClient
@@ -20,6 +21,7 @@ import play.api.libs.json._
 
 import scala.concurrent.duration.DurationLong
 import scala.concurrent.{Future, Promise}
+import scala.util.Try
 
 /**
  * @author Michael
@@ -30,10 +32,14 @@ class CloudSocket(uri: String, username: String, password: String)
 
   val registration = registrationPromise.future
 
+  def connectID(): Future[String] = connect().flatMap(_ => registration)
+
+  def unregister() = Try(send(SimpleCommand(UNREGISTER)))
+
   /**
    * Reconnections are currently not supported; only call this method once per instance.
    *
-   * Impl: On subsequent calls, the returned future will always completed regardless of connection result
+   * Impl: On subsequent calls, the returned future will always be completed regardless of connection result
    *
    * @return a future that completes when the connection has successfully been established
    */
@@ -92,7 +98,9 @@ class CloudSocket(uri: String, username: String, password: String)
       case GetStatus => sendResponse(MusicPlayer.status, request)
       case t: Track => upload(t, request)
       case RootFolder => sendResponse(Library.rootFolder, request)
-      case Folder(id) => sendResponse(Library folder id, request)
+      case Folder(id) =>
+        val json = (Library folder id).map(Json.toJson(_)) getOrElse JsonMessages.failure(s"Unable to find folder with ID: $id")
+        sendJsonResponse(json, request)
       case Search(term, limit) =>
         val result = PimpDb.fullText(term, limit)
         sendResponse(result, request)
@@ -177,7 +185,7 @@ object CloudSocket {
   val socketProtocol = "wss"
   //  val hostPort = "localhost:9000"
 
-  def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws", id getOrElse "", "pimp")
+  def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")

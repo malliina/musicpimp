@@ -5,7 +5,7 @@ import java.net.URI
 import com.mle.security.SSLUtils
 import com.mle.util.Log
 import org.java_websocket.client.{DefaultSSLWebSocketClientFactory, WebSocketClient}
-import org.java_websocket.drafts.Draft_10
+import org.java_websocket.drafts.{Draft_10, Draft_17}
 import org.java_websocket.handshake.ServerHandshake
 import play.api.libs.json.{JsValue, Json, Writes}
 import rx.lang.scala.{Observable, Subject}
@@ -83,7 +83,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
     client setWebSocketFactory factory
   }
 
-  def close(): Unit = client.close()
+  def close(): Unit = client.closeBlocking()
 
   override def onClose(): Unit = ()
 
