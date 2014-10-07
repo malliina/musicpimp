@@ -23,6 +23,8 @@ object PimpMessages {
 
   case class Track(id: String) extends PimpMessage
 
+  case class GetMeta(id: String) extends PimpMessage
+
   case class Search(term: String, limit: Int) extends PimpMessage
 
   case object GetAlarms extends PimpMessage
@@ -43,4 +45,5 @@ object PimpMessages {
   implicit val folderFormat = Json.format[Folder]
   implicit val trackFormat = Json.format[Track]
   implicit val authFormat = Json.format[Authenticate]
+  implicit val meta = Json.format[GetMeta]
 }

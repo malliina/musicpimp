@@ -114,6 +114,8 @@ trait JsonStrings {
   val ALARMS = "alarms"
   val ALARMS_EDIT = "alarms_edit"
   val ALARMS_ADD = "alarms_add"
+
+  val META = "meta"
 }
 
 object JsonStrings extends JsonStrings

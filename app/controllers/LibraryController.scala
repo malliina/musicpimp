@@ -5,7 +5,7 @@ import java.nio.file.Paths
 
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Library, MusicFolder}
-import com.mle.util.{Log, Utils}
+import com.mle.util.Log
 import models.MusicColumn
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -21,9 +21,9 @@ trait LibraryController extends Secured with Log {
    * @return an action that provides the contents of the library with the supplied id
    */
   def library(folderId: String) = PimpAction(implicit request => {
-//    val (result, duration) = Utils.timed(Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items)))
-//    log info s"Loaded $folderId in $duration"
-//    result
+    //    val (result, duration) = Utils.timed(Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items)))
+    //    log info s"Loaded $folderId in $duration"
+    //    result
     Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items))
   })
 
@@ -85,10 +85,16 @@ trait LibraryController extends Secured with Log {
   def supplyForPlayback(trackId: String) = download(trackId, r => r)
 
   def meta(id: String) = PimpAction {
-    Library.findMeta(id).fold(trackNotFound(id))(track => Ok(Json.toJson(track)))
+    trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
   }
 
-  private def trackNotFound(id: String) = BadRequest(JsonMessages.failure(s"Unable to find track with ID: $id"))
+  private def trackNotFound(id: String) = BadRequest(noTrackJson(id))
+
+  def findMeta(id: String) = trackMetaJson(id) getOrElse noTrackJson(id)
+
+  def trackMetaJson(id: String) = Library.findMeta(id).map(Json.toJson(_))
+
+  def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
 
   def toHtml(folder: MusicFolder): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(folder) match {

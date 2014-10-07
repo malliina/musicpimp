@@ -31,8 +31,8 @@ GET         /webplaylist                   controllers.Rest.webPlaylist
 GET         /folders                       controllers.Rest.rootLibrary
 GET         /folders/*folder               controllers.Rest.library(folder)
 GET         /downloads/*id                 controllers.Rest.download(id)
-GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
 GET         /tracks/meta/*id               controllers.Rest.meta(id)
+GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
 POST        /rootfolders                   controllers.Website.newFolder
 POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks

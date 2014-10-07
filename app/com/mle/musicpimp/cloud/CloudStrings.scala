@@ -10,4 +10,5 @@ object CloudStrings {
   val TRACK_KEY = "track"
   val REGISTERED = "registered"
   val UNREGISTER = "unregister"
+  val SUCCESS = "success"
 }

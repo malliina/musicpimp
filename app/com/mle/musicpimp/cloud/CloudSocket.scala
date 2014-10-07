@@ -2,7 +2,7 @@ package com.mle.musicpimp.cloud
 
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
-import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, UNREGISTER}
+import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
 import com.mle.musicpimp.db.PimpDb
 import com.mle.musicpimp.http.TrustAllMultipartRequest
@@ -77,6 +77,7 @@ class CloudSocket(uri: String, username: String, password: String)
     val requestMessage: JsResult[PimpMessage] = reqResult.flatMap(req => cmd.flatMap {
       case VERSION => JsSuccess(GetVersion)
       case TRACK => body.validate[Track]
+      case META => body.validate[GetMeta]
       case PING => JsSuccess(Ping)
       case AUTHENTICATE => body.validate[Authenticate]
       case ROOT_FOLDER => JsSuccess(RootFolder)
@@ -106,8 +107,9 @@ class CloudSocket(uri: String, username: String, password: String)
       case t: Track => upload(t, request)
       case RootFolder => sendResponse(Library.rootFolder, request)
       case Folder(id) =>
-        val json = (Library folder id).map(Json.toJson(_)) getOrElse JsonMessages.failure(s"Unable to find folder with ID: $id")
-        sendJsonResponse(json, request)
+        val folderResult = (Library folder id).map(Json.toJson(_))
+        val json = folderResult getOrElse JsonMessages.failure(s"Folder not found: $id")
+        sendJsonResponse(json, request, folderResult.isDefined)
       case Search(term, limit) =>
         val result = PimpDb.fullText(term, limit)
         sendResponse(result, request)
@@ -127,8 +129,12 @@ class CloudSocket(uri: String, username: String, password: String)
         val response =
           if (isValid) JsonMessages.Version
           else JsonMessages.failure("Invalid credentials")
-        sendJsonResponse(response, request)
+        sendJsonResponse(response, request, success = isValid)
       case GetVersion => sendJsonResponse(JsonMessages.Version, request)
+      case GetMeta(id) =>
+        val metaResult = Rest.trackMetaJson(id)
+        val response = metaResult getOrElse Rest.noTrackJson(id)
+        sendJsonResponse(response, request, metaResult.isDefined)
       case RegistrationEvent(event, id) => registrationPromise trySuccess id
       case PlaybackMessage(payload) => PlaybackMessageHandler handleMessage payload
     }
@@ -141,17 +147,17 @@ class CloudSocket(uri: String, username: String, password: String)
     }
   }
 
-  def requestJson(request: String) = Json.obj(REQUEST_ID -> request)
+  def requestJson(request: String, success: Boolean) = Json.obj(REQUEST_ID -> request, SUCCESS -> success)
 
   def sendResponse[T](response: T, request: String)(implicit writer: Writes[T]): Unit =
     sendJsonResponse(Json.toJson(response), request)
 
-  def sendJsonResponse(response: JsValue, request: String) = {
-    val payload = requestJson(request) + (BODY -> response)
+  def sendJsonResponse(response: JsValue, request: String, success: Boolean = true) = {
+    val payload = requestJson(request, success) + (BODY -> response)
     sendLogged(payload, request)
   }
 
-  def sendAckResponse(request: String) = sendLogged(requestJson(request), request)
+  def sendAckResponse(request: String) = sendLogged(requestJson(request, success = true), request)
 
   def sendLogged(payload: JsValue, request: String) = {
     send(payload)
@@ -170,27 +176,37 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def failRegistration(e: Exception) = registrationPromise tryFailure e
 
-  def upload(track: Track, request: String) = Future {
-    val trackID = track.id
+  def upload(track: Track, request: String) = {
     val uploadUri = s"$httpProtocol://$hostPort/track"
-    Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
-      req.addHeaders(REQUEST_ID -> request)
-      // TODO if the track cannot be found, this should be communicated to the client more elegantly
-      Library.findAbsolute(trackID).fold(log warn s"Unable to find track: $trackID")(path => {
-        req addFile path
-        log info s"Uploading file: $path to: $uploadUri as response to request: $request"
+    val trackID = track.id
+    val trackOpt = Library.findAbsolute(trackID)
+    if (trackOpt.isEmpty) {
+      log warn s"Unable to find track: $trackID"
+    }
+    //    trackOpt.map(path => {
+    Future {
+      def infoLog(message: String) = log info s"$message. URI: $uploadUri. Request: $request."
+      Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
+        req.addHeaders(REQUEST_ID -> request)
+        trackOpt.foreach(path => {
+          req addFile path
+          infoLog(s"Uploading: $path.")
+        })
+        req.execute()
+        infoLog("Upload complete")
       })
-      req.execute()
-      log info s"Upload complete of: $request"
-    })
+    }
+    //    })
   }
 }
 
 object CloudSocket {
-  val hostPort = "cloud.musicpimp.org"
-  val httpProtocol = "https"
-  val socketProtocol = "wss"
-  //  val hostPort = "localhost:9000"
+  //  val hostPort = "cloud.musicpimp.org"
+  //  val httpProtocol = "https"
+  //  val socketProtocol = "wss"
+  val hostPort = "localhost:9000"
+  val httpProtocol = "http"
+  val socketProtocol = "ws"
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 
