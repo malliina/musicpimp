@@ -40,6 +40,25 @@ trait LibraryController extends Secured with Log {
   }
 
   /**
+   * Serves the given track and sets the ACCEPT_RANGES header in the response.
+   *
+   * The Windows Phone background downloader requires the ACCEPT_RANGES header for files over 5 MB. To watch it fail,
+   * use a real device not an emulator.
+   *
+   * @param trackId track to serve
+   */
+  def download(trackId: String): EssentialAction = download(trackId, _.withHeaders(ACCEPT_RANGES -> "bytes"))
+
+  /**
+   * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
+   *
+   * The Windows Phone background audio player fails to work properly if the ACCEPT_RANGES header is set.
+   *
+   * @param trackId track to serve
+   */
+  def supplyForPlayback(trackId: String) = download(trackId, r => r)
+
+  /**
    * Responds with the song with the given ID.
    *
    * Note: If an unauthorized request is made here, the result is always
@@ -64,26 +83,6 @@ trait LibraryController extends Secured with Log {
     logUnauthorized(req)
     Unauthorized
   }
-
-  /**
-   * Serves the given track and sets the ACCEPT_RANGES header in the response.
-   *
-   * The Windows Phone background downloader requires the accept-ranges header for files over 5 MB.
-   *
-   * @param trackId track to serve
-   */
-  def download(trackId: String): EssentialAction = download(trackId, _.withHeaders(ACCEPT_RANGES -> "bytes"))
-
-  /**
-   * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
-   *
-   * The Windows Phone background audio player fails to work properly if the
-   * ACCEPT_RANGES header is set.
-   *
-   * @param trackId track to serve
-   */
-  def supplyForPlayback(trackId: String) = download(trackId, r => r)
-
   def meta(id: String) = PimpAction {
     trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
   }

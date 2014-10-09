@@ -190,7 +190,7 @@ class CloudSocket(uri: String, username: String, password: String)
         req.addHeaders(REQUEST_ID -> request)
         trackOpt.foreach(path => {
           req addFile path
-          infoLog(s"Uploading: $path.")
+          infoLog(s"Uploading: $path")
         })
         req.execute()
         infoLog("Upload complete")
@@ -201,12 +201,12 @@ class CloudSocket(uri: String, username: String, password: String)
 }
 
 object CloudSocket {
-    val hostPort = "cloud.musicpimp.org"
-    val httpProtocol = "https"
-    val socketProtocol = "wss"
-//  val hostPort = "localhost:9000"
-//  val httpProtocol = "http"
-//  val socketProtocol = "ws"
+//    val hostPort = "cloud.musicpimp.org"
+//    val httpProtocol = "https"
+//    val socketProtocol = "wss"
+  val hostPort = "localhost:9000"
+  val httpProtocol = "http"
+  val socketProtocol = "ws"
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 
