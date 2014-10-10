@@ -6,7 +6,7 @@ GET         /settings                      controllers.Website.settings
 GET         /account                       controllers.Website.account
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
-GET         /logs                          controllers.Website.logs
+GET         /logs                          controllers.PimpLogController.logs
 GET         /cloud                         controllers.Cloud.cloud
 POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about
@@ -43,7 +43,7 @@ POST        /search/refresh                controllers.Search.refresh
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.openSocket
 GET         /ws/webplay                    controllers.WebPlayerController.openSocket
-GET         /ws/logs                       controllers.Website.openLogSocket
+GET         /ws/logs                       controllers.PimpLogController.openSocket
 # Alarms
 GET         /alarms                        controllers.Alarms.alarms
 POST        /alarms                        controllers.Alarms.handleJson

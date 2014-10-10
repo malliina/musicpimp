@@ -1,20 +1,19 @@
 package controllers
 
 import com.mle.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
-import controllers.PimpLogController._
-import play.api.libs.json.{JsValue, Json}
+import com.mle.play.controllers.LogStreaming
+import com.mle.play.ws.SyncAuth
 import play.api.mvc.Call
-import rx.lang.scala.Observable
 import views.html
 
 /**
  *
  * @author mle
  */
-trait PimpLogController extends StreamingLogController with HtmlController {
-  override val logEvents: Observable[JsValue] = appenderOpt
-    .map(_.logEvents.map(e => Json.toJson(e)))
-    .getOrElse(Observable.empty)
+object PimpLogController extends LogStreaming with SyncAuth with HtmlController {
+  val appenderName = "RX"
+
+  override def appenderOpt = LogbackUtils.appender[BasicBoundedReplayRxAppender](appenderName)
 
   def feedback =
     if (appenderOpt.isEmpty) {
@@ -24,13 +23,7 @@ trait PimpLogController extends StreamingLogController with HtmlController {
       None
     }
 
-  override def subscribeCall: Call = routes.Website.openLogSocket
+  override def openSocketCall: Call = routes.PimpLogController.openSocket
 
   def logs = navigate(implicit req => html.logs(feedback))
-}
-
-object PimpLogController {
-  val appenderName = "RX"
-
-  def appenderOpt = LogbackUtils.appender[BasicBoundedReplayRxAppender](appenderName)
 }

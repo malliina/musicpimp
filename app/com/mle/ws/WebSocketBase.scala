@@ -11,7 +11,7 @@ trait WebSocketBase[T] {
   /**
    * @return a future that completes when the connection has successfully been established
    */
-  def connect: Future[Unit]
+  def connect(): Future[Unit]
 
   def send(json: T): Unit
 

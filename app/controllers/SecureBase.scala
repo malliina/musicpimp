@@ -1,23 +1,23 @@
 package controllers
 
-import java.io.FileNotFoundException
 import java.nio.file.Path
 
 import com.mle.musicpimp.auth.CookieLogin
+import com.mle.musicpimp.db.DatabaseUserManager
 import com.mle.play.controllers._
-import com.mle.util.{Log, Utils}
-import org.apache.commons.codec.digest.DigestUtils
+import com.mle.util.Log
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.io.BufferedSource
 
 /**
  * @author mle
  */
 trait SecureBase extends PimpContentController with BaseSecurity with Log {
+
+  val userManager = new DatabaseUserManager
 
   override def authenticate(implicit request: RequestHeader): Option[AuthResult] =
     super.authenticate orElse CookieLogin.authenticateFromCookie(request)
@@ -35,14 +35,8 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param password the supplied password
    * @return true if the credentials are valid, false otherwise
    */
-  override def validateCredentials(username: String, password: String): Boolean = {
-    import controllers.PimpAccountController._
-    Utils.opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
-      .flatMap(_.getLines().toList.headOption)
-      .fold(ifEmpty = username == defaultUser && password == defaultPass)(_ == hash(username, password))
-  }
-
-  def hash(username: String, password: String) = DigestUtils.md5Hex(username + ":" + password)
+  def validateCredentials(username: String, password: String): Boolean =
+    userManager.authenticate(username, password)
 
   /**
    * Authenticates, logs authenticated request, executes action, in that order.

@@ -1,8 +1,6 @@
 package controllers
 
-import com.mle.file.FileUtilities
 import com.mle.musicpimp.auth.CookieLogin
-import com.mle.musicpimp.util.FileUtil
 import com.mle.play.auth.RememberMe
 import com.mle.play.controllers.AccountController
 import com.mle.util.Log
@@ -15,11 +13,6 @@ import views.html
  * @author Michael
  */
 trait PimpAccountController extends HtmlController with AccountController with Log {
-
-  import controllers.PimpAccountController._
-
-  val FEEDBACK = "feedback"
-
   def account = PimpAction(implicit req =>
     Ok(html.account(req.user, changePasswordForm))
   )
@@ -34,8 +27,8 @@ trait PimpAccountController extends HtmlController with AccountController with L
 
   def login = Action(implicit request => {
     val motd =
-      if (validateCredentials(defaultUser, defaultPass)) {
-        Some(s"Welcome! The default credentials of $defaultUser / $defaultPass have not been changed. " +
+      if (userManager.isDefaultCredentials) {
+        Some(s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
           s"Consider changing the password under the Manage tab once you have logged in.")
       } else {
         None
@@ -86,7 +79,7 @@ trait PimpAccountController extends HtmlController with AccountController with L
       },
       success => {
         val (_, newPass, _) = success
-        setPassword(user, newPass)
+        userManager updatePassword(user, newPass)
         log info s"Password changed for user: $user from: ${request.remoteAddress}"
         val message = FEEDBACK -> "Password successfully changed."
         Redirect(routes.Website.account()).flashing(message)
@@ -94,17 +87,5 @@ trait PimpAccountController extends HtmlController with AccountController with L
     )
   })
 
-
-  private def setPassword(username: String, password: String) {
-    FileUtilities.writerTo(passFile)(passWriter => {
-      passWriter write hash(username, password)
-    })
-    FileUtil trySetOwnerOnlyPermissions passFile
-  }
-}
-
-object PimpAccountController {
-  val passFile = FileUtilities pathTo "credentials.txt"
-  val defaultUser = "admin"
-  val defaultPass = "test"
+  override protected def logUnauthorized(implicit request: RequestHeader): Unit = super.logUnauthorized
 }

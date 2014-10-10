@@ -11,4 +11,5 @@ trait PimpDatabase extends DatabaseLike {
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
   val tokens = TableQuery[TokensTable]
+  val usersTable = TableQuery[Users]
 }

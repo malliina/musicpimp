@@ -1,12 +1,9 @@
 package controllers
 
-import com.mle.play.json.JsonMessages
-import com.mle.play.ws.WebSocketController
+import com.mle.play.ws.JsonWebSockets
 import models.ClientInfo
 import play.api.libs.iteratee.Concurrent.Channel
-import play.api.libs.json.JsValue
-import play.api.mvc.WebSocket.FrameFormatter
-import play.api.mvc.{Call, Controller, RequestHeader}
+import play.api.mvc.{Controller, RequestHeader}
 
 /**
  * A websockets controller. Subclasses shall implement onConnect, onMessage and onDisconnect.
@@ -16,25 +13,10 @@ import play.api.mvc.{Call, Controller, RequestHeader}
  *
  * @author mle
  */
-trait JsonWebSocketController extends WebSocketController with Controller with Secured {
-  type Message = JsValue
+trait JsonWebSocketController extends JsonWebSockets with Controller with Secured {
   type Client = ClientInfo[Message]
+  type AuthSuccess = String
 
-  /**
-   * Opens an authenticated WebSocket connection.
-   *
-   * This is the controller for requests to ws://... or wss://... URIs.
-   *
-   * @return a websocket connection using messages of type Message
-   * @throws com.mle.musicpimp.exception.PimpException if authentication fails
-   */
-  def subscribe = ws3(FrameFormatter.jsonFrame)
-
-  def subscribeCall: Call
-
-  def wsUrl(implicit request: RequestHeader) =
-    subscribeCall.webSocketURL(secure = RequestHelpers.isHttps(request))
-
-  override def newClient(user: String, channel: Channel[Message])(implicit request: RequestHeader) =
+  override def newClient(user: AuthSuccess, channel: Channel[Message])(implicit request: RequestHeader) =
     ClientInfo(channel, request, user)
 }

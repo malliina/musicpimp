@@ -1,5 +1,6 @@
 package com.mle.musicpimp.cloud
 
+import com.mle.concurrent.Futures
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
@@ -51,7 +52,7 @@ class CloudSocket(uri: String, username: String, password: String)
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log info s"Got message: $json"
+    log debug s"Got message: $json"
     try {
       // Hack, responds to a "cmd: "status"" message. All other requests have an ID or require no response.
       // TODO fix this inconsistency.
@@ -201,12 +202,12 @@ class CloudSocket(uri: String, username: String, password: String)
 }
 
 object CloudSocket {
-//    val hostPort = "cloud.musicpimp.org"
-//    val httpProtocol = "https"
-//    val socketProtocol = "wss"
-  val hostPort = "localhost:9000"
-  val httpProtocol = "http"
-  val socketProtocol = "ws"
+    val hostPort = "cloud.musicpimp.org"
+    val httpProtocol = "https"
+    val socketProtocol = "wss"
+//  val hostPort = "localhost:9000"
+//  val httpProtocol = "http"
+//  val socketProtocol = "ws"
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 

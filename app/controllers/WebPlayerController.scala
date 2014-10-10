@@ -22,6 +22,8 @@ trait WebPlayerController extends MyJsonWebSocketController with Log {
   }
 
   def openSocketCall: Call = routes.WebPlayerController.openSocket()
+
+  def unicast(user: String, json: JsValue) = clients.filter(_.user == user).foreach(_.channel push json)
 }
 
 object WebPlayerController extends WebPlayerController

@@ -4,12 +4,12 @@ import java.nio.file.{Files, Path}
 
 import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.file.FileUtilities
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.SimpleCommand
 import com.mle.util.{Log, Utils}
 import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subscription}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong
 import scala.util.{Failure, Success, Try}

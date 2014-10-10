@@ -4,6 +4,7 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.library.Settings
+import com.mle.play.ws.SyncAuth
 import com.mle.util.Log
 import views.html
 
@@ -18,7 +19,6 @@ object Website
   with ConnectController
   with LibraryController
   with PimpAccountController
-  with PimpLogController
   with Log {
 
   def player = navigate(implicit req => {

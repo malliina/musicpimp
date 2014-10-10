@@ -1,19 +1,20 @@
 package controllers
 
-import com.mle.musicpimp.json.JsonMessages
 import com.mle.play.controllers.AuthResult
-import com.mle.play.ws.JsonWebSocket
+import com.mle.play.ws.{SyncAuth, JsonWebSockets, TrieClientStorage}
+import models.ClientInfo
+import play.api.libs.iteratee.Concurrent.Channel
 import play.api.mvc.RequestHeader
-import rx.lang.scala.Observable
-
-import scala.concurrent.duration.DurationLong
 
 /**
  * @author Michael
  */
-trait PimpSocket extends JsonWebSocket with Secured {
-  // prevents connections from being dropped after 30s of inactivity; i don't know how to modify that timeout
-  val pinger = Observable.interval(20.seconds).subscribe(_ => broadcast(JsonMessages.Ping))
+trait PimpSocket extends JsonWebSockets with TrieClientStorage with Secured with SyncAuth {
+  type Client = ClientInfo[Message]
+  type AuthSuccess = AuthResult
 
-  override def welcomeMessage: Option[Message] = Some(com.mle.play.json.JsonMessages.welcome)
+  override def newClient(user: AuthSuccess, channel: Channel[Message])(implicit request: RequestHeader) =
+    ClientInfo(channel, request, user.user)
+
+  override def welcomeMessage(client: Client): Option[Message] = Some(com.mle.play.json.JsonMessages.welcome)
 }

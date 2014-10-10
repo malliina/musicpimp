@@ -1,5 +1,6 @@
 <configuration>
     <appender name="RX" class="com.mle.logbackrx.BasicBoundedReplayRxAppender">
+        <bufferSize>500</bufferSize>
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="PIMPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">

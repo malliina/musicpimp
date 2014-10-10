@@ -4,13 +4,14 @@ import com.mle.musicpimp.audio.JsonHandlerBase
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.play.http.RequestInfo
+import com.mle.play.ws.TrieClientStorage
 import play.api.libs.json.{JsObject, JsValue, Json}
 
 /**
  *
  * @author mle
  */
-trait MyJsonWebSocketController extends PimpSocket {
+trait MyJsonWebSocketController extends PimpSocket with TrieClientStorage {
   def messageHandler: JsonHandlerBase
 
   def status(client: Client): JsValue

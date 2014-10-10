@@ -2,6 +2,8 @@ package com.mle.ws
 
 import java.net.URI
 
+import com.mle.concurrent.Futures
+import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.security.SSLUtils
 import com.mle.util.Log
 import org.java_websocket.client.{DefaultSSLWebSocketClientFactory, WebSocketClient}
@@ -11,6 +13,7 @@ import play.api.libs.json.{JsValue, Json, Writes}
 import rx.lang.scala.{Observable, Subject}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.DurationLong
 import scala.concurrent.{Future, Promise}
 
 
@@ -23,6 +26,8 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
   val ACCEPT = "Accept"
   val AUTHORIZATION = "Authorization"
   val JSON = "application/json"
+
+  protected val connectTimeout = 10.seconds
 
   private val connectPromise = Promise[Unit]()
 
@@ -100,7 +105,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
    */
   def connect(): Future[Unit] = {
     client.connect()
-    connectPromise.future
+    Futures.within(connectTimeout)(connectPromise.future)
   }
 
   def send[T](message: T)(implicit writer: Writes[T]): Unit = send(Json toJson message)
@@ -108,7 +113,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
   def send(json: JsValue): Unit = {
     val payload = Json stringify json
     client send payload
-//    log debug s"Sent: $payload"
+    //    log debug s"Sent: $payload"
   }
 
   def onMessage(json: JsValue) = ()

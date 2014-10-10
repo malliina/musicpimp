@@ -8,9 +8,7 @@ import play.api.mvc._
  * @author mle
  */
 trait Secured extends SecureBase with PimpContentController with Log {
-  val INTENDED_URI = "intended_uri"
-
-  protected def logUnauthorized(implicit request: RequestHeader) {
+  protected def logUnauthorized(implicit request: RequestHeader): Unit = {
     log warn "Unauthorized request: " + request.path + " from: " + request.remoteAddress
   }
 
@@ -18,7 +16,7 @@ trait Secured extends SecureBase with PimpContentController with Log {
     logUnauthorized(request)
     log info s"Intended: ${request.uri}"
     pimpResult(
-      html = Redirect(routes.Website.login()).withSession(INTENDED_URI -> request.uri),
+      html = Redirect(routes.Website.login()).withSession(Website.INTENDED_URI -> request.uri),
       json = Unauthorized
     )
   }
