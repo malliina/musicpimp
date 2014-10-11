@@ -3,7 +3,6 @@ GET         /                              controllers.Website.rootLibrary
 GET         /player                        controllers.Website.player
 GET         /popupPlayer                   controllers.Website.popupPlayer
 GET         /settings                      controllers.SettingsController.settings
-GET         /account                       controllers.Accounts.account
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
 GET         /logs                          controllers.PimpLogs.logs
@@ -11,10 +10,14 @@ GET         /cloud                         controllers.Cloud.cloud
 POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about
 GET         /manage                        controllers.SettingsController.manage
+GET         /account                       controllers.Accounts.account
+GET         /users                         controllers.Accounts.users
+POST        /users/delete/*id              controllers.Accounts.delete(id)
 GET         /login                         controllers.Accounts.login
 GET         /logout                        controllers.Accounts.logout
 POST        /authenticate                  controllers.Accounts.formAuthenticate
-POST        /changePassword                controllers.Accounts.changePassword
+POST        /changePassword                controllers.Accounts.formChangePassword
+POST        /addUser                       controllers.Accounts.formAddUser
 GET         /parameters                    controllers.Website.parameters
 # Player
 GET         /playback                      controllers.Rest.status

@@ -3,7 +3,7 @@ import java.nio.file.Files
 import com.mle.file.FileUtilities
 import com.mle.musicpimp.auth.Auth
 import com.mle.musicpimp.cloud.Clouds
-import com.mle.musicpimp.db.{Indexer, PimpDb}
+import com.mle.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.log.PimpLog
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
@@ -46,6 +46,7 @@ object Global extends WithFilters(new GzipFilter()) with Log {
     ScheduledPlaybackService.init()
     PimpDb.init()
     Auth.migrateFileCredentialsToDatabaseIfExists()
+    new DatabaseUserManager().ensureAtLeastOneUserExists()
     Future(Indexer.init())
     Clouds.init()
     val version = com.mle.musicpimp.BuildInfo.version

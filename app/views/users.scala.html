@@ -1,0 +1,33 @@
+@(users: Seq[String], addForm: Form[(String, String, String)])(implicit flash: Flash)
+@manage("users") {
+    @bs.row {
+        @util.div("col-md-6") {
+            @util.div("page-header") {
+                <h1>Users</h1>
+            }
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr><th>Username</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                @users.map { u =>
+                    <tr>
+                        <td>@u</td>
+                        <td><form action="@routes.Accounts.delete(u)" method="POST"><button class="btn btn-xs btn-danger">
+                            Delete</button></form></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            @flash.get(Accounts.USERS_FEEDBACK).map { feedback =>
+                <div class="lead alert alert-danger" role="alert">@feedback</div>
+            }
+        }
+        @util.div("col-md-4") {
+            @util.div("page-header") {
+                <h1>Add user</h1>
+            }
+            @addUser(addForm)
+        }
+    }
+}

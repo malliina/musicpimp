@@ -13,15 +13,13 @@ import views.html
  * @author Michael
  */
 object Accounts extends HtmlController with AccountController with Log {
+  val SUCCESS = "success"
+  val USERS_FEEDBACK = "usersFeedback"
   val invalidCredentialsMessage = "Invalid credentials."
   val defaultCredentialsMessage = s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
     s"Consider changing the password under the Manage tab once you have logged in."
   val passwordChangedMessage = "Password successfully changed."
   val logoutMessage = "You have now logged out."
-
-  def account = PimpAction(implicit req =>
-    Ok(html.account(req.user, changePasswordForm))
-  )
 
   val rememberMeLoginForm = Form(tuple(
     userFormKey -> nonEmptyText,
@@ -31,6 +29,29 @@ object Accounts extends HtmlController with AccountController with Log {
     case (username, password, _) => validateCredentials(username, password)
   }))
 
+  val addUserForm = Form(tuple(
+    userFormKey -> nonEmptyText,
+    newPassKey -> nonEmptyText,
+    newPassAgainKey -> nonEmptyText
+  ).verifying("The password was incorrectly repeated.", _ match {
+    case (_, newPass, newPassAgain) => newPass == newPassAgain
+  }))
+
+  def account = PimpAction(implicit req => Ok(html.account(req.user, changePasswordForm)))
+
+  def users = PimpAction(implicit req => Ok(html.users(userManager.users, addUserForm)))
+
+  def delete(user: String) = PimpAction(implicit req => {
+    val redir = Redirect(routes.Accounts.users())
+    if (user != req.user) {
+      userManager deleteUser user
+      redir
+    } else {
+      redir.flashing(USERS_FEEDBACK -> "You cannot delete yourself.")
+    }
+  })
+
+
   def login = Action(implicit request => {
     val motd = Option(defaultCredentialsMessage).filter(_ => userManager.isDefaultCredentials)
     Ok(html.login(rememberMeLoginForm, motd))
@@ -38,8 +59,24 @@ object Accounts extends HtmlController with AccountController with Log {
 
   def logout = AuthAction(implicit request => {
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Accounts.login()).withNewSession.discardingCookies(RememberMe.discardingCookie).flashing(
-      FEEDBACK -> logoutMessage
+    Redirect(routes.Accounts.login()).withNewSession.discardingCookies(RememberMe.discardingCookie)
+      .flashing(msg(logoutMessage))
+  })
+
+  def formAddUser = PimpAction(implicit req => {
+    val remoteAddress = req.remoteAddress
+    addUserForm.bindFromRequest.fold(
+      formWithErrors => {
+        val user = formWithErrors.data.getOrElse(userFormKey, "")
+        log warn s"Unable to add user: $user from: $remoteAddress, form: $formWithErrors"
+        BadRequest(html.users(userManager.users, formWithErrors))
+      },
+      credentials => {
+        val (user, pass, _) = credentials
+        val addCall = userManager.addUser(user, pass)
+        val (isSuccess, feedback) = addCall.fold((true, s"Created user $user."))(e => (false, s"User ${e.user} already exists."))
+        Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
+      }
     )
   })
 
@@ -70,7 +107,7 @@ object Accounts extends HtmlController with AccountController with Log {
 
   def defaultLoginSuccessPage: Call = routes.Website.rootLibrary()
 
-  def changePassword = PimpAction(implicit request => {
+  def formChangePassword = PimpAction(implicit request => {
     val user = request.user
     changePasswordForm.bindFromRequest.fold(
       errors => {
@@ -81,11 +118,12 @@ object Accounts extends HtmlController with AccountController with Log {
         val (_, newPass, _) = success
         userManager updatePassword(user, newPass)
         log info s"Password changed for user: $user from: ${request.remoteAddress}"
-        val message = FEEDBACK -> passwordChangedMessage
-        Redirect(routes.Accounts.account()).flashing(message)
+        Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
       }
     )
   })
+
+  def msg(message: String) = FEEDBACK -> message
 
   override protected def logUnauthorized(implicit request: RequestHeader): Unit = super.logUnauthorized
 }

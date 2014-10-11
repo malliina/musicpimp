@@ -3,6 +3,7 @@
     @indexMain("manage") {
         <ul class="nav nav-tabs">
             @navItem("Music Folders", "folders", routes.SettingsController.settings(), "folder-open")
+            @navItem("Users", "users", routes.Accounts.users(), "user")
             @navItem("Account", "account", routes.Accounts.account(), "user")
             @navItem("Alarms", "alarms", routes.Alarms.alarms(), "time")
             @navItem("Cloud", "cloud", routes.Cloud.cloud(), "cloud")

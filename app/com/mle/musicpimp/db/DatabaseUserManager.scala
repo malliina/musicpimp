@@ -13,6 +13,12 @@ class DatabaseUserManager extends UserManager {
 
   import com.mle.musicpimp.db.PimpDb.{usersTable, withSession}
 
+  def ensureAtLeastOneUserExists(): Unit = {
+    if (users.isEmpty) {
+      addUser(defaultUser, defaultPass)
+    }
+  }
+
   override def defaultUser: User = "admin"
 
   override def defaultPass: Password = "test"
@@ -25,6 +31,9 @@ class DatabaseUserManager extends UserManager {
     userExists || (user == defaultUser && pass == defaultPass && !usersQuery.exists.run(s))
   })
 
+  /**
+   * @return all users
+   */
   override def users: Seq[User] = withSession(s => usersQuery.list(s))
 
   override def addUser(user: User, pass: Password): Option[AlreadyExists] = addUser(DataUser(user, hash(user, pass)))
