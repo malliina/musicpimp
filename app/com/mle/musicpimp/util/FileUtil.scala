@@ -4,7 +4,7 @@ import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
 import java.nio.file.{FileAlreadyExistsException, Files, Path}
 
 import com.mle.file.{FileUtilities, StorageFile}
-import com.mle.util.{Log, Utils}
+import com.mle.util.{Util, Log, Utils}
 
 /**
  * @author Michael
@@ -21,7 +21,6 @@ object FileUtil extends Log {
     }
     path
   }
-
   // TODO DRY, this is in util
   def props(file: Path) = {
     if (Files.exists(file)) {

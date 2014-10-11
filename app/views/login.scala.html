@@ -4,17 +4,17 @@
     @util.css2("login.css")
     @util.div("container") {
         @bs.rowColumn("col-md-4 form-signin") {
-            @flash.get(Website.FEEDBACK).map { message =>
+            @flash.get(Accounts.FEEDBACK).map { message =>
                 <div class="lead alert alert-success">@message</div>
             }
         }
         @bs.rowColumn("col-md-4") {
-            <form class="form-signin" name="loginForm" action="@routes.Website.formAuthenticate()" method="POST">
+            <form class="form-signin" name="loginForm" action="@routes.Accounts.formAuthenticate()" method="POST">
                 <h2 class="form-signin-heading">Please sign in</h2>
-                <input type="text" class="form-control" name="@Website.userFormKey" id="@Website.userFormKey" placeholder="Username" autofocus>
-                <input type="password" class="form-control" name="@Website.passFormKey" id="@Website.passFormKey" placeholder="Password">
+                <input type="text" class="form-control" name="@Accounts.userFormKey" id="@Accounts.userFormKey" placeholder="Username" autofocus>
+                <input type="password" class="form-control" name="@Accounts.passFormKey" id="@Accounts.passFormKey" placeholder="Password">
                 <label class="checkbox">
-                    <input type="checkbox" value="true" name="@Website.rememberMeKey" id="@Website.rememberMeKey">
+                    <input type="checkbox" value="true" name="@Accounts.rememberMeKey" id="@Accounts.rememberMeKey">
                     Remember me
                 </label>
                 <button type="submit" id="loginbutton" class="btn btn-lg btn-primary btn-block">Sign in</button>

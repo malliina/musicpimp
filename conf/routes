@@ -2,19 +2,19 @@
 GET         /                              controllers.Website.rootLibrary
 GET         /player                        controllers.Website.player
 GET         /popupPlayer                   controllers.Website.popupPlayer
-GET         /settings                      controllers.Website.settings
-GET         /account                       controllers.Website.account
+GET         /settings                      controllers.SettingsController.settings
+GET         /account                       controllers.Accounts.account
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
-GET         /logs                          controllers.PimpLogController.logs
+GET         /logs                          controllers.PimpLogs.logs
 GET         /cloud                         controllers.Cloud.cloud
 POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about
-GET         /manage                        controllers.Website.manage
-GET         /login                         controllers.Website.login
-GET         /logout                        controllers.Website.logout
-POST        /authenticate                  controllers.Website.formAuthenticate
-POST        /changePassword                controllers.Website.changePassword
+GET         /manage                        controllers.SettingsController.manage
+GET         /login                         controllers.Accounts.login
+GET         /logout                        controllers.Accounts.logout
+POST        /authenticate                  controllers.Accounts.formAuthenticate
+POST        /changePassword                controllers.Accounts.changePassword
 GET         /parameters                    controllers.Website.parameters
 # Player
 GET         /playback                      controllers.Rest.status
@@ -33,8 +33,8 @@ GET         /folders/*folder               controllers.Rest.library(folder)
 GET         /downloads/*id                 controllers.Rest.download(id)
 GET         /tracks/meta/*id               controllers.Rest.meta(id)
 GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
-POST        /rootfolders                   controllers.Website.newFolder
-POST        /rootfolders/delete/*id        controllers.Website.deleteFolder(id)
+POST        /rootfolders                   controllers.SettingsController.newFolder
+POST        /rootfolders/delete/*id        controllers.SettingsController.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks
 GET         /pathsOnly                     controllers.Alarms.paths
 GET         /search                        controllers.Search.search
@@ -42,8 +42,8 @@ GET         /search/ws                     controllers.Search.openSocket
 POST        /search/refresh                controllers.Search.refresh
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.openSocket
-GET         /ws/webplay                    controllers.WebPlayerController.openSocket
-GET         /ws/logs                       controllers.PimpLogController.openSocket
+GET         /ws/webplay                    controllers.WebPlayer.openSocket
+GET         /ws/logs                       controllers.PimpLogs.openSocket
 # Alarms
 GET         /alarms                        controllers.Alarms.alarms
 POST        /alarms                        controllers.Alarms.handleJson

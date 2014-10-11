@@ -11,7 +11,7 @@ import play.api.libs.json.Json
  */
 trait Settings extends Log {
   val settingsFile = FileUtilities pathTo "settings.json"
-  val FOLDERS="folders"
+  val FOLDERS = "folders"
 
   def readFolders: Seq[String] = read.map(_.toString)
 

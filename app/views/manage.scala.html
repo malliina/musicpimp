@@ -2,11 +2,11 @@
 
     @indexMain("manage") {
         <ul class="nav nav-tabs">
-            @navItem("Music Folders", "folders", routes.Website.settings(), "folder-open")
-            @navItem("Account", "account", routes.Website.account(), "user")
+            @navItem("Music Folders", "folders", routes.SettingsController.settings(), "folder-open")
+            @navItem("Account", "account", routes.Accounts.account(), "user")
             @navItem("Alarms", "alarms", routes.Alarms.alarms(), "time")
             @navItem("Cloud", "cloud", routes.Cloud.cloud(), "cloud")
-            @navItem("Logs", "logs", routes.PimpLogController.logs(), "list")
+            @navItem("Logs", "logs", routes.PimpLogs.logs(), "list")
         </ul>
         <section>
         @content

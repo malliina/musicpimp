@@ -16,7 +16,7 @@ import scala.concurrent.duration.DurationLong
  *
  * @author mle
  */
-trait ServerWS extends MyJsonWebSocketController with Log {
+trait ServerWS extends PlayerSockets with Log {
   override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
 
   override def status(client: Client) = apiVersion(client) match {

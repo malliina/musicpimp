@@ -15,10 +15,8 @@ import views.html
 object Website
   extends Secured
   with HtmlController
-  with SettingsController
   with ConnectController
   with LibraryController
-  with PimpAccountController
   with Log {
 
   def player = navigate(implicit req => {
@@ -44,8 +42,6 @@ object Website
   }
 
   def popupPlayer = navigate(implicit req => html.popupPlayer())
-
-  def manage = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
 
   def about = navigate(html.aboutBase())
 

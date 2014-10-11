@@ -16,9 +16,9 @@
                         @navItem("Player", routes.Website.player(), "music")
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        @navItem("Manage", routes.Website.manage(), "wrench")
+                        @navItem("Manage", routes.SettingsController.manage(), "wrench")
                         @navItem("About", routes.Website.about(), "globe")
-                        <li><a href="@routes.Website.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
+                        <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
                     </ul>
                 </div>
             </div>

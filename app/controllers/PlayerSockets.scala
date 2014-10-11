@@ -4,14 +4,13 @@ import com.mle.musicpimp.audio.JsonHandlerBase
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.play.http.RequestInfo
-import com.mle.play.ws.TrieClientStorage
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.JsValue
 
 /**
  *
  * @author mle
  */
-trait MyJsonWebSocketController extends PimpSocket with TrieClientStorage {
+trait PlayerSockets extends PimpSockets {
   def messageHandler: JsonHandlerBase
 
   def status(client: Client): JsValue
@@ -20,7 +19,7 @@ trait MyJsonWebSocketController extends PimpSocket with TrieClientStorage {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case STATUS =>
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
-        val event = JsonMessages.withStatus(status(client))// Json.obj(EVENT -> STATUS) ++ statusJson.as[JsObject]
+        val event = JsonMessages.withStatus(status(client)) // Json.obj(EVENT -> STATUS) ++ statusJson.as[JsObject]
         client.channel push event
       case anythingElse =>
         handleMessage(msg, client)

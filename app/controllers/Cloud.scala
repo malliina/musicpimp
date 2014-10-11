@@ -18,7 +18,6 @@ import scala.concurrent.Future
 object Cloud extends Secured {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
-
   val cloudForm = Form(idFormKey -> optional(text))
 
   def cloud = PimpActionAsync(implicit req => {

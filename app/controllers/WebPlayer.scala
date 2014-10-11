@@ -10,7 +10,7 @@ import play.api.mvc.Call
  *
  * @author mle
  */
-trait WebPlayerController extends MyJsonWebSocketController with Log {
+object WebPlayer extends PlayerSockets with Log {
   override val messageHandler: JsonHandlerBase = WebPlayerMessageHandler
 
   def status(client: Client): JsValue = {
@@ -21,9 +21,7 @@ trait WebPlayerController extends MyJsonWebSocketController with Log {
     }
   }
 
-  def openSocketCall: Call = routes.WebPlayerController.openSocket()
+  def openSocketCall: Call = routes.WebPlayer.openSocket()
 
   def unicast(user: String, json: JsValue) = clients.filter(_.user == user).foreach(_.channel push json)
 }
-
-object WebPlayerController extends WebPlayerController

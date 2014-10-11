@@ -9,7 +9,7 @@
             <li>@renderFolder(f)</li>
         }
         </ul>
-        <form name="newFolderForm" action="@routes.Website.newFolder()" method="POST" class="form-horizontal">
+        <form name="newFolderForm" action="@routes.SettingsController.newFolder()" method="POST" class="form-horizontal">
             <div class="input-group">
                 <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
                 <input class="form-control" id="path" name="path" type="text" placeholder="/opt/music/" required/>
@@ -25,7 +25,7 @@
 
 
     @renderFolder(folder: String) = {
-        <form action="@routes.Website.deleteFolder(folder)" method="POST" class="form-horizontal">
+        <form action="@routes.SettingsController.deleteFolder(folder)" method="POST" class="form-horizontal">
             <div class="input-group">
                 <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
                 <span class="uneditable-input form-control">@folder</span>

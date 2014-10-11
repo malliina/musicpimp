@@ -15,7 +15,7 @@ import scala.util.Try
 /**
  * @author Michael
  */
-object Search extends PimpSocket with Log {
+object Search extends PimpSockets with Log {
   val DEFAULT_LIMIT = 1000
 
   val socketObserver = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)

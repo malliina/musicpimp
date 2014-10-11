@@ -14,9 +14,9 @@ trait Secured extends SecureBase with PimpContentController with Log {
 
   protected override def onUnauthorized(implicit request: RequestHeader): Result = {
     logUnauthorized(request)
-    log info s"Intended: ${request.uri}"
+    log debug s"Intended: ${request.uri}"
     pimpResult(
-      html = Redirect(routes.Website.login()).withSession(Website.INTENDED_URI -> request.uri),
+      html = Redirect(routes.Accounts.login()).withSession(Accounts.INTENDED_URI -> request.uri),
       json = Unauthorized
     )
   }

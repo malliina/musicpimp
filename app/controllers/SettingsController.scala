@@ -13,10 +13,12 @@ import views._
 /**
  * @author Michael
  */
-trait SettingsController extends Secured with HtmlController with PimpAccountController with Log {
+object SettingsController extends Secured with HtmlController with Log {
   protected val newFolderForm = Form(
     "path" -> nonEmptyText.verifying("Not a directory.", validateDirectory _)
   )
+
+  def manage = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
 
   def settings = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
 
@@ -46,6 +48,6 @@ trait SettingsController extends Secured with HtmlController with PimpAccountCon
   private def onFoldersChanged() = {
     Library.rootFolders = Settings.read
     Indexer.index()
-    Redirect(routes.Website.settings())
+    Redirect(routes.SettingsController.settings())
   }
 }

@@ -1,15 +1,15 @@
 package controllers
 
 import com.mle.play.controllers.AuthResult
-import com.mle.play.ws.{SyncAuth, JsonWebSockets, TrieClientStorage}
+import com.mle.play.ws.{JsonWebSockets, SyncAuth, TrieClientStorage}
 import models.ClientInfo
 import play.api.libs.iteratee.Concurrent.Channel
-import play.api.mvc.RequestHeader
+import play.api.mvc.{Controller, RequestHeader}
 
 /**
  * @author Michael
  */
-trait PimpSocket extends JsonWebSockets with TrieClientStorage with Secured with SyncAuth {
+trait PimpSockets extends Controller with JsonWebSockets with TrieClientStorage with Secured with SyncAuth {
   type Client = ClientInfo[Message]
   type AuthSuccess = AuthResult
 

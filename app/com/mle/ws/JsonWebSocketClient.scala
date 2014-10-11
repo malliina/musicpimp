@@ -23,6 +23,7 @@ import scala.concurrent.{Future, Promise}
  */
 class JsonWebSocketClient(uri: String, username: String, password: String, additionalHeaders: (String, String)*)
   extends JsonWebSocket with Log {
+
   val ACCEPT = "Accept"
   val AUTHORIZATION = "Authorization"
   val JSON = "application/json"

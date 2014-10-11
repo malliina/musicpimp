@@ -12,7 +12,13 @@ import views.html
 /**
  * @author Michael
  */
-trait PimpAccountController extends HtmlController with AccountController with Log {
+object Accounts extends HtmlController with AccountController with Log {
+  val invalidCredentialsMessage = "Invalid credentials."
+  val defaultCredentialsMessage = s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
+    s"Consider changing the password under the Manage tab once you have logged in."
+  val passwordChangedMessage = "Password successfully changed."
+  val logoutMessage = "You have now logged out."
+
   def account = PimpAction(implicit req =>
     Ok(html.account(req.user, changePasswordForm))
   )
@@ -21,25 +27,19 @@ trait PimpAccountController extends HtmlController with AccountController with L
     userFormKey -> nonEmptyText,
     passFormKey -> nonEmptyText,
     rememberMeKey -> boolean // the checkbox HTML element must have the property 'value="true"'
-  ) verifying("Invalid credentials.", _ match {
+  ) verifying(invalidCredentialsMessage, _ match {
     case (username, password, _) => validateCredentials(username, password)
   }))
 
   def login = Action(implicit request => {
-    val motd =
-      if (userManager.isDefaultCredentials) {
-        Some(s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
-          s"Consider changing the password under the Manage tab once you have logged in.")
-      } else {
-        None
-      }
+    val motd = Option(defaultCredentialsMessage).filter(_ => userManager.isDefaultCredentials)
     Ok(html.login(rememberMeLoginForm, motd))
   })
 
   def logout = AuthAction(implicit request => {
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Website.login()).withNewSession.discardingCookies(RememberMe.discardingCookie).flashing(
-      FEEDBACK -> "You have now logged out."
+    Redirect(routes.Accounts.login()).withNewSession.discardingCookies(RememberMe.discardingCookie).flashing(
+      FEEDBACK -> logoutMessage
     )
   })
 
@@ -81,8 +81,8 @@ trait PimpAccountController extends HtmlController with AccountController with L
         val (_, newPass, _) = success
         userManager updatePassword(user, newPass)
         log info s"Password changed for user: $user from: ${request.remoteAddress}"
-        val message = FEEDBACK -> "Password successfully changed."
-        Redirect(routes.Website.account()).flashing(message)
+        val message = FEEDBACK -> passwordChangedMessage
+        Redirect(routes.Accounts.account()).flashing(message)
       }
     )
   })

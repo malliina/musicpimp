@@ -108,6 +108,8 @@ trait LibraryController extends Secured with Log {
   /**
    * Arranges a music collection into columns.
    *
+   * TODO: It could be interesting to explore a type like a non-empty list. Scalaz might have something.
+   *
    * @param col music collection
    * @param minCount minimum amount of items; if there are less items, only one column is used
    * @param columns column count

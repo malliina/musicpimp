@@ -10,7 +10,7 @@ import views.html
  *
  * @author mle
  */
-object PimpLogController extends LogStreaming with SyncAuth with HtmlController {
+object PimpLogs extends LogStreaming with SyncAuth with HtmlController {
   val appenderName = "RX"
 
   override def appenderOpt = LogbackUtils.appender[BasicBoundedReplayRxAppender](appenderName)
@@ -23,7 +23,7 @@ object PimpLogController extends LogStreaming with SyncAuth with HtmlController 
       None
     }
 
-  override def openSocketCall: Call = routes.PimpLogController.openSocket
+  override def openSocketCall: Call = routes.PimpLogs.openSocket
 
   def logs = navigate(implicit req => html.logs(feedback))
 }
