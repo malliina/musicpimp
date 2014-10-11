@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.5.15",
+    version := "2.5.16",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -47,7 +47,7 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "util-play" % "1.6.6" withSources(),
+        mleGroup %% "util-play" % "1.6.7" withSources(),
         mleGroup %% "play-base" % "0.1.0",
         mleGroup %% "util" % "1.4.2",
         mleGroup %% "util-actor" % "1.4.0",
