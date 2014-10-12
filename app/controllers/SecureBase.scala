@@ -4,6 +4,7 @@ import java.nio.file.Path
 
 import com.mle.musicpimp.auth.CookieLogin
 import com.mle.musicpimp.db.DatabaseUserManager
+import com.mle.play.auth.BasicCredentials
 import com.mle.play.controllers._
 import com.mle.util.Log
 import play.api.libs.Files.TemporaryFile
@@ -37,6 +38,9 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    */
   def validateCredentials(username: String, password: String): Boolean =
     userManager.authenticate(username, password)
+
+  override def validateCredentials(creds: BasicCredentials): Boolean =
+    validateCredentials(creds.username, creds.password)
 
   /**
    * Authenticates, logs authenticated request, executes action, in that order.

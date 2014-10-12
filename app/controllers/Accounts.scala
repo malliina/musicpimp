@@ -111,7 +111,7 @@ object Accounts extends HtmlController with AccountController with Log {
     val user = request.user
     changePasswordForm.bindFromRequest.fold(
       errors => {
-        //        log info "" + errors.globalError + ", " + errors.errors
+        log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
         BadRequest(html.account(user, errors))
       },
       success => {

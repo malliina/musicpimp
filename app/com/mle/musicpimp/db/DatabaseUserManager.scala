@@ -11,7 +11,7 @@ import scala.slick.driver.H2Driver.simple._
  */
 class DatabaseUserManager extends UserManager {
 
-  import com.mle.musicpimp.db.PimpDb.{usersTable, withSession}
+  import com.mle.musicpimp.db.PimpDb.{tokens, usersTable, withSession}
 
   def ensureAtLeastOneUserExists(): Unit = {
     if (users.isEmpty) {
@@ -47,7 +47,10 @@ class DatabaseUserManager extends UserManager {
     }
 
   override def deleteUser(user: User): Unit =
-    withSession(s => usersTable.filter(_.user === user).delete(s))
+    withSession(implicit s => {
+      tokens.filter(_.user === user).delete
+      usersTable.filter(_.user === user).delete
+    })
 
   override def updatePassword(user: User, newPass: Password): Unit = withSession(s => {
     usersTable.filter(u => u.user === user).map(_.passHash).update(hash(user, newPass))(s)
