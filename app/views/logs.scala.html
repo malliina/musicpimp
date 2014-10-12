@@ -1,7 +1,11 @@
 @(errorMsg: Option[String] = None)(implicit request: RequestHeader)
 
 @manage("logs") {
-    @bs.headerRow("Logs")
+    @bs.rowColumn("col-md-12") {
+        <div class="page-header">
+            <h1>Logs <small class="pull-right" id="status">Initializing...</small></h1>
+        </div>
+    }
     @errorMsg.map { msg =>
         <p class="lead">@msg</p>
     }
