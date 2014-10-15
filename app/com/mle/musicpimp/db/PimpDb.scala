@@ -102,7 +102,7 @@ object PimpDb extends PimpDatabase with Log {
    */
   def refreshIndex(): Observable[Long] = observe(obs => {
     this.synchronized {
-      log info "Indexing..."
+      log debug "Indexing..."
       withSession(implicit session => {
         tracks.delete
         folders.delete

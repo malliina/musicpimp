@@ -28,7 +28,8 @@ object Indexer extends Log {
 
   def init() = ()
 
-  def indexIfNecessary(): Observable[Long] = {
+  def indexIfNecessary(): Observable[Long] = Observables hot {
+    log info "Indexing if necessary..."
     val actualObs = currentFileCount
     //    val actual = currentFileCountSync
     val saved = savedFileCount
@@ -58,7 +59,7 @@ object Indexer extends Log {
 
   private def index(count: Int): Observable[Long] = {
     val fileCounter = futObs(FileUtilities.stringToFile(count.toString, indexFile)).map(_ => 0L)
-    log info s"Indexing with count: $count"
+    log debug s"Indexing with count: $count"
     fileCounter ++ PimpDb.refreshIndex()
   }
 

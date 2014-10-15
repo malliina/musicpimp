@@ -1,6 +1,5 @@
 package com.mle.musicpimp.cloud
 
-import com.mle.concurrent.Futures
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
@@ -177,7 +176,13 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def failRegistration(e: Exception) = registrationPromise tryFailure e
 
-  def upload(track: Track, request: String) = {
+  /**
+   * Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's ID as the username.
+   * @param track track to upload
+   * @param request request id
+   * @return
+   */
+  def upload(track: Track, request: String): Future[Unit] = {
     val uploadUri = s"$httpProtocol://$hostPort/track"
     val trackID = track.id
     val trackOpt = Library.findAbsolute(trackID)
@@ -189,6 +194,7 @@ class CloudSocket(uri: String, username: String, password: String)
       def infoLog(message: String) = log info s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
         req.addHeaders(REQUEST_ID -> request)
+        Clouds.loadID().foreach(id => req.setAuth(id, "pimp"))
         trackOpt.foreach(path => {
           req addFile path
           infoLog(s"Uploading: $path")
@@ -202,12 +208,12 @@ class CloudSocket(uri: String, username: String, password: String)
 }
 
 object CloudSocket {
-    val hostPort = "cloud.musicpimp.org"
-    val httpProtocol = "https"
-    val socketProtocol = "wss"
-//  val hostPort = "localhost:9000"
-//  val httpProtocol = "http"
-//  val socketProtocol = "ws"
+  val hostPort = "cloud.musicpimp.org"
+  val httpProtocol = "https"
+  val socketProtocol = "wss"
+//    val hostPort = "localhost:9000"
+//    val httpProtocol = "http"
+//    val socketProtocol = "ws"
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 
