@@ -47,14 +47,14 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "util-play" % "1.6.7" withSources(),
+        mleGroup %% "util-play" % "1.6.7",
         mleGroup %% "play-base" % "0.1.0",
         mleGroup %% "util" % "1.4.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
-        mleGroup %% "util-audio" % "1.4.1",
+        mleGroup %% "util-audio" % "1.4.2",
         mleGroup %% "logback-rx" % "0.1.0",
-        mleGroup %% "mobile-push" % "0.0.9" withSources(),
+        mleGroup %% "mobile-push" % "0.0.9",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         play.PlayImport.filters,
@@ -62,7 +62,7 @@ object PimpBuild extends Build {
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.181",
         "com.typesafe.slick" %% "slick" % "2.1.0",
-        "org.java-websocket" % "Java-WebSocket" % "1.3.0"),
+        "org.java-websocket" % "Java-WebSocket" % "1.3.0").map(dep => dep withSources()),
       mainClass := Some("com.mle.musicpimp.Starter"),
       linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
