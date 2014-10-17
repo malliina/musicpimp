@@ -41,16 +41,23 @@ object Global extends WithFilters(new GzipFilter()) with Log {
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    FileUtilities init "musicpimp"
-    Files.createDirectories(FileUtil.pimpHomeDir)
-    ScheduledPlaybackService.init()
-    PimpDb.init()
-    Auth.migrateFileCredentialsToDatabaseIfExists()
-    new DatabaseUserManager().ensureAtLeastOneUserExists()
-    Future(Indexer.init())
-    Clouds.init()
-    val version = com.mle.musicpimp.BuildInfo.version
-    log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"
+    try {
+      FileUtilities init "musicpimp"
+      Files.createDirectories(FileUtil.pimpHomeDir)
+      ScheduledPlaybackService.init()
+      PimpDb.init()
+      Auth.migrateFileCredentialsToDatabaseIfExists()
+      new DatabaseUserManager().ensureAtLeastOneUserExists()
+      Future(Indexer.init())
+      Clouds.init()
+      val version = com.mle.musicpimp.BuildInfo.version
+      log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"
+    } catch {
+      case e: Exception =>
+        log.error(s"Unable to initialize MusicPimp", e)
+        throw e
+    }
+
   }
 
   override def onError(request: RequestHeader, ex: Throwable): Future[Result] =

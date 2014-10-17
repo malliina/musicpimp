@@ -1,6 +1,8 @@
 package com.mle.db
 
-import com.mle.util.Log
+import java.sql.SQLException
+
+import com.mle.util.{Log, Utils}
 
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.meta.MTable
@@ -24,8 +26,16 @@ trait DatabaseLike extends Log {
 
   def withSession[T](f: Session => T) = database withSession f
 
-  def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) =
-    MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty
+  def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {
+    val tableName = table.baseTableRow.tableName
+    try {
+      MTable.getTables(tableName).list(session).nonEmpty
+    } catch {
+      case sqle: SQLException =>
+        log.error(s"Unable to verify table: $tableName", sqle)
+        false
+    }
+  }
 
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*)(implicit session: Session) =
     tables.reverse.filter(t => !exists(t)(session)).foreach(t => initTable(t))
