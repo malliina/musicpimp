@@ -20,7 +20,10 @@ object PimpDb extends PimpDatabase with Log {
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-  val pool = JdbcConnectionPool.create("jdbc:h2:~/.musicpimp/pimp254;DB_CLOSE_DELAY=-1", "", "")
+  val databaseUrlSettings = sys.props.get("h2.url.settings").map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
+  val url = s"jdbc:h2:~/.musicpimp/pimp254;DB_CLOSE_DELAY=-1$databaseUrlSettings"
+  log info s"Connecting to: $url"
+  val pool = JdbcConnectionPool.create(url, "", "")
   override val database = Database.forDataSource(pool)
 
   val tracksName = tracks.baseTableRow.tableName
@@ -34,7 +37,7 @@ object PimpDb extends PimpDatabase with Log {
 
   def folder(id: String): (Seq[DataTrack], Seq[DataFolder]) = withSession(implicit s => {
     val tracksQuery = tracks.filter(_.folder === id)
-    // '=!=' is the same as '!=' in slick-lang
+    // '=!=' in slick-lang is the same as '!='
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID).sortBy(_.title)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     (tracksQuery.run, foldersQuery.run)
