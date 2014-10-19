@@ -1,5 +1,7 @@
 package tests
 
+import java.util.concurrent.TimeoutException
+
 import com.mle.rx.Observables
 import org.scalatest.FunSuite
 import rx.lang.scala.subjects.AsyncSubject
@@ -43,24 +45,20 @@ class RxTests extends FunSuite {
     sub.unsubscribe()
     assert(value === 1)
   }
-  test("ObservableS.from does not replay") {
-    //    val obs = Observable.from(Future {
-    //      Thread sleep 100
-    //      5
-    //    })
-    //    val obs2 = obs.map(n => {
-    //      println(s"Mapped: $n")
-    //      n + 1
-    //    }).publish
-    //    obs2.connect
-    //    Thread sleep 400
-    //    obs2.subscribe(n => println(n))
-    //    obs2.subscribe(n => println(n))
-    //    Thread sleep 400
-    //    var value = 0
-    //    val sub = obs.subscribe(n => value = n)
-    //    sub.unsubscribe()
-    //    assert(value === 0)
-    //    obs.flatMap(n => Observable.from(Seq(n, n, n))).subscribe(n => println(n))
+  test("Installing a callback on a hot Observable returns a cold Observable") {
+    val p = Promise[Int]()
+    val future = p.future
+    val correctAnswer = 1
+    val cold = Observable.from(Seq(1))
+    val hot = Observables.hot(cold)
+    val coldAgain = hot.doOnTerminate {
+      p trySuccess correctAnswer
+    }
+    intercept[TimeoutException] {
+      Await.result(future, 100.millis)
+    }
+    val hotCallback = Observables.hot(coldAgain)
+    val answer = Await.result(future, 100.millis)
+    assert(answer === correctAnswer)
   }
 }
