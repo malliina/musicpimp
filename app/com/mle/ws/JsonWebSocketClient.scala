@@ -15,6 +15,7 @@ import rx.lang.scala.{Observable, Subject}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.DurationLong
 import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success, Try}
 
 
 /**
@@ -65,7 +66,7 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
      */
     def onClose(code: Int, reason: String, remote: Boolean) {
       log info s"Closed websocket to: $uri, code: $code, reason: $reason, remote: $remote"
-      connectPromise.tryFailure(new NotConnectedException(s"The websocket was closed. Code: $code, reason: $reason."))
+      connectPromise tryFailure new NotConnectedException(s"The websocket was closed. Code: $code, reason: $reason.")
       JsonWebSocketClient.this.onClose()
       //      eventsSubject onNext Disconnected
       subject.onCompleted()
@@ -105,8 +106,13 @@ class JsonWebSocketClient(uri: String, username: String, password: String, addit
    * @return a future that completes when the connection has successfully been established
    */
   def connect(): Future[Unit] = {
-    client.connect()
-    Futures.within(connectTimeout)(connectPromise.future)
+    Try(client.connect()) match {
+      case Success(()) =>
+        Futures.within(connectTimeout)(connectPromise.future)
+      case Failure(t) =>
+        connectPromise tryFailure t
+        connectPromise.future
+    }
   }
 
   def send[T](message: T)(implicit writer: Writes[T]): Unit = send(Json toJson message)

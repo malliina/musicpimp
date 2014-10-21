@@ -1,6 +1,8 @@
 package com.mle.musicpimp.cloud
 
+import com.mle.concurrent.FutureImplicits.RichFuture
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
+import com.mle.musicpimp.beam.BeamCommand
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
@@ -86,6 +88,7 @@ class CloudSocket(uri: String, username: String, password: String)
       case ALARMS => JsSuccess(GetAlarms)
       case ALARMS_EDIT => JsSuccess(AlarmEdit(body))
       case ALARMS_ADD => JsSuccess(AlarmAdd(body))
+      case BEAM => body.validate[BeamCommand]
       case STATUS => JsSuccess(GetStatus)
       case other => JsError(s"Unknown JSON command: $other in $json")
     })
@@ -113,8 +116,8 @@ class CloudSocket(uri: String, username: String, password: String)
       case Search(term, limit) =>
         val result = PimpDb.fullText(term, limit)
         sendResponse(result, request)
-      case PingAuth => sendJsonResponse(JsonMessages.Version, request)
-      case Ping => sendJsonResponse(JsonMessages.Ping, request)
+      case PingAuth => sendJsonResponse(JsonMessages.version, request)
+      case Ping => sendJsonResponse(JsonMessages.ping, request)
       case GetAlarms =>
         implicit val writer = Alarms.alarmWriter
         sendResponse(ScheduledPlaybackService.status, request)
@@ -127,16 +130,21 @@ class CloudSocket(uri: String, username: String, password: String)
       case Authenticate(user, pass) =>
         val isValid = Rest.validateCredentials(user, pass)
         val response =
-          if (isValid) JsonMessages.Version
-          else JsonMessages.failure("Invalid credentials")
+          if (isValid) JsonMessages.version
+          else JsonMessages.invalidCredentials
         sendJsonResponse(response, request, success = isValid)
-      case GetVersion => sendJsonResponse(JsonMessages.Version, request)
+      case GetVersion => sendJsonResponse(JsonMessages.version, request)
       case GetMeta(id) =>
         val metaResult = Rest.trackMetaJson(id)
         val response = metaResult getOrElse Rest.noTrackJson(id)
         sendJsonResponse(response, request, metaResult.isDefined)
       case RegistrationEvent(event, id) => registrationPromise trySuccess id
       case PlaybackMessage(payload) => PlaybackMessageHandler handleMessage payload
+      case beamCommand: BeamCommand =>
+        Future(Rest beam beamCommand)
+          .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
+          .recoverAll(t => log.warn(s"Beaming failed.", t))
+        sendAckResponse(request)
     }
   }
 
@@ -211,9 +219,9 @@ object CloudSocket {
   val hostPort = "cloud.musicpimp.org"
   val httpProtocol = "https"
   val socketProtocol = "wss"
-//    val hostPort = "localhost:9000"
-//    val httpProtocol = "http"
-//    val socketProtocol = "ws"
+  //    val hostPort = "localhost:9000"
+  //    val httpProtocol = "http"
+  //    val socketProtocol = "ws"
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 

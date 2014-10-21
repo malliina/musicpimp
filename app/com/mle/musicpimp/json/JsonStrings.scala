@@ -14,6 +14,7 @@ trait JsonStrings {
   val REASON = "reason"
   val ACCESS_DENIED = "Access denied"
   val INVALID_PARAMETER = "Invalid parameter"
+  val INVALID_CREDENTIALS="Invalid credentials"
   val INVALID_JSON = "Invalid JSON"
   val NO_FILE_IN_MULTIPART = "No file in multipart/form-data"
   val FOLDER = "folder"
@@ -116,6 +117,7 @@ trait JsonStrings {
   val ALARMS_ADD = "alarms_add"
 
   val META = "meta"
+  val BEAM = "beam"
 }
 
 object JsonStrings extends JsonStrings

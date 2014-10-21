@@ -1,5 +1,6 @@
 package com.mle.musicpimp.beam
 
+import com.mle.musicpimp.cloud.PimpMessages.PimpMessage
 import play.api.libs.json.Json
 
 /**
@@ -9,7 +10,7 @@ import play.api.libs.json.Json
 case class BeamCommand(track: String,
                        uri: String,
                        username: String,
-                       password: String)
+                       password: String) extends PimpMessage
 
 object BeamCommand {
   implicit val jsonFormat = Json.format[BeamCommand]

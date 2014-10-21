@@ -13,13 +13,14 @@ import scala.concurrent.duration.Duration
  * @author Michael
  */
 trait JsonMessages extends Log {
-  val Version = obj(VERSION -> com.mle.musicpimp.BuildInfo.version)
-  val NoMedia = obj(STATE -> PlayerStates.NoMedia.toString)
-  val UnAuthorized = failure(ACCESS_DENIED)
-  val InvalidParameter = failure(INVALID_PARAMETER)
-  val InvalidJson = failure(INVALID_JSON)
-  val NoFileInMultipart = failure(NO_FILE_IN_MULTIPART)
-  val Ping = event(PING)
+  val version = obj(VERSION -> com.mle.musicpimp.BuildInfo.version)
+  val noMedia = obj(STATE -> PlayerStates.NoMedia.toString)
+  val unAuthorized = failure(ACCESS_DENIED)
+  val invalidParameter = failure(INVALID_PARAMETER)
+  val invalidCredentials = failure(INVALID_CREDENTIALS)
+  val invalidJson = failure(INVALID_JSON)
+  val noFileInMultipart = failure(NO_FILE_IN_MULTIPART)
+  val ping = event(PING)
 
   def failure(reason: String) = obj(REASON -> reason)
 
