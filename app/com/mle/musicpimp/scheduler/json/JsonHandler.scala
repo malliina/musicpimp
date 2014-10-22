@@ -54,6 +54,7 @@ trait JsonHandler extends SchedulerStrings with Log {
         parse(ID, Delete)
       case SAVE => (json \ AP).validate[ClockPlayback].map(Save)
       case START =>
+        log info s"Got start"
         parse(ID, Start)
       case STOP =>
         JsSuccess(StopPlayback)

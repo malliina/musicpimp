@@ -7,7 +7,7 @@ import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
 import com.mle.musicpimp.db.PimpDb
-import com.mle.musicpimp.http.TrustAllMultipartRequest
+import com.mle.musicpimp.http.{HttpConstants, TrustAllMultipartRequest}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
@@ -16,8 +16,9 @@ import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.JsonStrings.{CMD, EVENT}
 import com.mle.play.json.SimpleCommand
 import com.mle.rx.Observables
-import com.mle.util.Util
-import com.mle.ws.JsonWebSocketClient
+import com.mle.security.SSLUtils
+import com.mle.util.{Log, Util}
+import com.mle.ws.{HttpUtil, JsonWebSocketClient}
 import controllers.{Alarms, Rest}
 import play.api.libs.json._
 
@@ -26,10 +27,21 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
 /**
+ * Event format:
+ *
+ * {
+ * "event": "...",
+ * "request": "...",
+ * "body": "..."
+ * }
+ *
+ * The request key is defined if a response is desired.
+ *
  * @author Michael
  */
 class CloudSocket(uri: String, username: String, password: String)
-  extends JsonWebSocketClient(uri, username, password) {
+  extends JsonWebSocketClient(uri, Some(SSLUtils.trustAllSslContext()), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
+  with Log {
 
   private val registrationPromise = Promise[String]()
 
@@ -37,7 +49,7 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def connectID(): Future[String] = connect().flatMap(_ => registration)
 
-  def unregister() = Try(send(SimpleCommand(UNREGISTER)))
+  def unregister() = Try(sendMessage(SimpleCommand(UNREGISTER)))
 
   /**
    * Reconnections are currently not supported; only call this method once per instance.
@@ -53,7 +65,7 @@ class CloudSocket(uri: String, username: String, password: String)
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log debug s"Got message: $json"
+    log info s"Got message: $json"
     try {
       // Hack, responds to a "cmd: "status"" message. All other requests have an ID or require no response.
       // TODO fix this inconsistency.

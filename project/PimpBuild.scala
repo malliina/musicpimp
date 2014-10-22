@@ -47,6 +47,7 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
+        mleGroup %% "util-base" % "0.3.0",
         mleGroup %% "util-play" % "1.6.7",
         mleGroup %% "play-base" % "0.1.0",
         mleGroup %% "util" % "1.4.2",

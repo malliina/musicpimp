@@ -80,7 +80,7 @@ object Clouds extends Log {
   }
 
   def disconnectAndForget() = {
-    Try(client send SimpleCommand(CloudStrings.UNREGISTER))
+    client sendMessage SimpleCommand(CloudStrings.UNREGISTER)
     disconnect()
     Files.deleteIfExists(idFile)
   }
@@ -99,7 +99,7 @@ object Clouds extends Log {
 
   def sendIfConnected(msg: JsValue): SendResult = {
     if (client.isConnected) {
-      Try(client send msg) match {
+      client send msg match {
         case Success(()) => MessageSent
         case Failure(t) => SendFailure(t)
       }
