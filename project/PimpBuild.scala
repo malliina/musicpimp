@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.6.5",
+    version := "2.6.6",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -38,10 +38,6 @@ object PimpBuild extends Build {
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.3.5"
 
-  /**
-   * Our packaging settings must override the packaging settings from playScalaSettings. Play 2.2 also
-   * uses sbt-native-packager and has some own settings but we don't use those for packaging.
-   */
   lazy val playSettings = commonSettings ++
     nativePackagingSettings ++
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
@@ -55,7 +51,7 @@ object PimpBuild extends Build {
         mleGroup %% "util-rmi" % "1.3.1",
         mleGroup %% "util-audio" % "1.4.2",
         mleGroup %% "logback-rx" % "0.1.0",
-        mleGroup %% "mobile-push" % "0.0.9",
+        mleGroup %% "mobile-push" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         play.PlayImport.filters,
@@ -72,7 +68,7 @@ object PimpBuild extends Build {
       GenericKeys.manufacturer := "Skogberg Labs",
       WinKeys.displayName in Windows := "MusicPimp",
       // generate a new product GUID for upgrades
-      WinKeys.productGuid := "0d73f9c5-2c97-4a54-8915-e3aeee6a8753",
+      WinKeys.productGuid := "c02dbf93-420f-428a-a829-f360ab1a4dfe",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",

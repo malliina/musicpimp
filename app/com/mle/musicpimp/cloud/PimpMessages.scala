@@ -13,6 +13,8 @@ object PimpMessages {
     def request: String
   }
 
+  case class Registered(id: String) extends PimpMessage
+
   case object Ping extends PimpMessage
 
   case object PingAuth extends PimpMessage
@@ -46,4 +48,5 @@ object PimpMessages {
   implicit val trackFormat = Json.format[Track]
   implicit val authFormat = Json.format[Authenticate]
   implicit val meta = Json.format[GetMeta]
+  implicit val registeredFormat = Json.format[Registered]
 }

@@ -13,7 +13,7 @@ import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.play.json.JsonStrings.{CMD, EVENT}
+import com.mle.play.json.JsonStrings.CMD
 import com.mle.play.json.SimpleCommand
 import com.mle.rx.Observables
 import com.mle.security.SSLUtils
@@ -30,12 +30,19 @@ import scala.util.Try
  * Event format:
  *
  * {
- * "event": "...",
+ * "cmd": "...",
  * "request": "...",
  * "body": "..."
  * }
  *
- * The request key is defined if a response is desired.
+ * or
+ *
+ * {
+ * "event": "...",
+ * "body": "..."
+ * }
+ *
+ * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
  *
  * @author Michael
  */
@@ -65,30 +72,28 @@ class CloudSocket(uri: String, username: String, password: String)
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log info s"Got message: $json"
+    log debug s"Got message: $json"
     try {
-      // Hack, responds to a "cmd: "status"" message. All other requests have an ID or require no response.
-      // TODO fix this inconsistency.
-      if ((json \ REQUEST_ID).asOpt[String].isEmpty && json.asOpt[SimpleCommand].exists(_.cmd == STATUS)) {
-        send(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)))
-      } else {
-        // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
-        ((parseRequest(json) map (pair => handleRequest(pair._1, pair._2))) orElse
-          (parseEvent(json) map handleEvent)) recoverTotal (err => handleError(err, json))
-      }
+      // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
+      processRequest(json) orElse processEvent(json) recoverTotal (err => handleError(err, json))
     } catch {
       case e: Exception =>
+        log.warn(s"Failed while handling JSON: $json.", e)
         (json \ REQUEST_ID).validate[String].map(request => {
           sendJsonResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
         })
     }
   }
 
+  def processRequest(json: JsValue) = parseRequest(json) map (pair => handleRequest(pair._1, pair._2))
+
+  def processEvent(json: JsValue) = parseEvent(json) map handleEvent
+
   def parseRequest(json: JsValue): JsResult[(PimpMessage, String)] = {
-    val reqResult = (json \ REQUEST_ID).validate[String]
+    val cmd = (json \ CMD).validate[String]
+    val request = (json \ REQUEST_ID).validate[String]
     val body = json \ BODY
-    val cmd = (body \ CMD).validate[String]
-    val requestMessage: JsResult[PimpMessage] = reqResult.flatMap(req => cmd.flatMap {
+    val requestMessage: JsResult[PimpMessage] = request.flatMap(req => cmd.flatMap {
       case VERSION => JsSuccess(GetVersion)
       case TRACK => body.validate[Track]
       case META => body.validate[GetMeta]
@@ -104,23 +109,29 @@ class CloudSocket(uri: String, username: String, password: String)
       case STATUS => JsSuccess(GetStatus)
       case other => JsError(s"Unknown JSON command: $other in $json")
     })
-    reqResult.flatMap(req => requestMessage.map(msg => (msg, req)))
+    request.flatMap(req => requestMessage.map(msg => (msg, req)))
   }
 
   def parseEvent(json: JsValue): JsResult[PimpMessage] = {
-    val event = (json \ EVENT).validate[String]
+    val event = (json \ CMD).validate[String].orElse((json \ EVENT).validate[String])
+    val body = json \ BODY
     val eventMessage = event.flatMap {
-      case REGISTERED => json.validate[RegistrationEvent]
+      case REGISTERED => body.validate[Registered]
+      case PLAYER => JsSuccess(PlaybackMessage(body))
+      case PING => JsSuccess(Ping)
       case other => JsError(s"Unknown JSON event: $other in $json")
     }
-    eventMessage orElse JsSuccess(PlaybackMessage(json))
+    eventMessage
   }
 
   def handleRequest(message: PimpMessage, request: String) = {
     message match {
-      case GetStatus => sendResponse(MusicPlayer.status, request)
-      case t: Track => upload(t, request)
-      case RootFolder => sendResponse(Library.rootFolder, request)
+      case GetStatus =>
+        sendJsonResponse(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)), request)
+      case t: Track =>
+        upload(t, request)
+      case RootFolder =>
+        sendResponse(Library.rootFolder, request)
       case Folder(id) =>
         val folderResult = (Library folder id).map(Json.toJson(_))
         val json = folderResult getOrElse JsonMessages.failure(s"Folder not found: $id")
@@ -128,8 +139,10 @@ class CloudSocket(uri: String, username: String, password: String)
       case Search(term, limit) =>
         val result = PimpDb.fullText(term, limit)
         sendResponse(result, request)
-      case PingAuth => sendJsonResponse(JsonMessages.version, request)
-      case Ping => sendJsonResponse(JsonMessages.ping, request)
+      case PingAuth =>
+        sendJsonResponse(JsonMessages.version, request)
+      case Ping =>
+        sendJsonResponse(JsonMessages.ping, request)
       case GetAlarms =>
         implicit val writer = Alarms.alarmWriter
         sendResponse(ScheduledPlaybackService.status, request)
@@ -145,25 +158,33 @@ class CloudSocket(uri: String, username: String, password: String)
           if (isValid) JsonMessages.version
           else JsonMessages.invalidCredentials
         sendJsonResponse(response, request, success = isValid)
-      case GetVersion => sendJsonResponse(JsonMessages.version, request)
+      case GetVersion =>
+        sendJsonResponse(JsonMessages.version, request)
       case GetMeta(id) =>
         val metaResult = Rest.trackMetaJson(id)
         val response = metaResult getOrElse Rest.noTrackJson(id)
         sendJsonResponse(response, request, metaResult.isDefined)
-      case RegistrationEvent(event, id) => registrationPromise trySuccess id
-      case PlaybackMessage(payload) => PlaybackMessageHandler handleMessage payload
+      case RegistrationEvent(event, id) =>
+        registrationPromise trySuccess id
+      case PlaybackMessage(payload) =>
+        PlaybackMessageHandler handleMessage payload
       case beamCommand: BeamCommand =>
         Future(Rest beam beamCommand)
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendAckResponse(request)
+      case other =>
+        log.warn(s"Unknown request: $message")
     }
   }
 
   def handleEvent(e: PimpMessage) = {
     e match {
+      case Registered(id) => registrationPromise trySuccess id
       case RegistrationEvent(event, id) => registrationPromise trySuccess id
       case PlaybackMessage(payload) => PlaybackMessageHandler handleMessage payload
+      case Ping => ()
+      case other => log.warn(s"Unknown event: $other")
     }
   }
 
@@ -198,6 +219,7 @@ class CloudSocket(uri: String, username: String, password: String)
 
   /**
    * Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's ID as the username.
+   *
    * @param track track to upload
    * @param request request id
    * @return
@@ -209,7 +231,6 @@ class CloudSocket(uri: String, username: String, password: String)
     if (trackOpt.isEmpty) {
       log warn s"Unable to find track: $trackID"
     }
-    //    trackOpt.map(path => {
     Future {
       def infoLog(message: String) = log info s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
@@ -223,17 +244,14 @@ class CloudSocket(uri: String, username: String, password: String)
         infoLog("Upload complete")
       })
     }
-    //    })
   }
 }
 
 object CloudSocket {
-  val hostPort = "cloud.musicpimp.org"
-  val httpProtocol = "https"
-  val socketProtocol = "wss"
-  //    val hostPort = "localhost:9000"
-  //    val httpProtocol = "http"
-  //    val socketProtocol = "ws"
+  val isDev = false
+  val (hostPort, httpProtocol, socketProtocol) =
+    if (isDev) ("localhost:9000", "http", "ws")
+    else ("cloud.musicpimp.org", "https", "wss")
 
   def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
 

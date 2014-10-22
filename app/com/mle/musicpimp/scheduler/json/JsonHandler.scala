@@ -52,9 +52,9 @@ trait JsonHandler extends SchedulerStrings with Log {
     val result = (json \ CMD).validate[String].flatMap {
       case DELETE =>
         parse(ID, Delete)
-      case SAVE => (json \ AP).validate[ClockPlayback].map(Save)
+      case SAVE =>
+        (json \ AP).validate[ClockPlayback].map(Save)
       case START =>
-        log info s"Got start"
         parse(ID, Start)
       case STOP =>
         JsSuccess(StopPlayback)
