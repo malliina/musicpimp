@@ -16,7 +16,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.6.6",
+    version := "2.6.7",
     scalaVersion := "2.11.2",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
