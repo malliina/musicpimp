@@ -16,7 +16,7 @@ import scala.concurrent.duration.DurationLong
  *
  * @author mle
  */
-trait ServerWS extends PlayerSockets with Log {
+object ServerWS extends PlayerSockets with Log {
   override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
 
   override def status(client: Client) = apiVersion(client) match {
@@ -65,5 +65,3 @@ trait ServerWS extends PlayerSockets with Log {
     Clouds sendIfConnected message
   }
 }
-
-object ServerWS extends ServerWS
