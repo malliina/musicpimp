@@ -137,7 +137,7 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   // TODO observables
   def send(json: JsValue) = ServerWS.broadcast(json)
 
-  def seek(pos: Duration) {
+  def seek(pos: Duration) = {
     Try {
       player.filter(_.position.toSeconds != pos.toSeconds).foreach(p => {
         p.seek(pos)

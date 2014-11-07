@@ -15,8 +15,8 @@
         </div>
         <div class="row col-md-11 text-center">
             <input type="image" src="@routes.Assets.at("img/transport.rew.png")" onclick="prev()"/>
-            <input type="image" src="@routes.Assets.at("img/light/transport.play.png")" onclick="resume()"/>
-            <input type="image" src="@routes.Assets.at("img/light/transport.pause.png")" onclick="stop()"/>
+            <input id="playButton" type="image" src="@routes.Assets.at("img/light/transport.play.png")" onclick="resume()"/>
+            <input id="pauseButton" style="display: none" type="image" src="@routes.Assets.at("img/light/transport.pause.png")" onclick="stop()"/>
             <input type="image" src="@routes.Assets.at("img/light/transport.ff.png")" onclick="next()"/>
         </div>
         <div class="row col-md-11 visible-lg">

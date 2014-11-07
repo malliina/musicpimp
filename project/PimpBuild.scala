@@ -46,10 +46,9 @@ object PimpBuild extends Build {
         mleGroup %% "util-base" % "0.3.0",
         mleGroup %% "util-play" % "1.6.7",
         mleGroup %% "play-base" % "0.1.0",
-        mleGroup %% "util" % "1.4.2",
         mleGroup %% "util-actor" % "1.4.0",
         mleGroup %% "util-rmi" % "1.3.1",
-        mleGroup %% "util-audio" % "1.4.2",
+        mleGroup %% "util-audio" % "1.4.4",
         mleGroup %% "logback-rx" % "0.1.0",
         mleGroup %% "mobile-push" % "0.1.0",
         httpGroup % "httpclient" % httpVersion,
@@ -75,7 +74,10 @@ object PimpBuild extends Build {
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
-      WinKeys.forceStopOnUninstall := true
+      WinKeys.forceStopOnUninstall := true,
+      resolvers ++= Seq(
+        "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+        "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/")
     ) ++ buildMetaSettings
 
   def buildMetaSettings = buildInfoSettings ++ Seq(

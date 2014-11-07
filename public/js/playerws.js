@@ -1,9 +1,11 @@
 "use strict";
 var webSocket;
 var isMute = false;
+var playButton;
+var pauseButton;
 
 var onconnect = function () {
-    setFeedback("Connected.");
+    setFeedback("Initializing...");
     // update: sends status only after welcome message
 //    send(statusJson());
 };
@@ -52,6 +54,9 @@ var onmessage = function (payload) {
         case "time_updated":
             updateTime(json.position);
             break;
+        case "playstate_changed":
+            updatePlayPauseButtons(json.state);
+            break;
         case "track_changed":
             updateTrack(json.track);
             break;
@@ -66,9 +71,20 @@ var onmessage = function (payload) {
             break;
         case "status":
             onStatus(json);
+            setFeedback("Connected.");
+            $("#playerDiv").show();
             break;
         default:
             break;
+    }
+};
+var updatePlayPauseButtons = function (state) {
+    if (state == "Started") {
+        playButton.hide();
+        pauseButton.show();
+    } else {
+        pauseButton.hide();
+        playButton.show();
     }
 };
 var updateTime = function (secs) {
@@ -111,6 +127,7 @@ var onStatus = function (json) {
     isMute = json.mute;
     updateTimeAndDuration(json.position, json.track.duration);
     updatePlaylist(json.playlist);
+    updatePlayPauseButtons(json.state);
 };
 var onclose = function (payload) {
     setFeedback("Connection closed.");
@@ -121,3 +138,7 @@ var onerror = function (payload) {
 var setFeedback = function (fb) {
     $('#status').html(fb);
 };
+$(document).ready(function () {
+    playButton = $("#playButton");
+    pauseButton = $("#pauseButton");
+});

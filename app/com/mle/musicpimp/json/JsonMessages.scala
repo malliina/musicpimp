@@ -45,8 +45,9 @@ trait JsonMessages extends Log {
   def playlistIndexChanged(newIndex: Int) =
     event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex, PLAYLIST_INDEXv17v18 -> newIndex)
 
-  def playStateChanged(newState: PlayerStates.Value) =
+  def playStateChanged(newState: PlayerStates.Value) = {
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
+  }
 
   def searchStatus(status: String) = event(SEARCH_STATUS, STATUS -> status)
 
