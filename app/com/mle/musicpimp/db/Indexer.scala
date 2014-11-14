@@ -6,7 +6,7 @@ import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.rx.Observables
 import com.mle.util.Log
-import rx.lang.scala.Observable
+import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationLong
@@ -26,6 +26,9 @@ object Indexer extends Log {
   indexIfNecessary()
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
 
+  private val ongoingIndexings = Subject[Observable[Long]]()
+  val ongoing: Observable[Observable[Long]] = ongoingIndexings
+
   def init() = ()
 
   def indexIfNecessary(): Observable[Long] = Observables hot {
@@ -36,7 +39,7 @@ object Indexer extends Log {
     actualObs flatMap (actual => {
       if (actual != saved) {
         log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-        index(actual)
+        remembered(index(actual))
       } else {
         log info s"There are still $savedFileCount files in the library. No change since last time, not indexing."
         Observable.empty
@@ -55,12 +58,17 @@ object Indexer extends Log {
    *
    * @return a hot [[Observable]] with indexing progress
    */
-  def index(): Observable[Long] = Observables.hot(currentFileCount flatMap index)
+  def index(): Observable[Long] = remembered(Observables.hot(currentFileCount flatMap index))
 
   private def index(count: Int): Observable[Long] = {
     val fileCounter = futObs(FileUtilities.stringToFile(count.toString, indexFile)).map(_ => 0L)
     log debug s"Indexing with count: $count"
     fileCounter ++ PimpDb.refreshIndex()
+  }
+
+  def remembered(observable: Observable[Long]) = {
+    ongoingIndexings onNext observable
+    observable
   }
 
   private def savedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0

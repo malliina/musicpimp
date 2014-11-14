@@ -1,7 +1,7 @@
 var webSocket;
 
 var onconnect = function (payload) {
-//    webSocket.send(JSON.stringify({cmd: "subscribe"}));
+    sendCommand("subscribe");
 };
 var onmessage = function (payload) {
     var json = jQuery.parseJSON(payload.data);
@@ -19,7 +19,7 @@ var onerror = function (payload) {
     setStatus("Connection error.");
 };
 var refresh = function () {
-    webSocket.send(JSON.stringify({cmd: "refresh"}));
+    sendCommand("refresh");
 };
 var sendCommand = function (command) {
     webSocket.send(JSON.stringify({cmd: command}));
@@ -28,8 +28,5 @@ var setStatus = function (status) {
     $('#status').html(status);
 };
 $(document).ready(function () {
-//    $("#term").autocomplete({
-//        source: "/search",
-//        minLength: 2
-//    });
+
 });

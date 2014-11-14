@@ -2,7 +2,7 @@ package controllers
 
 import com.mle.musicpimp.db.{DataTrack, Indexer, PimpDb}
 import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH}
+import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.util.Log
 import play.api.libs.json.Json
@@ -37,7 +37,7 @@ object Search extends PimpSockets with Log {
   })
 
   def refresh = PimpAction(implicit req => {
-    observeRefresh(loggingObserver, socketObserver)
+    Indexer.index()
     Ok
   })
 
@@ -49,16 +49,17 @@ object Search extends PimpSockets with Log {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
-        observeRefresh(loggingObserver, socketObserver)
+        Indexer.index()
+//        observeRefresh(loggingObserver, socketObserver)
+      case SUBSCRIBE =>
+        Indexer.ongoing.subscribe(next => subscribeUntilComplete(next, socketObserver))
     })
     true
   }
 
   def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
 
-  def observeRefresh(observers: Observer[Long]*) = {
-    log debug s"Got refresh command..."
-    val observable = Indexer.index()
+  def subscribeUntilComplete[T](observable: Observable[T], observers: Observer[T]*) = {
     val subs = observers map observable.subscribe
     toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
   }
