@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path}
 import java.util.UUID
 
 import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.musicpimp.util.FileUtil
 import com.mle.util.Log
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
@@ -16,7 +17,7 @@ trait ScheduledPlaybackService extends Log {
   private val s: IScheduler = Cron4jScheduler
   private val clockAPs = new PlaybackScheduler[ClockSchedule, ClockPlayback](s)
 
-  val persistFile = FileUtilities.basePath / "schedules.json"
+  val persistFile = FileUtil.pimpHomeDir / "schedules.json"
 
   /**
    * Loads and initializes the saved schedules.

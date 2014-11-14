@@ -1,6 +1,6 @@
 package com.mle.musicpimp.db
 
-import com.mle.file.FileUtilities
+import com.mle.file.{FileUtilities, StorageFile}
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
@@ -21,7 +21,7 @@ import scala.util.Try
  * @author Michael
  */
 object Indexer extends Log {
-  val indexFile = FileUtil pathTo "files6.cache"
+  val indexFile = FileUtil.pimpHomeDir / "files7.cache"
   val indexInterval = 6.hours
   indexIfNecessary()
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())

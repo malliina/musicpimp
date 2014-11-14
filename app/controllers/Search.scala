@@ -43,14 +43,16 @@ object Search extends PimpSockets with Log {
 
   override def openSocketCall: Call = routes.Search.openSocket()
 
-  override def welcomeMessage(client:Client): Option[Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
+  override def welcomeMessage(client: Client): Option[Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
 
-  override def onMessage(msg: Message, client: Client): Unit =
+  override def onMessage(msg: Message, client: Client): Boolean = {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
         observeRefresh(loggingObserver, socketObserver)
     })
+    true
+  }
 
   def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
 

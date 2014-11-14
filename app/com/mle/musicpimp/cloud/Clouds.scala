@@ -3,7 +3,8 @@ package com.mle.musicpimp.cloud
 import java.nio.file.{Files, Path}
 
 import com.mle.concurrent.FutureImplicits.RichFuture
-import com.mle.file.FileUtilities
+import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.play.json.SimpleCommand
 import com.mle.util.{Log, Utils}
@@ -18,7 +19,7 @@ import scala.util.{Failure, Success, Try}
  * @author Michael
  */
 object Clouds extends Log {
-  val idFile = FileUtilities pathTo "cloud.txt"
+  val idFile = FileUtil.pimpHomeDir / "cloud.txt"
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(30.minutes)
   var poller: Option[Subscription] = None

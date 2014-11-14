@@ -15,7 +15,7 @@ trait PlayerSockets extends PimpSockets {
 
   def status(client: Client): JsValue
 
-  override def onMessage(msg: Message, client: Client) {
+  override def onMessage(msg: Message, client: Client): Boolean = {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case STATUS =>
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
@@ -24,6 +24,7 @@ trait PlayerSockets extends PimpSockets {
       case anythingElse =>
         handleMessage(msg, client)
     })
+    true
   }
 
   def handleMessage(message: Message, client: Client): Unit = {
