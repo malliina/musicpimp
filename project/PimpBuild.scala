@@ -1,5 +1,11 @@
-import com.mle.sbt.FileImplicits._
+import java.nio.file.Paths
+
+import com.mle.appbundler.{InfoPlistConf, FileMapping}
+import com.mle.file.StorageFile
+import com.mle.sbt.GenericKeys._
 import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
+import com.mle.sbt.mac.MacKeys._
+import com.mle.sbt.mac.MacPlugin._
 import com.mle.sbt.unix.LinuxPlugin
 import com.mle.sbt.win.{WinKeys, WinPlugin}
 import com.mle.sbt.{GenericKeys, GenericPlugin}
@@ -20,6 +26,7 @@ object PimpBuild extends Build {
 
   lazy val commonSettings = Seq(
     version := "2.7.1",
+    organization := "org.musicpimp",
     scalaVersion := "2.11.4",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
@@ -35,7 +42,19 @@ object PimpBuild extends Build {
     LinuxPlugin.rpmSettings ++
     LinuxPlugin.debianSettings ++
     GenericPlugin.confSettings ++
-    AzurePlugin.azureSettings
+    AzurePlugin.azureSettings ++
+    pimpMacSettings
+
+  def pimpMacSettings = macSettings ++ Seq(
+    jvmOptions ++= Seq("-Dhttp.port=8456"),
+    launchdConf := Some(defaultLaunchd.value),
+    appIcon in Mac := Some((pkgHome in Mac).value / "guitar.icns"),
+    pkgIcon := Some((pkgHome in Mac).value / "guitar.png"),
+    extraDmgFiles := Seq(
+      FileMapping((pkgHome in Mac).value / "guitar.png", Paths get ".background/.bg.png"),
+      FileMapping((pkgHome in Mac).value / "DS_Store", Paths get ".DS_Store")
+    )
+  )
 
   val mleGroup = "com.github.malliina"
   val httpGroup = "org.apache.httpcomponents"
@@ -70,13 +89,13 @@ object PimpBuild extends Build {
       linux.Keys.packageSummary in Linux := "MusicPimp summary here.",
       rpm.Keys.rpmVendor := "Skogberg Labs",
       GenericKeys.manufacturer := "Skogberg Labs",
-      WinKeys.displayName in Windows := "MusicPimp",
+      GenericKeys.displayName := "MusicPimp",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      WinKeys.appIcon := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
+      GenericKeys.appIcon in Windows := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
       resolvers ++= Seq(
         "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
         "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/")
