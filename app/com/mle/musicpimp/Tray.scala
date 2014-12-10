@@ -10,6 +10,7 @@ import scala.util.Try
 
 /**
  * @author Michael
+ * @see http://docs.oracle.com/javase/tutorial/uiswing/misc/systemtray.html
  */
 object Tray extends Log {
   val iconResource = "guitar-16x16.png"
@@ -48,12 +49,6 @@ object Tray extends Log {
     item
   }
 
-  /**
-   *
-   * @param path
-   * @param desc
-   * @return
-   */
   def icon(path: String, desc: String) = {
     val url = Util.resource(path)
     new ImageIcon(url, desc).getImage
