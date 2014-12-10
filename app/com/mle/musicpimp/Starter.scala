@@ -1,18 +1,15 @@
 package com.mle.musicpimp
 
-import java.nio.file.Paths
+import java.awt.Desktop
+import java.net.URI
 import java.rmi.ConnectException
 import java.util.concurrent.TimeUnit
 
-import com.mle.file.FileUtilities
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
-import com.mle.musicpimp.util.FileUtil
 import com.mle.play.PlayLifeCycle
 import com.mle.rmi.{RmiClient, RmiServer, RmiUtil}
-import com.mle.util.{Log, Scheduling, Util}
-import play.core.StaticApplication
-import play.core.server.NettyServer
+import com.mle.util.{Log, Scheduling}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,11 +20,13 @@ import scala.concurrent.Future
  *
  * @author mle
  */
-object Starter extends Log {
-  var rmiServer: Option[RmiServer] = None
-  var nettyServer: Option[NettyServer] = None
+object Starter extends PlayLifeCycle with Log {
 
-  def main(args: Array[String]) {
+  override def appName: String = "musicpimp"
+
+  var rmiServer: Option[RmiServer] = None
+
+  override def main(args: Array[String]) {
     args.headOption match {
       case Some("stop") =>
         try {
@@ -43,42 +42,15 @@ object Starter extends Log {
     }
   }
 
-  def start() {
-    //    LogbackUtils.installAppender(RxLogbackAppender)
-    log info "Starting MusicPimp ..."
+  override def start() = {
+    super.start()
     RmiUtil.initSecurityPolicy()
     rmiServer = Some(new RmiServer() {
       override def onClosed() {
         stop()
       }
     })
-    FileUtilities.basePath = Paths get sys.props.get("musicpimp.home").getOrElse(sys.props("user.dir"))
-    // adds settings in musicpimp.conf to system properties
-    val confFile = FileUtilities.pathTo("musicpimp.conf")
-    val props = FileUtil.props(confFile)
-    // makes keystore file path absolute
-    val keystorePathKey = "https.keyStore"
-    val sysPropsAdditions = props.get(keystorePathKey).map(keyStorePath => {
-      props.updated(keystorePathKey, FileUtilities.pathTo(keyStorePath).toAbsolutePath.toString)
-    }).getOrElse(props)
-    sys.props ++= sysPropsAdditions
-
-    /**
-     * NettyServer.createServer insists on writing a RUNNING_PID file.
-     * Fuck that.
-     */
-    nettyServer = Some(createServer())
-  }
-
-  def createServer() = {
-    val server = new NettyServer(
-      new StaticApplication(FileUtilities.basePath.toFile),
-      Option(System.getProperty("http.port")).map(Integer.parseInt).orElse(Some(9000)),
-      Option(System.getProperty("https.port")).map(Integer.parseInt),
-      Option(System.getProperty("http.address")).getOrElse("0.0.0.0")
-    )
-    Util.addShutdownHook(server.stop())
-    server
+    Tray.installTray()
   }
 
   def stop() {
@@ -110,6 +82,16 @@ object Starter extends Log {
     })
     println("Threads in total: " + threads.size())
   }
+
+  def openWebInterface() = {
+    val address = sys.props.get(httpAddressKey) getOrElse "localhost"
+    val (protocol, port) =
+      tryReadInt(httpsPortKey).map(p => ("https", p)) orElse
+        tryReadInt(httpPortKey).map(p => ("http", p)) getOrElse
+        (("http", 9000))
+    Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
+  }
+
   //  def test() {
   //    future {
   //      var loop = true
