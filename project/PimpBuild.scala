@@ -97,7 +97,7 @@ object PimpBuild extends Build {
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       GenericKeys.appIcon in Windows := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
       resolvers ++= Seq(
-        "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+        "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
         "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/")
     )
 
