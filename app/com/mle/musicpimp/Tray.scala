@@ -2,7 +2,7 @@ package com.mle.musicpimp
 
 import java.awt._
 import java.awt.event.{ActionEvent, ActionListener, MouseAdapter, MouseEvent}
-import javax.swing.ImageIcon
+import javax.swing.{UIManager, ImageIcon}
 
 import com.mle.util.{Log, Util}
 
@@ -21,19 +21,23 @@ object Tray extends Log {
    */
   def installTray() = {
     if (SystemTray.isSupported) {
+      Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
       val popup = new PopupMenu()
       popup add menuItem("Open", Starter.openWebInterface())
       popup add menuItem("Stop", Starter.stop())
       val trayIcon = new TrayIcon(icon(iconResource, "MusicPimp"), "Open MusicPimp", popup)
       trayIcon setImageAutoSize true
-      trayIcon addActionListener actionListener(Starter.openWebInterface())
-      trayIcon.addMouseListener(new MouseAdapter {
-        override def mouseClicked(e: MouseEvent): Unit = {
-          if (e.getClickCount == 1 && e.getButton == MouseEvent.BUTTON1) {
-            Starter.openWebInterface()
-          }
-        }
-      })
+      // commented because is triggered on all clicks on OSX, overriding the other listeners
+      //      trayIcon addActionListener actionListener(Starter.openWebInterface())
+
+      // commented because does not combine well with the popup menu
+      //      trayIcon.addMouseListener(new MouseAdapter {
+      //        override def mouseClicked(e: MouseEvent): Unit = {
+      //          if (e.getClickCount == 1 && e.getButton == MouseEvent.BUTTON1) {
+      //            Starter.openWebInterface()
+      //          }
+      //        }
+      //      })
       val tray = SystemTray.getSystemTray
       Try(tray add trayIcon).map(_ => {
         trayIcon.displayMessage("MusicPimp", "MusicPimp is now running.", TrayIcon.MessageType.INFO)
@@ -55,6 +59,8 @@ object Tray extends Log {
   }
 
   def actionListener(code: => Unit) = new ActionListener {
-    override def actionPerformed(e: ActionEvent): Unit = code
+    override def actionPerformed(e: ActionEvent): Unit = {
+      code
+    }
   }
 }
