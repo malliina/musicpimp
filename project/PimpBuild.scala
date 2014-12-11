@@ -25,7 +25,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.7.2",
+    version := "2.7.3",
     organization := "org.musicpimp",
     scalaVersion := "2.11.4",
     retrieveManaged := false,
@@ -47,9 +47,10 @@ object PimpBuild extends Build {
 
   def pimpMacSettings = macSettings ++ Seq(
     jvmOptions ++= Seq("-Dhttp.port=8456"),
-    launchdConf := Some(defaultLaunchd.value),
+    launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
     appIcon in Mac := Some((pkgHome in Mac).value / "guitar.icns"),
     pkgIcon := Some((pkgHome in Mac).value / "guitar.png"),
+    hideDock := true,
     extraDmgFiles := Seq(
       FileMapping((pkgHome in Mac).value / "guitar.png", Paths get ".background/.bg.png"),
       FileMapping((pkgHome in Mac).value / "DS_Store", Paths get ".DS_Store")
@@ -88,14 +89,14 @@ object PimpBuild extends Build {
       // why conf?
       linux.Keys.packageSummary in Linux := "MusicPimp summary here.",
       rpm.Keys.rpmVendor := "Skogberg Labs",
-      GenericKeys.manufacturer := "Skogberg Labs",
-      GenericKeys.displayName := "MusicPimp",
+      manufacturer := "Skogberg Labs",
+      displayName := "MusicPimp",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      GenericKeys.appIcon in Windows := Some((GenericKeys.pkgHome in Windows).value / "guitar-128x128-np.ico"),
+      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico"),
       resolvers ++= Seq(
         "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
         "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/")
