@@ -69,12 +69,12 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         mleGroup %% "util-base" % "0.3.0",
-        mleGroup %% "util-play" % "1.6.11",
-        mleGroup %% "play-base" % "0.1.2",
+        mleGroup %% "util-play" % "1.7.1",
+        mleGroup %% "play-base" % "0.2.2",
         mleGroup %% "util-actor" % "1.5.0",
         mleGroup %% "util-rmi" % "1.5.0",
         mleGroup %% "util-audio" % "1.4.4",
-        mleGroup %% "logback-rx" % "0.1.0",
+        mleGroup %% "logback-rx" % "0.1.2",
         mleGroup %% "mobile-push" % "0.1.1",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,

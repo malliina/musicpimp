@@ -11,14 +11,14 @@ object BuildBuild extends Build {
     scalaVersion := "2.10.4",
     resolvers ++= Seq(
       "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
-      "Sona rels" at "https://oss.sonatype.org/content/repositories/releases/",
+      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
       Resolver.url("sbt-plugin-snapshots", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)),
     scalacOptions ++= Seq("-unchecked", "-deprecation"),
     incOptions := incOptions.value.withNameHashing(true)
   ) ++ sbtPlugins
 
   def sbtPlugins = Seq(
-    "com.typesafe.play" % "sbt-plugin" % "2.3.6",
+    "com.typesafe.play" % "sbt-plugin" % "2.3.7",
     "com.github.malliina" %% "sbt-packager" % "1.5.11",
     "com.github.malliina" %% "sbt-play" % "0.1.1",
     "com.eed3si9n" % "sbt-buildinfo" % "0.3.0",
