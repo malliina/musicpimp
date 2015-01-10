@@ -52,7 +52,7 @@ object WebPlayerMessageHandler extends JsonHandlerBase {
       case SKIP =>
         userPlayer(_.skip(cmd.value))
       case SEEK =>
-        userPlayer(_.seek(Duration(cmd.value, TimeUnit.SECONDS)))
+        userPlayer(_.seek(Duration(cmd.value.toLong, TimeUnit.SECONDS)))
       case MUTE =>
         userPlayer(_.mute(cmd.boolValue))
       case VOLUME =>

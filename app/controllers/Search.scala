@@ -50,7 +50,7 @@ object Search extends PimpSockets with Log {
       case REFRESH =>
         broadcastStatus("Indexing...")
         Indexer.index()
-//        observeRefresh(loggingObserver, socketObserver)
+      //        observeRefresh(loggingObserver, socketObserver)
       case SUBSCRIBE =>
         Indexer.ongoing.subscribe(next => subscribeUntilComplete(next, socketObserver))
     })

@@ -1,9 +1,8 @@
 package com.mle.musicpimp.library
 
-import java.nio.file.{Path, Paths}
+import java.nio.file.Path
 
 import com.mle.musicpimp.audio.FolderMeta
-import com.mle.musicpimp.db.DataFolder
 import models.MusicItem
 
 /**

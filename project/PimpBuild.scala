@@ -1,14 +1,14 @@
 import java.nio.file.Paths
 
-import com.mle.appbundler.{InfoPlistConf, FileMapping}
+import com.mle.appbundler.FileMapping
 import com.mle.file.StorageFile
 import com.mle.sbt.GenericKeys._
+import com.mle.sbt.GenericPlugin
 import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
 import com.mle.sbt.mac.MacKeys._
 import com.mle.sbt.mac.MacPlugin._
 import com.mle.sbt.unix.LinuxPlugin
 import com.mle.sbt.win.{WinKeys, WinPlugin}
-import com.mle.sbt.{GenericKeys, GenericPlugin}
 import com.mle.sbtplay.PlayProjects
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
@@ -34,7 +34,24 @@ object PimpBuild extends Build {
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/"),
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
-    scalacOptions += "-target:jvm-1.7"
+    // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
+    scalacOptions ++= Seq(
+      "-target:jvm-1.7",
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-unchecked",
+      "-feature",
+      "-language:existentials",
+      "-language:higherKinds",
+      "-language:implicitConversions",
+      "-Xfatal-warnings",
+      "-Xlint",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen")
+    //      "-Ywarn-value-discard",
+    //      "-Xfuture", // file conf/routes would not compile
+    //      "-Ywarn-unused-import")
   )
 
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++

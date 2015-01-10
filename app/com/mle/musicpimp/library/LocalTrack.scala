@@ -36,7 +36,7 @@ object LocalTrack extends Log {
   val empty = new LocalTrack(
     id = "",
     meta = SongMeta(
-      UriSource(new URI("http://www.musicpimp.org/"), 0 seconds, StorageSize.empty),
+      UriSource(new URI("http://www.musicpimp.org/"), 0.seconds, StorageSize.empty),
       tags = new SongTags("", "", "")
     ))
 }

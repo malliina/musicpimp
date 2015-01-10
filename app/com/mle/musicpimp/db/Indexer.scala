@@ -51,7 +51,8 @@ object Indexer extends Log {
    * Indexes the music library.
    *
    * Note that this is a hot [[Observable]] for two reasons: we want the indexing to run regardless of whether there are
-   * any subscribers, and we want it to run only once. All subscribers will share the same stream of events.
+   * any subscribers, and we want it to run only once. All subscribers to the returned [[Observable]] will share the
+   * same stream of events.
    *
    * I think an observable should be hot when the event stream in itself is side-effecting, whereas normally we
    * subscribe to cold observables to cause side effects.

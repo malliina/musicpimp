@@ -31,7 +31,7 @@ object PlaybackMessageHandler extends JsonHandlerBase {
         MusicPlayer.volume(vol)
       case SEEK =>
         val pos = cmd.value
-        MusicPlayer.seek(pos.toDouble seconds)
+        MusicPlayer.seek(pos.toDouble.seconds)
       case PLAY =>
         val track = cmd.track
         MusicPlayer.reset(Library meta track)

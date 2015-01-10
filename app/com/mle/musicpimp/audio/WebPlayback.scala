@@ -1,7 +1,5 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.library.LocalTrack
-
 import scala.collection.mutable
 
 /**

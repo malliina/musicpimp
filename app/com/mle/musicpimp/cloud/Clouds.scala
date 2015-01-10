@@ -26,12 +26,12 @@ object Clouds extends Log {
   val MAX_FAILURES = 50
   var successiveFailures = 0
 
-  def init() = {
+  def init(): Unit = {
     ensureConnectedIfEnabled()
     maintainConnectivity()
   }
 
-  def ensureConnectedIfEnabled() = {
+  def ensureConnectedIfEnabled(): Unit = {
     if (isEnabled && !client.isConnected) {
       connect(loadID()).recoverAll(t => {
         log.warn(s"Unable to connect to the cloud.", t)
@@ -41,11 +41,12 @@ object Clouds extends Log {
           successiveFailures = 0
           disconnect()
         }
+        "Recovered" // -Xlint won't accept returning Any
       })
     }
   }
 
-  def maintainConnectivity() = {
+  def maintainConnectivity(): Unit = {
     poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
   }
 
