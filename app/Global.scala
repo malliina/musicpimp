@@ -60,6 +60,13 @@ object Global extends WithFilters(new GzipFilter()) with Log {
 
   }
 
+  /**
+   * TODO document when this is run; on InternalServerErrors?
+   *
+   * @param request
+   * @param ex
+   * @return
+   */
   override def onError(request: RequestHeader, ex: Throwable): Future[Result] =
     PimpContentController.pimpResult(
       html = super.onError(request, ex),
