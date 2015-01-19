@@ -50,7 +50,6 @@ object PimpBuild extends Build {
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen")
     //      "-Xfuture", // file conf/routes would not compile
-    //      "-Ywarn-unused-import")
   )
 
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
