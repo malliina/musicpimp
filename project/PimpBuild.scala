@@ -49,7 +49,6 @@ object PimpBuild extends Build {
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen")
-    //      "-Ywarn-value-discard",
     //      "-Xfuture", // file conf/routes would not compile
     //      "-Ywarn-unused-import")
   )
