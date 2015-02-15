@@ -3,6 +3,7 @@ package tests
 import java.nio.file.Paths
 
 import com.mle.util.Log
+import org.java_websocket.util.Base64
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
@@ -54,4 +55,10 @@ class Tests extends FunSuite with Log {
     assert(jsValue === "42")
     assert(none === "null")
   }
+//  test("base64") {
+//    val username = "test"
+//    val password = "test"
+//    val value = Base64.encodeBytes((username + ":" + password).getBytes("UTF-8"))
+//    println(value)
+//  }
 }

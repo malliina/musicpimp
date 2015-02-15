@@ -73,13 +73,13 @@ class DatabaseTests extends FunSuite {
 //    })
   }
 
-  def plainSQL(): Unit = {
-    implicit val conv = PimpDb.dataResult
-    PimpDb.database.withSession(implicit session => {
-      val tracks = sql"select * from TRACKS".as[DataTrack].list
-      tracks.foreach(track => println(track))
-    })
-  }
+//  def plainSQL(): Unit = {
+//    implicit val conv = PimpDb.dataResult
+//    PimpDb.database.withSession(implicit session => {
+//      val tracks = (sql"select * from TRACKS").as[DataTrack].list
+//      tracks.foreach(track => println(track))
+//    })
+//  }
 
   def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {
     MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty

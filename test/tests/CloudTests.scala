@@ -6,7 +6,8 @@ import org.scalatest.FunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 /**
  * @author Michael
@@ -31,24 +32,24 @@ class CloudTests extends FunSuite {
   //    assert(isSuccess)
   //  }
   test("server registration") {
-//    WebSocketImpl.DEBUG = true
+    //    WebSocketImpl.DEBUG = true
     val s = newSocket("incorrect password")
     val fut = connect(s).recoverAll(t => failID)
-    val fail = Await.result(fut, 5 seconds)
+    val fail = Await.result(fut, 5.seconds)
     assert(fail === failID)
     val socket = newSocket()
     val connFut = connect(socket)
-    val id = Await.result(connFut, 5 seconds)
+    val id = Await.result(connFut, 5.seconds)
     assert(id === testID)
     socket.unregister()
     socket.close()
     val socket2 = newSocket()
     val connFut2 = connect(socket2)
-    val id2 = Await.result(connFut2, 5 seconds)
+    val id2 = Await.result(connFut2, 5.seconds)
     assert(id2 === testID)
     val socket3 = newSocket()
     val connFut3 = connect(socket3)
-    val id3 = Await.result(connFut3, 5 seconds)
+    val id3 = Await.result(connFut3, 5.seconds)
     assert(id3 === failID)
     socket2.close()
     socket3.close()

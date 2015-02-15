@@ -12,7 +12,7 @@ import scala.concurrent.duration.DurationInt
 class MessagingTests extends FunSuite {
   test("can retrieve access token") {
     val tokenFuture = AdmClient.accessToken
-    val token = Await.result(tokenFuture, 5 seconds)
+    val token = Await.result(tokenFuture, 5.seconds)
     assert(token.expires_in === 3600.seconds)
   }
 }
