@@ -18,21 +18,23 @@ import sbt.Keys._
 import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
-import sbtbuildinfo.Plugin._
+import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
+import sbtbuildinfo.BuildInfoPlugin
 
 object PimpBuild extends Build {
 
-  lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").settings(playSettings: _*)
+  lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").enablePlugins(BuildInfoPlugin).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.7.3",
+    version := "2.7.4",
     organization := "org.musicpimp",
-    scalaVersion := "2.11.4",
+    scalaVersion := "2.11.6",
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
-      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/"),
+      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+      "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"),
     javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
@@ -73,7 +75,7 @@ object PimpBuild extends Build {
 
   val mleGroup = "com.github.malliina"
   val httpGroup = "org.apache.httpcomponents"
-  val httpVersion = "4.3.5"
+  val httpVersion = "4.4.1"
 
   lazy val playSettings = assemblyConf ++
     buildMetaSettings ++
@@ -82,14 +84,14 @@ object PimpBuild extends Build {
     net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "util-base" % "0.3.0",
+        mleGroup %% "util-base" % "0.4.0",
         mleGroup %% "util-play" % "1.7.1",
         mleGroup %% "play-base" % "0.2.2",
         mleGroup %% "util-actor" % "1.5.0",
         mleGroup %% "util-rmi" % "1.5.0",
         mleGroup %% "util-audio" % "1.4.4",
         mleGroup %% "logback-rx" % "0.1.2",
-        mleGroup %% "mobile-push" % "0.1.1",
+        mleGroup %% "mobile-push" % "0.9.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         play.PlayImport.filters,
@@ -110,15 +112,12 @@ object PimpBuild extends Build {
       AzureKeys.azureContainerName := "files",
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico"),
-      resolvers ++= Seq(
-        "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
-        "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/")
+      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
     )
 
-  def buildMetaSettings = buildInfoSettings ++ Seq(
-    sourceGenerators in Compile <+= buildInfo,
-    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
+  def buildMetaSettings = Seq(
+//    sourceGenerators in Compile <+= buildInfo,
+//    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
     buildInfoPackage := "com.mle.musicpimp"
   )
 
