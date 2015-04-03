@@ -2,7 +2,7 @@ package com.mle.musicpimp.cloud
 
 import java.nio.file.{Files, Path}
 
-import com.mle.concurrent.FutureImplicits.RichFuture
+import com.mle.concurrent.FutureOps
 import com.mle.file.{FileUtilities, StorageFile}
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
@@ -12,7 +12,7 @@ import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subscription}
 
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
 
 /**

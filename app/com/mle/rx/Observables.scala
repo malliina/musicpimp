@@ -23,14 +23,21 @@ object Observables {
    * Builds a new, hot [[Observable]] from a cold one. The returned observable emits items whether there are
    * subscribers or not, and all subscribers share the same stream.
    *
+   * TODO This may not even work.
+   *
    * @param cold cold observable
    * @tparam T item type
    * @return a new, hot observable
    */
-  def hot[T](cold: Observable[T]) = {
+  def hot[T](cold: Observable[T]): Observable[T] = {
     val connectable = cold.publish
     val subscription = connectable.connect
-    connectable.doOnCompleted(subscription.unsubscribe())
+    connectable
+      .doOnEach(i => {
+      println(s"Next: $i")
+    }).doOnCompleted {
+      subscription.unsubscribe()
+    }
   }
 
   def fromFuture[T](body: => T)(implicit executor: ExecutionContext): Observable[T] = Observable.from(Future(body))
@@ -55,7 +62,7 @@ object Observables {
   def timeoutAfter[T](duration: Duration, promise: Promise[T]) =
     after(duration)(promise tryFailure new concurrent.TimeoutException(s"Timed out after $duration."))
 
-  def every(duration:Duration)(code: => Any): Subscription = {
+  def every(duration: Duration)(code: => Any): Subscription = {
     Observable.interval(duration).subscribe(_ => code)
   }
 }

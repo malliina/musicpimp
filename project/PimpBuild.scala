@@ -50,7 +50,9 @@ object PimpBuild extends Build {
       "-Xlint",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen")
+      "-Ywarn-numeric-widen"),
+    updateOptions := updateOptions.value.withCachedResolution(true)
+
   )
 
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
@@ -78,18 +80,15 @@ object PimpBuild extends Build {
   val httpVersion = "4.4.1"
 
   lazy val playSettings = assemblyConf ++
-    buildMetaSettings ++
     commonSettings ++
     nativePackagingSettings ++
-    net.virtualvoid.sbt.graph.Plugin.graphSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "util-base" % "0.4.0",
-        mleGroup %% "util-play" % "1.7.1",
-        mleGroup %% "play-base" % "0.2.2",
-        mleGroup %% "util-actor" % "1.5.0",
-        mleGroup %% "util-rmi" % "1.5.0",
-        mleGroup %% "util-audio" % "1.4.4",
+        "org.scalatest" %% "scalatest" % "2.2.4" % "test",
+        mleGroup %% "play-base" % "0.3.0",
+        mleGroup %% "util-actor" % "1.7.0",
+        mleGroup %% "util-rmi" % "1.7.0",
+        mleGroup %% "util-audio" % "1.5.0",
         mleGroup %% "logback-rx" % "0.1.2",
         mleGroup %% "mobile-push" % "0.9.2",
         httpGroup % "httpclient" % httpVersion,
@@ -112,14 +111,9 @@ object PimpBuild extends Build {
       AzureKeys.azureContainerName := "files",
       WinKeys.minJavaVersion := Some(7),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
+      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico"),
+      buildInfoPackage := "com.mle.musicpimp"
     )
-
-  def buildMetaSettings = Seq(
-//    sourceGenerators in Compile <+= buildInfo,
-//    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
-    buildInfoPackage := "com.mle.musicpimp"
-  )
 
   def assemblyConf = assemblySettings ++ Seq(
     jarName in assembly := s"app-${version.value}.jar",

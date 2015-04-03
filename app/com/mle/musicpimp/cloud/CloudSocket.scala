@@ -1,6 +1,6 @@
 package com.mle.musicpimp.cloud
 
-import com.mle.concurrent.FutureImplicits.RichFuture
+import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.beam.BeamCommand
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
@@ -22,7 +22,7 @@ import com.mle.ws.{HttpUtil, JsonWebSocketClient}
 import controllers.{Alarms, Rest}
 import play.api.libs.json._
 
-import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 

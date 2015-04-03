@@ -1,6 +1,6 @@
 package com.mle.musicpimp.messaging.gcm
 
-import com.mle.push.android.AndroidDevices
+import com.mle.musicpimp.messaging.AndroidDevices
 
 /**
  *

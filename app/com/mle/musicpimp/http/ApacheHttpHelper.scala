@@ -1,7 +1,9 @@
 package com.mle.musicpimp.http
 
+import javax.net.ssl.HostnameVerifier
+
 import com.mle.security.SSLUtils
-import org.apache.http.conn.ssl.{SSLConnectionSocketFactory, X509HostnameVerifier}
+import org.apache.http.conn.ssl.{NoopHostnameVerifier, SSLConnectionSocketFactory}
 
 /**
  *
@@ -12,7 +14,7 @@ trait ApacheHttpHelper {
    *
    * @return a socket factory that trusts all server certificates
    */
-  def allowAllCertificatesSocketFactory(hostnameVerifier: X509HostnameVerifier = SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER) =
+  def allowAllCertificatesSocketFactory(hostnameVerifier: HostnameVerifier = NoopHostnameVerifier.INSTANCE) =
     new SSLConnectionSocketFactory(SSLUtils.trustAllSslContext(), hostnameVerifier)
 }
 

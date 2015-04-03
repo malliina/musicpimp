@@ -2,7 +2,7 @@ package controllers
 
 import java.net.ConnectException
 
-import com.mle.concurrent.FutureImplicits.RichFuture
+import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.cloud.Clouds
 import play.api.data.Form
 import play.api.data.Forms._

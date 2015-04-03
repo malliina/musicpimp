@@ -1,6 +1,6 @@
 package com.mle.musicpimp.messaging.adm
 
-import com.mle.push.android.AndroidDevices
+import com.mle.musicpimp.messaging.AndroidDevices
 
 /**
  * @author Michael
