@@ -50,22 +50,33 @@ class RxTests extends FunSuite {
     val f = p.future
     val f2 = p2.future
     val observable = Observable[Int](observer => {
-      p success correctAnswer
+      p trySuccess correctAnswer
       observer.onCompleted()
     })
     intercept[concurrent.TimeoutException] {
       Await.result(f, 100.millis)
     }
     val connectable = observable.publish
+    connectable.connect
     connectable.doOnCompleted {
       // doOnCompleted returns a new cold Observable: this will never run
       p2 success 42
     }
-    connectable.connect
     val answer = Await.result(f, 100.millis)
     assert(answer === correctAnswer)
     intercept[concurrent.TimeoutException] {
       Await.result(f2, 100.millis)
     }
+  }
+  test("hot completes when cold completes") {
+    val p = Promise[Int]()
+    val f = p.future
+    val correctAnswer = 42
+    val cold = Observable.interval(100.millis).take(5)
+    val hot = cold.publish
+    hot.connect
+    val s = hot.subscribe(i => (), err => println(err.getMessage), () => p success correctAnswer)
+    val answer = Await.result(f, 1000.millis)
+    assert(answer === correctAnswer)
   }
 }

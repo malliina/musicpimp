@@ -35,13 +35,9 @@ trait Settings extends Log {
     FileUtilities.writerTo(settingsFile)(_.println(jsonString))
   }
 
-  def add(folder: Path) {
-    save(folder +: read)
-  }
+  def add(folder: Path): Unit = save(folder +: read)
 
-  def delete(folder: Path) {
-    save(read.filter(_ != folder))
-  }
+  def delete(folder: Path): Unit = save(read.filter(_ != folder))
 }
 
 object Settings extends Settings

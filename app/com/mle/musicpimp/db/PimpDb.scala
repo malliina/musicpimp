@@ -103,9 +103,10 @@ object PimpDb extends PimpDatabase with Log {
    *
    * @return progress: total amount of files indexed
    */
-  def refreshIndex(): Observable[Long] = observe(obs => {
+  def refreshIndex(): Observable[Long] = observe(observer => {
+    // we only want one thread to index at a time
     this.synchronized {
-      log debug "Indexing..."
+      log info "Indexing..."
       withSession(implicit session => {
         tracks.delete
         folders.delete
@@ -114,7 +115,7 @@ object PimpDb extends PimpDatabase with Log {
         Library.dataTrackStream.grouped(100).foreach(chunk => {
           tracks ++= chunk
           fileCount += chunk.size
-          obs onNext fileCount
+          observer onNext fileCount
         })
         log info s"Indexed $fileCount files."
       })

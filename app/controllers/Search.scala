@@ -18,7 +18,8 @@ import scala.util.Try
 object Search extends PimpSockets with Log {
   val DEFAULT_LIMIT = 1000
 
-  val socketObserver = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
+  val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
+  val subscription = Indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster))
   val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.info)
 
   private def indexingObserver(onNext: String => Unit,
@@ -50,12 +51,13 @@ object Search extends PimpSockets with Log {
       case REFRESH =>
         broadcastStatus("Indexing...")
         Indexer.index()
-      //        observeRefresh(loggingObserver, socketObserver)
       case SUBSCRIBE =>
-        Indexer.ongoing.subscribe(next => subscribeUntilComplete(next, socketObserver))
+        ()
     })
     true
   }
+
+  override def onDisconnect(client: Client): Unit = super.onDisconnect(client)
 
   def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
 

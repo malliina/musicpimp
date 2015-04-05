@@ -23,11 +23,11 @@ import scala.util.Try
 object Indexer extends Log {
   val indexFile = FileUtil.pimpHomeDir / "files7.cache"
   val indexInterval = 6.hours
-  indexIfNecessary()
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
-
   private val ongoingIndexings = Subject[Observable[Long]]()
   val ongoing: Observable[Observable[Long]] = ongoingIndexings
+
+  indexIfNecessary()
 
   def init() = ()
 
@@ -40,7 +40,7 @@ object Indexer extends Log {
         log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
         remembered(index(actual))
       } else {
-        log info s"There are still $savedFileCount files in the library. No change since last time, not indexing."
+        log info s"There are $savedFileCount files in the library. No change since last time, not indexing."
         Observable.empty
       }
     })
@@ -61,9 +61,12 @@ object Indexer extends Log {
   def index(): Observable[Long] = remembered(Observables.hot(currentFileCount flatMap index))
 
   private def index(count: Int): Observable[Long] = {
-    val fileCounter = futObs(FileUtilities.stringToFile(count.toString, indexFile)).map(_ => 0L)
-    log debug s"Indexing with count: $count"
-    fileCounter ++ PimpDb.refreshIndex()
+    try {
+      FileUtilities.stringToFile(count.toString, indexFile)
+      Observable.just(0L) ++ PimpDb.refreshIndex()
+    } catch {
+      case e: Exception => Observable.error(e)
+    }
   }
 
   private def remembered(observable: Observable[Long]) = {
@@ -73,9 +76,7 @@ object Indexer extends Log {
 
   private def savedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
 
-  private def currentFileCountSync = Library.trackFiles.size
+  private def currentFileCountFuture = Future(Library.trackFiles.size)
 
-  private def currentFileCount: Observable[Int] = futObs(currentFileCountSync)
-
-  private def futObs[T](body: => T) = Observable.from(Future(body))
+  private def currentFileCount: Observable[Int] = Observable.from(currentFileCountFuture)
 }

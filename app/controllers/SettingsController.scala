@@ -1,5 +1,6 @@
 package controllers
 
+import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
 import com.mle.musicpimp.db.Indexer
@@ -9,6 +10,8 @@ import com.mle.util.Log
 import play.api.data.Form
 import play.api.data.Forms._
 import views._
+
+import scala.util.Try
 
 
 /**
@@ -39,13 +42,15 @@ object SettingsController extends Secured with HtmlController with Log {
   })
 
   def deleteFolder(folder: String) = PimpAction {
-    val path = Paths get folder
+    val decoded = URLDecoder.decode(folder, "UTF-8")
+    log info s"Attempting to remove folder: $decoded"
+    val path = Paths get decoded
     Settings delete path
-    log info s"Removed folder from music library: $folder"
+    log info s"Removed folder from music library: $decoded"
     onFoldersChanged()
   }
 
-  def validateDirectory(dir: String) = Files.isDirectory(Paths get dir)
+  def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
   private def foldersPage(form: Form[String]) = html.musicFolders(Settings.readFolders, form, folderPlaceHolder)
 

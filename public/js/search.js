@@ -1,6 +1,7 @@
 var webSocket;
 
 var onconnect = function (payload) {
+    setStatus("Connected.");
     sendCommand("subscribe");
 };
 var onmessage = function (payload) {
@@ -8,7 +9,7 @@ var onmessage = function (payload) {
     var eventType = json.event;
     switch (eventType) {
         case "search_status":
-            setStatus(json.status);
+            setIndexInfo(json.status);
             break;
     }
 };
@@ -24,8 +25,11 @@ var refresh = function () {
 var sendCommand = function (command) {
     webSocket.send(JSON.stringify({cmd: command}));
 };
-var setStatus = function (status) {
-    $('#status').html(status);
+var setStatus = function(status) {
+  $("#status").html(status);
+};
+var setIndexInfo = function (status) {
+    $("#index-info").html(status);
 };
 $(document).ready(function () {
 

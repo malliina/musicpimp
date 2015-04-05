@@ -1,4 +1,4 @@
-@(levelForm: Form[ch.qos.logback.classic.Level], levels: Seq[ch.qos.logback.classic.Level], selected: ch.qos.logback.classic.Level, errorMsg: Option[String] = None)(implicit request: RequestHeader)
+@(levelField: Field, levels: Seq[ch.qos.logback.classic.Level], selected: ch.qos.logback.classic.Level, errorMsg: Option[String] = None)(implicit request: RequestHeader)
 @import ch.qos.logback.classic.Level
 @import bs.rowColumn12
 @manage("logs") {
@@ -15,7 +15,7 @@
     @bs.rowColumn4 {
         <form method="POST" action="@routes.PimpLogs.changeLogLevel()">
             <div class="form-group">
-                <select class="form-control" id="@levelForm(PimpLogs.LEVEL).id" name="@levelForm(PimpLogs.LEVEL).name" onchange="this.form.submit()">
+                <select class="form-control" id="@levelField.id" name="@levelField.name" onchange="this.form.submit()">
                     @levels.map { level =>
                         @option(level, selected)
                     }
@@ -35,8 +35,8 @@
     @util.script2("rx.js")
     @wsopen(PimpLogs.wsUrl)
 }
-@option(level: Level, selected: Level) = {
-    @if(level == selected) {
+@option(level: Level, active: Level) = {
+    @if(level == active) {
         <option selected>@level</option>
     } else {
         <option>@level</option>
