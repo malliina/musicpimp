@@ -3,6 +3,7 @@ package com.mle.musicpimp.library
 import java.nio.file.{Files, Path, Paths}
 
 import com.mle.file.FileUtilities
+import com.mle.musicpimp.util.FileUtil
 import com.mle.util.Log
 import play.api.libs.json.Json
 
@@ -10,7 +11,7 @@ import play.api.libs.json.Json
  * @author Michael
  */
 trait Settings extends Log {
-  val settingsFile = FileUtilities pathTo "settings.json"
+  val settingsFile = FileUtil.localPath("settings.json")
   val FOLDERS = "folders"
 
   def readFolders: Seq[String] = read.map(_.toString)

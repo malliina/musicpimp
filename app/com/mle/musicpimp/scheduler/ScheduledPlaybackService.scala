@@ -17,7 +17,7 @@ trait ScheduledPlaybackService extends Log {
   private val s: IScheduler = Cron4jScheduler
   private val clockAPs = new PlaybackScheduler[ClockSchedule, ClockPlayback](s)
 
-  val persistFile = FileUtil.pimpHomeDir / "schedules.json"
+  val persistFile = FileUtil.localPath("schedules.json")
 
   /**
    * Loads and initializes the saved schedules.

@@ -4,7 +4,7 @@
 @manage("logs") {
     @rowColumn12 {
         <div class="page-header">
-            <h1>Logs <small class="pull-right" id="status">Initializing...</small></h1>
+            <h1>Logs <small class="pull-right hidden-xs" id="status">Initializing...</small></h1>
         </div>
     }
     @rowColumn12 {
@@ -36,7 +36,7 @@
     @wsopen(PimpLogs.wsUrl)
 }
 @option(level: Level, active: Level) = {
-    @if(level == active) {
+    @if(level.toString == active.toString) {
         <option selected>@level</option>
     } else {
         <option>@level</option>

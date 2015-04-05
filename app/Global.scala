@@ -10,7 +10,7 @@ import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.util.Log
-import controllers.PimpContentController
+import controllers.{Search, PimpContentController}
 import play.api.Application
 import play.api.mvc._
 import play.filters.gzip.GzipFilter
@@ -48,7 +48,13 @@ object Global extends WithFilters(new GzipFilter()) with Log {
       PimpDb.init()
       Auth.migrateFileCredentialsToDatabaseIfExists()
       new DatabaseUserManager().ensureAtLeastOneUserExists()
-      Future(Indexer.init())
+      Future {
+        Indexer.init()
+        Search.init()
+      }.recover {
+        case e: Exception =>
+          log.error(s"Unable to initialize indexer and search", e)
+      }
       Clouds.init()
       val version = com.mle.musicpimp.BuildInfo.version
       log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"
@@ -57,7 +63,12 @@ object Global extends WithFilters(new GzipFilter()) with Log {
         log.error(s"Unable to initialize MusicPimp", e)
         throw e
     }
+  }
 
+
+  override def onStop(app: Application): Unit = {
+    Search.subscription.unsubscribe()
+    super.onStop(app)
   }
 
   /**

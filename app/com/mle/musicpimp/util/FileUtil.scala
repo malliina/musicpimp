@@ -14,6 +14,8 @@ object FileUtil extends Log {
   val ownerOnlyAttributes = PosixFilePermissions asFileAttribute ownerOnlyPermissions
   val pimpHomeDir = FileUtilities.userDir / ".musicpimp"
 
+  def localPath(name: String) = pimpHomeDir / name
+
   def pathTo(file: String, createIfNotExists: Boolean = false): Path = {
     val path = pimpHomeDir / file
     if (!Files.exists(path)) {
@@ -21,6 +23,7 @@ object FileUtil extends Log {
     }
     path
   }
+
   // TODO DRY, this is in util
   def props(file: Path) = {
     if (Files.exists(file)) {

@@ -42,7 +42,7 @@ object PimpLogs extends LogStreaming with SyncAuth with HtmlController with Log 
 
   override def openSocketCall: Call = routes.PimpLogs.openSocket
 
-  private def logPage(form: Form[Level])(implicit req: RequestHeader) = html.logs(form(LEVEL), levels, logger.getLevel)
+  private def logPage(form: Form[Level])(implicit req: RequestHeader) = html.logs(form(LEVEL), levels, Option(logger.getLevel) getOrElse Level.INFO)
 
   //  def feedback =
   //    if (appenderOpt.isEmpty) {
