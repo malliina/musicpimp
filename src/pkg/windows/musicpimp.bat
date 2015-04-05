@@ -32,8 +32,8 @@ rem We use the value of the JAVA_OPTS environment variable if defined
 set _JAVA_OPTS=%JAVA_OPTS%
 if "%_JAVA_OPTS%"=="" set _JAVA_OPTS=-Xmx512M -XX:ReservedCodeCacheSize=128m
 
-set RUNCMD1="%_JAVACMD%" %_JAVA_OPTS% %APP_OPTS% -cp "%APP_HOME%%APP_JAR%;%APP_HOME%lib/*" %MAIN_CLASS% %ARG% %*
-set RUNCMD2=%_JAVACMD% %_JAVA_OPTS% %APP_OPTS% -cp "%APP_HOME%%APP_JAR%;%APP_HOME%lib/*" %MAIN_CLASS% %ARG% %*
+set RUNCMD1="%_JAVACMD%" %_JAVA_OPTS% %APP_OPTS% -cp "%APP_HOME%lib/*" %MAIN_CLASS% %ARG% %*
+set RUNCMD2=%_JAVACMD% %_JAVA_OPTS% %APP_OPTS% -cp "%APP_HOME%lib/*" %MAIN_CLASS% %ARG% %*
 :run
 
 if "%ARG%" == "silent" (start /B %RUNCMD2%) else (%RUNCMD1%)
