@@ -23,12 +23,7 @@ trait Library extends MusicLibrary with Log {
 
   def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
 
-  def folder(id: String): Option[MusicFolder] = {
-    //    val (result, duration) = Utils.timed(folderFromDatabase(id))
-    //    log info s"Loaded folder: $id in $duration"
-    //    result
-    folderFromDatabase(id)
-  }
+  def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
 
   def folderFromDatabase(id: String): Option[MusicFolder] = {
     val path = relativePath(id)

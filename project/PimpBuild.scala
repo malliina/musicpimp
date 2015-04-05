@@ -26,7 +26,7 @@ object PimpBuild extends Build {
   lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").enablePlugins(BuildInfoPlugin).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.7.4",
+    version := "2.8.0",
     organization := "org.musicpimp",
     scalaVersion := "2.11.6",
     retrieveManaged := false,
@@ -83,10 +83,10 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "0.3.0",
-        mleGroup %% "util-actor" % "1.7.0",
-        mleGroup %% "util-rmi" % "1.7.0",
-        mleGroup %% "util-audio" % "1.5.0",
+        mleGroup %% "play-base" % "0.4.0",
+        mleGroup %% "util-actor" % "1.8.0",
+        mleGroup %% "util-rmi" % "1.8.0",
+        mleGroup %% "util-audio" % "1.6.0",
         mleGroup %% "mobile-push" % "0.9.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
