@@ -3,10 +3,10 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.Paths
 
+import com.mle.models.MusicColumn
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Library, MusicFolder}
 import com.mle.util.Log
-import models.MusicColumn
 import play.api.libs.json.Json
 import play.api.mvc._
 import views.html

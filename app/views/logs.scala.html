@@ -1,21 +1,44 @@
-@(errorMsg: Option[String] = None)(implicit request: RequestHeader)
-
+@(levelForm: Form[ch.qos.logback.classic.Level], levels: Seq[ch.qos.logback.classic.Level], selected: ch.qos.logback.classic.Level, errorMsg: Option[String] = None)(implicit request: RequestHeader)
+@import ch.qos.logback.classic.Level
+@import bs.rowColumn12
 @manage("logs") {
-    @bs.rowColumn("col-md-12") {
+    @rowColumn12 {
         <div class="page-header">
             <h1>Logs <small class="pull-right" id="status">Initializing...</small></h1>
         </div>
     }
-    @errorMsg.map { msg =>
-        <p class="lead">@msg</p>
+    @rowColumn12 {
+        @errorMsg.map { msg =>
+            <p class="lead">@msg</p>
+        }
     }
-    <table class="table table-striped table-hover table-responsive">
-        <thead>
-            <tr><th>Time</th><th>Message</th><th>Logger</th><th>Thread</th><th>Level</th></tr>
-        </thead>
-        <tbody id="logTableBody">
-        </tbody>
-    </table>
+    @bs.rowColumn4 {
+        <form method="POST" action="@routes.PimpLogs.changeLogLevel()">
+            <div class="form-group">
+                <select class="form-control" id="@levelForm(PimpLogs.LEVEL).id" name="@levelForm(PimpLogs.LEVEL).name" onchange="this.form.submit()">
+                    @levels.map { level =>
+                        @option(level, selected)
+                    }
+                </select>
+            </div>
+        </form>
+    }
+    @rowColumn12 {
+        <table class="table table-striped table-hover table-responsive">
+            <thead>
+                <tr><th>Time</th><th>Message</th><th>Logger</th><th>Thread</th><th>Level</th></tr>
+            </thead>
+            <tbody id="logTableBody">
+            </tbody>
+        </table>
+    }
     @util.script2("rx.js")
     @wsopen(PimpLogs.wsUrl)
+}
+@option(level: Level, selected: Level) = {
+    @if(level == selected) {
+        <option selected>@level</option>
+    } else {
+        <option>@level</option>
+    }
 }

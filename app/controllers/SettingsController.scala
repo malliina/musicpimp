@@ -4,6 +4,7 @@ import java.nio.file.{Files, Paths}
 
 import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.library.{Library, Settings}
+import com.mle.musicpimp.util.EnvUtils
 import com.mle.util.Log
 import play.api.data.Form
 import play.api.data.Forms._
@@ -17,16 +18,17 @@ object SettingsController extends Secured with HtmlController with Log {
   protected val newFolderForm = Form(
     "path" -> nonEmptyText.verifying("Not a directory.", validateDirectory _)
   )
+  private val folderPlaceHolder = if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\" else "/opt/music/"
 
-  def manage = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
+  def manage = settings
 
-  def settings = navigate(html.musicFolders(Settings.readFolders, newFolderForm))
+  def settings = navigate(foldersPage(newFolderForm))
 
   def newFolder = PimpAction(implicit req => {
     newFolderForm.bindFromRequest.fold(
       formWithErrors => {
-        log info s"Errors: ${formWithErrors.errors}"
-        BadRequest(html.musicFolders(Settings.readFolders, formWithErrors))
+        log warn s"Errors: ${formWithErrors.errors}"
+        BadRequest(foldersPage(formWithErrors))
       },
       path => {
         Settings.add(Paths get path)
@@ -44,6 +46,8 @@ object SettingsController extends Secured with HtmlController with Log {
   }
 
   def validateDirectory(dir: String) = Files.isDirectory(Paths get dir)
+
+  private def foldersPage(form: Form[String]) = html.musicFolders(Settings.readFolders, form, folderPlaceHolder)
 
   private def onFoldersChanged() = {
     Library.rootFolders = Settings.read

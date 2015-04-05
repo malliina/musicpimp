@@ -1,8 +1,8 @@
-package com.mle.db
+package com.mle.musicpimp.db
 
 import java.sql.SQLException
 
-import com.mle.util.{Log, Utils}
+import com.mle.util.Log
 
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.meta.MTable

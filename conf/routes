@@ -6,6 +6,7 @@ GET         /settings                      controllers.SettingsController.settin
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
 GET         /logs                          controllers.PimpLogs.logs
+POST        /logs/levels                   controllers.PimpLogs.changeLogLevel
 GET         /cloud                         controllers.Cloud.cloud
 POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about

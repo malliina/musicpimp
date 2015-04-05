@@ -2,8 +2,8 @@ package com.mle.musicpimp.library
 
 import java.nio.file.Path
 
+import com.mle.models.MusicItem
 import com.mle.musicpimp.audio.FolderMeta
-import models.MusicItem
 
 /**
  *

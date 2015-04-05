@@ -1,4 +1,4 @@
-package models
+package com.mle.models
 
 trait MusicItem {
   def id: String

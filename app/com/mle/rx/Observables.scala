@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
  */
 object Observables {
 
-  implicit final class ObservableExtensions[T](val obs: Observable[T]) {
+  implicit final class ObservableOps[T](val obs: Observable[T]) {
     /**
      * Enables Observable.hot notation.
      *
@@ -31,13 +31,9 @@ object Observables {
    */
   def hot[T](cold: Observable[T]): Observable[T] = {
     val connectable = cold.publish
-    val subscription = connectable.connect
+//    val subscription = connectable.connect
+    connectable.connect
     connectable
-      .doOnEach(i => {
-      println(s"Next: $i")
-    }).doOnCompleted {
-      subscription.unsubscribe()
-    }
   }
 
   def fromFuture[T](body: => T)(implicit executor: ExecutionContext): Observable[T] = Observable.from(Future(body))

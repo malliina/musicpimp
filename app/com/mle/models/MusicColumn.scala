@@ -1,4 +1,4 @@
-package models
+package com.mle.models
 
 import com.mle.musicpimp.audio.{FolderMeta, TrackMeta}
 

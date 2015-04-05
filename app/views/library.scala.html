@@ -1,7 +1,7 @@
-@(relativePath: java.nio.file.Path, col1: models.MusicColumn, col2: models.MusicColumn, col3: models.MusicColumn)
+@(relativePath: java.nio.file.Path, col1: com.mle.models.MusicColumn, col2: com.mle.models.MusicColumn, col3: com.mle.models.MusicColumn)
+@import com.mle.models.MusicColumn
 
-    @import models._
-    @import com.mle.musicpimp.audio.{FolderMeta,TrackMeta}
+@import com.mle.musicpimp.audio.{FolderMeta,TrackMeta}
 
     @libraryBase("folders") {
         <div class="page-header">

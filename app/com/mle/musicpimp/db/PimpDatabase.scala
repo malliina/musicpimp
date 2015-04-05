@@ -1,7 +1,5 @@
 package com.mle.musicpimp.db
 
-import com.mle.db.DatabaseLike
-
 import scala.slick.driver.H2Driver.simple._
 
 /**

@@ -47,18 +47,18 @@ object Tray extends Log {
     }
   }
 
-  def menuItem(label: String, onClick: => Unit) = {
+  private def menuItem(label: String, onClick: => Unit) = {
     val item = new MenuItem(label)
     item addActionListener actionListener(onClick)
     item
   }
 
-  def icon(path: String, desc: String) = {
+  private def icon(path: String, desc: String) = {
     val url = Util.resource(path)
     new ImageIcon(url, desc).getImage
   }
 
-  def actionListener(code: => Unit) = new ActionListener {
+  private def actionListener(code: => Unit) = new ActionListener {
     override def actionPerformed(e: ActionEvent): Unit = {
       code
     }

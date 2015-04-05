@@ -9,14 +9,14 @@ import com.mle.util.Log
 import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 /**
  * Keeps the music library index up-to-date with respect to the actual file system.
  *
- * Indexes the music library if it changes. Performs consistency checks during `init()` and every six hours from then
- * on, indexing if necessary.
+ * Indexes the music library if it changes. Performs consistency checks during object initialization and every six hours
+ * from then on, indexing if necessary.
  *
  * @author Michael
  */
@@ -34,7 +34,6 @@ object Indexer extends Log {
   def indexIfNecessary(): Observable[Long] = Observables hot {
     log info "Indexing if necessary..."
     val actualObs = currentFileCount
-    //    val actual = currentFileCountSync
     val saved = savedFileCount
     actualObs flatMap (actual => {
       if (actual != saved) {
@@ -67,7 +66,7 @@ object Indexer extends Log {
     fileCounter ++ PimpDb.refreshIndex()
   }
 
-  def remembered(observable: Observable[Long]) = {
+  private def remembered(observable: Observable[Long]) = {
     ongoingIndexings onNext observable
     observable
   }

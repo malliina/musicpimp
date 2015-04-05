@@ -43,48 +43,29 @@ class RxTests extends FunSuite {
     sub.unsubscribe()
     assert(value === 1)
   }
-  //  test("Installing a callback on a hot Observable returns a cold Observable") {
-  //    val p = Promise[Int]()
-  //    val future = p.future
-  //    val correctAnswer = 1
-  //    val cold = Observable.interval(10.millis).take(2).map(i => {
-  //      println(i)
-  //      i
-  //    })
-  //    val cold2 = cold.doOnCompleted {
-  //      println("compl")
-  //    }
-  //    val hot = Observables.hot(cold2)
-  //    println("ok")
-  //    val coldAgain = hot.doOnCompleted {
-  //      println("terminated")
-  //      p trySuccess correctAnswer
-  //    }
-  //    intercept[TimeoutException] {
-  //      Await.result(future, 100.millis)
-  //    }
-  //    val hot2 = Observables.hot(coldAgain)
-  //    hot2.subscribe(n => println(s"hot2: $n"), _ => println("error"), () => println("completed"))
-  //    Thread sleep 150
-  //    val answer = Await.result(future, 100.millis)
-  //    assert(answer === correctAnswer)
-  //  }
-  test("Hot N Cold") {
-    val p = Promise[Int]()
-    val s = Subject[Int]()
+  test("hot cold") {
     val correctAnswer = 42
-    s.subscribe(n => println(s"n: $n"), _ => println("error"), () => println("completed"))
-    val hot = s.publish
-    val subscription = hot.connect
-    println("go!")
-    val hottie = hot.doOnEach(i => println(s"hot: $i")).doOnCompleted {
+    val p = Promise[Int]()
+    val p2 = Promise[Int]()
+    val f = p.future
+    val f2 = p2.future
+    val observable = Observable[Int](observer => {
       p success correctAnswer
-      println("Done")
+      observer.onCompleted()
+    })
+    intercept[concurrent.TimeoutException] {
+      Await.result(f, 100.millis)
     }
-    hottie.subscribe(n => println(s"h: $n"), _ => println("herror"), () => println("hcompleted"))
-    s.onNext(1)
-    s.onCompleted()
-    val answer = Await.result(p.future, 500.millis)
+    val connectable = observable.publish
+    connectable.doOnCompleted {
+      // doOnCompleted returns a new cold Observable: this will never run
+      p2 success 42
+    }
+    connectable.connect
+    val answer = Await.result(f, 100.millis)
     assert(answer === correctAnswer)
+    intercept[concurrent.TimeoutException] {
+      Await.result(f2, 100.millis)
+    }
   }
 }

@@ -1,4 +1,4 @@
-@(folders: Seq[String], newFolderForm: Form[String])
+@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)
 
     @if(folders.isEmpty) {
         <p>No music folders have been added.</p>
@@ -12,7 +12,7 @@
         <form name="newFolderForm" action="@routes.SettingsController.newFolder()" method="POST" class="form-horizontal">
             <div class="input-group">
                 <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
-                <input class="form-control" id="path" name="path" type="text" placeholder="/opt/music/" required/>
+                <input class="form-control" id="path" name="path" type="text" placeholder="@folderPlaceHolder" required/>
                 <span class="input-group-btn">
                     <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-plus"></i> Add</button>
                 </span>

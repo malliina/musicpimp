@@ -75,6 +75,7 @@ trait ScheduledPlaybackService extends Log {
       val exists = Files.exists(persistFile)
       val prefix = if (exists) "Cannot read: " else "File does not exist: "
       log.info(s"$prefix${persistFile.toAbsolutePath}, starting from scratch.")
+      save(Nil)
       Seq.empty
     }
 

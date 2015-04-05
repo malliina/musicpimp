@@ -1,8 +1,8 @@
 package controllers
 
+import com.mle.models.ClientInfo
 import com.mle.play.controllers.AuthResult
 import com.mle.play.ws.{JsonWebSockets, SyncAuth, TrieClientStorage}
-import models.ClientInfo
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.mvc.{Controller, RequestHeader}
 

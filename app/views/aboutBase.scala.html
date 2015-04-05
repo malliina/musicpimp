@@ -1,6 +1,10 @@
 @()
+@import com.mle.models.Licenses
+@import com.mle.models.Licenses
+@import com.mle.models.Licenses
+@import com.mle.models.Licenses
 
-    @indexMain("about") {
+@indexMain("about") {
         @bs.headerRow("About", "col-md-6")
         @bs.rowColumn("col-md-8") {
             <p class="lead">MusicPimp @com.mle.musicpimp.BuildInfo.version</p>
@@ -22,7 +26,7 @@
                     </div>
                     <div id="collapseOne" class="accordion-body collapse">
                         <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.SCALA</pre>
+                            <pre class="pre-scrollable">@Licenses.SCALA</pre>
                         </div>
                     </div>
                 </div>
@@ -37,7 +41,7 @@
                     </div>
                     <div id="collapseTwo" class="accordion-body collapse">
                         <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.MIT</pre>
+                            <pre class="pre-scrollable">@Licenses.MIT</pre>
                         </div>
                     </div>
                 </div>
@@ -52,7 +56,7 @@
                     </div>
                     <div id="collapseThree" class="accordion-body collapse">
                         <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.APACHE</pre>
+                            <pre class="pre-scrollable">@Licenses.APACHE</pre>
                         </div>
                     </div>
                 </div>
@@ -67,7 +71,7 @@
                     </div>
                     <div id="collapseFour" class="accordion-body collapse">
                         <div class="accordion-inner">
-                            <pre class="pre-scrollable">@models.Licenses.LGPL</pre>
+                            <pre class="pre-scrollable">@Licenses.LGPL</pre>
                         </div>
                     </div>
                 </div>

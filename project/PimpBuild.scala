@@ -52,7 +52,6 @@ object PimpBuild extends Build {
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen"),
     updateOptions := updateOptions.value.withCachedResolution(true)
-
   )
 
   lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
@@ -84,12 +83,10 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalatest" %% "scalatest" % "2.2.4" % "test",
         mleGroup %% "play-base" % "0.3.0",
         mleGroup %% "util-actor" % "1.7.0",
         mleGroup %% "util-rmi" % "1.7.0",
         mleGroup %% "util-audio" % "1.5.0",
-        mleGroup %% "logback-rx" % "0.1.2",
         mleGroup %% "mobile-push" % "0.9.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
