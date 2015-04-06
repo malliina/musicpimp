@@ -1,7 +1,7 @@
 package com.mle.musicpimp.db
 
+import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.musicpimp.library.Library
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.storage.StorageLong
 import com.mle.util.Log
 import org.h2.jdbcx.JdbcConnectionPool
@@ -104,6 +104,7 @@ object PimpDb extends PimpDatabase with Log {
    * @return progress: total amount of files indexed
    */
   def refreshIndex(): Observable[Long] = observe(observer => {
+    observer onNext 0L
     // we only want one thread to index at a time
     this.synchronized {
       log info "Indexing..."

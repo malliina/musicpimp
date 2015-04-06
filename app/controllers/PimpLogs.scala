@@ -4,10 +4,9 @@ import ch.qos.logback.classic.Level
 import com.mle.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
 import com.mle.play.controllers.LogStreaming
 import com.mle.play.ws.SyncAuth
-import com.mle.util.Log
-import org.slf4j.LoggerFactory
+import com.mle.util.{Log, Logging}
 import play.api.data.{Form, Forms}
-import play.api.mvc.{RequestHeader, Call}
+import play.api.mvc.{Call, RequestHeader}
 import views.html
 
 /**
@@ -17,8 +16,6 @@ import views.html
 object PimpLogs extends LogStreaming with SyncAuth with HtmlController with Log {
   val appenderName = "RX"
   val LEVEL = "level"
-  val levels = Seq(Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR, Level.OFF)
-  val logger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[ch.qos.logback.classic.Logger]
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
 
@@ -33,7 +30,7 @@ object PimpLogs extends LogStreaming with SyncAuth with HtmlController with Log 
         BadRequest(logPage(erroredForm))
       },
       level => {
-        logger setLevel level
+        Logging.level = level
         log warn s"Changed log level to $level"
         Redirect(routes.PimpLogs.logs())
       }
@@ -42,7 +39,7 @@ object PimpLogs extends LogStreaming with SyncAuth with HtmlController with Log 
 
   override def openSocketCall: Call = routes.PimpLogs.openSocket
 
-  private def logPage(form: Form[Level])(implicit req: RequestHeader) = html.logs(form(LEVEL), levels, Option(logger.getLevel) getOrElse Level.INFO)
+  private def logPage(form: Form[Level])(implicit req: RequestHeader) = html.logs(form(LEVEL), Logging.levels, Logging.level)
 
   //  def feedback =
   //    if (appenderOpt.isEmpty) {

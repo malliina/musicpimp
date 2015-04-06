@@ -41,7 +41,7 @@ object Search extends PimpSockets with Log {
   })
 
   def refresh = PimpAction(implicit req => {
-    Indexer.index()
+    Indexer.indexAndSave()
     Ok
   })
 
@@ -53,7 +53,7 @@ object Search extends PimpSockets with Log {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
-        Indexer.index()
+      Indexer.indexAndSave()
       case SUBSCRIBE =>
         ()
     })

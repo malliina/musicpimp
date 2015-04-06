@@ -79,4 +79,12 @@ class RxTests extends FunSuite {
     val answer = Await.result(f, 1000.millis)
     assert(answer === correctAnswer)
   }
+
+  test("return quickly") {
+    import com.mle.concurrent.ExecutionContexts.cached
+    val lie = Promise[Int]()
+    val never = lie.future
+    val obs = Observable.from(never) flatMap (i => Observable.just(i))
+    assert(true)
+  }
 }

@@ -16,9 +16,9 @@
         <form method="POST" action="@routes.PimpLogs.changeLogLevel()">
             <div class="form-group">
                 <select class="form-control" id="@levelField.id" name="@levelField.name" onchange="this.form.submit()">
-                    @levels.map { level =>
-                        @option(level, selected)
-                    }
+                @levels.map { level =>
+                    @option(level, selected)
+                }
                 </select>
             </div>
         </form>

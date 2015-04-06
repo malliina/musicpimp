@@ -1,5 +1,7 @@
 import java.nio.file.Files
 
+import ch.qos.logback.classic.{Level, LoggerContext}
+import ch.qos.logback.classic.util.ContextInitializer
 import com.mle.file.FileUtilities
 import com.mle.musicpimp.auth.Auth
 import com.mle.musicpimp.cloud.Clouds
@@ -9,8 +11,9 @@ import com.mle.musicpimp.log.PimpLog
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.util.FileUtil
 import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.util.Log
-import controllers.{Search, PimpContentController}
+import com.mle.util.{Logging, Log}
+import controllers.{PimpLogs, Search, PimpContentController}
+import org.slf4j.LoggerFactory
 import play.api.Application
 import play.api.mvc._
 import play.filters.gzip.GzipFilter
@@ -42,6 +45,7 @@ object Global extends WithFilters(new GzipFilter()) with Log {
   override def onStart(app: Application) {
     super.onStart(app)
     try {
+      Logging.level = Level.INFO
       FileUtilities init "musicpimp"
       Files.createDirectories(FileUtil.pimpHomeDir)
       ScheduledPlaybackService.init()
@@ -64,7 +68,6 @@ object Global extends WithFilters(new GzipFilter()) with Log {
         throw e
     }
   }
-
 
   override def onStop(app: Application): Unit = {
     Search.subscription.unsubscribe()

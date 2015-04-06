@@ -1,9 +1,9 @@
 package com.mle.musicpimp.db
 
-import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.concurrent.ExecutionContexts.cached
+import com.mle.file.FileUtilities
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.rx.Observables
 import com.mle.util.Log
 import rx.lang.scala.{Observable, Subject}
@@ -22,7 +22,7 @@ import scala.util.Try
  */
 object Indexer extends Log {
   val indexFile = FileUtil.localPath("files7.cache")
-  val indexInterval = 6.hours
+  val indexInterval = 4.minutes
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
   private val ongoingIndexings = Subject[Observable[Long]]()
   val ongoing: Observable[Observable[Long]] = ongoingIndexings
@@ -33,14 +33,18 @@ object Indexer extends Log {
 
   def indexIfNecessary(): Observable[Long] = Observables hot {
     log info "Indexing if necessary..."
-    val actualObs = currentFileCount
-    val saved = savedFileCount
+    val actualObs = calculateFileCount
+    val saved = loadSavedFileCount
     actualObs flatMap (actual => {
       if (actual != saved) {
+        saveFileCount(actual).recover {
+          case e: Exception =>
+            log.error(s"Unable to save file count of $actual", e)
+        }
         log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-        remembered(index(actual))
+        index()
       } else {
-        log info s"There are $savedFileCount files in the library. No change since last time, not indexing."
+        log info s"There are $actual files in the library. No change since last time, not indexing."
         Observable.empty
       }
     })
@@ -58,25 +62,31 @@ object Indexer extends Log {
    *
    * @return a hot [[Observable]] with indexing progress
    */
-  def index(): Observable[Long] = remembered(Observables.hot(currentFileCount flatMap index))
-
-  private def index(count: Int): Observable[Long] = {
-    try {
-      FileUtilities.stringToFile(count.toString, indexFile)
-      Observable.just(0L) ++ PimpDb.refreshIndex()
-    } catch {
-      case e: Exception => Observable.error(e)
-    }
-  }
-
-  private def remembered(observable: Observable[Long]) = {
+  def index(): Observable[Long] = {
+    val observable = Observables.hot(PimpDb.refreshIndex())
     ongoingIndexings onNext observable
     observable
   }
 
-  private def savedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
+  def indexAndSave(): Observable[Long] = {
+    val ret = index()
+    countAndSaveFiles()
+    ret
+  }
 
-  private def currentFileCountFuture = Future(Library.trackFiles.size)
+  private def countAndSaveFiles(): Future[Int] = for {
+    count <- currentFileCountFuture
+    _ <- saveFileCount(count)
+  } yield count
 
-  private def currentFileCount: Observable[Int] = Observable.from(currentFileCountFuture)
+  private def saveFileCount(count: Int) = Future(FileUtilities.stringToFile(count.toString, indexFile))
+
+  private def loadSavedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
+
+  private def currentFileCountFuture = Future {
+    log info s"Calculating file count..."
+    Library.trackFiles.size
+  }
+
+  private def calculateFileCount: Observable[Int] = Observable.from(currentFileCountFuture)
 }

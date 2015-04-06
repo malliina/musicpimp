@@ -57,7 +57,7 @@ object SettingsController extends Secured with HtmlController with Log {
   private def onFoldersChanged() = {
     Library.rootFolders = Settings.read
     log info s"Music folders changed, reindexing..."
-    Indexer.index()
+    Indexer.indexAndSave()
     Redirect(routes.SettingsController.settings())
   }
 }
