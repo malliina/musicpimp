@@ -58,7 +58,7 @@ case "$1" in
             # LSB says: return 0 when starting an already started service
             exit 0
         fi
-        COMMAND="exec ${JAVA_CMD} ${JAVA_OPTS} -cp ${APP_HOME}/lib/* ${MAIN_CLASS} >> ${APP_HOME}/logs/console.out 2>&1"
+        COMMAND="exec ${JAVA_CMD} ${JAVA_OPTS} -cp ${APP_HOME}/lib/*: ${MAIN_CLASS} >> ${APP_HOME}/logs/console.out 2>&1"
         if [ -z "${APP_USER}" ]; then
             nohup sh -c "${COMMAND}" >/dev/null 2>&1 &
         else
