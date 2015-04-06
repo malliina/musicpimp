@@ -22,7 +22,7 @@ import scala.util.Try
  */
 object Indexer extends Log {
   val indexFile = FileUtil.localPath("files7.cache")
-  val indexInterval = 4.minutes
+  val indexInterval = 6.hours
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
   private val ongoingIndexings = Subject[Observable[Long]]()
   val ongoing: Observable[Observable[Long]] = ongoingIndexings
