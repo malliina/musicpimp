@@ -53,7 +53,7 @@ object Search extends PimpSockets with Log {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
-      Indexer.indexAndSave()
+        Indexer.indexAndSave()
       case SUBSCRIBE =>
         ()
     })

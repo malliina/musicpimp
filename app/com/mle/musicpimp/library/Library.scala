@@ -17,11 +17,13 @@ trait Library extends MusicLibrary with Log {
   val emptyPath = Paths get ""
   var rootFolders: Seq[Path] = Settings.read
 
+  def rootStream = rootFolders.toStream
+
   def rootFolder = rootFolderFromDatabase
 
   def rootFolderFromDatabase: MusicFolder = folderFromDatabase(ROOT_ID) getOrElse MusicFolder.empty
 
-  def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
+  //  def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
 
   def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
 
@@ -34,14 +36,14 @@ trait Library extends MusicLibrary with Log {
     })
   }
 
-  def folderFromFile(id: String): Option[MusicFolder] = {
-    val path = relativePath(id)
-    val content = items(path)
-    content.map(MusicFolder.fromFolder(id, path, _))
-  }
+  //  def folderFromFile(id: String): Option[MusicFolder] = {
+  //    val path = relativePath(id)
+  //    val content = items(path)
+  //    content.map(MusicFolder.fromFolder(id, path, _))
+  //  }
 
-  private def rootPaths: Folder =
-    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
+  //  private def rootPaths: Folder =
+  //    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
 
   def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
@@ -67,26 +69,28 @@ trait Library extends MusicLibrary with Log {
     Map(items(root).toSeq.flatMap(f => recurse(f, Map(emptyPath -> f))): _*)
   }
 
-  def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
+  private def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
 
-  def allTracks(root: Path) = all(root).map(pair => pair._1 -> pair._2.files)
+  //  def allTracks(root: Path) = all(root).map(pair => pair._1 -> pair._2.files)
 
-  def tracksRecursive(root: Path) = allTracks(root).values.flatten
+  //  def tracksRecursive(root: Path) = allTracks(root).values.flatten
 
   def songPathsRecursive = all().flatMap(pair => pair._2.files)
 
   def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
 
-  def trackFiles: Stream[Path] = recursivePaths(root => {
-    FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
-  })
+  def trackFiles: Stream[Path] = recursivePaths(audioFiles)
 
-  def tracksStream: Stream[LocalTrack] = trackFiles.distinct map meta
+  def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
+
+  def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
+
+  def audioFiles(root: Path) = FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
 
   def folderStream: Stream[DataFolder] = recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
 
   private def recursivePaths(rootMap: Path => Stream[Path]) =
-    rootFolders.toStream.flatMap(root => rootMap(root).map(root.relativize))
+    rootStream.flatMap(root => rootMap(root).map(root.relativize))
 
   def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
 
@@ -110,25 +114,31 @@ trait Library extends MusicLibrary with Log {
 
   def relativePath(itemId: String): Path = Paths get decode(itemId)
 
+  def meta(itemId: String): LocalTrack = meta(relativePath(itemId))
+
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
     new LocalTrack(encode(song), meta)
   }
 
-  def meta(itemId: String): LocalTrack = Library meta relativePath(itemId)
-
-  def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative).flatMap(parseMeta)
+  def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
   def findMeta(id: String): Option[LocalTrack] = findMeta(relativePath(id))
+
+  //  def parseMeta(relative: Path): Option[LocalTrack] = parseMeta(pathInfo(relative))
 
   def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 
   def parseMeta(pi: PathInfo): Option[LocalTrack] =
-    Utils.opt[LocalTrack, Exception] {
+    try {
       // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      new LocalTrack(encode(pi.relative), meta)
+      Some(new LocalTrack(encode(pi.relative), meta))
+    } catch {
+      case e: Exception =>
+        log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.")
+        None
     }
 
   def findMetaWithTempFallback(id: String) = findMeta(id).orElse(searchTempDir(id))
@@ -195,4 +205,3 @@ object Library extends Library
 case class PathInfo(relative: Path, root: Path) {
   def absolute = root resolve relative
 }
-
