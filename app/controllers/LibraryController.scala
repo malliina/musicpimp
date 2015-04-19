@@ -6,6 +6,7 @@ import java.nio.file.Paths
 import com.mle.models.MusicColumn
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Library, MusicFolder}
+import com.mle.play.FileResults
 import com.mle.util.Log
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -47,7 +48,7 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to serve
    */
-  def download(trackId: String): EssentialAction = download(trackId, _.withHeaders(ACCEPT_RANGES -> "bytes"))
+//  def download(trackId: String): EssentialAction = download(trackId)//, _.withHeaders(ACCEPT_RANGES -> "bytes"))
 
   /**
    * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
@@ -56,7 +57,7 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to serve
    */
-  def supplyForPlayback(trackId: String) = download(trackId, r => r)
+  def supplyForPlayback(trackId: String) = download(trackId)
 
   /**
    * Responds with the song with the given ID.
@@ -71,18 +72,18 @@ trait LibraryController extends Secured with Log {
    *
    * @param trackId track to download
    */
-  def download(trackId: String, f: Result => Result): EssentialAction =
-    CustomFailingPimpAction(onDownloadAuthFail)(implicit req => {
+  def download(trackId: String): EssentialAction =
+    CustomFailingPimpAction(onDownloadAuthFail)((request, auth) => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
-        .fold(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))(path => {
-        f(Ok.sendFile(path.toFile))
-      })
+        .map(path => FileResults.fileResult(path, request))
+        .getOrElse(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))
     })
 
   def onDownloadAuthFail(req: RequestHeader): Result = {
     logUnauthorized(req)
     Unauthorized
   }
+
   def meta(id: String) = PimpAction {
     trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
   }

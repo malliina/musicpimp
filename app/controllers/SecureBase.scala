@@ -55,9 +55,9 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param onFail result to return if authentication fails
    * @param f the action we want to do
    */
-  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: AuthResult => Result) =
+  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) =
     Security.Authenticated(req => authenticate(req), req => onFail(req))(user => {
-      Logged(user, user => Action(maybeWithCookie(user, f(user))))
+      Logged(user, user => Action(implicit req => maybeWithCookie(user, f(req, user))))
     })
 
   def PimpAction(f: AuthRequest[AnyContent] => Result) = PimpParsedAction(parse.anyContent)(req => f(req))
