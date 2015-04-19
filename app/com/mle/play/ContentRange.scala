@@ -20,7 +20,7 @@ object ContentRange {
       val suffix = headerValue substring prefix.length
       val (start, end) =
         if (suffix startsWith "-") {
-          (size - suffix.drop(1).toInt, size - 1)
+          (size - suffix.tail.toInt, size - 1)
         } else if (suffix endsWith "-") {
           (suffix.init.toInt, size - 1)
         } else {
