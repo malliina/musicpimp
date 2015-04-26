@@ -29,7 +29,7 @@ trait FileResults {
     implicit val ec = play.api.libs.concurrent.Execution.defaultContext
     Result(responseHeader, {
       val drop = Traversable.drop[Array[Byte]](range.start)
-      val take = Traversable.take[Array[Byte]](range.endExclusive)
+      val take = Traversable.take[Array[Byte]](range.contentLength)
       Enumerator.fromFile(path.toFile) through drop through take
     })
   }
