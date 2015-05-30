@@ -12,15 +12,16 @@ object BuildBuild extends Build {
     resolvers ++= Seq(
       "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-      Resolver.url("sbt-plugin-snapshots", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns)),
+      Resolver.url("sbt-plugin-snapshots", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-snapshots"))(Resolver.ivyStylePatterns),
+      Resolver.url("malliina bintray sbt", url("https://dl.bintray.com/malliina/sbt-plugins"))(Resolver.ivyStylePatterns)),
     scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions"),
     incOptions := incOptions.value.withNameHashing(true)
   ) ++ sbtPlugins
 
   def sbtPlugins = Seq(
-    "com.typesafe.play" % "sbt-plugin" % "2.3.8",
-    "com.github.malliina" %% "sbt-packager" % "1.5.11",
-    "com.github.malliina" %% "sbt-play" % "0.2.0",
+    "com.typesafe.play" % "sbt-plugin" % "2.4.0",
+    "com.github.malliina" %% "sbt-packager" % "1.6.1",
+    "com.github.malliina" %% "sbt-play" % "0.3.1",
     "com.eed3si9n" % "sbt-buildinfo" % "0.4.0",
     "com.eed3si9n" % "sbt-assembly" % "0.11.2"
   ) map addSbtPlugin

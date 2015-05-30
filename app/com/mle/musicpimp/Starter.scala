@@ -25,7 +25,7 @@ object Starter extends PlayLifeCycle with Log {
 
   var rmiServer: Option[RmiServer] = None
 
-  override def main(args: Array[String]) {
+  def main(args: Array[String]) {
     args.headOption match {
       case Some("stop") =>
         try {
@@ -41,8 +41,8 @@ object Starter extends PlayLifeCycle with Log {
     }
   }
 
-  override def start() = {
-    super.start()
+  def start() = {
+    super.start(router.Routes.routes)
     RmiUtil.initSecurityPolicy()
     rmiServer = Some(new RmiServer() {
       override def onClosed() {
@@ -54,24 +54,10 @@ object Starter extends PlayLifeCycle with Log {
 
   def stop() {
     log info "Stopping MusicPimp..."
-    try {
-      MusicPlayer.close()
-      Scheduling.shutdown()
-      ScheduledPlaybackService.stop()
-      nettyServer foreach (server => {
-        server.allChannels.close().await(2, TimeUnit.SECONDS)
-        server.stop()
-      })
-    } finally {
-      /**
-       * Well the following is lame, but some threads are left hanging
-       * and I don't know how to stop them gracefully.
-       *
-       * Likely guilty: play! framework, because if no web requests have
-       * been made, the app exits normally without this
-       */
-      Future(System.exit(0))
-    }
+    MusicPlayer.close()
+    Scheduling.shutdown()
+    ScheduledPlaybackService.stop()
+    nettyServer foreach (_.stop())
   }
 
   def printThreads() {

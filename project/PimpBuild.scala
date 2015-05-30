@@ -13,17 +13,19 @@ import com.mle.sbtplay.PlayProjects
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{linux, rpm}
-import play.PlayImport.PlayKeys
+import play.sbt.PlayImport.PlayKeys
 import sbt.Keys._
 import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
 import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
 import sbtbuildinfo.BuildInfoPlugin
+import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 
 object PimpBuild extends Build {
 
-  lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp").enablePlugins(BuildInfoPlugin).settings(playSettings: _*)
+  lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp")
+    .enablePlugins(BuildInfoPlugin, SbtNativePackager).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
     version := "2.8.3",
@@ -33,6 +35,7 @@ object PimpBuild extends Build {
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
+      Resolver.jcenterRepo,
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
       "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"),
@@ -55,8 +58,7 @@ object PimpBuild extends Build {
     updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
-  lazy val nativePackagingSettings = SbtNativePackager.packagerSettings ++
-    WinPlugin.windowsSettings ++
+  lazy val nativePackagingSettings = WinPlugin.windowsSettings ++
     LinuxPlugin.rpmSettings ++
     LinuxPlugin.debianSettings ++
     AzurePlugin.azureSettings ++
@@ -84,30 +86,31 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "0.4.0",
-        mleGroup %% "util-actor" % "1.8.0",
-        mleGroup %% "util-rmi" % "1.8.0",
+        mleGroup %% "play-base" % "0.5.0",
+        //mleGroup %% "util-play" % "1.9.3",
+        mleGroup %% "util-actor" % "1.9.0",
+        mleGroup %% "util-rmi" % "1.9.0",
         mleGroup %% "util-audio" % "1.6.0",
-        mleGroup %% "mobile-push" % "0.9.2",
+        mleGroup %% "mobile-push" % "0.9.4",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        play.PlayImport.filters,
+        play.sbt.PlayImport.filters,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0").map(dep => dep withSources()),
       mainClass := Some("com.mle.musicpimp.Starter"),
-      linux.Keys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
+      PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       // why conf?
-      linux.Keys.packageSummary in Linux := "MusicPimp summary here.",
-      rpm.Keys.rpmVendor := "Skogberg Labs",
+      PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
+      PackagerKeys.rpmVendor := "Skogberg Labs",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
       // never change
       WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
       AzureKeys.azureContainerName := "files",
-      WinKeys.minJavaVersion := Some(7),
+      WinKeys.minJavaVersion := Some(8),
       WinKeys.postInstallUrl := Some("http://localhost:8456"),
       appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico"),
       buildInfoPackage := "com.mle.musicpimp"

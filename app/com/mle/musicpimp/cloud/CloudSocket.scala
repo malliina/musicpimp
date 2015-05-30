@@ -93,6 +93,11 @@ class CloudSocket(uri: String, username: String, password: String)
     val cmd = (json \ CMD).validate[String]
     val request = (json \ REQUEST_ID).validate[String]
     val body = json \ BODY
+
+    def withBody(f: JsValue => PimpMessage): JsResult[PimpMessage] = body.toOption
+      .map(js => JsSuccess(f(js)))
+      .getOrElse(JsError(s"Key $BODY does not contain JSON."))
+
     val requestMessage: JsResult[PimpMessage] = request.flatMap(req => cmd.flatMap {
       case VERSION => JsSuccess(GetVersion)
       case TRACK => body.validate[Track]
@@ -103,8 +108,8 @@ class CloudSocket(uri: String, username: String, password: String)
       case FOLDER => body.validate[Folder]
       case SEARCH => body.validate[Search]
       case ALARMS => JsSuccess(GetAlarms)
-      case ALARMS_EDIT => JsSuccess(AlarmEdit(body))
-      case ALARMS_ADD => JsSuccess(AlarmAdd(body))
+      case ALARMS_EDIT => withBody(AlarmEdit.apply)
+      case ALARMS_ADD => withBody(AlarmAdd.apply)
       case BEAM => body.validate[BeamCommand]
       case STATUS => JsSuccess(GetStatus)
       case other => JsError(s"Unknown JSON command: $other in $json")
@@ -117,7 +122,10 @@ class CloudSocket(uri: String, username: String, password: String)
     val body = json \ BODY
     val eventMessage = event.flatMap {
       case REGISTERED => body.validate[Registered]
-      case PLAYER => JsSuccess(PlaybackMessage(body))
+      case PLAYER =>
+        body.toOption
+          .map(bodyJson => JsSuccess(PlaybackMessage(bodyJson)))
+          .getOrElse(JsError(s"Playback message does not contain JSON in key $BODY."))
       case PING => JsSuccess(Ping)
       case other => JsError(s"Unknown JSON event: $other in $json")
     }

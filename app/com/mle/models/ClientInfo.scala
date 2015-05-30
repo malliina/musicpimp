@@ -15,7 +15,7 @@ import play.api.mvc.RequestHeader
  */
 case class ClientInfo[T](channel: Concurrent.Channel[T], request: RequestHeader, user: String)
   extends SocketClient[T] with Log {
-  val protocol = if (RequestHelpers isHttps request) "wss" else "ws"
+  val protocol = if (request.secure) "wss" else "ws"
   val remoteAddress = request.remoteAddress
   val describe = s"$protocol://$user@$remoteAddress"
   /**

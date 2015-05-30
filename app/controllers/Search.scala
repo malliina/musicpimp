@@ -32,19 +32,6 @@ object Search extends PimpSockets with Log {
     (t: Throwable) => onErr("Indexing failed.", t),
     () => onCompleted(s"Indexed ${PimpDb.trackCount} files."))
 
-  def search = PimpAction(implicit req => {
-    def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
-    val term = query("term")
-    val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse DEFAULT_LIMIT
-    val results = term.fold(Seq.empty[DataTrack])(databaseSearch(_, limit))
-    respond(html = views.html.search(term, results), json = Json.toJson(results))
-  })
-
-  def refresh = PimpAction(implicit req => {
-    Indexer.indexAndSave()
-    Ok
-  })
-
   override def openSocketCall: Call = routes.Search.openSocket()
 
   override def welcomeMessage(client: Client): Option[Message] = Some(JsonMessages.searchStatus(s"Files indexed: ${PimpDb.trackCount}"))
@@ -68,8 +55,6 @@ object Search extends PimpSockets with Log {
     val subs = observers map observable.subscribe
     toFuture(observable).onComplete(_ => subs.foreach(_.unsubscribe()))
   }
-
-  private def databaseSearch(query: String, limit: Int): Seq[DataTrack] = PimpDb.fullText(query, limit)
 
   private def toFuture[T](obs: Observable[T]): Future[Unit] = {
     val p = Promise[Unit]()

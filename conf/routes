@@ -5,8 +5,8 @@ GET         /popupPlayer                   controllers.Website.popupPlayer
 GET         /settings                      controllers.SettingsController.settings
 GET         /connect                       controllers.Website.connect
 GET         /image                         controllers.Website.image
-GET         /logs                          controllers.PimpLogs.logs
-POST        /logs/levels                   controllers.PimpLogs.changeLogLevel
+GET         /logs                          controllers.LogPage.logs
+POST        /logs/levels                   controllers.LogPage.changeLogLevel
 GET         /cloud                         controllers.Cloud.cloud
 POST        /cloud                         controllers.Cloud.toggle
 GET         /about                         controllers.Website.about
@@ -41,9 +41,9 @@ POST        /rootfolders                   controllers.SettingsController.newFol
 POST        /rootfolders/delete/*id        controllers.SettingsController.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks
 GET         /pathsOnly                     controllers.Alarms.paths
-GET         /search                        controllers.Search.search
+GET         /search                        controllers.SearchPage.search
 GET         /search/ws                     controllers.Search.openSocket
-POST        /search/refresh                controllers.Search.refresh
+POST        /search/refresh                controllers.SearchPage.refresh
 # WebSockets
 GET         /ws/playback                   controllers.ServerWS.openSocket
 GET         /ws/playback2                  controllers.ServerWS.openSocket2

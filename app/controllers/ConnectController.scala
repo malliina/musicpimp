@@ -42,8 +42,7 @@ trait ConnectController extends Secured with HtmlController with Log {
       if !address.isAnyLocalAddress && !address.isLinkLocalAddress && !address.isLoopbackAddress
     } yield address.getHostAddress).toList
 
-  def protocol(req: RequestHeader) =
-    if (RequestHelpers.isHttps(req)) Protocols.https else Protocols.http
+  def protocol(req: RequestHeader) = if (req.secure) Protocols.https else Protocols.http
 }
 
 object ConnectController {

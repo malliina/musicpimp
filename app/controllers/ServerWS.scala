@@ -3,13 +3,12 @@ package controllers
 import com.mle.musicpimp.audio._
 import com.mle.musicpimp.cloud.Clouds
 import com.mle.musicpimp.json.{JsonFormatVersions, JsonMessages}
-import com.mle.play.ws.TrieClientStorage
 import com.mle.util.Log
 import play.api.libs.json.Json.toJson
-import play.api.mvc.Call
+import play.api.mvc.{Result, RequestHeader, Call}
 import rx.lang.scala.{Observable, Subscription}
 
-import scala.concurrent.duration.DurationLong
+import scala.concurrent.duration.DurationInt
 
 /**
  * Emits playback events to and accepts commands from listening clients.
@@ -59,6 +58,11 @@ object ServerWS extends PlayerSockets with Log {
   def apiVersion(client: Client): String = PimpRequest.apiVersion(client.request)
 
   def openSocketCall: Call = routes.ServerWS.openSocket()
+
+//  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
+//    log.info("unauthorized")
+//    Unauthorized
+//  }
 
   override def broadcast(message: Message): Unit = {
     super.broadcast(message)

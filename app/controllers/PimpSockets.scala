@@ -9,9 +9,13 @@ import play.api.mvc.{Controller, RequestHeader}
 /**
  * @author Michael
  */
-trait PimpSockets extends Controller with JsonWebSockets with TrieClientStorage with Secured with SyncAuth {
+trait PimpSockets extends Controller with JsonWebSockets with TrieClientStorage with SyncAuth {
   type Client = ClientInfo[Message]
   type AuthSuccess = AuthResult
+
+  val security = new SecureBase {}
+
+  override def authenticate(implicit req: RequestHeader): Option[AuthResult] = security.authenticate(req)
 
   override def newClient(user: AuthSuccess, channel: Channel[Message])(implicit request: RequestHeader) =
     ClientInfo(channel, request, user.user)
