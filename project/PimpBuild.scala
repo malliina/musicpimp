@@ -36,6 +36,7 @@ object PimpBuild extends Build {
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
       Resolver.jcenterRepo,
+      Resolver.bintrayRepo("malliina", "maven"),
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
       "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"),
