@@ -52,7 +52,7 @@ object PimpBuild extends Build {
       "-language:higherKinds",
       "-language:implicitConversions",
       "-Xfatal-warnings",
-      "-Xlint",
+//      "-Xlint",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen"),
