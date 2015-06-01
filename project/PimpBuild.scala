@@ -28,7 +28,7 @@ object PimpBuild extends Build {
     .enablePlugins(BuildInfoPlugin, SbtNativePackager).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.3",
+    version := "2.8.4",
     organization := "org.musicpimp",
     scalaVersion := "2.11.6",
     exportJars := true,
@@ -40,10 +40,10 @@ object PimpBuild extends Build {
       "Sonatype snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/",
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
       "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"),
-    javacOptions ++= Seq("-source", "1.7", "-target", "1.7"),
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
-      "-target:jvm-1.7",
+      "-target:jvm-1.8",
       "-deprecation",
       "-encoding", "UTF-8",
       "-unchecked",
@@ -51,7 +51,7 @@ object PimpBuild extends Build {
       "-language:existentials",
       "-language:higherKinds",
       "-language:implicitConversions",
-      "-Xfatal-warnings",
+//      "-Xfatal-warnings",
 //      "-Xlint",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
