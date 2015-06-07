@@ -35,6 +35,8 @@ GET         /webplaylist                   controllers.Rest.webPlaylist
 GET         /folders                       controllers.Rest.rootLibrary
 GET         /folders/*folder               controllers.Rest.library(folder)
 GET         /downloads/*id                 controllers.Rest.download(id)
+GET         /tracks/folders                controllers.Rest.allTracks
+GET         /tracks/folders/*id            controllers.Rest.tracksIn(id)
 GET         /tracks/meta/*id               controllers.Rest.meta(id)
 GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
 POST        /rootfolders                   controllers.SettingsController.newFolder
@@ -59,6 +61,4 @@ POST        /alarms/editor/add             controllers.Alarms.newClock
 GET         /ping                          controllers.Rest.ping
 GET         /pingauth                      controllers.Rest.pingAuth
 # Maps static resources from the /public folder to the /assets URL path
-GET         /assets/*file                  controllers.Assets.at(path = "/public", file)
-
-
+GET         /assets/*file                  controllers.PimpAssets.at(file)

@@ -28,9 +28,17 @@ trait LibraryController extends Secured with Log {
     Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items))
   })
 
+  def allTracks = tracksIn(Library.ROOT_ID)
+
+  def tracksIn(folderID: String) = PimpAction(implicit request => {
+    Library.tracksIn(folderID)
+      .map(ts => Ok(Json.toJson(ts)))
+      .getOrElse(folderNotFound(folderID))
+  })
+
   private def folderNotFound(id: String)(implicit request: RequestHeader): Result = pimpResult(
     html = NotFound,
-    json = NotFound(JsonMessages.failure(s"Unknown folder ID: $id"))
+    json = NotFound(noFolderJson(id))
   )
 
   private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
@@ -39,16 +47,6 @@ trait LibraryController extends Secured with Log {
       json = Json.toJson(collection)
     )
   }
-
-  /**
-   * Serves the given track and sets the ACCEPT_RANGES header in the response.
-   *
-   * The Windows Phone background downloader requires the ACCEPT_RANGES header for files over 5 MB. To watch it fail,
-   * use a real device not an emulator.
-   *
-   * @param trackId track to serve
-   */
-//  def download(trackId: String): EssentialAction = download(trackId)//, _.withHeaders(ACCEPT_RANGES -> "bytes"))
 
   /**
    * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
@@ -76,7 +74,7 @@ trait LibraryController extends Secured with Log {
     CustomFailingPimpAction(onDownloadAuthFail)((request, auth) => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
         .map(path => FileResults.fileResult(path, request))
-        .getOrElse(NotFound(JsonMessages.failure(s"Unable to find track with ID: $trackId")))
+        .getOrElse(NotFound(noTrackJson(trackId)))
     })
 
   def onDownloadAuthFail(req: RequestHeader): Result = {
@@ -95,6 +93,8 @@ trait LibraryController extends Secured with Log {
   def trackMetaJson(id: String) = Library.findMeta(id).map(Json.toJson(_))
 
   def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
+
+  def noFolderJson(id: String) = JsonMessages.failure(s"Folder not found: $id")
 
   def toHtml(folder: MusicFolder): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(folder) match {

@@ -6,6 +6,7 @@ import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.mle.audio.meta.SongMeta
 import com.mle.file.FileUtilities
+import com.mle.musicpimp.audio.{FolderMeta, TrackMeta}
 import com.mle.musicpimp.db.{DataFolder, DataTrack, PimpDb}
 import com.mle.util.{Log, Utils}
 
@@ -23,8 +24,6 @@ trait Library extends MusicLibrary with Log {
 
   def rootFolderFromDatabase: MusicFolder = folderFromDatabase(ROOT_ID) getOrElse MusicFolder.empty
 
-  //  def rootFolderFromFile: MusicFolder = MusicFolder.fromFolder(ROOT_ID, emptyPath, rootPaths)
-
   def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
 
   def folderFromDatabase(id: String): Option[MusicFolder] = {
@@ -36,14 +35,17 @@ trait Library extends MusicLibrary with Log {
     })
   }
 
-  //  def folderFromFile(id: String): Option[MusicFolder] = {
-  //    val path = relativePath(id)
-  //    val content = items(path)
-  //    content.map(MusicFolder.fromFolder(id, path, _))
-  //  }
+  def allTracksRec(): Seq[TrackMeta] = tracksInOrEmpty(ROOT_ID)
 
-  //  private def rootPaths: Folder =
-  //    mergeContents(rootFolders.filter(Files.isDirectory(_)).map(f => PathInfo(emptyPath, f)))
+  def tracksIn(id: String): Option[Seq[TrackMeta]] = {
+    folderFromDatabase(id)
+      .map(folder => folder.folders.flatMap(f => tracksInOrEmpty(f.id)) ++ folder.tracks)
+  }
+
+  def localTracksIn(id: String): Option[Seq[LocalTrack]] =
+    tracksIn(id).map(metas => metas.flatMap(meta => findMeta(meta.id)))
+
+  private def tracksInOrEmpty(id: String) = tracksIn(id) getOrElse Nil
 
   def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
@@ -70,10 +72,6 @@ trait Library extends MusicLibrary with Log {
   }
 
   private def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
-
-  //  def allTracks(root: Path) = all(root).map(pair => pair._1 -> pair._2.files)
-
-  //  def tracksRecursive(root: Path) = allTracks(root).values.flatten
 
   def songPathsRecursive = all().flatMap(pair => pair._2.files)
 
@@ -125,8 +123,6 @@ trait Library extends MusicLibrary with Log {
   def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
   def findMeta(id: String): Option[LocalTrack] = findMeta(relativePath(id))
-
-  //  def parseMeta(relative: Path): Option[LocalTrack] = parseMeta(pathInfo(relative))
 
   def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 

@@ -23,7 +23,7 @@
         <div class="@columnSpan(onlyColumn)">
             <ul class="list-unstyled">
             @col.folders.map { f =>
-                <li>@renderDir(f)</li>
+                <li>@folderActions(f.id) @folderTitle(f)</li>
             }
             @col.tracks.map{ t =>
                 <li>@renderSong(t) @t.title</li>
@@ -31,7 +31,7 @@
             </ul>
         </div>
     }
-    @renderDir(dir: FolderMeta) = {
+    @folderTitle(dir: FolderMeta) = {
         <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
     }
     @renderSong(song: TrackMeta) = {

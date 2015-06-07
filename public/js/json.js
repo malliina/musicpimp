@@ -34,7 +34,12 @@ var addJson = function (id) {
 var playJson = function (id) {
     return trackJson("play", id)
 };
-
+var addItemsJson = function(fs, ts) {
+    return itemsJson("add_items", fs, ts)
+};
+var playItemsJson = function(fs, ts) {
+    return itemsJson("play_items", fs, ts)
+};
 var toJson = function (cmd) {
     return JSON.stringify({cmd: cmd})
 };
@@ -43,6 +48,9 @@ var valuedJson = function (cmd, param) {
 };
 var trackJson = function (cmd, track) {
     return JSON.stringify({cmd: cmd, track: track})
+};
+var itemsJson = function (cmd, fs, ts) {
+    return JSON.stringify({cmd: cmd, folders: fs, tracks: ts})
 };
 
 // Assuming a number is a duration in seconds,

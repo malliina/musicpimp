@@ -1,7 +1,7 @@
 package com.mle.musicpimp.audio
 
 import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.library.Library
+import com.mle.musicpimp.library.{LocalTrack, Library}
 import play.api.libs.json.JsValue
 
 import scala.concurrent.duration.DurationDouble
@@ -45,8 +45,23 @@ object PlaybackMessageHandler extends JsonHandlerBase {
         MusicPlayer.playlist.add(Library meta track)
       case REMOVE =>
         MusicPlayer.playlist delete cmd.value
+      case ADD_ITEMS =>
+        withTracks(cmd, ts => ts.foreach(MusicPlayer.playlist.add))
+      case PLAY_ITEMS =>
+        withTracks(cmd, ts => {
+          if(ts.nonEmpty) {
+            MusicPlayer.reset(ts.head)
+            ts.tail.foreach(track => MusicPlayer.playlist.add(track))
+          }
+        })
       case anythingElse =>
         log error s"Invalid JSON: $msg"
     })
+    def withTracks(cmd: JsonCmd, f: Seq[LocalTrack] => Unit): Unit = {
+      val folders = cmd.foldersOrNil
+      val tracks = cmd.tracksOrNil
+      val allTracks: Seq[LocalTrack] = folders.flatMap(Library.localTracksIn(_).getOrElse(Nil)) ++ tracks.map(Library.meta)
+      f(allTracks)
+    }
   }
 }

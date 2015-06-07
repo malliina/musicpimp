@@ -59,7 +59,9 @@ trait JsonStrings {
   val SEEK = "seek"
   val SKIP = "skip"
   val ADD = "add"
+  val ADD_ITEMS = "add_items"
   val PLAY = "play"
+  val PLAY_ITEMS = "play_items"
 
   val AUTHENTICATE = "authenticate"
   val USERNAME = "username"
