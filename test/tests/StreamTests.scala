@@ -4,6 +4,8 @@ import java.io.FileInputStream
 import java.nio.file.{Files, Paths}
 
 import com.mle.musicpimp.http.RangedInputStream
+import com.mle.play.ContentRange
+import com.mle.storage.StorageLong
 import com.mle.util.Util
 import org.apache.commons.io.IOUtils
 import org.scalatest.FunSuite
@@ -34,5 +36,16 @@ class StreamTests extends FunSuite {
       bytes.toSeq
     })
     assert(fiveTo14.drop(5) === tenTo19.take(5))
+  }
+  test("Ranged for all") {
+    val fileSize = Files.size(path).bytes
+    val range = ContentRange.all(fileSize)
+    assert(range.isAll)
+    val allRange = Util.using(new RangedInputStream(new FileInputStream(file), range))(stream => {
+      IOUtils.toByteArray(stream)
+    })
+    val fileRange = Util.using(new FileInputStream(file))(stream => IOUtils.toByteArray(stream))
+    assert(allRange.length === fileRange.length)
+    assert(allRange === fileRange)
   }
 }

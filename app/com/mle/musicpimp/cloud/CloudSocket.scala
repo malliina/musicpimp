@@ -1,6 +1,6 @@
 package com.mle.musicpimp.cloud
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 
 import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
@@ -19,12 +19,13 @@ import com.mle.play.json.JsonStrings.CMD
 import com.mle.play.json.SimpleCommand
 import com.mle.rx.Observables
 import com.mle.security.SSLUtils
+import com.mle.storage.StorageSize
 import com.mle.util.{Log, Util}
 import com.mle.ws.{HttpUtil, JsonWebSocketClient}
 import controllers.{Alarms, Rest}
 import play.api.libs.json._
-
 import scala.concurrent.duration.DurationInt
+import com.mle.storage.{StorageLong, StorageInt}
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
@@ -139,9 +140,9 @@ class CloudSocket(uri: String, username: String, password: String)
       case GetStatus =>
         sendJsonResponse(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)), request)
       case t: Track =>
-        upload(t, request)
+        upload(t, request).recoverAll(t => log.error("Ranged upload failed", t))
       case rt: RangedTrack =>
-        rangedUpload(rt, request)
+        rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
       case RootFolder =>
         sendResponse(Library.rootFolder, request)
       case Folder(id) =>
@@ -237,14 +238,17 @@ class CloudSocket(uri: String, username: String, password: String)
    * @return
    */
   def upload(track: Track, request: String): Future[Unit] = {
-    withUpload(track.id, request, (file, req) => req.addFile(file))
+    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
   }
 
   def rangedUpload(rangedTrack: RangedTrack, request: String): Future[Unit] = {
-    withUpload(rangedTrack.id, request, (file, req) => req.addRangedFile(file, rangedTrack.range))
+    withUpload(rangedTrack.id, request, _ => rangedTrack.range.contentSize, (file, req) => {
+      log.info(s"Preparing ranged upload of $rangedTrack. Request: $request.")
+      req.addRangedFile(file, rangedTrack.range)
+    })
   }
 
-  private def withUpload(trackID: String, request: String, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
+  private def withUpload(trackID: String, request: String, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
     val uploadUri = s"$httpProtocol://$hostPort/track"
     val trackOpt = Library.findAbsolute(trackID)
     if (trackOpt.isEmpty) {
@@ -257,10 +261,11 @@ class CloudSocket(uri: String, username: String, password: String)
         Clouds.loadID().foreach(id => req.setAuth(id, "pimp"))
         trackOpt.foreach(path => {
           content(path, req)
-          infoLog(s"Uploading: $path")
+//          infoLog(s"Uploading: $path")
         })
         req.execute()
-        infoLog("Upload complete")
+        val msg = trackOpt.map(f => s"Uploaded ${sizeCalc(f)}").getOrElse("Uploaded no bytes")
+        infoLog(msg)
       })
     }
   }

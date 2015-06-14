@@ -1,7 +1,7 @@
 package com.mle.play
 
 import com.mle.json.JsonFormats
-import com.mle.storage.StorageSize
+import com.mle.storage.{StorageInt, StorageSize}
 import play.api.http.HeaderNames._
 import play.api.libs.json.Json
 import play.api.mvc.RequestHeader
@@ -13,9 +13,12 @@ import scala.util.{Failure, Try}
  */
 case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
   val totalSizeBytes = size.toBytes
+
   def endExclusive = endInclusive + 1
 
   def contentLength = endExclusive - start
+
+  def contentSize: StorageSize = contentLength.bytes
 
   def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$totalSizeBytes"
 

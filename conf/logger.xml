@@ -10,6 +10,7 @@
     </appender>
     <logger name="org.jboss.netty.handler.codec.http.websocketx" level="INFO"/>
     <logger name="scala.slick" level="INFO"/>
+    <logger name="org.apache.http" level="INFO"/>
     <logger name="org.jaudiotagger" level="WARN" additivity="false"/>
     <logger name="javazoom" level="WARN" additivity="false"/>
     <root level="INFO">
