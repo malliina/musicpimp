@@ -21,6 +21,7 @@ object PimpDb extends PimpDatabase with Log {
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
   val databaseUrlSettings = sys.props.get("h2.url.settings").map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
+  // TODO do not do this on Unix; the home dir may not exist for service users
   val url = s"jdbc:h2:~/.musicpimp/pimp265;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")

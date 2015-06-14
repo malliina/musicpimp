@@ -1,10 +1,12 @@
 package com.mle.musicpimp.http
 
+import java.io.{FileInputStream, InputStream}
 import java.nio.file.Path
 
+import com.mle.play.ContentRange
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.mime.content.FileBody
+import org.apache.http.entity.mime.content.{FileBody, InputStreamBody}
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
 import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.HttpClientBuilder
@@ -25,6 +27,8 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
   request.addHeader(ACCEPT, JSON)
   private val reqContent = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
 
+  @volatile private var streams: List[InputStream] = Nil
+
   def setAuth(username: String, password: String) {
     val creds = new UsernamePasswordCredentials(username, password)
     request addHeader new BasicScheme().authenticate(creds, request, new BasicHttpContext())
@@ -35,6 +39,13 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
   def addFile(file: Path): Unit = {
     def fileName = file.getFileName.toString
     reqContent.addPart(fileName, new FileBody(file.toFile))
+  }
+
+  def addRangedFile(file: Path, range: ContentRange): Unit = {
+    def fileName = file.getFileName.toString
+    val rangedStream = new RangedInputStream(new FileInputStream(file.toFile), range)
+    streams = rangedStream :: streams
+    reqContent.addPart(fileName, new InputStreamBody(rangedStream, fileName))
   }
 
   def addKeyValues(kvs: (String, String)*): Unit =
@@ -62,6 +73,8 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
 
   override def close() {
     client.close()
+    streams.foreach(_.close())
+    streams = Nil
   }
 }
 

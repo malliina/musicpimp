@@ -12,13 +12,14 @@ import scala.util.{Failure, Try}
  * @author Michael
  */
 case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
+  val totalSizeBytes = size.toBytes
   def endExclusive = endInclusive + 1
 
   def contentLength = endExclusive - start
 
-  def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$size"
+  def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$totalSizeBytes"
 
-  def isAll = start == 0 && endInclusive == size.toBytes.toInt - 1
+  def isAll = start == 0 && endInclusive == totalSizeBytes.toInt - 1
 }
 
 object ContentRange {

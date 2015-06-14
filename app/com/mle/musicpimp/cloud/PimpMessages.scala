@@ -1,5 +1,6 @@
 package com.mle.musicpimp.cloud
 
+import com.mle.play.ContentRange
 import play.api.libs.json.{JsValue, Json}
 
 /**
@@ -25,6 +26,8 @@ object PimpMessages {
 
   case class Track(id: String) extends PimpMessage
 
+  case class RangedTrack(id: String, range: ContentRange) extends PimpMessage
+
   case class GetMeta(id: String) extends PimpMessage
 
   case class Search(term: String, limit: Int) extends PimpMessage
@@ -49,4 +52,5 @@ object PimpMessages {
   implicit val authFormat = Json.format[Authenticate]
   implicit val meta = Json.format[GetMeta]
   implicit val registeredFormat = Json.format[Registered]
+  implicit val rangedFormat = Json.format[RangedTrack]
 }
