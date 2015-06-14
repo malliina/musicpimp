@@ -7,17 +7,16 @@ import play.api.http.{ContentTypes, Status}
 import play.api.libs.MimeTypes
 import play.api.libs.iteratee.{Enumerator, Traversable}
 import play.api.mvc.{RequestHeader, ResponseHeader, Result, Results}
+import com.mle.storage.StorageLong
 
 /**
  * @author Michael
  */
 trait FileResults {
   def fileResult(path: Path, request: RequestHeader): Result = {
-    val maybeRanged = for {
-      rangeHeader <- request.headers.get(RANGE)
-      parsedRange <- ContentRange.fromHeader(rangeHeader, Files.size(path).toInt).toOption
-    } yield rangedResult(path, parsedRange)
-    (maybeRanged getOrElse Results.Ok.sendFile(path.toFile)).withHeaders(ACCEPT_RANGES -> "bytes")
+    ContentRange.fromHeader(request, Files.size(path).bytes).toOption
+      .map(range => rangedResult(path, range))
+      .getOrElse(Results.Ok.sendFile(path.toFile).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES))
   }
 
   def rangedResult(path: Path, range: ContentRange): Result = {

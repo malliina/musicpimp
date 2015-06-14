@@ -121,6 +121,7 @@ trait JsonStrings {
 
   val META = "meta"
   val BEAM = "beam"
+  val RANGE = "range"
 }
 
 object JsonStrings extends JsonStrings

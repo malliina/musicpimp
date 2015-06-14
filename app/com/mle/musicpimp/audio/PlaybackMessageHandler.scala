@@ -51,7 +51,7 @@ object PlaybackMessageHandler extends JsonHandlerBase {
         withTracks(cmd, ts => {
           if(ts.nonEmpty) {
             MusicPlayer.reset(ts.head)
-            ts.tail.foreach(track => MusicPlayer.playlist.add(track))
+            ts.tail.foreach(MusicPlayer.playlist.add)
           }
         })
       case anythingElse =>
