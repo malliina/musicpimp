@@ -1,7 +1,11 @@
 package com.mle.musicpimp.db
 
+import java.nio.file.{Paths, Path, Files}
+
 import com.mle.concurrent.ExecutionContexts.cached
+import com.mle.file.FileUtilities.{userHome, userDir, tempDir}
 import com.mle.musicpimp.library.Library
+import com.mle.musicpimp.util.FileUtil
 import com.mle.storage.StorageLong
 import com.mle.util.Log
 import org.h2.jdbcx.JdbcConnectionPool
@@ -12,7 +16,7 @@ import scala.concurrent.duration.DurationInt
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.GetResult
 import scala.util.{Failure, Success, Try}
-
+import com.mle.file.StorageFile
 /**
  * @author Michael
  */
@@ -21,8 +25,12 @@ object PimpDb extends PimpDatabase with Log {
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
   val databaseUrlSettings = sys.props.get("h2.url.settings").map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
-  // TODO do not do this on Unix; the home dir may not exist for service users
-  val url = s"jdbc:h2:~/.musicpimp/pimp265;DB_CLOSE_DELAY=-1$databaseUrlSettings"
+  // prefers h2.home, otherwise a subdir under user.dir, user.home or finally the temp dir, whichever works first
+  val dirByConf: Option[Path] = sys.props.get("h2.home").map(p => Paths.get(p))
+  def secondaryDir = Seq(userDir, userHome).find(Files.isWritable).map(dir => dir / ".musicpimp" / "db")
+  val dataHome: Path = (dirByConf orElse secondaryDir).getOrElse(tempDir)
+  Files.createDirectories(dataHome)
+  val url = s"jdbc:h2:$dataHome/pimp265;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
   override val database = Database.forDataSource(pool)
