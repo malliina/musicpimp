@@ -23,10 +23,10 @@
         <div class="@columnSpan(onlyColumn)">
             <ul class="list-unstyled">
             @col.folders.map { f =>
-                <li>@folderActions(f.id) @folderTitle(f)</li>
+                <li class="lead">@folderActions(f.id) @folderTitle(f)</li>
             }
             @col.tracks.map{ t =>
-                <li>@renderSong(t) @t.title</li>
+                <li class="lead">@renderSong(t) @t.title</li>
             }
             </ul>
         </div>

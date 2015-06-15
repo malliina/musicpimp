@@ -9,7 +9,6 @@ var postAjax = function (json, resource) {
     return false;
 };
 var postPlayback = function (json) {
-    alert(json);
     return postAjax(json, "/playback");
 };
 var postWebPlay = function (json) {
@@ -31,6 +30,5 @@ var addItems = function(id) {
     return postPlayback(addItemsJson([id], []))
 };
 var playItems = function(id) {
-    alert('hey');
-    //return postPlayback(playItemsJson([id], []))
+    return postPlayback(playItemsJson([id], []))
 };

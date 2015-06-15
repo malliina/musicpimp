@@ -31,7 +31,7 @@ object PimpBuild extends Build {
     version := "2.8.4",
     organization := "org.musicpimp",
     scalaVersion := "2.11.6",
-    exportJars := true,
+    // exportJars := true,
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
