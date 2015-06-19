@@ -32,7 +32,7 @@
         </div>
     }
     @folderTitle(dir: FolderMeta) = {
-        <a href="@routes.Rest.library(dir.id)"><i class="glyphicon glyphicon-folder-open"></i> @dir.title</a>
+        <a href="@routes.Rest.library(dir.id)">@dir.title</a>
     }
     @renderSong(song: TrackMeta) = {
         @trackActions(song.id)
