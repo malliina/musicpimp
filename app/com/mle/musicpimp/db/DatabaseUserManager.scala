@@ -58,3 +58,4 @@ class DatabaseUserManager extends UserManager {
 
   private def hash(user: User, pass: Password) = Auth.hash(user, pass)
 }
+object DatabaseUserManager extends DatabaseUserManager

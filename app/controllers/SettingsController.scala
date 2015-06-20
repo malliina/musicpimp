@@ -5,14 +5,12 @@ import java.nio.file.{Files, Paths}
 
 import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.library.{Library, Settings}
-import com.mle.musicpimp.util.EnvUtils
-import com.mle.util.Log
+import com.mle.util.{EnvUtils, Log}
 import play.api.data.Form
 import play.api.data.Forms._
 import views._
 
 import scala.util.Try
-
 
 /**
  * @author Michael

@@ -17,20 +17,22 @@ import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.GetResult
 import scala.util.{Failure, Success, Try}
 import com.mle.file.StorageFile
+
 /**
  * @author Michael
  */
 object PimpDb extends PimpDatabase with Log {
+  val H2_URL_SETTINGS = "h2.url.settings"
+  val H2_HOME = "h2.home"
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
   //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-  val databaseUrlSettings = sys.props.get("h2.url.settings").map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
-  // prefers h2.home, otherwise a subdir under user.dir, user.home or finally the temp dir, whichever works first
-  val dirByConf: Option[Path] = sys.props.get("h2.home").map(p => Paths.get(p))
-  def secondaryDir = Seq(userDir, userHome).find(Files.isWritable).map(dir => dir / ".musicpimp" / "db")
-  val dataHome: Path = (dirByConf orElse secondaryDir).getOrElse(tempDir)
+  val databaseUrlSettings = sys.props.get(H2_URL_SETTINGS).map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
+  val dirByConf: Option[Path] = sys.props.get(H2_HOME).map(p => Paths.get(p))
+  val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
   Files.createDirectories(dataHome)
-  val url = s"jdbc:h2:$dataHome/pimp265;DB_CLOSE_DELAY=-1$databaseUrlSettings"
+  val databaseFile = dataHome / "pimp265"
+  val url = s"jdbc:h2:$databaseFile;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
   override val database = Database.forDataSource(pool)

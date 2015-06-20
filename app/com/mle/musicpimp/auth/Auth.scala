@@ -13,10 +13,10 @@ object Auth {
     val fileUsers = new FileUserManager
     if (fileUsers.hasCredentials()) {
       val dataUsers = new DatabaseUserManager
-      fileUsers.savedPassHash.filter(_ => dataUsers.users.isEmpty).map(fileHash => {
+      fileUsers.savedPassHash.filter(_ => dataUsers.users.isEmpty).exists(fileHash => {
         dataUsers addUser DataUser(fileUsers.defaultUser, fileHash)
         fileUsers.resetCredentials()
-      }).contains(true)
+      })
     } else {
       false
     }

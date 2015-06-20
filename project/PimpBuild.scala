@@ -31,6 +31,7 @@ object PimpBuild extends Build {
     version := "2.8.5",
     organization := "org.musicpimp",
     scalaVersion := "2.11.6",
+    exportJars := true,
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
@@ -57,12 +58,26 @@ object PimpBuild extends Build {
     updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
-  lazy val nativePackagingSettings = WinPlugin.windowsSettings ++
-    LinuxPlugin.rpmSettings ++
-    LinuxPlugin.debianSettings ++
+  lazy val nativePackagingSettings =
     AzurePlugin.azureSettings ++
-    pimpMacSettings ++
-    GenericPlugin.confSettings
+      WinPlugin.windowsSettings ++
+      pimpMacSettings ++
+      GenericPlugin.confSettings ++ Seq(
+      com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
+      mainClass := Some("com.mle.musicpimp.Starter"),
+      PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
+      // why conf?
+      PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
+      PackagerKeys.rpmVendor := "Skogberg Labs",
+      manufacturer := "Skogberg Labs",
+      displayName := "MusicPimp",
+      // never change
+      WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
+      AzureKeys.azureContainerName := "files",
+      WinKeys.minJavaVersion := Some(8),
+      WinKeys.postInstallUrl := Some("http://localhost:8456"),
+      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
+  )
 
   def pimpMacSettings = macSettings ++ Seq(
     jvmOptions ++= Seq("-Dhttp.port=8456"),
@@ -98,19 +113,6 @@ object PimpBuild extends Build {
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0").map(dep => dep withSources()),
-      mainClass := Some("com.mle.musicpimp.Starter"),
-      PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
-      // why conf?
-      PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
-      PackagerKeys.rpmVendor := "Skogberg Labs",
-      manufacturer := "Skogberg Labs",
-      displayName := "MusicPimp",
-      // never change
-      WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
-      AzureKeys.azureContainerName := "files",
-      WinKeys.minJavaVersion := Some(8),
-      WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico"),
       buildInfoPackage := "com.mle.musicpimp"
     )
 

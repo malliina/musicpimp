@@ -40,7 +40,7 @@ trait ScheduledPlaybackService extends Log {
 
   def status = readConf()
 
-  def find(id: String) = readConf().find(_.id == Some(id))
+  def find(id: String) = readConf().find(_.id.contains(id))
 
   /**
    * Saves or updates action point ´ap´.
@@ -65,7 +65,7 @@ trait ScheduledPlaybackService extends Log {
 
   def remove(id: String) = {
     clockAPs.deschedule(id)
-    save(readConf().filter(_.id != Some(id)))
+    save(readConf().filter(!_.id.contains(id)))
   }
 
   private def readConf(): Seq[ClockPlayback] =

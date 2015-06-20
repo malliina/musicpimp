@@ -1,0 +1,1 @@
+JAVA_OPTS="-Dpidfile.path=/var/run/${{app_name}}/play.pid -Dhttp.port=8456 $JAVA_OPTS"

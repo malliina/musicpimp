@@ -1,23 +1,33 @@
 package com.mle.musicpimp.util
 
 import java.nio.file.attribute.{PosixFilePermission, PosixFilePermissions}
-import java.nio.file.{FileAlreadyExistsException, Files, Path}
+import java.nio.file.{Paths, FileAlreadyExistsException, Files, Path}
 
 import com.mle.file.{FileUtilities, StorageFile}
-import com.mle.util.{Util, Log, Utils}
+import com.mle.util.{EnvUtils, Util, Log, Utils}
 
 /**
  * @author Michael
  */
-object FileUtil extends Log {
+object FileUtil {
   val ownerOnlyPermissions = PosixFilePermissions fromString "rw-------"
   val ownerOnlyAttributes = PosixFilePermissions asFileAttribute ownerOnlyPermissions
-  val pimpHomeDir = FileUtilities.userDir / ".musicpimp"
+
+  val pimpHomeDir = appHome orElse localDirWindows getOrElse localDirDefault
 
   def localPath(name: String) = pimpHomeDir / name
 
+  protected def appHome = findPath(sys.props.get("musicpimp.home"))
+
+  protected def localDirWindows = findPath(sys.env.get("LOCALAPPDATA")).map(_ / "MusicPimp")
+    .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
+
+  protected def localDirDefault = FileUtilities.userDir / ".musicpimp"
+
+  private def findPath(dir: Option[String]) = dir.map(dir => Paths.get(dir))
+
   def pathTo(file: String, createIfNotExists: Boolean = false): Path = {
-    val path = pimpHomeDir / file
+    val path = localPath(file)
     if (!Files.exists(path)) {
       Utils.opt[Unit, FileAlreadyExistsException](Files.createFile(path))
     }

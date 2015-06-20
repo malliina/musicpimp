@@ -1,19 +1,7 @@
-import java.nio.file.Files
-
-import ch.qos.logback.classic.{Level, LoggerContext}
-import ch.qos.logback.classic.util.ContextInitializer
-import com.mle.file.FileUtilities
-import com.mle.musicpimp.auth.Auth
-import com.mle.musicpimp.cloud.Clouds
-import com.mle.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
+import com.mle.musicpimp.Starter
 import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.log.PimpLog
-import com.mle.musicpimp.scheduler.ScheduledPlaybackService
-import com.mle.musicpimp.util.FileUtil
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
-import com.mle.util.{Logging, Log}
-import controllers.{PimpLogs, Search, PimpContentController}
-import org.slf4j.LoggerFactory
+import com.mle.util.Log
+import controllers.PimpContentController
 import play.api.Application
 import play.api.mvc._
 import play.filters.gzip.GzipFilter
@@ -44,42 +32,16 @@ object Global extends WithFilters(new GzipFilter()) with Log {
    */
   override def onStart(app: Application) {
     super.onStart(app)
-    try {
-      Logging.level = Level.INFO
-      FileUtilities init "musicpimp"
-      Files.createDirectories(FileUtil.pimpHomeDir)
-      ScheduledPlaybackService.init()
-      PimpDb.init()
-      Auth.migrateFileCredentialsToDatabaseIfExists()
-      new DatabaseUserManager().ensureAtLeastOneUserExists()
-      Future {
-        Indexer.init()
-        Search.init()
-      }.recover {
-        case e: Exception =>
-          log.error(s"Unable to initialize indexer and search", e)
-      }
-      Clouds.init()
-      val version = com.mle.musicpimp.BuildInfo.version
-      log info s"Started MusicPimp $version, base dir: ${FileUtilities.basePath}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, app dir: ${FileUtil.pimpHomeDir}"
-    } catch {
-      case e: Exception =>
-        log.error(s"Unable to initialize MusicPimp", e)
-        throw e
-    }
+    Starter.startServices()
   }
 
   override def onStop(app: Application): Unit = {
-    Search.subscription.unsubscribe()
+    Starter.stopServices()
     super.onStop(app)
   }
 
   /**
-   * TODO document when this is run; on InternalServerErrors?
-   *
-   * @param request
-   * @param ex
-   * @return
+   * Run when a controller throws an exception.
    */
   override def onError(request: RequestHeader, ex: Throwable): Future[Result] =
     PimpContentController.pimpResult(
