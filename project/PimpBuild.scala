@@ -59,24 +59,38 @@ object PimpBuild extends Build {
   )
 
   lazy val nativePackagingSettings =
-    AzurePlugin.azureSettings ++
-      WinPlugin.windowsSettings ++
+    azureSettings ++
+      windowsSettings ++
       pimpMacSettings ++
+      linuxSettings ++
       GenericPlugin.confSettings ++ Seq(
       com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
-      mainClass := Some("com.mle.musicpimp.Starter"),
       PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
-      // why conf?
-      PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
-      PackagerKeys.rpmVendor := "Skogberg Labs",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
-      // never change
-      WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
-      AzureKeys.azureContainerName := "files",
-      WinKeys.minJavaVersion := Some(8),
-      WinKeys.postInstallUrl := Some("http://localhost:8456"),
-      appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
+      mainClass := Some("com.mle.musicpimp.Starter")
+  )
+
+  def linuxSettings = Seq(
+    javaOptions in Universal ++= Seq(
+      "-Dhttp.port=8456",
+      "-Dpidfile.path=/var/run/musicpimp/pimp.pid",
+      "-Dmusicpimp.home=/var/run/musicpimp"
+    ),
+    PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
+    PackagerKeys.rpmVendor := "Skogberg Labs"
+  )
+
+  def azureSettings = AzurePlugin.azureSettings ++ Seq(
+    AzureKeys.azureContainerName := "files"
+  )
+
+  def windowsSettings = WinPlugin.windowsSettings ++ Seq(
+    // never change
+    WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
+    WinKeys.minJavaVersion := Some(8),
+    WinKeys.postInstallUrl := Some("http://localhost:8456"),
+    appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
   )
 
   def pimpMacSettings = macSettings ++ Seq(

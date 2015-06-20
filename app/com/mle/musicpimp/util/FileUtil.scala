@@ -22,7 +22,7 @@ object FileUtil {
   protected def localDirWindows = findPath(sys.env.get("LOCALAPPDATA")).map(_ / "MusicPimp")
     .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
 
-  protected def localDirDefault = FileUtilities.userDir / ".musicpimp"
+  protected def localDirDefault = FileUtilities.tempDir / ".musicpimp"
 
   private def findPath(dir: Option[String]) = dir.map(dir => Paths.get(dir))
 
