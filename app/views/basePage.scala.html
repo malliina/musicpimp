@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
         <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"/>
         <link rel="stylesheet" href="@routes.PimpAssets.at("css/custom.css")">
+        <link rel="stylesheet" href="@routes.PimpAssets.at("css/footer.css")">
         <style>
         body {
         background : url ( " @routes.PimpAssets.at("img/guitar.png") ") no-repeat center;
@@ -20,8 +21,14 @@
         <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     </head>
     <body>
-        <section>
-        @content
-        </section>
+        <div id="wrap">
+            @content
+            <div id="push"></div>
+        </div>
+        <div id="footer">
+        @util.div("container"){
+            <p class="muted credit pull-right">Developed by <a href="https://github.com/malliina">Michael Skogberg</a>.</p>
+        }
+        </div>
     </body>
 </html>
