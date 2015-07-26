@@ -6,13 +6,12 @@ import java.nio.file.{Files, Paths}
 import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.library.{Library, Settings}
 import com.mle.util.{EnvUtils, Log}
-import play.api.{Play, Environment}
+import play.api.Play
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{Lang, I18nSupport, Messages, MessagesApi}
+import play.api.i18n.{Lang, Messages}
 
-//import play.api.i18n.MessagesApi
-import views._
+import views.html
 
 import scala.util.Try
 
