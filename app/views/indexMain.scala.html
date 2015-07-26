@@ -20,6 +20,9 @@
                         @navItem("About", routes.Website.about(), "globe")
                         <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
                     </ul>
+                    <div class="col-md-4 pull-right">
+                    @searchForm(None, "")
+                    </div>
                 </div>
             </div>
         </div>

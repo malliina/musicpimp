@@ -1,11 +1,12 @@
-@(relativePath: java.nio.file.Path, col1: com.mle.models.MusicColumn, col2: com.mle.models.MusicColumn, col3: com.mle.models.MusicColumn)
 @import com.mle.models.MusicColumn
-
 @import com.mle.musicpimp.audio.{FolderMeta,TrackMeta}
+@import java.nio.file.Path
+
+@(relativePath: Path, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn)
 
     @libraryBase("folders") {
         <div class="page-header">
-            <h1>Library <small>@relativePath</small> @util.div("col-md-4 pull-right hidden-xs hidden-sm")(searchForm(None, ""))</h1>
+            <h1>Library <small>@relativePath</small></h1>
         </div>
         <div class="row">
             @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
