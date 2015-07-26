@@ -5,20 +5,27 @@
     <head>
         <title>@title</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-        <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-        <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"/>
-        <link rel="stylesheet" href="@routes.PimpAssets.at("css/custom.css")">
-        <link rel="stylesheet" href="@routes.PimpAssets.at("css/footer.css")">
+        @util.css(
+            "//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css",
+            "//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css",
+            "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css",
+            "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
+        )
+        @util.routedCss(
+            routes.PimpAssets.at("css/custom.css"),
+            routes.PimpAssets.at("css/footer.css")
+        )
         <style>
         body {
         background : url ( " @routes.PimpAssets.at("img/guitar.png") ") no-repeat center;
         }
         </style>
             <!-- For playback and volume sliders -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
-        <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+        @util.script(
+            "//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js",
+            "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js",
+            "//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
+        )
     </head>
     <body>
         <div id="wrap">
