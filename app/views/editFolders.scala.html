@@ -1,4 +1,4 @@
-@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)
+@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)(implicit messages: Messages)
 
 @if(folders.isEmpty) {
     <p>No music folders have been added.</p>
@@ -18,7 +18,7 @@
             </span>
         </div>
         @newFolderForm.errors.map { error =>
-            <p class="error"> @error.message </p>
+            <p class="error">@Messages(error.message)(messages)</p>
         }
     </form>
 }

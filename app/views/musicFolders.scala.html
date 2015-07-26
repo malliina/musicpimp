@@ -1,6 +1,5 @@
-@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)
+@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)(implicit messages: Messages)
 @manage("folders") {
     @bs.headerRow("Music Folders", "col-md-8")
     @editFolders(folders, newFolderForm, folderPlaceHolder)
 }
-

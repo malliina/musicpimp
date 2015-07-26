@@ -6,8 +6,12 @@ import java.nio.file.{Files, Paths}
 import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.library.{Library, Settings}
 import com.mle.util.{EnvUtils, Log}
+import play.api.{Play, Environment}
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.i18n.{Lang, I18nSupport, Messages, MessagesApi}
+
+//import play.api.i18n.MessagesApi
 import views._
 
 import scala.util.Try
@@ -17,7 +21,7 @@ import scala.util.Try
  */
 object SettingsController extends Secured with HtmlController with Log {
   protected val newFolderForm = Form(
-    "path" -> nonEmptyText.verifying("Not a directory.", validateDirectory _)
+    "path" -> nonEmptyText.verifying("Not a directory", validateDirectory _)
   )
   private val folderPlaceHolder = if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\" else "/opt/music/"
 
@@ -50,7 +54,10 @@ object SettingsController extends Secured with HtmlController with Log {
 
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
-  private def foldersPage(form: Form[String]) = html.musicFolders(Settings.readFolders, form, folderPlaceHolder)
+  private def foldersPage(form: Form[String]) = {
+    implicit val messages = Messages.Implicits.applicationMessages(Lang.defaultLang, Play.current)
+    html.musicFolders(Settings.readFolders, form, folderPlaceHolder)
+  }
 
   private def onFoldersChanged() = {
     Library.rootFolders = Settings.read
