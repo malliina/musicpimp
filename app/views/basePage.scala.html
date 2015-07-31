@@ -1,17 +1,17 @@
 @(title: String)(content: Html)
-
+@import util.{div, div2, css, routedCss, script}
 <!DOCTYPE html>
 <html lang="en">
     <head>
         <title>@title</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        @util.css(
+        @css(
             "//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css",
             "//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css",
             "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css",
             "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"
         )
-        @util.routedCss(
+        @routedCss(
             routes.PimpAssets.at("css/custom.css"),
             routes.PimpAssets.at("css/footer.css")
         )
@@ -21,21 +21,30 @@
         }
         </style>
             <!-- For playback and volume sliders -->
-        @util.script(
+        @script(
             "//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js",
             "//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js",
             "//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
         )
     </head>
     <body>
-        <div id="wrap">
+        @div2('id -> "wrap") {
             @content
-            <div id="push"></div>
-        </div>
-        <div id="footer">
-        @util.div("container"){
-            <p class="muted credit pull-right">Developed by <a href="https://github.com/malliina">Michael Skogberg</a>.</p>
+            @div2('id -> "push") {
+
+            }
         }
-        </div>
+        @div2('id -> "footer") {
+            @div("container") {
+                <p>
+                    <span>
+                        <input type="image" src="@routes.PimpAssets.at("img/prev60.png")"/>
+                        <input type="image" src="@routes.PimpAssets.at("img/play60.png")"/>
+                        <input type="image" src="@routes.PimpAssets.at("img/next60.png")"/>
+                    </span>
+                    <span class="text-muted credit pull-right">Developed by <a href="https://github.com/malliina">Michael Skogberg</a>.</span>
+                </p>
+            }
+        }
     </body>
 </html>

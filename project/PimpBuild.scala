@@ -28,10 +28,10 @@ object PimpBuild extends Build {
     .enablePlugins(BuildInfoPlugin, SbtNativePackager).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.5",
+    version := "2.8.6",
     organization := "org.musicpimp",
-    scalaVersion := "2.11.6",
-    exportJars := true,
+    scalaVersion := "2.11.7",
+//    exportJars := true,
     retrieveManaged := false,
     sbt.Keys.fork in Test := true,
     resolvers ++= Seq(
@@ -114,7 +114,7 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "0.5.0",
+        mleGroup %% "play-base" % "0.5.2",
         mleGroup %% "util-actor" % "1.9.0",
         mleGroup %% "util-rmi" % "1.9.0",
         mleGroup %% "util-audio" % "1.6.0",

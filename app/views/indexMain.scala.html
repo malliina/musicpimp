@@ -1,37 +1,38 @@
 @(tabName: String)(content: Html)
-    @basePage("MusicPimp") {
-        <div class="navbar navbar-default navbar-static-top">
-            <div class="container">
-                <div class="navbar-header">
-                    <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="@routes.Website.rootLibrary()">MusicPimp</a>
-                </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        @navItem("Library", routes.Rest.rootLibrary(), "list")
-                        @navItem("Player", routes.Website.player(), "music")
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        @navItem("Manage", routes.SettingsController.manage(), "wrench")
-                        @navItem("About", routes.Website.about(), "globe")
-                        <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
-                    </ul>
-                    <div class="col-md-4 pull-right">
+@import util.div
+@basePage("MusicPimp") {
+    @div("navbar navbar-default navbar-static-top") {
+        @div("container") {
+            @div("navbar-header") {
+                <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="@routes.Website.rootLibrary()">MusicPimp</a>
+            }
+            @div("navbar-collapse collapse") {
+                <ul class="nav navbar-nav">
+                    @navItem("Library", routes.Rest.rootLibrary(), "list")
+                    @navItem("Player", routes.Website.player(), "music")
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    @navItem("Manage", routes.SettingsController.manage(), "wrench")
+                    @navItem("About", routes.Website.about(), "globe")
+                    <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
+                </ul>
+                @div("col-md-4 pull-right") {
                     @searchForm(None, "")
-                    </div>
-                </div>
-            </div>
-        </div>
-        <section>
-            <div class="container">
-            @content
-            </div>
-        </section>
+                }
+            }
+        }
     }
+    <section>
+        @div("container") {
+            @content
+        }
+    </section>
+}
     @navItem(title: String, href: Call, glyphSuffix: String) = {
         @bs.navItem(title, title.toLowerCase, tabName, href, glyphSuffix)
     }
