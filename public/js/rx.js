@@ -11,12 +11,17 @@ var onmessage = function (payload) {
     if (event.event == "ping") {
 
     } else {
-        prepend(event);
+        prependAll(event);
     }
 };
 // case class LogEvent(timeStamp: Long, timeFormatted: String, message: String, loggerName: String, threadName: String, level: Level)
 var rowCounter = 0;
-var prepend = function (e) {
+var prependAll = function (es) {
+    for(var i = 0; i < es.length; i++) {
+        prepend(es[i]);
+    }
+};
+var prepend = function(e) {
     var trc;
     var level = e.level;
     if (level == "ERROR") {
