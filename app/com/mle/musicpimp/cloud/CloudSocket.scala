@@ -243,14 +243,13 @@ class CloudSocket(val uri: String, username: String, password: String)
   }
 
   def rangedUpload(rangedTrack: RangedTrack, request: String): Future[Unit] = {
-    withUpload(rangedTrack.id, request, _ => rangedTrack.range.contentSize, (file, req) => {
-      val range = rangedTrack.range
+    val range = rangedTrack.range
+    withUpload(rangedTrack.id, request, _ => range.contentSize, (file, req) => {
       if(range.isAll) {
-        Files.size(file)
-        log info s"Uploading $file"
+        log info s"Uploading $file, request $request"
         req.addFile(file)
       } else {
-        log info s"Uploading $file with range $range"
+        log.info(s"Uploading $file, range $range, request $request")
         req.addRangedFile(file, range)
       }
     })
