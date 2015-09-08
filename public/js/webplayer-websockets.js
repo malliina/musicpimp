@@ -17,9 +17,13 @@ var onconnect = function () {
         next();
     });
     player.bind("playing", function () {
+        $("#playButton").hide();
+        $("#pauseButton").show();
         sendValuedJson("playstate_changed", "Started");
     });
     player.bind("pause", function () {
+        $("#pauseButton").hide();
+        $("#playButton").show();
         sendValuedJson("playstate_changed", "Stopped");
     });
     player.bind("volumechange", function () {
@@ -29,22 +33,22 @@ var onconnect = function () {
 };
 
 // user input handlers
-var stop = function () {
-    playerHtml.pause();
-};
 var resume = function () {
     playerHtml.play();
+};
+var stop = function () {
+    playerHtml.pause();
 };
 var next = function () {
     if (playlistPos + 1 < playlist.length) {
         playlistPos += 1;
-        playAndSend(pos);
+        playAndSend(playlistPos);
     }
 };
 var prev = function () {
     if (playlistPos > 0 && playlistPos <= playlist.length) {
         playlistPos -= 1;
-        playAndSend(pos);
+        playAndSend(playlistPos);
     }
 };
 var playAndSend = function (pos) {

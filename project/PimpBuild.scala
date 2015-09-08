@@ -25,14 +25,17 @@ import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 
 object PimpBuild extends Build {
 
+  val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
+
   lazy val pimpProject = PlayProject("musicpimp")
-    .enablePlugins(BuildInfoPlugin, SbtNativePackager).settings(playSettings: _*)
+    .enablePlugins(BuildInfoPlugin, SbtNativePackager)
+    .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.14",
+    version := "2.8.15",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
-    exportJars := true,
+//    exportJars := true,
     retrieveManaged := false,
     fork in Test := true,
     resolvers ++= Seq(
@@ -65,9 +68,9 @@ object PimpBuild extends Build {
 
   lazy val nativePackagingSettings =
     azureSettings ++
-      windowsSettings ++
+      pimpWindowsSettings ++
       pimpMacSettings ++
-      linuxSettings ++
+      pimpLinuxSettings ++
       GenericPlugin.confSettings ++ Seq(
       com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
       PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
@@ -76,10 +79,10 @@ object PimpBuild extends Build {
       mainClass := Some("com.mle.musicpimp.Starter")
     )
 
-  def linuxSettings = Seq(
+  def pimpLinuxSettings = LinuxPlugin.playSettings ++ Seq(
     javaOptions in Universal ++= Seq(
-      "-Dhttp.port=8456",
-      "-Dpidfile.path=/var/run/musicpimp/pimp.pid",
+//      "-Dhttp.port=8456",
+//      "-Dpidfile.path=/var/run/musicpimp/pimp.pid",
       "-Dmusicpimp.home=/var/run/musicpimp"
     ),
     PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
@@ -90,32 +93,18 @@ object PimpBuild extends Build {
     AzureKeys.azureContainerName := "files"
   )
 
-  val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
-
-  def windowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
+  def pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
     // never change
     WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
     WinKeys.minJavaVersion := Some(8),
-    WinKeys.postInstallUrl := Some("http://localhost:8456"),
-    appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
+    WinKeys.postInstallUrl := Some("http://localhost:8456")
   )
 
   def windowsConfSettings = inConfig(Windows)(Seq(
-    // hack because sbt-packager fails to package the main jar if exportJars := false
-    WinKeys.msiMappings ++= {
-      if (exportJars.value) {
-        Nil
-      } else {
-        val src = (packageBin in Compile).value.toPath
-        val dest = libDestDir.value / src.getFileName
-        Seq(src -> dest)
-      }
-    },
     prettyMappings := {
       val out: String = WinKeys.msiMappings.value.map {
         case (src, dest) => s"$dest\t\t$src"
       }.mkString("\n")
-      logger.value.log(Level.Info, "Printing")
       logger.value.log(Level.Info, out)
     },
     appIcon := Some(pkgHome.value / "guitar-128x128-np.ico")
