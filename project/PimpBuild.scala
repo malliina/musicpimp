@@ -90,13 +90,36 @@ object PimpBuild extends Build {
     AzureKeys.azureContainerName := "files"
   )
 
-  def windowsSettings = WinPlugin.windowsSettings ++ Seq(
+  val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
+
+  def windowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
     // never change
     WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
     WinKeys.minJavaVersion := Some(8),
     WinKeys.postInstallUrl := Some("http://localhost:8456"),
     appIcon in Windows := Some((pkgHome in Windows).value / "guitar-128x128-np.ico")
   )
+
+  def windowsConfSettings = inConfig(Windows)(Seq(
+    // hack because sbt-packager fails to package the main jar if exportJars := false
+    WinKeys.msiMappings ++= {
+      if (exportJars.value) {
+        Nil
+      } else {
+        val src = (packageBin in Compile).value.toPath
+        val dest = libDestDir.value / src.getFileName
+        Seq(src -> dest)
+      }
+    },
+    prettyMappings := {
+      val out: String = WinKeys.msiMappings.value.map {
+        case (src, dest) => s"$dest\t\t$src"
+      }.mkString("\n")
+      logger.value.log(Level.Info, "Printing")
+      logger.value.log(Level.Info, out)
+    },
+    appIcon := Some(pkgHome.value / "guitar-128x128-np.ico")
+  ))
 
   def pimpMacSettings = macSettings ++ Seq(
     jvmOptions ++= Seq("-Dhttp.port=8456"),
