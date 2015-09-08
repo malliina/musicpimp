@@ -4,7 +4,7 @@ import com.mle.musicpimp.audio.TrackMeta
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.scheduler.json.JsonHandler
+import com.mle.musicpimp.scheduler.json.{AlarmJsonHandler, JsonHandler}
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.mle.util.Log
@@ -12,20 +12,7 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerStrings with Log {
-
-  val jobWriter = new Writes[PlaybackJob] {
-    override def writes(o: PlaybackJob): JsValue = obj(TRACK -> toJson(o.trackInfo))
-  }
-  implicit val alarmWriter = new Writes[ClockPlayback] {
-    override def writes(o: ClockPlayback): JsValue = obj(
-      ID -> toJson(o.id),
-      JOB -> toJson(o.job)(jobWriter),
-      WHEN -> toJson(o.when),
-      ENABLED -> toJson(o.enabled)
-    )
-  }
-
+class Alarms extends Secured with AlarmEditor with SchedulerStrings with Log {
   def alarms = PimpAction(implicit request => {
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(
@@ -52,7 +39,7 @@ object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerSt
   })
 
   private def onRequest(json: JsValue): Result = {
-    val jsResult = handle(json)
+    val jsResult = AlarmJsonHandler.handle(json)
     simpleResult(json, jsResult)
   }
 
@@ -60,5 +47,19 @@ object Alarms extends Secured with AlarmEditor with JsonHandler with SchedulerSt
     result.fold(
       errors => BadRequest(JsonMessages.failure(s"Invalid JSON: $json. Errors: $errors.")),
       valid => Ok)
+  }
+}
+
+object Alarms {
+  val jobWriter = new Writes[PlaybackJob] {
+    override def writes(o: PlaybackJob): JsValue = obj(TRACK -> toJson(o.trackInfo))
+  }
+  implicit val alarmWriter = new Writes[ClockPlayback] {
+    override def writes(o: ClockPlayback): JsValue = obj(
+      ID -> toJson(o.id),
+      JOB -> toJson(o.job)(jobWriter),
+      WHEN -> toJson(o.when),
+      ENABLED -> toJson(o.enabled)
+    )
   }
 }

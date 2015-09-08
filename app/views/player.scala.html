@@ -1,4 +1,4 @@
-@(feedback: Option[String])(implicit request: RequestHeader)
+@(wsUrl: String, feedback: Option[String])(implicit request: RequestHeader)
 
     @basePlayer(feedback) {
         <p class="lead">
@@ -7,5 +7,5 @@
         target="_blank"
         class="btn btn-lg btn-primary">Open browser player</a></p>
         @util.script2("json.js", "playerws.js")
-        @wsopen(ServerWS.wsUrl(request))
+        @wsopen(wsUrl)
     }

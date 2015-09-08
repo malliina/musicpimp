@@ -1,29 +1,30 @@
 package controllers
 
-import com.mle.musicpimp.db.{DataTrack, Indexer, PimpDb}
+import com.mle.concurrent.ExecutionContexts.cached
+import com.mle.musicpimp.db.{Indexer, PimpDb}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
 import com.mle.util.Log
-import play.api.libs.json.Json
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
-import scala.util.Try
 
 /**
  * @author Michael
  */
-object Search extends PimpSockets with Log {
+object Search {
   val DEFAULT_LIMIT = 1000
+}
+
+class Search extends PimpSockets with Log {
 
   val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
   val subscription = Indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster))
   val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.info)
 
-  // call this to ensure that this object is initialized, to ensure that we subscribe to indexer operations
-  def init(): Unit = ()
+//   call this to ensure that this object is initialized, to ensure that we subscribe to indexer operations
+//  def init(): Unit = ()
 
   private def indexingObserver(onNext: String => Unit,
                                onErr: (String, Throwable) => Unit,

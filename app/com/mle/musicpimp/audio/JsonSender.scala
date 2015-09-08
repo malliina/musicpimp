@@ -13,6 +13,8 @@ import play.api.libs.json.{JsValue, Json, Writes}
 trait JsonSender extends Log {
   def user: String
 
+  def webPlayer: WebPlayer
+
   protected def sendCommand(cmd: String) =
     sendJson(CMD -> cmd)
 
@@ -24,6 +26,6 @@ trait JsonSender extends Log {
 
   protected def send(json: JsValue) {
     log debug s"Sending to: $user: $json"
-    WebPlayer.unicast(user, json)
+    webPlayer.unicast(user, json)
   }
 }

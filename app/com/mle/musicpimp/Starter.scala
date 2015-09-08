@@ -101,7 +101,7 @@ object Starter extends PlayLifeCycle with Log {
       new DatabaseUserManager().ensureAtLeastOneUserExists()
       Future {
         Indexer.init()
-        Search.init()
+//        Search.init()
       }.recover {
         case e: Exception =>
           log.error(s"Unable to initialize indexer and search", e)
@@ -120,7 +120,7 @@ object Starter extends PlayLifeCycle with Log {
     MusicPlayer.close()
     Scheduling.shutdown()
     ScheduledPlaybackService.stop()
-    Search.subscription.unsubscribe()
+//    Search.subscription.unsubscribe()
     nettyServer foreach (_.stop())
   }
 

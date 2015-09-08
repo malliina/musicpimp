@@ -13,7 +13,7 @@ import concurrent.duration.DurationInt
  *
  * @author mle
  */
-object PimpLogs extends LogStreaming with SyncAuth with Log {
+class PimpLogs extends LogStreaming with SyncAuth with Log {
   val appenderName = "RX"
 
   override lazy val jsonEvents: Observable[JsValue] = logEvents.tumblingBuffer(100.millis).filter(_.nonEmpty).map(Json.toJson(_))

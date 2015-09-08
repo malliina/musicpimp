@@ -2,30 +2,31 @@ package com.mle.musicpimp.cloud
 
 import java.nio.file.{Files, Path}
 
+import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.mle.musicpimp.beam.BeamCommand
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
-import com.mle.musicpimp.db.PimpDb
+import com.mle.musicpimp.db.{DatabaseUserManager, PimpDb}
 import com.mle.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.musicpimp.scheduler.json.AlarmJsonHandler
 import com.mle.play.json.JsonStrings.CMD
 import com.mle.play.json.SimpleCommand
 import com.mle.rx.Observables
 import com.mle.security.SSLUtils
-import com.mle.storage.StorageSize
+import com.mle.storage.{StorageLong, StorageSize}
 import com.mle.util.{Log, Util}
 import com.mle.ws.{HttpUtil, JsonWebSocketClient}
-import controllers.{Alarms, Rest}
+import controllers.{Alarms, LibraryController, Rest}
 import play.api.libs.json._
+
 import scala.concurrent.duration.DurationInt
-import com.mle.storage.{StorageLong, StorageInt}
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
@@ -49,7 +50,7 @@ import scala.util.Try
  *
  * @author Michael
  */
-class CloudSocket(uri: String, username: String, password: String)
+class CloudSocket(val uri: String, username: String, password: String)
   extends JsonWebSocketClient(uri, Some(SSLUtils.trustAllSslContext()), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
   with Log {
 
@@ -140,7 +141,7 @@ class CloudSocket(uri: String, username: String, password: String)
       case GetStatus =>
         sendJsonResponse(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)), request)
       case t: Track =>
-        upload(t, request).recoverAll(t => log.error("Ranged upload failed", t))
+        upload(t, request).recoverAll(t => log.error("Upload failed", t))
       case rt: RangedTrack =>
         rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
       case RootFolder =>
@@ -160,13 +161,13 @@ class CloudSocket(uri: String, username: String, password: String)
         implicit val writer = Alarms.alarmWriter
         sendResponse(ScheduledPlaybackService.status, request)
       case AlarmEdit(payload) =>
-        Alarms.handle(payload)
+        AlarmJsonHandler.handle(payload)
         sendAckResponse(request)
       case AlarmAdd(payload) =>
-        Alarms.handle(payload)
+        AlarmJsonHandler.handle(payload)
         sendAckResponse(request)
       case Authenticate(user, pass) =>
-        val isValid = Rest.validateCredentials(user, pass)
+        val isValid = DatabaseUserManager.authenticate(user, pass)
         val response =
           if (isValid) JsonMessages.version
           else JsonMessages.invalidCredentials
@@ -174,8 +175,8 @@ class CloudSocket(uri: String, username: String, password: String)
       case GetVersion =>
         sendJsonResponse(JsonMessages.version, request)
       case GetMeta(id) =>
-        val metaResult = Rest.trackMetaJson(id)
-        val response = metaResult getOrElse Rest.noTrackJson(id)
+        val metaResult = LibraryController.trackMetaJson(id)
+        val response = metaResult getOrElse LibraryController.noTrackJson(id)
         sendJsonResponse(response, request, metaResult.isDefined)
       case RegistrationEvent(event, id) =>
         registrationPromise trySuccess id
@@ -243,8 +244,15 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def rangedUpload(rangedTrack: RangedTrack, request: String): Future[Unit] = {
     withUpload(rangedTrack.id, request, _ => rangedTrack.range.contentSize, (file, req) => {
-      log.info(s"Preparing ranged upload of $rangedTrack. Request: $request.")
-      req.addRangedFile(file, rangedTrack.range)
+      val range = rangedTrack.range
+      if(range.isAll) {
+        Files.size(file)
+        log info s"Uploading $file"
+        req.addFile(file)
+      } else {
+        log info s"Uploading $file with range $range"
+        req.addRangedFile(file, range)
+      }
     })
   }
 
@@ -255,17 +263,22 @@ class CloudSocket(uri: String, username: String, password: String)
       log warn s"Unable to find track: $trackID"
     }
     Future {
-      def infoLog(message: String) = log info s"$message. URI: $uploadUri. Request: $request."
+      def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
         req.addHeaders(REQUEST_ID -> request)
         Clouds.loadID().foreach(id => req.setAuth(id, "pimp"))
         trackOpt.foreach(path => {
           content(path, req)
-//          infoLog(s"Uploading: $path")
         })
-        req.execute()
-        val msg = trackOpt.map(f => s"Uploaded ${sizeCalc(f)}").getOrElse("Uploaded no bytes")
-        infoLog(msg)
+        val response = req.execute()
+        val code = response.getStatusLine.getStatusCode
+        val isSuccess = code >= 200 && code < 300
+        if(!isSuccess) {
+          log error appendMeta(s"Non-success response code $code for track ID $trackID")
+        } else {
+          val prefix = trackOpt.map(f => s"Uploaded ${sizeCalc(f)} of $trackID").getOrElse("Uploaded no bytes")
+          log info appendMeta(s"$prefix with response $code")
+        }
       })
     }
   }

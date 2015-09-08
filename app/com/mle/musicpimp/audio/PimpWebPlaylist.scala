@@ -2,6 +2,7 @@ package com.mle.musicpimp.audio
 
 import com.mle.musicpimp.json.JsonMessages._
 import com.mle.musicpimp.json.JsonStrings._
+import controllers.WebPlayer
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 
@@ -11,7 +12,7 @@ import scala.collection.mutable
  *
  * @author mle
  */
-class PimpWebPlaylist(val user: String) extends BasePlaylist[TrackMeta] with JsonSender {
+class PimpWebPlaylist(val user: String, val webPlayer: WebPlayer) extends BasePlaylist[TrackMeta] with JsonSender {
   override val songs = mutable.Buffer.empty[TrackMeta]
 
   override def add(song: TrackMeta) {

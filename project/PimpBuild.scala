@@ -9,10 +9,11 @@ import com.mle.sbt.mac.MacKeys._
 import com.mle.sbt.mac.MacPlugin._
 import com.mle.sbt.unix.LinuxPlugin
 import com.mle.sbt.win.{WinKeys, WinPlugin}
-import com.mle.sbtplay.PlayProjects
+import com.mle.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{linux, rpm}
+import play.sbt.PlayImport
 import play.sbt.PlayImport.PlayKeys
 import sbt.Keys._
 import sbt._
@@ -24,22 +25,26 @@ import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 
 object PimpBuild extends Build {
 
-  lazy val pimpProject = PlayProjects.plainPlayProject("musicpimp")
+  lazy val pimpProject = PlayProject("musicpimp")
     .enablePlugins(BuildInfoPlugin, SbtNativePackager).settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.6",
+    version := "2.8.14",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
-//    exportJars := true,
+    exportJars := true,
     retrieveManaged := false,
-    sbt.Keys.fork in Test := true,
+    fork in Test := true,
     resolvers ++= Seq(
       Resolver.jcenterRepo,
       Resolver.bintrayRepo("malliina", "maven"),
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-      "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"),
-    javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+      "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
+    ),
+    javacOptions ++= Seq(
+      "-source", "1.8",
+      "-target", "1.8"
+    ),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
       "-target:jvm-1.8",
@@ -50,8 +55,8 @@ object PimpBuild extends Build {
       "-language:existentials",
       "-language:higherKinds",
       "-language:implicitConversions",
-//      "-Xfatal-warnings",
-//      "-Xlint",
+      //      "-Xfatal-warnings",
+      //      "-Xlint",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen"),
@@ -69,7 +74,7 @@ object PimpBuild extends Build {
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
       mainClass := Some("com.mle.musicpimp.Starter")
-  )
+    )
 
   def linuxSettings = Seq(
     javaOptions in Universal ++= Seq(
@@ -114,19 +119,22 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "0.5.2",
-        mleGroup %% "util-actor" % "1.9.0",
-        mleGroup %% "util-rmi" % "1.9.0",
-        mleGroup %% "util-audio" % "1.6.0",
-        mleGroup %% "mobile-push" % "0.9.4",
+        mleGroup %% "play-base" % "2.3.0",
+        mleGroup %% "util-actor" % "2.0.0",
+        mleGroup %% "util-rmi" % "2.0.0",
+        mleGroup %% "util-audio" % "1.7.0",
+        mleGroup %% "mobile-push" % "1.0.0",
         httpGroup % "httpclient" % httpVersion,
+        httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        play.sbt.PlayImport.filters,
+        PlayImport.filters,
+        PlayImport.specs2 % Test,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
-        "org.java-websocket" % "Java-WebSocket" % "1.3.0").map(dep => dep withSources()),
+        "org.java-websocket" % "Java-WebSocket" % "1.3.0"
+      ).map(dep => dep withSources()),
       buildInfoPackage := "com.mle.musicpimp"
     )
 

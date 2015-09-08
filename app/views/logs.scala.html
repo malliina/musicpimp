@@ -1,4 +1,4 @@
-@(levelField: Field, levels: Seq[ch.qos.logback.classic.Level], selected: ch.qos.logback.classic.Level, errorMsg: Option[String] = None)(implicit request: RequestHeader)
+@(wsUrl: String, levelField: Field, levels: Seq[ch.qos.logback.classic.Level], selected: ch.qos.logback.classic.Level, errorMsg: Option[String] = None)(implicit request: RequestHeader)
 @import ch.qos.logback.classic.Level
 @import bs.rowColumn12
 @manage("logs") {
@@ -33,7 +33,7 @@
         </table>
     }
     @util.script2("rx.js")
-    @wsopen(PimpLogs.wsUrl)
+    @wsopen(wsUrl)
 }
 @option(level: Level, active: Level) = {
     @if(level.toString == active.toString) {

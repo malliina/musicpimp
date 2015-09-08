@@ -15,21 +15,21 @@ import scala.concurrent.Future
 /**
  * @author Michael
  */
-object Cloud extends Secured {
+class Cloud extends Secured {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))
 
   def cloud = PimpActionAsync(implicit req => {
     val id = Clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
-    id map (i => Ok(views.html.cloud(cloudForm, i._1, i._2)))
+    id map (i => Ok(views.html.cloud(this, cloudForm, i._1, i._2)))
   })
 
   def toggle = PimpActionAsync(implicit req => {
     cloudForm.bindFromRequest.fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
-        Future successful BadRequest(html.cloud(formErrors))
+        Future successful BadRequest(html.cloud(this, formErrors))
       },
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())

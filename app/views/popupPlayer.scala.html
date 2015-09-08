@@ -1,18 +1,18 @@
-@()(implicit request: RequestHeader)
+@(wsUrl: String)(implicit request: RequestHeader)
 
-    @basePage("MusicPimp Web Player") {
-        <audio id="player" src="">You need to update your browser to support this feature.</audio>
-        @playerRow()
-        @bs.rowColumn("col-md-6") {
-            <ol id="playlist">
-            </ol>
-        }
-        @bs.rowColumn("col-md-6") {
-            <div class="alert alert-info">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                <strong>Note</strong> For uninterrupted browser playback, please keep this window open.
-            </div>
-        }
-        @util.script2("json.js", "webplayer-websockets.js")
-        @wsopen(WebPlayer.wsUrl(request))
+@basePage("MusicPimp Web Player") {
+    <audio id="player" src="">You need to update your browser to support this feature.</audio>
+    @playerRow()
+    @bs.rowColumn("col-md-6") {
+        <ol id="playlist">
+        </ol>
     }
+    @bs.rowColumn("col-md-6") {
+        <div class="alert alert-info">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <strong>Note</strong> For uninterrupted browser playback, please keep this window open.
+        </div>
+    }
+    @util.script2("json.js", "webplayer-websockets.js")
+    @wsopen(wsUrl)
+}

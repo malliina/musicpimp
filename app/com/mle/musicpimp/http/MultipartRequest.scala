@@ -42,17 +42,13 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
   }
 
   def addRangedFile(file: Path, range: ContentRange): Unit = {
-    val fileName = file.getFileName.toString
     if (range.isAll) {
       addFile(file)
     } else {
+      val fileName = file.getFileName.toString
       val rangedStream = new RangedInputStream(new FileInputStream(file.toFile), range)
       streams = rangedStream :: streams
       val contentBody = new InputStreamBody(rangedStream, fileName)
-      //      val byteArray = Util.using(new RangedInputStream(new FileInputStream(file.toFile), range))(stream => {
-      //        IOUtils.toByteArray(stream)
-      //      })
-      //      val contentBody = new ByteArrayBody(byteArray, fileName)
       reqContent.addPart(fileName, contentBody)
     }
   }

@@ -8,7 +8,7 @@ import com.mle.musicpimp.library.Library
 import com.mle.util.Log
 import controllers.ServerWS
 import play.api.libs.json.JsValue
-import rx.lang.scala.Subscription
+import rx.lang.scala.{Observable, Subject, Subscription}
 
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
@@ -19,9 +19,12 @@ import scala.util.{Failure, Success, Try}
  * @author Michael
  */
 object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log {
-
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
+
+  private val subject = Subject[JsValue]()
+  val events: Observable[JsValue] = subject
+  val allEvents = events.merge(playlist.events)
 
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
@@ -135,7 +138,7 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   }
 
   // TODO observables
-  def send(json: JsValue) = ServerWS.broadcast(json)
+  def send(json: JsValue) = subject.onNext(json)
 
   def seek(pos: Duration) = {
     Try {

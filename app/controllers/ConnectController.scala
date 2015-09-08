@@ -2,7 +2,7 @@ package controllers
 
 import java.net.NetworkInterface
 
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.play.controllers.AuthRequest
 import com.mle.play.json.JsonFormats
 import com.mle.util.Log

@@ -1,7 +1,8 @@
 @(username: String, helloForm: Form[(String, String, String)])(implicit flash: Flash)
-    @manage("account") {
-        @bs.headerRow("Account", "col-md-4")
-        @bs.rowColumn("col-md-4") {
-            @changePassword(username, helloForm)
-        }
+
+@manage("account") {
+    @bs.headerRow("Account", "col-md-4")
+    @bs.rowColumn("col-md-4") {
+        @changePassword(username, helloForm)
     }
+}

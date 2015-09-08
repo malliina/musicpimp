@@ -15,7 +15,8 @@ import scala.concurrent.duration.DurationInt
  *
  * @author mle
  */
-object ServerWS extends PlayerSockets with Log {
+class ServerWS extends PlayerSockets with Log {
+  val subscription = MusicPlayer.allEvents.subscribe(event => broadcast(event))
   override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
 
   override def status(client: Client) = apiVersion(client) match {

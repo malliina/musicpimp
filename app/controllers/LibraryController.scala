@@ -8,7 +8,7 @@ import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Library, MusicFolder}
 import com.mle.play.FileResults
 import com.mle.util.Log
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import views.html
 
@@ -38,12 +38,12 @@ trait LibraryController extends Secured with Log {
 
   private def folderNotFound(id: String)(implicit request: RequestHeader): Result = pimpResult(
     html = NotFound,
-    json = NotFound(noFolderJson(id))
+    json = NotFound(LibraryController.noFolderJson(id))
   )
 
   private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
     respond(
-      html = Website.toHtml(collection),
+      html = toHtml(collection),
       json = Json.toJson(collection)
     )
   }
@@ -74,7 +74,7 @@ trait LibraryController extends Secured with Log {
     CustomFailingPimpAction(onDownloadAuthFail)((request, auth) => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
         .map(path => FileResults.fileResult(path, request))
-        .getOrElse(NotFound(noTrackJson(trackId)))
+        .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
     })
 
   def onDownloadAuthFail(req: RequestHeader): Result = {
@@ -83,18 +83,10 @@ trait LibraryController extends Secured with Log {
   }
 
   def meta(id: String) = PimpAction {
-    trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
+    LibraryController.trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
   }
 
-  private def trackNotFound(id: String) = BadRequest(noTrackJson(id))
-
-  def findMeta(id: String) = trackMetaJson(id) getOrElse noTrackJson(id)
-
-  def trackMetaJson(id: String) = Library.findMeta(id).map(Json.toJson(_))
-
-  def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
-
-  def noFolderJson(id: String) = JsonMessages.failure(s"Folder not found: $id")
+  private def trackNotFound(id: String) = BadRequest(LibraryController.noTrackJson(id))
 
   def toHtml(folder: MusicFolder): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(folder) match {
@@ -133,4 +125,14 @@ trait LibraryController extends Secured with Log {
       column :: columnify(remains, 0, columns - 1)
     }
   }
+}
+
+object LibraryController {
+  def findMeta(id: String): JsValue = trackMetaJson(id) getOrElse noTrackJson(id)
+
+  def trackMetaJson(id: String) = Library.findMeta(id).map(Json.toJson(_))
+
+  def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
+
+  def noFolderJson(id: String) = JsonMessages.failure(s"Folder not found: $id")
 }

@@ -38,7 +38,7 @@ class DatabaseUserManager extends UserManager {
 
   override def addUser(user: User, pass: Password): Option[AlreadyExists] = addUser(DataUser(user, hash(user, pass)))
 
-  def addUser(user: DataUser) =
+  def addUser(user: DataUser): Option[AlreadyExists] =
     try {
       withSession(implicit s => usersTable += user)
       None

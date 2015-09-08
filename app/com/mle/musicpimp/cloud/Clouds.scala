@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path}
 import com.mle.concurrent.FutureOps
 import com.mle.file.{FileUtilities, StorageFile}
 import com.mle.musicpimp.util.FileUtil
-import com.mle.play.concurrent.ExecutionContexts.synchronousIO
+import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.play.json.SimpleCommand
 import com.mle.util.{Log, Utils}
 import play.api.libs.json.JsValue
@@ -34,10 +34,10 @@ object Clouds extends Log {
   def ensureConnectedIfEnabled(): Unit = {
     if (isEnabled && !client.isConnected) {
       connect(loadID()).recoverAll(t => {
-        log.warn(s"Unable to connect to the cloud.", t)
+        log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
         successiveFailures += 1
         if (successiveFailures == MAX_FAILURES) {
-          log info s"Connection attempts to the cloud have failed $MAX_FAILURES times in a row, giving up."
+          log info s"Connection attempts to the cloud have failed $MAX_FAILURES times in a row, giving up"
           successiveFailures = 0
           disconnect()
         }
@@ -69,12 +69,13 @@ object Clouds extends Log {
 
   def connect(id: Option[String]): Future[String] = reg {
     disconnect()
-    log debug s"Connecting as $id..."
+    log debug s"Connecting to ${client.uri} as $id..."
     client = newSocket(id)
     maintainConnectivity()
     val ret = client.connectID().map(id => {
       successiveFailures = 0
       saveID(id)
+      log info s"Connected to ${client.uri}"
       id
     })
     ret.recoverAll(t => log.warn("Connection failure", t))
@@ -93,7 +94,7 @@ object Clouds extends Log {
     val wasConnected = client.isConnected
     client.close()
     if (wasConnected) {
-      log info s"Disconnected from the cloud."
+      log info s"Disconnected from the cloud at ${client.uri}"
     }
   }
 

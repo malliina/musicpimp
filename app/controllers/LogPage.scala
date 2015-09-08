@@ -9,7 +9,7 @@ import views.html
 /**
  * @author mle
  */
-object LogPage extends HtmlController {
+class LogPage(sockets: PimpLogs) extends HtmlController {
   val LEVEL = "level"
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
@@ -30,5 +30,6 @@ object LogPage extends HtmlController {
     )
   })
 
-  private def logPage(form: Form[Level])(implicit req: RequestHeader) = html.logs(form(LEVEL), Logging.levels, Logging.level)
+  private def logPage(form: Form[Level])(implicit req: RequestHeader) =
+    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level)
 }

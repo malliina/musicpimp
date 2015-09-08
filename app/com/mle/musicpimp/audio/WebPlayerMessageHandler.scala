@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 import com.mle.audio.PlayerStates
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
+import controllers.WebPlayer
 import play.api.libs.json.JsValue
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -14,10 +15,13 @@ import scala.concurrent.duration.{Duration, DurationInt}
  *
  * @author mle
  */
-object WebPlayerMessageHandler extends JsonHandlerBase {
+trait WebPlayerMessageHandler extends JsonHandlerBase {
+
+  def player(user: String): PimpWebPlayer
+
   override protected def handleMessage(msg: JsValue, user: String): Unit = {
     def userPlayer(op: PimpWebPlayer => Unit) {
-      webPlayer(user, op)
+      op(player(user))
     }
     withCmd(msg)(cmd => cmd.command match {
       case TIME_UPDATED =>
@@ -61,8 +65,6 @@ object WebPlayerMessageHandler extends JsonHandlerBase {
         log warn s"Unknown message: $msg"
     })
   }
-
-  def webPlayer(user: String, op: PimpWebPlayer => Unit): Unit = WebPlayback.execute(user, op)
 
   private def newTrackInfo(trackId: String) = Library meta trackId
 }

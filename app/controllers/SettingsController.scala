@@ -18,7 +18,7 @@ import scala.util.Try
 /**
  * @author Michael
  */
-object SettingsController extends Secured with HtmlController with Log {
+class SettingsController(messages: Messages) extends Secured with HtmlController with Log {
   protected val newFolderForm = Form(
     "path" -> nonEmptyText.verifying("Not a directory", validateDirectory _)
   )
@@ -54,8 +54,7 @@ object SettingsController extends Secured with HtmlController with Log {
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
   private def foldersPage(form: Form[String]) = {
-    implicit val messages = Messages.Implicits.applicationMessages(Lang.defaultLang, Play.current)
-    html.musicFolders(Settings.readFolders, form, folderPlaceHolder)
+    html.musicFolders(Settings.readFolders, form, folderPlaceHolder)(messages)
   }
 
   private def onFoldersChanged() = {

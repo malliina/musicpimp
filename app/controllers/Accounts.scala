@@ -12,9 +12,14 @@ import views.html
 /**
  * @author Michael
  */
-object Accounts extends HtmlController with AccountController with Log {
-  val SUCCESS = "success"
+object Accounts {
+  val FEEDBACK = "feedback"
   val USERS_FEEDBACK = "usersFeedback"
+  val SUCCESS = "success"
+  val INTENDED_URI = "intended_uri"
+}
+
+class Accounts extends HtmlController with AccountController with Log {
   val invalidCredentialsMessage = "Invalid credentials."
   val defaultCredentialsMessage = s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
     s"Consider changing the password under the Manage tab once you have logged in."
@@ -47,14 +52,14 @@ object Accounts extends HtmlController with AccountController with Log {
       userManager deleteUser user
       redir
     } else {
-      redir.flashing(USERS_FEEDBACK -> "You cannot delete yourself.")
+      redir.flashing(Accounts.USERS_FEEDBACK -> "You cannot delete yourself.")
     }
   })
 
 
   def login = Action(implicit request => {
     val motd = Option(defaultCredentialsMessage).filter(_ => userManager.isDefaultCredentials)
-    Ok(html.login(rememberMeLoginForm, motd))
+    Ok(html.login(this, rememberMeLoginForm, motd))
   })
 
   def logout = AuthAction(implicit request => {
@@ -86,7 +91,7 @@ object Accounts extends HtmlController with AccountController with Log {
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
-        BadRequest(html.login(formWithErrors))
+        BadRequest(html.login(this, formWithErrors))
       },
       credentials => {
         val (user, _, shouldRemember) = credentials

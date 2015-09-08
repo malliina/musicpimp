@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 trait SecureBase extends PimpContentController with BaseSecurity with Log {
 
-  val userManager = new DatabaseUserManager
+  val userManager = DatabaseUserManager
 
   override def authenticate(implicit request: RequestHeader): Option[AuthResult] =
     super.authenticate orElse CookieLogin.authenticateFromCookie(request)

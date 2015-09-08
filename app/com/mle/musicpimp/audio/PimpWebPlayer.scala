@@ -5,6 +5,7 @@ import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonMessages._
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.LocalTrack
+import controllers.WebPlayer
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 
@@ -14,12 +15,12 @@ import scala.concurrent.duration.Duration
  *
  * @author mle
  */
-class PimpWebPlayer(val user: String)
+class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
   extends IPlayer
   with PlaylistSupport[TrackMeta]
   with StateAwarePlayer
   with JsonSender {
-  val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user)
+  val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, webPlayer)
   private val DEFAULT_BROWSER_VOLUME = 100
 
   // todo update with event listener
@@ -37,7 +38,7 @@ class PimpWebPlayer(val user: String)
   def trackChanged() {
     val maybeTrack = playlist.current
     duration = maybeTrack.map(_.duration) getOrElse Duration.fromNanos(0)
-    maybeTrack.map(t => send(JsonMessages.trackChanged(t)))
+    maybeTrack.foreach(t => send(JsonMessages.trackChanged(t)))
   }
 
   def notifyTrackChanged(track: TrackMeta) {

@@ -4,7 +4,7 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.library.Settings
-import com.mle.play.ws.SyncAuth
+import com.mle.play.ws.{WebSocketController, SyncAuth}
 import com.mle.util.Log
 import views.html
 
@@ -12,7 +12,7 @@ import views.html
  *
  * @author mle
  */
-object Website
+class Website(sockets: WebSocketController, serverWS: ServerWS)
   extends Secured
   with HtmlController
   with ConnectController
@@ -20,14 +20,14 @@ object Website
   with Log {
 
   def player = navigate(implicit req => {
-    val hasAudioDevice = AudioSystem.getMixerInfo.size > 0
+    val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
     val feedback: Option[String] =
       if (!hasAudioDevice) {
         Some("Unable to access audio hardware. Playback on this machine is likely to fail.")
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    html.player(feedback)
+    html.player(serverWS.wsUrl, feedback)
   })
 
   def errorMsg(t: Throwable): String = t match {
@@ -41,9 +41,9 @@ object Website
       s"Playback could not be started. $msg"
   }
 
-  def popupPlayer = navigate(implicit req => html.popupPlayer())
+  def popupPlayer = navigate(implicit req => html.popupPlayer(sockets.wsUrl))
 
   def about = navigate(html.aboutBase())
 
-  def parameters = navigate(html.parameters(Rest.uploadDir.toAbsolutePath.toString))
+  def parameters = navigate(html.parameters())
 }

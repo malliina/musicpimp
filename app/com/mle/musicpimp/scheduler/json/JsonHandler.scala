@@ -15,6 +15,8 @@ import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
  *
  * @author mle
  */
+object AlarmJsonHandler extends JsonHandler
+
 trait JsonHandler extends SchedulerStrings with Log {
 
   def musicPlayer = MusicPlayer

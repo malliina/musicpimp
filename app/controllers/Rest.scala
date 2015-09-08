@@ -29,11 +29,13 @@ import scala.concurrent.Future
  *
  * @author mle
  */
-object Rest
+class Rest(webPlayer: WebPlayer)
   extends Secured
   with BaseController
   with LibraryController
   with Log {
+
+  val webPlayerHandler = webPlayer.messageHandler
 
   def ping = Action(NoCache(Ok))
 
@@ -47,7 +49,7 @@ object Rest
   /**
    * Handles web browser player playback commands POSTed as JSON.
    */
-  def webPlayback = JsonAckAction(WebPlayerMessageHandler.onJson)
+  def webPlayback = JsonAckAction(webPlayerHandler.onJson)
 
   /**
    * Alias for `playback`. Should be deprecated.
@@ -98,7 +100,7 @@ object Rest
       invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
         try {
-          val (response, duration) = Utils.timed(beam(cmd))
+          val (response, duration) = Utils.timed(Rest.beam(cmd))
           response.fold(
             errorMsg => BadRequest(JsonMessages.failure(errorMsg)),
             httpResponse => {
@@ -167,7 +169,7 @@ object Rest
       val track = meta.buildTrack(inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
-    PimpParsedAction(StreamParsers.multiPartBodyParser(iteratee))(req => {
+    PimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs))(req => {
       log.info(s"Received stream of track: ${meta.id}")
       Ok
     })
@@ -204,39 +206,13 @@ object Rest
     (pipeIn, iteratee)
   }
 
-
-  /**
-   * Beams a track to a URI as specified in `cmd`.
-   *
-   * @param cmd beam details
-   */
-  def beam(cmd: BeamCommand): Either[String, HttpResponse] =
-    try {
-      val uri = cmd.uri
-      Util.using(new TrustAllMultipartRequest(uri))(req => {
-        req.setAuth(cmd.username, cmd.password)
-        Library.findAbsolute(cmd.track).map(file => {
-          val size = Files.size(file).bytes
-          log info s"Beaming: $file of size: $size to: $uri..."
-          req addFile file
-          val response = req.execute()
-          log info s"Beamed file: $file of size: $size to: $uri"
-          Right(response)
-        }).getOrElse(Left(s"Unable to find track with id: ${cmd.track}"))
-      })
-    } catch {
-      case e: Throwable =>
-        log.warn("Unable to beam.", e)
-        Left("An error occurred while MusicBeaming. Please check your settings or try again later.")
-    }
-
   private def webStatusJson(user: String) = {
-    val player = WebPlayback.players.getOrElse(user, new PimpWebPlayer(user))
+    val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(user, webPlayer))
     Json.toJson(player.status)
   }
 
   private def playlistFor(user: String): Seq[TrackMeta] =
-    WebPlayback.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
+    webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
   private def AckPimpAction[T](parser: BodyParser[T])(bodyHandler: AuthRequest[T] => Unit): EssentialAction =
     PimpParsedAction(parser)(implicit request => {
@@ -293,4 +269,31 @@ object Rest
   class TrackUploadRequest[A](val track: LocalTrack, file: Path, user: String, request: Request[A])
     extends OneFileUploadRequest(file, user, request)
 
+}
+
+object Rest extends Log {
+  /**
+   * Beams a track to a URI as specified in `cmd`.
+   *
+   * @param cmd beam details
+   */
+  def beam(cmd: BeamCommand): Either[String, HttpResponse] =
+    try {
+      val uri = cmd.uri
+      Util.using(new TrustAllMultipartRequest(uri))(req => {
+        req.setAuth(cmd.username, cmd.password)
+        Library.findAbsolute(cmd.track).map(file => {
+          val size = Files.size(file).bytes
+          log info s"Beaming: $file of size: $size to: $uri..."
+          req addFile file
+          val response = req.execute()
+          log info s"Beamed file: $file of size: $size to: $uri"
+          Right(response)
+        }).getOrElse(Left(s"Unable to find track with id: ${cmd.track}"))
+      })
+    } catch {
+      case e: Throwable =>
+        log.warn("Unable to beam.", e)
+        Left("An error occurred while MusicBeaming. Please check your settings or try again later.")
+    }
 }
