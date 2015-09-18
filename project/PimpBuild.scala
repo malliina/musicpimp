@@ -81,8 +81,6 @@ object PimpBuild extends Build {
 
   def pimpLinuxSettings = LinuxPlugin.playSettings ++ Seq(
     javaOptions in Universal ++= Seq(
-//      "-Dhttp.port=8456",
-//      "-Dpidfile.path=/var/run/musicpimp/pimp.pid",
       "-Dmusicpimp.home=/var/run/musicpimp"
     ),
     PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
