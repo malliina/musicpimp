@@ -32,10 +32,9 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.16",
+    version := "2.8.17",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
-//    exportJars := true,
     retrieveManaged := false,
     fork in Test := true,
     resolvers ++= Seq(
@@ -81,6 +80,7 @@ object PimpBuild extends Build {
 
   def pimpLinuxSettings = LinuxPlugin.playSettings ++ Seq(
     javaOptions in Universal ++= Seq(
+      "-Dconfig.file=/usr/share/musicpimp/conf/application.conf",
       "-Dmusicpimp.home=/var/run/musicpimp"
     ),
     PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
@@ -102,7 +102,7 @@ object PimpBuild extends Build {
     prettyMappings := {
       val out: String = WinKeys.msiMappings.value.map {
         case (src, dest) => s"$dest\t\t$src"
-      }.mkString("\n")
+      }.sorted.mkString("\n")
       logger.value.log(Level.Info, out)
     },
     appIcon := Some(pkgHome.value / "guitar-128x128-np.ico")
