@@ -32,7 +32,7 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.17",
+    version := "2.8.26",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -75,13 +75,15 @@ object PimpBuild extends Build {
       PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
-      mainClass := Some("com.mle.musicpimp.Starter")
+      mainClass := Some("com.mle.musicpimp.Starter"),
+      PlayKeys.externalizeResources := false // packages files in /conf to the app jar
     )
 
   def pimpLinuxSettings = LinuxPlugin.playSettings ++ Seq(
     javaOptions in Universal ++= Seq(
-      "-Dconfig.file=/usr/share/musicpimp/conf/application.conf",
-      "-Dmusicpimp.home=/var/run/musicpimp"
+      "-Dmusicpimp.home=/var/run/musicpimp",
+      "-Dlog.dir=/var/run/musicpimp/logs",
+      "-Dlogger.resource=prod-logger.xml"
     ),
     PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
     PackagerKeys.rpmVendor := "Skogberg Labs"

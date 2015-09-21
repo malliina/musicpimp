@@ -4,10 +4,10 @@
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="PIMPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.dir:-${musicpimp.home}}/musicpimp.log</file>
+        <file>${log.dir}/musicpimp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${log.dir:-${musicpimp.home}}/musicpimp-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${log.dir}/musicpimp-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy
                     class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">

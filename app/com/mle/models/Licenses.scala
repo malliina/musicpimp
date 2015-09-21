@@ -10,14 +10,11 @@ import scala.util.Try
 object Licenses {
   private val lineSep = sys.props("line.separator")
 
-  val SCALA = fileResiliently("scala-license.txt")
-  val MIT = fileResiliently("slf4j-mit-license.txt")
-  val APACHE = fileResiliently("LICENSE-2.0.txt")
-  val GPL = fileResiliently("gpl.txt")
-  val LGPL = fileResiliently("lgpl.txt")
+  val SCALA = fileToString("scala-license.txt")
+  val MIT = fileToString("slf4j-mit-license.txt")
+  val APACHE = fileToString("LICENSE-2.0.txt")
+  val GPL = fileToString("gpl.txt")
+  val LGPL = fileToString("lgpl.txt")
 
-  // hack due to debian packaging issues
-  private def fileResiliently(name: String) = Try(fileToString(s"licenses/$name")).getOrElse(fileToString(s"conf/licenses/$name"))
-
-  private def fileToString(resource: String) = FileUtilities.readerFrom(resource)(_.mkString(lineSep))
+  private def fileToString(resource: String) = FileUtilities.readerFrom(s"licenses/$resource")(_.mkString(lineSep))
 }
