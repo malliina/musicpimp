@@ -32,7 +32,7 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.8.26",
+    version := "2.8.27",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -86,7 +86,8 @@ object PimpBuild extends Build {
       "-Dlogger.resource=prod-logger.xml"
     ),
     PackagerKeys.packageSummary in Linux := "MusicPimp summary here.",
-    PackagerKeys.rpmVendor := "Skogberg Labs"
+    PackagerKeys.rpmVendor := "Skogberg Labs",
+    PackagerKeys.rpmLicense := Option("BSD License")
   )
 
   def azureSettings = AzurePlugin.azureSettings ++ Seq(
