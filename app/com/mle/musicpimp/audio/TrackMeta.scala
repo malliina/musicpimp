@@ -22,6 +22,15 @@ trait TrackMeta {
 }
 
 object TrackMeta {
+//  val format = (
+//    (JsPath \ ID).format[String] and
+//      (JsPath \ TITLE).format[String] and
+//      (JsPath \ ARTIST).format[String] and
+//      (JsPath \ ALBUM).format[String] and
+//      (JsPath \ DURATION).format[Duration] and
+//      (JsPath \ SIZE).format[StorageSize]
+//    )(apply, unlift(unapply))
+
   implicit val trackWriter = new Writes[TrackMeta] {
     def writes(o: TrackMeta): JsValue = obj(
       ID -> o.id,

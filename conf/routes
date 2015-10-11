@@ -39,6 +39,7 @@ GET         /tracks/folders                controllers.Rest.allTracks
 GET         /tracks/folders/*id            controllers.Rest.tracksIn(id)
 GET         /tracks/meta/*id               controllers.Rest.meta(id)
 GET         /tracks/*id                    controllers.Rest.supplyForPlayback(id)
+GET         /playlists/*playlist           controllers.SavedPlaylists.playlist(playlist)
 POST        /rootfolders                   controllers.SettingsController.newFolder
 POST        /rootfolders/delete/*id        controllers.SettingsController.deleteFolder(id)
 GET         /tracks                        controllers.Alarms.tracks

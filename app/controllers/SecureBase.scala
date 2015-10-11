@@ -7,11 +7,13 @@ import com.mle.musicpimp.db.DatabaseUserManager
 import com.mle.play.auth.BasicCredentials
 import com.mle.play.controllers._
 import com.mle.util.Log
+import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * @author mle
@@ -70,30 +72,44 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
       Ok
     })
 
-  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
+  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
     PimpUploadAction(req => req.files.headOption
       .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user, req)))
       .getOrElse(BadRequest))
+  }
 
-  def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
+  def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
     PimpParsedAction(parse.multipartFormData)(req => {
       val files: Seq[Path] = saveFiles(req)
       f(new FileUploadRequest(files, req.user, req))
     })
+  }
 
-  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) =
-    AuthenticatedAndLogged(user => Action(parser)(req => {
-      val result = f(new AuthRequest(user.user, req, user.cookie))
-      maybeWithCookie(user, result)
-    }))
+  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) = {
+    PimpParsedActionAsync(parser)(req => Future.successful(f(req)))
+  }
 
-  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) = PimpParsedActionAsync(parse.anyContent)(f)
+  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) = {
+    PimpParsedActionAsync(parse.anyContent)(f)
+  }
 
-  def PimpParsedActionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) =
+  def PimpParsedActionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) = {
     AuthenticatedAndLogged(auth => Action.async(parser)(req => {
       val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))
-      resultFuture.map(r => maybeWithCookie(auth, r))(ExecutionContext.Implicits.global)
+      resultFuture.map(r => maybeWithCookie(auth, r))
     }))
+  }
+
+  def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) = {
+    pimpParsedActionAsync2(parse.anyContent)(f)
+  }
+  def pimpParsedActionAsync2[T, R: Writeable](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[R]) = {
+    PimpParsedActionAsync(parser)(req => f(req).map(r => Ok(r)).recover(errorHandler))
+  }
+
+  def errorHandler: PartialFunction[Throwable, Result] = {
+    case t => InternalServerError
+  }
 
   /**
    * Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.

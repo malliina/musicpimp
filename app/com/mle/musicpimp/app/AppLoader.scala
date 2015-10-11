@@ -1,6 +1,7 @@
 package com.mle.musicpimp.app
 
 import com.mle.musicpimp.Starter
+import com.mle.musicpimp.library.PlaylistService
 import controllers._
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
@@ -38,16 +39,16 @@ class PimpComponents(context: Context) extends BuiltInComponentsFromContext(cont
   lazy val s = new Search
   lazy val sp = new SearchPage(s)
   lazy val r = new Rest(wp)
+  lazy val pl = new SavedPlaylists(new PlaylistService)
   lazy val sc = new SettingsController(messages)
 
   Starter.startServices()
 
-  lazy val router: Routes = new Routes(httpErrorHandler,
-    w, sc, lp,
-    new Cloud, new Accounts, r,
-    new Alarms, sp, s,
-    sws, wp, ls,
-    new PimpAssets)
+  lazy val router: Routes = new Routes(
+    httpErrorHandler, w, sc, lp,
+    new Cloud, new Accounts, r, pl,
+    new Alarms, sp, s, sws,
+    wp, ls, new PimpAssets)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
