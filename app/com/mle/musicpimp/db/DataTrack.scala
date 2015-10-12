@@ -11,7 +11,13 @@ import scala.concurrent.duration.{Duration, DurationInt}
 /**
  * @author Michael
  */
-case class DataTrack(id: String, title: String, artist: String, album: String, duration: Duration, size: StorageSize, folder: String) extends TrackMeta {
+case class DataTrack(id: String,
+                     title: String,
+                     artist: String,
+                     album: String,
+                     duration: Duration,
+                     size: StorageSize,
+                     folder: String) extends TrackMeta {
   val path = Library decode folder
 
   def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
