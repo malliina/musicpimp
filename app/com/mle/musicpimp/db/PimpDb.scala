@@ -7,7 +7,7 @@ import com.mle.file.FileUtilities.{userHome, userDir, tempDir}
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
 import com.mle.storage.StorageLong
-import com.mle.util.Log
+import com.mle.util.{Utils, Util, Log}
 import org.h2.jdbcx.JdbcConnectionPool
 import rx.lang.scala.{Observable, Observer, Subject}
 
@@ -38,7 +38,7 @@ object PimpDb extends PimpDatabase with Log {
   override val database = Database.forDataSource(pool)
 
   val tracksName = tracks.baseTableRow.tableName
-  override val tableQueries = Seq(tracks, folders, tokens, usersTable)
+  override val tableQueries = Seq(idsTable, tracks, folders, tokens, usersTable)
   implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Seq[DataTrack] = {
@@ -112,25 +112,45 @@ object PimpDb extends PimpDatabase with Log {
   /**
    * Starts indexing on a background thread and returns an [[Observable]] with progress updates.
    *
+   * This algorithm adds new tracks and folders to the index, and removes tracks and folders that no longer exist in
+   * the library.
+   *
+   * Implementation:
+   *
+   * 1) Upsert all folders to the folders table, based on the (authoritative) library
+   * 2) Put all existing folder IDs also into a temporary table (also based on the library)
+   * 3) Delete all folders which don't have IDs in the temporary table
+   * 4) Delete the temporary table
+   * 5) Do the same thing for tracks (go to step 1)
+   *
    * @return progress: total amount of files indexed
    */
   def refreshIndex(): Observable[Long] = observe(observer => {
     observer onNext 0L
     // we only want one thread to index at a time
     this.synchronized {
-      log info "Indexing..."
-      withSession(implicit session => {
-        tracks.delete
-        folders.delete
-        folders ++= Library.folderStream
-        var fileCount = 0L
-        Library.dataTrackStream.grouped(100).foreach(chunk => {
-          tracks ++= chunk
-          fileCount += chunk.size
-          observer onNext fileCount
+      val ((fileCount, foldersPurged, tracksPurged), duration) = Utils.timed {
+        log info "Indexing..."
+        withSession(implicit session => {
+          idsTable.delete
+          val musicFolders = Library.folderStream
+          musicFolders.foreach(folder => folders.insertOrUpdate(folder))
+          idsTable.insertAll(musicFolders.map(f => Id(f.id)): _*)
+          val foldersDeleted = folders.filterNot(f => f.id.in(idsTable.map(_.id))).delete
+          idsTable.delete
+          var fileCount = 0L
+          Library.dataTrackStream.grouped(100).foreach(chunk => {
+            chunk.foreach(track => tracks.insertOrUpdate(track))
+            idsTable.insertAll(chunk.map(t => Id(t.id)): _*)
+            fileCount += chunk.size
+            observer onNext fileCount
+          })
+          val tracksDeleted = tracks.filterNot(t => t.id.in(idsTable.map(_.id))).delete
+          idsTable.delete
+          (fileCount, foldersDeleted, tracksDeleted)
         })
-        log info s"Indexed $fileCount files."
-      })
+      }
+      log info s"Indexing complete in $duration. Indexed $fileCount files, purged $foldersPurged folders and $tracksPurged files."
     }
   })
 
@@ -143,3 +163,5 @@ object PimpDb extends PimpDatabase with Log {
     subject
   }
 }
+
+case class IndexResult(totalFiles: Int, foldersPurged: Int, tracksPurged: Int)

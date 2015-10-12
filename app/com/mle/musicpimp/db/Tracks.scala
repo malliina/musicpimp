@@ -39,3 +39,14 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
 
   def * = (id, title, path, parent) <>((DataFolder.apply _).tupled, DataFolder.unapply)
 }
+
+/**
+ * Temp table.
+ */
+class Ids(tag: Tag) extends Table[Id](tag, "IDS") {
+  def id = column[String]("ID", O.PrimaryKey)
+
+  def * = id <> (Id.apply, Id.unapply)
+}
+
+case class Id(id: String)

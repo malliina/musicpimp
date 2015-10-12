@@ -20,8 +20,8 @@ object Search {
 class Search extends PimpSockets with Log {
 
   val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
-  val subscription = Indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster))
-  val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.info)
+  val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.debug)
+  val subscription = Indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster, loggingObserver))
 
 //   call this to ensure that this object is initialized, to ensure that we subscribe to indexer operations
 //  def init(): Unit = ()
