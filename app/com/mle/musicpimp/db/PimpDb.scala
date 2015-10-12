@@ -38,7 +38,7 @@ object PimpDb extends PimpDatabase with Log {
   override val database = Database.forDataSource(pool)
 
   val tracksName = tracks.baseTableRow.tableName
-  override val tableQueries = Seq(idsTable, tracks, folders, tokens, usersTable)
+  override val tableQueries = Seq(playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
   implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Seq[DataTrack] = {
