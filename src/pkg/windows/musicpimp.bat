@@ -11,7 +11,7 @@
 
 set APP_HOME=%~dp0
 rem APP_HOME ends with a backslash, which escapes the quote unless we add another backslash
-set APP_OPTS=-Dlog.dir="%SystemDrive%\ProgramData\MusicPimp\logs" -Dmusicpimp.home="%SystemDrive%\ProgramData\MusicPimp\" -Dlogger.resource=prod-logger-win.xml
+set APP_OPTS=-Dhttp.port=8456 -Dlog.dir="%SystemDrive%\ProgramData\MusicPimp\logs" -Dmusicpimp.home="%SystemDrive%\ProgramData\MusicPimp\\" -Dlogger.resource=prod-logger-win.xml
 set ERROR_CODE=0
 set APP_JAR=musicpimp.jar
 set MAIN_CLASS=com.mle.musicpimp.Starter

@@ -32,7 +32,7 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.9.2",
+    version := "2.9.4",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
