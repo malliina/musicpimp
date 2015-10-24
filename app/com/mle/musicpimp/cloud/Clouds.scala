@@ -47,6 +47,7 @@ object Clouds extends Log {
   }
 
   def maintainConnectivity(): Unit = {
+    stopPolling()
     poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
   }
 
@@ -69,17 +70,15 @@ object Clouds extends Log {
 
   def connect(id: Option[String]): Future[String] = reg {
     disconnect()
-    log debug s"Connecting to ${client.uri} as $id..."
+    log info s"Connecting to ${client.uri} as $id..."
     client = newSocket(id)
-    maintainConnectivity()
-    val ret = client.connectID().map(id => {
+    client.connectID().map(id => {
       successiveFailures = 0
       saveID(id)
       log info s"Connected to ${client.uri}"
+      maintainConnectivity()
       id
     })
-    ret.recoverAll(t => log.warn("Connection failure", t))
-    ret
   }
 
   def disconnectAndForget() = {
@@ -89,13 +88,17 @@ object Clouds extends Log {
   }
 
   def disconnect() = {
-    poller.foreach(_.unsubscribe())
-    poller = None
+    stopPolling()
     val wasConnected = client.isConnected
     client.close()
     if (wasConnected) {
       log info s"Disconnected from the cloud at ${client.uri}"
     }
+  }
+
+  def stopPolling(): Unit = {
+    poller.foreach(_.unsubscribe())
+    poller = None
   }
 
   def registration: Future[String] = reg(Future.failed(CloudSocket.notConnected))

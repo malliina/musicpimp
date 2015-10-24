@@ -32,7 +32,7 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.9.1",
+    version := "2.9.2",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -146,10 +146,20 @@ object PimpBuild extends Build {
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
-        "org.java-websocket" % "Java-WebSocket" % "1.3.0"
+        "org.java-websocket" % "Java-WebSocket" % "1.3.0",
+        "com.neovisionaries" % "nv-websocket-client" % "1.12"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.mle.musicpimp"
     )
+
+//  <groupId>javax.websocket</groupId>
+//    <artifactId>javax.websocket-api</artifactId>
+//    <version>1.0</version>
+//    <dependency>
+//      <groupId>org.glassfish.tyrus</groupId>
+//      <artifactId>tyrus-client</artifactId>
+//      <version>1.1</version>
+//    </dependency>
 
   def assemblyConf = assemblySettings ++ Seq(
     jarName in assembly := s"app-${version.value}.jar",

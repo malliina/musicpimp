@@ -1,12 +1,14 @@
 package tests
 
+import java.net.URI
+
 import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.cloud.CloudSocket
+import org.java_websocket.client.WebSocketClient
+import org.java_websocket.handshake.ServerHandshake
 import org.scalatest.FunSuite
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
 /**
@@ -18,41 +20,41 @@ class CloudTests extends FunSuite {
   val testID = "test"
   val failID = "failure"
 
-  //  test("this will block indefinitely"){
-  //    val client = new WebSocketClient(URI create testUri) {
-  //      override def onError(ex: Exception): Unit = ???
-  //
-  //      override def onMessage(message: String): Unit = ???
-  //
-  //      override def onClose(code: Int, reason: String, remote: Boolean): Unit = ???
-  //
-  //      override def onOpen(handshakedata: ServerHandshake): Unit = ???
-  //    }
-  //    val isSuccess = client.connectBlocking()
-  //    assert(isSuccess)
-  //  }
+  test("this will not block indefinitely") {
+    val client = new WebSocketClient(URI create testUri) {
+      override def onError(ex: Exception): Unit = ()
+
+      override def onMessage(message: String): Unit = ()
+
+      override def onClose(code: Int, reason: String, remote: Boolean): Unit = ()
+
+      override def onOpen(handshakedata: ServerHandshake): Unit = ()
+    }
+    val isSuccess = client.connectBlocking()
+    assert(!isSuccess)
+  }
   test("server registration") {
-//    //    WebSocketImpl.DEBUG = true
-//    val s = newSocket("incorrect password")
-//    val fut = connect(s).recoverAll(t => failID)
-//    val fail = Await.result(fut, 5.seconds)
-//    assert(fail === failID)
-//    val socket = newSocket()
-//    val connFut = connect(socket)
-//    val id = Await.result(connFut, 5.seconds)
-//    assert(id === testID)
-//    socket.unregister()
-//    socket.close()
-//    val socket2 = newSocket()
-//    val connFut2 = connect(socket2)
-//    val id2 = Await.result(connFut2, 5.seconds)
-//    assert(id2 === testID)
-//    val socket3 = newSocket()
-//    val connFut3 = connect(socket3)
-//    val id3 = Await.result(connFut3, 5.seconds)
-//    assert(id3 === failID)
-//    socket2.close()
-//    socket3.close()
+    //    //    WebSocketImpl.DEBUG = true
+    //    val s = newSocket("incorrect password")
+    //    val fut = connect(s).recoverAll(t => failID)
+    //    val fail = Await.result(fut, 5.seconds)
+    //    assert(fail === failID)
+    //    val socket = newSocket()
+    //    val connFut = connect(socket)
+    //    val id = Await.result(connFut, 5.seconds)
+    //    assert(id === testID)
+    //    socket.unregister()
+    //    socket.close()
+    //    val socket2 = newSocket()
+    //    val connFut2 = connect(socket2)
+    //    val id2 = Await.result(connFut2, 5.seconds)
+    //    assert(id2 === testID)
+    //    val socket3 = newSocket()
+    //    val connFut3 = connect(socket3)
+    //    val id3 = Await.result(connFut3, 5.seconds)
+    //    assert(id3 === failID)
+    //    socket2.close()
+    //    socket3.close()
   }
 
   def newSocket(pass: String = "pimp") = new CloudSocket(testUri, testID, pass)

@@ -50,8 +50,8 @@ import scala.util.Try
  *
  * @author Michael
  */
-class CloudSocket(val uri: String, username: String, password: String)
-  extends JsonWebSocketClient(uri, Some(SSLUtils.trustAllSslContext()), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
+class CloudSocket(uri: String, username: String, password: String)
+  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
   with Log {
 
   private val registrationPromise = Promise[String]()
