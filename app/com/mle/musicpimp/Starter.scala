@@ -101,7 +101,6 @@ object Starter extends PlayLifeCycle with Log {
       new DatabaseUserManager().ensureAtLeastOneUserExists()
       Future {
         Indexer.init()
-//        Search.init()
       }.recover {
         case e: Exception =>
           log.error(s"Unable to initialize indexer and search", e)

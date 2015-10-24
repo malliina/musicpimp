@@ -19,7 +19,7 @@ import scala.util.{Failure, Success, Try}
  * @author Michael
  */
 object Clouds extends Log {
-  val idFile = FileUtil.pimpHomeDir / "cloud.txt"
+  val idFile = FileUtil.localPath("cloud.txt")
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(30.minutes)
   var poller: Option[Subscription] = None

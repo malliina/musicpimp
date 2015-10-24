@@ -19,7 +19,7 @@ class PlaybackScheduler[S <: DaySchedule, A <: PlaybackAP[S]](s: IScheduler) ext
   }
 
   def deschedule(id: String): Option[A] = {
-    val pairOpt = scheduled.find(pair => pair._2.id == Some(id))
+    val pairOpt = scheduled.find(pair => pair._2.id.contains(id))
     pairOpt.foreach {
       case (taskId, ap) =>
         s.cancel(taskId)
