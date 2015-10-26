@@ -132,7 +132,7 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "2.4.1",
+        mleGroup %% "play-base" % "2.4.2",
         mleGroup %% "util-actor" % "2.0.0",
         mleGroup %% "util-rmi" % "2.0.0",
         mleGroup %% "util-audio" % "1.7.0",

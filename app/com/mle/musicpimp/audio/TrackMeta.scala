@@ -4,7 +4,7 @@ import com.mle.json.JsonFormats
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.storage.StorageSize
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsValue, Writes}
+import play.api.libs.json.{Format, Reads, JsValue, Writes}
 
 import scala.concurrent.duration.Duration
 
@@ -36,4 +36,10 @@ object TrackMeta {
       SIZE -> o.size
     )
   }
+  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map(base => {
+    val meta: TrackMeta = base
+    meta
+  })
+  implicit val format: Format[TrackMeta] = Format(reader, trackWriter)
 }
+

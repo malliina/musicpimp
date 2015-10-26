@@ -7,6 +7,7 @@ import java.rmi.ConnectException
 
 import ch.qos.logback.classic.Level
 import com.mle.file.FileUtilities
+import com.mle.musicpimp.app.InitOptions
 import com.mle.musicpimp.audio.MusicPlayer
 import com.mle.musicpimp.auth.Auth
 import com.mle.musicpimp.cloud.Clouds
@@ -90,22 +91,30 @@ object Starter extends PlayLifeCycle with Log {
     }
   }
 
-  def startServices() = {
+  def startServices(options: InitOptions): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
       Files.createDirectories(FileUtil.pimpHomeDir)
-      ScheduledPlaybackService.init()
-      PimpDb.init()
-      Auth.migrateFileCredentialsToDatabaseIfExists()
-      new DatabaseUserManager().ensureAtLeastOneUserExists()
-      Future {
-        Indexer.init()
-      }.recover {
-        case e: Exception =>
-          log.error(s"Unable to initialize indexer and search", e)
+      if (options.alarms) {
+        ScheduledPlaybackService.init()
       }
-      Clouds.init()
+      if (options.database) {
+        PimpDb.init()
+        Auth.migrateFileCredentialsToDatabaseIfExists()
+        new DatabaseUserManager().ensureAtLeastOneUserExists()
+      }
+      if (options.indexer) {
+        Future {
+          Indexer.init()
+        }.recover {
+          case e: Exception =>
+            log.error(s"Unable to initialize indexer and search", e)
+        }
+      }
+      if (options.cloud) {
+        Clouds.init()
+      }
       val version = com.mle.musicpimp.BuildInfo.version
       log info s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
     } catch {
@@ -114,12 +123,13 @@ object Starter extends PlayLifeCycle with Log {
         throw e
     }
   }
+
   def stopServices() = {
     log.info("Stopping services...")
     MusicPlayer.close()
     Scheduling.shutdown()
     ScheduledPlaybackService.stop()
-//    Search.subscription.unsubscribe()
+    //    Search.subscription.unsubscribe()
     nettyServer foreach (_.stop())
   }
 

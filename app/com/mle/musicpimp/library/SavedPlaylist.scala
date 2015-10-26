@@ -10,5 +10,5 @@ import play.api.libs.json.Json
 case class SavedPlaylist(id: PlaylistID, name: String, tracks: Seq[TrackMeta])
 
 object SavedPlaylist {
-  implicit val json = Json.writes[SavedPlaylist]
+  implicit val json = Json.format[SavedPlaylist]
 }

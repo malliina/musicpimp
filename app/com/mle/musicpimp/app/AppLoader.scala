@@ -14,20 +14,30 @@ import router.Routes
 
 import scala.concurrent.Future
 
+case class InitOptions(alarms: Boolean = true,
+                       database: Boolean = true,
+                       users: Boolean = true,
+                       indexer: Boolean = true,
+                       cloud: Boolean = true)
+
 /**
  * @author mle
  */
-class PimpLoader extends ApplicationLoader {
+class PimpLoader(options: InitOptions) extends ApplicationLoader {
+  def this() = this(InitOptions())
   def load(context: Context) = {
     Logger.configure(context.environment)
-    new PimpComponents(context).application
+    new PimpComponents(context, options).application
   }
 }
 
-class PimpComponents(context: Context) extends BuiltInComponentsFromContext(context) with I18nComponents {
+class PimpComponents(context: Context, options: InitOptions)
+  extends BuiltInComponentsFromContext(context)
+  with I18nComponents {
+
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
-  override lazy val httpErrorHandler: HttpErrorHandler = new DefaultHttpErrorHandler(environment, configuration, sourceMapper,
-    Some(router)) with PimpErrorHandling
+  override lazy val httpErrorHandler: HttpErrorHandler =
+    new DefaultHttpErrorHandler(environment, configuration, sourceMapper, Some(router)) with PimpErrorHandling
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = Messages(language, messagesApi)
@@ -43,7 +53,7 @@ class PimpComponents(context: Context) extends BuiltInComponentsFromContext(cont
   lazy val pl = new Playlists(new DatabasePlaylist(PimpDb))
   lazy val sc = new SettingsController(messages)
 
-  Starter.startServices()
+  Starter.startServices(options)
 
   lazy val router: Routes = new Routes(
     httpErrorHandler, w, sc, lp,

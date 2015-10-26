@@ -34,11 +34,11 @@ class Playlists(service: PlaylistService) extends Secured {
       .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(_ => Accepted))
       .getOrElse(Future.successful(BadRequest))
   })
-  
+
   def deletePlaylist(id: PlaylistID) = recoveredAsync((req, user) => {
     service.delete(id, user).map(_ => Accepted)
   })
-  
+
   protected def recoveredAsync(f: (AuthRequest[AnyContent], User) => Future[Result]) =
     parsedRecoveredAsync(parse.anyContent)(f)
 
