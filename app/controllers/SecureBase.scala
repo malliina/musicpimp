@@ -10,8 +10,10 @@ import com.mle.util.Log
 import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.iteratee.{Done, Input, Iteratee}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
+import com.mle.concurrent2.FutureOps2
 
 import scala.concurrent.Future
 
@@ -22,8 +24,9 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
 
   val userManager = DatabaseUserManager
 
-  override def authenticate(implicit request: RequestHeader): Option[AuthResult] =
-    super.authenticate orElse CookieLogin.authenticateFromCookie(request)
+  override def authenticate(implicit request: RequestHeader): Future[Option[AuthResult]] = {
+    super.authenticate.checkOrElse(_.nonEmpty, CookieLogin.authenticateFromCookie(request))
+  }
 
   /**
    * Validates the supplied credentials.
@@ -38,10 +41,10 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param password the supplied password
    * @return true if the credentials are valid, false otherwise
    */
-  def validateCredentials(username: String, password: String): Boolean =
+  def validateCredentials(username: String, password: String): Future[Boolean] =
     userManager.authenticate(username, password)
 
-  override def validateCredentials(creds: BasicCredentials): Boolean =
+  override def validateCredentials(creds: BasicCredentials): Future[Boolean] =
     validateCredentials(creds.username, creds.password)
 
   /**
@@ -57,10 +60,11 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
    * @param onFail result to return if authentication fails
    * @param f the action we want to do
    */
-  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) =
-    Security.Authenticated(req => authenticate(req), req => onFail(req))(user => {
+  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) = {
+    authenticatedAsync(req => authenticate(req), onFail)(user => {
       Logged(user, user => Action(implicit req => maybeWithCookie(user, f(req, user))))
     })
+  }
 
   def PimpAction(f: AuthRequest[AnyContent] => Result) = PimpParsedAction(parse.anyContent)(req => f(req))
 
@@ -103,6 +107,7 @@ trait SecureBase extends PimpContentController with BaseSecurity with Log {
   def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) = {
     pimpParsedActionAsync2(parse.anyContent)(f)
   }
+
   def pimpParsedActionAsync2[T, R: Writeable](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[R]) = {
     PimpParsedActionAsync(parser)(req => f(req).map(r => Ok(r)).recover(errorHandler))
   }

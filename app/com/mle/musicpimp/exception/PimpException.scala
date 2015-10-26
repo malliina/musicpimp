@@ -3,6 +3,5 @@ package com.mle.musicpimp.exception
 /**
  * @author Michael
  */
-class PimpException(msg: String, t: Throwable) extends Exception(msg, t) {
-  def this(msg: String) = this(msg, null)
-}
+class PimpException(val friendlyMessage: String, t: Option[Throwable])
+  extends Exception(friendlyMessage, t.orNull)

@@ -6,9 +6,12 @@ import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.mle.audio.meta.SongMeta
 import com.mle.file.FileUtilities
-import com.mle.musicpimp.audio.{FolderMeta, TrackMeta}
-import com.mle.musicpimp.db.{DataFolder, DataTrack, PimpDb}
+import com.mle.musicpimp.models.User
+import com.mle.musicpimp.audio.TrackMeta
+import com.mle.musicpimp.db._
 import com.mle.util.{Log, Utils}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.Future
 
 /**
  * @author Michael
@@ -20,32 +23,37 @@ trait Library extends MusicLibrary with Log {
 
   def rootStream = rootFolders.toStream
 
-  def rootFolder = rootFolderFromDatabase
+  def rootFolder: Future[MusicFolder] = rootFolderFromDatabase
 
-  def rootFolderFromDatabase: MusicFolder = folderFromDatabase(ROOT_ID) getOrElse MusicFolder.empty
+  def rootFolderFromDatabase: Future[MusicFolder] = folderFromDatabase(ROOT_ID).map(_.getOrElse(MusicFolder.empty))
 
-  def folder(id: String): Option[MusicFolder] = folderFromDatabase(id)
+  def folder(id: String): Future[Option[MusicFolder]] = folderFromDatabase(id)
 
-  def folderFromDatabase(id: String): Option[MusicFolder] = {
+  def folderFromDatabase(id: String): Future[Option[MusicFolder]] = {
     val path = relativePath(id)
-    findPathInfo(path).map(_ => {
+    val optFuture = findPathInfo(path).map(_ => {
       val thisFolder = DataFolder fromPath path
-      val (tracks, subFolders) = PimpDb folder id
-      MusicFolder(thisFolder, subFolders, tracks)
+      (PimpDb folder id).map(kv => MusicFolder(thisFolder, kv._2, kv._1))
+    })
+    optFuture.map(_.map(Option.apply)).getOrElse(Future.successful(None))
+  }
+
+  def allTracksRec(): Future[Seq[TrackMeta]] = tracksInOrEmpty(ROOT_ID)
+
+  def localTracksIn(id: String): Future[Option[Seq[LocalTrack]]] =
+    tracksIn(id).map(_.map(metas => metas.flatMap(meta => findMeta(meta.id))))
+
+  def localTracksInOrEmpty(id: String) = localTracksIn(id).map(_.getOrElse(Nil))
+
+  def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = {
+    folderFromDatabase(id).flatMap(maybeFolder => {
+      maybeFolder
+        .map(folder => Future.traverse(folder.folders)(sub => tracksInOrEmpty(sub.id)).map(subs => folder.tracks ++ subs.flatten)).map(_.map(Option.apply))
+        .getOrElse(Future.successful(None))
     })
   }
 
-  def allTracksRec(): Seq[TrackMeta] = tracksInOrEmpty(ROOT_ID)
-
-  def tracksIn(id: String): Option[Seq[TrackMeta]] = {
-    folderFromDatabase(id)
-      .map(folder => folder.folders.flatMap(f => tracksInOrEmpty(f.id)) ++ folder.tracks)
-  }
-
-  def localTracksIn(id: String): Option[Seq[LocalTrack]] =
-    tracksIn(id).map(metas => metas.flatMap(meta => findMeta(meta.id)))
-
-  private def tracksInOrEmpty(id: String) = tracksIn(id) getOrElse Nil
+  private def tracksInOrEmpty(id: String) = tracksIn(id).map(_.getOrElse(Nil))
 
   def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {

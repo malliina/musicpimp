@@ -1,22 +1,21 @@
 package com.mle.musicpimp.db
 
-import java.nio.file.{Paths, Path, Files}
+import java.nio.file.{Files, Path, Paths}
 
 import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.file.FileUtilities.{userHome, userDir, tempDir}
+import com.mle.file.StorageFile
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
 import com.mle.storage.StorageLong
-import com.mle.util.{Utils, Util, Log}
+import com.mle.util.{Log, Utils}
 import org.h2.jdbcx.JdbcConnectionPool
 import rx.lang.scala.{Observable, Observer, Subject}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.GetResult
 import scala.util.{Failure, Success, Try}
-import com.mle.file.StorageFile
 
 /**
  * @author Michael
@@ -31,7 +30,7 @@ object PimpDb extends PimpDatabase with Log {
   val dirByConf: Option[Path] = sys.props.get(H2_HOME).map(p => Paths.get(p))
   val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
   Files.createDirectories(dataHome)
-  val databaseFile = dataHome / "pimp265"
+  val databaseFile = dataHome / "pimp290"
   val url = s"jdbc:h2:$databaseFile;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
@@ -41,12 +40,12 @@ object PimpDb extends PimpDatabase with Log {
   override val tableQueries = Seq(playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
   implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
-  def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Seq[DataTrack] = {
+  def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
     log debug s"Querying: $searchTerm"
     queryPlainParam[DataTrack, String](s"SELECT T.* FROM FT_SEARCH_DATA(?,0,0) FT, $tableName T WHERE FT.TABLE='$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;", searchTerm)
   }
 
-  def folder(id: String): (Seq[DataTrack], Seq[DataFolder]) = withSession(implicit s => {
+  def folder(id: String): Future[(Seq[DataTrack], Seq[DataFolder])] = withSession(implicit s => {
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' in slick-lang is the same as '!='
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID).sortBy(_.title)
@@ -58,7 +57,7 @@ object PimpDb extends PimpDatabase with Log {
 
   def trackCount = withSession(tracks.size.run(_))
 
-  def merge(items: Seq[DataTrack]) = withSession(implicit session => {
+  def merge(items: Seq[DataTrack]) = withSession(implicit s => {
     val inserts = items map sqlify mkString ","
     val sql = s"MERGE INTO $tracksName KEY(ID) VALUES $inserts"
     executePlain(sql)
@@ -131,7 +130,7 @@ object PimpDb extends PimpDatabase with Log {
     this.synchronized {
       val ((fileCount, foldersPurged, tracksPurged), duration) = Utils.timed {
         log info "Indexing..."
-        withSession(implicit session => {
+        val f = withSession(implicit session => {
           idsTable.delete
           val musicFolders = Library.folderStream
           musicFolders.foreach(folder => folders.insertOrUpdate(folder))
@@ -149,6 +148,8 @@ object PimpDb extends PimpDatabase with Log {
           idsTable.delete
           (fileCount, foldersDeleted, tracksDeleted)
         })
+        // TODO
+        Await.result(f, 3.hours)
       }
       log info s"Indexing complete in $duration. Indexed $fileCount files, purged $foldersPurged folders and $tracksPurged files."
     }

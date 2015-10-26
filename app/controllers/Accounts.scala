@@ -6,8 +6,11 @@ import com.mle.play.controllers.AccountController
 import com.mle.util.Log
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import views.html
+
+import scala.concurrent.Future
 
 /**
  * @author Michael
@@ -30,9 +33,7 @@ class Accounts extends HtmlController with AccountController with Log {
     userFormKey -> nonEmptyText,
     passFormKey -> nonEmptyText,
     rememberMeKey -> boolean // the checkbox HTML element must have the property 'value="true"'
-  ) verifying(invalidCredentialsMessage, _ match {
-    case (username, password, _) => validateCredentials(username, password)
-  }))
+  ))
 
   val addUserForm = Form(tuple(
     userFormKey -> nonEmptyText,
@@ -44,86 +45,106 @@ class Accounts extends HtmlController with AccountController with Log {
 
   def account = PimpAction(implicit req => Ok(html.account(req.user, changePasswordForm)))
 
-  def users = PimpAction(implicit req => Ok(html.users(userManager.users, addUserForm)))
+  def users = PimpActionAsync(implicit req => userManager.users.map(us => Ok(html.users(us, addUserForm))))
 
-  def delete(user: String) = PimpAction(implicit req => {
+  def delete(user: String) = PimpActionAsync(implicit req => {
     val redir = Redirect(routes.Accounts.users())
     if (user != req.user) {
-      userManager deleteUser user
-      redir
+      (userManager deleteUser user).map(_ => redir)
     } else {
-      redir.flashing(Accounts.USERS_FEEDBACK -> "You cannot delete yourself.")
+      Future.successful(redir.flashing(Accounts.USERS_FEEDBACK -> "You cannot delete yourself."))
     }
   })
 
 
-  def login = Action(implicit request => {
-    val motd = Option(defaultCredentialsMessage).filter(_ => userManager.isDefaultCredentials)
-    Ok(html.login(this, rememberMeLoginForm, motd))
+  def login = Action.async(implicit request => {
+    userManager.isDefaultCredentials.map(isDefault => {
+      val motd = if (isDefault) Option(defaultCredentialsMessage) else None
+      Ok(html.login(this, rememberMeLoginForm, motd))
+    })
   })
 
   def logout = AuthAction(implicit request => {
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Accounts.login()).withNewSession.discardingCookies(RememberMe.discardingCookie)
+    Redirect(routes.Accounts.login())
+      .withNewSession
+      .discardingCookies(RememberMe.discardingCookie)
       .flashing(msg(logoutMessage))
   })
 
-  def formAddUser = PimpAction(implicit req => {
+  def formAddUser = PimpActionAsync(implicit req => {
     val remoteAddress = req.remoteAddress
     addUserForm.bindFromRequest.fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Unable to add user: $user from: $remoteAddress, form: $formWithErrors"
-        BadRequest(html.users(userManager.users, formWithErrors))
+        userManager.users.map(users => BadRequest(html.users(users, formWithErrors)))
       },
       credentials => {
         val (user, pass, _) = credentials
         val addCall = userManager.addUser(user, pass)
-        val (isSuccess, feedback) = addCall.fold((true, s"Created user $user."))(e => (false, s"User ${e.user} already exists."))
-        Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
+        addCall.map(addError => {
+          val (isSuccess, feedback) = addError.fold((true, s"Created user $user."))(e => (false, s"User ${e.user} already exists."))
+          Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
+        })
       }
     )
   })
 
-  def formAuthenticate = Action(implicit request => {
+  def formAuthenticate = Action.async(implicit request => {
     val remoteAddress = request.remoteAddress
     rememberMeLoginForm.bindFromRequest.fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
-        BadRequest(html.login(this, formWithErrors))
+        Future.successful(BadRequest(html.login(this, formWithErrors)))
       },
       credentials => {
-        val (user, _, shouldRemember) = credentials
-        log info s"Authentication succeeded for user: $user from: $remoteAddress"
-        val intendedUrl = request.session.get(INTENDED_URI).getOrElse(defaultLoginSuccessPage.url)
-        val result = Redirect(intendedUrl).withSession(Security.username -> user)
-        if (shouldRemember) {
-          log debug s"Remembering auth..."
-          // create token, retrieve cookie
-          val cookie = CookieLogin persistNewCookie user
-          result.withCookies(cookie)
-        } else {
-          result
-        }
+        val (user, pass, shouldRemember) = credentials
+        validateCredentials(user, pass).flatMap(isValid => {
+          if (isValid) {
+            log info s"Authentication succeeded for user: $user from: $remoteAddress"
+            val intendedUrl = request.session.get(INTENDED_URI).getOrElse(defaultLoginSuccessPage.url)
+            val result = Redirect(intendedUrl).withSession(Security.username -> user)
+            if (shouldRemember) {
+              log debug s"Remembering auth..."
+              // create token, retrieve cookie
+              val cookie = CookieLogin persistNewCookie user
+              cookie.map(c => result.withCookies(c))
+            } else {
+              Future.successful(result)
+            }
+          } else {
+            log.warn(s"Invalid form authentication for user $user")
+            // TODO show an "authentication failed" message to the user
+            Future.successful(Unauthorized)
+          }
+        })
       }
     )
   })
 
   def defaultLoginSuccessPage: Call = routes.Website.rootLibrary()
 
-  def formChangePassword = PimpAction(implicit request => {
+  def formChangePassword = PimpActionAsync(implicit request => {
     val user = request.user
     changePasswordForm.bindFromRequest.fold(
       errors => {
         log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
-        BadRequest(html.account(user, errors))
+        Future.successful(BadRequest(html.account(user, errors)))
       },
       success => {
-        val (_, newPass, _) = success
-        userManager updatePassword(user, newPass)
-        log info s"Password changed for user: $user from: ${request.remoteAddress}"
-        Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
+        val (old, newPass, _) = success
+        validateCredentials(user, old).flatMap(isValid => {
+          if(isValid) {
+            userManager.updatePassword(user, newPass).map(_ => {
+              log info s"Password changed for user: $user from: ${request.remoteAddress}"
+              Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
+            })
+          } else {
+            Future.successful(BadRequest(html.account(user, changePasswordForm)))
+          }
+        })
       }
     )
   })

@@ -1,4 +1,4 @@
-package com.mle.models
+package com.mle.musicpimp.models
 
 import com.mle.musicpimp.audio.TrackMeta
 import com.mle.play.Writeables

@@ -3,7 +3,7 @@ package com.mle.musicpimp.library
 import java.net.URI
 
 import com.mle.audio.meta.{SongMeta, SongTags, UriSource}
-import com.mle.models.MusicItem
+import com.mle.musicpimp.models.MusicItem
 import com.mle.musicpimp.audio.{TrackMeta, PimpPlayer, PlayableTrack, StoragePlayer}
 import com.mle.storage.StorageSize
 import com.mle.util.Log

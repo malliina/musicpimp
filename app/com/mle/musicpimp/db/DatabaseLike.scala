@@ -4,10 +4,12 @@ import java.sql.SQLException
 
 import com.mle.util.Log
 
+import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.meta.MTable
 import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery}
 import scala.slick.lifted.AbstractTable
+import scala.util.Try
 
 /**
  * @author Michael
@@ -24,7 +26,7 @@ trait DatabaseLike extends Log {
     })
   }
 
-  def withSession[T](f: Session => T) = database withSession f
+  def withSession[T](f: Session => T): Future[T] = Future.fromTry(Try(database withSession f))
 
   def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {
     val tableName = table.baseTableRow.tableName

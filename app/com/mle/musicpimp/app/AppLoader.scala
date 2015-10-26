@@ -1,6 +1,7 @@
 package com.mle.musicpimp.app
 
 import com.mle.musicpimp.Starter
+import com.mle.musicpimp.db.{PimpDb, DatabasePlaylist}
 import com.mle.musicpimp.library.PlaylistService
 import controllers._
 import play.api.ApplicationLoader.Context
@@ -39,7 +40,7 @@ class PimpComponents(context: Context) extends BuiltInComponentsFromContext(cont
   lazy val s = new Search
   lazy val sp = new SearchPage(s)
   lazy val r = new Rest(wp)
-  lazy val pl = new SavedPlaylists(new PlaylistService)
+  lazy val pl = new Playlists(new DatabasePlaylist(PimpDb))
   lazy val sc = new SettingsController(messages)
 
   Starter.startServices()

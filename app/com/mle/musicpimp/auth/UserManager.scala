@@ -1,5 +1,7 @@
 package com.mle.musicpimp.auth
 
+import scala.concurrent.Future
+
 /**
  * @author Michael
  */
@@ -19,15 +21,15 @@ trait UserManager {
    * @param pass password
    * @return true if the credentials are valid, false otherwise
    */
-  def authenticate(user: User, pass: Password): Boolean
+  def authenticate(user: User, pass: Password): Future[Boolean]
 
-  def updatePassword(user: User, newPass: Password)
+  def updatePassword(user: User, newPass: Password): Future[Unit]
 
-  def addUser(user: User, pass: Password): Option[AlreadyExists]
+  def addUser(user: User, pass: Password): Future[Option[AlreadyExists]]
 
-  def deleteUser(user: User)
+  def deleteUser(user: User): Future[Unit]
 
-  def users: Seq[User]
+  def users: Future[Seq[User]]
 
   case class AlreadyExists(user: User)
 

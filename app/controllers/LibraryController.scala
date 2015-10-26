@@ -3,7 +3,7 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.Paths
 
-import com.mle.models.MusicColumn
+import com.mle.musicpimp.models.MusicColumn
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.library.{Library, MusicFolder}
 import com.mle.play.FileResults
@@ -11,35 +11,36 @@ import com.mle.util.Log
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import views.html
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
  * @author Michael
  */
 trait LibraryController extends Secured with Log {
-  def rootLibrary = PimpAction(implicit request => folderResult(Library.rootFolder))
+  def rootLibrary = PimpActionAsync(implicit request => Library.rootFolder.map(root => folderResult(root)))
 
   /**
    * @return an action that provides the contents of the library with the supplied id
    */
-  def library(folderId: String) = PimpAction(implicit request => {
+  def library(folderId: String) = PimpActionAsync(implicit request => {
     //    val (result, duration) = Utils.timed(Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items)))
     //    log info s"Loaded $folderId in $duration"
     //    result
-    Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items))
+    Library.folder(folderId).map(_.fold(folderNotFound(folderId))(items => folderResult(items)))
   })
 
   def allTracks = tracksIn(Library.ROOT_ID)
 
-  def tracksIn(folderID: String) = PimpAction(implicit request => {
-    Library.tracksIn(folderID)
-      .map(ts => Ok(Json.toJson(ts)))
-      .getOrElse(folderNotFound(folderID))
+  def tracksIn(folderID: String) = PimpActionAsync(implicit request => {
+    Library.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
   })
 
-  private def folderNotFound(id: String)(implicit request: RequestHeader): Result = pimpResult(
-    html = NotFound,
-    json = NotFound(LibraryController.noFolderJson(id))
-  )
+  private def folderNotFound(id: String)(implicit request: RequestHeader): Result = {
+    pimpResult(
+      html = NotFound,
+      json = NotFound(LibraryController.noFolderJson(id))
+    )
+  }
 
   private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
     respond(

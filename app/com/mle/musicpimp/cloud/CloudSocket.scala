@@ -145,14 +145,28 @@ class CloudSocket(uri: String, username: String, password: String)
       case rt: RangedTrack =>
         rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
       case RootFolder =>
-        sendResponse(Library.rootFolder, request)
+        val result = Library.rootFolder
+        result.map(folder => sendResponse(folder, request))
+        result.recover {
+          case t =>
+            log.error(s"Root folder failure", t)
+            sendJsonResponse(JsonMessages.failure("Library failure"), request, success = false)
+        }
       case Folder(id) =>
-        val folderResult = (Library folder id).map(Json.toJson(_))
-        val json = folderResult getOrElse JsonMessages.failure(s"Folder not found: $id")
-        sendJsonResponse(json, request, folderResult.isDefined)
+        val folderFuture = Library.folder(id).recover {
+          case t =>
+            log.error(s"Library failure for folder $id", t)
+            None
+        }
+        folderFuture.map(maybeFolder => {
+          val json = maybeFolder
+            .map(folder => Json.toJson(folder))
+            .getOrElse(JsonMessages.failure(s"Folder not found: $id"))
+          sendJsonResponse(json, request, success = maybeFolder.isDefined)
+        })
       case Search(term, limit) =>
         val result = PimpDb.fullText(term, limit)
-        sendResponse(result, request)
+        result.map(tracks => sendResponse(tracks, request))
       case PingAuth =>
         sendJsonResponse(JsonMessages.version, request)
       case Ping =>
@@ -167,11 +181,17 @@ class CloudSocket(uri: String, username: String, password: String)
         AlarmJsonHandler.handle(payload)
         sendAckResponse(request)
       case Authenticate(user, pass) =>
-        val isValid = DatabaseUserManager.authenticate(user, pass)
-        val response =
-          if (isValid) JsonMessages.version
-          else JsonMessages.invalidCredentials
-        sendJsonResponse(response, request, success = isValid)
+        val authentication = DatabaseUserManager.authenticate(user, pass).recover {
+          case t =>
+            log.error(s"Database failure when authenticating $user", t)
+            false
+        }
+        authentication.map(isValid => {
+          val response =
+            if (isValid) JsonMessages.version
+            else JsonMessages.invalidCredentials
+          sendJsonResponse(response, request, success = isValid)
+        })
       case GetVersion =>
         sendJsonResponse(JsonMessages.version, request)
       case GetMeta(id) =>

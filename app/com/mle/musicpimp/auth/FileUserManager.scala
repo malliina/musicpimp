@@ -7,6 +7,7 @@ import com.mle.file.FileUtilities
 import com.mle.musicpimp.util.FileUtil
 import com.mle.util.Utils
 
+import scala.concurrent.Future
 import scala.io.BufferedSource
 
 
@@ -32,24 +33,26 @@ class FileUserManager extends UserManager {
    * @param pass the supplied password
    * @return true if the credentials are valid, false otherwise
    */
-  override def authenticate(user: User, pass: Password): Boolean = {
+  override def authenticate(user: User, pass: Password): Future[Boolean] = fut {
     savedPassHash.fold(ifEmpty = user == defaultUser && pass == defaultPass)(_ == Auth.hash(user, pass))
   }
 
-  override def deleteUser(user: User): Unit = ()
+  override def deleteUser(user: User): Future[Unit] = fut(())
 
-  override def users: Seq[User] = Seq(defaultUser)
+  override def users: Future[Seq[User]] = fut(Seq(defaultUser))
 
-  override def updatePassword(user: User, newPass: Password): Unit = {
+  override def updatePassword(user: User, newPass: Password): Future[Unit] = fut {
     FileUtilities.writerTo(passFile)(passWriter => {
       passWriter write Auth.hash(user, newPass)
     })
     FileUtil trySetOwnerOnlyPermissions passFile
   }
 
-  override def addUser(user: User, pass: Password): Option[AlreadyExists] = None
+  override def addUser(user: User, pass: Password): Future[Option[AlreadyExists]] = fut(None)
 
   def hasCredentials(): Boolean = Files.exists(passFile)
 
   def resetCredentials() = Files.deleteIfExists(passFile)
+
+  def fut[T](t: T) = Future.successful(t)
 }

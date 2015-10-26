@@ -1,6 +1,6 @@
 package com.mle.musicpimp.audio
 
-import com.mle.models.MusicItem
+import com.mle.musicpimp.models.MusicItem
 import com.mle.musicpimp.json.JsonStrings._
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Writes}

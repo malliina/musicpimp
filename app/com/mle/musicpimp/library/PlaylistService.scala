@@ -1,18 +1,29 @@
 package com.mle.musicpimp.library
 
-import com.mle.models.SavedPlaylist
+import com.mle.musicpimp.models.{PlaylistID, User}
 
 import scala.concurrent.Future
 
 /**
  * @author mle
  */
-class PlaylistService {
-  def playlist(id: String): Future[SavedPlaylist] = Future.failed(new NoSuchElementException)
+trait PlaylistService {
+  /**
+   * @return the saved playlists of user
+   */
+  def playlists(user: User): Future[Seq[SavedPlaylist]]
 
-  def playlists: Future[Seq[SavedPlaylist]] = Future.successful(Nil)
+  /**
+   * @param id playlist id
+   * @return the playlist with ID `id`
+   */
+  def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]]
 
-  def add(playlist: SavedPlaylist): Future[Unit] = Future.successful(())
+  /**
+   * @param playlist playlist submission
+   * @return a Future that completes when saving is done
+   */
+  def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit]
 
-  def remove(id: String): Future[Unit] = Future.successful(())
+  def delete(id: PlaylistID, user: User): Future[Unit]
 }
