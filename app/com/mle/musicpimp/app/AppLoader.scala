@@ -1,6 +1,7 @@
 package com.mle.musicpimp.app
 
 import com.mle.musicpimp.Starter
+import com.mle.musicpimp.cloud.Clouds
 import com.mle.musicpimp.db.{PimpDb, DatabasePlaylist}
 import com.mle.musicpimp.library.PlaylistService
 import controllers._
@@ -25,6 +26,7 @@ case class InitOptions(alarms: Boolean = true,
  */
 class PimpLoader(options: InitOptions) extends ApplicationLoader {
   def this() = this(InitOptions())
+
   def load(context: Context) = {
     Logger.configure(context.environment)
     new PimpComponents(context, options).application
@@ -41,23 +43,30 @@ class PimpComponents(context: Context, options: InitOptions)
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = Messages(language, messagesApi)
-  lazy val as = new Assets(httpErrorHandler)
+
+  // Services
+  lazy val ps = new DatabasePlaylist(PimpDb)
+  lazy val c = new Clouds(ps)
+
+  // Controllers
   lazy val ls = new PimpLogs
   lazy val lp = new LogPage(ls)
   lazy val wp = new WebPlayer
-  lazy val sws = new ServerWS
+  lazy val sws = new ServerWS(c)
   lazy val w = new Website(wp, sws)
   lazy val s = new Search
   lazy val sp = new SearchPage(s)
   lazy val r = new Rest(wp)
-  lazy val pl = new Playlists(new DatabasePlaylist(PimpDb))
+  lazy val pl = new Playlists(ps)
   lazy val sc = new SettingsController(messages)
+  lazy val as = new Assets(httpErrorHandler)
 
-  Starter.startServices(options)
+
+  Starter.startServices(options, c)
 
   lazy val router: Routes = new Routes(
     httpErrorHandler, w, sc, lp,
-    new Cloud, new Accounts, r, pl,
+    new Cloud(c), new Accounts, r, pl,
     new Alarms, sp, s, sws,
     wp, ls, new PimpAssets)
 

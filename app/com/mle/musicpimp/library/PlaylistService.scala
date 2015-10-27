@@ -15,7 +15,7 @@ trait PlaylistService {
 
   /**
    * @param id playlist id
-   * @return the playlist with ID `id`
+   * @return the playlist with ID `id`, or None if no such playlist exists
    */
   def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]]
 

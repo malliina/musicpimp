@@ -1,5 +1,7 @@
 package com.mle.musicpimp.cloud
 
+import com.mle.musicpimp.library.PlaylistSubmission
+import com.mle.musicpimp.models.{RequestID, PlaylistID, User}
 import com.mle.play.ContentRange
 import play.api.libs.json.{JsValue, Json}
 
@@ -11,7 +13,7 @@ object PimpMessages {
   trait PimpMessage
 
   trait RequestMessage extends PimpMessage {
-    def request: String
+    def request: RequestID
   }
 
   case class Registered(id: String) extends PimpMessage
@@ -46,6 +48,14 @@ object PimpMessages {
 
   case object GetStatus extends PimpMessage
 
+  case class GetPlaylists(user: User) extends PimpMessage
+
+  case class GetPlaylist(id: PlaylistID, user: User) extends PimpMessage
+
+  case class SavePlaylist(playlist: PlaylistSubmission, user: User) extends PimpMessage
+
+  case class DeletePlaylist(id: PlaylistID, user: User) extends PimpMessage
+
   implicit val searchFormat = Json.format[Search]
   implicit val folderFormat = Json.format[Folder]
   implicit val trackFormat = Json.format[Track]
@@ -53,4 +63,8 @@ object PimpMessages {
   implicit val meta = Json.format[GetMeta]
   implicit val registeredFormat = Json.format[Registered]
   implicit val rangedFormat = Json.format[RangedTrack]
+  implicit val playlistsGet = Json.format[GetPlaylists]
+  implicit val playlistGet = Json.format[GetPlaylist]
+  implicit val playlistSave = Json.format[SavePlaylist]
+  implicit val playlistDelete = Json.format[DeletePlaylist]
 }

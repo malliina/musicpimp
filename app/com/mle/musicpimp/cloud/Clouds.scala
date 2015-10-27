@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path}
 
 import com.mle.concurrent.FutureOps
 import com.mle.file.{FileUtilities, StorageFile}
+import com.mle.musicpimp.library.PlaylistService
 import com.mle.musicpimp.util.FileUtil
 import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.play.json.SimpleCommand
@@ -18,8 +19,25 @@ import scala.util.{Failure, Success, Try}
 /**
  * @author Michael
  */
-object Clouds extends Log {
+object Clouds {
   val idFile = FileUtil.localPath("cloud.txt")
+
+  def isEnabled = Files exists idFile
+
+  def loadID(): Option[String] = readFirstLine(idFile)
+
+  def readFirstLine(file: Path): Option[String] = Utils.opt[String, Exception](FileUtilities.firstLine(file))
+
+  def saveID(id: String) = writeOneLine(idFile, id)
+
+  def writeOneLine(file: Path, text: String) = {
+    if (!Files.exists(file)) {
+      Try(Files.createFile(file))
+    }
+    FileUtilities.writerTo(file)(_.println(text))
+  }
+}
+class Clouds(playlists: PlaylistService) extends Log {
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(30.minutes)
   var poller: Option[Subscription] = None
@@ -32,8 +50,8 @@ object Clouds extends Log {
   }
 
   def ensureConnectedIfEnabled(): Unit = {
-    if (isEnabled && !client.isConnected) {
-      connect(loadID()).recoverAll(t => {
+    if (Clouds.isEnabled && !client.isConnected) {
+      connect(Clouds.loadID()).recoverAll(t => {
         log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
         successiveFailures += 1
         if (successiveFailures == MAX_FAILURES) {
@@ -51,22 +69,7 @@ object Clouds extends Log {
     poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
   }
 
-  def isEnabled = Files exists idFile
-
-  def loadID(): Option[String] = readFirstLine(idFile)
-
-  def readFirstLine(file: Path): Option[String] = Utils.opt[String, Exception](FileUtilities.firstLine(file))
-
-  def saveID(id: String) = writeOneLine(idFile, id)
-
-  def writeOneLine(file: Path, text: String) = {
-    if (!Files.exists(file)) {
-      Try(Files.createFile(file))
-    }
-    FileUtilities.writerTo(file)(_.println(text))
-  }
-
-  def newSocket(id: Option[String]) = CloudSocket build (id orElse loadID())
+  def newSocket(id: Option[String]) = CloudSocket.build(id orElse Clouds.loadID(), Deps(playlists))
 
   def connect(id: Option[String]): Future[String] = reg {
     disconnect()
@@ -74,7 +77,7 @@ object Clouds extends Log {
     client = newSocket(id)
     client.connectID().map(id => {
       successiveFailures = 0
-      saveID(id)
+      Clouds.saveID(id)
       log info s"Connected to ${client.uri}"
       maintainConnectivity()
       id
@@ -84,7 +87,7 @@ object Clouds extends Log {
   def disconnectAndForget() = {
     client sendMessage SimpleCommand(CloudStrings.UNREGISTER)
     disconnect()
-    Files.deleteIfExists(idFile)
+    Files.deleteIfExists(Clouds.idFile)
   }
 
   def disconnect() = {

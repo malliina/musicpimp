@@ -1,8 +1,9 @@
 package controllers
 
-import com.mle.musicpimp.models.{PlaylistID, User}
 import com.mle.musicpimp.exception.{PimpException, UnauthorizedException}
+import com.mle.musicpimp.json.JsonStrings.{Playlist, Playlists}
 import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.mle.musicpimp.models.{PlaylistID, User}
 import com.mle.play.controllers.AuthRequest
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
@@ -15,8 +16,6 @@ import scala.concurrent.Future
  */
 class Playlists(service: PlaylistService) extends Secured {
 
-  val Playlist = "playlist"
-  val Playlists = "playlists"
 
   def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
     service.playlist(id, user)
@@ -29,8 +28,7 @@ class Playlists(service: PlaylistService) extends Secured {
   })
 
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
-    val parsedPlaylist = (req.body \ Playlist).validate[PlaylistSubmission]
-    parsedPlaylist
+    (req.body \ Playlist).validate[PlaylistSubmission]
       .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(_ => Accepted))
       .getOrElse(Future.successful(BadRequest))
   })
@@ -51,6 +49,9 @@ class Playlists(service: PlaylistService) extends Secured {
       Unauthorized
     case pe: PimpException =>
       log.error(s"Pimp error", pe)
+      InternalServerError
+    case t: Throwable =>
+      log.error(s"Server error", t)
       InternalServerError
   }
 }

@@ -17,6 +17,8 @@ trait JsonStrings {
   val INVALID_CREDENTIALS = "Invalid credentials"
   val INVALID_JSON = "Invalid JSON"
   val NO_FILE_IN_MULTIPART = "No file in multipart/form-data"
+  val DatabaseError = "A database error occurred"
+  val GenericError = "A generic error occurred"
   val FOLDER = "folder"
   val ROOT_FOLDER = "root_folder"
   val FOLDERS = "folders"
@@ -37,13 +39,13 @@ trait JsonStrings {
   val PLAYLIST = "playlist"
   val PLAYLIST_INDEXv17v18 = "playlist_index"
   val PLAYLIST_INDEX = "index"
-//  @deprecated("Use POSITION", "1.8.0")
+  //  @deprecated("Use POSITION", "1.8.0")
   val POS = "pos"
   val POSITION = "position"
-//  @deprecated("Use POSITION", "1.8.0")
+  //  @deprecated("Use POSITION", "1.8.0")
   val POS_SECONDS = "pos_seconds"
   val DURATION = "duration"
-//  @deprecated("Use DURATION", "1.8.0")
+  //  @deprecated("Use DURATION", "1.8.0")
   val DURATION_SECONDS = "duration_seconds"
   val MSG = "msg"
   val THANK_YOU = "thank you"
@@ -122,6 +124,13 @@ trait JsonStrings {
   val META = "meta"
   val BEAM = "beam"
   val RANGE = "range"
+
+  val PlaylistsGet = "playlists"
+  val PlaylistGet = "playlist"
+  val PlaylistSave = "playlist_save"
+  val PlaylistDelete = "playlist_delete"
+  val Playlist = "playlist"
+  val Playlists = "playlists"
 }
 
 object JsonStrings extends JsonStrings

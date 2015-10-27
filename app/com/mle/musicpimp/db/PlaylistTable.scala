@@ -8,7 +8,7 @@ import scala.slick.driver.H2Driver.simple._
  * @author mle
  */
 class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
-  def id = column[Long]("ID", O.PrimaryKey, O.NotNull)
+  def id = column[Long]("ID", O.PrimaryKey, O.NotNull, O.AutoInc)
 
   def name = column[String]("NAME", O.NotNull)
 

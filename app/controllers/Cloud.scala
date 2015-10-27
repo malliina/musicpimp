@@ -15,13 +15,13 @@ import scala.concurrent.Future
 /**
  * @author Michael
  */
-class Cloud extends Secured {
+class Cloud(clouds: Clouds) extends Secured {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))
 
   def cloud = PimpActionAsync(implicit req => {
-    val id = Clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
+    val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
     id map (i => Ok(views.html.cloud(this, cloudForm, i._1, i._2)))
   })
 
@@ -34,11 +34,11 @@ class Cloud extends Secured {
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())
         val maybeID = desiredID.filter(_.nonEmpty)
-        if (Clouds.client.isConnected) {
-          Clouds.disconnectAndForget()
+        if (clouds.client.isConnected) {
+          clouds.disconnectAndForget()
           Future(redir)
         } else {
-          Clouds.connect(maybeID).map(_ => redir).recover(errorMessage andThen (msg => redir.flashing(FEEDBACK -> msg)))
+          clouds.connect(maybeID).map(_ => redir).recover(errorMessage andThen (msg => redir.flashing(FEEDBACK -> msg)))
         }
       }
     )

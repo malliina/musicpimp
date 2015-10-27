@@ -1,0 +1,42 @@
+package com.mle.musicpimp.audio
+
+import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.mle.musicpimp.models.{PlaylistID, User}
+import play.api.libs.json._
+
+import scala.concurrent.Future
+import com.mle.musicpimp.json.JsonStrings._
+
+/**
+ * @author mle
+ */
+
+
+class PlaylistHandler(service: PlaylistService) {
+  val Id = "id"
+
+  trait Command
+
+  case object GetPlaylists extends Command
+
+  case class GetPlaylist(id: PlaylistID) extends Command
+
+  case class SavePlaylist(playlist: PlaylistSubmission) extends Command
+
+  case class DeletePlaylist(id: PlaylistID) extends Command
+
+  def parseCommand(json: JsValue): JsResult[Command] = {
+    (json \ CMD).validate[String].flatMap {
+      case PlaylistsGet =>
+        JsSuccess(GetPlaylists)
+      case PlaylistGet =>
+        (json \ Id).validate[PlaylistID].map(GetPlaylist)
+      case PlaylistSave =>
+        (json \ Playlist).validate[PlaylistSubmission].map(SavePlaylist)
+      case PlaylistDelete =>
+        (json \ Id).validate[PlaylistID].map(DeletePlaylist)
+      case other =>
+        JsError(s"Unknown command: $other")
+    }
+  }
+}

@@ -16,6 +16,8 @@ trait JsonMessages extends Log {
   val version = obj(VERSION -> com.mle.musicpimp.BuildInfo.version)
   val noMedia = obj(STATE -> PlayerStates.NoMedia.toString)
   val unAuthorized = failure(ACCESS_DENIED)
+  val databaseFailure = failure(DatabaseError)
+  val genericFailure = failure(GenericError)
   val invalidParameter = failure(INVALID_PARAMETER)
   val invalidCredentials = failure(INVALID_CREDENTIALS)
   val invalidJson = failure(INVALID_JSON)

@@ -18,7 +18,7 @@ trait AlarmEditor extends Secured with SchedulerStrings {
     ID -> optional(text),
     HOURS -> number(min = 0, max = 24),
     MINUTES -> number(min = 0, max = 59),
-    DAYS -> Forms.seq(text).verifying("Must select at least one day", _.size > 0),
+    DAYS -> Forms.seq(text).verifying("Must select at least one day", _.nonEmpty),
     TRACK -> nonEmptyText,
     TRACK_ID -> nonEmptyText,
     ENABLED -> optional(text)

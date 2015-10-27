@@ -53,7 +53,7 @@ class CloudTests extends FunSuite {
   //    socket3.close()
   //  }
 
-  def newSocket(pass: String = "pimp") = new CloudSocket(testUri, testID, pass)
+//  def newSocket(pass: String = "pimp") = new CloudSocket(testUri, testID, pass)
 
   def connect(socket: CloudSocket) = socket.connect().flatMap(_ => socket.registration).recoverAll(t => failID)
 }

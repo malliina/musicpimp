@@ -15,7 +15,7 @@ import scala.concurrent.duration.DurationInt
  *
  * @author mle
  */
-class ServerWS extends PlayerSockets with Log {
+class ServerWS(clouds: Clouds) extends PlayerSockets with Log {
   val subscription = MusicPlayer.allEvents.subscribe(event => broadcast(event))
   override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
 
@@ -67,6 +67,6 @@ class ServerWS extends PlayerSockets with Log {
 
   override def broadcast(message: Message): Unit = {
     super.broadcast(message)
-    Clouds sendIfConnected message
+    clouds sendIfConnected message
   }
 }

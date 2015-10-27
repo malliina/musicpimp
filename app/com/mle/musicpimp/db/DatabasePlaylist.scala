@@ -4,15 +4,17 @@ import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.musicpimp.models.{PlaylistID, User}
 import com.mle.musicpimp.exception.UnauthorizedException
 import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission, SavedPlaylist}
+import com.mle.util.Log
 
 import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.lifted.Query
+import scala.util.Try
 
 /**
  * @author mle
  */
-class DatabasePlaylist(db: PimpDatabase) extends PlaylistService {
+class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
 
   import db._
 
@@ -42,21 +44,20 @@ class DatabasePlaylist(db: PimpDatabase) extends PlaylistService {
   }
 
   override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit] = {
-    withSession(implicit s => {
-      val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
-      owns.flatMap(isOwner => {
-        if (isOwner) {
+    val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
+    owns.flatMap(isOwner => {
+      if (isOwner) {
+        withSession(implicit s => {
           def insertionQuery = (playlistsTable returning playlistsTable.map(_.id)) += PlaylistRow(None, playlist.name, user)
           val id: Long = playlist.playlistId.map(_.id).getOrElse(insertionQuery.run(s))
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)
           }
           entries.map(entry => playlistTracksTable.insertOrUpdate(entry)(s))
-          Future.successful(())
-        } else {
-          Future.failed(new UnauthorizedException(s"User $user is unauthorized"))
-        }
-      })
+        })
+      } else {
+        Future.failed(new UnauthorizedException(s"User $user is unauthorized"))
+      }
     })
   }
 

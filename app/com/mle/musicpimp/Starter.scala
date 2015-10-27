@@ -91,7 +91,7 @@ object Starter extends PlayLifeCycle with Log {
     }
   }
 
-  def startServices(options: InitOptions): Unit = {
+  def startServices(options: InitOptions, clouds: Clouds): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
@@ -113,7 +113,7 @@ object Starter extends PlayLifeCycle with Log {
         }
       }
       if (options.cloud) {
-        Clouds.init()
+        clouds.init()
       }
       val version = com.mle.musicpimp.BuildInfo.version
       log info s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"

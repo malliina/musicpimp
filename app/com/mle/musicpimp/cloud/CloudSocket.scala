@@ -13,7 +13,8 @@ import com.mle.musicpimp.db.{DatabaseUserManager, PimpDb}
 import com.mle.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.library.Library
+import com.mle.musicpimp.library.{Library, PlaylistService}
+import com.mle.musicpimp.models.RequestID
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.scheduler.json.AlarmJsonHandler
 import com.mle.play.json.JsonStrings.CMD
@@ -22,13 +23,15 @@ import com.mle.rx.Observables
 import com.mle.security.SSLUtils
 import com.mle.storage.{StorageLong, StorageSize}
 import com.mle.util.{Log, Util}
-import com.mle.ws.{HttpUtil, JsonWebSocketClient}
+import com.mle.ws.HttpUtil
 import controllers.{Alarms, LibraryController, Rest}
 import play.api.libs.json._
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
+
+case class Deps(playlists: PlaylistService)
 
 /**
  * Event format:
@@ -50,13 +53,13 @@ import scala.util.Try
  *
  * @author Michael
  */
-class CloudSocket(uri: String, username: String, password: String)
+class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
   with Log {
 
   private val registrationPromise = Promise[String]()
-
   val registration = registrationPromise.future
+  val playlists = deps.playlists
 
   def connectID(): Future[String] = connect().flatMap(_ => registration)
 
@@ -83,8 +86,8 @@ class CloudSocket(uri: String, username: String, password: String)
     } catch {
       case e: Exception =>
         log.warn(s"Failed while handling JSON: $json.", e)
-        (json \ REQUEST_ID).validate[String].map(request => {
-          sendJsonResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
+        (json \ REQUEST_ID).validate[RequestID].map(request => {
+          sendFailureResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
         })
     }
   }
@@ -93,9 +96,9 @@ class CloudSocket(uri: String, username: String, password: String)
 
   def processEvent(json: JsValue) = parseEvent(json) map handleEvent
 
-  def parseRequest(json: JsValue): JsResult[(PimpMessage, String)] = {
+  def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
     val cmd = (json \ CMD).validate[String]
-    val request = (json \ REQUEST_ID).validate[String]
+    val request = (json \ REQUEST_ID).validate[RequestID]
     val body = json \ BODY
 
     def withBody(f: JsValue => PimpMessage): JsResult[PimpMessage] = body.toOption
@@ -111,6 +114,10 @@ class CloudSocket(uri: String, username: String, password: String)
       case ROOT_FOLDER => JsSuccess(RootFolder)
       case FOLDER => body.validate[Folder]
       case SEARCH => body.validate[Search]
+      case PlaylistsGet => body.validate[GetPlaylists]
+      case PlaylistGet => body.validate[GetPlaylist]
+      case PlaylistSave => body.validate[SavePlaylist]
+      case PlaylistDelete => body.validate[DeletePlaylist]
       case ALARMS => JsSuccess(GetAlarms)
       case ALARMS_EDIT => withBody(AlarmEdit.apply)
       case ALARMS_ADD => withBody(AlarmAdd.apply)
@@ -125,18 +132,21 @@ class CloudSocket(uri: String, username: String, password: String)
     val event = (json \ CMD).validate[String].orElse((json \ EVENT).validate[String])
     val body = json \ BODY
     val eventMessage = event.flatMap {
-      case REGISTERED => body.validate[Registered]
+      case REGISTERED =>
+        body.validate[Registered]
       case PLAYER =>
         body.toOption
           .map(bodyJson => JsSuccess(PlaybackMessage(bodyJson)))
           .getOrElse(JsError(s"Playback message does not contain JSON in key $BODY."))
-      case PING => JsSuccess(Ping)
-      case other => JsError(s"Unknown JSON event: $other in $json")
+      case PING =>
+        JsSuccess(Ping)
+      case other =>
+        JsError(s"Unknown JSON event: $other in $json")
     }
     eventMessage
   }
 
-  def handleRequest(message: PimpMessage, request: String) = {
+  def handleRequest(message: PimpMessage, request: RequestID) = {
     message match {
       case GetStatus =>
         sendJsonResponse(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)), request)
@@ -171,6 +181,26 @@ class CloudSocket(uri: String, username: String, password: String)
         sendJsonResponse(JsonMessages.version, request)
       case Ping =>
         sendJsonResponse(JsonMessages.ping, request)
+      case GetPlaylists(user) =>
+        withDatabaseExcuse(request) {
+          playlists.playlists(user)
+            .map(pls => sendResponse(pls, request))
+        }
+      case GetPlaylist(id, user) =>
+        def notFound = JsonMessages.failure(s"Playlist not found: $id")
+        withDatabaseExcuse(request) {
+          playlists.playlist(id, user).map(maybePlaylist => {
+            maybePlaylist.fold(sendFailureResponse(notFound, request))(pl => sendResponse(pl, request))
+          })
+        }
+      case SavePlaylist(playlist, user) =>
+        withDatabaseExcuse(request) {
+          playlists.saveOrUpdatePlaylist(playlist, user).map(_ => sendAckResponse(request))
+        }
+      case DeletePlaylist(id, user) =>
+        withDatabaseExcuse(request) {
+          playlists.delete(id, user).map(_ => sendAckResponse(request))
+        }
       case GetAlarms =>
         implicit val writer = Alarms.alarmWriter
         sendResponse(ScheduledPlaybackService.status, request)
@@ -212,6 +242,13 @@ class CloudSocket(uri: String, username: String, password: String)
     }
   }
 
+  def withDatabaseExcuse[T](request: RequestID)(f: Future[T]) = {
+    f.recoverAll(t => {
+      log.error(s"Request $request error", t)
+      sendFailureResponse(JsonMessages.databaseFailure, request)
+    })
+  }
+
   def handleEvent(e: PimpMessage) = {
     e match {
       case Registered(id) => registrationPromise trySuccess id
@@ -222,19 +259,27 @@ class CloudSocket(uri: String, username: String, password: String)
     }
   }
 
-  def requestJson(request: String, success: Boolean) = Json.obj(REQUEST_ID -> request, SUCCESS -> success)
+  def requestJson(request: RequestID, success: Boolean) = Json.obj(REQUEST_ID -> request, SUCCESS -> success)
 
-  def sendResponse[T](response: T, request: String)(implicit writer: Writes[T]): Unit =
+  def sendResponse[T](response: T, request: RequestID)(implicit writer: Writes[T]): Unit =
     sendJsonResponse(Json.toJson(response), request)
 
-  def sendJsonResponse(response: JsValue, request: String, success: Boolean = true) = {
+  def sendDefaultFailure(request: RequestID) = {
+    sendFailureResponse(JsonMessages.genericFailure, request)
+  }
+
+  def sendFailureResponse(response: JsValue, request: RequestID) = {
+    sendJsonResponse(response, request, success = false)
+  }
+
+  def sendJsonResponse(response: JsValue, request: RequestID, success: Boolean = true) = {
     val payload = requestJson(request, success) + (BODY -> response)
     sendLogged(payload, request)
   }
 
-  def sendAckResponse(request: String) = sendLogged(requestJson(request, success = true), request)
+  def sendAckResponse(request: RequestID) = sendLogged(requestJson(request, success = true), request)
 
-  def sendLogged(payload: JsValue, request: String) = {
+  def sendLogged(payload: JsValue, request: RequestID) = {
     send(payload)
     log debug s"Responded to request: $request with payload: $payload"
   }
@@ -258,24 +303,24 @@ class CloudSocket(uri: String, username: String, password: String)
    * @param request request id
    * @return
    */
-  def upload(track: Track, request: String): Future[Unit] = {
+  def upload(track: Track, request: RequestID): Future[Unit] = {
     withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
   }
 
-  def rangedUpload(rangedTrack: RangedTrack, request: String): Future[Unit] = {
+  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
     withUpload(rangedTrack.id, request, _ => range.contentSize, (file, req) => {
-      if(range.isAll) {
+      if (range.isAll) {
         log info s"Uploading $file, request $request"
         req.addFile(file)
       } else {
-        log.info(s"Uploading $file, range $range, request $request")
+        log info s"Uploading $file, range $range, request $request"
         req.addRangedFile(file, range)
       }
     })
   }
 
-  private def withUpload(trackID: String, request: String, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
+  private def withUpload(trackID: String, request: RequestID, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
     val uploadUri = s"$httpProtocol://$hostPort/track"
     val trackOpt = Library.findAbsolute(trackID)
     if (trackOpt.isEmpty) {
@@ -284,7 +329,7 @@ class CloudSocket(uri: String, username: String, password: String)
     Future {
       def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
-        req.addHeaders(REQUEST_ID -> request)
+        req.addHeaders(REQUEST_ID -> request.id)
         Clouds.loadID().foreach(id => req.setAuth(id, "pimp"))
         trackOpt.foreach(path => {
           content(path, req)
@@ -292,7 +337,7 @@ class CloudSocket(uri: String, username: String, password: String)
         val response = req.execute()
         val code = response.getStatusLine.getStatusCode
         val isSuccess = code >= 200 && code < 300
-        if(!isSuccess) {
+        if (!isSuccess) {
           log error appendMeta(s"Non-success response code $code for track ID $trackID")
         } else {
           val prefix = trackOpt.map(f => s"Uploaded ${sizeCalc(f)} of $trackID").getOrElse("Uploaded no bytes")
@@ -309,7 +354,9 @@ object CloudSocket {
     if (isDev) ("localhost:9000", "http", "ws")
     else ("cloud.musicpimp.org", "https", "wss")
 
-  def build(id: Option[String]) = new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp")
+  def build(id: Option[String], deps: Deps) = {
+    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp", deps)
+  }
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")

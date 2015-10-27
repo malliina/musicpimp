@@ -1,0 +1,20 @@
+<configuration>
+    <appender name="RX" class="com.mle.logbackrx.BasicBoundedReplayRxAppender">
+        <bufferSize>500</bufferSize>
+        <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
+    </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="org.jboss.netty.handler.codec.http.websocketx" level="INFO"/>
+    <logger name="scala.slick" level="INFO"/>
+    <logger name="org.apache.http" level="INFO"/>
+    <logger name="org.jaudiotagger" level="WARN" additivity="false"/>
+    <logger name="javazoom" level="WARN" additivity="false"/>
+    <root level="ERROR">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="RX"/>
+    </root>
+</configuration>

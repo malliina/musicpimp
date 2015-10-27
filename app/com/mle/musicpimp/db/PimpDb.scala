@@ -30,7 +30,7 @@ object PimpDb extends PimpDatabase with Log {
   val dirByConf: Option[Path] = sys.props.get(H2_HOME).map(p => Paths.get(p))
   val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
   Files.createDirectories(dataHome)
-  val databaseFile = dataHome / "pimp290"
+  val databaseFile = dataHome / "pimp291"
   val url = s"jdbc:h2:$databaseFile;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
