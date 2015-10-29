@@ -33,7 +33,7 @@ class PlaylistsSpec extends Specification {
     "POST /playlists" in new WithApp {
       if (testTracks.nonEmpty) {
         val submission = PlaylistSubmission(None, "test playlist", testTracks)
-        val request = FakeRequest(POST, "/playlists").withJsonBody(Json.obj(JsonStrings.Playlist -> Json.toJson(submission)))
+        val request = FakeRequest(POST, "/playlists").withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(submission)))
         val response = fetch(request)
         status(response) mustEqual 202
 
