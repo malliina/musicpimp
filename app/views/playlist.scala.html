@@ -1,0 +1,27 @@
+@import com.mle.musicpimp.library.SavedPlaylist
+@import bs.rowColumn12
+@import com.mle.musicpimp.library.PlaylistSubmission
+@(playlist: SavedPlaylist, form: Form[PlaylistSubmission])
+
+@indexMain("playlist") {
+    @bs.headerRow("Playlist")
+    <p class="lead">@playlist.name</p>
+    @if(playlist.tracks.isEmpty) {
+        @rowColumn12 {
+            <p class="lead">This playlist is empty.</p>
+        }
+    } else {
+        @rowColumn12 {
+            <table class="table table-striped table-hover table-responsive">
+                <thead>
+                    <tr><th>Title</th><th>Album</th><th>Artist</th></tr>
+                </thead>
+                <tbody>
+                @playlist.tracks.map { track =>
+                    <tr><td>@track.title</td><td>@track.album<td><td>@track.artist</td></tr>
+                }
+                </tbody>
+            </table>
+        }
+    }
+}

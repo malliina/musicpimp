@@ -1,17 +1,13 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.mle.musicpimp.models.{PlaylistID, User}
-import play.api.libs.json._
-
-import scala.concurrent.Future
 import com.mle.musicpimp.json.JsonStrings._
+import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.mle.musicpimp.models.PlaylistID
+import play.api.libs.json._
 
 /**
  * @author mle
  */
-
-
 class PlaylistHandler(service: PlaylistService) {
   val Id = "id"
 
@@ -32,7 +28,7 @@ class PlaylistHandler(service: PlaylistService) {
       case PlaylistGet =>
         (json \ Id).validate[PlaylistID].map(GetPlaylist)
       case PlaylistSave =>
-        (json \ Playlist).validate[PlaylistSubmission].map(SavePlaylist)
+        (json \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist)
       case PlaylistDelete =>
         (json \ Id).validate[PlaylistID].map(DeletePlaylist)
       case other =>

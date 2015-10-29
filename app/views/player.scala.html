@@ -1,11 +1,11 @@
 @(wsUrl: String, feedback: Option[String])(implicit request: RequestHeader)
 
-    @basePlayer(feedback) {
-        <p class="lead">
-            Playing on server. Click to open the browser player instead: <a href="@routes.Website.popupPlayer()"
-        onclick="return ! window.open (this.href, 'MusicPimp Web Player', 'scrollbars=yes,width=500,height=400')"
-        target="_blank"
-        class="btn btn-lg btn-primary">Open browser player</a></p>
-        @util.script2("json.js", "playerws.js")
-        @wsopen(wsUrl)
-    }
+@basePlayer(feedback) {
+    <p class="lead">
+        Playing on server. Click to open the browser player instead: <a href="@routes.Website.popupPlayer()"
+    onclick="return ! window.open (this.href, 'MusicPimp Web Player', 'scrollbars=yes,width=500,height=400')"
+    target="_blank"
+    class="btn btn-lg btn-primary">Open browser player</a></p>
+    @util.script2("json.js", "playerws.js")
+    @wsopen(wsUrl)
+}

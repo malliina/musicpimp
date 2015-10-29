@@ -1,0 +1,29 @@
+@import com.mle.musicpimp.library.SavedPlaylist
+@import bs.rowColumn12
+@(lists: Seq[SavedPlaylist])
+
+@indexMain("playlists") {
+    @bs.headerRow("Playlists")
+    @if(lists.isEmpty) {
+        @rowColumn12 {
+            <p class="lead">No saved playlists.</p>
+        }
+    } else {
+        @rowColumn12 {
+            <table class="table table-striped table-hover table-responsive">
+                <thead>
+                    <tr><th>Name</th><th>Tracks</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                @lists.map { list =>
+                    <tr>
+                        <td><a href="@routes.Playlists.playlist(list.id)">@list.name</a></td>
+                        <td>@list.tracks.size</td>
+                        <td>Add/Edit/Delete</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    }
+}

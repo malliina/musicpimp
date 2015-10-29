@@ -42,6 +42,8 @@ GET         /tracks/*id                        controllers.Rest.supplyForPlaybac
 GET         /playlists                         controllers.Playlists.playlists
 GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: com.mle.musicpimp.models.PlaylistID)
 POST        /playlists/delete/*playlist        controllers.Playlists.deletePlaylist(playlist: com.mle.musicpimp.models.PlaylistID)
+POST        /playlists/edit                    controllers.Playlists.edit
+POST        /playlists/handle                  controllers.Playlists.handleSubmission
 POST        /playlists                         controllers.Playlists.savePlaylist
 POST        /rootfolders                       controllers.SettingsController.newFolder
 POST        /rootfolders/delete/*id            controllers.SettingsController.deleteFolder(id)

@@ -129,8 +129,8 @@ trait JsonStrings {
   val PlaylistGet = "playlist"
   val PlaylistSave = "playlist_save"
   val PlaylistDelete = "playlist_delete"
-  val Playlist = "playlist"
-  val Playlists = "playlists"
+  val PlaylistKey = "playlist"
+  val PlaylistsKey = "playlists"
 }
 
 object JsonStrings extends JsonStrings

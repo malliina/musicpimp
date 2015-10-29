@@ -99,7 +99,9 @@ var updateTimeAndDuration = function (pos, dur) {
     updateTime(pos);
     updateDuration(dur);
 };
+var currentPlaylist = [];
 var updatePlaylist = function (playlist) {
+    currentPlaylist = playlist;
     $('li').remove(".song");
     var playlistElement = $("#playlist");
     for (var i = 0; i < playlist.length; i++) {
@@ -138,6 +140,10 @@ var onerror = function (payload) {
 var setFeedback = function (fb) {
     $('#status').html(fb);
 };
+var onSave = function() {
+
+};
+
 $(document).ready(function () {
     playButton = $("#playButton");
     pauseButton = $("#pauseButton");
