@@ -6,7 +6,7 @@ import play.api.libs.json.Json
 /**
  * @author mle
  */
-case class PlaylistSubmission(playlistId: Option[PlaylistID],
+case class PlaylistSubmission(id: Option[PlaylistID],
                               name: String,
                               tracks: Seq[String])
 

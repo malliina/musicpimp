@@ -20,10 +20,19 @@ trait PlaylistService {
   def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]]
 
   /**
-   * @param playlist playlist submission
-   * @return a Future that completes when saving is done
-   */
-  def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit]
+    * May fail with an UnauthorizedException.
+    *
+    * @param playlist playlist submission
+    * @param user user
+    * @return a Future that completes with the playlist ID when the save operation has completed successfully, or fails
+    */
+  def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID]
 
+  /**
+    *
+    * @param id playlist to delete
+    * @param user user performing deletion
+    * @return a Future that completes when deletion completes
+    */
   def delete(id: PlaylistID, user: User): Future[Unit]
 }

@@ -43,17 +43,19 @@ class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
     })
   }
 
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit] = {
-    val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
+  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
+    val owns = playlist.id.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
     owns.flatMap(isOwner => {
       if (isOwner) {
         withSession(implicit s => {
-          def insertionQuery = (playlistsTable returning playlistsTable.map(_.id)) += PlaylistRow(None, playlist.name, user)
-          val id: Long = playlist.playlistId.map(_.id).getOrElse(insertionQuery.run(s))
+          def insertionQuery: Long = (playlistsTable returning playlistsTable.map(_.id)) += PlaylistRow(None, playlist.name, user)
+          val id: Long = playlist.id.map(_.id).getOrElse(insertionQuery.run(s))
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)
           }
           entries.map(entry => playlistTracksTable.insertOrUpdate(entry)(s))
+          log.info(s"Saved or updated playlist $playlist")
+          PlaylistID(id)
         })
       } else {
         Future.failed(new UnauthorizedException(s"User $user is unauthorized"))

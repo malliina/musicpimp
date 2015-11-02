@@ -3,7 +3,7 @@ package controllers
 import com.mle.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.mle.musicpimp.json.JsonStrings.{PlaylistKey, PlaylistsKey}
 import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.mle.musicpimp.models.{PlaylistID, User}
+import com.mle.musicpimp.models.{SaveFeedback, PlaylistID, User}
 import com.mle.play.controllers.AuthRequest
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
@@ -53,7 +53,7 @@ class Playlists(service: PlaylistService) extends Secured {
 
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
     (req.body \ PlaylistKey).validate[PlaylistSubmission]
-      .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(_ => Accepted))
+      .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(id => Created(SaveFeedback(id.id))))
       .getOrElse(Future.successful(BadRequest))
   })
 
