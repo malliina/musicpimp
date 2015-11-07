@@ -2,7 +2,8 @@ package tests
 
 import com.mle.musicpimp.app.{InitOptions, PimpLoader}
 import com.mle.musicpimp.json.JsonStrings
-import com.mle.musicpimp.library.{PlaylistSubmission, SavedPlaylist}
+import com.mle.musicpimp.library.PlaylistSubmission
+import com.mle.musicpimp.models.SavedPlaylist
 import com.mle.ws.HttpUtil
 import org.specs2.mutable.Specification
 import play.api.http.{HeaderNames, Writeable}

@@ -12,12 +12,16 @@ import scala.concurrent.duration.Duration
  *
  * @author mle
  */
-case class BaseTrackMeta(id: String, title: String, artist: String, album: String, duration: Duration, size: StorageSize) extends TrackMeta {
+case class BaseTrackMeta(id: String,
+                         title: String,
+                         artist: String,
+                         album: String,
+                         duration: Duration,
+                         size: StorageSize) extends TrackMeta {
   def buildTrack(inStream: InputStream) = StreamedTrack(id, title, artist, album, duration, size, inStream)
 }
 
 object BaseTrackMeta {
-  //  val empty = BaseTrackMeta("Unknown id", "Unknown title", "Unknown artist", "Unknown album", 0.seconds, 1.bytes)
   implicit val dur = JsonFormats.durationFormat
   implicit val storage = JsonFormats.storageSizeFormat
   implicit val jsonFormat = Json.format[BaseTrackMeta]

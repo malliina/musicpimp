@@ -40,11 +40,11 @@ GET         /tracks/folders/*id                controllers.Rest.tracksIn(id)
 GET         /tracks/meta/*id                   controllers.Rest.meta(id)
 GET         /tracks/*id                        controllers.Rest.supplyForPlayback(id)
 GET         /playlists                         controllers.Playlists.playlists
-GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: com.mle.musicpimp.models.PlaylistID)
-POST        /playlists/delete/*playlist        controllers.Playlists.deletePlaylist(playlist: com.mle.musicpimp.models.PlaylistID)
+POST        /playlists                         controllers.Playlists.savePlaylist
+GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: PlaylistID)
+POST        /playlists/delete/*playlist        controllers.Playlists.deletePlaylist(playlist: PlaylistID)
 POST        /playlists/edit                    controllers.Playlists.edit
 POST        /playlists/handle                  controllers.Playlists.handleSubmission
-POST        /playlists                         controllers.Playlists.savePlaylist
 POST        /rootfolders                       controllers.SettingsController.newFolder
 POST        /rootfolders/delete/*id            controllers.SettingsController.deleteFolder(id)
 GET         /tracks                            controllers.Alarms.tracks

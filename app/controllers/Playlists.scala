@@ -1,13 +1,12 @@
 package controllers
 
 import com.mle.musicpimp.exception.{PimpException, UnauthorizedException}
-import com.mle.musicpimp.json.JsonStrings.{PlaylistKey, PlaylistsKey}
+import com.mle.musicpimp.json.JsonStrings.PlaylistKey
 import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.mle.musicpimp.models.{PlaylistID, User}
 import com.mle.play.controllers.AuthRequest
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
-import play.api.http.Writeable
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, BodyParser, Result}
@@ -34,27 +33,28 @@ class Playlists(service: PlaylistService) extends Secured {
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync((req, user) => {
-    service.playlists(user).map(playlists => {
+    service.playlistsMeta(user).map(playlists => {
       respond(
-        html = html.playlists(playlists),
-        json = Json.obj(PlaylistsKey -> playlists)
+        html = html.playlists(playlists.playlists),
+        json = Json.toJson(playlists)
       )(req)
     })
   })
 
   def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
-    service.playlist(id, user).map(result => {
+    service.playlistMeta(id, user).map(result => {
       result.map(playlist => respond(
-        html = html.playlist(playlist, playlistForm),
-        json = Json.obj(PlaylistKey -> playlist)
-      )(req)).getOrElse(NotFound)
+        html = html.playlist(playlist.playlist, playlistForm),
+        json = Json.toJson(playlist)
+      )(req)).getOrElse(NotFound(s"Playlist not found: $id"))
     })
   })
 
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
-    (req.body \ PlaylistKey).validate[PlaylistSubmission]
+    val json = req.body
+    (json \ PlaylistKey).validate[PlaylistSubmission]
       .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(_ => Accepted))
-      .getOrElse(Future.successful(BadRequest))
+      .getOrElse(Future.successful(BadRequest(s"Invalid JSON: $json")))
   })
 
   def deletePlaylist(id: PlaylistID) = recoveredAsync((req, user) => {
@@ -62,19 +62,15 @@ class Playlists(service: PlaylistService) extends Secured {
   })
 
   def edit = parsedRecoveredAsync(parse.json)((req, user) => {
-    val body = req.body
-    log info s"Edit $body"
-    Future.successful(Ok(s"Yo $body"))
+    Future.successful(Ok)
   })
 
   def handleSubmission = recoveredAsync((req, user) => {
     playlistForm.bindFromRequest()(req).fold(
       errors => {
-        log info s"Errors: $errors"
-        service.playlists(user).map(pls => BadRequest(html.playlists(pls)))
+        service.playlistsMeta(user).map(pls => BadRequest(html.playlists(pls.playlists)))
       },
       submission => {
-        log info s"Submission: $submission"
         Future.successful(Redirect(routes.Playlists.playlists()))
       }
     )

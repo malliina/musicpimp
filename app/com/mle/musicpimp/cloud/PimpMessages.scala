@@ -48,13 +48,13 @@ object PimpMessages {
 
   case object GetStatus extends PimpMessage
 
-  case class GetPlaylists(user: User) extends PimpMessage
+  case class GetPlaylists(username: User) extends PimpMessage
 
-  case class GetPlaylist(id: PlaylistID, user: User) extends PimpMessage
+  case class GetPlaylist(id: PlaylistID, username: User) extends PimpMessage
 
-  case class SavePlaylist(playlist: PlaylistSubmission, user: User) extends PimpMessage
+  case class SavePlaylist(playlist: PlaylistSubmission, username: User) extends PimpMessage
 
-  case class DeletePlaylist(id: PlaylistID, user: User) extends PimpMessage
+  case class DeletePlaylist(id: PlaylistID, username: User) extends PimpMessage
 
   implicit val searchFormat = Json.format[Search]
   implicit val folderFormat = Json.format[Folder]

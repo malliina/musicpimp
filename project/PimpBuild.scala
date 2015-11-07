@@ -15,6 +15,7 @@ import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{linux, rpm}
 import play.sbt.PlayImport
 import play.sbt.PlayImport.PlayKeys
+import play.sbt.routes.RoutesKeys
 import sbt.Keys._
 import sbt._
 import sbtassembly.Plugin.AssemblyKeys._
@@ -32,7 +33,7 @@ object PimpBuild extends Build {
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.9.4",
+    version := "2.9.5",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -149,23 +150,17 @@ object PimpBuild extends Build {
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
         "com.neovisionaries" % "nv-websocket-client" % "1.12"
       ).map(dep => dep withSources()),
-      buildInfoPackage := "com.mle.musicpimp"
+      buildInfoPackage := "com.mle.musicpimp",
+      RoutesKeys.routesImport ++= Seq(
+        "com.mle.musicpimp.models.PlaylistID"
+      )
     )
-
-//  <groupId>javax.websocket</groupId>
-//    <artifactId>javax.websocket-api</artifactId>
-//    <version>1.0</version>
-//    <dependency>
-//      <groupId>org.glassfish.tyrus</groupId>
-//      <artifactId>tyrus-client</artifactId>
-//      <version>1.1</version>
-//    </dependency>
 
   def assemblyConf = assemblySettings ++ Seq(
     jarName in assembly := s"app-${version.value}.jar",
     test in assembly :=(),
     fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    mergeStrategy in assembly <<= (mergeStrategy in assembly)((old: (String => MergeStrategy)) => {
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) ((old: (String => MergeStrategy)) => {
       case "application.conf" =>
         MergeStrategy.concat
       case x if (x startsWith """org\apache\commons\logging""") || (x startsWith """play\core\server""") =>

@@ -1,7 +1,7 @@
 package com.mle.musicpimp.db
 
-import com.mle.musicpimp.models.User
-import com.mle.musicpimp.library.{MusicFolder, PlaylistSubmission, SavedPlaylist}
+import com.mle.musicpimp.models.{SavedPlaylist, User}
+import com.mle.musicpimp.library.{MusicFolder, PlaylistSubmission}
 
 import scala.concurrent.Future
 

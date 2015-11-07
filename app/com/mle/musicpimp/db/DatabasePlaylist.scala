@@ -1,24 +1,23 @@
 package com.mle.musicpimp.db
 
 import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.musicpimp.models.{PlaylistID, User}
 import com.mle.musicpimp.exception.UnauthorizedException
-import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission, SavedPlaylist}
+import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.mle.musicpimp.models.{PlaylistID, SavedPlaylist, User}
 import com.mle.util.Log
 
 import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.lifted.Query
-import scala.util.Try
 
 /**
- * @author mle
- */
+  * @author mle
+  */
 class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
 
   import db._
 
-  override def playlists(user: User): Future[Seq[SavedPlaylist]] = {
+  override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
     val result = withSession(s => {
       val baseQuery = playlistsTable.filter(_.user === user.name)
       val q = playlistQuery(baseQuery)

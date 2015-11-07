@@ -26,16 +26,14 @@ object TrackMeta {
   implicit val sto = JsonFormats.storageSizeFormat
   implicit val dur = JsonFormats.durationFormat
 
-  implicit val trackWriter = new Writes[TrackMeta] {
-    def writes(o: TrackMeta): JsValue = obj(
-      ID -> o.id,
-      TITLE -> o.title,
-      ARTIST -> o.artist,
-      ALBUM -> o.album,
-      DURATION -> o.duration,
-      SIZE -> o.size
-    )
-  }
+  val trackWriter = Writes[TrackMeta](o => obj(
+    ID -> o.id,
+    TITLE -> o.title,
+    ARTIST -> o.artist,
+    ALBUM -> o.album,
+    DURATION -> o.duration,
+    SIZE -> o.size
+  ))
   val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map(base => {
     val meta: TrackMeta = base
     meta
