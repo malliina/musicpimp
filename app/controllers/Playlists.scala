@@ -53,7 +53,7 @@ class Playlists(service: PlaylistService) extends Secured {
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
     val json = req.body
     (json \ PlaylistKey).validate[PlaylistSubmission]
-      .map(playlist => service.saveOrUpdatePlaylist(playlist, user).map(_ => Accepted))
+      .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, user).map(meta => Accepted(Json.toJson(meta))))
       .getOrElse(Future.successful(BadRequest(s"Invalid JSON: $json")))
   })
 

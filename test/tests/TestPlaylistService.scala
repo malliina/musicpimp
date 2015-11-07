@@ -36,8 +36,8 @@ class TestPlaylistService extends PlaylistService {
    * @param playlist playlist submission
    * @return a Future that completes when saving is done
    */
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit] = {
-    Future.successful(())
+  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
+    Future.successful(PlaylistID(0))
   }
 
   /**

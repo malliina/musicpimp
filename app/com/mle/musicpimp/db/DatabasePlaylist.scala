@@ -31,7 +31,7 @@ class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
     })
   }
 
-  override def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
+  override protected def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
     val result = withSession(s => {
       val q = playlistQuery(playlistsTable.filter(pl => pl.user === user.name && pl.id === id.id))
       q.sortBy(_._4).run(s)
@@ -42,7 +42,7 @@ class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
     })
   }
 
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[Unit] = {
+  override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
     val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
     owns.flatMap(isOwner => {
       if (isOwner) {
@@ -53,6 +53,7 @@ class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
             case (track, index) => PlaylistTrack(id, track, index)
           }
           entries.map(entry => playlistTracksTable.insertOrUpdate(entry)(s))
+          PlaylistID(id)
         })
       } else {
         Future.failed(new UnauthorizedException(s"User $user is unauthorized"))

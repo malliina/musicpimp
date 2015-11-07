@@ -198,7 +198,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
         }
       case SavePlaylist(playlist, user) =>
         withDatabaseExcuse(request) {
-          playlists.saveOrUpdatePlaylist(playlist, user).map(_ => sendAckResponse(request))
+          playlists.saveOrUpdatePlaylistMeta(playlist, user).map(meta => sendResponse(meta, request))
         }
       case DeletePlaylist(id, user) =>
         withDatabaseExcuse(request) {
