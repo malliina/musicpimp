@@ -9,11 +9,11 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="@routes.Website.rootLibrary()">MusicPimp</a>
+                <a class="navbar-brand" href="@routes.LibraryController.rootLibrary()">MusicPimp</a>
             }
             @div("navbar-collapse collapse") {
                 <ul class="nav navbar-nav">
-                    @navItem("Library", routes.Rest.rootLibrary(), "list")
+                    @navItem("Library", routes.LibraryController.rootLibrary(), "list")
                     @navItem("Player", routes.Website.player(), "music")
                 </ul>
                 <ul class="nav navbar-nav navbar-right">

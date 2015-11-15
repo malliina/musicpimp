@@ -2,6 +2,7 @@ package controllers
 
 import com.mle.musicpimp.audio._
 import com.mle.musicpimp.json.JsonFormatVersions
+import com.mle.play.Authenticator
 import com.mle.util.Log
 import play.api.libs.json.JsValue
 import play.api.mvc.Call
@@ -11,7 +12,7 @@ import scala.collection.mutable
 /**
  * @author mle
  */
-class WebPlayer extends PlayerSockets with Log {
+class WebPlayer(auth: Authenticator) extends PlayerSockets(auth) with Log {
   override val messageHandler: JsonHandlerBase = new WebPlayerMessageHandler {
     override def player(user: String): PimpWebPlayer = WebPlayer.this.player(user)
   }

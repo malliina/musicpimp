@@ -5,16 +5,17 @@ import java.nio.file.{Files, Path}
 import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
+import com.mle.musicpimp.auth.UserManager
 import com.mle.musicpimp.beam.BeamCommand
 import com.mle.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
 import com.mle.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.mle.musicpimp.cloud.PimpMessages._
-import com.mle.musicpimp.db.{DatabaseUserManager, PimpDb}
+import com.mle.musicpimp.db.PimpDb
 import com.mle.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.library.{PlaylistSubmission, Library, PlaylistService}
-import com.mle.musicpimp.models.{PlaylistID, User, RequestID}
+import com.mle.musicpimp.library.{MusicLibrary, Library, PlaylistService, PlaylistSubmission}
+import com.mle.musicpimp.models.{PlaylistID, RequestID, User}
 import com.mle.musicpimp.scheduler.ScheduledPlaybackService
 import com.mle.musicpimp.scheduler.json.AlarmJsonHandler
 import com.mle.play.json.JsonStrings.CMD
@@ -31,7 +32,11 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
-case class Deps(playlists: PlaylistService)
+case class Deps(playlists: PlaylistService,
+                db: PimpDb,
+                userManager: UserManager,
+                handler: PlaybackMessageHandler,
+                lib: MusicLibrary)
 
 /**
   * Event format:
@@ -56,7 +61,8 @@ case class Deps(playlists: PlaylistService)
 class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
   with Log {
-
+  val lib = deps.lib
+  val handler = deps.handler
   private val registrationPromise = Promise[String]()
   val registration = registrationPromise.future
   val playlists = deps.playlists
@@ -158,7 +164,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       case rt: RangedTrack =>
         rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
       case RootFolder =>
-        val result = Library.rootFolder
+        val result = lib.rootFolder
         result.map(folder => sendResponse(folder, request))
         result.recover {
           case t =>
@@ -166,7 +172,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
             sendJsonResponse(JsonMessages.failure("Library failure"), request, success = false)
         }
       case Folder(id) =>
-        val folderFuture = Library.folder(id).recover {
+        val folderFuture = lib.folder(id).recover {
           case t =>
             log.error(s"Library failure for folder $id", t)
             None
@@ -178,7 +184,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
           sendJsonResponse(json, request, success = maybeFolder.isDefined)
         })
       case Search(term, limit) =>
-        val result = PimpDb.fullText(term, limit)
+        val result = deps.db.fullText(term, limit)
         result.map(tracks => sendResponse(tracks, request))
       case PingAuth =>
         sendJsonResponse(JsonMessages.version, request)
@@ -214,7 +220,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
         AlarmJsonHandler.handle(payload)
         sendAckResponse(request)
       case Authenticate(user, pass) =>
-        val authentication = DatabaseUserManager.authenticate(user, pass).recover {
+        val authentication = deps.userManager.authenticate(user, pass).recover {
           case t =>
             log.error(s"Database failure when authenticating $user", t)
             false
@@ -234,7 +240,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       case RegistrationEvent(event, id) =>
         registrationPromise trySuccess id
       case PlaybackMessage(payload) =>
-        PlaybackMessageHandler handleMessage payload
+        handler handleMessage payload
       case beamCommand: BeamCommand =>
         Future(Rest beam beamCommand)
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
@@ -256,7 +262,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
     e match {
       case Registered(id) => registrationPromise trySuccess id
       case RegistrationEvent(event, id) => registrationPromise trySuccess id
-      case PlaybackMessage(payload) => PlaybackMessageHandler handleMessage payload
+      case PlaybackMessage(payload) => handler handleMessage payload
       case Ping => ()
       case other => log.warn(s"Unknown event: $other")
     }

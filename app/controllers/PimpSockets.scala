@@ -1,6 +1,7 @@
 package controllers
 
 import com.mle.musicpimp.models.ClientInfo
+import com.mle.play.Authenticator
 import com.mle.play.controllers.AuthResult
 import com.mle.play.ws.{JsonWebSockets, TrieClientStorage}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -12,11 +13,11 @@ import scala.concurrent.Future
 /**
  * @author Michael
  */
-trait PimpSockets extends Controller with JsonWebSockets with TrieClientStorage {
+abstract class PimpSockets(auth: Authenticator) extends Controller with JsonWebSockets with TrieClientStorage {
   type Client = ClientInfo[Message]
   type AuthSuccess = AuthResult
 
-  val security = new SecureBase {}
+  val security = new SecureBase(auth)
 
   override def authenticateAsync(req: RequestHeader): Future[AuthResult] = {
     security.authenticate(req).flatMap(opt => opt

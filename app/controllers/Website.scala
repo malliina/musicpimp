@@ -3,21 +3,16 @@ package controllers
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import com.mle.musicpimp.audio.MusicPlayer
-import com.mle.musicpimp.library.Settings
-import com.mle.play.ws.{WebSocketController, SyncAuth}
-import com.mle.util.Log
+import com.mle.play.Authenticator
+import com.mle.play.ws.WebSocketController
 import views.html
 
 /**
  *
  * @author mle
  */
-class Website(sockets: WebSocketController, serverWS: ServerWS)
-  extends Secured
-  with HtmlController
-  with ConnectController
-  with LibraryController
-  with Log {
+class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authenticator)
+  extends HtmlController(auth) {
 
   def player = navigate(implicit req => {
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty

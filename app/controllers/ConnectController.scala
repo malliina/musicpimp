@@ -3,6 +3,7 @@ package controllers
 import java.net.NetworkInterface
 
 import com.mle.concurrent.ExecutionContexts.cached
+import com.mle.play.Authenticator
 import com.mle.play.controllers.AuthRequest
 import com.mle.play.json.JsonFormats
 import com.mle.util.Log
@@ -21,7 +22,7 @@ import scala.collection.JavaConversions._
  *
  * @author mle
  */
-trait ConnectController extends Secured with HtmlController with Log {
+class ConnectController(auth: Authenticator) extends HtmlController(auth) with Log {
   def connect = navigate(html.connectApp())
 
   def image = PimpAction(implicit req => {

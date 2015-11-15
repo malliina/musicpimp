@@ -1,15 +1,10 @@
 package controllers
 
-import java.net.InetSocketAddress
-
 import com.mle.musicpimp.Starter
-import com.mle.util.{Log, Utils}
-import org.jboss.netty.bootstrap.ServerBootstrap
-import org.jboss.netty.channel.Channel
+import com.mle.util.Utils
 import play.api.mvc.RequestHeader
-import play.core.server.NettyServer
 
-object RequestHelpers extends Log {
+object RequestHelpers {
   def httpPort = Starter.nettyServer.flatMap(_.httpPort)
 
   def httpsPort = Starter.nettyServer.flatMap(_.httpsPort)

@@ -4,7 +4,7 @@
     <a class="btn btn-default" href="#" onclick="return add('@trackID');"><i class="glyphicon glyphicon-plus"></i></a>
     <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
     <ul class="dropdown-menu">
-        <li><a href="@routes.Rest.download(trackID)"><i class="glyphicon glyphicon-download"></i> Download</a></li>
+        <li><a href="@routes.LibraryController.download(trackID)"><i class="glyphicon glyphicon-download"></i> Download</a></li>
         <li><a href="#" onclick="return webPlay('@trackID');"><i class="glyphicon glyphicon-play"></i>
             Play in browser</a>
         </li>

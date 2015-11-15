@@ -6,54 +6,62 @@ import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.mle.audio.meta.SongMeta
 import com.mle.file.FileUtilities
-import com.mle.musicpimp.models.User
 import com.mle.musicpimp.audio.TrackMeta
 import com.mle.musicpimp.db._
 import com.mle.util.{Log, Utils}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.Future
 
-/**
- * @author Michael
- */
-trait Library extends MusicLibrary with Log {
+import scala.concurrent.stm.{Ref, atomic}
+
+object Library extends Library {
   val ROOT_ID = ""
   val emptyPath = Paths get ""
-  var rootFolders: Seq[Path] = Settings.read
 
-  def rootStream = rootFolders.toStream
+  def relativePath(itemId: String): Path = Paths get decode(itemId)
 
-  def rootFolder: Future[MusicFolder] = rootFolderFromDatabase
+  /**
+    * Generates a URL-safe ID of the given music item.
+    *
+    * TODO: make item unique
+    *
+    * @param path path to music file or folder
+    * @return the id
+    */
+  def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
 
-  def rootFolderFromDatabase: Future[MusicFolder] = folderFromDatabase(ROOT_ID).map(_.getOrElse(MusicFolder.empty))
+  def decode(id: String) = URLDecoder.decode(id, "UTF-8")
+}
 
-  def folder(id: String): Future[Option[MusicFolder]] = folderFromDatabase(id)
+/**
+  * @author Michael
+  */
+class Library extends Log {
 
-  def folderFromDatabase(id: String): Future[Option[MusicFolder]] = {
-    val path = relativePath(id)
-    val optFuture = findPathInfo(path).map(_ => {
-      val thisFolder = DataFolder fromPath path
-      (PimpDb folder id).map(kv => MusicFolder(thisFolder, kv._2, kv._1))
-    })
-    optFuture.map(_.map(Option.apply)).getOrElse(Future.successful(None))
-  }
+  import Library._
 
-  def allTracksRec(): Future[Seq[TrackMeta]] = tracksInOrEmpty(ROOT_ID)
+  private val rootFolders: Ref[Seq[Path]] = Ref(Settings.read)
 
-  def localTracksIn(id: String): Future[Option[Seq[LocalTrack]]] =
-    tracksIn(id).map(_.map(metas => metas.flatMap(meta => findMeta(meta.id))))
+  def roots = rootFolders.single.get
 
-  def localTracksInOrEmpty(id: String) = localTracksIn(id).map(_.getOrElse(Nil))
+  def reloadFolders(): Unit = setFolders(Settings.read)
 
-  def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = {
-    folderFromDatabase(id).flatMap(maybeFolder => {
-      maybeFolder
-        .map(folder => Future.traverse(folder.folders)(sub => tracksInOrEmpty(sub.id)).map(subs => folder.tracks ++ subs.flatten)).map(_.map(Option.apply))
-        .getOrElse(Future.successful(None))
-    })
-  }
+  def setFolders(folders: Seq[Path]) = atomic(txn => rootFolders.set(folders)(txn))
 
-  private def tracksInOrEmpty(id: String) = tracksIn(id).map(_.getOrElse(Nil))
+  def rootStream = roots.toStream
+
+  //  def rootFolder: Future[MusicFolder] = Future.successful(MusicFolder.empty)
+
+  //  def folder(id: String): Future[Option[MusicFolder]] = Future.successful(None)
+
+  //  def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = Future.successful(None)
+
+  //  def allTracksRec(): Future[Seq[TrackMeta]] = tracksInOrEmpty(ROOT_ID)
+
+  //  def localTracksInOrEmpty(id: String) = localTracksIn(id).map(_.getOrElse(Nil))
+
+  //  def localTracksIn(id: String): Future[Option[Seq[LocalTrack]]] =
+  //    tracksIn(id).map(_.map(localize))
+
+  def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.id))
 
   def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
@@ -62,24 +70,13 @@ trait Library extends MusicLibrary with Log {
       } else {
         Map(folder.dirs
           .flatMap(dir => items(dir).toSeq
-          .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
-      }
-    }
-    def recurse2(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
-      if (folder.dirs.isEmpty) {
-        acc
-      } else {
-        Map((for {
-          dir <- folder.dirs
-          subFolder <- items(dir).toSeq
-          pair <- recurse2(subFolder, acc.updated(dir, subFolder))
-        } yield pair): _*)
+            .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
       }
     }
     Map(items(root).toSeq.flatMap(f => recurse(f, Map(emptyPath -> f))): _*)
   }
 
-  private def all(): Map[Path, Folder] = Map(rootFolders.flatMap(all): _*)
+  private def all(): Map[Path, Folder] = Map(roots.flatMap(all): _*)
 
   def songPathsRecursive = all().flatMap(pair => pair._2.files)
 
@@ -87,9 +84,9 @@ trait Library extends MusicLibrary with Log {
 
   def trackFiles: Stream[Path] = recursivePaths(audioFiles)
 
-  def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
-
   def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
+
+  def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
 
   def audioFiles(root: Path) = FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
 
@@ -102,23 +99,22 @@ trait Library extends MusicLibrary with Log {
 
   def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(relativePath(id).getParent) getOrElse emptyPath
+    val path = Option(Library.relativePath(id).getParent) getOrElse emptyPath
     DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encode(path))
   }
 
   /**
-   * This method has a bug.
-   *
-   * @param trackId the music item id
-   * @return the absolute path to the music item id, or None if no such track exists
-   */
+    * This method has a bug.
+    *
+    * @param trackId the music item id
+    * @return the absolute path to the music item id, or None if no such track exists
+    */
   def findAbsolute(trackId: String): Option[Path] = findPathInfo(relativePath(trackId)).map(_.absolute)
 
-  def suggestAbsolute(relative: Path): Option[Path] = rootFolders.headOption.map(_ resolve relative)
+  def suggestAbsolute(relative: Path): Option[Path] = roots.headOption.map(_ resolve relative)
 
   def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 
-  def relativePath(itemId: String): Path = Paths get decode(itemId)
 
   def meta(itemId: String): LocalTrack = meta(relativePath(itemId))
 
@@ -148,23 +144,11 @@ trait Library extends MusicLibrary with Log {
   def findMetaWithTempFallback(id: String) = findMeta(id).orElse(searchTempDir(id))
 
   def searchTempDir(id: String): Option[LocalTrack] = {
-    val pathInfo = PathInfo(Library.relativePath(id), FileUtilities.tempDir)
+    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
     val absolute = pathInfo.absolute
-    if (Files.exists(absolute) && Files.isReadable(absolute)) Library.parseMeta(pathInfo)
+    if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
     else None
   }
-
-  /**
-   * Generates a URL-safe ID of the given music item.
-   *
-   * TODO: make item unique
-   *
-   * @param path path to music file or folder
-   * @return the id
-   */
-  def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
-
-  def decode(id: String) = URLDecoder.decode(id, "UTF-8")
 
   private def items(relative: Path): Option[Folder] = {
     val sources = findPathInfo2(relative)
@@ -178,33 +162,28 @@ trait Library extends MusicLibrary with Log {
     tryReadFolder(FileUtils.listFiles(pathInfo.absolute, pathInfo.root))
 
   private def findPathInfo(relative: Path): Option[PathInfo] = {
-    rootFolders.find(root => Files.isReadable(root resolve relative))
+    roots.find(root => Files.isReadable(root resolve relative))
       .map(root => PathInfo(relative, root))
   }
 
   private def findPathInfo2(relative: Path): Seq[PathInfo] = {
-    rootFolders.filter(root => Files.isReadable(root resolve relative))
+    roots.filter(root => Files.isReadable(root resolve relative))
       .map(root => PathInfo(relative, root))
   }
-
-  // How do I write this correctly?
-  //  private def yo[R[_]](f: Seq[Path] => R[PathInfo]) = f(rootFolders).map(PathInfo(relative,_))
 
   private def pathInfo(relative: Path): PathInfo = findPathInfo(relative)
     .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))
 
   /**
-   * Some folders might have unsuitable permissions, throwing an exception when a read attempt is made. Suppresses such
-   * AccessDeniedExceptions.
-   *
-   * @param f function that returns folder contents
-   * @return the folder, or an empty folder if the folder could not be read
-   */
+    * Some folders might have unsuitable permissions, throwing an exception when a read attempt is made. Suppresses such
+    * AccessDeniedExceptions.
+    *
+    * @param f function that returns folder contents
+    * @return the folder, or an empty folder if the folder could not be read
+    */
   private def tryReadFolder(f: => Folder): Folder =
     Utils.opt[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
 }
-
-object Library extends Library
 
 case class PathInfo(relative: Path, root: Path) {
   def absolute = root resolve relative

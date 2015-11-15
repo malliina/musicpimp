@@ -3,9 +3,9 @@ package com.mle.musicpimp.db
 import scala.slick.driver.H2Driver.simple._
 
 /**
- * @author Michael
- */
-trait PimpDatabase extends DatabaseLike {
+  * @author mle
+  */
+object PimpSchema {
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
   val tokens = TableQuery[TokensTable]
@@ -13,4 +13,6 @@ trait PimpDatabase extends DatabaseLike {
   val idsTable = TableQuery[Ids]
   val playlistsTable = TableQuery[PlaylistTable]
   val playlistTracksTable = TableQuery[PlaylistTracks]
+
+  val tableQueries: Seq[TableQuery[_ <: Table[_]]] = Seq(playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
 }

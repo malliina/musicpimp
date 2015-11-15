@@ -3,9 +3,10 @@ package controllers
 import com.mle.musicpimp.audio._
 import com.mle.musicpimp.cloud.Clouds
 import com.mle.musicpimp.json.{JsonFormatVersions, JsonMessages}
+import com.mle.play.Authenticator
 import com.mle.util.Log
 import play.api.libs.json.Json.toJson
-import play.api.mvc.{Result, RequestHeader, Call}
+import play.api.mvc.Call
 import rx.lang.scala.{Observable, Subscription}
 
 import scala.concurrent.duration.DurationInt
@@ -15,9 +16,9 @@ import scala.concurrent.duration.DurationInt
  *
  * @author mle
  */
-class ServerWS(clouds: Clouds) extends PlayerSockets with Log {
+class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler) extends PlayerSockets(auth) with Log {
   val subscription = MusicPlayer.allEvents.subscribe(event => broadcast(event))
-  override val messageHandler: JsonHandlerBase = PlaybackMessageHandler
+  override val messageHandler: JsonHandlerBase = handler
 
   override def status(client: Client) = apiVersion(client) match {
     case JsonFormatVersions.JSONv17 => toJson(MusicPlayer.status17)

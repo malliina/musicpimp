@@ -4,15 +4,16 @@ import com.mle.musicpimp.audio.TrackMeta
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
 import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.scheduler.json.{AlarmJsonHandler, JsonHandler}
+import com.mle.musicpimp.scheduler.json.AlarmJsonHandler
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
 import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
+import com.mle.play.Authenticator
 import com.mle.util.Log
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms extends Secured with AlarmEditor with SchedulerStrings with Log {
+class Alarms(auth: Authenticator) extends AlarmEditor(auth) with SchedulerStrings with Log {
   def alarms = PimpAction(implicit request => {
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(

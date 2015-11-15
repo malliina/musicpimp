@@ -17,7 +17,7 @@ class FileTests extends FunSuite {
 
   test(s"lists at least $minPathsPerSecond files per second or completes within 3 seconds") {
     testRootOpt.foreach(testRoot => {
-      Library.rootFolders = Seq(testRoot)
+      Library.setFolders(Seq(testRoot))
       val (size, duration) = Utils.timed(Library.trackFiles.size)
       val threshold = (1.0d * size / minPathsPerSecond).seconds
       assert(duration < 3.seconds || duration < threshold)
@@ -26,7 +26,7 @@ class FileTests extends FunSuite {
 
   test("folder list") {
     testRootOpt.foreach(testRoot => {
-      Library.rootFolders = Seq(testRoot)
+      Library.setFolders(Seq(testRoot))
       val (size, duration) = Utils.timed(Library.folderStream.size)
       val threshold = (1.0d * size / minPathsPerSecond).seconds
       assert(duration < 3.seconds || duration < threshold)

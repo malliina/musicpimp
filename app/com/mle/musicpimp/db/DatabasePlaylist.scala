@@ -13,9 +13,9 @@ import scala.slick.lifted.Query
 /**
   * @author mle
   */
-class DatabasePlaylist(db: PimpDatabase) extends PlaylistService with Log {
+class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService with Log {
 
-  import db._
+  import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 
   override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
     val result = withSession(s => {

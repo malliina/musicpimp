@@ -4,6 +4,7 @@ import com.mle.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.mle.musicpimp.json.JsonStrings.PlaylistKey
 import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.mle.musicpimp.models.{PlaylistID, User}
+import com.mle.play.Authenticator
 import com.mle.play.controllers.AuthRequest
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
@@ -23,7 +24,7 @@ object Playlists {
 /**
  * @author mle
  */
-class Playlists(service: PlaylistService) extends Secured {
+class Playlists(service: PlaylistService, auth: Authenticator) extends Secured(auth) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val playlistForm: Form[PlaylistSubmission] = Form(mapping(

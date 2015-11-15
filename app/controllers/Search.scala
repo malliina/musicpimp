@@ -1,9 +1,10 @@
 package controllers
 
 import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.musicpimp.db.{Indexer, PimpDb}
+import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
+import com.mle.play.Authenticator
 import com.mle.util.Log
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Observer}
@@ -17,11 +18,11 @@ object Search {
   val DefaultLimit = 1000
 }
 
-class Search extends PimpSockets with Log {
+class Search(indexer: Indexer, auth: Authenticator) extends PimpSockets(auth) with Log {
 
   val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
   val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.debug)
-  val subscription = Indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster, loggingObserver))
+  val subscription = indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster, loggingObserver))
 
   private def indexingObserver(onNext: String => Unit,
                                onErr: (String, Throwable) => Unit,
@@ -38,7 +39,7 @@ class Search extends PimpSockets with Log {
     (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
       case REFRESH =>
         broadcastStatus("Indexing...")
-        Indexer.indexAndSave()
+        indexer.indexAndSave()
       case SUBSCRIBE =>
         ()
     })

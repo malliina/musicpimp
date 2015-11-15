@@ -1,8 +1,12 @@
 package com.mle.musicpimp.app
 
 import com.mle.musicpimp.Starter
-import com.mle.musicpimp.cloud.Clouds
-import com.mle.musicpimp.db.{PimpDb, DatabasePlaylist}
+import com.mle.musicpimp.audio.PlaybackMessageHandler
+import com.mle.musicpimp.cloud.{Deps, Clouds}
+import com.mle.musicpimp.db._
+import com.mle.musicpimp.library.DatabaseLibrary
+import com.mle.play.PimpAuthenticator
+import com.mle.play.auth.RememberMe
 import controllers._
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
@@ -45,33 +49,49 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val messages = Messages(language, messagesApi)
 
   // Services
-  lazy val ps = new DatabasePlaylist(PimpDb)
-  lazy val c = new Clouds(ps)
+  lazy val db = new PimpDb
+  lazy val indexer = new Indexer(db)
+  lazy val ps = new DatabasePlaylist(db)
+  lazy val lib = new DatabaseLibrary(db)
+  lazy val userManager = new DatabaseUserManager(db)
+  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db))
+  lazy val auth = new PimpAuthenticator(userManager, rememberMe)
+  lazy val handler = new PlaybackMessageHandler(lib)
+  lazy val deps = Deps(ps, db, userManager, handler, lib)
+  lazy val c = new Clouds(deps)
 
   // Controllers
   lazy val ls = new PimpLogs
-  lazy val lp = new LogPage(ls)
-  lazy val wp = new WebPlayer
-  lazy val sws = new ServerWS(c)
-  lazy val w = new Website(wp, sws)
-  lazy val s = new Search
-  lazy val sp = new SearchPage(s)
-  lazy val r = new Rest(wp)
-  lazy val pl = new Playlists(ps)
-  lazy val sc = new SettingsController(messages)
+  lazy val lp = new LogPage(ls, auth)
+  lazy val wp = new WebPlayer(auth)
+  lazy val sws = new ServerWS(c, auth, handler)
+  lazy val webCtrl = new Website(wp, sws, auth)
+  lazy val s = new Search(indexer, auth)
+  lazy val sp = new SearchPage(s, indexer, db, auth)
+  lazy val r = new Rest(wp, auth, handler)
+  lazy val pl = new Playlists(ps, auth)
+  lazy val settingsCtrl = new SettingsController(messages, indexer, auth)
   lazy val as = new Assets(httpErrorHandler)
+  lazy val libCtrl = new LibraryController(lib, auth)
+  lazy val alarms = new Alarms(auth)
+  lazy val accounts = new Accounts(auth)
+  lazy val cloud = new Cloud(c, auth)
+  lazy val connect = new ConnectController(auth)
+  lazy val pimpAssets = new PimpAssets
 
-  Starter.startServices(options, c)
+  Starter.startServices(options, c, db, indexer)
 
   lazy val router: Routes = new Routes(
-    httpErrorHandler, w, sc, lp,
-    new Cloud(c), new Accounts, r, pl,
-    new Alarms, sp, s, sws,
-    wp, ls, new PimpAssets)
+    httpErrorHandler, libCtrl, webCtrl,
+    settingsCtrl, connect, lp,
+    cloud, accounts, r, pl,
+    alarms, sp, s, sws,
+    wp, ls, pimpAssets)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
     s.subscription.unsubscribe()
     Starter.stopServices()
+    db.close()
   })
 }

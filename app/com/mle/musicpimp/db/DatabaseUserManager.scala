@@ -11,9 +11,11 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 /**
  * @author Michael
  */
-class DatabaseUserManager extends UserManager {
+class DatabaseUserManager(db: PimpDb) extends UserManager {
 
-  import com.mle.musicpimp.db.PimpDb.{tokens, usersTable, withSession}
+  import PimpSchema.{tokens, usersTable}
+
+  def withSession[T](f: Session => T): Future[T] = db.withSession(f)
 
   def ensureAtLeastOneUserExists(): Future[Unit] = {
     users.flatMap(us => {
@@ -64,4 +66,3 @@ class DatabaseUserManager extends UserManager {
 
   private def hash(user: User, pass: Password) = Auth.hash(user, pass)
 }
-object DatabaseUserManager extends DatabaseUserManager

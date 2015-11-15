@@ -1,16 +1,19 @@
 package controllers
 
-import com.mle.musicpimp.db.{PimpDb, Indexer, DataTrack}
+import com.mle.musicpimp.db.{DataTrack, Indexer, PimpDb}
+import com.mle.play.Authenticator
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
 import scala.util.Try
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
- * @author mle
- */
-class SearchPage(s: Search) extends HtmlController {
+  * @author mle
+  */
+class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator)
+  extends HtmlController(auth) {
+
   def search = PimpActionAsync(implicit req => {
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
     val term = query("term")
@@ -23,10 +26,9 @@ class SearchPage(s: Search) extends HtmlController {
   })
 
   def refresh = PimpAction(implicit req => {
-    Indexer.indexAndSave()
+    indexer.indexAndSave()
     Ok
   })
 
-  private def databaseSearch(query: String, limit: Int): Future[Seq[DataTrack]] = PimpDb.fullText(query, limit)
-
+  private def databaseSearch(query: String, limit: Int): Future[Seq[DataTrack]] = db.fullText(query, limit)
 }

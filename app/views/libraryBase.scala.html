@@ -2,7 +2,7 @@
 
     @indexMain("library") {
         <ul class="nav nav-tabs">
-            @navItem("Folders", "folders", routes.Rest.rootLibrary(), "folder-open")
+            @navItem("Folders", "folders", routes.LibraryController.rootLibrary(), "folder-open")
             @navItem("Search", "search", routes.SearchPage.search(), "search")
         </ul>
         <section>

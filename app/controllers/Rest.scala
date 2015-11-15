@@ -12,16 +12,16 @@ import com.mle.musicpimp.audio._
 import com.mle.musicpimp.beam.BeamCommand
 import com.mle.musicpimp.json.{JsonMessages, JsonStrings}
 import com.mle.musicpimp.library.{Library, LocalTrack}
+import com.mle.play.Authenticator
 import com.mle.play.controllers.{AuthRequest, BaseController, OneFileUploadRequest}
 import com.mle.play.streams.{StreamParsers, Streams}
-import com.mle.storage.StorageInt
+import com.mle.storage.{StorageInt, StorageLong}
 import com.mle.util.{Log, Util, Utils}
 import org.apache.http.HttpResponse
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
-import com.mle.storage.StorageLong
 
 import scala.concurrent.Future
 
@@ -29,10 +29,9 @@ import scala.concurrent.Future
  *
  * @author mle
  */
-class Rest(webPlayer: WebPlayer)
-  extends Secured
+class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHandler)
+  extends Secured(auth)
   with BaseController
-  with LibraryController
   with Log {
 
   val webPlayerHandler = webPlayer.messageHandler
@@ -44,7 +43,7 @@ class Rest(webPlayer: WebPlayer)
   /**
    * Handles server playback commands POSTed as JSON.
    */
-  def playback = JsonAckAction(PlaybackMessageHandler.onJson)
+  def playback = JsonAckAction(handler.onJson)
 
   /**
    * Handles web browser player playback commands POSTed as JSON.

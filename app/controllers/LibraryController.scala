@@ -3,37 +3,34 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.Paths
 
-import com.mle.musicpimp.models.MusicColumn
 import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.library.{Library, MusicFolder}
-import com.mle.play.FileResults
+import com.mle.musicpimp.library.{Library, MusicFolder, MusicLibrary}
+import com.mle.musicpimp.models.MusicColumn
+import com.mle.play.{Authenticator, FileResults}
 import com.mle.util.Log
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import views.html
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 /**
- * @author Michael
- */
-trait LibraryController extends Secured with Log {
-  def rootLibrary = PimpActionAsync(implicit request => Library.rootFolder.map(root => folderResult(root)))
+  * @author Michael
+  */
+class LibraryController(lib: MusicLibrary, auth: Authenticator) extends Secured(auth) with Log {
+  def rootLibrary = PimpActionAsync(implicit request => lib.rootFolder.map(root => folderResult(root)))
 
   /**
-   * @return an action that provides the contents of the library with the supplied id
-   */
+    * @return an action that provides the contents of the library with the supplied id
+    */
   def library(folderId: String) = PimpActionAsync(implicit request => {
-    //    val (result, duration) = Utils.timed(Library.folder(folderId).fold(folderNotFound(folderId))(items => folderResult(items)))
-    //    log info s"Loaded $folderId in $duration"
-    //    result
-    Library.folder(folderId).map(_.fold(folderNotFound(folderId))(items => folderResult(items)))
+    lib.folder(folderId).map(_.fold(folderNotFound(folderId))(items => folderResult(items)))
+  })
+
+  def tracksIn(folderID: String) = PimpActionAsync(implicit request => {
+    lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
   })
 
   def allTracks = tracksIn(Library.ROOT_ID)
-
-  def tracksIn(folderID: String) = PimpActionAsync(implicit request => {
-    Library.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
-  })
 
   private def folderNotFound(id: String)(implicit request: RequestHeader): Result = {
     pimpResult(
@@ -50,27 +47,27 @@ trait LibraryController extends Secured with Log {
   }
 
   /**
-   * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
-   *
-   * The Windows Phone background audio player fails to work properly if the ACCEPT_RANGES header is set.
-   *
-   * @param trackId track to serve
-   */
+    * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
+    *
+    * The Windows Phone background audio player fails to work properly if the ACCEPT_RANGES header is set.
+    *
+    * @param trackId track to serve
+    */
   def supplyForPlayback(trackId: String) = download(trackId)
 
   /**
-   * Responds with the song with the given ID.
-   *
-   * Note: If an unauthorized request is made here, the result is always
-   * Unauthorized with JSON content. This differs from the default of
-   * redirecting to the login page if the client accepts HTML, because
-   * the Background Transfer Service in WP8 makes download requests
-   * accepting any response format, yet we want to respond with an
-   * Unauthorized as opposed to a redirect to make it easier to deal
-   * with download errors on the client side.
-   *
-   * @param trackId track to download
-   */
+    * Responds with the song with the given ID.
+    *
+    * Note: If an unauthorized request is made here, the result is always
+    * Unauthorized with JSON content. This differs from the default of
+    * redirecting to the login page if the client accepts HTML, because
+    * the Background Transfer Service in WP8 makes download requests
+    * accepting any response format, yet we want to respond with an
+    * Unauthorized as opposed to a redirect to make it easier to deal
+    * with download errors on the client side.
+    *
+    * @param trackId track to download
+    */
   def download(trackId: String): EssentialAction =
     CustomFailingPimpAction(onDownloadAuthFail)((request, auth) => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
@@ -100,15 +97,15 @@ trait LibraryController extends Secured with Log {
   }
 
   /**
-   * Arranges a music collection into columns.
-   *
-   * TODO: It could be interesting to explore a type like a non-empty list. Scalaz might have something.
-   *
-   * @param col music collection
-   * @param minCount minimum amount of items; if there are less items, only one column is used
-   * @param columns column count
-   * @return at least one column
-   */
+    * Arranges a music collection into columns.
+    *
+    * TODO: It could be interesting to explore a type like a non-empty list. Scalaz might have something.
+    *
+    * @param col music collection
+    * @param minCount minimum amount of items; if there are less items, only one column is used
+    * @param columns column count
+    * @return at least one column
+    */
   private def columnify(col: MusicFolder, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
     val tracks = col.tracks
     val folders = col.folders

@@ -4,6 +4,7 @@ import java.net.ConnectException
 
 import com.mle.concurrent.FutureOps
 import com.mle.musicpimp.cloud.Clouds
+import com.mle.play.Authenticator
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.Result
@@ -15,7 +16,7 @@ import scala.concurrent.Future
 /**
  * @author Michael
  */
-class Cloud(clouds: Clouds) extends Secured {
+class Cloud(clouds: Clouds, auth: Authenticator) extends Secured(auth) {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))

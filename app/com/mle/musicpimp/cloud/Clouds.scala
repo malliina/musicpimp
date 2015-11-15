@@ -2,11 +2,10 @@ package com.mle.musicpimp.cloud
 
 import java.nio.file.{Files, Path}
 
-import com.mle.concurrent.FutureOps
-import com.mle.file.{FileUtilities, StorageFile}
-import com.mle.musicpimp.library.PlaylistService
-import com.mle.musicpimp.util.FileUtil
 import com.mle.concurrent.ExecutionContexts.cached
+import com.mle.concurrent.FutureOps
+import com.mle.file.FileUtilities
+import com.mle.musicpimp.util.FileUtil
 import com.mle.play.json.SimpleCommand
 import com.mle.util.{Log, Utils}
 import play.api.libs.json.JsValue
@@ -37,7 +36,7 @@ object Clouds {
     FileUtilities.writerTo(file)(_.println(text))
   }
 }
-class Clouds(playlists: PlaylistService) extends Log {
+class Clouds(deps: Deps) extends Log {
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(30.minutes)
   var poller: Option[Subscription] = None
@@ -69,7 +68,7 @@ class Clouds(playlists: PlaylistService) extends Log {
     poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
   }
 
-  def newSocket(id: Option[String]) = CloudSocket.build(id orElse Clouds.loadID(), Deps(playlists))
+  def newSocket(id: Option[String]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
 
   def connect(id: Option[String]): Future[String] = reg {
     disconnect()

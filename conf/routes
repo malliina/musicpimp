@@ -1,10 +1,10 @@
 # Web specific
-GET         /                                  controllers.Website.rootLibrary
+GET         /                                  controllers.LibraryController.rootLibrary
 GET         /player                            controllers.Website.player
 GET         /popupPlayer                       controllers.Website.popupPlayer
 GET         /settings                          controllers.SettingsController.settings
-GET         /connect                           controllers.Website.connect
-GET         /image                             controllers.Website.image
+GET         /connect                           controllers.ConnectController.connect
+GET         /image                             controllers.ConnectController.image
 GET         /logs                              controllers.LogPage.logs
 POST        /logs/levels                       controllers.LogPage.changeLogLevel
 GET         /cloud                             controllers.Cloud.cloud
@@ -32,13 +32,13 @@ POST        /playlist                          controllers.Rest.playlist
 POST        /playlist/uploads                  controllers.Rest.addUpload
 GET         /webplaylist                       controllers.Rest.webPlaylist
 # Library
-GET         /folders                           controllers.Rest.rootLibrary
-GET         /folders/*folder                   controllers.Rest.library(folder)
-GET         /downloads/*id                     controllers.Rest.download(id)
-GET         /tracks/folders                    controllers.Rest.allTracks
-GET         /tracks/folders/*id                controllers.Rest.tracksIn(id)
-GET         /tracks/meta/*id                   controllers.Rest.meta(id)
-GET         /tracks/*id                        controllers.Rest.supplyForPlayback(id)
+GET         /folders                           controllers.LibraryController.rootLibrary
+GET         /folders/*folder                   controllers.LibraryController.library(folder)
+GET         /downloads/*id                     controllers.LibraryController.download(id)
+GET         /tracks/folders                    controllers.LibraryController.allTracks
+GET         /tracks/folders/*id                controllers.LibraryController.tracksIn(id)
+GET         /tracks/meta/*id                   controllers.LibraryController.meta(id)
+GET         /tracks/*id                        controllers.LibraryController.supplyForPlayback(id)
 GET         /playlists                         controllers.Playlists.playlists
 POST        /playlists                         controllers.Playlists.savePlaylist
 GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: PlaylistID)

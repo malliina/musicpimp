@@ -5,12 +5,11 @@ import java.nio.file.{Files, Paths}
 
 import com.mle.musicpimp.db.Indexer
 import com.mle.musicpimp.library.{Library, Settings}
+import com.mle.play.Authenticator
 import com.mle.util.{EnvUtils, Log}
-import play.api.Play
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{Lang, Messages}
-
+import play.api.i18n.Messages
 import views.html
 
 import scala.util.Try
@@ -18,7 +17,10 @@ import scala.util.Try
 /**
  * @author Michael
  */
-class SettingsController(messages: Messages) extends Secured with HtmlController with Log {
+class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticator)
+  extends HtmlController(auth)
+  with Log {
+
   protected val newFolderForm = Form(
     "path" -> nonEmptyText.verifying("Not a directory", validateDirectory _)
   )
@@ -58,9 +60,9 @@ class SettingsController(messages: Messages) extends Secured with HtmlController
   }
 
   private def onFoldersChanged() = {
-    Library.rootFolders = Settings.read
+    Library.reloadFolders()
     log info s"Music folders changed, reindexing..."
-    Indexer.indexAndSave()
+    indexer.indexAndSave()
     Redirect(routes.SettingsController.settings())
   }
 }

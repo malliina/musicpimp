@@ -91,7 +91,7 @@ object Starter extends PlayLifeCycle with Log {
     }
   }
 
-  def startServices(options: InitOptions, clouds: Clouds): Unit = {
+  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
@@ -100,13 +100,13 @@ object Starter extends PlayLifeCycle with Log {
         ScheduledPlaybackService.init()
       }
       if (options.database) {
-        PimpDb.init()
-        Auth.migrateFileCredentialsToDatabaseIfExists()
-        new DatabaseUserManager().ensureAtLeastOneUserExists()
+        db.init()
+        new Auth(db).migrateFileCredentialsToDatabaseIfExists()
+        new DatabaseUserManager(db).ensureAtLeastOneUserExists()
       }
       if (options.indexer) {
         Future {
-          Indexer.init()
+          indexer.init()
         }.recover {
           case e: Exception =>
             log.error(s"Unable to initialize indexer and search", e)

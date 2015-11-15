@@ -20,7 +20,7 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 
   def folder = column[String]("FOLDER")
 
-  def folderConstraint = foreignKey("FOLDER_FK", folder, PimpDb.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def folderConstraint = foreignKey("FOLDER_FK", folder, PimpSchema.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
   def * = (id, title, artist, album, duration, size, folder) <>((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
 }
@@ -35,7 +35,7 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
   def parent = column[String]("PARENT")
 
   // foreign key to itself; the root folder is its own parent
-  def parentFolder = foreignKey("PARENT_FK", parent, PimpDb.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def parentFolder = foreignKey("PARENT_FK", parent, PimpSchema.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
   def * = (id, title, path, parent) <>((DataFolder.apply _).tupled, DataFolder.unapply)
 }

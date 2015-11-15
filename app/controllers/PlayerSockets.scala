@@ -3,6 +3,7 @@ package controllers
 import com.mle.musicpimp.audio.JsonHandlerBase
 import com.mle.musicpimp.json.JsonMessages
 import com.mle.musicpimp.json.JsonStrings._
+import com.mle.play.Authenticator
 import com.mle.play.http.RequestInfo
 import play.api.libs.json.JsValue
 
@@ -10,7 +11,7 @@ import play.api.libs.json.JsValue
  *
  * @author mle
  */
-trait PlayerSockets extends PimpSockets {
+abstract class PlayerSockets(auth: Authenticator) extends PimpSockets(auth) {
   def messageHandler: JsonHandlerBase
 
   def status(client: Client): JsValue

@@ -1,7 +1,7 @@
 package com.mle.musicpimp.audio
 
 import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.library.{Library, LocalTrack}
+import com.mle.musicpimp.library.{MusicLibrary, Library, LocalTrack}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 
@@ -12,7 +12,7 @@ import scala.util.Try
  *
  * @author mle
  */
-object PlaybackMessageHandler extends JsonHandlerBase {
+class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
   def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
 
   override protected def handleMessage(msg: JsValue, user: String): Unit = {
@@ -47,7 +47,9 @@ object PlaybackMessageHandler extends JsonHandlerBase {
       case REMOVE =>
         MusicPlayer.playlist delete cmd.value
       case ADD_ITEMS =>
-        resolveTracks(cmd).map(ts => ts.foreach(MusicPlayer.playlist.add))
+        resolveTracks(cmd).map(ts => {
+          ts.foreach(MusicPlayer.playlist.add)
+        })
       case PLAY_ITEMS =>
         resolveTracks(cmd).map(ts => {
           if (ts.nonEmpty) {
@@ -62,7 +64,8 @@ object PlaybackMessageHandler extends JsonHandlerBase {
     def resolveTracks(cmd: JsonCmd): Future[Seq[LocalTrack]] = {
       val folders = cmd.foldersOrNil
       val tracks = cmd.tracksOrNil
-      Future.traverse(folders)(Library.localTracksInOrEmpty)
+
+      Future.traverse(folders)(folder => lib.tracksIn(folder).map(_.getOrElse(Nil)).map(Library.localize))
         .map(_.flatten).map(subTracks => tracks.map(Library.meta) ++ subTracks)
     }
   }

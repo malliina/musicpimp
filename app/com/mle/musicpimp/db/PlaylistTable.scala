@@ -14,7 +14,7 @@ class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
 
   def user = column[String]("USER", O.NotNull)
 
-  def userConstraint = foreignKey("USER_FK", user, PimpDb.usersTable)(_.user,
+  def userConstraint = foreignKey("USER_FK", user, PimpSchema.usersTable)(_.user,
     onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
   def * = (id.?, name, user) <>(build, unbuild)
@@ -39,10 +39,10 @@ class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACK
 
   def pk = primaryKey("PT_PK", (playlist, idx))
 
-  def playlistConstraint = foreignKey("PLAYLIST_FK", playlist, PimpDb.playlistsTable)(_.id,
+  def playlistConstraint = foreignKey("PLAYLIST_FK", playlist, PimpSchema.playlistsTable)(_.id,
     onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
-  def trackConstraint = foreignKey("TRACK_FK", track, PimpDb.tracks)(_.id,
+  def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(_.id,
     onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
 
   def * = (playlist, track, idx) <>((PlaylistTrack.apply _).tupled, PlaylistTrack.unapply)

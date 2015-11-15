@@ -2,11 +2,13 @@ package controllers
 
 import com.mle.musicpimp.json.JsonFormatVersions
 import com.mle.util.Log
+import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.JsValue
-import play.api.mvc.{Controller, RequestHeader, Result}
+import play.api.mvc.{Results, Controller, RequestHeader, Result}
 
 import scala.concurrent.Future
+import PimpContentController.log
 
 /**
  * Methods that choose the correct response to provide to clients
@@ -14,15 +16,18 @@ import scala.concurrent.Future
  *
  * @author mle
  */
-trait PimpContentController extends Controller with Log {
+trait PimpContentController extends Controller {
 
   import com.mle.musicpimp.json.JsonFormatVersions._
 
   def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
     PimpRequest.requestedResponseFormat(request) match {
-      case Some(MimeTypes.HTML) => html
-      case Some(JSONv17) => Ok(json17)
-      case Some(JSONv18) => Ok(latest)
+      case Some(MimeTypes.HTML) =>
+        html
+      case Some(JSONv17) =>
+        Ok(json17)
+      case Some(JSONv18) =>
+        Ok(latest)
       //      case Some(JSONv24) => Ok(latest)
       case Some(other) =>
         log.warn(s"Client requests unknown response format: $other")
@@ -34,19 +39,10 @@ trait PimpContentController extends Controller with Log {
   }
 
   def pimpResult(html: => Result, json: => Result)(implicit request: RequestHeader): Result =
-    PimpRequest.requestedResponseFormat(request) match {
-      case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains "json" => json
-      case _ => NotAcceptable
-    }
+    PimpContentController.pimpResult(html, json)
 
-  // TODO dry
   def pimpResult(html: => Future[Result], json: => Result)(implicit request: RequestHeader): Future[Result] =
-    PimpRequest.requestedResponseFormat(request) match {
-      case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains "json" => Future.successful(json)
-      case _ => Future.successful(NotAcceptable)
-    }
+    PimpContentController.pimpResult(html, json)
 
   def pimpResponse(html: => Result, json: => JsValue)(implicit request: RequestHeader): Result =
     pimpResult(html, Ok(json))
@@ -62,7 +58,25 @@ trait PimpContentController extends Controller with Log {
     pimpResult(html = Accepted, json = Accepted)
 }
 
-object PimpContentController extends PimpContentController
+object PimpContentController {
+  private val log = Logger(getClass)
+
+  // TODO dry
+
+  def pimpResult(html: => Result, json: => Result)(implicit request: RequestHeader): Result =
+    PimpRequest.requestedResponseFormat(request) match {
+      case Some(MimeTypes.HTML) => html
+      case Some(format) if format contains "json" => json
+      case _ => Results.NotAcceptable
+    }
+
+  def pimpResult(html: => Future[Result], json: => Result)(implicit request: RequestHeader): Future[Result] =
+    PimpRequest.requestedResponseFormat(request) match {
+      case Some(MimeTypes.HTML) => html
+      case Some(format) if format contains "json" => Future.successful(json)
+      case _ => Future.successful(Results.NotAcceptable)
+    }
+}
 
 object PimpRequest extends Log {
 

@@ -20,7 +20,7 @@ import scala.util.Try
  *
  * @author Michael
  */
-object Indexer extends Log {
+class Indexer(db: PimpDb) extends Log {
   val indexFile = FileUtil.localPath("files7.cache")
   val indexInterval = 6.hours
   val timer = Observable.interval(indexInterval).subscribe(_ => indexIfNecessary())
@@ -63,7 +63,7 @@ object Indexer extends Log {
    * @return a hot [[Observable]] with indexing progress
    */
   def index(): Observable[Long] = {
-    val observable = Observables.hot(PimpDb.refreshIndex())
+    val observable = Observables.hot(db.refreshIndex())
     ongoingIndexings onNext observable
     observable
   }

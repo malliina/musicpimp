@@ -1,6 +1,6 @@
 package controllers
 
-import com.mle.musicpimp.auth.CookieLogin
+import com.mle.play.PimpAuthenticator
 import com.mle.play.auth.RememberMe
 import com.mle.play.controllers.AccountController
 import com.mle.util.Log
@@ -13,8 +13,8 @@ import views.html
 import scala.concurrent.Future
 
 /**
- * @author Michael
- */
+  * @author Michael
+  */
 object Accounts {
   val FEEDBACK = "feedback"
   val USERS_FEEDBACK = "usersFeedback"
@@ -22,7 +22,9 @@ object Accounts {
   val INTENDED_URI = "intended_uri"
 }
 
-class Accounts extends HtmlController with AccountController with Log {
+class Accounts(auth: PimpAuthenticator) extends HtmlController(auth) with AccountController with Log {
+  val userManager = auth.userManager
+  val rememberMe = auth.rememberMe
   val invalidCredentialsMessage = "Invalid credentials."
   val defaultCredentialsMessage = s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
     s"Consider changing the password under the Manage tab once you have logged in."
@@ -109,7 +111,7 @@ class Accounts extends HtmlController with AccountController with Log {
             if (shouldRemember) {
               log debug s"Remembering auth..."
               // create token, retrieve cookie
-              val cookie = CookieLogin persistNewCookie user
+              val cookie = rememberMe persistNewCookie user
               cookie.map(c => result.withCookies(c))
             } else {
               Future.successful(result)
@@ -124,7 +126,7 @@ class Accounts extends HtmlController with AccountController with Log {
     )
   })
 
-  def defaultLoginSuccessPage: Call = routes.Website.rootLibrary()
+  def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
 
   def formChangePassword = PimpActionAsync(implicit request => {
     val user = request.user
@@ -136,7 +138,7 @@ class Accounts extends HtmlController with AccountController with Log {
       success => {
         val (old, newPass, _) = success
         validateCredentials(user, old).flatMap(isValid => {
-          if(isValid) {
+          if (isValid) {
             userManager.updatePassword(user, newPass).map(_ => {
               log info s"Password changed for user: $user from: ${request.remoteAddress}"
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))

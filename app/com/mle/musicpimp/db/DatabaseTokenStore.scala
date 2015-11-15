@@ -6,10 +6,10 @@ import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 
 /**
- * @author Michael
- */
-class DatabaseTokenStore(db: PimpDatabase) extends TokenStore {
-  val tokens = db.tokens
+  * @author Michael
+  */
+class DatabaseTokenStore(db: PimpDb) extends Sessionizer(db) with TokenStore {
+  val tokens = PimpSchema.tokens
 
   override def persist(token: Token): Future[Unit] = withSession(implicit s => tokens += token)
 
@@ -24,8 +24,4 @@ class DatabaseTokenStore(db: PimpDatabase) extends TokenStore {
     withSession(tokens.filter(t => t.user === user && t.series === series).firstOption(_))
 
   private def removeWhere(p: TokensTable => Column[Boolean]): Future[Unit] = withSession(tokens.filter(p).delete(_))
-
-  private def withSession[T](body: Session => T): Future[T] = db.withSession(s => body(s))
 }
-
-object DatabaseTokenStore extends DatabaseTokenStore(PimpDb)

@@ -3,6 +3,7 @@ package controllers
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.scheduler._
 import com.mle.musicpimp.scheduler.web.SchedulerStrings
+import com.mle.play.Authenticator
 import com.mle.play.controllers.AuthRequest
 import play.api.data.Forms._
 import play.api.data.{Form, Forms}
@@ -13,7 +14,7 @@ import play.api.mvc.{AnyContent, Request, Result}
  *
  * @author mle
  */
-trait AlarmEditor extends Secured with SchedulerStrings {
+class AlarmEditor(auth: Authenticator) extends Secured(auth) with SchedulerStrings {
   private val clockForm: Form[ClockPlayback] = Form(mapping(
     ID -> optional(text),
     HOURS -> number(min = 0, max = 24),

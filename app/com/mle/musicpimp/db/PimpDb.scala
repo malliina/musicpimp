@@ -4,6 +4,7 @@ import java.nio.file.{Files, Path, Paths}
 
 import com.mle.concurrent.ExecutionContexts.cached
 import com.mle.file.StorageFile
+import com.mle.musicpimp.db.PimpSchema.{folders, idsTable, tracks}
 import com.mle.musicpimp.library.Library
 import com.mle.musicpimp.util.FileUtil
 import com.mle.storage.StorageLong
@@ -11,16 +12,16 @@ import com.mle.util.{Log, Utils}
 import org.h2.jdbcx.JdbcConnectionPool
 import rx.lang.scala.{Observable, Observer, Subject}
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.GetResult
 import scala.util.{Failure, Success, Try}
 
 /**
- * @author Michael
- */
-object PimpDb extends PimpDatabase with Log {
+  * @author Michael
+  */
+class PimpDb extends DatabaseLike with Log with AutoCloseable {
   val H2_URL_SETTINGS = "h2.url.settings"
   val H2_HOME = "h2.home"
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
@@ -35,9 +36,8 @@ object PimpDb extends PimpDatabase with Log {
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
   override val database = Database.forDataSource(pool)
-
-  val tracksName = tracks.baseTableRow.tableName
-  override val tableQueries = Seq(playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
+  val tracksName = PimpSchema.tracks.baseTableRow.tableName
+  override val tableQueries = PimpSchema.tableQueries
   implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
@@ -51,6 +51,10 @@ object PimpDb extends PimpDatabase with Log {
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID).sortBy(_.title)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     (tracksQuery.run, foldersQuery.run)
+  })
+
+  def folderOnly(id: String): Future[Option[DataFolder]] = withSession(implicit s => {
+    folders.filter(folder => folder.id === id).firstOption
   })
 
   def allTracks = withSession(tracks.list(_))
@@ -78,13 +82,13 @@ object PimpDb extends PimpDatabase with Log {
   }
 
   /**
-   * Fails if the index is already created or if the table does not exist.
-   *
-   * TODO check when this throws and whether I'm calling it correctly
-   * @param session
-   */
+    * Fails if the index is already created or if the table does not exist.
+    *
+    * TODO check when this throws and whether I'm calling it correctly
+    * @param session
+    */
   def initIndex(tableName: String)(implicit session: Session): Try[Unit] = Try {
-    PimpDb.executePlain(
+    executePlain(
       "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
       "CALL FT_INIT();",
       s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
@@ -95,7 +99,7 @@ object PimpDb extends PimpDatabase with Log {
   def dropAll() = withSession(implicit s => {
     tableQueries.foreach(t => {
       if (exists(t)) {
-        PimpDb.executePlain(s"DROP TABLE ${t.baseTableRow.tableName}")
+        executePlain(s"DROP TABLE ${t.baseTableRow.tableName}")
         // ddl.drop fails if the table has a constraint to something nonexistent
         //        t.ddl.drop
       }
@@ -105,25 +109,25 @@ object PimpDb extends PimpDatabase with Log {
   })
 
   def dropIndex(tableName: String)(implicit s: Session): Try[Unit] = Try {
-    PimpDb.executePlain(s"CALL FT_DROP_INDEX('PUBLIC','$tableName');")
+    executePlain(s"CALL FT_DROP_INDEX('PUBLIC','$tableName');")
   }
 
   /**
-   * Starts indexing on a background thread and returns an [[Observable]] with progress updates.
-   *
-   * This algorithm adds new tracks and folders to the index, and removes tracks and folders that no longer exist in
-   * the library.
-   *
-   * Implementation:
-   *
-   * 1) Upsert all folders to the folders table, based on the (authoritative) library
-   * 2) Put all existing folder IDs also into a temporary table (also based on the library)
-   * 3) Delete all folders which don't have IDs in the temporary table
-   * 4) Delete the temporary table
-   * 5) Do the same thing for tracks (go to step 1)
-   *
-   * @return progress: total amount of files indexed
-   */
+    * Starts indexing on a background thread and returns an [[Observable]] with progress updates.
+    *
+    * This algorithm adds new tracks and folders to the index, and removes tracks and folders that no longer exist in
+    * the library.
+    *
+    * Implementation:
+    *
+    * 1) Upsert all folders to the folders table, based on the (authoritative) library
+    * 2) Put all existing folder IDs also into a temporary table (also based on the library)
+    * 3) Delete all folders which don't have IDs in the temporary table
+    * 4) Delete the temporary table
+    * 5) Do the same thing for tracks (go to step 1)
+    *
+    * @return progress: total amount of files indexed
+    */
   def refreshIndex(): Observable[Long] = observe(observer => {
     observer onNext 0L
     // we only want one thread to index at a time
@@ -162,6 +166,10 @@ object PimpDb extends PimpDatabase with Log {
       case Failure(t) => subject.onError(t)
     }
     subject
+  }
+
+  def close(): Unit = {
+    pool.dispose()
   }
 }
 
