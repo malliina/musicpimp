@@ -14,7 +14,7 @@ class SearchPage(s: Search) extends HtmlController {
   def search = PimpActionAsync(implicit req => {
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
     val term = query("term")
-    val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DEFAULT_LIMIT
+    val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DefaultLimit
     val results = term.fold(Future.successful(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map(tracks => respond(
       html = views.html.search(term, tracks, s.wsUrl(req)),

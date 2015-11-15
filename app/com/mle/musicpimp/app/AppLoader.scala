@@ -3,7 +3,6 @@ package com.mle.musicpimp.app
 import com.mle.musicpimp.Starter
 import com.mle.musicpimp.cloud.Clouds
 import com.mle.musicpimp.db.{PimpDb, DatabasePlaylist}
-import com.mle.musicpimp.library.PlaylistService
 import controllers._
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
@@ -22,8 +21,8 @@ case class InitOptions(alarms: Boolean = true,
                        cloud: Boolean = true)
 
 /**
- * @author mle
- */
+  * @author mle
+  */
 class PimpLoader(options: InitOptions) extends ApplicationLoader {
   def this() = this(InitOptions())
 
@@ -35,7 +34,8 @@ class PimpLoader(options: InitOptions) extends ApplicationLoader {
 
 class PimpComponents(context: Context, options: InitOptions)
   extends BuiltInComponentsFromContext(context)
-  with I18nComponents {
+  with I18nComponents
+  with FileUploadWorkaround {
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
@@ -60,7 +60,6 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val pl = new Playlists(ps)
   lazy val sc = new SettingsController(messages)
   lazy val as = new Assets(httpErrorHandler)
-
 
   Starter.startServices(options, c)
 

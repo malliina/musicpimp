@@ -149,15 +149,4 @@ object Starter extends PlayLifeCycle with Log {
         (("http", 9000))
     Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
   }
-
-  //  def test() {
-  //    future {
-  //      var loop = true
-  //      while (loop) {
-  //        printThreads()
-  //        val line = Console.readLine("Press enter to print threads, q followed by enter to quit")
-  //        loop = "q" != line
-  //      }
-  //    }
-  //  }
 }

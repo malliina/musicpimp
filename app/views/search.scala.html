@@ -30,7 +30,7 @@
                     </thead>
                     <tbody>
                     @results.map { row =>
-                        <tr><td>@row.title</td><td>@row.artist</td><td>@row.album</td><th>@trackActions(row.id)</th></tr>
+                        <tr><td>@row.title</td><td>@row.artist</td><td>@row.album</td><td>@trackActions(row.id, "flex")</td></tr>
                     }
                     </tbody>
                 </table>

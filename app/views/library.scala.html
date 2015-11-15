@@ -36,7 +36,7 @@
         <a href="@routes.Rest.library(dir.id)">@dir.title</a>
     }
     @renderSong(song: TrackMeta) = {
-        @trackActions(song.id)
+        @trackActions(song.id, "")
     }
 
     @columnSpan(onlyColumn: Boolean) = {
