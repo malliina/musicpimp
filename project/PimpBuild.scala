@@ -2,9 +2,11 @@ import java.nio.file.Paths
 
 import com.mle.appbundler.FileMapping
 import com.mle.file.StorageFile
+import com.mle.jenkinsctrl.models.{BuildOrder, JobName}
 import com.mle.sbt.GenericKeys._
 import com.mle.sbt.GenericPlugin
 import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
+import com.mle.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
 import com.mle.sbt.mac.MacKeys._
 import com.mle.sbt.mac.MacPlugin._
 import com.mle.sbt.unix.LinuxPlugin
@@ -12,7 +14,7 @@ import com.mle.sbt.win.{WinKeys, WinPlugin}
 import com.mle.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.{linux, rpm}
+import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 import play.sbt.PlayImport
 import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys
@@ -22,18 +24,20 @@ import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin._
 import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
 import sbtbuildinfo.BuildInfoPlugin
-import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 
 object PimpBuild extends Build {
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
+  val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
+  val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
   lazy val pimpProject = PlayProject("musicpimp")
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
     .settings(playSettings: _*)
 
   lazy val commonSettings = Seq(
-    version := "2.9.7",
+    javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
+    version := "2.9.8",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -64,6 +68,24 @@ object PimpBuild extends Build {
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen"),
     updateOptions := updateOptions.value.withCachedResolution(true)
+  )
+
+  lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
+    release := {
+      (AzureKeys.azureUpload in Windows).value
+      val order = BuildOrder.simple(JobName("musicpimp-azure"))
+      val creds = JenkinsKeys.jenkinsCreds.value
+      val log = JenkinsKeys.logger.value
+      JenkinsPlugin.runLogged(order, creds, log)
+    },
+    JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("musicpimp-deb-rpm"))),
+    jenkinsPackage := {
+      val order = BuildOrder.simple(JobName("musicpimp-deb-rpm"))
+      val creds = JenkinsKeys.jenkinsCreds.value
+      val log = JenkinsKeys.logger.value
+      WinKeys.msi.value
+      JenkinsPlugin.runLogged(order, creds, log)
+    }
   )
 
   lazy val nativePackagingSettings =
@@ -129,6 +151,7 @@ object PimpBuild extends Build {
   val httpVersion = "4.4.1"
 
   lazy val playSettings = assemblyConf ++
+    jenkinsSettings ++
     commonSettings ++
     nativePackagingSettings ++
     Seq(
