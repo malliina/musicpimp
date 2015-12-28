@@ -37,15 +37,18 @@ class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
         val track = cmd.track
         MusicPlayer.reset(Library meta track)
       case SKIP =>
-        val index = cmd.value
+        val index = cmd.indexOrValue
         Try(MusicPlayer skip index).recover {
           case iae: IllegalArgumentException => log.warn(s"Cannot skip to index $index. Reason: ${iae.getMessage}")
         }
       case ADD =>
         val track = cmd.track
         MusicPlayer.playlist.add(Library meta track)
+      case Insert =>
+        val track = cmd.track
+        MusicPlayer.playlist.insert(cmd.indexOrValue, Library meta track)
       case REMOVE =>
-        MusicPlayer.playlist delete cmd.value
+        MusicPlayer.playlist.delete(cmd.indexOrValue)
       case ADD_ITEMS =>
         resolveTracks(cmd).map(ts => {
           ts.foreach(MusicPlayer.playlist.add)

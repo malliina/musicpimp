@@ -98,6 +98,7 @@ trait JsonStrings {
   //  val SKIPPED = "skipped"
 
   val REMOVE = "remove"
+  val Insert = "insert"
 
   val SUBSCRIBE = "subscribe"
 

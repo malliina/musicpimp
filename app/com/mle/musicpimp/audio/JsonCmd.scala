@@ -1,12 +1,12 @@
 package com.mle.musicpimp.audio
 
-import com.mle.musicpimp.json.JsonStrings.{CMD, VALUE, TRACK, TRACKS, FOLDER, FOLDERS, ID}
+import com.mle.musicpimp.json.JsonStrings._
 import play.api.libs.json.JsValue
 
 /**
- *
- * @author mle
- */
+  *
+  * @author mle
+  */
 class JsonCmd(json: JsValue) {
   val command = (json \ CMD).as[String]
 
@@ -31,4 +31,8 @@ class JsonCmd(json: JsValue) {
   def idOpt = (json \ ID).asOpt[String]
 
   def id = idOpt.get
+
+  def indexOpt = (json \ PLAYLIST_INDEX).asOpt[Int]
+
+  def indexOrValue = indexOpt getOrElse value
 }
