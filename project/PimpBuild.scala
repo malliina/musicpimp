@@ -74,14 +74,14 @@ object PimpBuild extends Build {
     release := {
       (AzureKeys.azureUpload in Windows).value
       val order = BuildOrder.simple(JobName("musicpimp-azure"))
-      val creds = JenkinsKeys.jenkinsCreds.value
+      val creds = JenkinsKeys.jenkinsReadCreds.value
       val log = JenkinsKeys.logger.value
       JenkinsPlugin.runLogged(order, creds, log)
     },
     JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("musicpimp-deb-rpm"))),
     jenkinsPackage := {
       val order = BuildOrder.simple(JobName("musicpimp-deb-rpm"))
-      val creds = JenkinsKeys.jenkinsCreds.value
+      val creds = JenkinsKeys.jenkinsReadCreds.value
       val log = JenkinsKeys.logger.value
       WinKeys.msi.value
       JenkinsPlugin.runLogged(order, creds, log)
