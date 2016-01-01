@@ -1,6 +1,6 @@
 package tests
 
-import com.mle.musicpimp.messaging.adm.AdmClient
+import com.malliina.musicpimp.messaging.adm.AdmClient
 import org.scalatest.FunSuite
 
 import scala.concurrent.Await

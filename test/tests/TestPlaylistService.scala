@@ -1,8 +1,8 @@
 package tests
 
-import com.mle.musicpimp.models.{SavedPlaylist, PlaylistID, User}
-import com.mle.musicpimp.db.DataTrack
-import com.mle.musicpimp.library.{PlaylistSubmission, PlaylistService}
+import com.malliina.musicpimp.models.{SavedPlaylist, PlaylistID, User}
+import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.library.{PlaylistSubmission, PlaylistService}
 
 import scala.concurrent.Future
 

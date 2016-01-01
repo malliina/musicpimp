@@ -1,16 +1,16 @@
 package controllers
 
 import ch.qos.logback.classic.Level
-import com.mle.play.Authenticator
-import com.mle.util.Logging
+import com.malliina.play.Authenticator
+import com.malliina.util.{Log, Logging}
 import play.api.data.{Form, Forms}
 import play.api.mvc.RequestHeader
 import views.html
 
 /**
- * @author mle
- */
-class LogPage(sockets: PimpLogs, auth: Authenticator) extends HtmlController(auth) {
+  * @author mle
+  */
+class LogPage(sockets: PimpLogs, auth: Authenticator) extends HtmlController(auth) with Log {
   val LEVEL = "level"
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
@@ -34,3 +34,4 @@ class LogPage(sockets: PimpLogs, auth: Authenticator) extends HtmlController(aut
   private def logPage(form: Form[Level])(implicit req: RequestHeader) =
     html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level)
 }
+

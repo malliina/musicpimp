@@ -1,12 +1,13 @@
 package controllers
 
-import com.mle.musicpimp.audio.JsonHandlerBase
-import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.json.JsonStrings._
-import com.mle.play.Authenticator
-import com.mle.play.http.RequestInfo
+import com.malliina.musicpimp.audio.JsonHandlerBase
+import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.play.Authenticator
+import com.malliina.play.http.RequestInfo
+import controllers.PlayerSockets.log
+import play.api.Logger
 import play.api.libs.json.JsValue
-
 /**
  *
  * @author mle
@@ -31,4 +32,8 @@ abstract class PlayerSockets(auth: Authenticator) extends PimpSockets(auth) {
   def handleMessage(message: Message, client: Client): Unit = {
     messageHandler.onJson(message, RequestInfo(client.user, client.request))
   }
+}
+
+object PlayerSockets {
+  private val log = Logger(getClass)
 }

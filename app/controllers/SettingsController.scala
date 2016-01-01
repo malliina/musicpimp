@@ -3,10 +3,10 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
-import com.mle.musicpimp.db.Indexer
-import com.mle.musicpimp.library.{Library, Settings}
-import com.mle.play.Authenticator
-import com.mle.util.{EnvUtils, Log}
+import com.malliina.musicpimp.db.Indexer
+import com.malliina.musicpimp.library.{Library, Settings}
+import com.malliina.play.Authenticator
+import com.malliina.util.{EnvUtils, Log}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages

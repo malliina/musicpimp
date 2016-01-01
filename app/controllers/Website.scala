@@ -2,9 +2,9 @@ package controllers
 
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
-import com.mle.musicpimp.audio.MusicPlayer
-import com.mle.play.Authenticator
-import com.mle.play.ws.WebSocketController
+import com.malliina.musicpimp.audio.MusicPlayer
+import com.malliina.play.Authenticator
+import com.malliina.play.ws.WebSocketController
 import views.html
 
 /**

@@ -2,10 +2,10 @@ package tests
 
 import java.nio.file.{Files, Path, Paths}
 
-import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.http.MultipartRequest
-import com.mle.util.Util
-import com.mle.util.Util._
+import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.http.MultipartRequest
+import com.malliina.util.Util
+import com.malliina.util.Util._
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 

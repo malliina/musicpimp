@@ -2,11 +2,11 @@ package controllers
 
 import java.net.NetworkInterface
 
-import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.play.Authenticator
-import com.mle.play.controllers.AuthRequest
-import com.mle.play.json.JsonFormats
-import com.mle.util.Log
+import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.play.Authenticator
+import com.malliina.play.controllers.AuthRequest
+import com.malliina.play.json.JsonFormats
+import com.malliina.util.Log
 import controllers.ConnectController.Protocols
 import net.glxn.qrgen.QRCode
 import play.api.libs.iteratee.Enumerator

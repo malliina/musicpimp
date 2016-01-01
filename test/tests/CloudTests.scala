@@ -1,7 +1,7 @@
 package tests
 
-import com.mle.concurrent.FutureOps
-import com.mle.musicpimp.cloud.CloudSocket
+import com.malliina.concurrent.FutureOps
+import com.malliina.musicpimp.cloud.CloudSocket
 import org.scalatest.FunSuite
 
 import scala.concurrent.ExecutionContext.Implicits.global

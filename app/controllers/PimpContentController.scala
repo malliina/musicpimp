@@ -1,14 +1,14 @@
 package controllers
 
-import com.mle.musicpimp.json.JsonFormatVersions
-import com.mle.util.Log
+import com.malliina.musicpimp.json.JsonFormatVersions
+import com.malliina.util.Log
+import controllers.PimpContentController.log
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.JsValue
-import play.api.mvc.{Results, Controller, RequestHeader, Result}
+import play.api.mvc.{Controller, RequestHeader, Result, Results}
 
 import scala.concurrent.Future
-import PimpContentController.log
 
 /**
  * Methods that choose the correct response to provide to clients
@@ -18,7 +18,7 @@ import PimpContentController.log
  */
 trait PimpContentController extends Controller {
 
-  import com.mle.musicpimp.json.JsonFormatVersions._
+  import com.malliina.musicpimp.json.JsonFormatVersions._
 
   def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
     PimpRequest.requestedResponseFormat(request) match {
@@ -80,7 +80,7 @@ object PimpContentController {
 
 object PimpRequest extends Log {
 
-  import com.mle.musicpimp.json.JsonFormatVersions._
+  import com.malliina.musicpimp.json.JsonFormatVersions._
 
   /**
    * @param request the request

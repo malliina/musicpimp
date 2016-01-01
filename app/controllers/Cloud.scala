@@ -2,9 +2,11 @@ package controllers
 
 import java.net.ConnectException
 
-import com.mle.concurrent.FutureOps
-import com.mle.musicpimp.cloud.Clouds
-import com.mle.play.Authenticator
+import com.malliina.concurrent.FutureOps
+import com.malliina.musicpimp.cloud.Clouds
+import com.malliina.play.Authenticator
+import controllers.Cloud.log
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.Result
@@ -55,4 +57,8 @@ class Cloud(clouds: Clouds, auth: Authenticator) extends Secured(auth) {
   }
 
   def withError(result: Result, message: String) = result.flashing(FEEDBACK -> message)
+}
+
+object Cloud {
+  private val log = Logger(getClass)
 }

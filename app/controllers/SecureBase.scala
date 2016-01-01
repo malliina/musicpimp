@@ -2,11 +2,11 @@ package controllers
 
 import java.nio.file.Path
 
-import com.mle.concurrent2.FutureOps2
-import com.mle.musicpimp.models.User
-import com.mle.play.Authenticator
-import com.mle.play.auth.BasicCredentials
-import com.mle.play.controllers._
+import com.malliina.musicpimp.models.User
+import com.malliina.play.Authenticator
+import com.malliina.play.auth.BasicCredentials
+import com.malliina.play.concurrent.FutureOps2
+import com.malliina.play.controllers._
 import play.api.Logger
 import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile

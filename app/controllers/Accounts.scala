@@ -1,9 +1,9 @@
 package controllers
 
-import com.mle.play.PimpAuthenticator
-import com.mle.play.auth.RememberMe
-import com.mle.play.controllers.AccountController
-import com.mle.util.Log
+import com.malliina.play.PimpAuthenticator
+import com.malliina.play.auth.RememberMe
+import com.malliina.play.controllers.AccountController
+import com.malliina.util.Log
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

@@ -1,7 +1,7 @@
 package controllers
 
-import com.mle.musicpimp.db.{DataTrack, Indexer, PimpDb}
-import com.mle.play.Authenticator
+import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
+import com.malliina.play.Authenticator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 

@@ -1,6 +1,6 @@
 package controllers
 
-import com.mle.play.Authenticator
+import com.malliina.play.Authenticator
 import play.api.Logger
 import play.api.mvc._
 

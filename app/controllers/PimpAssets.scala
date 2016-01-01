@@ -1,6 +1,6 @@
 package controllers
 
-import com.mle.util.Log
+import com.malliina.util.Log
 import play.api.mvc.EssentialAction
 
 /**

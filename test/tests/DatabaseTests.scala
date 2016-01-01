@@ -2,7 +2,7 @@ package tests
 
 import java.nio.file.Path
 
-import com.mle.musicpimp.db.{DataFolder, DataTrack}
+import com.malliina.musicpimp.db.{DataFolder, DataTrack}
 import org.scalatest.FunSuite
 
 import scala.slick.jdbc.meta.MTable

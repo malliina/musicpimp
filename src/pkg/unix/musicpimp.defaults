@@ -4,4 +4,4 @@ APP_USER=musicpimp
 JAVA_OPTS="-Dmusicpimp.home=/opt/musicpimp -Dconf.dir=/opt/musicpimp -Dlog.dir=/opt/musicpimp/logs -Dlogger.resource=prod-logger.xml"
 JAVA_CMD=/usr/bin/java
 PID_FILE=/var/run/musicpimp.pid
-MAIN_CLASS=com.mle.musicpimp.Starter
+MAIN_CLASS=com.malliina.musicpimp.Starter

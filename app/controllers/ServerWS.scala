@@ -1,10 +1,10 @@
 package controllers
 
-import com.mle.musicpimp.audio._
-import com.mle.musicpimp.cloud.Clouds
-import com.mle.musicpimp.json.{JsonFormatVersions, JsonMessages}
-import com.mle.play.Authenticator
-import com.mle.util.Log
+import com.malliina.musicpimp.audio._
+import com.malliina.musicpimp.cloud.Clouds
+import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
+import com.malliina.play.Authenticator
+import com.malliina.util.Log
 import play.api.libs.json.Json.toJson
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Subscription}

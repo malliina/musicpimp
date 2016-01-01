@@ -1,17 +1,17 @@
 import java.nio.file.Paths
 
-import com.mle.appbundler.FileMapping
-import com.mle.file.StorageFile
-import com.mle.jenkinsctrl.models.{BuildOrder, JobName}
-import com.mle.sbt.GenericKeys._
-import com.mle.sbt.GenericPlugin
-import com.mle.sbt.azure.{AzureKeys, AzurePlugin}
-import com.mle.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
-import com.mle.sbt.mac.MacKeys._
-import com.mle.sbt.mac.MacPlugin._
-import com.mle.sbt.unix.LinuxPlugin
-import com.mle.sbt.win.{WinKeys, WinPlugin}
-import com.mle.sbtplay.PlayProject
+import com.malliina.appbundler.FileMapping
+import com.malliina.file.StorageFile
+import com.malliina.jenkinsctrl.models.{BuildOrder, JobName}
+import com.malliina.sbt.GenericKeys._
+import com.malliina.sbt.GenericPlugin
+import com.malliina.sbt.azure.{AzureKeys, AzurePlugin}
+import com.malliina.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
+import com.malliina.sbt.mac.MacKeys._
+import com.malliina.sbt.mac.MacPlugin._
+import com.malliina.sbt.unix.LinuxPlugin
+import com.malliina.sbt.win.{WinKeys, WinPlugin}
+import com.malliina.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
@@ -37,7 +37,7 @@ object PimpBuild extends Build {
 
   lazy val commonSettings = Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "2.9.9",
+    version := "2.9.10",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -98,7 +98,7 @@ object PimpBuild extends Build {
       PackagerKeys.maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
-      mainClass := Some("com.mle.musicpimp.Starter"),
+      mainClass := Some("com.malliina.musicpimp.Starter"),
       PlayKeys.externalizeResources := false // packages files in /conf to the app jar
     )
 
@@ -146,7 +146,7 @@ object PimpBuild extends Build {
     )
   )
 
-  val mleGroup = "com.github.malliina"
+  val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
 
@@ -156,11 +156,11 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        mleGroup %% "play-base" % "2.4.2",
-        mleGroup %% "util-actor" % "2.0.0",
-        mleGroup %% "util-rmi" % "2.0.0",
-        mleGroup %% "util-audio" % "1.7.0",
-        mleGroup %% "mobile-push" % "1.0.0",
+        malliinaGroup %% "play-base" % "2.5.0",
+        malliinaGroup %% "util-actor" % "2.1.0",
+        malliinaGroup %% "util-rmi" % "2.1.0",
+        malliinaGroup %% "util-audio" % "1.8.0",
+        malliinaGroup %% "mobile-push" % "1.3.1",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -171,11 +171,12 @@ object PimpBuild extends Build {
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-        "com.neovisionaries" % "nv-websocket-client" % "1.12"
+        "com.neovisionaries" % "nv-websocket-client" % "1.12",
+        "org.scalatest" %% "scalatest" % "2.2.5" % Test
       ).map(dep => dep withSources()),
-      buildInfoPackage := "com.mle.musicpimp",
+      buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
-        "com.mle.musicpimp.models.PlaylistID"
+        "com.malliina.musicpimp.models.PlaylistID"
       )
     )
 

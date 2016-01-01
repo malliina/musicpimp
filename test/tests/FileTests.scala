@@ -2,8 +2,8 @@ package tests
 
 import java.nio.file.Path
 
-import com.mle.musicpimp.library.Library
-import com.mle.util.Utils
+import com.malliina.musicpimp.library.Library
+import com.malliina.util.Utils
 import org.scalatest.FunSuite
 
 import scala.concurrent.duration.{DurationDouble, DurationInt}

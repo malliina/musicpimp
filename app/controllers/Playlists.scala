@@ -1,11 +1,13 @@
 package controllers
 
-import com.mle.musicpimp.exception.{PimpException, UnauthorizedException}
-import com.mle.musicpimp.json.JsonStrings.PlaylistKey
-import com.mle.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.mle.musicpimp.models.{PlaylistID, User}
-import com.mle.play.Authenticator
-import com.mle.play.controllers.AuthRequest
+import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
+import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
+import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.malliina.musicpimp.models.{PlaylistID, User}
+import com.malliina.play.Authenticator
+import com.malliina.play.controllers.AuthRequest
+import controllers.Playlists.log
+import play.api.Logger
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -16,6 +18,7 @@ import views.html
 import scala.concurrent.Future
 
 object Playlists {
+  private val log = Logger(getClass)
   val Id = "id"
   val Name = "name"
   val Tracks = "tracks"

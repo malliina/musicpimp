@@ -1,6 +1,6 @@
 package tests
 
-import com.mle.rx.Observables
+import com.malliina.rx.Observables
 import org.scalatest.FunSuite
 import rx.lang.scala.subjects.AsyncSubject
 import rx.lang.scala.{Observable, Subject}
@@ -81,7 +81,7 @@ class RxTests extends FunSuite {
   }
 
   test("return quickly") {
-    import com.mle.concurrent.ExecutionContexts.cached
+    import com.malliina.concurrent.ExecutionContexts.cached
     val lie = Promise[Int]()
     val never = lie.future
     val obs = Observable.from(never) flatMap (i => Observable.just(i))

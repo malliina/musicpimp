@@ -1,6 +1,6 @@
 package tests
 
-import com.mle.musicpimp.beam.BeamCommand
+import com.malliina.musicpimp.beam.BeamCommand
 import org.scalatest.FunSuite
 import play.api.libs.json._
 import play.api.mvc.Controller

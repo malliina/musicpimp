@@ -2,7 +2,7 @@ package tests
 
 import java.nio.file.Paths
 
-import com.mle.util.Log
+import com.malliina.util.Log
 import org.java_websocket.util.Base64
 import org.scalatest.FunSuite
 import play.api.libs.json.Json

@@ -1,5 +1,5 @@
-@(field:Field)
-    @import com.mle.musicpimp.scheduler.WeekDay
+@(field: Field, messages: Messages)
+    @import com.malliina.musicpimp.scheduler.WeekDay
 
     @checkOpt(name: String) = {
         @if(field.indexes.flatMap(i => field("[" + i + "]").value).contains(name)) {
@@ -16,7 +16,7 @@
                 </label>
             </div>
             @WeekDay.EveryDay.zipWithIndex.map(pair => weekDayCheck2(pair._1, pair._2))
-            @bs.helpSpan(field)
+            @bs.helpSpan(field)(messages)
         </div>
     </div>
 

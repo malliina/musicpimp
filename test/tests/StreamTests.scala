@@ -3,10 +3,10 @@ package tests
 import java.io.FileInputStream
 import java.nio.file.{Files, Paths}
 
-import com.mle.musicpimp.http.RangedInputStream
-import com.mle.play.ContentRange
-import com.mle.storage.StorageLong
-import com.mle.util.Util
+import com.malliina.musicpimp.http.RangedInputStream
+import com.malliina.play.ContentRange
+import com.malliina.storage.StorageLong
+import com.malliina.util.Util
 import org.apache.commons.io.IOUtils
 import org.scalatest.FunSuite
 

@@ -1,7 +1,7 @@
 package controllers
 
-import com.mle.musicpimp.Starter
-import com.mle.util.Utils
+import com.malliina.musicpimp.Starter
+import com.malliina.util.Utils
 import play.api.mvc.RequestHeader
 
 object RequestHelpers {

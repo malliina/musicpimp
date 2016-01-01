@@ -1,19 +1,20 @@
 package controllers
 
-import com.mle.musicpimp.audio.TrackMeta
-import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.json.JsonStrings._
-import com.mle.musicpimp.library.Library
-import com.mle.musicpimp.scheduler.json.AlarmJsonHandler
-import com.mle.musicpimp.scheduler.web.SchedulerStrings
-import com.mle.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
-import com.mle.play.Authenticator
-import com.mle.util.Log
+import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
+import com.malliina.musicpimp.scheduler.web.SchedulerStrings
+import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
+import com.malliina.play.Authenticator
+import com.malliina.util.Log
+import play.api.i18n.Messages
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms(auth: Authenticator) extends AlarmEditor(auth) with SchedulerStrings with Log {
+class Alarms(auth: Authenticator, messages: Messages) extends AlarmEditor(auth, messages) with SchedulerStrings with Log {
   def alarms = PimpAction(implicit request => {
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(

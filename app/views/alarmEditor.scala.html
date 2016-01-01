@@ -1,5 +1,5 @@
-@(form: Form[com.mle.musicpimp.scheduler.ClockPlayback], feedback: Option[String] = None)
-@import com.mle.musicpimp.scheduler.web.SchedulerStrings
+@(form: Form[com.malliina.musicpimp.scheduler.ClockPlayback], feedback: Option[String] = None)(implicit m: Messages)
+@import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 @import views.html.bs.{numberInput,saveButton,headerRow,rowColumn}
 @import pimpbs.formTextInput
 
@@ -12,7 +12,7 @@
             </div>
             @numberInput(form(SchedulerStrings.HOURS), "Hour", "hh")
             @numberInput(form(SchedulerStrings.MINUTES), "Minute", "mm")
-            @weekDayCheckBoxes(form(SchedulerStrings.DAYS))
+            @weekDayCheckBoxes(form(SchedulerStrings.DAYS), m)
             @formTextInput(form(SchedulerStrings.TRACK_ID), "Track ID", formGroupClasses = Seq("hidden"))
             @formTextInput(form(SchedulerStrings.TRACK), "Track", "Start typing the name of the track...", "text", "col-sm-10", Seq("selector"))
             @check(form(SchedulerStrings.ENABLED), "Enabled")

@@ -1,9 +1,9 @@
 package controllers
 
-import com.mle.musicpimp.models.ClientInfo
-import com.mle.play.Authenticator
-import com.mle.play.controllers.AuthResult
-import com.mle.play.ws.{JsonWebSockets, TrieClientStorage}
+import com.malliina.musicpimp.models.ClientInfo
+import com.malliina.play.Authenticator
+import com.malliina.play.controllers.AuthResult
+import com.malliina.play.ws.{JsonWebSockets, TrieClientStorage}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.mvc.{Controller, RequestHeader}
@@ -28,5 +28,5 @@ abstract class PimpSockets(auth: Authenticator) extends Controller with JsonWebS
   override def newClient(user: AuthSuccess, channel: Channel[Message])(implicit request: RequestHeader) =
     ClientInfo(channel, request, user.user)
 
-  override def welcomeMessage(client: Client): Option[Message] = Some(com.mle.play.json.JsonMessages.welcome)
+  override def welcomeMessage(client: Client): Option[Message] = Some(com.malliina.play.json.JsonMessages.welcome)
 }

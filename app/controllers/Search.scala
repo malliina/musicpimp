@@ -1,19 +1,19 @@
 package controllers
 
-import com.mle.concurrent.ExecutionContexts.cached
-import com.mle.musicpimp.db.Indexer
-import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
-import com.mle.play.Authenticator
-import com.mle.util.Log
+import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.db.Indexer
+import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
+import com.malliina.play.Authenticator
+import com.malliina.util.Log
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
 
 /**
- * @author Michael
- */
+  * @author Michael
+  */
 object Search {
   val DefaultLimit = 1000
 }

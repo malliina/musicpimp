@@ -1,9 +1,9 @@
 package controllers
 
-import com.mle.musicpimp.audio._
-import com.mle.musicpimp.json.JsonFormatVersions
-import com.mle.play.Authenticator
-import com.mle.util.Log
+import com.malliina.musicpimp.audio._
+import com.malliina.musicpimp.json.JsonFormatVersions
+import com.malliina.play.Authenticator
+import com.malliina.util.Log
 import play.api.libs.json.JsValue
 import play.api.mvc.Call
 

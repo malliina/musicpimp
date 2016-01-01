@@ -3,11 +3,11 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.Paths
 
-import com.mle.musicpimp.json.JsonMessages
-import com.mle.musicpimp.library.{Library, MusicFolder, MusicLibrary}
-import com.mle.musicpimp.models.MusicColumn
-import com.mle.play.{Authenticator, FileResults}
-import com.mle.util.Log
+import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
+import com.malliina.musicpimp.models.MusicColumn
+import com.malliina.play.{Authenticator, FileResults}
+import com.malliina.util.Log
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
