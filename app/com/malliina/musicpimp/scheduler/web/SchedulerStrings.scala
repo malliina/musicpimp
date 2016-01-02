@@ -1,9 +1,9 @@
 package com.malliina.musicpimp.scheduler.web
 
 /**
- *
- * @author mle
- */
+  *
+  * @author mle
+  */
 trait SchedulerStrings {
   val DESCRIPTION = "description"
   val MINUTES = "minutes"
@@ -33,6 +33,8 @@ trait SchedulerStrings {
   val GCM_REMOVE = "gcm_remove"
   val ADM_ADD = "adm_add"
   val ADM_REMOVE = "adm_remove"
+  val ApnsAdd = "apns_add"
+  val ApnsRemove = "apns_remove"
   val URL = "url"
   val TAG = "tag"
 }

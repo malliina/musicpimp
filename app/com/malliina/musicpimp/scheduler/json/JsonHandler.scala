@@ -1,12 +1,13 @@
 package com.malliina.musicpimp.scheduler.json
 
 import com.malliina.musicpimp.audio.MusicPlayer
-import com.malliina.musicpimp.messaging.AndroidDevice
 import com.malliina.musicpimp.messaging.adm.{ADMDevice, AmazonDevices}
+import com.malliina.musicpimp.messaging.apns.APNSDevices
 import com.malliina.musicpimp.messaging.gcm.{GCMDevice, GoogleDevices}
 import com.malliina.musicpimp.messaging.mpns.PushUrls
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, ScheduledPlaybackService}
+import com.malliina.push.apns.APNSToken
 import com.malliina.push.mpns.PushUrl
 import com.malliina.util.Log
 import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
@@ -43,6 +44,10 @@ trait JsonHandler extends SchedulerStrings with Log {
 
   case class RemoveAmazonDevice(id: String) extends Command
 
+  case class AddApnsToken(id: APNSToken) extends Command
+
+  case class RemoveApnsToken(id: APNSToken) extends Command
+
   case object StopPlayback extends Command
 
   def handle(json: JsValue): JsResult[Unit] = parseCommand(json) map handleCommand
@@ -72,6 +77,10 @@ trait JsonHandler extends SchedulerStrings with Log {
         json.validate[ADMDevice].map(AddAmazonDevice)
       case ADM_REMOVE =>
         parse(ID, RemoveAmazonDevice)
+      case ApnsAdd =>
+        (json \ ID).validate[APNSToken].map(AddApnsToken)
+      case ApnsRemove =>
+        (json \ ID).validate[APNSToken].map(RemoveApnsToken)
       case cmd =>
         JsError(s"Unknown command: $cmd")
     }
@@ -93,6 +102,8 @@ trait JsonHandler extends SchedulerStrings with Log {
     case RemoveGoogleDevice(id) => GoogleDevices removeID id
     case AddAmazonDevice(device) => AmazonDevices add device
     case RemoveAmazonDevice(id) => AmazonDevices removeID id
+    case AddApnsToken(token) => APNSDevices add token
+    case RemoveApnsToken(token) => APNSDevices remove token
     case _ => log.warn(s"Unknown command: $cmd")
   }
 }

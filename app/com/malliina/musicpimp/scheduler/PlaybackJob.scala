@@ -6,8 +6,8 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.{MusicPlayer, PlayableTrack}
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.messaging.AndroidDevice
 import com.malliina.musicpimp.messaging.adm.{AdmClient, AmazonDevices}
+import com.malliina.musicpimp.messaging.apns.{PimpAPNSClient, APNSDevices}
 import com.malliina.musicpimp.messaging.gcm.{GCMDevice, GcmClient, GoogleDevices}
 import com.malliina.musicpimp.messaging.mpns.{MicrosoftClient, PushUrls}
 import com.malliina.play.json.JsonFormats
@@ -36,26 +36,21 @@ case class PlaybackJob(track: String) extends Job with Log {
       trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback."))(t => {
         val initResult = MusicPlayer.tryInitTrackWithFallback(t)
         if (initResult.isSuccess) {
-          //        val percentPerSecond = 5
-          //        MusicPlayer.volume.foreach(vol => {
-          //          val s = Observable.interval(1.second).map(_ + 1).take(100 / percentPerSecond).subscribe(basePercentage => {
-          //            MusicPlayer.volume((1.0 * basePercentage * percentPerSecond * 100 * vol).toInt)
-          //          })
-          //        })
           MusicPlayer.play()
+          val apns = APNSDevices.get().map(PimpAPNSClient.sendLogged)
           val toasts = PushUrls.get().map(MicrosoftClient.sendLogged)
           val gcms = GoogleDevices.get().map(GcmClient.sendLogged)
           val adms = AmazonDevices.get().map(AdmClient.sendLogged)
-          val messages = toasts ++ gcms ++ adms
+          val messages = apns ++ toasts ++ gcms ++ adms
           if (messages.isEmpty) {
             log.info(s"No push notification URLs are active, so no push notifications were sent.")
+          } else {
+            Future.sequence(messages)
+              .map(seq => log info s"Sent ${seq.size} notifications.")
+              .recoverAll(t => log.warn(s"Unable to send all notifications. ${t.getClass.getName}", t))
           }
-          Future.sequence(messages)
-            .map(seq => log info s"Sent ${seq.size} messages.")
-            .recoverAll(t => log.warn(s"Unable to send all messages. ${t.getClass.getName}", t))
         }
       })
-
     }.recover {
       case t: Throwable => log.warn(s"Failure while running playback job: $describe", t)
     }
