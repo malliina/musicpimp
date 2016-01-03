@@ -53,15 +53,11 @@ class Alarms(auth: Authenticator, messages: Messages) extends AlarmEditor(auth, 
 }
 
 object Alarms {
-  val jobWriter = new Writes[PlaybackJob] {
-    override def writes(o: PlaybackJob): JsValue = obj(TRACK -> toJson(o.trackInfo))
-  }
-  implicit val alarmWriter = new Writes[ClockPlayback] {
-    override def writes(o: ClockPlayback): JsValue = obj(
-      ID -> toJson(o.id),
-      JOB -> toJson(o.job)(jobWriter),
-      WHEN -> toJson(o.when),
-      ENABLED -> toJson(o.enabled)
-    )
-  }
+  val jobWriter = Writes[PlaybackJob](o => obj(TRACK -> toJson(o.trackInfo)))
+  implicit val alarmWriter = Writes[ClockPlayback](o => obj(
+    ID -> toJson(o.id),
+    JOB -> toJson(o.job)(jobWriter),
+    WHEN -> toJson(o.when),
+    ENABLED -> toJson(o.enabled)
+  ))
 }

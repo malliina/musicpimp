@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.messaging.adm
 
-import com.malliina.musicpimp.messaging.AndroidDevices
+import com.malliina.musicpimp.messaging.TaggedDevices
 
 /**
  * @author Michael
  */
-object AmazonDevices extends AndroidDevices[ADMDevice]("adm.json")
+object AmazonDevices extends TaggedDevices[ADMDevice]("adm.json")

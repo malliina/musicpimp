@@ -132,6 +132,11 @@ trait JsonStrings {
   val PlaylistDelete = "playlist_delete"
   val PlaylistKey = "playlist"
   val PlaylistsKey = "playlists"
+
+  // push notifications
+  val Push = "push"
+  val Result = "result"
+  val Body = "body"
 }
 
 object JsonStrings extends JsonStrings

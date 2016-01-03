@@ -1,11 +1,8 @@
 package com.malliina.musicpimp.messaging.apns
 
-import com.malliina.io.FileSet
-import com.malliina.push.apns.APNSToken
+import com.malliina.musicpimp.messaging.TaggedDevices
 
 /**
   * @author mle
   */
-object APNSDevices extends FileSet[APNSToken]("apns.json") {
-  override protected def id(elem: APNSToken): String = elem.token
-}
+object APNSDevices extends TaggedDevices[APNSDevice]("apns.json")

@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.messaging.gcm
 
+import com.malliina.musicpimp.messaging.PushKeys.{Cmd, Stop, Tag}
 import com.malliina.push.MessagingClient
 import com.malliina.push.gcm.GCMClient
 import com.ning.http.client.Response
@@ -16,5 +17,5 @@ object GcmClient
   with MessagingClient[GCMDevice] {
 
   override def send(dest: GCMDevice): Future[Response] =
-    send(dest.id, Map("cmd" -> "stop", "tag" -> dest.tag))
+    send(dest.id, Map(Cmd -> Stop, Tag -> dest.tag.tag))
 }

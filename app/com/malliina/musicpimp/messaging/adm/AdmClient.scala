@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.messaging.adm
 
+import com.malliina.musicpimp.messaging.PushKeys.{Cmd, Stop, Tag}
 import com.malliina.push.MessagingClient
 import com.malliina.push.adm.ADMClient
 import com.ning.http.client.Response
@@ -18,5 +19,5 @@ object AdmClient
   with MessagingClient[ADMDevice] {
 
   override def send(dest: ADMDevice): Future[Response] =
-    send(dest.id, Map("cmd" -> "stop", "tag" -> dest.tag))
+    send(dest.id, Map(Cmd -> Stop, Tag -> dest.tag.tag))
 }
