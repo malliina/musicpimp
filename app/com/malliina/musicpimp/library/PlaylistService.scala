@@ -28,15 +28,12 @@ trait PlaylistService {
 
   def delete(id: PlaylistID, user: User): Future[Unit]
 
-  def playlistsMeta(user: User): Future[PlaylistsMeta] = {
+  def playlistsMeta(user: User): Future[PlaylistsMeta] =
     playlists(user).map(PlaylistsMeta.apply)
-  }
 
-  def playlistMeta(id: PlaylistID, user: User): Future[Option[PlaylistMeta]] = {
+  def playlistMeta(id: PlaylistID, user: User): Future[Option[PlaylistMeta]] =
     playlist(id, user).map(o => o.map(PlaylistMeta.apply))
-  }
 
-  def saveOrUpdatePlaylistMeta(playlist: PlaylistSubmission, user: User): Future[PlaylistSavedMeta] = {
+  def saveOrUpdatePlaylistMeta(playlist: PlaylistSubmission, user: User): Future[PlaylistSavedMeta] =
     saveOrUpdatePlaylist(playlist, user).map(PlaylistSavedMeta.apply)
-  }
 }

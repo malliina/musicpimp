@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.library.{MusicLibrary, Library, LocalTrack}
+import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 
@@ -10,9 +10,9 @@ import scala.concurrent.duration.DurationDouble
 import scala.util.Try
 
 /**
- *
- * @author mle
- */
+  *
+  * @author mle
+  */
 class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
   def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
 
@@ -48,6 +48,11 @@ class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
       case Insert =>
         val track = cmd.track
         MusicPlayer.playlist.insert(cmd.indexOrValue, Library meta track)
+      case Move =>
+        for {
+          from <- (msg \ From).asOpt[Int]
+          to <- (msg \ To).asOpt[Int]
+        } yield MusicPlayer.playlist.move(from, to)
       case REMOVE =>
         MusicPlayer.playlist.delete(cmd.indexOrValue)
       case ADD_ITEMS =>
@@ -61,6 +66,10 @@ class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
             ts.tail.foreach(MusicPlayer.playlist.add)
           }
         })
+      case ResetPlaylist =>
+        val index = cmd.indexOpt getOrElse BasePlaylist.NoPosition
+        val tracks = cmd.tracksOrNil.map(Library.meta)
+        MusicPlayer.playlist.reset(index, tracks)
       case anythingElse =>
         log error s"Invalid JSON: $msg"
     })

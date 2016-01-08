@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.json
 
 /**
- * @author Michael
- */
+  * @author Michael
+  */
 trait JsonStrings {
   val OK = "ok"
   val PING = "ping"
@@ -99,6 +99,10 @@ trait JsonStrings {
 
   val REMOVE = "remove"
   val Insert = "insert"
+  val ResetPlaylist = "reset_playlist"
+  val Move = "move"
+  val From = "from"
+  val To = "to"
 
   val SUBSCRIBE = "subscribe"
 

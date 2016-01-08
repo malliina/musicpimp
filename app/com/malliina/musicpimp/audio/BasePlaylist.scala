@@ -1,9 +1,13 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.audio.IPlaylist
-import com.malliina.util.Log
+import com.malliina.util.{Lists, Log}
 
 import scala.concurrent.stm._
+
+object BasePlaylist {
+  val NoPosition = -1
+}
 
 /**
   *
@@ -14,11 +18,11 @@ trait BasePlaylist[T]
   with Log {
 
   type PlaylistIndex = Int
-  val NO_POSITION = -1
+  val NO_POSITION = BasePlaylist.NoPosition
 
-  def pos: Ref[PlaylistIndex]
+  protected def pos: Ref[PlaylistIndex]
 
-  def songs: Ref[Seq[T]]
+  protected def songs: Ref[Seq[T]]
 
   def songList = songs.single.get
 
@@ -84,7 +88,7 @@ trait BasePlaylist[T]
   }
 
   def insert(position: PlaylistIndex, song: T) = atomic { implicit txn =>
-    songs.transform(list => insertAt(position, list, song))
+    songs.transform(list => Lists.insertAt(position, list, song))
     onPlaylistModified(songs.get)
     val idx = pos.get
     if (position <= idx && songs.get.size > idx + 1) {
@@ -93,9 +97,39 @@ trait BasePlaylist[T]
     }
   }
 
+  def move(sourcePosition: PlaylistIndex, destPosition: PlaylistIndex) = atomic { implicit txn =>
+    val songCount = songList.size
+    val isActionable =
+      sourcePosition != destPosition &&
+        sourcePosition < songCount &&
+        destPosition < songCount &&
+        sourcePosition >= 0 &&
+        destPosition >= 0
+    if (isActionable) {
+      val isCurrent = index == sourcePosition
+      songs.transform(ts => Lists.move(sourcePosition, destPosition, ts))
+      onPlaylistModified(songs.get)
+      if (isCurrent) {
+        index = destPosition
+        onPlaylistIndexChanged(pos.get)
+      }
+    }
+  }
+
+  def reset(position: PlaylistIndex, tracks: Seq[T]) = atomic { implicit txn =>
+    clearButDontTell()
+    val previousSongs = songs.getAndTransform(_ => tracks)
+    val previousIndex = pos.getAndTransform(_ => position)
+    if (previousSongs != tracks) {
+      onPlaylistModified(songs.get)
+    }
+    if (previousIndex != pos.get) {
+      onPlaylistIndexChanged(pos.get)
+    }
+  }
 
   def delete(position: PlaylistIndex) = atomic { implicit txn =>
-    songs.transform(list => removeAt(position, list))
+    songs.transform(list => Lists.removeAt(position, list))
     onPlaylistModified(songs.get)
     val idx = pos.get
     if (position <= idx && idx >= 0) {
@@ -130,13 +164,5 @@ trait BasePlaylist[T]
 
   }
 
-  private def insertAt(pos: Int, xs: Seq[T], elem: T) = {
-    val (left, right) = xs.splitAt(pos)
-    left ++ Seq(elem) ++ right
-  }
 
-  private def removeAt(pos: Int, xs: Seq[T]): Seq[T] = {
-    val (left, right) = xs.splitAt(pos)
-    left ++ right.drop(1)
-  }
 }
