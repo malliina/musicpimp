@@ -23,6 +23,7 @@ class RxTests extends FunSuite {
     val result = Await.result(p.future, 100.millis)
     assert(result === correctAnswer)
   }
+
   test("Subject does not replay") {
     val s = Subject[Int]()
     var aValue = 0
@@ -34,6 +35,7 @@ class RxTests extends FunSuite {
     assert(aValue === 1)
     assert(bValue === 0)
   }
+
   test("Observable.from replays all items") {
     val subject = AsyncSubject[Int]()
     subject onNext 1
@@ -43,6 +45,7 @@ class RxTests extends FunSuite {
     sub.unsubscribe()
     assert(value === 1)
   }
+
   test("hot cold") {
     val correctAnswer = 42
     val p = Promise[Int]()
@@ -68,6 +71,7 @@ class RxTests extends FunSuite {
       Await.result(f2, 100.millis)
     }
   }
+
   test("hot completes when cold completes") {
     val p = Promise[Int]()
     val f = p.future

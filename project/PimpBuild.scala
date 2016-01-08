@@ -35,9 +35,9 @@ object PimpBuild extends Build {
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
     .settings(playSettings: _*)
 
-  lazy val commonSettings = Seq(
+  lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "2.9.10",
+    version := "2.9.12",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,

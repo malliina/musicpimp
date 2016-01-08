@@ -23,6 +23,7 @@ class StreamTests extends FunSuite {
       assert(bytes.length === Files.size(path).toInt)
     })
   }
+
   test("RangedInputStream to Array[Byte]") {
     val fiveTo14 = Util.using(new RangedInputStream(new FileInputStream(file), 5, 10))(stream => {
       val bytes = IOUtils.toByteArray(stream)
@@ -37,6 +38,7 @@ class StreamTests extends FunSuite {
     })
     assert(fiveTo14.drop(5) === tenTo19.take(5))
   }
+
   test("Ranged for all") {
     val fileSize = Files.size(path).bytes
     val range = ContentRange.all(fileSize)

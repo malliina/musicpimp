@@ -47,17 +47,15 @@ trait JsonMessages extends Log {
   def playlistIndexChanged(newIndex: Int) =
     event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex, PLAYLIST_INDEXv17v18 -> newIndex)
 
-  def playStateChanged(newState: PlayerStates.Value) = {
+  def playStateChanged(newState: PlayerStates.Value) =
     event(PLAYSTATE_CHANGED, STATE -> newState.toString)
-  }
 
   def searchStatus(status: String) = event(SEARCH_STATUS, STATUS -> status)
 
   def withStatus(json: JsValue): JsValue = event(STATUS) ++ json.as[JsObject]
 
-  def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject = {
+  def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject =
     obj(EVENT -> eventType) ++ obj(valuePairs: _*)
-  }
 
   def thanks = Json.obj(MSG -> Json.toJson(THANK_YOU))
 }

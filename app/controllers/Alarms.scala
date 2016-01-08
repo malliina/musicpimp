@@ -14,7 +14,11 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms(auth: Authenticator, messages: Messages) extends AlarmEditor(auth, messages) with SchedulerStrings with Log {
+class Alarms(auth: Authenticator, messages: Messages)
+  extends AlarmEditor(auth, messages)
+  with SchedulerStrings
+  with Log {
+
   def alarms = PimpAction(implicit request => {
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(
