@@ -24,6 +24,9 @@ class PlaylistTests extends FunSuite {
     assert(playlist.index === 4)
     playlist.move(0, 1)
     assert(playlist.index === 4)
+    playlist.index = 2
+    playlist.move(3, 2)
+    assert(playlist.index === 3)
   }
 
   class TestPlaylist extends BasePlaylist[String] {
