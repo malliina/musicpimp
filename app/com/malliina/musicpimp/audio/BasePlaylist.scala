@@ -107,11 +107,13 @@ trait BasePlaylist[T]
         destPosition >= 0
     if (isActionable) {
       val isCurrent = index == sourcePosition
+      val isSourceBelowIndex = sourcePosition < index
       songs.transform(ts => Lists.move(sourcePosition, destPosition, ts))
       onPlaylistModified(songs.get)
       if (isCurrent) {
         index = destPosition
-        onPlaylistIndexChanged(pos.get)
+      } else if (isSourceBelowIndex) {
+        index -= 1
       }
     }
   }
