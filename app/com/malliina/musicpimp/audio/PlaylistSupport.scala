@@ -2,6 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.audio.IPlaylist
 
+import scala.util.{Failure, Try}
+
 /**
  * @author Michael
  */
@@ -15,7 +17,7 @@ trait PlaylistSupport[T] {
    *
    * @param song
    */
-  def playTrack(song: T)
+  def playTrack(song: T): Try[Unit]
 
   /**
    * Skips to the track with the specified index; playback starts automatically.
@@ -24,14 +26,15 @@ trait PlaylistSupport[T] {
    * @return the track skipped to
    * @throws IndexOutOfBoundsException if the index is out of bounds
    */
-  def skip(index: Int): Unit = {
+  def skip(index: Int): Try[Unit] = {
     playlist.index = index
-    playlist.current.foreach(playTrack)
+    play(_.current)
   }
 
-  def nextTrack() = play(_.next)
+  def nextTrack() = play(_.next): Try[Unit]
 
-  def previousTrack() = play(_.prev)
+  def previousTrack() = play(_.prev): Try[Unit]
 
-  private def play(f: IPlaylist[T] => Option[T]) = f(playlist).foreach(playTrack)
+  protected def play(f: IPlaylist[T] => Option[T]): Try[Unit] =
+    f(playlist).map(playTrack).getOrElse(Failure(new Exception("No track")))
 }

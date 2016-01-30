@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import java.io.IOException
+import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
 import com.malliina.musicpimp.json.JsonMessages
@@ -39,24 +40,22 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
 
   def underLying = player
 
-  def reset(track: PlayableTrack): Unit = {
+  def reset(track: PlayableTrack): Try[Unit] = {
     playlist set track
-    playlist.current.foreach(playTrack)
+    play(_.current)
   }
 
-  def setPlaylistAndPlay(track: PlayableTrack): Unit = {
+  def setPlaylistAndPlay(track: PlayableTrack): Try[Unit] = {
     playlist set track
     playTrack(track)
   }
 
-  override def playTrack(songMeta: PlayableTrack): Unit = {
-    val initResult = tryInitTrackWithFallback(songMeta)
-    initResult match {
-      case Success(_) =>
-        play()
-      case Failure(t) =>
+  override def playTrack(songMeta: PlayableTrack): Try[Unit] = {
+    tryInitTrackWithFallback(songMeta).map(_ => play()).recoverWith {
+      case t =>
         log.warn(s"Unable to play track: ${songMeta.id}", t)
         errorOpt = Some(t)
+        Failure(t)
     }
   }
 
@@ -108,9 +107,9 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
    * @return a result wrapped in an [[Option]]
    */
   private def tryWithFallback[T](first: PimpPlayer => T, fallback: PimpPlayer => Option[T]): Option[T] =
-    player.map(p => Try(first(p)).toOption.orElse(fallback(p))).flatten
+    player.flatMap(p => Try(first(p)).toOption.orElse(fallback(p)))
 
-  def play() {
+  def play() = {
     val mustReinitializePlayer = player.exists(_.state == PlayerStates.Closed)
     if (mustReinitializePlayer) {
       player = player.map(p => initPlayer(p.track))
@@ -133,7 +132,6 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
       p.stop()
       send(JsonMessages.playStateChanged(PlayerStates.Stopped))
     })
-    //    ServerPlayerManager.playbackPoller ! Stop
   }
 
   // TODO observables

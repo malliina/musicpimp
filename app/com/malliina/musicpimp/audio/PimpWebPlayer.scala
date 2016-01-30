@@ -10,6 +10,7 @@ import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 
 import scala.concurrent.duration.Duration
+import scala.util.{Success, Try}
 
 /**
  *
@@ -129,9 +130,10 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
     playState = PlayerStates.Closed
   }
 
-  def playTrack(song: TrackMeta) {
+  def playTrack(song: TrackMeta): Try[Unit] = {
     duration = song.duration
     sendCommand(SKIP, playlist.index)
+    Success(())
   }
 
   def status = {
