@@ -5,9 +5,6 @@ import com.malliina.musicpimp.models.{RequestID, PlaylistID, User}
 import com.malliina.play.ContentRange
 import play.api.libs.json.{JsValue, Json}
 
-/**
- * @author Michael
- */
 object PimpMessages {
 
   trait PimpMessage
@@ -42,7 +39,7 @@ object PimpMessages {
 
   case class PlaybackMessage(payload: JsValue) extends PimpMessage
 
-  case class Authenticate(username: String, password: String) extends PimpMessage
+  case class Authenticate(username: User, password: String) extends PimpMessage
 
   case object GetVersion extends PimpMessage
 

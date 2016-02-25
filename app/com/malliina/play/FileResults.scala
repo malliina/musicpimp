@@ -9,9 +9,6 @@ import play.api.libs.MimeTypes
 import play.api.libs.iteratee.{Enumerator, Traversable}
 import play.api.mvc.{RequestHeader, ResponseHeader, Result, Results}
 
-/**
-  * @author Michael
-  */
 trait FileResults {
   def fileResult(path: Path, request: RequestHeader): Result = {
     ContentRange.fromHeader(request, Files.size(path).bytes).toOption

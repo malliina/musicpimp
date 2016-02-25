@@ -1,5 +1,6 @@
 package controllers
 
+import com.malliina.musicpimp.models.User
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountController
@@ -12,9 +13,6 @@ import views.html
 
 import scala.concurrent.Future
 
-/**
-  * @author Michael
-  */
 object Accounts {
   val FEEDBACK = "feedback"
   val USERS_FEEDBACK = "usersFeedback"
@@ -52,7 +50,7 @@ class Accounts(auth: PimpAuthenticator) extends HtmlController(auth) with Accoun
   def delete(user: String) = PimpActionAsync(implicit req => {
     val redir = Redirect(routes.Accounts.users())
     if (user != req.user) {
-      (userManager deleteUser user).map(_ => redir)
+      (userManager deleteUser User(user)).map(_ => redir)
     } else {
       Future.successful(redir.flashing(Accounts.USERS_FEEDBACK -> "You cannot delete yourself."))
     }
@@ -84,7 +82,7 @@ class Accounts(auth: PimpAuthenticator) extends HtmlController(auth) with Accoun
       },
       credentials => {
         val (user, pass, _) = credentials
-        val addCall = userManager.addUser(user, pass)
+        val addCall = userManager.addUser(User(user), pass)
         addCall.map(addError => {
           val (isSuccess, feedback) = addError.fold((true, s"Created user $user."))(e => (false, s"User ${e.user} already exists."))
           Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
@@ -139,7 +137,7 @@ class Accounts(auth: PimpAuthenticator) extends HtmlController(auth) with Accoun
         val (old, newPass, _) = success
         validateCredentials(user, old).flatMap(isValid => {
           if (isValid) {
-            userManager.updatePassword(user, newPass).map(_ => {
+            userManager.updatePassword(User(user), newPass).map(_ => {
               log info s"Password changed for user: $user from: ${request.remoteAddress}"
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
             })

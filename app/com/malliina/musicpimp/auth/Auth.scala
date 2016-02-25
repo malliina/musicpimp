@@ -1,16 +1,18 @@
 package com.malliina.musicpimp.auth
 
 import com.malliina.musicpimp.db.{DatabaseUserManager, PimpDb}
+import com.malliina.musicpimp.models.User
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
-/**
-  * @author Michael
-  */
 object Auth {
-  def hash(username: String, password: String) = DigestUtils.md5Hex(username + ":" + password)
+  def hash(user: User, password: String): String =
+    hash(user.name, password)
+
+  def hash(username: String, password: String): String =
+    DigestUtils.md5Hex(username + ":" + password)
 }
 
 class Auth(db: PimpDb) {

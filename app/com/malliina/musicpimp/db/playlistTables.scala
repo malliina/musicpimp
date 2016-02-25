@@ -9,19 +9,21 @@ class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
 
   def name = column[String]("NAME", O.NotNull)
 
-  def user = column[String]("USER", O.NotNull)
+  def user = column[User]("USER", O.NotNull)
 
-  def userConstraint = foreignKey("USER_FK", user, PimpSchema.usersTable)(_.user,
-    onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def userConstraint = foreignKey("USER_FK", user, PimpSchema.usersTable)(
+    _.user,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade)
 
   def * = (id.?, name, user) <>(build, unbuild)
 
-  def build(kvs: (Option[Long], String, String)): PlaylistRow = kvs match {
-    case (i, n, u) => PlaylistRow(i, n, User(u))
+  def build(kvs: (Option[Long], String, User)): PlaylistRow = kvs match {
+    case (i, n, u) => PlaylistRow(i, n, u)
   }
 
-  def unbuild(row: PlaylistRow): Option[(Option[Long], String, String)] = {
-    Option((row.id, row.name, row.user.name))
+  def unbuild(row: PlaylistRow): Option[(Option[Long], String, User)] = {
+    Option((row.id, row.name, row.user))
   }
 }
 
@@ -36,11 +38,15 @@ class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACK
 
   def pk = primaryKey("PT_PK", (playlist, idx))
 
-  def playlistConstraint = foreignKey("PLAYLIST_FK", playlist, PimpSchema.playlistsTable)(_.id,
-    onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def playlistConstraint = foreignKey("PLAYLIST_FK", playlist, PimpSchema.playlistsTable)(
+    _.id,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade)
 
-  def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(_.id,
-    onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(
+    _.id,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade)
 
   def * = (playlist, track, idx) <>((PlaylistTrack.apply _).tupled, PlaylistTrack.unapply)
 }

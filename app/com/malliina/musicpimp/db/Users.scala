@@ -1,14 +1,12 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.auth.DataUser
+import com.malliina.musicpimp.models.User
 
 import scala.slick.driver.H2Driver.simple._
 
-/**
- * @author Michael
- */
 class Users(tag: Tag) extends Table[DataUser](tag, "USERS") {
-  def user = column[String]("USER", O.PrimaryKey, O.NotNull)
+  def user = column[User]("USER", O.PrimaryKey, O.NotNull)
 
   def passHash = column[String]("PASS_HASH", O.NotNull)
 

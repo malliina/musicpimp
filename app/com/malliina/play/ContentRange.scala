@@ -8,9 +8,6 @@ import play.api.mvc.RequestHeader
 
 import scala.util.{Failure, Try}
 
-/**
- * @author Michael
- */
 case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
   val totalSizeBytes = size.toBytes
 

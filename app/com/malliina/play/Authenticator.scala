@@ -6,9 +6,6 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
 trait Authenticator {
   /**
     * @param user username

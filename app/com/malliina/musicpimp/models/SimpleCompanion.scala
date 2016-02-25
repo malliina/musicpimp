@@ -3,9 +3,6 @@ package com.malliina.musicpimp.models
 import play.api.libs.json.{Format, Json, Reads, Writes}
 import play.api.mvc.PathBindable
 
-/**
- * @author mle
- */
 abstract class SimpleCompanion[Raw, T](implicit rawBindable: PathBindable[Raw], f: Format[Raw]) {
   def apply(raw: Raw): T
 

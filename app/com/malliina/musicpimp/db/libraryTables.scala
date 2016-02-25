@@ -1,19 +1,20 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.db.Mappings.jodaDate
+import com.malliina.musicpimp.models.User
 import org.joda.time.DateTime
 
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.lifted.ProvenShape
 
-case class PlaybackRecord(track: String, when: DateTime, user: String)
+case class PlaybackRecord(track: String, when: DateTime, user: User)
 
 class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
   def track = column[String]("TRACK", O.NotNull)
 
   def when = column[DateTime]("WHEN", O.NotNull)
 
-  def who = column[String]("WHO", O.NotNull)
+  def who = column[User]("WHO", O.NotNull)
 
   def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(
     _.id,
@@ -64,7 +65,10 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
   def parent = column[String]("PARENT")
 
   // foreign key to itself; the root folder is its own parent
-  def parentFolder = foreignKey("PARENT_FK", parent, PimpSchema.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def parentFolder = foreignKey("PARENT_FK", parent, PimpSchema.folders)(
+    _.id,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade)
 
   def * = (id, title, path, parent) <>((DataFolder.apply _).tupled, DataFolder.unapply)
 }

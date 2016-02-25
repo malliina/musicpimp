@@ -34,7 +34,7 @@ import scala.util.Try
 
 case class Deps(playlists: PlaylistService,
                 db: PimpDb,
-                userManager: UserManager,
+                userManager: UserManager[User, String],
                 handler: PlaybackMessageHandler,
                 lib: MusicLibrary)
 

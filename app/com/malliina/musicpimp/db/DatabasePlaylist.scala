@@ -16,7 +16,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
 
   override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
     val result = withSession(s => {
-      val baseQuery = playlistsTable.filter(_.user === user.name)
+      val baseQuery = playlistsTable.filter(_.user === user)
       val q = playlistQuery(baseQuery)
       q.run(s)
     })
@@ -30,7 +30,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
 
   override protected def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
     val result = withSession(s => {
-      val q = playlistQuery(playlistsTable.filter(pl => pl.user === user.name && pl.id === id.id))
+      val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
       q.sortBy(_._4).run(s)
     })
     result.map(data => {
@@ -60,16 +60,15 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
 
   override def delete(id: PlaylistID, user: User): Future[Unit] = {
     withSession(s => {
-      playlistsTable.filter(pl => pl.user === user.name && pl.id === id.id).delete(s)
+      playlistsTable.filter(pl => pl.user === user && pl.id === id.id).delete(s)
     }).map(_ => ())
   }
 
   // transient class
   case class PlaylistEntry(id: Long, name: String, track: DataTrack, index: Int)
 
-  protected def ownsPlaylist(id: PlaylistID, user: User): Future[Boolean] = {
-    withSession(s => playlistsTable.filter(pl => pl.user === user.name && pl.id === id.id).exists.run(s))
-  }
+  protected def ownsPlaylist(id: PlaylistID, user: User): Future[Boolean] =
+    withSession(s => playlistsTable.filter(pl => pl.user === user && pl.id === id.id).exists.run(s))
 
   private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, scala.Seq]) = {
     for {

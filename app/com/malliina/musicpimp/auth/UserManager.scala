@@ -2,35 +2,30 @@ package com.malliina.musicpimp.auth
 
 import scala.concurrent.Future
 
-/**
- * @author Michael
- */
-trait UserManager {
-  type User = String
-  type Password = String
+trait UserManager[U, P] {
 
-  def defaultUser: User
+  def defaultUser: U
 
-  def defaultPass: Password
+  def defaultPass: P
 
   def isDefaultCredentials = authenticate(defaultUser, defaultPass)
 
   /**
-   *
-   * @param user username
-   * @param pass password
-   * @return true if the credentials are valid, false otherwise
-   */
-  def authenticate(user: User, pass: Password): Future[Boolean]
+    *
+    * @param user username
+    * @param pass password
+    * @return true if the credentials are valid, false otherwise
+    */
+  def authenticate(user: U, pass: P): Future[Boolean]
 
-  def updatePassword(user: User, newPass: Password): Future[Unit]
+  def updatePassword(user: U, newPass: P): Future[Unit]
 
-  def addUser(user: User, pass: Password): Future[Option[AlreadyExists]]
+  def addUser(user: U, pass: P): Future[Option[AlreadyExists]]
 
-  def deleteUser(user: User): Future[Unit]
+  def deleteUser(user: U): Future[Unit]
 
-  def users: Future[Seq[User]]
+  def users: Future[Seq[U]]
 
-  case class AlreadyExists(user: User)
+  case class AlreadyExists(user: U)
 
 }

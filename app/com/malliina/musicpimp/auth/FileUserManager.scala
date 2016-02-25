@@ -4,18 +4,20 @@ import java.io.FileNotFoundException
 import java.nio.file.Files
 
 import com.malliina.file.FileUtilities
+import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils
 
 import scala.concurrent.Future
 import scala.io.BufferedSource
 
-class FileUserManager extends UserManager {
+class FileUserManager extends UserManager[User, String] {
+  type Password = String
   private val passFile = FileUtilities pathTo "credentials.txt"
-  val defaultUser = "admin"
+  val defaultUser = User("admin")
   val defaultPass = "test"
 
-  def savedPassHash: Option[User] =
+  def savedPassHash: Option[String] =
     Utils.opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
 

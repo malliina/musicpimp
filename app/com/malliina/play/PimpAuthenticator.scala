@@ -8,15 +8,11 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
-class PimpAuthenticator(val userManager: UserManager, val rememberMe: RememberMe) extends Authenticator {
-  override def authenticate(user: User, pass: String): Future[Boolean] = {
-    userManager.authenticate(user.name, pass)
-  }
+class PimpAuthenticator(val userManager: UserManager[User, String],
+                        val rememberMe: RememberMe) extends Authenticator {
+  override def authenticate(user: User, pass: String): Future[Boolean] =
+    userManager.authenticate(user, pass)
 
-  override def authenticateFromCookie(req: RequestHeader): Future[Option[AuthResult]] = {
+  override def authenticateFromCookie(req: RequestHeader): Future[Option[AuthResult]] =
     rememberMe.authenticateFromCookie(req)
-  }
 }

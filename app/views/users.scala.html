@@ -1,4 +1,5 @@
-@(users: Seq[String], addForm: Form[(String, String, String)])(implicit flash: Flash)
+@import com.malliina.musicpimp.models.User
+@(users: Seq[User], addForm: Form[(String, String, String)])(implicit flash: Flash)
 @manage("users") {
     @bs.row {
         @util.div("col-md-6") {
@@ -13,7 +14,7 @@
                 @users.map { u =>
                     <tr>
                         <td>@u</td>
-                        <td><form action="@routes.Accounts.delete(u)" method="POST"><button class="btn btn-xs btn-danger">
+                        <td><form action="@routes.Accounts.delete(u.name)" method="POST"><button class="btn btn-xs btn-danger">
                             Delete</button></form></td>
                     </tr>
                 }
