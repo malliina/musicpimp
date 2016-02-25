@@ -4,9 +4,6 @@ import com.malliina.musicpimp.models.User
 
 import scala.slick.driver.H2Driver.simple._
 
-/**
- * @author mle
- */
 class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
   def id = column[Long]("ID", O.PrimaryKey, O.NotNull, O.AutoInc)
 

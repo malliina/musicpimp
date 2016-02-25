@@ -10,9 +10,6 @@ import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import scala.slick.lifted.Query
 
-/**
-  * @author mle
-  */
 class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService with Log {
 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}

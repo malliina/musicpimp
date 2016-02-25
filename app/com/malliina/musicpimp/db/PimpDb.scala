@@ -18,9 +18,6 @@ import scala.slick.driver.H2Driver.simple._
 import scala.slick.jdbc.GetResult
 import scala.util.{Failure, Success, Try}
 
-/**
-  * @author Michael
-  */
 class PimpDb extends DatabaseLike with Log with AutoCloseable {
   val H2_URL_SETTINGS = "h2.url.settings"
   val H2_HOME = "h2.home"
@@ -112,8 +109,7 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     executePlain(s"CALL FT_DROP_INDEX('PUBLIC','$tableName');")
   }
 
-  /**
-    * Starts indexing on a background thread and returns an [[Observable]] with progress updates.
+  /** Starts indexing on a background thread and returns an [[Observable]] with progress updates.
     *
     * This algorithm adds new tracks and folders to the index, and removes tracks and folders that no longer exist in
     * the library.

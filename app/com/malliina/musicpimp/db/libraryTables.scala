@@ -1,10 +1,36 @@
 package com.malliina.musicpimp.db
 
-import scala.slick.driver.H2Driver.simple._
+import com.malliina.musicpimp.db.Mappings.jodaDate
+import org.joda.time.DateTime
 
-/**
- * @author Michael
- */
+import scala.slick.driver.H2Driver.simple._
+import scala.slick.lifted.ProvenShape
+
+case class PlaybackRecord(track: String, when: DateTime, user: String)
+
+class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
+  def track = column[String]("TRACK", O.NotNull)
+
+  def when = column[DateTime]("WHEN", O.NotNull)
+
+  def who = column[String]("WHO", O.NotNull)
+
+  def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(
+    _.id,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.NoAction
+  )
+
+  def whoConstraint = foreignKey("WHO_FK", who, PimpSchema.usersTable)(
+    _.user,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade
+  )
+
+  def * : ProvenShape[PlaybackRecord] =
+    (track, when, who) <>((PlaybackRecord.apply _).tupled, PlaybackRecord.unapply)
+}
+
 class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
   def id = column[String]("ID", O.PrimaryKey)
 
@@ -20,7 +46,10 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 
   def folder = column[String]("FOLDER")
 
-  def folderConstraint = foreignKey("FOLDER_FK", folder, PimpSchema.folders)(_.id, onUpdate = ForeignKeyAction.Cascade, onDelete = ForeignKeyAction.Cascade)
+  def folderConstraint = foreignKey("FOLDER_FK", folder, PimpSchema.folders)(
+    _.id,
+    onUpdate = ForeignKeyAction.Cascade,
+    onDelete = ForeignKeyAction.Cascade)
 
   def * = (id, title, artist, album, duration, size, folder) <>((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
 }
@@ -41,12 +70,12 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
 }
 
 /**
- * Temp table.
- */
+  * Temp table.
+  */
 class Ids(tag: Tag) extends Table[Id](tag, "IDS") {
   def id = column[String]("ID", O.PrimaryKey)
 
-  def * = id <> (Id.apply, Id.unapply)
+  def * = id <>(Id.apply, Id.unapply)
 }
 
 case class Id(id: String)

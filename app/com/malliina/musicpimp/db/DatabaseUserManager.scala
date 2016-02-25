@@ -8,9 +8,6 @@ import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-/**
- * @author Michael
- */
 class DatabaseUserManager(db: PimpDb) extends UserManager {
 
   import PimpSchema.{tokens, usersTable}

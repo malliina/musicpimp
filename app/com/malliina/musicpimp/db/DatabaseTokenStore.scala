@@ -5,9 +5,6 @@ import com.malliina.play.auth.{Token, TokenStore}
 import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 
-/**
-  * @author Michael
-  */
 class DatabaseTokenStore(db: PimpDb) extends Sessionizer(db) with TokenStore {
   val tokens = PimpSchema.tokens
 

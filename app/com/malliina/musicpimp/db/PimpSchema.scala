@@ -1,10 +1,7 @@
 package com.malliina.musicpimp.db
 
-import scala.slick.driver.H2Driver.simple._
+import scala.slick.driver.H2Driver.simple.{Table, TableQuery}
 
-/**
-  * @author mle
-  */
 object PimpSchema {
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
@@ -13,6 +10,8 @@ object PimpSchema {
   val idsTable = TableQuery[Ids]
   val playlistsTable = TableQuery[PlaylistTable]
   val playlistTracksTable = TableQuery[PlaylistTracks]
+  val plays = TableQuery[Plays]
 
-  val tableQueries: Seq[TableQuery[_ <: Table[_]]] = Seq(playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
+  val tableQueries: Seq[TableQuery[_ <: Table[_]]] =
+    Seq(plays, playlistTracksTable, playlistsTable, idsTable, tracks, folders, tokens, usersTable)
 }

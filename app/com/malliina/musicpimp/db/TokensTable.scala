@@ -4,9 +4,6 @@ import com.malliina.play.auth.Token
 
 import scala.slick.driver.H2Driver.simple._
 
-/**
- * @author Michael
- */
 class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
   def user = column[String]("USER")
 

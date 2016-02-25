@@ -5,9 +5,6 @@ import com.malliina.musicpimp.library.{MusicFolder, PlaylistSubmission}
 
 import scala.concurrent.Future
 
-/**
- * @author mle
- */
 trait MusicDatabase {
   def rootFolder: Future[MusicFolder]
 

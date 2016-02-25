@@ -171,7 +171,7 @@ object PimpBuild extends Build {
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "2.1.0",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-        "com.neovisionaries" % "nv-websocket-client" % "1.12",
+        "com.neovisionaries" % "nv-websocket-client" % "1.22",
         "org.scalatest" %% "scalatest" % "2.2.5" % Test
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
