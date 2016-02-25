@@ -12,6 +12,7 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
+import com.malliina.musicpimp.models.User
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.{AuthRequest, BaseController, OneFileUploadRequest}
 import com.malliina.play.streams.{StreamParsers, Streams}
@@ -26,13 +27,13 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 /**
- *
- * @author mle
- */
-class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHandler)
+  *
+  * @author mle
+  */
+class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHandler, statsPlayer: StatsPlayer)
   extends Secured(auth)
-  with BaseController
-  with Log {
+    with BaseController
+    with Log {
 
   val webPlayerHandler = webPlayer.messageHandler
 
@@ -41,41 +42,45 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
   def pingAuth = PimpAction(req => NoCacheOk(JsonMessages.version))
 
   /**
-   * Handles server playback commands POSTed as JSON.
-   */
+    * Handles server playback commands POSTed as JSON.
+    */
   def playback = JsonAckAction(handler.onJson)
 
   /**
-   * Handles web browser player playback commands POSTed as JSON.
-   */
+    * Handles web browser player playback commands POSTed as JSON.
+    */
   def webPlayback = JsonAckAction(webPlayerHandler.onJson)
 
   /**
-   * Alias for `playback`. Should be deprecated.
-   */
+    * Alias for `playback`. Should be deprecated.
+    */
   def playlist = playback
 
-  def playUploadedFile = UploadedSongAction(MusicPlayer.setPlaylistAndPlay)
+  def playUploadedFile = UploadedSongAction { track =>
+    MusicPlayer.setPlaylistAndPlay(track)
+  }
 
   def webPlaylist = PimpAction(req => Ok(Json.toJson(playlistFor(req.user))))
 
   /**
-   * Adds the uploaded track to the server playlist.
-   */
-  def addUpload = UploadedSongAction(MusicPlayer.playlist.add)
+    * Adds the uploaded track to the server playlist.
+    */
+  def addUpload = UploadedSongAction { track =>
+    MusicPlayer.playlist.add(track)
+  }
 
   /**
-   * Starts playback of the track in the request.
-   *
-   * First authenticates, then reads the Track header, then attempts to find the track ID from
-   * local storage. If found, starts playback of the local track, otherwise, starts playback of
-   * the streamed track available in the body of the request.
-   *
-   * Returns Unauthorized if authentication fails (as usual), and BadRequest with JSON if the
-   * Track header is faulty. Otherwise returns 200 OK.
-   *
-   * TODO: See and fix https://github.com/playframework/playframework/issues/1842
-   */
+    * Starts playback of the track in the request.
+    *
+    * First authenticates, then reads the Track header, then attempts to find the track ID from
+    * local storage. If found, starts playback of the local track, otherwise, starts playback of
+    * the streamed track available in the body of the request.
+    *
+    * Returns Unauthorized if authentication fails (as usual), and BadRequest with JSON if the
+    * Track header is faulty. Otherwise returns 200 OK.
+    *
+    * TODO: See and fix https://github.com/playframework/playframework/issues/1842
+    */
   def streamedPlayback = Authenticated(user => EssentialAction(requestHeader => {
     val headerValue = requestHeader.headers.get(JsonStrings.TRACK_HEADER)
       .map(Json.parse(_).validate[BaseTrackMeta])
@@ -85,15 +90,18 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
     ).getOrElse(Left(loggedJson("No Track header is defined.")))
     val authAction = metaOrError.fold(
       error => PimpAction(BadRequest(error)),
-      meta => localPlaybackAction(meta.id).getOrElse(streamingAction(meta)))
+      meta => {
+        statsPlayer.updateUser(User(user.user))
+        localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
+      }
+    )
     authAction(requestHeader)
   }))
 
-  /**
-   * Beams the local track according to the [[BeamCommand]] in the request body.
-   *
-   * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
-   */
+  /** Beams the local track according to the [[BeamCommand]] in the request body.
+    *
+    * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
+    */
   def stream = PimpParsedAction(parse.json)(implicit req => {
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
@@ -129,22 +137,22 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
   ))
 
   /**
-   * The status of the web player of the user making the request.
-   */
+    * The status of the web player of the user making the request.
+    */
   def webStatus = PimpAction(req => Ok(webStatusJson(req.user)))
 
   private def localPlaybackAction(id: String): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id).map(track => {
       /**
-       * The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
-       *
-       * The request has already been authenticated at this point because this method is called from within an
-       * Authenticated block only, see `streamedPlayback`. The following authentication made by PimpAction is thus
-       * superfluous. The next line is not inside the OkPimpAction block because we want to start playback before the
-       * body of the request, which may contain a large file, has been received: if the track is already available
-       * locally, the uploaded file is ignored. Clients should thus ask the server whether it already has a file before
-       * initiating long-running, possibly redundant, file uploads.
-       */
+        * The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
+        *
+        * The request has already been authenticated at this point because this method is called from within an
+        * Authenticated block only, see `streamedPlayback`. The following authentication made by PimpAction is thus
+        * superfluous. The next line is not inside the OkPimpAction block because we want to start playback before the
+        * body of the request, which may contain a large file, has been received: if the track is already available
+        * locally, the uploaded file is ignored. Clients should thus ask the server whether it already has a file before
+        * initiating long-running, possibly redundant, file uploads.
+        */
       MusicPlayer.setPlaylistAndPlay(track)
       log info s"Playing local file of: ${track.id}"
       PimpAction(Ok)
@@ -189,12 +197,12 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
   }
 
   /**
-   * Builds an [[play.api.libs.iteratee.Iteratee]] that writes any consumed bytes to both `file` and a stream. The bytes
-   * written to the stream are made available to the returned [[InputStream]].
-   *
-   * @param file file to write to
-   * @return an [[InputStream]] an an [[play.api.libs.iteratee.Iteratee]]
-   */
+    * Builds an [[play.api.libs.iteratee.Iteratee]] that writes any consumed bytes to both `file` and a stream. The bytes
+    * written to the stream are made available to the returned [[InputStream]].
+    *
+    * @param file file to write to
+    * @return an [[InputStream]] an an [[play.api.libs.iteratee.Iteratee]]
+    */
   private def streamingAndFileWritingIteratee(file: Path): (PipedInputStream, Iteratee[Array[Byte], Long]) = {
     Option(file.getParent).foreach(p => Files.createDirectories(p))
     val streamOut = new PipedOutputStream()
@@ -235,6 +243,7 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
     MetaUploadAction(implicit req => {
       songAction(req.track)
+      statsPlayer.updateUser(User(req.user))
       AckResponse
     })
 
@@ -272,10 +281,10 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
 
 object Rest extends Log {
   /**
-   * Beams a track to a URI as specified in `cmd`.
-   *
-   * @param cmd beam details
-   */
+    * Beams a track to a URI as specified in `cmd`.
+    *
+    * @param cmd beam details
+    */
   def beam(cmd: BeamCommand): Either[String, HttpResponse] =
     try {
       val uri = cmd.uri

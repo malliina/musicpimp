@@ -2,6 +2,7 @@
 GET         /                                  controllers.LibraryController.rootLibrary
 GET         /player                            controllers.Website.player
 GET         /popupPlayer                       controllers.Website.popupPlayer
+GET         /player/recent                     controllers.Website.mostRecent
 GET         /settings                          controllers.SettingsController.settings
 GET         /connect                           controllers.ConnectController.connect
 GET         /image                             controllers.ConnectController.image

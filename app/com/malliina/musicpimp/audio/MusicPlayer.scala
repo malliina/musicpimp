@@ -11,13 +11,10 @@ import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subject, Subscription}
 
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
-/**
- * This is a mutable mess. It should be rewritten, maybe using Rx.
- *
- * @author Michael
- */
+/** This is a mutable mess. It should be rewritten, maybe using Rx.
+  */
 object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log {
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
@@ -25,6 +22,8 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   private val subject = Subject[JsValue]()
   val events: Observable[JsValue] = subject
   val allEvents = events.merge(playlist.events)
+  private val trackHistorySubject = Subject[TrackMeta]()
+  val trackHistory: Observable[TrackMeta] = trackHistorySubject
 
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
@@ -32,10 +31,9 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   var stateSubscription: Option[Subscription] = None
   var timeSubscription: Option[Subscription] = None
 
-  /**
-   * Every time the track changes, a new [[PimpPlayer]] is used.
-   * - Well, why?
-   */
+  /** Every time the track changes, a new [[PimpPlayer]] is used.
+    * - Well, why?
+    */
   private var player: Option[PimpPlayer] = None
 
   def underLying = player
@@ -72,12 +70,11 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   }
 
 
-  /**
-   * Blocks until an [[javax.sound.sampled.AudioInputStream]] can be created of the media.
-   *
-   * @param track
-   * @throws LineUnavailableException
-   */
+  /** Blocks until an [[javax.sound.sampled.AudioInputStream]] can be created of the media.
+    *
+    * @param track
+    * @throws LineUnavailableException
+    */
   private def initTrack(track: PlayableTrack): Unit = {
     // If the player exists, tries to obtain the volume; if it fails, falls back to the cached volume.
     val previousVolume: Option[Int] = tryWithFallback(_.volume, _.cachedVolume)
@@ -96,16 +93,16 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
     }
     previousMute foreach mute
     send(JsonMessages.trackChanged(track))
+    trackHistorySubject.onNext(track)
   }
 
-  /**
-   * If the player exists, first tries `first`, and if that fails exceptionally, falls back to `fallback`.
-   *
-   * @param first first attempt
-   * @param fallback optional fallback value
-   * @tparam T desired result
-   * @return a result wrapped in an [[Option]]
-   */
+  /** If the player exists, first tries `first`, and if that fails exceptionally, falls back to `fallback`.
+    *
+    * @param first    first attempt
+    * @param fallback optional fallback value
+    * @tparam T desired result
+    * @return a result wrapped in an [[Option]]
+    */
   private def tryWithFallback[T](first: PimpPlayer => T, fallback: PimpPlayer => Option[T]): Option[T] =
     player.flatMap(p => Try(first(p)).toOption.orElse(fallback(p)))
 
@@ -154,10 +151,10 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   def volume: Option[Int] = player.map(_.volume)
 
   /**
-   *
-   * @param level new volume
-   * @return true if the volume was changed, false otherwise
-   */
+    *
+    * @param level new volume
+    * @return true if the volume was changed, false otherwise
+    */
   def setVolume(level: Int): Boolean =
     player.filter(_.volume != level).map(p => {
       p.volume = level

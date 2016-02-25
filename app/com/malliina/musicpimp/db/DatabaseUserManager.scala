@@ -9,6 +9,10 @@ import scala.concurrent.Future
 import scala.slick.driver.H2Driver.simple._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+object DatabaseUserManager {
+  val DefaultUser = User("admin")
+}
+
 class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
 
   import PimpSchema.{tokens, usersTable}
@@ -22,7 +26,7 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
     })
   }
 
-  override def defaultUser: User = User("admin")
+  override def defaultUser: User = DatabaseUserManager.DefaultUser
 
   override def defaultPass: String = "test"
 

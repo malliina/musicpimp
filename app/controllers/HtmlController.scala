@@ -3,10 +3,6 @@ package controllers
 import com.malliina.play.Authenticator
 import play.api.mvc.{EssentialAction, RequestHeader}
 
-/**
- *
- * @author mle
- */
 class HtmlController(auth: Authenticator) extends Secured(auth) {
   protected def navigate(page: => play.twirl.api.Html): EssentialAction = navigate(_ => page)
 

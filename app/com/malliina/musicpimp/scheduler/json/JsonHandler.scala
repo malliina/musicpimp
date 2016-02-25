@@ -12,10 +12,6 @@ import com.malliina.push.mpns.PushUrl
 import com.malliina.util.Log
 import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
 
-/**
- *
- * @author mle
- */
 object AlarmJsonHandler extends JsonHandler
 
 trait JsonHandler extends SchedulerStrings with Log {

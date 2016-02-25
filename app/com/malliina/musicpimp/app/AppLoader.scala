@@ -1,10 +1,11 @@
 package com.malliina.musicpimp.app
 
 import com.malliina.musicpimp.Starter
-import com.malliina.musicpimp.audio.PlaybackMessageHandler
+import com.malliina.musicpimp.audio.{StatsPlayer, PlaybackMessageHandler}
 import com.malliina.musicpimp.cloud.{Deps, Clouds}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
+import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import controllers._
@@ -24,9 +25,6 @@ case class InitOptions(alarms: Boolean = true,
                        indexer: Boolean = true,
                        cloud: Boolean = true)
 
-/**
-  * @author mle
-  */
 class PimpLoader(options: InitOptions) extends ApplicationLoader {
   def this() = this(InitOptions())
 
@@ -55,8 +53,10 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val lib = new DatabaseLibrary(db)
   lazy val userManager = new DatabaseUserManager(db)
   lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db))
+  lazy val stats = new DatabaseStats(db)
+  lazy val statsPlayer = new StatsPlayer(stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe)
-  lazy val handler = new PlaybackMessageHandler(lib)
+  lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib)
   lazy val c = new Clouds(deps)
 
@@ -65,10 +65,10 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val lp = new LogPage(ls, auth)
   lazy val wp = new WebPlayer(auth)
   lazy val sws = new ServerWS(c, auth, handler)
-  lazy val webCtrl = new Website(wp, sws, auth)
+  lazy val webCtrl = new Website(wp, sws, auth, stats)
   lazy val s = new Search(indexer, auth)
   lazy val sp = new SearchPage(s, indexer, db, auth)
-  lazy val r = new Rest(wp, auth, handler)
+  lazy val r = new Rest(wp, auth, handler, statsPlayer)
   lazy val pl = new Playlists(ps, auth)
   lazy val settingsCtrl = new SettingsController(messages, indexer, auth)
   lazy val as = new Assets(httpErrorHandler)
@@ -80,6 +80,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val pimpAssets = new PimpAssets
 
   Starter.startServices(options, c, db, indexer)
+  val dummyForInit = statsPlayer
 
   lazy val router: Routes = new Routes(
     httpErrorHandler, libCtrl, webCtrl,
@@ -92,6 +93,7 @@ class PimpComponents(context: Context, options: InitOptions)
     sws.subscription.unsubscribe()
     s.subscription.unsubscribe()
     Starter.stopServices()
+    statsPlayer.close()
     db.close()
   })
 }

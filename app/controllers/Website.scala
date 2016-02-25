@@ -3,15 +3,14 @@ package controllers
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import com.malliina.musicpimp.audio.MusicPlayer
+import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.play.Authenticator
 import com.malliina.play.ws.WebSocketController
+import play.api.libs.concurrent.Execution
 import views.html
 
-/**
- *
- * @author mle
- */
-class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authenticator)
+class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authenticator, stats: PlaybackStats)
   extends HtmlController(auth) {
 
   def player = navigate(implicit req => {
@@ -24,6 +23,12 @@ class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authentica
       }
     html.player(serverWS.wsUrl, feedback)
   })
+
+  def mostRecent = pimpActionAsync2 { implicit req =>
+    val user = User(req.user)
+    stats.mostRecent(user, count = 100)
+      .map(entries => html.mostRecent(entries, user))(Execution.defaultContext)
+  }
 
   def errorMsg(t: Throwable): String = t match {
     case _: LineUnavailableException =>

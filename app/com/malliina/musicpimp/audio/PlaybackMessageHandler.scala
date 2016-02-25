@@ -2,6 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
+import com.malliina.musicpimp.models.User
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 
@@ -9,14 +10,11 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationDouble
 import scala.util.Try
 
-/**
-  *
-  * @author mle
-  */
-class PlaybackMessageHandler(lib: MusicLibrary) extends JsonHandlerBase {
+class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer) extends JsonHandlerBase {
   def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
 
   override protected def handleMessage(msg: JsValue, user: String): Unit = {
+    statsPlayer.updateUser(User(user))
     withCmd(msg)(cmd => cmd.command match {
       case RESUME =>
         MusicPlayer.play()
