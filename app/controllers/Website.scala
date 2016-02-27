@@ -7,8 +7,13 @@ import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.play.Authenticator
 import com.malliina.play.ws.WebSocketController
-import play.api.libs.concurrent.Execution
+import play.api.http.Writeable
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.mvc.AnyContent
+import play.api.mvc.Security.AuthenticatedRequest
 import views.html
+
+import scala.concurrent.Future
 
 class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authenticator, stats: PlaybackStats)
   extends HtmlController(auth) {
@@ -24,11 +29,22 @@ class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authentica
     html.player(serverWS.wsUrl, feedback)
   })
 
-  def mostRecent = pimpActionAsync2 { implicit req =>
-    val user = User(req.user)
+  def recent = userAction { req =>
+    val user = req.user
     stats.mostRecent(user, count = 100)
-      .map(entries => html.mostRecent(entries, user))(Execution.defaultContext)
+      .map(entries => html.mostRecent(entries, user))
   }
+
+  def popular = userAction { req =>
+    val user = req.user
+    stats.mostPlayed(user)
+      .map(entries => html.mostPopular(entries, user))
+  }
+
+  protected def userAction[R: Writeable](f: AuthenticatedRequest[AnyContent, User] => Future[R]) =
+    pimpActionAsync2 { r =>
+      f(new AuthenticatedRequest(User(r.user), r))
+    }
 
   def errorMsg(t: Throwable): String = t match {
     case _: LineUnavailableException =>
