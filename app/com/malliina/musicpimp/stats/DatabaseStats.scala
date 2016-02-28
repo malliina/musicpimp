@@ -27,7 +27,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
     })
   }
 
-  override def mostPlayed(user: User): Future[Seq[MostPlayedEntry]] = {
+  override def mostPlayed(user: User): Future[Seq[PopularEntry]] = {
     val query = playbackHistory(user).groupBy {
       case (record, track) => track
     }.map {
@@ -36,7 +36,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
       case (track, count) => count.desc
     }
     runQuery(query).map(_.map {
-      case (track, count) => PimpMostPlayedEntry(track, count)
+      case (track, count) => PopularEntry(track, count)
     })
   }
 

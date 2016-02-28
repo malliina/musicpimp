@@ -5,12 +5,6 @@ import com.malliina.musicpimp.models.User
 
 import scala.concurrent.Future
 
-trait MostPlayedEntry {
-  def track: TrackMeta
-
-  def playbackCount: Int
-}
-
 trait PlaybackStats {
   /** Increments the playback count of `track` by one.
     *
@@ -24,7 +18,7 @@ trait PlaybackStats {
     * @param user user
     * @return the most played tracks, ordered by playback count
     */
-  def mostPlayed(user: User): Future[Seq[MostPlayedEntry]]
+  def mostPlayed(user: User): Future[Seq[PopularEntry]]
 
   /**
     * @param user  user

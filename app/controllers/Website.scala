@@ -4,13 +4,12 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.models.User
-import com.malliina.musicpimp.stats.PlaybackStats
+import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.Authenticator
 import com.malliina.play.ws.WebSocketController
-import play.api.http.Writeable
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.AnyContent
 import play.api.mvc.Security.AuthenticatedRequest
+import play.api.mvc.{AnyContent, Result}
 import views.html
 
 import scala.concurrent.Future
@@ -29,20 +28,28 @@ class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authentica
     html.player(serverWS.wsUrl, feedback)
   })
 
-  def recent = userAction { req =>
+  def recent = userAction { implicit req =>
     val user = req.user
-    stats.mostRecent(user, count = 100)
-      .map(entries => html.mostRecent(entries, user))
+    stats.mostRecent(user, count = 100).map { entries =>
+      respond2(
+        html = html.mostRecent(entries, user),
+        json = RecentList(entries)
+      )
+    }
   }
 
-  def popular = userAction { req =>
+  def popular = userAction { implicit req =>
     val user = req.user
-    stats.mostPlayed(user)
-      .map(entries => html.mostPopular(entries, user))
+    stats.mostPlayed(user).map { entries =>
+      respond2(
+        html = html.mostPopular(entries, user),
+        json = PopularList(entries)
+      )
+    }
   }
 
-  protected def userAction[R: Writeable](f: AuthenticatedRequest[AnyContent, User] => Future[R]) =
-    pimpActionAsync2 { r =>
+  protected def userAction(f: AuthenticatedRequest[AnyContent, User] => Future[Result]) =
+    actionAsync() { r =>
       f(new AuthenticatedRequest(User(r.user), r))
     }
 

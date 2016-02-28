@@ -20,7 +20,6 @@ class StatsPlayer(stats: PlaybackStats) extends AutoCloseable {
   )
 
   def updateUser(user: User): Unit = {
-    println(s"Set user to $user")
     atomic(txn => latestUser.update(user)(txn))
   }
 

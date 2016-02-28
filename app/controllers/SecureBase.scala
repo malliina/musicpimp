@@ -16,16 +16,11 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
 class SecureBase(auth: Authenticator) extends PimpContentController with BaseSecurity {
-  override def authenticate(implicit request: RequestHeader): Future[Option[AuthResult]] = {
+  override def authenticate(implicit request: RequestHeader): Future[Option[AuthResult]] =
     super.authenticate.checkOrElse(_.nonEmpty, auth.authenticateFromCookie(request))
-  }
 
-  /**
-    * Validates the supplied credentials.
+  /** Validates the supplied credentials.
     *
     * Hashes the supplied credentials and compares the hash with the first line of
     * the password file. If they equal, validation succeeds, otherwise it fails.
@@ -48,13 +43,14 @@ class SecureBase(auth: Authenticator) extends PimpContentController with BaseSec
     *
     * If authentication fails, logs auth fail message.
     */
-  def AuthenticatedAndLogged(f: AuthResult => EssentialAction): EssentialAction = Authenticated(user => Logged(user, f))
+  def AuthenticatedAndLogged(f: AuthResult => EssentialAction): EssentialAction =
+    Authenticated(user => Logged(user, f))
 
   /**
     * Returns an action with the result specified in <code>onFail</code> if authentication fails.
     *
     * @param onFail result to return if authentication fails
-    * @param f the action we want to do
+    * @param f      the action we want to do
     */
   def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) = {
     authenticatedAsync(req => authenticate(req), onFail)(user => {
@@ -85,27 +81,26 @@ class SecureBase(auth: Authenticator) extends PimpContentController with BaseSec
     })
   }
 
-  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) = {
+  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) =
     PimpParsedActionAsync(parser)(req => Future.successful(f(req)))
-  }
 
-  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) = {
+  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) =
     PimpParsedActionAsync(parse.anyContent)(f)
-  }
+
+  def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) =
+    okAsyncAction(parse.anyContent)(f)
+
+  def okAsyncAction[T, R: Writeable](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[R]) =
+    actionAsync(parser)(req => f(req).map(r => Ok(r)))
+
+  def actionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) =
+    PimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
   def PimpParsedActionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) = {
     AuthenticatedAndLogged(auth => Action.async(parser)(req => {
       val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))
       resultFuture.map(r => maybeWithCookie(auth, r))
     }))
-  }
-
-  def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) = {
-    pimpParsedActionAsync2(parse.anyContent)(f)
-  }
-
-  def pimpParsedActionAsync2[T, R: Writeable](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[R]) = {
-    PimpParsedActionAsync(parser)(req => f(req).map(r => Ok(r)).recover(errorHandler))
   }
 
   def errorHandler: PartialFunction[Throwable, Result] = {
@@ -117,7 +112,7 @@ class SecureBase(auth: Authenticator) extends PimpContentController with BaseSec
     * To achieve that, we remember the result of the authentication and then update any cookie, if necessary, in the
     * response to the request.
     *
-    * @param auth authentication output
+    * @param auth   authentication output
     * @param result response
     * @return response, with possibly updated cookies
     */
