@@ -4,17 +4,17 @@ import com.malliina.musicpimp.db.Mappings.jodaDate
 import com.malliina.musicpimp.models.User
 import org.joda.time.DateTime
 
-import scala.slick.driver.H2Driver.simple._
-import scala.slick.lifted.ProvenShape
+import slick.driver.H2Driver.api._
+import slick.lifted.ProvenShape
 
 case class PlaybackRecord(track: String, when: DateTime, user: User)
 
 class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
-  def track = column[String]("TRACK", O.NotNull)
+  def track = column[String]("TRACK")
 
-  def when = column[DateTime]("WHEN", O.NotNull)
+  def when = column[DateTime]("WHEN")
 
-  def who = column[User]("WHO", O.NotNull)
+  def who = column[User]("WHO")
 
   def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(
     _.id,

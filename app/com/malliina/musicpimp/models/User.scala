@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.models
 
-import scala.slick.driver.H2Driver.simple.{MappedColumnType, stringColumnType}
+import slick.driver.H2Driver.api.{MappedColumnType, stringColumnType}
 
 case class User(name: String) {
   override def toString = name

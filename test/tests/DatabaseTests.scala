@@ -4,9 +4,9 @@ import java.nio.file.Path
 
 import com.malliina.musicpimp.db.{DataFolder, DataTrack}
 import org.scalatest.FunSuite
+import slick.jdbc.meta.MTable
+import slick.lifted.AbstractTable
 
-import scala.slick.jdbc.meta.MTable
-import scala.slick.lifted.AbstractTable
 
 /**
  * @author Michael
@@ -33,7 +33,7 @@ class DatabaseTests extends FunSuite {
   )
   val tracksInFolder2 = testTracks.slice(2, 5)
 
-  import scala.slick.driver.H2Driver.simple._
+  import slick.driver.H2Driver.api._
 
   case class Query(query: String, other: String)
 
@@ -78,11 +78,11 @@ class DatabaseTests extends FunSuite {
   //    })
   //  }
 
-  def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {
-    MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty
-  }
+//  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*) = {
+//    tables.filter(t => !exists(t)).foreach(t => t.schema.create)
+//  }
 
-  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*)(implicit session: Session) = {
-    tables.filter(t => !exists(t)(session)).foreach(t => t.ddl.create)
-  }
+//  def exists[T <: AbstractTable[_]](table: TableQuery[T]) = {
+//    MTable.getTables(table.baseTableRow.tableName).list(session).nonEmpty
+//  }
 }

@@ -4,35 +4,31 @@ import java.sql.SQLException
 
 import com.malliina.musicpimp.db.DatabaseLike.log
 import play.api.Logger
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import slick.driver.H2Driver.api._
+import slick.jdbc.meta.MTable
+import slick.lifted.{AbstractTable, TableQuery}
 
-import scala.concurrent.Future
-import scala.slick.driver.H2Driver.simple._
-import scala.slick.jdbc.meta.MTable
-import scala.slick.jdbc.{GetResult, SetParameter, StaticQuery}
-import scala.slick.lifted.AbstractTable
-import scala.util.Try
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 
-/**
- * @author Michael
- */
 trait DatabaseLike {
   def database: Database
 
   def tableQueries: Seq[TableQuery[_ <: Table[_]]]
 
   def init(): Unit = {
-    withSession(implicit session => {
-      log info s"Ensuring all tables exist..."
-      createIfNotExists(tableQueries: _*)
-    })
+    log info s"Ensuring all tables exist..."
+    createIfNotExists(tableQueries: _*)
   }
 
-  def withSession[T](f: Session => T): Future[T] = Future.fromTry(Try(database withSession f))
+  //  def withSession[T](f: Session => T): Future[T] = Future.fromTry(Try(database withSession f))
 
-  def exists[T <: AbstractTable[_]](table: TableQuery[T])(implicit session: Session) = {
+  def exists[T <: AbstractTable[_]](table: TableQuery[T]): Boolean = {
     val tableName = table.baseTableRow.tableName
     try {
-      MTable.getTables(tableName).list(session).nonEmpty
+      val future = database.run(MTable.getTables(tableName))
+      Await.result(future, 5.seconds).nonEmpty
     } catch {
       case sqle: SQLException =>
         log.error(s"Unable to verify table: $tableName", sqle)
@@ -40,25 +36,21 @@ trait DatabaseLike {
     }
   }
 
-  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*)(implicit session: Session) =
-    tables.reverse.filter(t => !exists(t)(session)).foreach(t => initTable(t))
+  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*) =
+    tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
-  def initTable[T <: Table[_]](table: TableQuery[T])(implicit session: Session) = {
-    table.ddl.create(session)
-    val msg = s"Created table: ${table.baseTableRow.tableName}"
-    log info msg
+  def initTable[T <: Table[_]](table: TableQuery[T]) = {
+    database.run(table.schema.create)
+    log info s"Created table: ${table.baseTableRow.tableName}"
   }
 
-  def executePlain(queries: String*) =
-    withSession(s => queries.foreach(q => StaticQuery.updateNA(q).execute(s)))
+  def executePlain(queries: String*): Future[Seq[Int]] =
+    Future.traverse(queries)(query => database.run(sqlu"""$query"""))
 
-  def queryPlain[R](query: String)(implicit rconv: GetResult[R]) =
-    withSession(s => StaticQuery.queryNA[R](query).list(s))
-
-  def queryPlainParam[R, P](query: String, param: P)(implicit pconv: SetParameter[P], rconv: GetResult[R]) = {
-    val q = StaticQuery.query[P, R](query)
-    withSession(s => q(param).list(s))
-  }
+  //  def queryPlain[R](query: String)(implicit rconv: GetResult[R]): Future[Seq[R]] = {
+  //    val action = sql"""$query""".as[R]
+  //    database.run(action)
+  //  }
 }
 
 object DatabaseLike {

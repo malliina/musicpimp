@@ -5,6 +5,7 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.play.json.JsonFormats
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json
+import slick.jdbc.GetResult
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
@@ -30,4 +31,5 @@ object DataTrack {
   implicit val durJson = JsonFormats.durationFormat
   implicit val storageJson = JsonFormats.storageSizeFormat
   implicit val format = Json.format[DataTrack]
+  implicit val dataResult = GetResult(r => DataTrack(r.<<, r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, r.<<))
 }

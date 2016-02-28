@@ -1,15 +1,14 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.models.User
-
-import scala.slick.driver.H2Driver.simple._
+import slick.driver.H2Driver.api._
 
 class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
-  def id = column[Long]("ID", O.PrimaryKey, O.NotNull, O.AutoInc)
+  def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
 
-  def name = column[String]("NAME", O.NotNull)
+  def name = column[String]("NAME")
 
-  def user = column[User]("USER", O.NotNull)
+  def user = column[User]("USER")
 
   def userConstraint = foreignKey("USER_FK", user, PimpSchema.usersTable)(
     _.user,
@@ -30,11 +29,11 @@ class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
 case class PlaylistRow(id: Option[Long], name: String, user: User)
 
 class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {
-  def playlist = column[Long]("PLAYLIST", O.NotNull)
+  def playlist = column[Long]("PLAYLIST")
 
-  def track = column[String]("TRACK", O.NotNull)
+  def track = column[String]("TRACK")
 
-  def idx = column[Int]("INDEX", O.NotNull)
+  def idx = column[Int]("INDEX")
 
   def pk = primaryKey("PT_PK", (playlist, idx))
 

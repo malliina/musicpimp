@@ -5,22 +5,17 @@ import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist, User}
 import com.malliina.util.Log
+import slick.driver.H2Driver.api._
+import slick.lifted.Query
 
 import scala.concurrent.Future
-import scala.slick.driver.H2Driver.simple._
-import scala.slick.lifted.Query
 
 class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService with Log {
 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 
   override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
-    val result = withSession(s => {
-      val baseQuery = playlistsTable.filter(_.user === user)
-      val q = playlistQuery(baseQuery)
-      q.run(s)
-    })
-    result.map(data => {
+    runQuery(playlistQuery(playlistsTable.filter(_.user === user))).map(data => {
       data.map((PlaylistEntry.apply _).tupled)
         .groupBy(_.id)
         .flatMap(kv => toPlaylist(kv._2))
@@ -29,10 +24,8 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   }
 
   override protected def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
-    val result = withSession(s => {
-      val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
-      q.sortBy(_._4).run(s)
-    })
+    val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
+    val result = runQuery(q.sortBy(_._4))
     result.map(data => {
       val es = data.map((PlaylistEntry.apply _).tupled)
       toPlaylist(es)
@@ -43,34 +36,33 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
     val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
     owns.flatMap(isOwner => {
       if (isOwner) {
-        withSession(implicit s => {
-          def insertionQuery = (playlistsTable returning playlistsTable.map(_.id)) += PlaylistRow(None, playlist.name, user)
-          val id: Long = playlist.playlistId.map(_.id).getOrElse(insertionQuery.run(s))
+        def insertionQuery = (playlistsTable returning playlistsTable.map(_.id))
+          .into((item, id) => item.copy(id = Option(id))) += PlaylistRow(None, playlist.name, user)
+        def newPlaylistId: Future[Long] = db.database.run(insertionQuery).map(_.id.getOrElse(0L))
+        val playlistId: Future[Long] = playlist.playlistId.map(plid => Future.successful(plid.id)).getOrElse(newPlaylistId)
+        playlistId.flatMap { id =>
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)
           }
-          entries.map(entry => playlistTracksTable.insertOrUpdate(entry)(s))
-          PlaylistID(id)
-        })
+          val action = DBIO.sequence(entries.map(entry => playlistTracksTable.insertOrUpdate(entry)))
+          run(action).map(_ => PlaylistID(id))
+        }
       } else {
         Future.failed(new UnauthorizedException(s"User $user is unauthorized"))
       }
     })
   }
 
-  override def delete(id: PlaylistID, user: User): Future[Unit] = {
-    withSession(s => {
-      playlistsTable.filter(pl => pl.user === user && pl.id === id.id).delete(s)
-    }).map(_ => ())
-  }
+  override def delete(id: PlaylistID, user: User): Future[Unit] =
+    run(playlistsTable.filter(pl => pl.user === user && pl.id === id.id).delete).map(_ => ())
 
   // transient class
   case class PlaylistEntry(id: Long, name: String, track: DataTrack, index: Int)
 
   protected def ownsPlaylist(id: PlaylistID, user: User): Future[Boolean] =
-    withSession(s => playlistsTable.filter(pl => pl.user === user && pl.id === id.id).exists.run(s))
+    runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id)).map(_.nonEmpty)
 
-  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, scala.Seq]) = {
+  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) = {
     for {
       pls <- lists
       pts <- playlistTracksTable if pts.playlist === pls.id

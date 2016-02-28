@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.db
 
-import scala.slick.driver.H2Driver.simple.{Table, TableQuery}
+import slick.driver.H2Driver.api.{Table, TableQuery}
 
 object PimpSchema {
   val tracks = TableQuery[Tracks]

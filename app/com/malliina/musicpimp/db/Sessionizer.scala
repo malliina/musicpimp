@@ -1,8 +1,12 @@
 package com.malliina.musicpimp.db
 
+import slick.dbio.{DBIOAction, NoStream}
+import slick.lifted.Query
+
 import scala.concurrent.Future
-import scala.slick.driver.H2Driver.simple.Session
 
 class Sessionizer(db: PimpDb) {
-  protected def withSession[T](body: Session => T): Future[T] = db.withSession(body)
+  def runQuery[A, B, C[_]](query: Query[A, B, C]): Future[C[B]] = db.runQuery(query)
+
+  def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = db.run(a)
 }

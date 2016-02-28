@@ -169,7 +169,7 @@ object PimpBuild extends Build {
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.3.176",
-        "com.typesafe.slick" %% "slick" % "2.1.0",
+        "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
         "com.neovisionaries" % "nv-websocket-client" % "1.22",
         "org.scalatest" %% "scalatest" % "2.2.5" % Test
