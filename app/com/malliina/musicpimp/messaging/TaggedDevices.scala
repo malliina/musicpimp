@@ -3,9 +3,6 @@ package com.malliina.musicpimp.messaging
 import com.malliina.io.FileSet
 import play.api.libs.json.Format
 
-/**
-  * @author Michael
-  */
 class TaggedDevices[T <: TaggedDevice[_]](file: String)(implicit format: Format[T])
   extends FileSet[T](file) {
 

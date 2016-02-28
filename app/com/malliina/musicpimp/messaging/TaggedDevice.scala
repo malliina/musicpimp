@@ -2,9 +2,6 @@ package com.malliina.musicpimp.messaging
 
 import com.malliina.push.Token
 
-/**
-  * @author Michael
-  */
 trait TaggedDevice[T <: Token] {
   def id: T
 

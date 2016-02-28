@@ -3,9 +3,6 @@ package com.malliina.musicpimp.models
 import play.api.http.Writeable
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class SaveFeedback(created: Long)
 
 object SaveFeedback {

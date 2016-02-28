@@ -2,9 +2,6 @@ package com.malliina.musicpimp.models
 
 import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
 
-/**
- * @author Michael
- */
 case class MusicColumn(folders: Seq[FolderMeta], tracks: Seq[TrackMeta]) {
   val isEmpty = folders.isEmpty && tracks.isEmpty
 }

@@ -2,9 +2,6 @@ package com.malliina.musicpimp.models
 
 import com.malliina.file.FileUtilities
 
-/**
-  * @author Michael
-  */
 object Licenses {
   private val lineSep = sys.props("line.separator")
 

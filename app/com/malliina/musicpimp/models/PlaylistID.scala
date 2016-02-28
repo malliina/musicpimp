@@ -1,8 +1,5 @@
 package com.malliina.musicpimp.models
 
-/**
- * @author mle
- */
 case class PlaylistID(id: Long) {
   override def toString = s"$id"
 }

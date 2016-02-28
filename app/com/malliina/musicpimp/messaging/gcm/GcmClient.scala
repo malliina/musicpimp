@@ -7,10 +7,7 @@ import com.ning.http.client.Response
 
 import scala.concurrent.Future
 
-/**
-  * What can a rogue actor do with the api key?
-  *
-  * @author mle
+/** What can a rogue actor do with the api key?
   */
 object GcmClient
   extends GCMClient(apiKey = "AIzaSyCCDniLRhlHAfnXIJnsVn-You2QQKLfrM8")

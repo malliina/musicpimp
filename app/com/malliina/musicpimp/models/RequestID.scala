@@ -1,8 +1,5 @@
 package com.malliina.musicpimp.models
 
-/**
- * @author mle
- */
 case class RequestID(id: String) {
   override def toString = id
 }
