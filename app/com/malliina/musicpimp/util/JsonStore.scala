@@ -7,9 +7,6 @@ import play.api.libs.json.{Reads, Writes}
 
 import scala.util.Try
 
-/**
-  * @author Michael
-  */
 trait JsonStore {
   def save[T](t: T, file: Path)(implicit writer: Writes[T])
 

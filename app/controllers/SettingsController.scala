@@ -3,6 +3,7 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.play.Authenticator
@@ -14,11 +15,8 @@ import views.html
 
 import scala.util.Try
 
-/**
- * @author Michael
- */
-class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticator)
-  extends HtmlController(auth)
+class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticator, mat: Materializer)
+  extends HtmlController(auth, mat)
   with Log {
 
   protected val newFolderForm = Form(

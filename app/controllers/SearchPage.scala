@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
 import com.malliina.play.Authenticator
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -8,11 +9,8 @@ import play.api.libs.json.Json
 import scala.concurrent.Future
 import scala.util.Try
 
-/**
-  * @author mle
-  */
-class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator)
-  extends HtmlController(auth) {
+class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, mat: Materializer)
+  extends HtmlController(auth, mat) {
 
   def search = PimpActionAsync(implicit req => {
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)

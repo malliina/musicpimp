@@ -6,9 +6,6 @@ import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
 import com.malliina.file.{FileUtilities, StorageFile}
 import com.malliina.util.{EnvUtils, Utils}
 
-/**
- * @author Michael
- */
 object FileUtil {
   val ownerOnlyPermissions = PosixFilePermissions fromString "rw-------"
   val ownerOnlyAttributes = PosixFilePermissions asFileAttribute ownerOnlyPermissions

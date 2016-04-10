@@ -7,9 +7,6 @@ import play.api.mvc.{RequestHeader, Result, Results}
 
 import scala.concurrent.Future
 
-/**
- * @author mle
- */
 trait PimpErrorHandling extends HttpErrorHandler {
   abstract override def onServerError(request: RequestHeader, ex: Throwable): Future[Result] =
     PimpContentController.pimpResult(

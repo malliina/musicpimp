@@ -1,14 +1,8 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.play.controllers.AuthRequest
-import com.malliina.play.http.RequestInfo
+import com.malliina.play.http.{AuthRequest, RequestInfo}
 import com.malliina.util.Log
 import play.api.libs.json.JsValue
-
-/**
- *
- * @author Michael
- */
 
 trait JsonHandlerBase extends Log {
   def withCmd[T](json: JsValue)(f: JsonCmd => T): T =
@@ -17,10 +11,8 @@ trait JsonHandlerBase extends Log {
   def onJson(req: AuthRequest[JsValue]): Unit =
     onJson(req.body, RequestInfo(req.user, req))
 
-  /**
-   * Handles messages sent by web players.
-   *
-   */
+  /** Handles messages sent by web players.
+    */
   def onJson(msg: JsValue, req: RequestInfo): Unit = {
     val user = req.user
     log info s"User: $user from: ${req.request.remoteAddress} said: $msg"
@@ -29,6 +21,3 @@ trait JsonHandlerBase extends Log {
 
   protected def handleMessage(msg: JsValue, user: String): Unit
 }
-
-
-

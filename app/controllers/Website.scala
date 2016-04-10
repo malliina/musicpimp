@@ -2,6 +2,7 @@ package controllers
 
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
@@ -14,8 +15,12 @@ import views.html
 
 import scala.concurrent.Future
 
-class Website(sockets: WebSocketController, serverWS: ServerWS, auth: Authenticator, stats: PlaybackStats)
-  extends HtmlController(auth) {
+class Website(sockets: WebSocketController,
+              serverWS: ServerWS,
+              auth: Authenticator,
+              stats: PlaybackStats,
+              mat: Materializer)
+  extends HtmlController(auth, mat) {
 
   def player = navigate(implicit req => {
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty

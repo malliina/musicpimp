@@ -3,6 +3,7 @@ package controllers
 import java.net.URLDecoder
 import java.nio.file.Paths
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.MusicColumn
@@ -13,10 +14,10 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import views.html
 
-/**
-  * @author Michael
-  */
-class LibraryController(lib: MusicLibrary, auth: Authenticator) extends Secured(auth) with Log {
+class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materializer)
+  extends Secured(auth, mat)
+    with Log {
+
   def rootLibrary = PimpActionAsync(implicit request => lib.rootFolder.map(root => folderResult(root)))
 
   /**

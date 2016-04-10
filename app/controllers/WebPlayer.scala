@@ -1,18 +1,19 @@
 package controllers
 
+import akka.stream.{Materializer, QueueOfferResult}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.json.JsonFormatVersions
 import com.malliina.play.Authenticator
-import com.malliina.util.Log
 import play.api.libs.json.JsValue
 import play.api.mvc.Call
 
 import scala.collection.mutable
+import scala.concurrent.Future
 
-/**
- * @author mle
- */
-class WebPlayer(auth: Authenticator) extends PlayerSockets(auth) with Log {
+class WebPlayer(auth: Authenticator, mat: Materializer)
+  extends PlayerSockets(auth, mat) {
+  implicit val ec = mat.executionContext
+
   override val messageHandler: JsonHandlerBase = new WebPlayerMessageHandler {
     override def player(user: String): PimpWebPlayer = WebPlayer.this.player(user)
   }
@@ -40,5 +41,6 @@ class WebPlayer(auth: Authenticator) extends PlayerSockets(auth) with Log {
 
   def openSocketCall: Call = routes.WebPlayer.openSocket()
 
-  def unicast(user: String, json: JsValue) = clients.filter(_.user == user).foreach(_.channel push json)
+  def unicast(user: String, json: JsValue): Future[Seq[QueueOfferResult]] =
+    Future.traverse(clients.filter(_.user == user))(_.channel offer json)
 }

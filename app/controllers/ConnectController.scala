@@ -2,9 +2,11 @@ package controllers
 
 import java.net.NetworkInterface
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.play.Authenticator
-import com.malliina.play.controllers.AuthRequest
+import com.malliina.play.http.AuthRequest
 import com.malliina.play.json.JsonFormats
 import com.malliina.util.Log
 import controllers.ConnectController.Protocols
@@ -18,19 +20,17 @@ import views.html
 import scala.collection.JavaConversions._
 
 /**
- * This code is totally best effort so make sure the user has the final say.
- *
- * @author mle
- */
-class ConnectController(auth: Authenticator) extends HtmlController(auth) with Log {
+  * This code is totally best effort so make sure the user has the final say.
+  */
+class ConnectController(auth: Authenticator, mat: Materializer) extends HtmlController(auth, mat) with Log {
   def connect = navigate(html.connectApp())
 
   def image = PimpAction(implicit req => {
     val qrText = stringify(Json.toJson(coordinate(req))(Coordinate.json))
     log info s"Generating image with QR code: $qrText"
     val qrFile = QRCode.from(qrText).withSize(768, 768).file()
-    val enumerator = Enumerator fromFile qrFile
-    Ok.chunked(enumerator)
+    FileIO.fromFile(qrFile)
+    Ok.chunked(FileIO.fromFile(qrFile))
   })
 
   def coordinate(req: AuthRequest[_]): Coordinate =

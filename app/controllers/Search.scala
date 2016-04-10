@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.json.JsonMessages
@@ -11,14 +12,13 @@ import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
 
-/**
-  * @author Michael
-  */
 object Search {
   val DefaultLimit = 1000
 }
 
-class Search(indexer: Indexer, auth: Authenticator) extends PimpSockets(auth) with Log {
+class Search(indexer: Indexer, auth: Authenticator, mat: Materializer)
+  extends PimpSockets(auth, mat)
+    with Log {
 
   val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
   val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.debug)

@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.app
 
 import com.malliina.musicpimp.Starter
-import com.malliina.musicpimp.audio.{StatsPlayer, PlaybackMessageHandler}
-import com.malliina.musicpimp.cloud.{Deps, Clouds}
+import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
+import com.malliina.musicpimp.cloud.{Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.stats.DatabaseStats
@@ -13,10 +13,9 @@ import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang, Messages}
 import play.api.mvc.EssentialFilter
-import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logger}
+import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigurator}
 import play.filters.gzip.GzipFilter
 import router.Routes
-
 import scala.concurrent.Future
 
 case class InitOptions(alarms: Boolean = true,
@@ -29,15 +28,15 @@ class PimpLoader(options: InitOptions) extends ApplicationLoader {
   def this() = this(InitOptions())
 
   def load(context: Context) = {
-    Logger.configure(context.environment)
+    LoggerConfigurator(context.environment.classLoader)
+      .foreach(_.configure(context.environment))
     new PimpComponents(context, options).application
   }
 }
 
 class PimpComponents(context: Context, options: InitOptions)
   extends BuiltInComponentsFromContext(context)
-  with I18nComponents
-  with FileUploadWorkaround {
+  with I18nComponents {
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
@@ -52,7 +51,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db)
   lazy val userManager = new DatabaseUserManager(db)
-  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db))
+  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db), cookieSigner)
   lazy val stats = new DatabaseStats(db)
   lazy val statsPlayer = new StatsPlayer(stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe)
@@ -61,22 +60,22 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val c = new Clouds(deps)
 
   // Controllers
-  lazy val ls = new PimpLogs
-  lazy val lp = new LogPage(ls, auth)
-  lazy val wp = new WebPlayer(auth)
-  lazy val sws = new ServerWS(c, auth, handler)
-  lazy val webCtrl = new Website(wp, sws, auth, stats)
-  lazy val s = new Search(indexer, auth)
-  lazy val sp = new SearchPage(s, indexer, db, auth)
-  lazy val r = new Rest(wp, auth, handler, statsPlayer)
-  lazy val pl = new Playlists(ps, auth)
-  lazy val settingsCtrl = new SettingsController(messages, indexer, auth)
+  lazy val ls = new PimpLogs(materializer)
+  lazy val lp = new LogPage(ls, auth, materializer)
+  lazy val wp = new WebPlayer(auth, materializer)
+  lazy val sws = new ServerWS(c, auth, handler, materializer)
+  lazy val webCtrl = new Website(wp, sws, auth, stats, materializer)
+  lazy val s = new Search(indexer, auth, materializer)
+  lazy val sp = new SearchPage(s, indexer, db, auth, materializer)
+  lazy val r = new Rest(wp, auth, handler, statsPlayer, materializer)
+  lazy val pl = new Playlists(ps, auth, materializer)
+  lazy val settingsCtrl = new SettingsController(messages, indexer, auth, materializer)
   lazy val as = new Assets(httpErrorHandler)
-  lazy val libCtrl = new LibraryController(lib, auth)
-  lazy val alarms = new Alarms(auth, messages)
-  lazy val accounts = new Accounts(auth)
-  lazy val cloud = new Cloud(c, auth)
-  lazy val connect = new ConnectController(auth)
+  lazy val libCtrl = new LibraryController(lib, auth, materializer)
+  lazy val alarms = new Alarms(auth, messages, materializer)
+  lazy val accounts = new Accounts(auth, materializer)
+  lazy val cloud = new Cloud(c, auth, materializer)
+  lazy val connect = new ConnectController(auth, materializer)
   lazy val pimpAssets = new PimpAssets
 
   Starter.startServices(options, c, db, indexer)

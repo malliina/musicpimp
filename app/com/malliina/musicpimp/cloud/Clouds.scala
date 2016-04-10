@@ -15,9 +15,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
 
-/**
- * @author Michael
- */
 object Clouds {
   val idFile = FileUtil.localPath("cloud.txt")
 

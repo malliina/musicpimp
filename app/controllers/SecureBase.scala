@@ -2,11 +2,14 @@ package controllers
 
 import java.nio.file.Path
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.models.User
 import com.malliina.play.Authenticator
 import com.malliina.play.auth.BasicCredentials
 import com.malliina.play.concurrent.FutureOps2
 import com.malliina.play.controllers._
+import com.malliina.play.http.{AuthRequest, AuthResult, FileUploadRequest, OneFileUploadRequest}
+import controllers.SecureBase.log
 import play.api.Logger
 import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile
@@ -16,7 +19,10 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-class SecureBase(auth: Authenticator) extends PimpContentController with BaseSecurity {
+class SecureBase(auth: Authenticator, val mat: Materializer)
+  extends PimpContentController
+    with BaseSecurity {
+
   override def authenticate(implicit request: RequestHeader): Future[Option[AuthResult]] =
     super.authenticate.checkOrElse(_.nonEmpty, auth.authenticateFromCookie(request))
 
@@ -118,7 +124,7 @@ class SecureBase(auth: Authenticator) extends PimpContentController with BaseSec
     */
   private def maybeWithCookie(auth: AuthResult, result: Result): Result =
     auth.cookie.fold(result)(c => {
-      SecureBase.log debug s"Sending updated cookie in response..."
+      log debug s"Sending updated cookie in response..."
       result withCookies c withSession (Security.username -> auth.user)
     })
 }

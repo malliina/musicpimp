@@ -4,6 +4,9 @@ import java.io._
 import java.net.UnknownHostException
 import java.nio.file._
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 import com.malliina.audio.ExecutionContexts.defaultPlaybackContext
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
 import com.malliina.file.FileUtilities
@@ -14,7 +17,8 @@ import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models.User
 import com.malliina.play.Authenticator
-import com.malliina.play.controllers.{AuthRequest, BaseController, OneFileUploadRequest}
+import com.malliina.play.controllers.BaseController
+import com.malliina.play.http.{AuthRequest, OneFileUploadRequest}
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.{Log, Util, Utils}
@@ -26,12 +30,12 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-/**
-  *
-  * @author mle
-  */
-class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHandler, statsPlayer: StatsPlayer)
-  extends Secured(auth)
+class Rest(webPlayer: WebPlayer,
+           auth: Authenticator,
+           handler: PlaybackMessageHandler,
+           statsPlayer: StatsPlayer,
+           mat: Materializer)
+  extends Secured(auth, mat)
     with BaseController
     with Log {
 
@@ -176,7 +180,7 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
       val track = meta.buildTrack(inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
-    PimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs))(req => {
+    PimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat))(req => {
       log.info(s"Received stream of track: ${meta.id}")
       Ok
     })
@@ -196,14 +200,13 @@ class Rest(webPlayer: WebPlayer, auth: Authenticator, handler: PlaybackMessageHa
     JsonMessages.failure(errorMessage)
   }
 
-  /**
-    * Builds an [[play.api.libs.iteratee.Iteratee]] that writes any consumed bytes to both `file` and a stream. The bytes
+  /** Builds an [[play.api.libs.iteratee.Iteratee]] that writes any consumed bytes to both `file` and a stream. The bytes
     * written to the stream are made available to the returned [[InputStream]].
     *
     * @param file file to write to
-    * @return an [[InputStream]] an an [[play.api.libs.iteratee.Iteratee]]
+    * @return an [[InputStream]] and a [[Sink]]
     */
-  private def streamingAndFileWritingIteratee(file: Path): (PipedInputStream, Iteratee[Array[Byte], Long]) = {
+  private def streamingAndFileWritingIteratee(file: Path): (PipedInputStream, Sink[ByteString, Future[Long]]) = {
     Option(file.getParent).foreach(p => Files.createDirectories(p))
     val streamOut = new PipedOutputStream()
     val bufferSize = math.min(10.megs.toBytes.toInt, Int.MaxValue)

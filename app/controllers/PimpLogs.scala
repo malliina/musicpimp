@@ -1,8 +1,10 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
 import com.malliina.maps.{ItemMap, StmItemMap}
-import com.malliina.play.controllers.{AuthResult, LogStreaming}
+import com.malliina.play.controllers.LogStreaming
+import com.malliina.play.http.AuthResult
 import com.malliina.play.ws.{SyncAuth, WebSocketClient}
 import com.malliina.util.Log
 import play.api.libs.json.{JsValue, Json}
@@ -11,11 +13,7 @@ import rx.lang.scala.{Observable, Subscription}
 
 import scala.concurrent.duration.DurationInt
 
-/**
- *
- * @author mle
- */
-class PimpLogs extends LogStreaming with SyncAuth with Log {
+class PimpLogs(val mat: Materializer) extends LogStreaming with SyncAuth with Log {
   val appenderName = "RX"
 
   override lazy val subscriptions: ItemMap[WebSocketClient, Subscription] = StmItemMap.empty[WebSocketClient, Subscription]

@@ -1,10 +1,11 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.play.Authenticator
-import com.malliina.play.controllers.AuthRequest
+import com.malliina.play.http.AuthRequest
 import controllers.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -14,11 +15,10 @@ import play.api.i18n.Messages
 import play.api.mvc.{AnyContent, Request, Result}
 import views.html
 
-/**
- *
- * @author mle
- */
-class AlarmEditor(auth: Authenticator, messages: Messages) extends Secured(auth) with SchedulerStrings {
+class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
+  extends Secured(auth, mat)
+    with SchedulerStrings {
+
   private val clockForm: Form[ClockPlayback] = Form(mapping(
     ID -> optional(text),
     HOURS -> number(min = 0, max = 24),
@@ -60,7 +60,9 @@ class AlarmEditor(auth: Authenticator, messages: Messages) extends Secured(auth)
     PimpAction(Ok(html.alarmEditor(form, feedback)(messages)))
 
   def newClock() = formSubmission(clockForm)(
-    err => html.alarmEditor(err)(messages),
+    err => {
+      html.alarmEditor(err)(messages)
+    },
     (req, form, ap) => {
       ScheduledPlaybackService.save(ap)
       log.info(s"User: ${req.user} from: ${req.remoteAddress} saved alarm: $ap")

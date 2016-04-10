@@ -1,11 +1,12 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, User}
 import com.malliina.play.Authenticator
-import com.malliina.play.controllers.AuthRequest
+import com.malliina.play.http.AuthRequest
 import controllers.Playlists.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -24,10 +25,7 @@ object Playlists {
   val Tracks = "tracks"
 }
 
-/**
- * @author mle
- */
-class Playlists(service: PlaylistService, auth: Authenticator) extends Secured(auth) {
+class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val playlistForm: Form[PlaylistSubmission] = Form(mapping(

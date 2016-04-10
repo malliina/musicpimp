@@ -1,7 +1,7 @@
 package com.malliina.play
 
 import com.malliina.musicpimp.models.User
-import com.malliina.play.controllers.AuthResult
+import com.malliina.play.http.AuthResult
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future

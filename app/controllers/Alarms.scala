@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.json.JsonStrings._
@@ -14,8 +15,8 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms(auth: Authenticator, messages: Messages)
-  extends AlarmEditor(auth, messages)
+class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
+  extends AlarmEditor(auth, messages, mat)
   with SchedulerStrings
   with Log {
 

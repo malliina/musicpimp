@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import ch.qos.logback.classic.Level
 import com.malliina.play.Authenticator
 import com.malliina.util.{Log, Logging}
@@ -7,10 +8,9 @@ import play.api.data.{Form, Forms}
 import play.api.mvc.RequestHeader
 import views.html
 
-/**
-  * @author mle
-  */
-class LogPage(sockets: PimpLogs, auth: Authenticator) extends HtmlController(auth) with Log {
+class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
+  extends HtmlController(auth, mat)
+    with Log {
   val LEVEL = "level"
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))

@@ -2,6 +2,7 @@ package controllers
 
 import java.net.ConnectException
 
+import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.play.Authenticator
@@ -15,10 +16,7 @@ import views.html
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
- * @author Michael
- */
-class Cloud(clouds: Clouds, auth: Authenticator) extends Secured(auth) {
+class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))

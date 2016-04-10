@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.models.User
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
@@ -20,7 +21,11 @@ object Accounts {
   val INTENDED_URI = "intended_uri"
 }
 
-class Accounts(auth: PimpAuthenticator) extends HtmlController(auth) with AccountController with Log {
+class Accounts(auth: PimpAuthenticator, mat: Materializer)
+  extends HtmlController(auth, mat)
+    with AccountController
+    with Log {
+
   val userManager = auth.userManager
   val rememberMe = auth.rememberMe
   val invalidCredentialsMessage = "Invalid credentials."

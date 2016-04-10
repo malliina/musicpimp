@@ -1,24 +1,23 @@
 package com.malliina.musicpimp
 
 import java.awt._
-import java.awt.event.{ActionEvent, ActionListener, MouseAdapter, MouseEvent}
-import javax.swing.{UIManager, ImageIcon}
+import java.awt.event.{ActionEvent, ActionListener}
+import javax.swing.{ImageIcon, UIManager}
 
 import com.malliina.util.{Log, Util}
 
 import scala.util.Try
 
 /**
- * @author Michael
- * @see http://docs.oracle.com/javase/tutorial/uiswing/misc/systemtray.html
- */
+  * @see http://docs.oracle.com/javase/tutorial/uiswing/misc/systemtray.html
+  */
 object Tray extends Log {
   val iconResource = "guitar-16x16.png"
 
   /**
-   * Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
-   * MusicPimp.
-   */
+    * Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
+    * MusicPimp.
+    */
   def installTray() = {
     if (SystemTray.isSupported) {
       Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
@@ -40,7 +39,7 @@ object Tray extends Log {
       //      })
       val tray = SystemTray.getSystemTray
       Try(tray add trayIcon).map(_ => {
-//        trayIcon.displayMessage("MusicPimp", "MusicPimp is now running.", TrayIcon.MessageType.INFO)
+        //        trayIcon.displayMessage("MusicPimp", "MusicPimp is now running.", TrayIcon.MessageType.INFO)
       }).toOption.fold(log.warn(s"Unable to add tray icon."))(_ => log.info(s"Added tray icon."))
     } else {
       log warn s"System tray is not supported."

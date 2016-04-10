@@ -1,5 +1,6 @@
 package controllers
 
+import akka.stream.{Materializer, QueueOfferResult}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
@@ -9,14 +10,15 @@ import play.api.libs.json.Json.toJson
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Subscription}
 
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-/**
- * Emits playback events to and accepts commands from listening clients.
- *
- * @author mle
- */
-class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler) extends PlayerSockets(auth) with Log {
+/** Emits playback events to and accepts commands from listening clients.
+  */
+class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler, mat: Materializer)
+  extends PlayerSockets(auth, mat)
+    with Log {
+
   val subscription = MusicPlayer.allEvents.subscribe(event => broadcast(event))
   override val messageHandler: JsonHandlerBase = handler
 
@@ -61,13 +63,15 @@ class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHand
 
   def openSocketCall: Call = routes.ServerWS.openSocket()
 
-//  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
-//    log.info("unauthorized")
-//    Unauthorized
-//  }
+  //  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
+  //    log.info("unauthorized")
+  //    Unauthorized
+  //  }
 
-  override def broadcast(message: Message): Unit = {
-    super.broadcast(message)
+  override def broadcast(message: Message): Future[Seq[QueueOfferResult]] = {
+    val ret = super.broadcast(message)
+    // TODO document this
     clouds sendIfConnected message
+    ret
   }
 }

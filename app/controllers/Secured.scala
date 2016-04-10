@@ -1,14 +1,11 @@
 package controllers
 
+import akka.stream.Materializer
 import com.malliina.play.Authenticator
 import play.api.Logger
 import play.api.mvc._
 
-/**
-  *
-  * @author mle
-  */
-class Secured(auth: Authenticator) extends SecureBase(auth) {
+class Secured(auth: Authenticator, mat: Materializer) extends SecureBase(auth, mat) {
   protected def logUnauthorized(implicit request: RequestHeader): Unit = {
     Secured.log warn "Unauthorized request: " + request.path + " from: " + request.remoteAddress
   }
