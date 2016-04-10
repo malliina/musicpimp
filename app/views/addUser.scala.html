@@ -11,8 +11,8 @@
     @addForm.globalError.map { error =>
         <div class="lead alert alert-danger" role="alert">@error.message</div>
     }
-    @flash.get(Accounts.FEEDBACK).map { feedback =>
-        @if(flash.get(Accounts.SUCCESS) contains "yes") {
+    @flash.get(Accounts.Feedback).map { feedback =>
+        @if(flash.get(Accounts.Success) contains "yes") {
             <div class="lead alert alert-success" role="alert">@feedback</div>
         } else {
             <div class="lead alert alert-danger" role="alert">@feedback</div>

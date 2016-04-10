@@ -54,7 +54,7 @@ class Website(sockets: WebSocketController,
   }
 
   protected def userAction(f: AuthenticatedRequest[AnyContent, User] => Future[Result]) =
-    actionAsync() { r =>
+    actionAsync(parse.default) { r =>
       f(new AuthenticatedRequest(User(r.user), r))
     }
 

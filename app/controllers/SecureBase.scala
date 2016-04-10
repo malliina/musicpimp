@@ -64,9 +64,11 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     })
   }
 
-  def PimpAction(f: AuthRequest[AnyContent] => Result) = PimpParsedAction(parse.anyContent)(req => f(req))
+  def PimpAction(f: AuthRequest[AnyContent] => Result) =
+    PimpParsedAction(parse.default)(req => f(req))
 
-  def PimpAction(result: => Result) = PimpParsedAction(parse.anyContent)(auth => result)
+  def PimpAction(result: => Result) =
+    PimpParsedAction(parse.default)(auth => result)
 
   def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
     PimpAction(req => {
@@ -87,34 +89,35 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     })
   }
 
-  def PimpParsedAction[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Result) =
+  def PimpParsedAction[T](parser: BodyParser[T])(f: AuthRequest[T] => Result) =
     PimpParsedActionAsync(parser)(req => Future.successful(f(req)))
 
   def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) =
-    PimpParsedActionAsync(parse.anyContent)(f)
+    PimpParsedActionAsync(parse.default)(f)
 
   def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) =
-    okAsyncAction(parse.anyContent)(f)
+    okAsyncAction(parse.default)(f)
 
-  def okAsyncAction[T, R: Writeable](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[R]) =
+  def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: AuthRequest[T] => Future[R]) =
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
 
-  def actionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) =
+  def actionAsync[T](parser: BodyParser[T])(f: AuthRequest[T] => Future[Result]) =
     PimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
-  def PimpParsedActionAsync[T](parser: BodyParser[T] = parse.anyContent)(f: AuthRequest[T] => Future[Result]) = {
-    AuthenticatedAndLogged(auth => Action.async(parser)(req => {
-      val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))
-      resultFuture.map(r => maybeWithCookie(auth, r))
-    }))
+  def PimpParsedActionAsync[T](parser: BodyParser[T])(f: AuthRequest[T] => Future[Result]): EssentialAction = {
+    AuthenticatedAndLogged(auth => {
+      Action.async(parser)(req => {
+        val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))
+        resultFuture.map(r => maybeWithCookie(auth, r))
+      })
+    })
   }
 
   def errorHandler: PartialFunction[Throwable, Result] = {
     case t => InternalServerError
   }
 
-  /**
-    * Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.
+  /** Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.
     * To achieve that, we remember the result of the authentication and then update any cookie, if necessary, in the
     * response to the request.
     *
@@ -122,11 +125,12 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     * @param result response
     * @return response, with possibly updated cookies
     */
-  private def maybeWithCookie(auth: AuthResult, result: Result): Result =
+  private def maybeWithCookie(auth: AuthResult, result: Result): Result = {
     auth.cookie.fold(result)(c => {
       log debug s"Sending updated cookie in response..."
       result withCookies c withSession (Security.username -> auth.user)
     })
+  }
 }
 
 object SecureBase {

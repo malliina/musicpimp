@@ -49,7 +49,6 @@ class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHand
     }
   }
 
-
   override def onDisconnect(client: Client): Unit = {
     super.onDisconnect(client)
     if (clients.isEmpty) {
@@ -69,8 +68,10 @@ class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHand
   //  }
 
   override def broadcast(message: Message): Future[Seq[QueueOfferResult]] = {
+    log debug s"$message to ${clients.map(_.describe).mkString(", ")}"
+    // sends the message to directly connected clients
     val ret = super.broadcast(message)
-    // TODO document this
+    // sends the message to the cloud, if this server is connected
     clouds sendIfConnected message
     ret
   }

@@ -47,6 +47,7 @@ var send = function (json) {
 var onmessage = function (payload) {
     var json = jQuery.parseJSON(payload.data);
     var eventType = json.event;
+    console.log(payload);
     switch (eventType) {
         case "welcome":
             send(statusJson());

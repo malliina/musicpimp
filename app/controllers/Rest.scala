@@ -23,7 +23,6 @@ import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.{Log, Util, Utils}
 import org.apache.http.HttpResponse
-import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
@@ -45,18 +44,15 @@ class Rest(webPlayer: WebPlayer,
 
   def pingAuth = PimpAction(req => NoCacheOk(JsonMessages.version))
 
-  /**
-    * Handles server playback commands POSTed as JSON.
+  /** Handles server playback commands POSTed as JSON.
     */
   def playback = JsonAckAction(handler.onJson)
 
-  /**
-    * Handles web browser player playback commands POSTed as JSON.
+  /** Handles web browser player playback commands POSTed as JSON.
     */
   def webPlayback = JsonAckAction(webPlayerHandler.onJson)
 
-  /**
-    * Alias for `playback`. Should be deprecated.
+  /** Alias for `playback`. Should be deprecated.
     */
   def playlist = playback
 
@@ -64,17 +60,17 @@ class Rest(webPlayer: WebPlayer,
     MusicPlayer.setPlaylistAndPlay(track)
   }
 
-  def webPlaylist = PimpAction(req => Ok(Json.toJson(playlistFor(req.user))))
+  def webPlaylist = PimpAction { req =>
+    Ok(Json.toJson(playlistFor(req.user)))
+  }
 
-  /**
-    * Adds the uploaded track to the server playlist.
+  /** Adds the uploaded track to the server playlist.
     */
   def addUpload = UploadedSongAction { track =>
     MusicPlayer.playlist.add(track)
   }
 
-  /**
-    * Starts playback of the track in the request.
+  /** Starts playback of the track in the request.
     *
     * First authenticates, then reads the Track header, then attempts to find the track ID from
     * local storage. If found, starts playback of the local track, otherwise, starts playback of
@@ -147,8 +143,7 @@ class Rest(webPlayer: WebPlayer,
 
   private def localPlaybackAction(id: String): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id).map(track => {
-      /**
-        * The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
+      /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
         *
         * The request has already been authenticated at this point because this method is called from within an
         * Authenticated block only, see `streamedPlayback`. The following authentication made by PimpAction is thus
@@ -283,8 +278,7 @@ class Rest(webPlayer: WebPlayer,
 }
 
 object Rest extends Log {
-  /**
-    * Beams a track to a URI as specified in `cmd`.
+  /** Beams a track to a URI as specified in `cmd`.
     *
     * @param cmd beam details
     */

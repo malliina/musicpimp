@@ -20,7 +20,7 @@
                 }
                 </tbody>
             </table>
-            @flash.get(Accounts.USERS_FEEDBACK).map { feedback =>
+            @flash.get(Accounts.UsersFeedback).map { feedback =>
                 <div class="lead alert alert-danger" role="alert">@feedback</div>
             }
         }

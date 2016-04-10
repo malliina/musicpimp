@@ -14,7 +14,7 @@ class Secured(auth: Authenticator, mat: Materializer) extends SecureBase(auth, m
     logUnauthorized(request)
     Secured.log debug s"Intended: ${request.uri}"
     pimpResult(
-      html = Redirect(routes.Accounts.login()).withSession(Accounts.INTENDED_URI -> request.uri),
+      html = Redirect(routes.Accounts.login()).withSession(Accounts.IntendedUri -> request.uri),
       json = Unauthorized
     )
   }

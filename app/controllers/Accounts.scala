@@ -15,10 +15,10 @@ import views.html
 import scala.concurrent.Future
 
 object Accounts {
-  val FEEDBACK = "feedback"
-  val USERS_FEEDBACK = "usersFeedback"
-  val SUCCESS = "success"
-  val INTENDED_URI = "intended_uri"
+  val Feedback = "feedback"
+  val UsersFeedback = "usersFeedback"
+  val Success = "success"
+  val IntendedUri = "intended_uri"
 }
 
 class Accounts(auth: PimpAuthenticator, mat: Materializer)
@@ -57,7 +57,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
     if (user != req.user) {
       (userManager deleteUser User(user)).map(_ => redir)
     } else {
-      Future.successful(redir.flashing(Accounts.USERS_FEEDBACK -> "You cannot delete yourself."))
+      Future.successful(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
     }
   })
 
