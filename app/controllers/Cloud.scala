@@ -5,12 +5,12 @@ import java.net.ConnectException
 import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.Clouds
-import com.malliina.play.Authenticator
+import com.malliina.play.{Authenticator, Parsers}
 import controllers.Cloud.log
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.mvc.Result
+import play.api.mvc._
 import views.html
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -23,10 +23,11 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
 
   def cloud = PimpActionAsync(implicit req => {
     val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
-    id map (i => Ok(views.html.cloud(this, cloudForm, i._1, i._2)))
+    id map (i => Ok(html.cloud(this, cloudForm, i._1, i._2)))
   })
 
-  def toggle = PimpActionAsync(implicit req => {
+
+  def toggle = PimpParsedActionAsync(Parsers.default)(implicit req => {
     cloudForm.bindFromRequest.fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
@@ -37,7 +38,7 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
         val maybeID = desiredID.filter(_.nonEmpty)
         if (clouds.client.isConnected) {
           clouds.disconnectAndForget()
-          Future(redir)
+          Future.successful(redir)
         } else {
           clouds.connect(maybeID).map(_ => redir).recover(errorMessage andThen (msg => redir.flashing(FEEDBACK -> msg)))
         }

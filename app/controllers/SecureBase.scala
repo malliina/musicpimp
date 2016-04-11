@@ -4,11 +4,11 @@ import java.nio.file.Path
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.models.User
-import com.malliina.play.Authenticator
 import com.malliina.play.auth.BasicCredentials
 import com.malliina.play.concurrent.FutureOps2
 import com.malliina.play.controllers._
 import com.malliina.play.http.{AuthRequest, AuthResult, FileUploadRequest, OneFileUploadRequest}
+import com.malliina.play.{Authenticator, Parsers}
 import controllers.SecureBase.log
 import play.api.Logger
 import play.api.http.Writeable
@@ -65,10 +65,10 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
   }
 
   def PimpAction(f: AuthRequest[AnyContent] => Result) =
-    PimpParsedAction(parse.default)(req => f(req))
+    PimpParsedAction(Parsers.default)(req => f(req))
 
   def PimpAction(result: => Result) =
-    PimpParsedAction(parse.default)(auth => result)
+    PimpParsedAction(Parsers.default)(auth => result)
 
   def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
     PimpAction(req => {
@@ -93,10 +93,10 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     PimpParsedActionAsync(parser)(req => Future.successful(f(req)))
 
   def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) =
-    PimpParsedActionAsync(parse.default)(f)
+    PimpParsedActionAsync(Parsers.default)(f)
 
   def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) =
-    okAsyncAction(parse.default)(f)
+    okAsyncAction(Parsers.default)(f)
 
   def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: AuthRequest[T] => Future[R]) =
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
