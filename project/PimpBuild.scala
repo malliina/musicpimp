@@ -157,9 +157,9 @@ object PimpBuild extends Build {
     Seq(
       libraryDependencies ++= Seq(
         malliinaGroup %% "play-base" % "2.7.1",
-        malliinaGroup %% "util-actor" % "2.1.0",
-        malliinaGroup %% "util-rmi" % "2.1.0",
-        malliinaGroup %% "util-audio" % "1.8.0",
+        malliinaGroup %% "util-actor" % "2.3.0",
+        malliinaGroup %% "util-rmi" % "2.3.0",
+        malliinaGroup %% "util-audio" % "1.9.0",
         malliinaGroup %% "mobile-push" % "1.3.1",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
