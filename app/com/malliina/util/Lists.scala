@@ -1,8 +1,5 @@
 package com.malliina.util
 
-/**
-  * @author mle
-  */
 object Lists {
   def insertAt[T](pos: Int, xs: Seq[T], elem: T) = {
     val (left, right) = xs.splitAt(pos)

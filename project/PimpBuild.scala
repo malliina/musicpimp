@@ -156,11 +156,11 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-base" % "2.7.1",
-        malliinaGroup %% "util-actor" % "2.3.0",
-        malliinaGroup %% "util-rmi" % "2.3.0",
-        malliinaGroup %% "util-audio" % "1.9.0",
-        malliinaGroup %% "mobile-push" % "1.3.1",
+        malliinaGroup %% "play-base" % "2.8.0-0",
+        malliinaGroup %% "util-actor" % "2.4.0-1",
+        malliinaGroup %% "util-rmi" % "2.4.0-1",
+        malliinaGroup %% "util-audio" % "2.0.0-0",
+        malliinaGroup %% "mobile-push" % "1.5.0-0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,

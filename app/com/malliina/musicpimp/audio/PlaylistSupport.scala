@@ -4,9 +4,6 @@ import com.malliina.audio.IPlaylist
 
 import scala.util.{Failure, Try}
 
-/**
- * @author Michael
- */
 trait PlaylistSupport[T] {
   def playlist: IPlaylist[T]
 

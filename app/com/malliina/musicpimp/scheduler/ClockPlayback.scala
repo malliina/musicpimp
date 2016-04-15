@@ -2,10 +2,6 @@ package com.malliina.musicpimp.scheduler
 
 import play.api.libs.json.Json
 
-/**
- *
- * @author mle
- */
 case class ClockPlayback(id: Option[String], job: PlaybackJob, when: ClockSchedule, enabled: Boolean)
   extends PlaybackAP[ClockSchedule]
 

@@ -8,28 +8,22 @@ import java.rmi.ConnectException
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.app.InitOptions
-import com.malliina.musicpimp.audio.{StatsPlayer, MusicPlayer}
+import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.auth.Auth
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
 import com.malliina.musicpimp.log.PimpLog
-import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
-import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
 import com.malliina.rmi.{RmiClient, RmiServer, RmiUtil}
 import com.malliina.util.{Log, Logging, Scheduling}
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.core.server.{ProdServerStart, RealServerProcess, ServerWithStop}
 
 import scala.collection.JavaConversions._
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-/**
- *
- * @author mle
- */
 object Starter extends PlayLifeCycle with Log {
 
   override def appName: String = "musicpimp"

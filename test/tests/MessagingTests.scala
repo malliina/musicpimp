@@ -8,9 +8,6 @@ import org.scalatest.FunSuite
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-/**
-  * @author Michael
-  */
 class MessagingTests extends FunSuite {
   val testToken = APNSToken.build("193942675140b3d429311de140bd08ff423712ec9c3ea365b12e61b84609afa9").get
   val testTask = PushTask(

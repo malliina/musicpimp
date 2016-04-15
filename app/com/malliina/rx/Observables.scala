@@ -5,9 +5,6 @@ import rx.lang.scala.{Subscription, Observable}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-/**
- * @author Michael
- */
 object Observables {
 
   implicit final class ObservableOps[T](val obs: Observable[T]) {

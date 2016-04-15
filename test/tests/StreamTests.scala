@@ -10,9 +10,6 @@ import com.malliina.util.Util
 import org.apache.commons.io.IOUtils
 import org.scalatest.FunSuite
 
-/**
- * @author Michael
- */
 class StreamTests extends FunSuite {
   val path = Paths.get("conf/guitar-32x32.png")
   val file = path.toFile

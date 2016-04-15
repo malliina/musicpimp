@@ -8,9 +8,6 @@ import org.scalatest.FunSuite
 
 import scala.concurrent.duration.{DurationDouble, DurationInt}
 
-/**
- * @author Michael
- */
 class FileTests extends FunSuite {
   val minPathsPerSecond = 400
   val testRootOpt: Option[Path] = None

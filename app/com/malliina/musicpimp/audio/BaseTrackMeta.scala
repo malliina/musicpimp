@@ -8,10 +8,6 @@ import play.api.libs.json.Json
 
 import scala.concurrent.duration.Duration
 
-/**
-  *
-  * @author mle
-  */
 case class BaseTrackMeta(id: String,
                          title: String,
                          artist: String,

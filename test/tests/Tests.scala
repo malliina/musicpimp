@@ -7,9 +7,6 @@ import org.java_websocket.util.Base64
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-/**
- * @author Michael
- */
 class Tests extends FunSuite with Log {
   //  val testPath = Paths get ""
   test("can run test") {

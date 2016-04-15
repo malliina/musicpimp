@@ -13,7 +13,7 @@ object PimpMessages {
     def request: RequestID
   }
 
-  case class Registered(id: String) extends PimpMessage
+  case class Registered(id: CloudID) extends PimpMessage
 
   case object Ping extends PimpMessage
 

@@ -2,20 +2,15 @@ package com.malliina.musicpimp.scheduler
 
 import it.sauronsoftware.cron4j.SchedulingPattern
 
-/**
- *
- * @author mle
- */
 trait IScheduler {
   type TaskId = String
 
-  /**
-   * Primitive.
-   *
-   * @param cron cron string
-   * @param job code to run
-   * @return the task id
-   */
+  /** Primitive.
+    *
+    * @param cron cron string
+    * @param job  code to run
+    * @return the task id
+    */
   def schedule(cron: String)(job: => Any): TaskId
 
   def scheduleWithInterval(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId

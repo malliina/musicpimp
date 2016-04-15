@@ -3,9 +3,6 @@ package com.malliina.musicpimp.messaging.cloud
 import com.malliina.push.gcm.{GCMResponse, MappedGCMResponse}
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class PushResult(apns: Seq[APNSResult],
                       gcm: Seq[MappedGCMResponse],
                       adm: Seq[BasicResult],

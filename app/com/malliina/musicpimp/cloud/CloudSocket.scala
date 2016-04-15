@@ -55,19 +55,17 @@ case class Deps(playlists: PlaylistService,
   * }
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
-  *
-  * @author Michael
   */
 class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
   with Log {
   val lib = deps.lib
   val handler = deps.handler
-  private val registrationPromise = Promise[String]()
+  private val registrationPromise = Promise[CloudID]()
   val registration = registrationPromise.future
   val playlists = deps.playlists
 
-  def connectID(): Future[String] = connect().flatMap(_ => registration)
+  def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
 
   def unregister() = Try(sendMessage(SimpleCommand(UNREGISTER)))
 
@@ -278,13 +276,11 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   def sendResponse[T](response: T, request: RequestID)(implicit writer: Writes[T]): Try[Unit] =
     sendJsonResponse(Json.toJson(response), request)
 
-  def sendDefaultFailure(request: RequestID) = {
+  def sendDefaultFailure(request: RequestID) =
     sendFailureResponse(JsonMessages.genericFailure, request)
-  }
 
-  def sendFailureResponse(response: JsValue, request: RequestID) = {
+  def sendFailureResponse(response: JsValue, request: RequestID) =
     sendJsonResponse(response, request, success = false)
-  }
 
   def sendAckResponse(request: RequestID) = sendJsonResponse(Json.obj(), request, success = true)
 
@@ -320,9 +316,8 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
     * @param request request id
     * @return
     */
-  def upload(track: Track, request: RequestID): Future[Unit] = {
+  def upload(track: Track, request: RequestID): Future[Unit] =
     withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
-  }
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
@@ -347,7 +342,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
         req.addHeaders(REQUEST_ID -> request.id)
-        Clouds.loadID().foreach(id => req.setAuth(id, "pimp"))
+        Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))
         trackOpt.foreach(path => {
           content(path, req)
         })
@@ -371,8 +366,8 @@ object CloudSocket {
     if (isDev) ("localhost:9000", "http", "ws")
     else ("cloud.musicpimp.org", "https", "wss")
 
-  def build(id: Option[String], deps: Deps) = {
-    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse "", "pimp", deps)
+  def build(id: Option[CloudID], deps: Deps) = {
+    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", (id getOrElse CloudID.empty).id, "pimp", deps)
   }
 
   val notConnected = new Exception("Not connected.")

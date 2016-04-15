@@ -3,9 +3,6 @@ package com.malliina.musicpimp.messaging.cloud
 import com.malliina.push.mpns._
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class MPNSRequest(tokens: Seq[MPNSToken],
                        toast: Option[ToastMessage],
                        tile: Option[TileData],

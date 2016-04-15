@@ -12,10 +12,6 @@ import play.api.libs.json.Json._
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
-/**
- *
- * @author mle
- */
 class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
   extends IPlayer
   with PlaylistSupport[TrackMeta]

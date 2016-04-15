@@ -9,9 +9,6 @@ import com.malliina.util.Utils
 
 import scala.concurrent.Future
 
-/**
- * @author Michael
- */
 class Tokens(file: Path) extends FileBackedList[Token](file) {
   protected override def load(): Seq[Token] = Utils.opt[Seq[Token], Exception](super.load()) getOrElse Nil
 }

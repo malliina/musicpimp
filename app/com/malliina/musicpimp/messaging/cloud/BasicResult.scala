@@ -1,11 +1,8 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import com.ning.http.client.Response
+import org.asynchttpclient.Response
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class BasicResult(statusCode: Int)
 
 object BasicResult {

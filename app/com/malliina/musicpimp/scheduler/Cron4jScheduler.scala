@@ -3,10 +3,6 @@ package com.malliina.musicpimp.scheduler
 import com.malliina.util.Utils
 import it.sauronsoftware.cron4j.{Scheduler, SchedulingPattern}
 
-/**
-  *
-  * @author mle
-  */
 trait Cron4jScheduler extends IScheduler {
   val s = new Scheduler
 

@@ -6,9 +6,6 @@ import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.util.Try
 
-/**
- * @author mle
- */
 class JsonSocket8(uri: String,
                   sslContext: SSLContext,
                   headers: (String, String)*)

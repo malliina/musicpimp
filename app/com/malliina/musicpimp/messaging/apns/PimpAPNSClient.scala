@@ -4,14 +4,12 @@ import com.malliina.musicpimp.messaging.PushKeys.{Cmd, Stop, Tag}
 import com.malliina.musicpimp.messaging.cloud.{APNSRequest, CloudPushClient, PushTask}
 import com.malliina.push.MessagingClient
 import com.malliina.push.apns.{APNSMessage, APSPayload}
-import com.ning.http.client.Response
+import org.asynchttpclient.Response
 import play.api.libs.json.Json.toJson
 
 import scala.concurrent.Future
 
 /** Sends a push notification using pimpcloud.
-  *
-  * @author mle
   */
 object PimpAPNSClient extends MessagingClient[APNSDevice] {
   override def send(dest: APNSDevice): Future[Response] = {

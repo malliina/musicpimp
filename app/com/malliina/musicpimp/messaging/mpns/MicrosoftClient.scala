@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.messaging.mpns
 
 import com.malliina.push.MessagingClient
-import com.malliina.push.mpns.{MPNSClient, MPNSToken, PushUrl, ToastMessage}
-import com.ning.http.client.Response
+import com.malliina.push.mpns.{MPNSClient, PushUrl, ToastMessage}
+import org.asynchttpclient.Response
 
 import scala.concurrent.Future
 

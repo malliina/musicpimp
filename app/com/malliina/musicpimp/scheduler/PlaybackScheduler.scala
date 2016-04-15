@@ -2,10 +2,6 @@ package com.malliina.musicpimp.scheduler
 
 import com.malliina.util.Log
 
-/**
- *
- * @author mle
- */
 class PlaybackScheduler[S <: DaySchedule, A <: PlaybackAP[S]](s: IScheduler) extends Log {
   private var scheduled = Map.empty[String, A]
 

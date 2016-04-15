@@ -2,9 +2,6 @@ package com.malliina.util
 
 import com.malliina.storage.{StorageLong, StorageSize}
 
-/**
- * @author Michael
- */
 object Platform {
   val availableJvmMemory: StorageSize = Runtime.getRuntime.maxMemory().bytes
   val platform: Architecture = sys.props.get("os.arch") map fromName getOrElse Unknown

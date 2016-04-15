@@ -7,10 +7,6 @@ import org.scalatest.FunSuite
 import slick.jdbc.meta.MTable
 import slick.lifted.AbstractTable
 
-
-/**
- * @author Michael
- */
 class DatabaseTests extends FunSuite {
   val testRootOpt: Option[Path] = None
   //  Library.rootFolders = Seq(testRoot)

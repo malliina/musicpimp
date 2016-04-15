@@ -5,10 +5,6 @@ import org.scalatest.FunSuite
 import play.api.libs.json._
 import play.api.mvc.Controller
 
-
-/**
- * @author Michael
- */
 class WSTests extends FunSuite with Controller {
   test("json to case class") {
     val json = Json.obj(

@@ -8,12 +8,6 @@ import play.api.libs.json.{JsValue, Writes}
 
 import scala.concurrent.duration.Duration
 
-/**
- * @author Michael
- */
-/**
- *
- */
 case class StatusEvent17(id: String,
                          title: String,
                          artist: String,

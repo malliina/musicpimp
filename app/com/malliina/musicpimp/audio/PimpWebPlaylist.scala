@@ -7,10 +7,6 @@ import play.api.libs.json.Json._
 
 import scala.concurrent.stm.Ref
 
-/**
- *
- * @author mle
- */
 class PimpWebPlaylist(val user: String, val webPlayer: WebPlayer) extends BasePlaylist[TrackMeta] with JsonSender {
   val songs = Ref[Seq[TrackMeta]](Nil)
   val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)

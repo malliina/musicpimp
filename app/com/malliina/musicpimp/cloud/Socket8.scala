@@ -12,9 +12,6 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 
-/**
- * @author mle
- */
 abstract class Socket8[T](val uri: String, sslContext: SSLContext, headers: (String, String)*)
   extends WebSocketBase[T] with Log {
 

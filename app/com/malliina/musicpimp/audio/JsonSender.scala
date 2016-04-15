@@ -6,10 +6,6 @@ import controllers.WebPlayer
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Json, Writes}
 
-/**
- *
- * @author mle
- */
 trait JsonSender extends Log {
   def user: String
 

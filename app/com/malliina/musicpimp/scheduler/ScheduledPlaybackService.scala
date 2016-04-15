@@ -9,21 +9,16 @@ import com.malliina.util.Log
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 
-/**
- *
- * @author mle
- */
 trait ScheduledPlaybackService extends Log {
   private val s: IScheduler = Cron4jScheduler
   private val clockAPs = new PlaybackScheduler[ClockSchedule, ClockPlayback](s)
 
   val persistFile = FileUtil.localPath("schedules.json")
 
-  /**
-   * Loads and initializes the saved schedules.
-   *
-   * You will typically want to call this on program startup.
-   */
+  /** Loads and initializes the saved schedules.
+    *
+    * You will typically want to call this on program startup.
+    */
   def init(): Unit = ()
 
   start()
@@ -42,14 +37,13 @@ trait ScheduledPlaybackService extends Log {
 
   def find(id: String) = readConf().find(_.id.contains(id))
 
-  /**
-   * Saves or updates action point ´ap´.
-   *
-   * When updating, we deschedule any previous ap, then reschedule if necessary.
-   *
-   * @param ap the action point
-   * @return
-   */
+  /** Saves or updates action point ´ap´.
+    *
+    * When updating, we deschedule any previous ap, then reschedule if necessary.
+    *
+    * @param ap the action point
+    * @return
+    */
   def save(ap: ClockPlayback): Unit = {
     val withId: ClockPlayback = ap.id
       .filter(id => id != "" && id != "null")

@@ -20,11 +20,12 @@ object Clouds {
 
   def isEnabled = Files exists idFile
 
-  def loadID(): Option[String] = readFirstLine(idFile)
+  def loadID(): Option[CloudID] = readFirstLine(idFile).map(CloudID.apply)
 
-  def readFirstLine(file: Path): Option[String] = Utils.opt[String, Exception](FileUtilities.firstLine(file))
+  def readFirstLine(file: Path): Option[String] =
+    Utils.opt[String, Exception](FileUtilities.firstLine(file))
 
-  def saveID(id: String) = writeOneLine(idFile, id)
+  def saveID(id: CloudID) = writeOneLine(idFile, id.id)
 
   def writeOneLine(file: Path, text: String) = {
     if (!Files.exists(file)) {
@@ -33,6 +34,7 @@ object Clouds {
     FileUtilities.writerTo(file)(_.println(text))
   }
 }
+
 class Clouds(deps: Deps) extends Log {
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(30.minutes)
@@ -43,6 +45,15 @@ class Clouds(deps: Deps) extends Log {
   def init(): Unit = {
     ensureConnectedIfEnabled()
     maintainConnectivity()
+  }
+
+  def maintainConnectivity(): Unit = {
+    stopPolling()
+    val subscription = timer.subscribe(
+      _ => ensureConnectedIfEnabled(),
+      (err: Throwable) => log.error("Cloud poller failed", err),
+      () => log.warn("Cloud poller completed"))
+    poller = Some(subscription)
   }
 
   def ensureConnectedIfEnabled(): Unit = {
@@ -60,25 +71,20 @@ class Clouds(deps: Deps) extends Log {
     }
   }
 
-  def maintainConnectivity(): Unit = {
-    stopPolling()
-    poller = Some(timer.subscribe(_ => ensureConnectedIfEnabled()))
-  }
-
-  def newSocket(id: Option[String]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
-
-  def connect(id: Option[String]): Future[String] = reg {
+  def connect(id: Option[CloudID]): Future[CloudID] = reg {
     disconnect()
     log info s"Connecting to ${client.uri} as $id..."
     client = newSocket(id)
-    client.connectID().map(id => {
+    client.connectID() map { id =>
       successiveFailures = 0
       Clouds.saveID(id)
       log info s"Connected to ${client.uri}"
       maintainConnectivity()
       id
-    })
+    }
   }
+
+  def newSocket(id: Option[CloudID]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
 
   def disconnectAndForget() = {
     client sendMessage SimpleCommand(CloudStrings.UNREGISTER)
@@ -100,7 +106,7 @@ class Clouds(deps: Deps) extends Log {
     poller = None
   }
 
-  def registration: Future[String] = reg(Future.failed(CloudSocket.notConnected))
+  def registration: Future[CloudID] = reg(Future.failed(CloudSocket.notConnected))
 
   def sendIfConnected(msg: JsValue): SendResult = {
     if (client.isConnected) {
@@ -113,7 +119,7 @@ class Clouds(deps: Deps) extends Log {
     }
   }
 
-  private def reg(ifDisconnected: => Future[String]) = {
+  private def reg(ifDisconnected: => Future[CloudID]) = {
     if (client.isConnected) client.registration
     else ifDisconnected
   }

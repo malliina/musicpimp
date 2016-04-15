@@ -9,11 +9,6 @@ import play.api.libs.json.JsValue
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
-
-/**
- *
- * @author mle
- */
 trait WebPlayerMessageHandler extends JsonHandlerBase {
 
   def player(user: String): PimpWebPlayer

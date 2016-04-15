@@ -9,10 +9,6 @@ import play.api.libs.json.Json
 
 import scala.concurrent.duration.Duration
 
-/**
- *
- * @author mle
- */
 case class StatusEvent(track: TrackMeta,
                        state: PlayerStates.PlayerState,
                        position: Duration,

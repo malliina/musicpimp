@@ -3,10 +3,6 @@ package com.malliina.musicpimp.scheduler
 import com.malliina.play.json.JsonEnum
 
 
-/**
- *
- * @author mle
- */
 sealed abstract class TimeUnit(val name: String) {
   override def toString = name
 }

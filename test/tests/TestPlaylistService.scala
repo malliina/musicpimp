@@ -6,9 +6,6 @@ import com.malliina.musicpimp.library.{PlaylistSubmission, PlaylistService}
 
 import scala.concurrent.Future
 
-/**
- * @author mle
- */
 class TestPlaylistService extends PlaylistService {
   val tracks1 = Seq(
     DataTrack.fromValues("1", "Aces High", "Iron Maiden", "Powerslave", 100, 1000000, "folder 1"),

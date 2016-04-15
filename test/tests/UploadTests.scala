@@ -12,10 +12,6 @@ import org.scalatest.FunSuite
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
-/**
- *
- * @author mle
- */
 class UploadTests extends FunSuite {
   val fileName = "mpthreetest.mp3"
 

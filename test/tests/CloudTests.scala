@@ -7,9 +7,6 @@ import org.scalatest.FunSuite
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
 
-/**
- * @author Michael
- */
 class CloudTests extends FunSuite {
   val uri = "wss://cloud.musicpimp.org/servers/ws2"
   val testUri = "ws://localhost:9000/servers/ws2"

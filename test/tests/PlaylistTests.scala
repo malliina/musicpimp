@@ -5,9 +5,6 @@ import org.scalatest.FunSuite
 
 import scala.concurrent.stm.Ref
 
-/**
-  * @author mle
-  */
 class PlaylistTests extends FunSuite {
   test("Playlist index reacts to playlist reorganization") {
     val tracks = Seq("a", "b", "c", "d", "e")

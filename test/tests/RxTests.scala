@@ -8,9 +8,6 @@ import rx.lang.scala.{Observable, Subject}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Promise}
 
-/**
- * @author Michael
- */
 class RxTests extends FunSuite {
   test("rx hot/cold") {
     val correctAnswer = 1

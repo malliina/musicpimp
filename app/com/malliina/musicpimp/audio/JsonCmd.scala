@@ -3,10 +3,6 @@ package com.malliina.musicpimp.audio
 import com.malliina.musicpimp.json.JsonStrings._
 import play.api.libs.json.JsValue
 
-/**
-  *
-  * @author mle
-  */
 class JsonCmd(json: JsValue) {
   val command = (json \ CMD).as[String]
 

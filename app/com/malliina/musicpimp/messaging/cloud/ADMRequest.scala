@@ -4,9 +4,6 @@ import com.malliina.push.adm.ADMToken
 import com.malliina.push.android.AndroidMessage
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class ADMRequest(tokens: Seq[ADMToken], message: AndroidMessage)
   extends PushRequest[ADMToken, AndroidMessage]
 

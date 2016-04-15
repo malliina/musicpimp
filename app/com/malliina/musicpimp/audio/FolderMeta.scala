@@ -5,9 +5,6 @@ import com.malliina.musicpimp.json.JsonStrings._
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Writes}
 
-/**
- * @author Michael
- */
 trait FolderMeta extends MusicItem {
   def id: String
 

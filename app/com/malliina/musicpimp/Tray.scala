@@ -14,8 +14,7 @@ import scala.util.Try
 object Tray extends Log {
   val iconResource = "guitar-16x16.png"
 
-  /**
-    * Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
+  /** Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
     * MusicPimp.
     */
   def installTray() = {

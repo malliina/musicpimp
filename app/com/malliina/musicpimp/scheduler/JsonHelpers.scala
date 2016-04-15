@@ -3,10 +3,6 @@ package com.malliina.musicpimp.scheduler
 import play.api.libs.json.Json._
 import play.api.libs.json.{Format, JsResult, JsValue}
 
-/**
- *
- * @author mle
- */
 trait JsonHelpers {
 
   /**

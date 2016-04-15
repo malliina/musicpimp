@@ -10,7 +10,7 @@ class StoragePlayer(val track: LocalTrack, eom: () => Unit)
 }
 
 class StreamPlayer(val track: StreamedTrack, eom: () => Unit)
-  extends JavaSoundPlayer(track.stream, track.duration, track.size, JavaSoundPlayer.DEFAULT_RW_BUFFER_SIZE)
+  extends JavaSoundPlayer(track.stream, track.duration, track.size, JavaSoundPlayer.DefaultRwBufferSize)
   with PimpPlayer {
   override def onEndOfMedia(): Unit = eom()
 }

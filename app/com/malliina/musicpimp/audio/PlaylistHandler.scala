@@ -5,9 +5,6 @@ import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.PlaylistID
 import play.api.libs.json._
 
-/**
- * @author mle
- */
 class PlaylistHandler(service: PlaylistService) {
   val Id = "id"
 
