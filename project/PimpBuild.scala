@@ -37,7 +37,7 @@ object PimpBuild extends Build {
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.0.0",
+    version := "3.0.1",
     organization := "org.musicpimp",
     scalaVersion := "2.11.7",
     retrieveManaged := false,
@@ -156,11 +156,11 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-base" % "2.8.0-0",
-        malliinaGroup %% "util-actor" % "2.4.0-1",
-        malliinaGroup %% "util-rmi" % "2.4.0-1",
-        malliinaGroup %% "util-audio" % "2.0.0-0",
-        malliinaGroup %% "mobile-push" % "1.5.0-0",
+        malliinaGroup %% "play-base" % "2.8.0",
+        malliinaGroup %% "util-actor" % "2.4.1",
+        malliinaGroup %% "util-rmi" % "2.4.1",
+        malliinaGroup %% "util-audio" % "2.0.0",
+        malliinaGroup %% "mobile-push" % "1.5.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -171,7 +171,7 @@ object PimpBuild extends Build {
         "com.h2database" % "h2" % "1.3.176",
         "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-        "com.neovisionaries" % "nv-websocket-client" % "1.22",
+        "com.neovisionaries" % "nv-websocket-client" % "1.25",
         "org.scalatest" %% "scalatest" % "2.2.5" % Test
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
