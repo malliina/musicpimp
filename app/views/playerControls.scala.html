@@ -14,14 +14,14 @@
             <span id="pos"> 00:00 </span> / <span id="duration"> 00:00 </span>
         </div>
         <div class="row col-md-11 text-center">
-            <input type="image" src="@routes.PimpAssets.at("img/transport.rew.png")" onclick="prev()"/>
-            <input id="playButton" type="image" src="@routes.PimpAssets.at("img/light/transport.play.png")" onclick="resume()"/>
-            <input id="pauseButton" style="display: none" type="image" src="@routes.PimpAssets.at("img/light/transport.pause.png")" onclick="stop()"/>
-            <input type="image" src="@routes.PimpAssets.at("img/light/transport.ff.png")" onclick="next()"/>
+            <input type="image" src="@routes.Assets.at("img/transport.rew.png")" onclick="prev()"/>
+            <input id="playButton" type="image" src="@routes.Assets.at("img/light/transport.play.png")" onclick="resume()"/>
+            <input id="pauseButton" style="display: none" type="image" src="@routes.Assets.at("img/light/transport.pause.png")" onclick="stop()"/>
+            <input type="image" src="@routes.Assets.at("img/light/transport.ff.png")" onclick="next()"/>
         </div>
         <div class="row col-md-11 visible-lg">
             <div class="col-md-3">
-                <input type="image" class="pull-right" src="@routes.PimpAssets.at("img/light/appbar.sound.3.png")" onclick="togglemute()"/>
+                <input type="image" class="pull-right" src="@routes.Assets.at("img/light/appbar.sound.3.png")" onclick="togglemute()"/>
             </div>
             <div class="col-md-8">
                 <div class="col-md-12 pull-left" id="volume"></div>

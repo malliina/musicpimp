@@ -76,7 +76,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val accounts = new Accounts(auth, materializer)
   lazy val cloud = new Cloud(c, auth, materializer)
   lazy val connect = new ConnectController(auth, materializer)
-  lazy val pimpAssets = new PimpAssets
+  lazy val assetsCtrl = new Assets(httpErrorHandler)
 
   Starter.startServices(options, c, db, indexer)
   val dummyForInit = statsPlayer
@@ -86,7 +86,7 @@ class PimpComponents(context: Context, options: InitOptions)
     settingsCtrl, connect, lp,
     cloud, accounts, r, pl,
     alarms, sp, s, sws,
-    wp, ls, pimpAssets)
+    wp, ls, assetsCtrl)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
