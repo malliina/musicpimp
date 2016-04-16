@@ -5,7 +5,7 @@ import java.net.ConnectException
 import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.{CloudID, Clouds}
-import com.malliina.play.{Authenticator, Parsers}
+import com.malliina.play.Authenticator
 import controllers.Cloud.log
 import play.api.Logger
 import play.api.data.Form
@@ -26,7 +26,7 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
     id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2)))
   })
 
-  def toggle = PimpParsedActionAsync(Parsers.default)(implicit req => {
+  def toggle = PimpParsedActionAsync(parse.default)(implicit req => {
     cloudForm.bindFromRequest.fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
