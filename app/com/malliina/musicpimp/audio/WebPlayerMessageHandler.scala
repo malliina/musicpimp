@@ -1,64 +1,74 @@
 package com.malliina.musicpimp.audio
 
-import java.util.concurrent.TimeUnit
-
 import com.malliina.audio.PlayerStates
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.audio.WebPlayerMessageHandler.log
 import com.malliina.musicpimp.library.Library
-import play.api.libs.json.JsValue
+import play.api.Logger
+import play.api.libs.json._
 
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.util.Try
 
 trait WebPlayerMessageHandler extends JsonHandlerBase {
 
   def player(user: String): PimpWebPlayer
 
-  override protected def handleMessage(msg: JsValue, user: String): Unit = {
-    def userPlayer(op: PimpWebPlayer => Unit) {
+  def fulfillMessage(message: PlayerMessage, user: String): Unit = {
+
+    def userPlayer(op: PimpWebPlayer => Unit): Unit =
       op(player(user))
-    }
-    withCmd(msg)(cmd => cmd.command match {
-      case TIME_UPDATED =>
-        userPlayer(_.position = cmd.value.seconds)
-      case TRACK_CHANGED =>
-        userPlayer(_.notifyTrackChanged(Library meta cmd.track))
-      case VOLUME_CHANGED =>
-        userPlayer(_.notifyVolumeChanged(cmd.value))
-      case PLAYLIST_INDEX_CHANGED =>
+
+    message match {
+      case TimeUpdated(position) =>
+        userPlayer(_.position = position)
+      case TrackChanged(track) =>
+        userPlayer(_.notifyTrackChanged(newTrackInfo(track)))
+      case VolumeChanged(volume) =>
+        userPlayer(_.notifyVolumeChanged(volume))
+      case PlaylistIndexChanged(index) =>
         userPlayer(player => {
-          player.playlist.index = cmd.value
+          player.playlist.index = index
           player.trackChanged()
         })
-      case PLAYSTATE_CHANGED =>
-        userPlayer(_.notifyPlayStateChanged(PlayerStates.withName(cmd.stringValue)))
-      case MUTE_TOGGLED =>
-        userPlayer(_.notifyMuteToggled(cmd.boolValue))
-      case PLAY =>
-        userPlayer(_.setPlaylistAndPlay(newTrackInfo(cmd.track)))
-      case ADD =>
-        userPlayer(_.playlist.add(newTrackInfo(cmd.track)))
-      case REMOVE =>
-        userPlayer(_.playlist.delete(cmd.value))
-      case RESUME =>
+      case PlayStateChanged(state) =>
+        userPlayer(_.notifyPlayStateChanged(state))
+      case MuteToggled(isMute) =>
+        userPlayer(_.notifyMuteToggled(isMute))
+      case Play(track) =>
+        userPlayer(_.setPlaylistAndPlay(newTrackInfo(track)))
+      case Add(track) =>
+        userPlayer(_.playlist.add(newTrackInfo(track)))
+      case Remove(track) =>
+        userPlayer(_.playlist.delete(track))
+      case Resume =>
         userPlayer(_.play())
-      case STOP =>
+      case Stop =>
         userPlayer(_.stop())
-      case NEXT =>
+      case Next =>
         userPlayer(_.nextTrack())
-      case PREV =>
+      case Prev =>
         userPlayer(_.previousTrack())
-      case SKIP =>
-        userPlayer(_.skip(cmd.value))
-      case SEEK =>
-        userPlayer(_.seek(Duration(cmd.value.toLong, TimeUnit.SECONDS)))
-      case MUTE =>
-        userPlayer(_.mute(cmd.boolValue))
-      case VOLUME =>
-        userPlayer(_.gain(1.0f * cmd.value / 100))
-      case anythingElse =>
-        log warn s"Unknown message: $msg"
-    })
+      case Skip(index) =>
+        userPlayer(_.skip(index))
+      case Seek(position) =>
+        userPlayer(_.seek(position))
+      case Mute(isMute) =>
+        userPlayer(_.mute(isMute))
+      case Volume(volume) =>
+        userPlayer(_.gain(1.0f * volume / 100))
+      case _ =>
+        log warn s"Unsupported message: $message from $user"
+    }
   }
 
   private def newTrackInfo(trackId: String) = Library meta trackId
+}
+
+object WebPlayerMessageHandler {
+  private val log = Logger(getClass)
+
+  val playerStateReader = Reads[PlayerStates.Value](_.validate[String] flatMap { str =>
+    Try(PlayerStates.withName(str))
+      .map[JsResult[PlayerStates.Value]](state => JsSuccess(state))
+      .getOrElse(JsError(s"Unknown player state: $str"))
+  })
 }

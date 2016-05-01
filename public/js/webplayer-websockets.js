@@ -85,6 +85,7 @@ var sendValuedJson = function (cmd, value) {
 };
 // sends json back to server
 var send = function (json) {
+    console.log("Sending " + json);
     webSocket.send(json);
 };
 // server message handlers
@@ -181,7 +182,8 @@ var setPlaylist = function (tracks) {
 var appendToPlaylistUI = function (track) {
     playlistElem.append("<li class='song'><a href='#' onclick='skip(IndexOf(this))'>" + track.title + "</a></li>");
 };
-var onclose = function (payload) {
+var onclose = function (closeEvent) {
+    console.log("Closed, code " + closeEvent.code + ", reason " + closeEvent.reason + ", was clean " + closeEvent.wasClean);
 //    alert('the connection has been closed')
 };
 var onerror = function (payload) {

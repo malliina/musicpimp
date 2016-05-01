@@ -3,7 +3,10 @@ package controllers
 import akka.stream.{Materializer, QueueOfferResult}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.json.JsonFormatVersions
+import com.malliina.musicpimp.models.ClientInfo
 import com.malliina.play.Authenticator
+import controllers.WebPlayer.log
+import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.mvc.Call
 
@@ -28,8 +31,18 @@ class WebPlayer(auth: Authenticator, mat: Materializer)
     p.playlist add track
   }
 
+  override def onConnect(client: ClientInfo[JsValue]): Unit = {
+    super.onConnect(client)
+    log info s"Connected ${client.describe}"
+  }
+
+  override def onDisconnect(client: ClientInfo[JsValue]): Unit = {
+    super.onDisconnect(client)
+    log info s"Disconnected ${client.describe}"
+  }
+
   def remove(user: String, trackIndex: Int): Unit =
-    players.get(user).foreach(_.playlist.delete(trackIndex))
+    players.get(user).foreach(_.playlist delete trackIndex)
 
   def status(client: Client): JsValue = {
     val p = player(client.user)
@@ -43,4 +56,8 @@ class WebPlayer(auth: Authenticator, mat: Materializer)
 
   def unicast(user: String, json: JsValue): Future[Seq[QueueOfferResult]] =
     Future.traverse(clients.filter(_.user == user))(_.channel offer json)
+}
+
+object WebPlayer {
+  private val log = Logger(getClass)
 }

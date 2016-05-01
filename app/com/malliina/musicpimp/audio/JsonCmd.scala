@@ -1,34 +1,34 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Reads}
 
 class JsonCmd(json: JsValue) {
-  val command = (json \ CMD).as[String]
+  val command = (json \ CMD).validate[String]
 
-  def value = (json \ VALUE).as[Int]
+  def intValue = asValue[Int]
 
-  def boolValue = (json \ VALUE).as[Boolean]
+  def doubleValue = asValue[Double]
 
-  def stringValue = (json \ VALUE).as[String]
+  def boolValue = asValue[Boolean]
 
-  def trackOpt = (json \ TRACK).asOpt[String]
+  def stringValue = asValue[String]
 
-  def track = trackOpt.get
+  def asValue[T : Reads] = (json \ VALUE).validate[T]
 
-  def tracksOpt = (json \ TRACKS).asOpt[Seq[String]]
+  def track = (json \ TRACK).validate[String]
 
-  def tracksOrNil = tracksOpt getOrElse Nil
+  def tracks = (json \ TRACKS).validate[Seq[String]]
 
-  def foldersOpt = (json \ FOLDERS).asOpt[Seq[String]]
+  def tracksOrNil = tracks getOrElse Nil
 
-  def foldersOrNil = foldersOpt getOrElse Nil
+  def folders = (json \ FOLDERS).validate[Seq[String]]
 
-  def idOpt = (json \ ID).asOpt[String]
+  def foldersOrNil = folders getOrElse Nil
 
-  def id = idOpt.get
+  def id = (json \ ID).validate[String]
 
-  def indexOpt = (json \ PLAYLIST_INDEX).asOpt[Int]
+  def index = (json \ PLAYLIST_INDEX).validate[Int]
 
-  def indexOrValue = indexOpt getOrElse value
+  def indexOrValue = index orElse intValue
 }

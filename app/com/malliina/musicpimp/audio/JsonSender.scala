@@ -21,7 +21,7 @@ trait JsonSender extends Log {
     send(obj(fields: _*))
 
   protected def send(json: JsValue) {
-    log debug s"Sending to: $user: $json"
+    log info s"Sending to: $user: $json"
     webPlayer.unicast(user, json)
   }
 }
