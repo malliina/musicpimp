@@ -37,7 +37,7 @@ object Clouds {
 
 class Clouds(deps: Deps) extends Log {
   var client: CloudSocket = newSocket(None)
-  val timer = Observable.interval(5.seconds)
+  val timer = Observable.interval(60.seconds)
   var poller: Option[Subscription] = None
   val MAX_FAILURES = 50
   var successiveFailures = 0
