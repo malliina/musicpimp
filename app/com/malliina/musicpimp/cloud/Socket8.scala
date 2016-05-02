@@ -4,16 +4,21 @@ import java.util
 import javax.net.ssl.SSLContext
 
 import com.malliina.security.SSLUtils
-import com.malliina.util.Log
+import com.malliina.musicpimp.cloud.Socket8.log
 import com.malliina.ws.{NotConnectedException, WebSocketBase}
 import com.neovisionaries.ws.client._
+import play.api.Logger
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 
+object Socket8 {
+  private val log = Logger(getClass)
+}
+
 abstract class Socket8[T](val uri: String, sslContext: SSLContext, headers: (String, String)*)
-  extends WebSocketBase[T] with Log {
+  extends WebSocketBase[T] {
 
   protected val connectPromise = Promise[Unit]()
   val connectTimeout = 20.seconds

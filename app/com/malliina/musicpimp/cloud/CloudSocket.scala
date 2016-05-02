@@ -7,7 +7,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler}
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
-import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol}
+import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
 import com.malliina.musicpimp.cloud.CloudStrings.{BODY, REGISTERED, REQUEST_ID, SUCCESS, UNREGISTER}
 import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
@@ -23,9 +23,10 @@ import com.malliina.play.json.SimpleCommand
 import com.malliina.rx.Observables
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
-import com.malliina.util.{Log, Util}
+import com.malliina.util.Util
 import com.malliina.ws.HttpUtil
 import controllers.{Alarms, LibraryController, Rest}
+import play.api.Logger
 import play.api.libs.json._
 
 import scala.concurrent.duration.DurationInt
@@ -57,8 +58,8 @@ case class Deps(playlists: PlaylistService,
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
 class CloudSocket(uri: String, username: String, password: String, deps: Deps)
-  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password))
-  with Log {
+  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username, password)) {
+
   val lib = deps.lib
   val handler = deps.handler
   private val registrationPromise = Promise[CloudID]()
@@ -361,6 +362,8 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 }
 
 object CloudSocket {
+  private val log = Logger(getClass)
+
   val isDev = false
   val (hostPort, httpProtocol, socketProtocol) =
     if (isDev) ("localhost:9000", "http", "ws")

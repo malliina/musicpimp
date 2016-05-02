@@ -28,7 +28,7 @@ trait DatabaseLike {
     val tableName = table.baseTableRow.tableName
     try {
       val future = database.run(MTable.getTables(tableName))
-      Await.result(future, 5.seconds).nonEmpty
+      await(future).nonEmpty
     } catch {
       case sqle: SQLException =>
         log.error(s"Unable to verify table: $tableName", sqle)
@@ -36,11 +36,12 @@ trait DatabaseLike {
     }
   }
 
-  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*) =
+
+  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
     tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
   def initTable[T <: Table[_]](table: TableQuery[T]) = {
-    database.run(table.schema.create)
+    await(database.run(table.schema.create))
     log info s"Created table: ${table.baseTableRow.tableName}"
   }
 
@@ -51,6 +52,8 @@ trait DatabaseLike {
   //    val action = sql"""$query""".as[R]
   //    database.run(action)
   //  }
+
+  private def await[T](f: Future[T]): T = Await.result(f, 10.seconds)
 }
 
 object DatabaseLike {

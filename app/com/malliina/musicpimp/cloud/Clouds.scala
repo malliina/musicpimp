@@ -37,7 +37,7 @@ object Clouds {
 
 class Clouds(deps: Deps) extends Log {
   var client: CloudSocket = newSocket(None)
-  val timer = Observable.interval(30.minutes)
+  val timer = Observable.interval(5.seconds)
   var poller: Option[Subscription] = None
   val MAX_FAILURES = 50
   var successiveFailures = 0
@@ -48,16 +48,18 @@ class Clouds(deps: Deps) extends Log {
   }
 
   def maintainConnectivity(): Unit = {
-    stopPolling()
-    val subscription = timer.subscribe(
-      _ => ensureConnectedIfEnabled(),
-      (err: Throwable) => log.error("Cloud poller failed", err),
-      () => log.warn("Cloud poller completed"))
-    poller = Some(subscription)
+    if(poller.isEmpty) {
+      val subscription = timer.subscribe(
+        _ => ensureConnectedIfEnabled(),
+        (err: Throwable) => log.error("Cloud poller failed", err),
+        () => log.warn("Cloud poller completed"))
+      poller = Some(subscription)
+    }
   }
 
-  def ensureConnectedIfEnabled(): Unit = {
+  def ensureConnectedIfEnabled(): Unit = Try {
     if (Clouds.isEnabled && !client.isConnected) {
+      log info s"Attempting to reconnect to the cloud..."
       connect(Clouds.loadID()).recoverAll(t => {
         log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
         successiveFailures += 1
@@ -72,7 +74,7 @@ class Clouds(deps: Deps) extends Log {
   }
 
   def connect(id: Option[CloudID]): Future[CloudID] = reg {
-    disconnect()
+    closeAnyConnection()
     log info s"Connecting to ${client.uri} as $id..."
     client = newSocket(id)
     client.connectID() map { id =>
@@ -94,6 +96,10 @@ class Clouds(deps: Deps) extends Log {
 
   def disconnect() = {
     stopPolling()
+    closeAnyConnection()
+  }
+
+  def closeAnyConnection() = {
     val wasConnected = client.isConnected
     client.close()
     if (wasConnected) {
