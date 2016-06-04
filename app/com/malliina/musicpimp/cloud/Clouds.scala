@@ -89,7 +89,7 @@ class Clouds(deps: Deps) extends Log {
   def newSocket(id: Option[CloudID]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
 
   def disconnectAndForget() = {
-    client sendMessage SimpleCommand(CloudStrings.UNREGISTER)
+    client sendMessage SimpleCommand(CloudStrings.Unregister)
     disconnect()
     Files.deleteIfExists(Clouds.idFile)
   }

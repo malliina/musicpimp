@@ -15,14 +15,16 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo, User}
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.BaseController
 import com.malliina.play.http.{AuthRequest, OneFileUploadRequest}
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
-import com.malliina.util.{Log, Util, Utils}
+import com.malliina.util.{Util, Utils}
+import controllers.Rest.log
 import org.apache.http.HttpResponse
+import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
@@ -35,8 +37,7 @@ class Rest(webPlayer: WebPlayer,
            statsPlayer: StatsPlayer,
            mat: Materializer)
   extends Secured(auth, mat)
-    with BaseController
-    with Log {
+    with BaseController {
 
   val webPlayerHandler = webPlayer.messageHandler
 
@@ -60,7 +61,8 @@ class Rest(webPlayer: WebPlayer,
     MusicPlayer.setPlaylistAndPlay(track)
   }
 
-  def webPlaylist = PimpAction { req =>
+  def webPlaylist = PimpAction { implicit req =>
+    implicit val w = TrackMeta.writer(req)
     Ok(Json.toJson(playlistFor(req.user)))
   }
 
@@ -81,22 +83,24 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: See and fix https://github.com/playframework/playframework/issues/1842
     */
-  def streamedPlayback = Authenticated(user => EssentialAction(requestHeader => {
-    val headerValue = requestHeader.headers.get(JsonStrings.TRACK_HEADER)
-      .map(Json.parse(_).validate[BaseTrackMeta])
-    val metaOrError = headerValue.map(jsonResult => jsonResult.fold(
-      invalid => Left(loggedJson(s"Invalid JSON: $invalid")),
-      valid => Right(valid))
-    ).getOrElse(Left(loggedJson("No Track header is defined.")))
-    val authAction = metaOrError.fold(
-      error => PimpAction(BadRequest(error)),
-      meta => {
-        statsPlayer.updateUser(User(user.user))
-        localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
-      }
-    )
-    authAction(requestHeader)
-  }))
+  def streamedPlayback = Authenticated { user =>
+    EssentialAction { requestHeader =>
+      val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
+        .map(Json.parse(_).validate[BaseTrackMeta])
+      val metaOrError = headerValue.map(jsonResult => jsonResult.fold(
+        invalid => Left(loggedJson(s"Invalid JSON: $invalid")),
+        valid => Right(valid))
+      ).getOrElse(Left(loggedJson("No Track header is defined.")))
+      val authAction = metaOrError.fold(
+        error => PimpAction(BadRequest(error)),
+        meta => {
+          statsPlayer.updateUser(User(user.user))
+          localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
+        }
+      )
+      authAction(requestHeader)
+    }
+  }
 
   /** Beams the local track according to the [[BeamCommand]] in the request body.
     *
@@ -130,16 +134,18 @@ class Rest(webPlayer: WebPlayer,
     )
   })
 
-  def status = PimpAction(implicit req => pimpResponse(
-    html = NoContent,
-    json17 = Json.toJson(MusicPlayer.status17),
-    latest = Json.toJson(MusicPlayer.status)
-  ))
+  def status = PimpAction { implicit req =>
+    implicit val w = TrackMeta.writer(req)
+    pimpResponse(
+      html = NoContent,
+      json17 = Json.toJson(MusicPlayer.status17),
+      latest = Json.toJson(MusicPlayer.status)
+    )
+  }
 
-  /**
-    * The status of the web player of the user making the request.
+  /** The status of the web player of the user making the request.
     */
-  def webStatus = PimpAction(req => Ok(webStatusJson(req.user)))
+  def webStatus = PimpAction(req => Ok(webStatusJson(req.user, RemoteInfo(req.user, PimpUrl.hostOnly(req)))))
 
   private def localPlaybackAction(id: String): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id).map(track => {
@@ -195,7 +201,7 @@ class Rest(webPlayer: WebPlayer,
     JsonMessages.failure(errorMessage)
   }
 
-  /** Builds an [[play.api.libs.iteratee.Iteratee]] that writes any consumed bytes to both `file` and a stream. The bytes
+  /** Builds a [[Sink]] that writes any consumed bytes to both `file` and a stream. The bytes
     * written to the stream are made available to the returned [[InputStream]].
     *
     * @param file file to write to
@@ -211,8 +217,8 @@ class Rest(webPlayer: WebPlayer,
     (pipeIn, iteratee)
   }
 
-  private def webStatusJson(user: String) = {
-    val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(user, webPlayer))
+  private def webStatusJson(user: String, request: RemoteInfo) = {
+    val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(request, webPlayer))
     Json.toJson(player.status)
   }
 
@@ -246,7 +252,7 @@ class Rest(webPlayer: WebPlayer,
     })
 
   private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
-    HeadPimpUploadAction(request => {
+    HeadPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)
       val pathParameterOpt = firstValue("path")
@@ -262,7 +268,7 @@ class Rest(webPlayer: WebPlayer,
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new LocalTrack("", meta)
+        new LocalTrack("", PimpPath.Empty, meta)
       }
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
       val user = request.user
@@ -270,14 +276,16 @@ class Rest(webPlayer: WebPlayer,
       val fileSize = mediaInfo.size
       log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
       f(new TrackUploadRequest(track, file, user, request))
-    })
+    }
 
   class TrackUploadRequest[A](val track: LocalTrack, file: Path, user: String, request: Request[A])
     extends OneFileUploadRequest(file, user, request)
 
 }
 
-object Rest extends Log {
+object Rest {
+  private val log = Logger(getClass)
+
   /** Beams a track to a URI as specified in `cmd`.
     *
     * @param cmd beam details

@@ -2,6 +2,7 @@ package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.PimpPath
 import com.malliina.play.json.JsonFormats
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json
@@ -9,9 +10,6 @@ import slick.jdbc.GetResult
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
-/**
- * @author Michael
- */
 case class DataTrack(id: String,
                      title: String,
                      artist: String,
@@ -19,7 +17,7 @@ case class DataTrack(id: String,
                      duration: Duration,
                      size: StorageSize,
                      folder: String) extends TrackMeta {
-  val path = Library decode folder
+  val path = PimpPath.fromRaw(Library decode folder)
 
   def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
 }

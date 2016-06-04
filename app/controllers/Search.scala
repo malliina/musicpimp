@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.json.JsonStrings.{CMD, REFRESH, SUBSCRIBE}
+import com.malliina.musicpimp.json.JsonStrings.{Cmd, Refresh, Subscribe}
 import com.malliina.play.Authenticator
 import com.malliina.util.Log
 import play.api.mvc.Call
@@ -36,11 +36,11 @@ class Search(indexer: Indexer, auth: Authenticator, mat: Materializer)
   override def welcomeMessage(client: Client): Option[Message] = Some(JsonMessages.searchStatus(s"Connected."))
 
   override def onMessage(msg: Message, client: Client): Boolean = {
-    (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
-      case REFRESH =>
+    (msg \ Cmd).asOpt[String].fold(log warn s"Unknown message: $msg")({
+      case Refresh =>
         broadcastStatus("Indexing...")
         indexer.indexAndSave()
-      case SUBSCRIBE =>
+      case Subscribe =>
         ()
     })
     true

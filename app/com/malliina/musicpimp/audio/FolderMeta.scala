@@ -1,27 +1,28 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.musicpimp.models.MusicItem
 import com.malliina.musicpimp.json.JsonStrings._
-import play.api.libs.json.Json._
-import play.api.libs.json.{JsValue, Writes}
+import com.malliina.musicpimp.models.{MusicItem, PimpPath, PimpUrl}
+import play.api.libs.json.Json.obj
+import play.api.libs.json.Writes
 
 trait FolderMeta extends MusicItem {
   def id: String
 
   def title: String
 
-  def path: String
+  def path: PimpPath
 
   def parent: String
 }
 
 object FolderMeta {
-  implicit val folderWriter = new Writes[FolderMeta] {
-    def writes(f: FolderMeta): JsValue = obj(
-      ID -> f.id,
-      TITLE -> f.title,
-      PATH -> f.path
-      //      PARENT -> f.parent
+  def writer(host: PimpUrl) = Writes[FolderMeta] { f =>
+    val call = controllers.routes.LibraryController.library(f.id)
+    obj(
+      Id -> f.id,
+      Title -> f.title,
+      PathKey -> f.path,
+      Url -> host.absolute(call)
     )
   }
 }

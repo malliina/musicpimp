@@ -3,9 +3,10 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.json.PimpJson
 import com.malliina.musicpimp.library.LocalTrack
+import com.malliina.musicpimp.models.PimpUrl
 import com.malliina.play.json.JsonFormats
 import com.malliina.util.Log
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Writes}
 
 import scala.concurrent.duration.Duration
 
@@ -20,7 +21,10 @@ case class StatusEvent(track: TrackMeta,
 object StatusEvent extends Log {
   implicit val dur = JsonFormats.durationFormat
   implicit val playerState = PimpJson.playStateFormat
-  implicit val status18writer = Json.writes[StatusEvent]
+
+  implicit def status18writer(implicit w: Writes[TrackMeta]) = {
+    Json.writes[StatusEvent]
+  }
 
   val empty = StatusEvent(
     LocalTrack.empty,

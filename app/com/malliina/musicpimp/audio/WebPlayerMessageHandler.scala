@@ -3,6 +3,7 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.WebPlayerMessageHandler.log
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.RemoteInfo
 import play.api.Logger
 import play.api.libs.json._
 
@@ -10,53 +11,53 @@ import scala.util.Try
 
 trait WebPlayerMessageHandler extends JsonHandlerBase {
 
-  def player(user: String): PimpWebPlayer
+  def player(request: RemoteInfo): PimpWebPlayer
 
-  def fulfillMessage(message: PlayerMessage, user: String): Unit = {
+  def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit = {
 
     def userPlayer(op: PimpWebPlayer => Unit): Unit =
-      op(player(user))
+      op(player(request))
 
     message match {
-      case TimeUpdated(position) =>
+      case TimeUpdatedMsg(position) =>
         userPlayer(_.position = position)
-      case TrackChanged(track) =>
+      case TrackChangedMsg(track) =>
         userPlayer(_.notifyTrackChanged(newTrackInfo(track)))
-      case VolumeChanged(volume) =>
+      case VolumeChangedMsg(volume) =>
         userPlayer(_.notifyVolumeChanged(volume))
-      case PlaylistIndexChanged(index) =>
+      case PlaylistIndexChangedMsg(index) =>
         userPlayer(player => {
           player.playlist.index = index
           player.trackChanged()
         })
-      case PlayStateChanged(state) =>
+      case PlayStateChangedMsg(state) =>
         userPlayer(_.notifyPlayStateChanged(state))
-      case MuteToggled(isMute) =>
+      case MuteToggledMsg(isMute) =>
         userPlayer(_.notifyMuteToggled(isMute))
-      case Play(track) =>
+      case PlayMsg(track) =>
         userPlayer(_.setPlaylistAndPlay(newTrackInfo(track)))
-      case Add(track) =>
+      case AddMsg(track) =>
         userPlayer(_.playlist.add(newTrackInfo(track)))
-      case Remove(track) =>
+      case RemoveMsg(track) =>
         userPlayer(_.playlist.delete(track))
-      case Resume =>
+      case ResumeMsg =>
         userPlayer(_.play())
-      case Stop =>
+      case StopMsg =>
         userPlayer(_.stop())
-      case Next =>
+      case NextMsg =>
         userPlayer(_.nextTrack())
-      case Prev =>
+      case PrevMsg =>
         userPlayer(_.previousTrack())
-      case Skip(index) =>
+      case SkipMsg(index) =>
         userPlayer(_.skip(index))
-      case Seek(position) =>
+      case SeekMsg(position) =>
         userPlayer(_.seek(position))
-      case Mute(isMute) =>
+      case MuteMsg(isMute) =>
         userPlayer(_.mute(isMute))
-      case Volume(volume) =>
+      case VolumeMsg(volume) =>
         userPlayer(_.gain(1.0f * volume / 100))
       case _ =>
-        log warn s"Unsupported message: $message from $user"
+        log warn s"Unsupported message: $message from ${request.user}"
     }
   }
 

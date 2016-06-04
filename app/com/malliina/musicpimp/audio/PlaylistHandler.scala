@@ -19,7 +19,7 @@ class PlaylistHandler(service: PlaylistService) {
   case class DeletePlaylist(id: PlaylistID) extends Command
 
   def parseCommand(json: JsValue): JsResult[Command] = {
-    (json \ CMD).validate[String].flatMap {
+    (json \ Cmd).validate[String].flatMap {
       case PlaylistsGet =>
         JsSuccess(GetPlaylists)
       case PlaylistGet =>

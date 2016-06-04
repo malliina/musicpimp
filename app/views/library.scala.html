@@ -1,48 +1,49 @@
 @import com.malliina.musicpimp.models.MusicColumn
 @import com.malliina.musicpimp.audio.{FolderMeta,TrackMeta}
-@import java.nio.file.Path
 @import util.div
-@(relativePath: Path, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn)
+@import com.malliina.musicpimp.models.PimpPath
 
-    @libraryBase("folders") {
-        @div("page-header") {
-            <h1>Library <small>@relativePath</small></h1>
-        }
-        @div("row") {
-            @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
-            @renderColumn(col2)
-            @renderColumn(col3)
-        }
-        @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.toString.isEmpty) {
-            <p class="lead">
-                The library is empty. To get started, add music folders under <a href="@routes.SettingsController.settings()">
-                Music Folders</a>.</p>
-        }
-        @util.script2("json.js", "library.js")
-    }
-    @renderColumn(col: MusicColumn, onlyColumn: Boolean = false) = {
-        @div(columnSpan(onlyColumn).toString()) {
-            <ul class="list-unstyled">
-                @col.folders.map { f =>
-                    <li class="lead">@folderActions(f.id) @folderTitle(f)</li>
-                }
-                @col.tracks.map{ t =>
-                    <li class="lead">@renderSong(t) @t.title</li>
-                }
-            </ul>
-        }
-    }
-    @folderTitle(dir: FolderMeta) = {
-        <a href="@routes.LibraryController.library(dir.id)">@dir.title</a>
-    }
-    @renderSong(song: TrackMeta) = {
-        @trackActions(song.id, "")
-    }
+@(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn)
 
-    @columnSpan(onlyColumn: Boolean) = {
-        @if(onlyColumn) {
-            col-md-10
-        } else {
-            col-md-4
-        }
+@libraryBase("folders") {
+    @div("page-header") {
+        <h1>Library <small>@relativePath.path</small></h1>
     }
+    @div("row") {
+        @renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty)
+        @renderColumn(col2)
+        @renderColumn(col3)
+    }
+    @if(col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.path.isEmpty) {
+        <p class="lead">
+            The library is empty. To get started, add music folders under <a href="@routes.SettingsController.settings()">
+            Music Folders</a>.</p>
+    }
+    @util.script2("json.js", "library.js")
+}
+@renderColumn(col: MusicColumn, onlyColumn: Boolean = false) = {
+    @div(columnSpan(onlyColumn).toString()) {
+        <ul class="list-unstyled">
+            @col.folders.map { f =>
+                <li class="lead">@folderActions(f.id) @folderTitle(f)</li>
+            }
+            @col.tracks.map{ t =>
+                <li class="lead">@renderSong(t) @t.title</li>
+            }
+        </ul>
+    }
+}
+@folderTitle(dir: FolderMeta) = {
+    <a href="@routes.LibraryController.library(dir.id)">@dir.title</a>
+}
+@renderSong(song: TrackMeta) = {
+    @trackActions(song.id, "")
+}
+
+@columnSpan(onlyColumn: Boolean) = {
+    @if(onlyColumn) {
+        col-md-10
+    } else {
+        col-md-4
+    }
+}

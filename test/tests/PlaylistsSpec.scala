@@ -1,9 +1,10 @@
 package tests
 
 import com.malliina.musicpimp.app.{InitOptions, PimpLoader}
+import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.SavedPlaylist
+import com.malliina.musicpimp.models.{PimpUrl, SavedPlaylist}
 import com.malliina.ws.HttpUtil
 import org.specs2.mutable.Specification
 import play.api.Application
@@ -20,6 +21,8 @@ object TestOptions {
 
 class PlaylistsSpec extends Specification {
   val testTracks: Seq[String] = Nil
+  implicit val f = TrackMeta.format(PimpUrl.build("http://www.google.com").get)
+
   "Playlist" should {
     "GET /playlists" in new TestAppLoader {
       val response = fetch(app, FakeRequest(GET, "/playlists"))

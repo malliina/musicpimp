@@ -1,22 +1,20 @@
 package controllers
 
 import java.net.URLDecoder
-import java.nio.file.Paths
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
-import com.malliina.musicpimp.models.MusicColumn
+import com.malliina.musicpimp.models.{MusicColumn, PimpUrl}
 import com.malliina.play.{Authenticator, FileResults}
-import com.malliina.util.Log
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 import views.html
 
 class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materializer)
-  extends Secured(auth, mat)
-    with Log {
+  extends Secured(auth, mat) {
 
   def rootLibrary = PimpActionAsync(implicit request => lib.rootFolder.map(root => folderResult(root)))
 
@@ -28,10 +26,11 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
   })
 
   def tracksIn(folderID: String) = PimpActionAsync(implicit request => {
+    implicit val writer = TrackMeta.writer(request)
     lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
   })
 
-  def allTracks = tracksIn(Library.ROOT_ID)
+  def allTracks = tracksIn(Library.RootId)
 
   private def folderNotFound(id: String)(implicit request: RequestHeader): Result = {
     pimpResult(
@@ -42,13 +41,17 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 
   private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
     respond(
-      html = toHtml(collection),
-      json = Json.toJson(collection)
+      html = {
+        toHtml(collection)
+      },
+      json = {
+        implicit val format = MusicFolder.writer(request)
+        Json.toJson(collection)
+      }
     )
   }
 
-  /**
-    * Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
+  /** Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
     *
     * The Windows Phone background audio player fails to work properly if the ACCEPT_RANGES header is set.
     *
@@ -56,8 +59,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     */
   def supplyForPlayback(trackId: String) = download(trackId)
 
-  /**
-    * Responds with the song with the given ID.
+  /** Responds with the song with the given ID.
     *
     * Note: If an unauthorized request is made here, the result is always
     * Unauthorized with JSON content. This differs from the default of
@@ -81,8 +83,10 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     Unauthorized
   }
 
-  def meta(id: String) = PimpAction {
-    LibraryController.trackMetaJson(id).fold(trackNotFound(id))(json => Ok(json))
+  def meta(id: String) = PimpAction { request =>
+    implicit val writer = TrackMeta.writer(request)
+    val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
+    metaResult.fold(trackNotFound(id))(json => Ok(json))
   }
 
   private def trackNotFound(id: String) = BadRequest(LibraryController.noTrackJson(id))
@@ -94,17 +98,16 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
       case f :: s :: Nil => (f, s, MusicColumn.empty)
       case f :: s :: t :: tail => (f, s, t)
     }
-    html.library(Paths get folder.folder.path, col1, col2, col3)
+    html.library(folder.folder.path, col1, col2, col3)
   }
 
-  /**
-    * Arranges a music collection into columns.
+  /** Arranges a music collection into columns.
     *
     * TODO: It could be interesting to explore a type like a non-empty list. Scalaz might have something.
     *
-    * @param col music collection
+    * @param col      music collection
     * @param minCount minimum amount of items; if there are less items, only one column is used
-    * @param columns column count
+    * @param columns  column count
     * @return at least one column
     */
   private def columnify(col: MusicFolder, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
@@ -127,10 +130,6 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 }
 
 object LibraryController {
-  def findMeta(id: String): JsValue = trackMetaJson(id) getOrElse noTrackJson(id)
-
-  def trackMetaJson(id: String) = Library.findMeta(id).map(Json.toJson(_))
-
   def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
 
   def noFolderJson(id: String) = JsonMessages.failure(s"Folder not found: $id")

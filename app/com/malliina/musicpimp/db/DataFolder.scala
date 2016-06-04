@@ -4,16 +4,23 @@ import java.nio.file.Path
 
 import com.malliina.musicpimp.audio.FolderMeta
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.PimpPath
 
-/**
- * @author Michael
- */
-case class DataFolder(id: String, title: String, path: String, parent: String) extends FolderMeta
+case class DataFolder(id: String,
+                      title: String,
+                      path: PimpPath,
+                      parent: String) extends FolderMeta
 
 object DataFolder {
-  val root = DataFolder(Library.ROOT_ID, "", "", Library.ROOT_ID)
+  val root = DataFolder(Library.RootId, "", PimpPath.Empty, Library.RootId)
 
-  def fromPath(p: Path) = DataFolder(Library.encode(p), p.getFileName.toString, p.toString, Library.encode(Option(p.getParent).getOrElse(Library.emptyPath)))
+  def fromPath(p: Path) =
+    DataFolder(
+      Library.encode(p),
+      p.getFileName.toString,
+      PimpPath(p),
+      Library.encode(Option(p.getParent).getOrElse(Library.EmptyPath)))
 
-  def fromId(id: String) = fromPath(Library relativePath id)
+  def fromId(id: String) =
+    fromPath(Library relativePath id)
 }

@@ -2,7 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.models.{RemoteInfo, User}
+import com.malliina.play.http.RequestInfo
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
@@ -16,47 +17,47 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
   val player = MusicPlayer
   val playlist = MusicPlayer.playlist
 
-  def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
+//  def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
 
-  override protected def handleMessage(msg: JsValue, user: String): Unit = {
-    statsPlayer.updateUser(User(user))
-    super.handleMessage(msg, user)
+  override def handleMessage(msg: JsValue, src: RemoteInfo): Unit = {
+    statsPlayer.updateUser(User(src.user))
+    super.handleMessage(msg, src)
   }
 
-  override def fulfillMessage(message: PlayerMessage, user: String): Unit = {
+  override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
     message match {
-      case Resume =>
+      case ResumeMsg =>
         player.play()
-      case Stop =>
+      case StopMsg =>
         player.stop()
-      case Next =>
+      case NextMsg =>
         player.nextTrack()
-      case Prev =>
+      case PrevMsg =>
         player.previousTrack()
-      case Mute(isMute) =>
+      case MuteMsg(isMute) =>
         player.mute(isMute)
-      case Volume(vol) =>
+      case VolumeMsg(vol) =>
         player.volume(vol)
-      case Seek(pos) =>
+      case SeekMsg(pos) =>
         player.seek(pos)
-      case Play(track) =>
+      case PlayMsg(track) =>
         player.reset(Library meta track)
-      case Skip(index) =>
+      case SkipMsg(index) =>
         Try(player skip index).recover {
           case iae: IllegalArgumentException =>
             log.warn(s"Cannot skip to index $index. Reason: ${iae.getMessage}")
         }
-      case Add(track) =>
+      case AddMsg(track) =>
         playlist.add(Library meta track)
-      case InsertTrack(index, track) =>
+      case InsertTrackMsg(index, track) =>
         playlist.insert(index, Library meta track)
-      case MoveTrack(from, to) =>
+      case MoveTrackMsg(from, to) =>
         playlist.move(from, to)
-      case Remove(index) =>
+      case RemoveMsg(index) =>
         playlist.delete(index)
-      case AddAll(folders, tracks) =>
+      case AddAllMsg(folders, tracks) =>
         resolveTracksOrEmpty(folders, tracks).map(_.foreach(playlist.add))
-      case PlayAll(folders, tracks) =>
+      case PlayAllMsg(folders, tracks) =>
         resolveTracksOrEmpty(folders, tracks) map {
           case head :: tail =>
             player.reset(head)

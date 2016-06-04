@@ -43,7 +43,7 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
   def folder(id: String): Future[(Seq[DataTrack], Seq[DataFolder])] = {
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' in slick-lang is the same as '!='
-    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.ROOT_ID).sortBy(_.title)
+    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     val tracksFuture = runQuery(tracksQuery)
     val foldersFuture = runQuery(foldersQuery)

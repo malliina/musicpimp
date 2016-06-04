@@ -12,10 +12,10 @@ trait JsonSender extends Log {
   def webPlayer: WebPlayer
 
   protected def sendCommand(cmd: String) =
-    sendJson(CMD -> cmd)
+    sendJson(Cmd -> cmd)
 
   protected def sendCommand[T](cmd: String, value: T)(implicit tjs: Writes[T]) =
-    sendJson(CMD -> cmd, VALUE -> toJson(value))
+    sendJson(Cmd -> cmd, Value -> toJson(value))
 
   private def sendJson(fields: (String, Json.JsValueWrapper)*) =
     send(obj(fields: _*))

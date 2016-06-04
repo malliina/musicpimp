@@ -5,6 +5,7 @@ import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.LocalTrack
+import com.malliina.musicpimp.models.RemoteInfo
 import controllers.WebPlayer
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
@@ -12,11 +13,14 @@ import play.api.libs.json.Json._
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
-class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
+class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
   extends IPlayer
   with PlaylistSupport[TrackMeta]
   with StateAwarePlayer
   with JsonSender {
+
+  val user = request.user
+  implicit val trackWriter = TrackMeta.writer(request.host)
   val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, webPlayer)
   private val DEFAULT_BROWSER_VOLUME = 100
 
@@ -59,11 +63,11 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
     send(playStateChanged(newState))
   }
 
-  def play() = sendCommand(RESUME)
+  def play() = sendCommand(Resume)
 
   def notifyPlaying() = send(playStateChanged(PlayerStates.Started))
 
-  def stop() = sendCommand(STOP)
+  def stop() = sendCommand(Stop)
 
   def notifyStopped() = send(playStateChanged(PlayerStates.Stopped))
 
@@ -76,7 +80,7 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
 
   def seek(pos: Duration): Unit = {
     //    send(timeUpdated(pos))
-    sendCommand(SEEK, pos.toSeconds)
+    sendCommand(Seek, pos.toSeconds)
   }
 
   def gain = 1.0f * currentVolume / 100
@@ -84,7 +88,7 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
   def gain_=(level: Float) {
     val volumeValue = (level * 100).toInt
     currentVolume = volumeValue
-    sendCommand(VOLUME, volumeValue)
+    sendCommand(Volume, volumeValue)
   }
 
   def gain(newGain: Float): Unit = gain = newGain
@@ -104,7 +108,7 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
 
   def mute_=(mute: Boolean) {
     isMuted = mute
-    sendCommand(MUTE, mute)
+    sendCommand(Mute, mute)
   }
 
   def mute(newMute: Boolean) {
@@ -118,7 +122,7 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
 
   def toggleMute() {
     isMuted = !isMuted
-    sendCommand(MUTE)
+    sendCommand(Mute)
   }
 
   def close() {
@@ -128,21 +132,24 @@ class PimpWebPlayer(val user: String, val webPlayer: WebPlayer)
 
   def playTrack(song: TrackMeta): Try[Unit] = {
     duration = song.duration
-    sendCommand(SKIP, playlist.index)
+    sendCommand(Skip, playlist.index)
     Success(())
   }
 
   def status = {
-    import com.malliina.musicpimp.audio.StatusEvent._
     val track = playlist.current getOrElse LocalTrack.empty
-    toJson(StatusEvent(track, state, pos, currentVolume, isMuted, playlist.songList, playlist.index))
+    val event = StatusEvent(
+      track, state, pos,
+      currentVolume, isMuted, playlist.songList,
+      playlist.index)
+    toJson(event)(StatusEvent.status18writer)
   }
 
   def statusEvent =
-    obj(EVENT -> toJson(STATUS)) ++ status.as[JsObject]
+    obj(Event -> toJson(Status)) ++ status.as[JsObject]
 
   def statusEvent17 =
-    obj(EVENT -> toJson(STATUS)) ++ toJson(status17).as[JsObject]
+    obj(Event -> toJson(Status)) ++ toJson(status17)(StatusEvent17.status17writer).as[JsObject]
 
   def status17 = {
     val track = playlist.current getOrElse LocalTrack.empty

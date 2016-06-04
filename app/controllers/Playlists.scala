@@ -1,10 +1,11 @@
 package controllers
 
 import akka.stream.Materializer
+import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, User}
+import com.malliina.musicpimp.models.{PimpUrl, PlaylistID, PlaylistsMeta, User}
 import com.malliina.play.Authenticator
 import com.malliina.play.http.AuthRequest
 import controllers.Playlists.log
@@ -35,6 +36,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync((req, user) => {
+    implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
     service.playlistsMeta(user).map(playlists => {
       respond(
         html = html.playlists(playlists.playlists),
@@ -44,6 +46,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   })
 
   def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
+    implicit val f = TrackMeta.format(req)
     service.playlistMeta(id, user).map(result => {
       result.map(playlist => respond(
         html = html.playlist(playlist.playlist, playlistForm),

@@ -3,7 +3,7 @@ package controllers
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.MusicPlayer
+import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
 import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.Authenticator
@@ -35,6 +35,7 @@ class Website(sockets: WebSocketController,
 
   def recent = userAction { implicit req =>
     val user = req.user
+    implicit val f = TrackMeta.format(req)
     stats.mostRecent(user, count = 100).map { entries =>
       respond2(
         html = html.mostRecent(entries, user),
@@ -45,6 +46,7 @@ class Website(sockets: WebSocketController,
 
   def popular = userAction { implicit req =>
     val user = req.user
+    implicit val f = TrackMeta.format(req)
     stats.mostPlayed(user).map { entries =>
       respond2(
         html = html.mostPopular(entries, user),

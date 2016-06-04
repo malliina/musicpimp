@@ -36,6 +36,7 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
 
   def tracks = PimpAction(implicit request => {
     val tracks: Iterable[TrackMeta] = Library.tracksRecursive
+    implicit val w = TrackMeta.writer(request)
     Ok(Json.toJson(tracks))
   })
 
@@ -58,11 +59,11 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
 }
 
 object Alarms {
-  val jobWriter = Writes[PlaybackJob](o => obj(TRACK -> toJson(o.trackInfo)))
-  implicit val alarmWriter = Writes[ClockPlayback](o => obj(
-    ID -> toJson(o.id),
-    JOB -> toJson(o.job)(jobWriter),
-    WHEN -> toJson(o.when),
-    ENABLED -> toJson(o.enabled)
+  def jobWriter(implicit w: Writes[TrackMeta]) = Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
+  implicit def alarmWriter(implicit w: Writes[TrackMeta]) = Writes[ClockPlayback](o => obj(
+    Id -> toJson(o.id),
+    Job -> toJson(o.job)(jobWriter),
+    When -> toJson(o.when),
+    Enabled -> toJson(o.enabled)
   ))
 }
