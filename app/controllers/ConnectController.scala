@@ -4,14 +4,12 @@ import java.net.NetworkInterface
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.play.Authenticator
 import com.malliina.play.http.AuthRequest
 import com.malliina.play.json.JsonFormats
-import com.malliina.util.Log
-import controllers.ConnectController.Protocols
+import controllers.ConnectController.{Protocols, log}
 import net.glxn.qrgen.QRCode
-import play.api.libs.iteratee.Enumerator
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc.RequestHeader
@@ -22,7 +20,7 @@ import scala.collection.JavaConversions._
 /**
   * This code is totally best effort so make sure the user has the final say.
   */
-class ConnectController(auth: Authenticator, mat: Materializer) extends HtmlController(auth, mat) with Log {
+class ConnectController(auth: Authenticator, mat: Materializer) extends HtmlController(auth, mat) {
   def connect = navigate(html.connectApp())
 
   def image = PimpAction(implicit req => {
@@ -47,6 +45,7 @@ class ConnectController(auth: Authenticator, mat: Materializer) extends HtmlCont
 }
 
 object ConnectController {
+  private val log = Logger(getClass)
 
   implicit object protoJson extends JsonFormats.SimpleFormat[Protocols.Protocol](name => Protocols.withName(name.toLowerCase))
 

@@ -9,7 +9,8 @@ import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.play.Authenticator
-import com.malliina.util.Log
+import controllers.Alarms.log
+import play.api.Logger
 import play.api.i18n.Messages
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
@@ -17,8 +18,7 @@ import play.api.mvc.Result
 
 class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
   extends AlarmEditor(auth, messages, mat)
-  with SchedulerStrings
-  with Log {
+    with SchedulerStrings {
 
   def alarms = PimpAction(implicit request => {
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
@@ -59,7 +59,10 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
 }
 
 object Alarms {
+  private val log = Logger(getClass)
+
   def jobWriter(implicit w: Writes[TrackMeta]) = Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
+
   implicit def alarmWriter(implicit w: Writes[TrackMeta]) = Writes[ClockPlayback](o => obj(
     Id -> toJson(o.id),
     Job -> toJson(o.job)(jobWriter),

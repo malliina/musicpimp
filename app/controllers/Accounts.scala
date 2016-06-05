@@ -5,7 +5,8 @@ import com.malliina.musicpimp.models.User
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountController
-import com.malliina.util.Log
+import controllers.Accounts.log
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -15,6 +16,7 @@ import views.html
 import scala.concurrent.Future
 
 object Accounts {
+  private val log = Logger(getClass)
   val Feedback = "feedback"
   val UsersFeedback = "usersFeedback"
   val Success = "success"
@@ -23,8 +25,7 @@ object Accounts {
 
 class Accounts(auth: PimpAuthenticator, mat: Materializer)
   extends HtmlController(auth, mat)
-    with AccountController
-    with Log {
+    with AccountController {
 
   val userManager = auth.userManager
   val rememberMe = auth.rememberMe

@@ -6,22 +6,29 @@ import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.json.JsonStrings.{Cmd, Refresh, Subscribe}
 import com.malliina.play.Authenticator
-import com.malliina.util.Log
+import controllers.Search.log
+import play.api.Logger
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Observer}
 
 import scala.concurrent.{Future, Promise}
 
 object Search {
+  private val log = Logger(getClass)
   val DefaultLimit = 1000
 }
 
 class Search(indexer: Indexer, auth: Authenticator, mat: Materializer)
-  extends PimpSockets(auth, mat)
-    with Log {
+  extends PimpSockets(auth, mat) {
 
-  val socketBroadcaster = indexingObserver(broadcastStatus, (msg, _) => broadcastStatus(msg), broadcastStatus)
-  val loggingObserver = indexingObserver(log.debug, (msg, t) => log.error(msg, t), log.debug)
+  val socketBroadcaster = indexingObserver(
+    msg => broadcastStatus(msg),
+    (msg, _) => broadcastStatus(msg),
+    compl => broadcastStatus(compl))
+  val loggingObserver = indexingObserver(
+    msg => log.debug(msg),
+    (msg, t) => log.error(msg, t),
+    compl => log.debug(compl))
   val subscription = indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster, loggingObserver))
 
   private def indexingObserver(onNext: String => Unit,
@@ -46,7 +53,7 @@ class Search(indexer: Indexer, auth: Authenticator, mat: Materializer)
     true
   }
 
-  def broadcastStatus(message: String) = broadcast(JsonMessages.searchStatus(message))
+  def broadcastStatus(message: String): Unit = broadcast(JsonMessages.searchStatus(message))
 
   def subscribeUntilComplete[T](observable: Observable[T], observers: Observer[T]*) = {
     val subs = observers map observable.subscribe

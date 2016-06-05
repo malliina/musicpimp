@@ -13,7 +13,7 @@ import rx.lang.scala.{Observable, Subscription}
 
 import scala.concurrent.duration.DurationInt
 
-class PimpLogs(val mat: Materializer) extends LogStreaming with SyncAuth with Log {
+class PimpLogs(val mat: Materializer) extends LogStreaming with SyncAuth {
   val appenderName = "RX"
 
   override lazy val subscriptions: ItemMap[WebSocketClient, Subscription] = StmItemMap.empty[WebSocketClient, Subscription]

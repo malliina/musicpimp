@@ -96,8 +96,7 @@ object PimpRequest extends Log {
     else None
   }
 
-  /**
-    * The desired format for clients compatible with API version 17 is
+  /** The desired format for clients compatible with API version 17 is
     * incorrectly determined to be HTML, because those clients do not
     * specify an Accept header in their WebSocket requests thus the server
     * thinks they are browsers by default. However, the WebSocket API does

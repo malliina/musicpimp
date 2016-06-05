@@ -7,7 +7,9 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.play.Authenticator
-import com.malliina.util.{EnvUtils, Log}
+import com.malliina.util.EnvUtils
+import controllers.SettingsController.log
+import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
@@ -16,8 +18,7 @@ import views.html
 import scala.util.Try
 
 class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticator, mat: Materializer)
-  extends HtmlController(auth, mat)
-  with Log {
+  extends HtmlController(auth, mat) {
 
   protected val newFolderForm = Form(
     "path" -> nonEmptyText.verifying("Not a directory", validateDirectory _)
@@ -63,4 +64,8 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
     indexer.indexAndSave()
     Redirect(routes.SettingsController.settings())
   }
+}
+
+object SettingsController {
+  private val log = Logger(getClass)
 }
