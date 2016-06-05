@@ -4,31 +4,34 @@ import java.net.URLDecoder
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
+import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
-import com.malliina.musicpimp.models.{MusicColumn, PimpUrl}
+import com.malliina.musicpimp.models.MusicColumn
 import com.malliina.play.{Authenticator, FileResults}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import play.api.mvc._
 import views.html
 
 class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materializer)
   extends Secured(auth, mat) {
 
-  def rootLibrary = PimpActionAsync(implicit request => lib.rootFolder.map(root => folderResult(root)))
+  def siteRoot = rootLibrary
+
+  def rootLibrary = PimpActionAsync { request =>
+    lib.rootFolder.map(root => folderResult(root)(request)) }
 
   /**
     * @return an action that provides the contents of the library with the supplied id
     */
-  def library(folderId: String) = PimpActionAsync(implicit request => {
+  def library(folderId: String) = PimpActionAsync { implicit request =>
     lib.folder(folderId).map(_.fold(folderNotFound(folderId))(items => folderResult(items)))
-  })
+  }
 
-  def tracksIn(folderID: String) = PimpActionAsync(implicit request => {
+  def tracksIn(folderID: String) = PimpActionAsync { implicit request =>
     implicit val writer = TrackMeta.writer(request)
     lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
-  })
+  }
 
   def allTracks = tracksIn(Library.RootId)
 

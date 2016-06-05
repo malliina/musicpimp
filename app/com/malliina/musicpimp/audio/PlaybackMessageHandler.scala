@@ -17,8 +17,6 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
   val player = MusicPlayer
   val playlist = MusicPlayer.playlist
 
-//  def handleMessage(msg: JsValue): Unit = handleMessage(msg, "")
-
   override def handleMessage(msg: JsValue, src: RemoteInfo): Unit = {
     statsPlayer.updateUser(User(src.user))
     super.handleMessage(msg, src)

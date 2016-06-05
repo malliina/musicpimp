@@ -6,9 +6,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
 class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
 
   def rootFolder: Future[MusicFolder] = {

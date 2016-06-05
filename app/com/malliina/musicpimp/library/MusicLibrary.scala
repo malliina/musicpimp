@@ -4,10 +4,6 @@ import com.malliina.musicpimp.audio.TrackMeta
 
 import scala.concurrent.Future
 
-/**
-  *
-  * @author mle
-  */
 trait MusicLibrary {
   /**
     * @return the contents of the root library folder
