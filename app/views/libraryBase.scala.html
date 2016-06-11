@@ -1,14 +1,17 @@
 @(tab: String)(content: Html)
 
-    @indexMain("library") {
-        <ul class="nav nav-tabs">
-            @navItem("Folders", "folders", routes.LibraryController.rootLibrary(), "folder-open")
-            @navItem("Search", "search", routes.SearchPage.search(), "search")
-        </ul>
-        <section>
+@indexMain("library") {
+    <ul class="nav nav-tabs">
+        @navItem("Folders", "folders", routes.LibraryController.rootLibrary(), "fa fa-folder-open")
+        @navItem("Most Played", "popular", routes.Website.popular(), "fa fa-list")
+        @navItem("Most Recent", "recent", routes.Website.recent(), "fa fa-clock-o")
+        @navItem("Search", "search", routes.SearchPage.search(), "fa fa-search")
+    </ul>
+    <section>
         @content
-        </section>
-    }
-    @navItem(title: String, tabName: String, href: Call, glyphIcon: String) = {
-        @bs.navItem(title, tabName, tab, href, glyphIcon)
-    }
+    </section>
+}
+
+@navItem(title: String, tabName: String, href: Call, glyphIcon: String) = {
+    @navItem2(title, tabName, tab, href, glyphIcon)
+}

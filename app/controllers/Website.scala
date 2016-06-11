@@ -22,7 +22,7 @@ class Website(sockets: WebSocketController,
               mat: Materializer)
   extends HtmlController(auth, mat) {
 
-  def player = navigate(implicit req => {
+  def player = navigate { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
     val feedback: Option[String] =
       if (!hasAudioDevice) {
@@ -30,8 +30,8 @@ class Website(sockets: WebSocketController,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    html.player(serverWS.wsUrl, feedback)
-  })
+    html.player(serverWS.wsUrl(req), feedback)(req)
+  }
 
   def recent = userAction { implicit req =>
     val user = req.user

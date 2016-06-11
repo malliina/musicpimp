@@ -1,9 +1,10 @@
 @import com.malliina.musicpimp.models.User
 @import com.malliina.musicpimp.stats.PopularEntry
-@(entries: Seq[PopularEntry], user: User)
 @import bs.rowColumn12
 
-@indexMain("popular") {
+@(entries: Seq[PopularEntry], user: User)
+
+@libraryBase("popular") {
     @rowColumn12 {
         <div class="page-header">
             <h1>Most popular <small class="hidden-xs">by @user.name</small></h1>
@@ -12,7 +13,13 @@
     @rowColumn12 {
         <table class="table table-striped table-hover table-responsive">
             <thead>
-                <tr><th>Title</th><th>Artist</th><th>Album</th><th>Plays</th></tr>
+                <tr>
+                    <th>Title</th>
+                    <th>Artist</th>
+                    <th>Album</th>
+                    <th>Plays</th>
+                    <th>Actions</th>
+                </tr>
             </thead>
             <tbody>
             @entries.map { entry =>
@@ -21,9 +28,11 @@
                     <td>@entry.track.artist</td>
                     <td>@entry.track.album</td>
                     <td>@entry.playbackCount</td>
+                    <td>@trackActions(entry.track.id, "flex")</td>
                 </tr>
             }
             </tbody>
         </table>
     }
 }
+@util.script2("json.js", "library.js")
