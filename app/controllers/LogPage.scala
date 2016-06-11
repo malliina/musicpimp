@@ -18,7 +18,7 @@ class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
 
   def logs = navigate(req => logPage(levelForm, req))
 
-  def changeLogLevel = PimpAction { request =>
+  def changeLogLevel = pimpAction { request =>
     levelForm.bindFromRequest()(request).fold(
       erroredForm => {
         log warn s"Log level change submission failed"

@@ -53,11 +53,11 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
   def editAlarm(id: String, fb: Option[String] = None) = {
     ScheduledPlaybackService.find(id)
       .map(clockForm.fill)
-      .fold(ifEmpty = PimpAction(NotFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
+      .fold(ifEmpty = pimpAction(NotFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
   }
 
   private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =
-    PimpAction(Ok(html.alarmEditor(form, feedback)(messages)))
+    pimpAction(Ok(html.alarmEditor(form, feedback)(messages)))
 
   def newClock() = formSubmission(clockForm)(
     err => {
@@ -70,7 +70,7 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
     })
 
   private def formSubmission[T, C: Writeable](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => Result) =
-    PimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
+    pimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
 
   private def handle[T, C: Writeable](form: Form[T], request: Request[_])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result) = {
     val filledForm = form.bindFromRequest()(request)

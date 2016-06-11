@@ -18,18 +18,18 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 
   def siteRoot = rootLibrary
 
-  def rootLibrary = PimpActionAsync { request =>
+  def rootLibrary = pimpActionAsync { request =>
     lib.rootFolder.map(root => folderResult(root, request))
   }
 
   /**
     * @return an action that provides the contents of the library with the supplied id
     */
-  def library(folderId: String) = PimpActionAsync { request =>
+  def library(folderId: String) = pimpActionAsync { request =>
     lib.folder(folderId).map(_.fold(folderNotFound(folderId, request))(items => folderResult(items, request)))
   }
 
-  def tracksIn(folderID: String) = PimpActionAsync { request =>
+  def tracksIn(folderID: String) = pimpActionAsync { request =>
     implicit val writer = TrackMeta.writer(request)
     lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID, request))(ts => Ok(Json.toJson(ts))))
   }
@@ -69,7 +69,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     * @param trackId track to download
     */
   def download(trackId: String): EssentialAction =
-    CustomFailingPimpAction(onDownloadAuthFail)((request, auth) => {
+    customFailingPimpAction(onDownloadAuthFail)((request, auth) => {
       Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
         .map(path => FileResults.fileResult(path, request))
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
@@ -80,7 +80,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     Unauthorized
   }
 
-  def meta(id: String) = PimpAction { request =>
+  def meta(id: String) = pimpAction { request =>
     implicit val writer = TrackMeta.writer(request)
     val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
     metaResult.fold(trackNotFound(id))(json => Ok(json))

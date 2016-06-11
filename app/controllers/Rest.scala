@@ -43,7 +43,7 @@ class Rest(webPlayer: WebPlayer,
 
   def ping = Action(NoCache(Ok))
 
-  def pingAuth = PimpAction(req => NoCacheOk(JsonMessages.version))
+  def pingAuth = pimpAction(req => NoCacheOk(JsonMessages.version))
 
   /** Handles server playback commands POSTed as JSON.
     */
@@ -61,7 +61,7 @@ class Rest(webPlayer: WebPlayer,
     MusicPlayer.setPlaylistAndPlay(track)
   }
 
-  def webPlaylist = PimpAction { req =>
+  def webPlaylist = pimpAction { req =>
     implicit val w = TrackMeta.writer(req)
     Ok(Json.toJson(playlistFor(req.user)))
   }
@@ -92,7 +92,7 @@ class Rest(webPlayer: WebPlayer,
         valid => Right(valid))
       ).getOrElse(Left(loggedJson("No Track header is defined.")))
       val authAction = metaOrError.fold(
-        error => PimpAction(BadRequest(error)),
+        error => pimpAction(BadRequest(error)),
         meta => {
           statsPlayer.updateUser(User(user.user))
           localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
@@ -106,7 +106,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
-  def stream = PimpParsedAction(parse.json) { implicit req =>
+  def stream = pimpParsedAction(parse.json) { implicit req =>
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
@@ -134,7 +134,7 @@ class Rest(webPlayer: WebPlayer,
     )
   }
 
-  def status = PimpAction { req =>
+  def status = pimpAction { req =>
     implicit val w = TrackMeta.writer(req)
     pimpResponse(req)(
       html = NoContent,
@@ -145,7 +145,7 @@ class Rest(webPlayer: WebPlayer,
 
   /** The status of the web player of the user making the request.
     */
-  def webStatus = PimpAction(req => Ok(webStatusJson(req.user, RemoteInfo(req.user, PimpUrl.hostOnly(req)))))
+  def webStatus = pimpAction(req => Ok(webStatusJson(req.user, RemoteInfo(req.user, PimpUrl.hostOnly(req)))))
 
   private def localPlaybackAction(id: String): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id).map(track => {
@@ -160,7 +160,7 @@ class Rest(webPlayer: WebPlayer,
         */
       MusicPlayer.setPlaylistAndPlay(track)
       log info s"Playing local file of: ${track.id}"
-      PimpAction(Ok)
+      pimpAction(Ok)
     })
 
   private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
@@ -181,7 +181,7 @@ class Rest(webPlayer: WebPlayer,
       val track = meta.buildTrack(inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
-    PimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat))(req => {
+    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat))(req => {
       log.info(s"Received stream of track: ${meta.id}")
       Ok
     })
@@ -226,7 +226,7 @@ class Rest(webPlayer: WebPlayer,
     webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
   private def AckPimpAction[T](parser: BodyParser[T])(bodyHandler: AuthRequest[T] => Unit): EssentialAction =
-    PimpParsedAction(parser) { request =>
+    pimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
         AckResponse(request)
@@ -252,7 +252,7 @@ class Rest(webPlayer: WebPlayer,
     }
 
   private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
-    HeadPimpUploadAction { request =>
+    headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)
       val pathParameterOpt = firstValue("path")

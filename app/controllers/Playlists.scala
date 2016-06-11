@@ -87,7 +87,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     parsedRecoveredAsync(parse.anyContent)(f)
 
   protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: (AuthRequest[T], User) => Future[Result]) =
-    PimpParsedActionAsync(parser)(auth => f(auth, User(auth.user)).recover(errorHandler))
+    pimpParsedActionAsync(parser)(auth => f(auth, User(auth.user)).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {
     case ue: UnauthorizedException =>

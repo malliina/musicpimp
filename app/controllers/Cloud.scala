@@ -21,12 +21,12 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))
 
-  def cloud = PimpActionAsync { request =>
+  def cloud = pimpActionAsync { request =>
     val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
     id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2)(request.flash)))
   }
 
-  def toggle = PimpParsedActionAsync(parse.default) { request =>
+  def toggle = pimpParsedActionAsync(parse.default) { request =>
     cloudForm.bindFromRequest()(request).fold(
       formErrors => {
         log debug s"Form errors: $formErrors"

@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
 class ConnectController(auth: Authenticator, mat: Materializer) extends HtmlController(auth, mat) {
   def connect = navigate(html.connectApp())
 
-  def image = PimpAction(implicit req => {
+  def image = pimpAction(implicit req => {
     val qrText = stringify(Json.toJson(coordinate(req))(Coordinate.json))
     log info s"Generating image with QR code: $qrText"
     val qrFile = QRCode.from(qrText).withSize(768, 768).file()

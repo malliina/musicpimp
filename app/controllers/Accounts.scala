@@ -50,15 +50,15 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
     case (_, newPass, newPassAgain) => newPass == newPassAgain
   }))
 
-  def account = PimpAction { request =>
+  def account = pimpAction { request =>
     Ok(html.account(request.user, changePasswordForm(request))(request.flash))
   }
 
-  def users = PimpActionAsync { request =>
+  def users = pimpActionAsync { request =>
     userManager.users.map(us => Ok(html.users(us, addUserForm)(request.flash)))
   }
 
-  def delete(user: String) = PimpActionAsync { request =>
+  def delete(user: String) = pimpActionAsync { request =>
     val redir = Redirect(routes.Accounts.users())
     if (user != request.user) {
       (userManager deleteUser User(user)).map(_ => redir)
@@ -82,7 +82,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
       .flashing(msg(logoutMessage))
   }
 
-  def formAddUser = PimpActionAsync { request =>
+  def formAddUser = pimpActionAsync { request =>
     val remoteAddress = request.remoteAddress
     addUserForm.bindFromRequest()(request).fold(
       formWithErrors => {
@@ -136,7 +136,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
 
   def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
 
-  def formChangePassword = PimpActionAsync { request =>
+  def formChangePassword = pimpActionAsync { request =>
     val user = request.user
     changePasswordForm(request).bindFromRequest()(request).fold(
       errors => {

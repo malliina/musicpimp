@@ -44,56 +44,54 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
   override def validateCredentials(creds: BasicCredentials): Future[Boolean] =
     validateCredentials(creds.username, creds.password)
 
-  /**
-    * Authenticates, logs authenticated request, executes action, in that order.
+  /** Authenticates, logs authenticated request, executes action, in that order.
     *
     * If authentication fails, logs auth fail message.
     */
   def AuthenticatedAndLogged(f: AuthResult => EssentialAction): EssentialAction =
     Authenticated(user => Logged(user, f))
 
-  /**
-    * Returns an action with the result specified in <code>onFail</code> if authentication fails.
+  /** Returns an action with the result specified in <code>onFail</code> if authentication fails.
     *
     * @param onFail result to return if authentication fails
     * @param f      the action we want to do
     */
-  def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) = {
+  def customFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) = {
     authenticatedAsync(req => authenticate(req), onFail) { user =>
       Logged(user, user => Action(req => maybeWithCookie(user, f(req, user))))
     }
   }
 
-  def PimpAction(f: AuthRequest[AnyContent] => Result) =
-    PimpParsedAction(parse.default)(req => f(req))
-
-  def PimpAction(result: => Result) =
-    PimpParsedAction(parse.default)(auth => result)
-
-  def OkPimpAction(f: AuthRequest[AnyContent] => Unit) =
-    PimpAction(req => {
+  def okPimpAction(f: AuthRequest[AnyContent] => Unit) =
+    pimpAction { req =>
       f(req)
       Ok
-    })
+    }
 
-  def HeadPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
-    PimpUploadAction(req => req.files.headOption
+  def pimpAction(result: => Result): EssentialAction =
+    pimpAction(_ => result)
+
+  def pimpAction(f: AuthRequest[AnyContent] => Result): EssentialAction =
+    pimpParsedAction(parse.default)(req => f(req))
+
+  def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
+    pimpUploadAction(req => req.files.headOption
       .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user, req)))
       .getOrElse(BadRequest))
   }
 
-  def PimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
-    PimpParsedAction(parse.multipartFormData)(req => {
+  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) = {
+    pimpParsedAction(parse.multipartFormData)(req => {
       val files: Seq[Path] = saveFiles(req)
       f(new FileUploadRequest(files, req.user, req))
     })
   }
 
-  def PimpParsedAction[T](parser: BodyParser[T])(f: AuthRequest[T] => Result) =
-    PimpParsedActionAsync(parser)(req => Future.successful(f(req)))
+  def pimpParsedAction[T](parser: BodyParser[T])(f: AuthRequest[T] => Result) =
+    pimpParsedActionAsync(parser)(req => Future.successful(f(req)))
 
-  def PimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) =
-    PimpParsedActionAsync(parse.default)(f)
+  def pimpActionAsync(f: AuthRequest[AnyContent] => Future[Result]) =
+    pimpParsedActionAsync(parse.default)(f)
 
   def pimpActionAsync2[R: Writeable](f: AuthRequest[AnyContent] => Future[R]) =
     okAsyncAction(parse.default)(f)
@@ -102,9 +100,9 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
 
   def actionAsync[T](parser: BodyParser[T])(f: AuthRequest[T] => Future[Result]) =
-    PimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
+    pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
-  def PimpParsedActionAsync[T](parser: BodyParser[T])(f: AuthRequest[T] => Future[Result]): EssentialAction = {
+  def pimpParsedActionAsync[T](parser: BodyParser[T])(f: AuthRequest[T] => Future[Result]): EssentialAction = {
     AuthenticatedAndLogged(auth => {
       Action.async(parser)(req => {
         val resultFuture = f(new AuthRequest(auth.user, req, auth.cookie))

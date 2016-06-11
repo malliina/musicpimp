@@ -29,7 +29,7 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
 
   def settings = navigate(foldersPage(newFolderForm))
 
-  def newFolder = PimpAction { request =>
+  def newFolder = pimpAction { request =>
     newFolderForm.bindFromRequest()(request).fold(
       formWithErrors => {
         log warn s"Errors: ${formWithErrors.errors}"
@@ -43,7 +43,7 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
     )
   }
 
-  def deleteFolder(folder: String) = PimpAction {
+  def deleteFolder(folder: String) = pimpAction {
     val decoded = URLDecoder.decode(folder, "UTF-8")
     log info s"Attempting to remove folder: $decoded"
     val path = Paths get decoded

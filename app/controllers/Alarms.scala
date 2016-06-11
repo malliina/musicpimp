@@ -20,7 +20,7 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
   extends AlarmEditor(auth, messages, mat)
     with SchedulerStrings {
 
-  def alarms = PimpAction { request =>
+  def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(request)(
       html = views.html.alarms(content),
@@ -28,19 +28,19 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
     )
   }
 
-  def handleJson = PimpParsedAction(parse.json) { jsonRequest =>
+  def handleJson = pimpParsedAction(parse.json) { jsonRequest =>
     val json = jsonRequest.body
     log debug s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
     onRequest(json)
   }
 
-  def tracks = PimpAction { request =>
+  def tracks = pimpAction { request =>
     val tracks: Iterable[TrackMeta] = Library.tracksRecursive
     implicit val w = TrackMeta.writer(request)
     Ok(Json.toJson(tracks))
   }
 
-  def paths = PimpAction { request =>
+  def paths = pimpAction { request =>
     val tracks = Library.songPathsRecursive
     implicit val pathFormat = PlaybackJob.pathFormat
     Ok(Json.toJson(tracks))

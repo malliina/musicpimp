@@ -12,7 +12,7 @@ import scala.util.Try
 class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
 
-  def search = PimpActionAsync { req => {
+  def search = pimpActionAsync { req => {
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
     val term = query("term")
     val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DefaultLimit
@@ -26,7 +26,7 @@ class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, m
   }
   }
 
-  def refresh = PimpAction {
+  def refresh = pimpAction {
     indexer.indexAndSave()
     Ok
   }
