@@ -29,8 +29,8 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
 
   def settings = navigate(foldersPage(newFolderForm))
 
-  def newFolder = PimpAction(implicit req => {
-    newFolderForm.bindFromRequest.fold(
+  def newFolder = PimpAction { request =>
+    newFolderForm.bindFromRequest()(request).fold(
       formWithErrors => {
         log warn s"Errors: ${formWithErrors.errors}"
         BadRequest(foldersPage(formWithErrors))
@@ -41,7 +41,7 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
         onFoldersChanged()
       }
     )
-  })
+  }
 
   def deleteFolder(folder: String) = PimpAction {
     val decoded = URLDecoder.decode(folder, "UTF-8")

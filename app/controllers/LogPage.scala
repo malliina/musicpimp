@@ -16,13 +16,13 @@ class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
 
-  def logs = navigate(implicit req => logPage(levelForm))
+  def logs = navigate(req => logPage(levelForm, req))
 
-  def changeLogLevel = PimpAction(implicit req => {
-    levelForm.bindFromRequest.fold(
+  def changeLogLevel = PimpAction { request =>
+    levelForm.bindFromRequest()(request).fold(
       erroredForm => {
         log warn s"Log level change submission failed"
-        BadRequest(logPage(erroredForm))
+        BadRequest(logPage(erroredForm, request))
       },
       level => {
         Logging.level = level
@@ -30,10 +30,10 @@ class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
         Redirect(routes.LogPage.logs())
       }
     )
-  })
+  }
 
-  private def logPage(form: Form[Level])(implicit req: RequestHeader) =
-    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level)
+  private def logPage(form: Form[Level], req: RequestHeader) =
+    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level)(req)
 }
 
 object LogPage {

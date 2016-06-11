@@ -21,16 +21,16 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))
 
-  def cloud = PimpActionAsync(implicit req => {
+  def cloud = PimpActionAsync { request =>
     val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
-    id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2)))
-  })
+    id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2)(request.flash)))
+  }
 
-  def toggle = PimpParsedActionAsync(parse.default)(implicit req => {
-    cloudForm.bindFromRequest.fold(
+  def toggle = PimpParsedActionAsync(parse.default) { request =>
+    cloudForm.bindFromRequest()(request).fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
-        Future successful BadRequest(html.cloud(this, formErrors))
+        Future successful BadRequest(html.cloud(this, formErrors)(request.flash))
       },
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())
@@ -43,7 +43,7 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
         }
       }
     )
-  })
+  }
 
   def errorMessage: PartialFunction[Throwable, String] = {
     case ce: ConnectException =>

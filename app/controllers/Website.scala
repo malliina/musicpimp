@@ -71,7 +71,7 @@ class Website(sockets: WebSocketController,
       s"Playback could not be started. $msg"
   }
 
-  def popupPlayer = navigate(implicit req => html.popupPlayer(sockets.wsUrl))
+  def popupPlayer = navigate(req => html.popupPlayer(sockets.wsUrl(req))(req))
 
   def about = navigate(html.aboutBase())
 

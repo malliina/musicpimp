@@ -17,6 +17,7 @@ import scala.concurrent.Future
 
 object Accounts {
   private val log = Logger(getClass)
+
   val Feedback = "feedback"
   val UsersFeedback = "usersFeedback"
   val Success = "success"
@@ -49,42 +50,45 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
     case (_, newPass, newPassAgain) => newPass == newPassAgain
   }))
 
-  def account = PimpAction(implicit req => Ok(html.account(req.user, changePasswordForm)))
+  def account = PimpAction { request =>
+    Ok(html.account(request.user, changePasswordForm(request))(request.flash))
+  }
 
-  def users = PimpActionAsync(implicit req => userManager.users.map(us => Ok(html.users(us, addUserForm))))
+  def users = PimpActionAsync { request =>
+    userManager.users.map(us => Ok(html.users(us, addUserForm)(request.flash)))
+  }
 
-  def delete(user: String) = PimpActionAsync(implicit req => {
+  def delete(user: String) = PimpActionAsync { request =>
     val redir = Redirect(routes.Accounts.users())
-    if (user != req.user) {
+    if (user != request.user) {
       (userManager deleteUser User(user)).map(_ => redir)
     } else {
       Future.successful(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
     }
-  })
+  }
 
-
-  def login = Action.async(implicit request => {
-    userManager.isDefaultCredentials.map(isDefault => {
+  def login = Action.async { request =>
+    userManager.isDefaultCredentials.map { isDefault =>
       val motd = if (isDefault) Option(defaultCredentialsMessage) else None
-      Ok(html.login(this, rememberMeLoginForm, motd))
-    })
-  })
+      Ok(html.login(this, rememberMeLoginForm, motd)(request.flash))
+    }
+  }
 
-  def logout = AuthAction(implicit request => {
+  def logout = AuthAction { request =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
     Redirect(routes.Accounts.login())
       .withNewSession
       .discardingCookies(RememberMe.discardingCookie)
       .flashing(msg(logoutMessage))
-  })
+  }
 
-  def formAddUser = PimpActionAsync(implicit req => {
-    val remoteAddress = req.remoteAddress
-    addUserForm.bindFromRequest.fold(
+  def formAddUser = PimpActionAsync { request =>
+    val remoteAddress = request.remoteAddress
+    addUserForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Unable to add user: $user from: $remoteAddress, form: $formWithErrors"
-        userManager.users.map(users => BadRequest(html.users(users, formWithErrors)))
+        userManager.users.map(users => BadRequest(html.users(users, formWithErrors)(request.flash)))
       },
       credentials => {
         val (user, pass, _) = credentials
@@ -95,19 +99,19 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
         })
       }
     )
-  })
+  }
 
-  def formAuthenticate = Action.async(implicit request => {
+  def formAuthenticate = Action.async { request =>
     val remoteAddress = request.remoteAddress
-    rememberMeLoginForm.bindFromRequest.fold(
+    rememberMeLoginForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
-        Future.successful(BadRequest(html.login(this, formWithErrors)))
+        Future.successful(BadRequest(html.login(this, formWithErrors)(request.flash)))
       },
       credentials => {
         val (user, pass, shouldRemember) = credentials
-        validateCredentials(user, pass).flatMap(isValid => {
+        validateCredentials(user, pass) flatMap { isValid =>
           if (isValid) {
             log info s"Authentication succeeded for user: $user from: $remoteAddress"
             val intendedUrl = request.session.get(INTENDED_URI).getOrElse(defaultLoginSuccessPage.url)
@@ -125,35 +129,35 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
             // TODO show an "authentication failed" message to the user
             Future.successful(Unauthorized)
           }
-        })
+        }
       }
     )
-  })
+  }
 
   def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
 
-  def formChangePassword = PimpActionAsync(implicit request => {
+  def formChangePassword = PimpActionAsync { request =>
     val user = request.user
-    changePasswordForm.bindFromRequest.fold(
+    changePasswordForm(request).bindFromRequest()(request).fold(
       errors => {
         log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
-        Future.successful(BadRequest(html.account(user, errors)))
+        Future.successful(BadRequest(html.account(user, errors)(request.flash)))
       },
       success => {
         val (old, newPass, _) = success
-        validateCredentials(user, old).flatMap(isValid => {
+        validateCredentials(user, old) flatMap { isValid =>
           if (isValid) {
-            userManager.updatePassword(User(user), newPass).map(_ => {
+            userManager.updatePassword(User(user), newPass) map { _ =>
               log info s"Password changed for user: $user from: ${request.remoteAddress}"
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
-            })
+            }
           } else {
-            Future.successful(BadRequest(html.account(user, changePasswordForm)))
+            Future.successful(BadRequest(html.account(user, changePasswordForm(request))(request.flash)))
           }
-        })
+        }
       }
     )
-  })
+  }
 
   def msg(message: String) = FEEDBACK -> message
 

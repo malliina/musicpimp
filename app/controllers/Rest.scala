@@ -106,7 +106,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
-  def stream = PimpParsedAction(parse.json)(implicit req => {
+  def stream = PimpParsedAction(parse.json) { implicit req =>
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
@@ -132,7 +132,7 @@ class Rest(webPlayer: WebPlayer,
         }
       }
     )
-  })
+  }
 
   def status = PimpAction { req =>
     implicit val w = TrackMeta.writer(req)

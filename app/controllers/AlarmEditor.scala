@@ -69,16 +69,14 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
       Ok(html.alarmEditor(form, Some("Saved."))(messages))
     })
 
-  private def formSubmission[T, C](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => Result)(implicit w: Writeable[C]) =
-    PimpAction(implicit request => handle(form)(err, (form, ap) => ok(request, form, ap)))
+  private def formSubmission[T, C: Writeable](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => Result) =
+    PimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
 
-  private def handle[T, C](form: Form[T])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result)(implicit request: Request[_], w: Writeable[C]) = {
-    val filledForm = form.bindFromRequest()
-    filledForm.fold(errors => {
-      BadRequest(errorContent(errors))
-    }, success => {
-      okRedir(filledForm, success)
-    })
+  private def handle[T, C: Writeable](form: Form[T], request: Request[_])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result) = {
+    val filledForm = form.bindFromRequest()(request)
+    filledForm.fold(
+      errors => BadRequest(errorContent(errors)),
+      success => okRedir(filledForm, success))
   }
 }
 
