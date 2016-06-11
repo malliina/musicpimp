@@ -59,9 +59,9 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     * @param f      the action we want to do
     */
   def CustomFailingPimpAction(onFail: RequestHeader => Result)(f: (RequestHeader, AuthResult) => Result) = {
-    authenticatedAsync(req => authenticate(req), onFail)(user => {
-      Logged(user, user => Action(implicit req => maybeWithCookie(user, f(req, user))))
-    })
+    authenticatedAsync(req => authenticate(req), onFail) { user =>
+      Logged(user, user => Action(req => maybeWithCookie(user, f(req, user))))
+    }
   }
 
   def PimpAction(f: AuthRequest[AnyContent] => Result) =

@@ -61,7 +61,7 @@ class Rest(webPlayer: WebPlayer,
     MusicPlayer.setPlaylistAndPlay(track)
   }
 
-  def webPlaylist = PimpAction { implicit req =>
+  def webPlaylist = PimpAction { req =>
     implicit val w = TrackMeta.writer(req)
     Ok(Json.toJson(playlistFor(req.user)))
   }
@@ -134,9 +134,9 @@ class Rest(webPlayer: WebPlayer,
     )
   })
 
-  def status = PimpAction { implicit req =>
+  def status = PimpAction { req =>
     implicit val w = TrackMeta.writer(req)
-    pimpResponse(
+    pimpResponse(req)(
       html = NoContent,
       json17 = Json.toJson(MusicPlayer.status17),
       latest = Json.toJson(MusicPlayer.status)
@@ -226,10 +226,10 @@ class Rest(webPlayer: WebPlayer,
     webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
   private def AckPimpAction[T](parser: BodyParser[T])(bodyHandler: AuthRequest[T] => Unit): EssentialAction =
-    PimpParsedAction(parser)(implicit request => {
+    PimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
-        AckResponse
+        AckResponse(request)
       } catch {
         case iae: IllegalArgumentException =>
           log error("Illegal argument", iae)
@@ -239,17 +239,17 @@ class Rest(webPlayer: WebPlayer,
           log error("Unable to execute action", t)
           InternalServerError
       }
-    })
+    }
 
   private def JsonAckAction(jsonHandler: AuthRequest[JsValue] => Unit): EssentialAction =
     AckPimpAction(parse.json)(jsonHandler)
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
-    MetaUploadAction(implicit req => {
+    MetaUploadAction { req =>
       songAction(req.track)
       statsPlayer.updateUser(User(req.user))
-      AckResponse
-    })
+      AckResponse(req)
+    }
 
   private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     HeadPimpUploadAction { request =>

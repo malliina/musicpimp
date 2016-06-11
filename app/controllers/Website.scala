@@ -33,22 +33,22 @@ class Website(sockets: WebSocketController,
     html.player(serverWS.wsUrl(req), feedback)(req)
   }
 
-  def recent = userAction { implicit req =>
+  def recent = userAction { req =>
     val user = req.user
     implicit val f = TrackMeta.format(req)
-    stats.mostRecent(user, count = 100).map { entries =>
-      respond2(
+    stats.mostRecent(user, count = 100) map { entries =>
+      respond2(req)(
         html = html.mostRecent(entries, user),
         json = RecentList(entries)
       )
     }
   }
 
-  def popular = userAction { implicit req =>
+  def popular = userAction { req =>
     val user = req.user
     implicit val f = TrackMeta.format(req)
-    stats.mostPlayed(user).map { entries =>
-      respond2(
+    stats.mostPlayed(user) map { entries =>
+      respond2(req)(
         html = html.mostPopular(entries, user),
         json = PopularList(entries)
       )

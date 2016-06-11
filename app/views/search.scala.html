@@ -1,4 +1,4 @@
-@(query: Option[String], results: Seq[com.malliina.musicpimp.db.DataTrack], wsUrl: String)(implicit request: RequestHeader)
+@(query: Option[String], results: Seq[com.malliina.musicpimp.db.DataTrack], wsUrl: String, request: RequestHeader)
 
 @libraryBase("search") {
     @bs.rowColumn12 {
@@ -49,4 +49,4 @@
     }
 }
 @util.script2("search.js", "json.js", "library.js")
-@wsopen(wsUrl)
+@wsopen(wsUrl)(request)

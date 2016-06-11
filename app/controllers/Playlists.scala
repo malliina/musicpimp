@@ -38,21 +38,23 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   def playlists = recoveredAsync((req, user) => {
     implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
     service.playlistsMeta(user).map(playlists => {
-      respond(
+      respond(req)(
         html = html.playlists(playlists.playlists),
         json = Json.toJson(playlists)
-      )(req)
+      )
     })
   })
 
   def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
     implicit val f = TrackMeta.format(req)
-    service.playlistMeta(id, user).map(result => {
-      result.map(playlist => respond(
-        html = html.playlist(playlist.playlist, playlistForm),
-        json = Json.toJson(playlist)
-      )(req)).getOrElse(NotFound(s"Playlist not found: $id"))
-    })
+    service.playlistMeta(id, user).map { result =>
+      result.map { playlist =>
+        respond(req)(
+          html = html.playlist(playlist.playlist, playlistForm),
+          json = Json.toJson(playlist)
+        )
+      }.getOrElse(NotFound(s"Playlist not found: $id"))
+    }
   })
 
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {

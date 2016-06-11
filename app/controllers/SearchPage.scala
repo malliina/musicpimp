@@ -12,14 +12,14 @@ import scala.util.Try
 class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
 
-  def search = PimpActionAsync { implicit req => {
+  def search = PimpActionAsync { req => {
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
     val term = query("term")
     val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DefaultLimit
     val results = term.fold(Future.successful(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map { tracks =>
-      respond(
-        html = views.html.search(term, tracks, s.wsUrl(req)),
+      respond(req)(
+        html = views.html.search(term, tracks, s.wsUrl(req), req),
         json = Json.toJson(tracks)
       )
     }

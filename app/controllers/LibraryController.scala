@@ -19,44 +19,38 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
   def siteRoot = rootLibrary
 
   def rootLibrary = PimpActionAsync { request =>
-    lib.rootFolder.map(root => folderResult(root)(request)) }
+    lib.rootFolder.map(root => folderResult(root, request))
+  }
 
   /**
     * @return an action that provides the contents of the library with the supplied id
     */
-  def library(folderId: String) = PimpActionAsync { implicit request =>
-    lib.folder(folderId).map(_.fold(folderNotFound(folderId))(items => folderResult(items)))
+  def library(folderId: String) = PimpActionAsync { request =>
+    lib.folder(folderId).map(_.fold(folderNotFound(folderId, request))(items => folderResult(items, request)))
   }
 
-  def tracksIn(folderID: String) = PimpActionAsync { implicit request =>
+  def tracksIn(folderID: String) = PimpActionAsync { request =>
     implicit val writer = TrackMeta.writer(request)
-    lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID))(ts => Ok(Json.toJson(ts))))
+    lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID, request))(ts => Ok(Json.toJson(ts))))
   }
 
   def allTracks = tracksIn(Library.RootId)
 
-  private def folderNotFound(id: String)(implicit request: RequestHeader): Result = {
-    pimpResult(
+  private def folderNotFound(id: String, request: RequestHeader): Result = {
+    pimpResult(request)(
       html = NotFound,
       json = NotFound(LibraryController.noFolderJson(id))
     )
   }
 
-  private def folderResult(collection: => MusicFolder)(implicit request: RequestHeader): Result = {
-    respond(
-      html = {
-        toHtml(collection)
-      },
-      json = {
-        implicit val format = MusicFolder.writer(request)
-        Json.toJson(collection)
-      }
+  private def folderResult(collection: => MusicFolder, request: RequestHeader): Result = {
+    respond(request)(
+      html = toHtml(collection),
+      json = Json.toJson(collection)(MusicFolder.writer(request))
     )
   }
 
-  /** Serves the given track but does NOT set the ACCEPT_RANGES header in the response.
-    *
-    * The Windows Phone background audio player fails to work properly if the ACCEPT_RANGES header is set.
+  /** Legacy.
     *
     * @param trackId track to serve
     */

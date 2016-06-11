@@ -9,7 +9,7 @@ import scala.concurrent.Future
 
 trait PimpErrorHandling extends HttpErrorHandler {
   abstract override def onServerError(request: RequestHeader, ex: Throwable): Future[Result] =
-    PimpContentController.pimpResult(
+    PimpContentController.pimpResult2(request)(
       html = super.onServerError(request, ex),
-      json = Results.InternalServerError(JsonMessages.failure(s"${ex.getClass.getName}: ${ex.getMessage}")))(request)
+      json = Results.InternalServerError(JsonMessages.failure(s"${ex.getClass.getName}: ${ex.getMessage}")))
 }
