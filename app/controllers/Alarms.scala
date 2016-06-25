@@ -20,30 +20,30 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
   with SchedulerStrings
   with Log {
 
-  def alarms = PimpAction(implicit request => {
+  def alarms = PimpAction { implicit request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(
       html = views.html.alarms(content),
       json = Json.toJson(content)
     )
-  })
+  }
 
-  def handleJson = PimpParsedAction(parse.json)(jsonRequest => {
+  def handleJson = PimpParsedAction(parse.json) { jsonRequest =>
     val json = jsonRequest.body
     log debug s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
     onRequest(json)
-  })
+  }
 
-  def tracks = PimpAction(implicit request => {
+  def tracks = PimpAction {
     val tracks: Iterable[TrackMeta] = Library.tracksRecursive
     Ok(Json.toJson(tracks))
-  })
+  }
 
-  def paths = PimpAction(implicit request => {
+  def paths = PimpAction {
     val tracks = Library.songPathsRecursive
     implicit val pathFormat = PlaybackJob.pathFormat
     Ok(Json.toJson(tracks))
-  })
+  }
 
   private def onRequest(json: JsValue): Result = {
     val jsResult = AlarmJsonHandler.handle(json)
