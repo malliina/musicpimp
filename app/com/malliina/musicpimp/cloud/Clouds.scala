@@ -39,7 +39,7 @@ class Clouds(deps: Deps) extends Log {
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(60.seconds)
   var poller: Option[Subscription] = None
-  val MAX_FAILURES = 50
+  val MAX_FAILURES = 720
   var successiveFailures = 0
 
   def init(): Unit = {
@@ -75,7 +75,8 @@ class Clouds(deps: Deps) extends Log {
 
   def connect(id: Option[CloudID]): Future[CloudID] = reg {
     closeAnyConnection()
-    log info s"Connecting to ${client.uri} as $id..."
+    val name = id.map(_.id) getOrElse "a random client"
+    log info s"Connecting to ${client.uri} as $name..."
     client = newSocket(id)
     client.connectID() map { id =>
       successiveFailures = 0
@@ -89,7 +90,7 @@ class Clouds(deps: Deps) extends Log {
   def newSocket(id: Option[CloudID]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
 
   def disconnectAndForget() = {
-    client sendMessage SimpleCommand(CloudStrings.UNREGISTER)
+    client sendMessage SimpleCommand(CloudStrings.Unregister)
     disconnect()
     Files.deleteIfExists(Clouds.idFile)
   }

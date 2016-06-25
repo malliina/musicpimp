@@ -4,6 +4,7 @@ import java.io.IOException
 import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
+import com.malliina.musicpimp.audio.ServerMessage._
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.Library
 import com.malliina.util.Log
@@ -19,8 +20,8 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
 
-  private val subject = Subject[JsValue]()
-  val events: Observable[JsValue] = subject
+  private val subject = Subject[ServerMessage]()
+  val events: Observable[ServerMessage] = subject
   val allEvents = events.merge(playlist.events)
   private val trackHistorySubject = Subject[TrackMeta]()
   val trackHistory: Observable[TrackMeta] = trackHistorySubject
@@ -92,7 +93,7 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
       sendCurrentVolume()
     }
     previousMute foreach mute
-    send(JsonMessages.trackChanged(track))
+    send(TrackChangedMessage(track))
     trackHistorySubject.onNext(track)
   }
 
@@ -119,26 +120,30 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
   def initPlayer(track: PlayableTrack): PimpPlayer = {
     close()
     val newPlayer = track.buildPlayer(() => nextTrack())
-    stateSubscription = Some(newPlayer.events.subscribe(playerState => send(JsonMessages.playStateChanged(playerState))))
-    timeSubscription = Some(newPlayer.timeUpdates.subscribe(time => send(JsonMessages.timeUpdated(time.position))))
+    stateSubscription = Some(newPlayer.events.subscribe { playerState =>
+      send(PlayStateChangedMessage(playerState))
+    })
+    timeSubscription = Some(newPlayer.timeUpdates.subscribe { time =>
+      send(TimeUpdatedMessage(time.position))
+    })
     newPlayer
   }
 
   def stop() {
     player.foreach(p => {
       p.stop()
-      send(JsonMessages.playStateChanged(PlayerStates.Stopped))
+      send(PlayStateChangedMessage(PlayerStates.Stopped))
     })
   }
 
   // TODO observables
-  def send(json: JsValue) = subject.onNext(json)
+  def send(json: ServerMessage) = subject.onNext(json)
 
   def seek(pos: Duration) = {
     Try {
       player.filter(_.position.toSeconds != pos.toSeconds).foreach(p => {
         p.seek(pos)
-        send(JsonMessages.timeUpdated(pos))
+        send(TimeUpdatedMessage(pos))
       })
     }.recover {
       case ioe: IOException if ioe.getMessage == "Resetting to invalid mark" =>
@@ -161,21 +166,21 @@ object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log 
       sendVolumeChanged(level)
     }).isDefined
 
-  def sendVolumeChanged(level: Int) = send(JsonMessages.volumeChanged(level))
+  def sendVolumeChanged(level: Int) = send(VolumeChangedMessage(level))
 
   def sendCurrentVolume() = sendVolumeChanged(player.map(_.volume) getOrElse 0)
 
   def mute(mute: Boolean) {
     player.filter(_.mute != mute).foreach(p => {
       p.mute(mute)
-      send(JsonMessages.muteToggled(mute))
+      send(MuteToggledMessage(mute))
     })
   }
 
   def toggleMute() {
     player.foreach(p => {
       p.toggleMute()
-      send(JsonMessages.muteToggled(p.mute))
+      send(MuteToggledMessage(p.mute))
     })
   }
 

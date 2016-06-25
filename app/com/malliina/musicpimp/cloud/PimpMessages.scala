@@ -13,9 +13,9 @@ object PimpMessages {
     def request: RequestID
   }
 
-  case class Registered(id: CloudID) extends PimpMessage
+  case class RegisteredMessage(id: CloudID) extends PimpMessage
 
-  case object Ping extends PimpMessage
+  case object PingMessage extends PimpMessage
 
   case object PingAuth extends PimpMessage
 
@@ -58,7 +58,7 @@ object PimpMessages {
   implicit val trackFormat = Json.format[Track]
   implicit val authFormat = Json.format[Authenticate]
   implicit val meta = Json.format[GetMeta]
-  implicit val registeredFormat = Json.format[Registered]
+  implicit val registeredFormat = Json.format[RegisteredMessage]
   implicit val rangedFormat = Json.format[RangedTrack]
   implicit val playlistsGet = Json.format[GetPlaylists]
   implicit val playlistGet = Json.format[GetPlaylist]

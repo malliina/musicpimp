@@ -3,7 +3,7 @@ package controllers
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.MusicPlayer
+import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
 import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.Authenticator
@@ -22,7 +22,7 @@ class Website(sockets: WebSocketController,
               mat: Materializer)
   extends HtmlController(auth, mat) {
 
-  def player = navigate(implicit req => {
+  def player = navigate { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
     val feedback: Option[String] =
       if (!hasAudioDevice) {
@@ -30,23 +30,25 @@ class Website(sockets: WebSocketController,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    html.player(serverWS.wsUrl, feedback)
-  })
+    html.player(serverWS.wsUrl(req), feedback)(req)
+  }
 
-  def recent = userAction { implicit req =>
+  def recent = userAction { req =>
     val user = req.user
-    stats.mostRecent(user, count = 100).map { entries =>
-      respond2(
+    implicit val f = TrackMeta.format(req)
+    stats.mostRecent(user, count = 100) map { entries =>
+      respond2(req)(
         html = html.mostRecent(entries, user),
         json = RecentList(entries)
       )
     }
   }
 
-  def popular = userAction { implicit req =>
+  def popular = userAction { req =>
     val user = req.user
-    stats.mostPlayed(user).map { entries =>
-      respond2(
+    implicit val f = TrackMeta.format(req)
+    stats.mostPlayed(user) map { entries =>
+      respond2(req)(
         html = html.mostPopular(entries, user),
         json = PopularList(entries)
       )
@@ -69,7 +71,7 @@ class Website(sockets: WebSocketController,
       s"Playback could not be started. $msg"
   }
 
-  def popupPlayer = navigate(implicit req => html.popupPlayer(sockets.wsUrl))
+  def popupPlayer = navigate(req => html.popupPlayer(sockets.wsUrl(req))(req))
 
   def about = navigate(html.aboutBase())
 

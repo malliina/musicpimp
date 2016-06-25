@@ -6,13 +6,10 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
 class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
 
   def rootFolder: Future[MusicFolder] = {
-    folder(Library.ROOT_ID).map(_.getOrElse(MusicFolder.empty))
+    folder(Library.RootId).map(_.getOrElse(MusicFolder.empty))
   }
 
   def folder(id: String): Future[Option[MusicFolder]] = {

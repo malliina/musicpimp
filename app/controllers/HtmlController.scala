@@ -10,5 +10,5 @@ class HtmlController(auth: Authenticator, mat: Materializer) extends Secured(aut
     navigate(_ => page)
 
   protected def navigate(f: RequestHeader => Html): EssentialAction =
-    PimpAction(req => Ok(f(req)))
+    pimpAction(req => Ok(f(req)))
 }

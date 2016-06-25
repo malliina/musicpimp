@@ -2,7 +2,7 @@ package controllers
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.JsonHandlerBase
-import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.play.Authenticator
 import com.malliina.play.http.RequestInfo
@@ -18,10 +18,10 @@ abstract class PlayerSockets(auth: Authenticator, mat: Materializer)
   def status(client: Client): JsValue
 
   override def onMessage(msg: Message, client: Client): Boolean = {
-    (msg \ CMD).asOpt[String].fold(log warn s"Unknown message: $msg")({
-      case STATUS =>
+    (msg \ Cmd).asOpt[String].fold(log warn s"Unknown message: $msg")({
+      case JsonStrings.Status =>
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
-        val event = JsonMessages.withStatus(status(client)) // Json.obj(EVENT -> STATUS) ++ statusJson.as[JsObject]
+        val event = JsonMessages.withStatus(status(client))
         client.channel offer event
       case anythingElse =>
         handleMessage(msg, client)

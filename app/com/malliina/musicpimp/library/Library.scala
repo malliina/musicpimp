@@ -8,18 +8,18 @@ import com.malliina.audio.meta.SongMeta
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
+import com.malliina.musicpimp.models.PimpPath
 import com.malliina.util.{Log, Utils}
 
 import scala.concurrent.stm.{Ref, atomic}
 
 object Library extends Library {
-  val ROOT_ID = ""
-  val emptyPath = Paths get ""
+  val RootId = ""
+  val EmptyPath = Paths get ""
 
   def relativePath(itemId: String): Path = Paths get decode(itemId)
 
-  /**
-    * Generates a URL-safe ID of the given music item.
+  /** Generates a URL-safe ID of the given music item.
     *
     * TODO: make item unique
     *
@@ -31,9 +31,6 @@ object Library extends Library {
   def decode(id: String) = URLDecoder.decode(id, "UTF-8")
 }
 
-/**
-  * @author Michael
-  */
 class Library extends Log {
 
   import Library._
@@ -48,19 +45,6 @@ class Library extends Log {
 
   def rootStream = roots.toStream
 
-  //  def rootFolder: Future[MusicFolder] = Future.successful(MusicFolder.empty)
-
-  //  def folder(id: String): Future[Option[MusicFolder]] = Future.successful(None)
-
-  //  def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = Future.successful(None)
-
-  //  def allTracksRec(): Future[Seq[TrackMeta]] = tracksInOrEmpty(ROOT_ID)
-
-  //  def localTracksInOrEmpty(id: String) = localTracksIn(id).map(_.getOrElse(Nil))
-
-  //  def localTracksIn(id: String): Future[Option[Seq[LocalTrack]]] =
-  //    tracksIn(id).map(_.map(localize))
-
   def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.id))
 
   def all(root: Path): Map[Path, Folder] = {
@@ -73,7 +57,7 @@ class Library extends Log {
             .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
       }
     }
-    Map(items(root).toSeq.flatMap(f => recurse(f, Map(emptyPath -> f))): _*)
+    Map(items(root).toSeq.flatMap(f => recurse(f, Map(EmptyPath -> f))): _*)
   }
 
   private def all(): Map[Path, Folder] = Map(roots.flatMap(all): _*)
@@ -99,12 +83,11 @@ class Library extends Log {
 
   def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(Library.relativePath(id).getParent) getOrElse emptyPath
+    val path = Option(Library.relativePath(id).getParent) getOrElse EmptyPath
     DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encode(path))
   }
 
-  /**
-    * This method has a bug.
+  /** This method has a bug.
     *
     * @param trackId the music item id
     * @return the absolute path to the music item id, or None if no such track exists
@@ -115,13 +98,12 @@ class Library extends Log {
 
   def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 
-
   def meta(itemId: String): LocalTrack = meta(relativePath(itemId))
 
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new LocalTrack(encode(song), meta)
+    new LocalTrack(encode(song), PimpPath(pathData.relative), meta)
   }
 
   def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
@@ -134,7 +116,7 @@ class Library extends Log {
     try {
       // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      Some(new LocalTrack(encode(pi.relative), meta))
+      Option(new LocalTrack(encode(pi.relative), PimpPath(pi.relative), meta))
     } catch {
       case e: Exception =>
         log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.")
@@ -174,8 +156,7 @@ class Library extends Log {
   private def pathInfo(relative: Path): PathInfo = findPathInfo(relative)
     .getOrElse(throw new FileNotFoundException(s"Root folder for $relative not found."))
 
-  /**
-    * Some folders might have unsuitable permissions, throwing an exception when a read attempt is made. Suppresses such
+  /** Some folders might have unsuitable permissions, throwing an exception when a read attempt is made. Suppresses such
     * AccessDeniedExceptions.
     *
     * @param f function that returns folder contents

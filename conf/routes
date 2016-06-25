@@ -1,5 +1,5 @@
 # Web specific
-GET         /                                  controllers.LibraryController.rootLibrary
+GET         /                                  controllers.LibraryController.siteRoot
 GET         /player                            controllers.Website.player
 GET         /popupPlayer                       controllers.Website.popupPlayer
 GET         /player/recent                     controllers.Website.recent

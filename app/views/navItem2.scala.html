@@ -1,0 +1,3 @@
+@(title: String, tabItemName: String, currentTabName: String, href: Call, iconClass: String)
+
+<li class="@("active".when(currentTabName == tabItemName))"><a href="@href"><i class="@iconClass"></i> @title</a></li>

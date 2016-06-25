@@ -1,9 +1,11 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json.Json
+import com.malliina.musicpimp.audio.TrackMeta
+import play.api.libs.json.{Format, Json}
 
 case class PlaylistsMeta(playlists: Seq[SavedPlaylist])
 
 object PlaylistsMeta {
-  implicit val format = Json.format[PlaylistsMeta]
+  implicit def format(implicit f: Format[TrackMeta]): Format[PlaylistsMeta] =
+    Json.format[PlaylistsMeta]
 }

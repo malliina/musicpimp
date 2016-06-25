@@ -1,4 +1,4 @@
-@(cloud: Cloud, cloudForm: Form[Option[String]], serverID: Option[String] = None, feedback: Option[String] = None)(implicit request: RequestHeader, flash: Flash)
+@(cloud: Cloud, cloudForm: Form[Option[String]], serverID: Option[String] = None, feedback: Option[String] = None)(implicit flash: Flash)
 
 @manage("cloud") {
     @bs.headerRow("Cloud", "col-md-12", "Connect this server to the cloud.")

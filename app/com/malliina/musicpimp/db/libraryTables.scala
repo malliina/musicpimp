@@ -1,9 +1,8 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.db.Mappings.jodaDate
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.models.{PimpPath, User}
 import org.joda.time.DateTime
-
 import slick.driver.H2Driver.api._
 import slick.lifted.ProvenShape
 
@@ -60,7 +59,7 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
 
   def title = column[String]("TITLE")
 
-  def path = column[String]("PATH")
+  def path = column[PimpPath]("PATH")
 
   def parent = column[String]("PARENT")
 

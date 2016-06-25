@@ -9,7 +9,8 @@ import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.play.Authenticator
-import com.malliina.util.Log
+import controllers.Alarms.log
+import play.api.Logger
 import play.api.i18n.Messages
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
@@ -17,29 +18,29 @@ import play.api.mvc.Result
 
 class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
   extends AlarmEditor(auth, messages, mat)
-  with SchedulerStrings
-  with Log {
+    with SchedulerStrings {
 
-  def alarms = PimpAction { implicit request =>
+  def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
-    respond(
+    respond(request)(
       html = views.html.alarms(content),
       json = Json.toJson(content)
     )
   }
 
-  def handleJson = PimpParsedAction(parse.json) { jsonRequest =>
+  def handleJson = pimpParsedAction(parse.json) { jsonRequest =>
     val json = jsonRequest.body
     log debug s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
     onRequest(json)
   }
 
-  def tracks = PimpAction {
+  def tracks = pimpAction { request =>
     val tracks: Iterable[TrackMeta] = Library.tracksRecursive
+    implicit val w = TrackMeta.writer(request)
     Ok(Json.toJson(tracks))
   }
 
-  def paths = PimpAction {
+  def paths = pimpAction { request =>
     val tracks = Library.songPathsRecursive
     implicit val pathFormat = PlaybackJob.pathFormat
     Ok(Json.toJson(tracks))
@@ -58,11 +59,14 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
 }
 
 object Alarms {
-  val jobWriter = Writes[PlaybackJob](o => obj(TRACK -> toJson(o.trackInfo)))
-  implicit val alarmWriter = Writes[ClockPlayback](o => obj(
-    ID -> toJson(o.id),
-    JOB -> toJson(o.job)(jobWriter),
-    WHEN -> toJson(o.when),
-    ENABLED -> toJson(o.enabled)
+  private val log = Logger(getClass)
+
+  def jobWriter(implicit w: Writes[TrackMeta]) = Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
+
+  implicit def alarmWriter(implicit w: Writes[TrackMeta]) = Writes[ClockPlayback](o => obj(
+    Id -> toJson(o.id),
+    Job -> toJson(o.job)(jobWriter),
+    When -> toJson(o.when),
+    Enabled -> toJson(o.enabled)
   ))
 }

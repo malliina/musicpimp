@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.stats
 
-import play.api.libs.json.Json
+import com.malliina.musicpimp.audio.TrackMeta
+import play.api.libs.json.{Format, Json}
 
 case class RecentList(recents: Seq[RecentEntry])
 
 object RecentList {
-  implicit val json = Json.format[RecentList]
+  implicit def json(implicit f: Format[TrackMeta]) = Json.format[RecentList]
 }

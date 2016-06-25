@@ -4,8 +4,11 @@ import akka.stream.{Materializer, QueueOfferResult}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
+import com.malliina.musicpimp.models.PimpUrl
 import com.malliina.play.Authenticator
-import com.malliina.util.Log
+import controllers.ServerWS.log
+import play.api.Logger
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json.toJson
 import play.api.mvc.Call
 import rx.lang.scala.{Observable, Subscription}
@@ -15,21 +18,32 @@ import scala.concurrent.duration.DurationInt
 
 /** Emits playback events to and accepts commands from listening clients.
   */
-class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler, mat: Materializer)
-  extends PlayerSockets(auth, mat)
-    with Log {
+class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler, mat: Materializer)
+  extends PlayerSockets(auth, mat) {
 
-  val subscription = MusicPlayer.allEvents.subscribe(event => broadcast(event))
+  val subscription = MusicPlayer.allEvents.subscribe(event => customBroadcast(event))
   override val messageHandler: JsonHandlerBase = handler
-
-  override def status(client: Client) = apiVersion(client) match {
-    case JsonFormatVersions.JSONv17 => toJson(MusicPlayer.status17)
-    case _ => toJson(MusicPlayer.status)
-  }
-
   val ticks = Observable.interval(900.millis)
   var poller: Option[Subscription] = None
   var previousPos = -1L
+
+  def customBroadcast(message: ServerMessage) = {
+    Future.traverse(clients) { client =>
+      val writer = ServerMessage.writer(PimpUrl.hostOnly(client.request))
+      client.channel.offer(writer.writes(message))
+    }
+    val cloudHost = clouds.client.cloudHost
+    val cloudJson = ServerMessage.writer(cloudHost).writes(message)
+    clouds.sendIfConnected(cloudJson)
+  }
+
+  override def status(client: Client) = {
+    implicit val w = TrackMeta.writer(client.request)
+    apiVersion(client) match {
+      case JsonFormatVersions.JSONv17 => toJson(MusicPlayer.status17)
+      case _ => toJson(MusicPlayer.status)
+    }
+  }
 
   def onTick() {
     val pos = MusicPlayer.position
@@ -62,11 +76,6 @@ class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHand
 
   def openSocketCall: Call = routes.ServerWS.openSocket()
 
-  //  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
-  //    log.info("unauthorized")
-  //    Unauthorized
-  //  }
-
   override def broadcast(message: Message): Future[Seq[QueueOfferResult]] = {
     log debug s"$message to ${clients.map(_.describe).mkString(", ")}"
     // sends the message to directly connected clients
@@ -75,4 +84,8 @@ class ServerWS(clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHand
     clouds sendIfConnected message
     ret
   }
+}
+
+object ServerWS {
+  private val log = Logger(getClass)
 }

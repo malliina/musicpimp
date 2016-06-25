@@ -5,8 +5,9 @@ import com.malliina.util.Log
 import controllers.PimpContentController.log
 import play.api.Logger
 import play.api.http.MimeTypes
-import play.api.libs.json.{Json, Writes, JsValue}
+import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.{Controller, RequestHeader, Result, Results}
+import play.twirl.api.Html
 
 import scala.concurrent.Future
 
@@ -17,7 +18,7 @@ trait PimpContentController extends Controller {
 
   import com.malliina.musicpimp.json.JsonFormatVersions._
 
-  def pimpResponse(html: => Result, json17: => JsValue, latest: => JsValue)(implicit request: RequestHeader): Result = {
+  def pimpResponse(request: RequestHeader)(html: => Result, json17: => JsValue, latest: => JsValue): Result = {
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) =>
         html
@@ -35,26 +36,23 @@ trait PimpContentController extends Controller {
     }
   }
 
-  def pimpResult(html: => Result, json: => Result)(implicit request: RequestHeader): Result =
-    PimpContentController.pimpResult(html, json)
+  def respond2[T](request: RequestHeader)(html: => Html, json: => T)(implicit w: Writes[T]) =
+    respond(request)(html, Json.toJson(json))
 
-  def pimpResult(html: => Future[Result], json: => Result)(implicit request: RequestHeader): Future[Result] =
-    PimpContentController.pimpResult(html, json)
-
-  def pimpResponse(html: => Result, json: => JsValue)(implicit request: RequestHeader): Result =
-    pimpResult(html, Ok(json))
-
-  def respond2[T](html: => play.twirl.api.Html, json: => T)(implicit request: RequestHeader, w: Writes[T]) =
-    respond(html, Json.toJson(json))
-
-  def respond(html: => play.twirl.api.Html, json: => JsValue, status: Status = Ok)(implicit request: RequestHeader): Result =
-    pimpResult(status(html), status(json))
+  def respond(request: RequestHeader)(html: => Html, json: => JsValue, status: Status = Ok): Result =
+    pimpResult(request)(status(html), status(json))
 
   /**
     * @return the equivalent of "Unit" in JSON and HTML
     */
-  def AckResponse(implicit request: RequestHeader) =
-    pimpResult(html = Accepted, json = Accepted)
+  def AckResponse(request: RequestHeader) =
+    pimpResult(request)(html = Accepted, json = Accepted)
+
+  def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
+    PimpContentController.pimpResult(request)(html, json)
+
+  def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
+    PimpContentController.pimpResult2(request)(html, json)
 }
 
 object PimpContentController {
@@ -62,14 +60,14 @@ object PimpContentController {
 
   // TODO dry
 
-  def pimpResult(html: => Result, json: => Result)(implicit request: RequestHeader): Result =
+  def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(format) if format contains "json" => json
       case _ => Results.NotAcceptable
     }
 
-  def pimpResult(html: => Future[Result], json: => Result)(implicit request: RequestHeader): Future[Result] =
+  def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
       case Some(format) if format contains "json" => Future.successful(json)
@@ -96,8 +94,7 @@ object PimpRequest extends Log {
     else None
   }
 
-  /**
-    * The desired format for clients compatible with API version 17 is
+  /** The desired format for clients compatible with API version 17 is
     * incorrectly determined to be HTML, because those clients do not
     * specify an Accept header in their WebSocket requests thus the server
     * thinks they are browsers by default. However, the WebSocket API does

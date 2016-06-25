@@ -1,10 +1,11 @@
 package controllers
 
 import akka.stream.Materializer
+import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, User}
+import com.malliina.musicpimp.models.{PimpUrl, PlaylistID, PlaylistsMeta, User}
 import com.malliina.play.Authenticator
 import com.malliina.play.http.AuthRequest
 import controllers.Playlists.log
@@ -35,21 +36,25 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync((req, user) => {
+    implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
     service.playlistsMeta(user).map(playlists => {
-      respond(
+      respond(req)(
         html = html.playlists(playlists.playlists),
         json = Json.toJson(playlists)
-      )(req)
+      )
     })
   })
 
   def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
-    service.playlistMeta(id, user).map(result => {
-      result.map(playlist => respond(
-        html = html.playlist(playlist.playlist, playlistForm),
-        json = Json.toJson(playlist)
-      )(req)).getOrElse(NotFound(s"Playlist not found: $id"))
-    })
+    implicit val f = TrackMeta.format(req)
+    service.playlistMeta(id, user).map { result =>
+      result.map { playlist =>
+        respond(req)(
+          html = html.playlist(playlist.playlist, playlistForm),
+          json = Json.toJson(playlist)
+        )
+      }.getOrElse(NotFound(s"Playlist not found: $id"))
+    }
   })
 
   def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
@@ -82,7 +87,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     parsedRecoveredAsync(parse.anyContent)(f)
 
   protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: (AuthRequest[T], User) => Future[Result]) =
-    PimpParsedActionAsync(parser)(auth => f(auth, User(auth.user)).recover(errorHandler))
+    pimpParsedActionAsync(parser)(auth => f(auth, User(auth.user)).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {
     case ue: UnauthorizedException =>

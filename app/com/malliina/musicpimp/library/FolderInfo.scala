@@ -2,19 +2,20 @@ package com.malliina.musicpimp.library
 
 import java.nio.file.Path
 
-import com.malliina.musicpimp.models.MusicItem
 import com.malliina.musicpimp.audio.FolderMeta
+import com.malliina.musicpimp.models.{MusicItem, PimpPath}
 
-/**
- *
- * @author mle
- */
-class FolderInfo(val id: String, val title: String, val folderPath: Path) extends MusicItem with FolderMeta {
-  override val path: String = folderPath.toString
-  override val parent: String = (Option(folderPath.getParent) getOrElse Library.emptyPath).toString
+class FolderInfo(val id: String,
+                 val title: String,
+                 val folderPath: Path) extends MusicItem with FolderMeta {
+  override val path = PimpPath(folderPath)
+  override val parent: String = (Option(folderPath.getParent) getOrElse Library.EmptyPath).toString
 }
 
 object FolderInfo {
   def fromPath(path: Path) =
-    new FolderInfo(Library.encode(path), Option(path.getFileName).map(_.toString).getOrElse(""), path)
+    new FolderInfo(
+      Library.encode(path),
+      Option(path.getFileName).map(_.toString).getOrElse(""),
+      path)
 }

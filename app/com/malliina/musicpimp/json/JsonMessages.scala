@@ -3,61 +3,62 @@ package com.malliina.musicpimp.json
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.util.Log
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 
 import scala.concurrent.duration.Duration
 
-/**
- * @author Michael
- */
-trait JsonMessages extends Log {
-  val version = obj(VERSION -> com.malliina.musicpimp.BuildInfo.version)
-  val noMedia = obj(STATE -> PlayerStates.NoMedia.toString)
-  val unAuthorized = failure(ACCESS_DENIED)
+object JsonMessages extends JsonMessages
+
+trait JsonMessages {
+  val version = obj(Version -> com.malliina.musicpimp.BuildInfo.version)
+  val noMedia = obj(State -> PlayerStates.NoMedia.toString)
+  val unAuthorized = failure(AccessDenied)
   val databaseFailure = failure(DatabaseError)
   val genericFailure = failure(GenericError)
-  val invalidParameter = failure(INVALID_PARAMETER)
-  val invalidCredentials = failure(INVALID_CREDENTIALS)
-  val invalidJson = failure(INVALID_JSON)
-  val noFileInMultipart = failure(NO_FILE_IN_MULTIPART)
-  val ping = event(PING)
+  val invalidParameter = failure(InvalidParameter)
+  val invalidCredentials = failure(InvalidCredentials)
+  val invalidJson = failure(InvalidJson)
+  val noFileInMultipart = failure(NoFileInMultipart)
+  val ping = event(Ping)
 
-  def failure(reason: String) = obj(REASON -> reason)
+  def failure(reason: String) =
+    obj(Reason -> reason)
 
-  def exception(e: Throwable) = failure(e.getMessage)
+  def exception(e: Throwable) =
+    failure(e.getMessage)
 
-  def trackChanged(track: TrackMeta) =
-    event(TRACK_CHANGED, TRACK -> toJson(track))
+  def trackChanged(track: TrackMeta)(implicit w: Writes[TrackMeta]) =
+    event(TrackChanged, TrackKey -> toJson(track))
 
   // POS and POS_SECONDS are deprecated
   def timeUpdated(newTime: Duration) =
-    event(TIME_UPDATED, POSITION -> newTime.toSeconds)
+    event(TimeUpdated, Position -> newTime.toSeconds)
 
   def volumeChanged(newVolume: Int) =
-    event(VOLUME_CHANGED, VOLUME -> newVolume)
+    event(VolumeChanged, Volume -> newVolume)
 
   def muteToggled(newMute: Boolean) =
-    event(MUTE_TOGGLED, MUTE -> newMute)
+    event(MuteToggled, Mute -> newMute)
 
-  def playlistModified(newPlaylist: Seq[TrackMeta]) =
-    event(PLAYLIST_MODIFIED, PLAYLIST -> toJson(newPlaylist))
+  def playlistModified(newPlaylist: Seq[TrackMeta])(implicit w: Writes[TrackMeta]) =
+    event(PlaylistModified, Playlist -> toJson(newPlaylist))
 
   def playlistIndexChanged(newIndex: Int) =
-    event(PLAYLIST_INDEX_CHANGED, PLAYLIST_INDEX -> newIndex, PLAYLIST_INDEXv17v18 -> newIndex)
+    event(PlaylistIndexChanged, PlaylistIndex -> newIndex, PlaylistIndexv17v18 -> newIndex)
 
   def playStateChanged(newState: PlayerStates.Value) =
-    event(PLAYSTATE_CHANGED, STATE -> newState.toString)
+    event(PlaystateChanged, State -> newState.toString)
 
-  def searchStatus(status: String) = event(SEARCH_STATUS, STATUS -> status)
+  def searchStatus(status: String) =
+    event(SearchStatus, Status -> status)
 
-  def withStatus(json: JsValue): JsValue = event(STATUS) ++ json.as[JsObject]
+  def withStatus(json: JsValue): JsValue =
+    event(Status) ++ json.as[JsObject]
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject =
-    obj(EVENT -> eventType) ++ obj(valuePairs: _*)
+    obj(Event -> eventType) ++ obj(valuePairs: _*)
 
-  def thanks = Json.obj(MSG -> Json.toJson(THANK_YOU))
+  def thanks =
+    Json.obj(Msg -> Json.toJson(ThankYou))
 }
-
-object JsonMessages extends JsonMessages
