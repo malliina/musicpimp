@@ -18,23 +18,23 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
   override def played(track: TrackMeta, user: User): Future[Unit] =
     run(plays += PlaybackRecord(track.id, DateTime.now, user)).map(_ => ())
 
-  override def mostRecent(user: User, count: Int): Future[Seq[RecentEntry]] = {
-    val sortedHistory = playbackHistory(user)
+  override def mostRecent(request: DataRequest): Future[Seq[RecentEntry]] = {
+    val sortedHistory = playbackHistory(request.username)
       .sortBy(_._1.when.desc)
-      .take(count)
+      .drop(request.from)
+      .take(request.until)
     runQuery(sortedHistory).map(_.map {
       case (record, track) => RecentEntry(track, record.when)
     })
   }
 
-  override def mostPlayed(user: User): Future[Seq[PopularEntry]] = {
-    val query = playbackHistory(user).groupBy {
-      case (record, track) => track
-    }.map {
-      case (track, rs) => (track, rs.length)
-    }.sortBy {
-      case (track, count) => count.desc
-    }
+  override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
+    val query = playbackHistory(request.username)
+      .groupBy { case (record, track) => track }
+      .map { case (track, rs) => (track, rs.length) }
+      .sortBy { case (track, count) => count.desc }
+      .drop(request.from)
+      .take(request.until)
     runQuery(query).map(_.map {
       case (track, count) => PopularEntry(track, count)
     })

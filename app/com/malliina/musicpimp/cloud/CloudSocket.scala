@@ -18,6 +18,7 @@ import com.malliina.musicpimp.library.{Folder => _, _}
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
+import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats}
 import com.malliina.play.json.JsonStrings.CMD
 import com.malliina.play.json.SimpleCommand
 import com.malliina.rx.Observables
@@ -37,7 +38,8 @@ case class Deps(playlists: PlaylistService,
                 db: PimpDb,
                 userManager: UserManager[User, String],
                 handler: PlaybackMessageHandler,
-                lib: MusicLibrary)
+                lib: MusicLibrary,
+                stats: PlaybackStats)
 
 /**
   * Event format:
@@ -67,6 +69,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 
   val lib = deps.lib
   val handler = deps.handler
+  val stats = deps.stats
   private val registrationPromise = Promise[CloudID]()
   val registration = registrationPromise.future
   val playlists = deps.playlists
@@ -120,6 +123,12 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 
     def withUser[T](transform: User => JsResult[T]): JsResult[T] = user.flatMap(transform)
 
+    def withCount[T](f: (Int, User) => T) =
+      user.map { u =>
+        val count = (json \ "count").asOpt[Int].getOrElse(100)
+        f(count, u)
+      }
+
     val requestMessage: JsResult[PimpMessage] = request.flatMap(req => cmd.flatMap {
       case Version => JsSuccess(GetVersion)
       case TrackKey => body.validate[RangedTrack] orElse body.validate[Track] // the fallback is not needed I think
@@ -138,6 +147,8 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       case AlarmsAdd => withBody(AlarmAdd.apply)
       case Beam => body.validate[BeamCommand]
       case Status => JsSuccess(GetStatus)
+      case Recent => body.validate[DataRequest].map(GetRecent.apply)
+      case Popular => body.validate[DataRequest].map(GetPopular.apply)
       case other => JsError(s"Unknown JSON command: $other in $json")
     })
     request.flatMap(req => requestMessage.map(msg => (msg, req)))
@@ -146,7 +157,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   protected def parseEvent(json: JsValue): JsResult[PimpMessage] = {
     val event = (json \ CMD).validate[String].orElse((json \ Event).validate[String])
     val body = json \ Body
-    val eventMessage = event.flatMap {
+    event.flatMap {
       case Registered =>
         body.validate[RegisteredMessage]
       case Player =>
@@ -158,10 +169,13 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       case other =>
         JsError(s"Unknown JSON event: $other in $json")
     }
-    eventMessage
   }
 
   def handleRequest(message: PimpMessage, request: RequestID): Unit = {
+
+    def databaseResponse[T: Writes](f: Future[T]) =
+      withDatabaseExcuse(request)(f.map(t => sendResponse(t, request)))
+
     message match {
       case GetStatus =>
         sendJsonResponse(JsonMessages.withStatus(Json.toJson(MusicPlayer.status)(StatusEvent.status18writer)), request)
@@ -178,29 +192,29 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
             sendJsonResponse(JsonMessages.failure("Library failure"), request, success = false)
         }
       case Folder(id) =>
-        val folderFuture = lib.folder(id).recover {
+        val folderFuture = lib.folder(id) recover {
           case t =>
             log.error(s"Library failure for folder $id", t)
             None
         }
-        folderFuture.map(maybeFolder => {
+        folderFuture map { maybeFolder =>
           val json = maybeFolder
             .map(folder => Json.toJson(folder))
             .getOrElse(JsonMessages.failure(s"Folder not found: $id"))
           sendJsonResponse(json, request, success = maybeFolder.isDefined)
-        })
+        }
       case Search(term, limit) =>
-        val result = deps.db.fullText(term, limit)
-        result.map(tracks => sendResponse(tracks, request))
+        databaseResponse(deps.db.fullText(term, limit))
       case PingAuth =>
         sendJsonResponse(JsonMessages.version, request)
       case PingMessage =>
         sendJsonResponse(JsonMessages.ping, request)
+      case GetPopular(meta) =>
+        databaseResponse(stats.mostPlayed(meta))
+      case GetRecent(meta) =>
+        databaseResponse(stats.mostRecent(meta))
       case GetPlaylists(user) =>
-        withDatabaseExcuse(request) {
-          playlists.playlistsMeta(user)
-            .map(pls => sendResponse(pls, request))
-        }
+        databaseResponse(playlists.playlistsMeta(user))
       case GetPlaylist(id, user) =>
         def notFound = JsonMessages.failure(s"Playlist not found: $id")
         withDatabaseExcuse(request) {
@@ -209,9 +223,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
           })
         }
       case SavePlaylist(playlist, user) =>
-        withDatabaseExcuse(request) {
-          playlists.saveOrUpdatePlaylistMeta(playlist, user).map(meta => sendResponse(meta, request))
-        }
+        databaseResponse(playlists.saveOrUpdatePlaylistMeta(playlist, user))
       case DeletePlaylist(id, user) =>
         withDatabaseExcuse(request) {
           playlists.delete(id, user).map(_ => sendAckResponse(request))
@@ -231,12 +243,12 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
             log.error(s"Database failure when authenticating $user", t)
             false
         }
-        authentication.map(isValid => {
+        authentication map { isValid =>
           val response =
             if (isValid) JsonMessages.version
             else JsonMessages.invalidCredentials
           sendJsonResponse(response, request, success = isValid)
-        })
+        }
       case GetVersion =>
         sendJsonResponse(JsonMessages.version, request)
       case GetMeta(id) =>
@@ -258,10 +270,10 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
   }
 
   def withDatabaseExcuse[T](request: RequestID)(f: Future[T]) = {
-    f.recoverAll(t => {
+    f.recoverAll { t =>
       log.error(s"Request $request error", t)
       sendFailureResponse(JsonMessages.databaseFailure, request)
-    })
+    }
   }
 
   def handleEvent(e: PimpMessage): Unit = {
@@ -281,7 +293,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       Body -> Json.obj())
   }
 
-  def sendResponse[T](response: T, request: RequestID)(implicit writer: Writes[T]): Try[Unit] =
+  def sendResponse[T: Writes](response: T, request: RequestID): Try[Unit] =
     sendJsonResponse(Json.toJson(response), request)
 
   def sendDefaultFailure(request: RequestID) =

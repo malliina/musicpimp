@@ -4,13 +4,14 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
+import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.models.User
-import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
+import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.play.Authenticator
 import com.malliina.play.ws.WebSocketController
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Security.AuthenticatedRequest
-import play.api.mvc.{AnyContent, Result}
+import play.api.mvc.{AnyContent, RequestHeader, Result}
 import views.html
 
 import scala.concurrent.Future
@@ -33,27 +34,33 @@ class Website(sockets: WebSocketController,
     html.player(serverWS.wsUrl(req), feedback)(req)
   }
 
-  def recent = userAction { req =>
-    val user = req.user
+  def recent = metaAction { (meta, req) =>
     implicit val f = TrackMeta.format(req)
-    stats.mostRecent(user, count = 100) map { entries =>
+    stats.mostRecent(meta) map { entries =>
       respond2(req)(
-        html = html.mostRecent(entries, user),
+        html = html.mostRecent(entries, meta.username),
         json = RecentList(entries)
       )
     }
   }
 
-  def popular = userAction { req =>
-    val user = req.user
+  def popular = metaAction { (meta, req) =>
     implicit val f = TrackMeta.format(req)
-    stats.mostPlayed(user) map { entries =>
+    stats.mostPlayed(meta) map { entries =>
       respond2(req)(
-        html = html.mostPopular(entries, user),
+        html = html.mostPopular(entries, meta.username),
         json = PopularList(entries)
       )
     }
   }
+
+  protected def metaAction(f: (DataRequest, RequestHeader) => Future[Result]) =
+    userAction { req =>
+      DataRequest.fromRequest(req).fold(
+        error => Future.successful(BadRequest(JsonMessages.failure(error))),
+        meta => f(meta, req)
+      )
+    }
 
   protected def userAction(f: AuthenticatedRequest[AnyContent, User] => Future[Result]) =
     actionAsync(parse.default) { r =>

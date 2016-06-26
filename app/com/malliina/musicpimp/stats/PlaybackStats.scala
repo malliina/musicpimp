@@ -15,15 +15,14 @@ trait PlaybackStats {
   def played(track: TrackMeta, user: User): Future[Unit]
 
   /**
-    * @param user user
+    * @param request request limits
     * @return the most played tracks, ordered by playback count
     */
-  def mostPlayed(user: User): Future[Seq[PopularEntry]]
+  def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]]
 
   /**
-    * @param user  user
-    * @param count maximum number of tracks
+    * @param request request limits
     * @return the most recently played tracks
     */
-  def mostRecent(user: User, count: Int): Future[Seq[RecentEntry]]
+  def mostRecent(request: DataRequest): Future[Seq[RecentEntry]]
 }
