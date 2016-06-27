@@ -1,15 +1,15 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.models.User
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.QueryStringBindable
 import play.api.mvc.Security.AuthenticatedRequest
 
 /**
   *
   * @param username relevant user
-  * @param from start index of results, inclusive
-  * @param until end index, exclusive
+  * @param from     start index of results, inclusive
+  * @param until    end index, exclusive
   */
 case class DataRequest(username: User, from: Int, until: Int) {
   val maxItems = math.max(0, until - from)
@@ -40,5 +40,14 @@ object DataRequest {
       from <- readInt(From, 0)
       until <- readInt(Until, from + DefaultItemCount)
     } yield DataRequest(request.user, from, until)
+  }
+
+  def fromJson(user: User, body: JsValue) = {
+    def readInt(key: String, default: Int) =
+      (body \ key).validateOpt[Int].map(_ getOrElse default)
+    for {
+      from <- readInt(From, 0)
+      until <- readInt(Until, from + DefaultItemCount)
+    } yield DataRequest(user, from, until)
   }
 }

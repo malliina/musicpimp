@@ -8,7 +8,7 @@ import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, Status
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
-import com.malliina.musicpimp.cloud.CloudStrings.{Body, REQUEST_ID, Registered, SUCCESS, Unregister}
+import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, Registered, SUCCESS, Unregister}
 import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
@@ -99,7 +99,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
     } catch {
       case e: Exception =>
         log.warn(s"Failed while handling JSON: $json.", e)
-        (json \ REQUEST_ID).validate[RequestID].map(request => {
+        (json \ RequestId).validate[RequestID].map(request => {
           sendFailureResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
         })
     }
@@ -113,7 +113,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 
   protected def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
     val cmd = (json \ CMD).validate[String]
-    val request = (json \ REQUEST_ID).validate[RequestID]
+    val request = (json \ RequestId).validate[RequestID]
     val user = (json \ Username).validate[User]
     val body = json \ Body
 
@@ -123,35 +123,37 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 
     def withUser[T](transform: User => JsResult[T]): JsResult[T] = user.flatMap(transform)
 
-    def withCount[T](f: (Int, User) => T) =
-      user.map { u =>
-        val count = (json \ "count").asOpt[Int].getOrElse(100)
-        f(count, u)
-      }
+    def readMeta: JsResult[DataRequest] = for {
+      u <- user
+      b <- body.validate[JsObject]
+      meta <- DataRequest.fromJson(u, b)
+    } yield meta
 
-    val requestMessage: JsResult[PimpMessage] = request.flatMap(req => cmd.flatMap {
-      case Version => JsSuccess(GetVersion)
-      case TrackKey => body.validate[RangedTrack] orElse body.validate[Track] // the fallback is not needed I think
-      case Meta => body.validate[GetMeta]
-      case Ping => JsSuccess(PingMessage)
-      case AuthenticateKey => body.validate[Authenticate]
-      case RootFolderKey => JsSuccess(RootFolder)
-      case FolderKey => body.validate[Folder]
-      case SearchKey => body.validate[Search]
-      case PlaylistsGet => user.map(u => GetPlaylists(u))
-      case PlaylistGet => withUser(u => (body \ Id).validate[PlaylistID].map(GetPlaylist(_, u)))
-      case PlaylistSave => withUser(u => (body \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist(_, u)))
-      case PlaylistDelete => withUser(u => (body \ Id).validate[PlaylistID].map(DeletePlaylist(_, u)))
-      case AlarmsKey => JsSuccess(GetAlarms)
-      case AlarmsEdit => withBody(AlarmEdit.apply)
-      case AlarmsAdd => withBody(AlarmAdd.apply)
-      case Beam => body.validate[BeamCommand]
-      case Status => JsSuccess(GetStatus)
-      case Recent => body.validate[DataRequest].map(GetRecent.apply)
-      case Popular => body.validate[DataRequest].map(GetPopular.apply)
-      case other => JsError(s"Unknown JSON command: $other in $json")
-    })
-    request.flatMap(req => requestMessage.map(msg => (msg, req)))
+    request.flatMap { req =>
+      val message = cmd.flatMap {
+        case Version => JsSuccess(GetVersion)
+        case TrackKey => body.validate[RangedTrack] orElse body.validate[Track] // the fallback is not needed I think
+        case Meta => body.validate[GetMeta]
+        case Ping => JsSuccess(PingMessage)
+        case AuthenticateKey => body.validate[Authenticate]
+        case RootFolderKey => JsSuccess(RootFolder)
+        case FolderKey => body.validate[Folder]
+        case SearchKey => body.validate[Search]
+        case PlaylistsGet => user.map(u => GetPlaylists(u))
+        case PlaylistGet => withUser(u => (body \ Id).validate[PlaylistID].map(GetPlaylist(_, u)))
+        case PlaylistSave => withUser(u => (body \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist(_, u)))
+        case PlaylistDelete => withUser(u => (body \ Id).validate[PlaylistID].map(DeletePlaylist(_, u)))
+        case AlarmsKey => JsSuccess(GetAlarms)
+        case AlarmsEdit => withBody(AlarmEdit.apply)
+        case AlarmsAdd => withBody(AlarmAdd.apply)
+        case Beam => body.validate[BeamCommand]
+        case Status => JsSuccess(GetStatus)
+        case Recent => readMeta.map(GetRecent.apply)
+        case Popular => readMeta.map(GetPopular.apply)
+        case other => JsError(s"Unknown JSON command: $other in $json")
+      }
+      message.map(msg => (msg, req))
+    }
   }
 
   protected def parseEvent(json: JsValue): JsResult[PimpMessage] = {
@@ -288,7 +290,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
 
   def requestJson(request: RequestID, success: Boolean) = {
     Json.obj(
-      REQUEST_ID -> request,
+      RequestId -> request,
       SUCCESS -> success,
       Body -> Json.obj())
   }
@@ -361,7 +363,7 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
     Future {
       def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
-        req.addHeaders(REQUEST_ID -> request.id)
+        req.addHeaders(RequestId -> request.id)
         Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))
         trackOpt.foreach(path => {
           content(path, req)
