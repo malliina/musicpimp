@@ -1,7 +1,8 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{RequestID, PlaylistID, User}
+import com.malliina.musicpimp.models.{PlaylistID, RequestID, User}
+import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
 import play.api.libs.json.{JsValue, Json}
 
@@ -22,6 +23,10 @@ object PimpMessages {
   case object RootFolder extends PimpMessage
 
   case class Folder(id: String) extends PimpMessage
+
+  case class GetPopular(meta: DataRequest) extends PimpMessage
+
+  case class GetRecent(meta: DataRequest) extends PimpMessage
 
   case class Track(id: String) extends PimpMessage
 
@@ -64,4 +69,6 @@ object PimpMessages {
   implicit val playlistGet = Json.format[GetPlaylist]
   implicit val playlistSave = Json.format[SavePlaylist]
   implicit val playlistDelete = Json.format[DeletePlaylist]
+  implicit val popular = Json.format[GetPopular]
+  implicit val recent = Json.format[GetRecent]
 }

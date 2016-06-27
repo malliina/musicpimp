@@ -142,4 +142,7 @@ trait JsonStrings {
   val Body = "body"
 
   val Url = "url"
+
+  val Recent = "recent"
+  val Popular = "popular"
 }

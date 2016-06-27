@@ -56,7 +56,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val statsPlayer = new StatsPlayer(stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
-  lazy val deps = Deps(ps, db, userManager, handler, lib)
+  lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
   lazy val c = new Clouds(deps)
 
   // Controllers

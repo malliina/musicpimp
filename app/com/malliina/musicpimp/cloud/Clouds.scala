@@ -7,15 +7,17 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.json.SimpleCommand
-import com.malliina.util.{Log, Utils}
+import com.malliina.util.Utils
+import play.api.Logger
 import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subscription}
-
+import com.malliina.musicpimp.cloud.Clouds.log
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
 
 object Clouds {
+  private val log = Logger(getClass)
   val idFile = FileUtil.localPath("cloud.txt")
 
   def isEnabled = Files exists idFile
@@ -35,11 +37,11 @@ object Clouds {
   }
 }
 
-class Clouds(deps: Deps) extends Log {
+class Clouds(deps: Deps) {
   var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(60.seconds)
   var poller: Option[Subscription] = None
-  val MAX_FAILURES = 720
+  val MaxFailures = 720
   var successiveFailures = 0
 
   def init(): Unit = {
@@ -63,8 +65,8 @@ class Clouds(deps: Deps) extends Log {
       connect(Clouds.loadID()).recoverAll(t => {
         log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
         successiveFailures += 1
-        if (successiveFailures == MAX_FAILURES) {
-          log info s"Connection attempts to the cloud have failed $MAX_FAILURES times in a row, giving up"
+        if (successiveFailures == MaxFailures) {
+          log info s"Connection attempts to the cloud have failed $MaxFailures times in a row, giving up"
           successiveFailures = 0
           disconnect()
         }
