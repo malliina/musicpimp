@@ -15,26 +15,26 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 
   override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
-    runQuery(playlistQuery(playlistsTable.filter(_.user === user))).map(data => {
+    runQuery(playlistQuery(playlistsTable.filter(_.user === user))) map { data =>
       data.map((PlaylistEntry.apply _).tupled)
         .groupBy(_.id)
         .flatMap(kv => toPlaylist(kv._2))
         .toList
-    })
+    }
   }
 
   override protected def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
     val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
     val result = runQuery(q.sortBy(_._4))
-    result.map(data => {
+    result map { data =>
       val es = data.map((PlaylistEntry.apply _).tupled)
       toPlaylist(es)
-    })
+    }
   }
 
   override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
     val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
-    owns.flatMap(isOwner => {
+    owns flatMap { isOwner =>
       if (isOwner) {
         def insertionQuery = (playlistsTable returning playlistsTable.map(_.id))
           .into((item, id) => item.copy(id = Option(id))) += PlaylistRow(None, playlist.name, user)
@@ -50,7 +50,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
       } else {
         Future.failed(new UnauthorizedException(s"User $user is unauthorized"))
       }
-    })
+    }
   }
 
   override def delete(id: PlaylistID, user: User): Future[Unit] =
@@ -62,7 +62,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   protected def ownsPlaylist(id: PlaylistID, user: User): Future[Boolean] =
     runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id)).map(_.nonEmpty)
 
-  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) = {
+  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) =
     for {
       pls <- lists
       pts <- playlistTracksTable if pts.playlist === pls.id
@@ -70,7 +70,6 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
     } yield {
       (pls.id, pls.name, ts, pts.idx)
     }
-  }
 
   private def toPlaylist(es: Seq[PlaylistEntry]): Option[SavedPlaylist] =
     es.headOption.map(e => SavedPlaylist(PlaylistID(e.id), e.name, es.sortBy(_.index).map(_.track)))
