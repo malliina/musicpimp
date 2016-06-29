@@ -8,18 +8,16 @@ import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, Status
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
-import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, Registered, SUCCESS, Unregister}
+import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SUCCESS, Unregister}
 import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.{Folder => _, _}
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
-import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats}
-import com.malliina.play.json.JsonStrings.CMD
+import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.json.SimpleCommand
 import com.malliina.rx.Observables
 import com.malliina.security.SSLUtils
@@ -155,9 +153,9 @@ class CloudSocket(uri: String, username: String, password: String, deps: Deps)
       case PingMessage =>
         sendJsonResponse(JsonMessages.ping, request)
       case GetPopular(meta) =>
-        databaseResponse(stats.mostPlayed(meta))
+        databaseResponse(stats.mostPlayed(meta).map(PopularList.apply))
       case GetRecent(meta) =>
-        databaseResponse(stats.mostRecent(meta))
+        databaseResponse(stats.mostRecent(meta).map(RecentList.apply))
       case GetPlaylists(user) =>
         databaseResponse(playlists.playlistsMeta(user))
       case GetPlaylist(id, user) =>
