@@ -64,7 +64,7 @@ class Website(sockets: WebSocketController,
 
   protected def userAction(f: AuthenticatedRequest[AnyContent, User] => Future[Result]) =
     actionAsync(parse.default) { r =>
-      f(new AuthenticatedRequest(User(r.user), r))
+      f(new AuthenticatedRequest(r.user, r))
     }
 
   def errorMsg(t: Throwable): String = t match {

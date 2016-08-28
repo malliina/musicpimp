@@ -5,6 +5,7 @@ import com.malliina.musicpimp.models.User
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountController
+import com.malliina.play.models.Username
 import controllers.Accounts.log
 import play.api.Logger
 import play.api.data.Form
@@ -24,10 +25,13 @@ object Accounts {
   val IntendedUri = "intended_uri"
 }
 
-class Accounts(auth: PimpAuthenticator, mat: Materializer)
-  extends HtmlController(auth, mat)
-    with AccountController {
+class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountController)
+  extends HtmlController(auth, mat) {
 
+  val userFormKey = accs.userFormKey
+  val rememberMeKey = accs.rememberMeKey
+  val passFormKey = accs.passFormKey
+  val feedback = accs.feedback
   val userManager = auth.userManager
   val rememberMe = auth.rememberMe
   val invalidCredentialsMessage = "Invalid credentials."
@@ -44,14 +48,14 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
 
   val addUserForm = Form(tuple(
     userFormKey -> nonEmptyText,
-    newPassKey -> nonEmptyText,
-    newPassAgainKey -> nonEmptyText
+    accs.newPassKey -> nonEmptyText,
+    accs.newPassAgainKey -> nonEmptyText
   ).verifying("The password was incorrectly repeated.", _ match {
     case (_, newPass, newPassAgain) => newPass == newPassAgain
   }))
 
   def account = pimpAction { request =>
-    Ok(html.account(request.user, changePasswordForm(request))(request.flash))
+    Ok(html.account(request.user, accs.changePasswordForm(request))(request.flash))
   }
 
   def users = pimpActionAsync { request =>
@@ -60,7 +64,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
 
   def delete(user: String) = pimpActionAsync { request =>
     val redir = Redirect(routes.Accounts.users())
-    if (user != request.user) {
+    if (User(user) != request.user) {
       (userManager deleteUser User(user)).map(_ => redir)
     } else {
       Future.successful(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
@@ -74,7 +78,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
     }
   }
 
-  def logout = AuthAction { request =>
+  def logout = authAction { request =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
     Redirect(routes.Accounts.login())
       .withNewSession
@@ -93,10 +97,10 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
       credentials => {
         val (user, pass, _) = credentials
         val addCall = userManager.addUser(User(user), pass)
-        addCall.map(addError => {
+        addCall.map { addError =>
           val (isSuccess, feedback) = addError.fold((true, s"Created user $user."))(e => (false, s"User ${e.user} already exists."))
           Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
-        })
+        }
       }
     )
   }
@@ -111,15 +115,15 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
       },
       credentials => {
         val (user, pass, shouldRemember) = credentials
-        validateCredentials(user, pass) flatMap { isValid =>
+        validateCredentials(User(user), pass) flatMap { isValid =>
           if (isValid) {
             log info s"Authentication succeeded for user: $user from: $remoteAddress"
-            val intendedUrl = request.session.get(INTENDED_URI).getOrElse(defaultLoginSuccessPage.url)
+            val intendedUrl = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
             val result = Redirect(intendedUrl).withSession(Security.username -> user)
             if (shouldRemember) {
               log debug s"Remembering auth..."
               // create token, retrieve cookie
-              val cookie = rememberMe persistNewCookie user
+              val cookie = rememberMe persistNewCookie Username(user)
               cookie.map(c => result.withCookies(c))
             } else {
               Future.successful(result)
@@ -138,28 +142,27 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer)
 
   def formChangePassword = pimpActionAsync { request =>
     val user = request.user
-    changePasswordForm(request).bindFromRequest()(request).fold(
+    accs.changePasswordForm(request).bindFromRequest()(request).fold(
       errors => {
         log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
         Future.successful(BadRequest(html.account(user, errors)(request.flash)))
       },
       success => {
         val (old, newPass, _) = success
-        validateCredentials(user, old) flatMap { isValid =>
+        val u = User(user.name)
+        validateCredentials(u, old) flatMap { isValid =>
           if (isValid) {
-            userManager.updatePassword(User(user), newPass) map { _ =>
+            userManager.updatePassword(u, newPass) map { _ =>
               log info s"Password changed for user: $user from: ${request.remoteAddress}"
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
             }
           } else {
-            Future.successful(BadRequest(html.account(user, changePasswordForm(request))(request.flash)))
+            Future.successful(BadRequest(html.account(user, accs.changePasswordForm(request))(request.flash)))
           }
         }
       }
     )
   }
 
-  def msg(message: String) = FEEDBACK -> message
-
-  override protected def logUnauthorized(implicit request: RequestHeader): Unit = super.logUnauthorized
+  def msg(message: String) = feedback -> message
 }

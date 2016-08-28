@@ -1,14 +1,11 @@
 package com.malliina.musicpimp.json
 
 import com.malliina.audio.PlayerStates
+import com.malliina.json.JsonFormats
 
-/**
- *
- * @author mle
- */
 trait PimpJson {
 
-  implicit object playStateFormat extends com.malliina.play.json.JsonFormats.SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
+  implicit object playStateFormat extends JsonFormats.SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
 
 }
 

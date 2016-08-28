@@ -27,7 +27,7 @@ trait FileResults {
       CONTENT_LENGTH -> s"$contentLength",
       CONTENT_TYPE -> MimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)))
     implicit val ec = play.api.libs.concurrent.Execution.defaultContext
-    val source = FileIO.fromFile(path.toFile)
+    val source = FileIO.fromPath(path)
       .drop(range.start.toLong)
       .take(contentLength)
     val streamedBody = HttpEntity.Streamed(source, Option(contentLength), Option(contentType))

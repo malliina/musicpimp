@@ -6,7 +6,8 @@ import controllers.PimpContentController.log
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.libs.json.{JsValue, Json, Writes}
-import play.api.mvc.{Controller, RequestHeader, Result, Results}
+import play.api.mvc.Results.{Accepted, NotAcceptable, Ok, Status}
+import play.api.mvc.{RequestHeader, Result, Results}
 import play.twirl.api.Html
 
 import scala.concurrent.Future
@@ -14,7 +15,7 @@ import scala.concurrent.Future
 /** Methods that choose the correct response to provide to clients
   * based on what they accept (HTML/JSON/which JSON version).
   */
-trait PimpContentController extends Controller {
+trait PimpContentController {
 
   import com.malliina.musicpimp.json.JsonFormatVersions._
 
@@ -46,7 +47,7 @@ trait PimpContentController extends Controller {
     * @return the equivalent of "Unit" in JSON and HTML
     */
   def AckResponse(request: RequestHeader) =
-    pimpResult(request)(html = Accepted, json = Accepted)
+  pimpResult(request)(html = Accepted, json = Accepted)
 
   def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpContentController.pimpResult(request)(html, json)
@@ -110,7 +111,7 @@ object PimpRequest extends Log {
     * is complete, we should default to the latest API version.
     */
   def apiVersion(header: RequestHeader) =
-    PimpRequest.requestedResponseFormat(header)
-      .filter(_ != MimeTypes.HTML)
-      .getOrElse(JsonFormatVersions.JSONv17)
+  PimpRequest.requestedResponseFormat(header)
+    .filter(_ != MimeTypes.HTML)
+    .getOrElse(JsonFormatVersions.JSONv17)
 }

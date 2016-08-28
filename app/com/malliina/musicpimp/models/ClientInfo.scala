@@ -2,22 +2,22 @@ package com.malliina.musicpimp.models
 
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.musicpimp.json.JsonFormatVersions
+import com.malliina.musicpimp.models.ClientInfo.log
 import com.malliina.play.ws.SocketClient
-import com.malliina.util.Log
 import controllers.PimpRequest
+import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.mvc.RequestHeader
-
 /**
   * @param channel channel used to push messages to the client
   * @param request the request headers from the HTTP request that initiated the WebSocket connection
   * @param user    the authenticated username
   */
-case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: String)
-  extends SocketClient[T] with Log {
+case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: User)
+  extends SocketClient[T] {
   val protocol = if (request.secure) "wss" else "ws"
   val remoteAddress = request.remoteAddress
-  val describe = s"$protocol://$user@$remoteAddress"
+  val describe = s"$protocol://${user.name}@$remoteAddress"
 
   /** The desired format for clients compatible with API version 17 is
     * incorrectly determined to be HTML, because those clients do not
@@ -40,4 +40,8 @@ case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: 
     .getOrElse(JsonFormatVersions.JSONv17)
   log debug s"Client connected with API version: $apiVersion"
   override val toString = describe
+}
+
+object ClientInfo {
+  private val log = Logger(getClass)
 }

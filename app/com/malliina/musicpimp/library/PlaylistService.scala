@@ -5,9 +5,6 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
-/**
-  * @author mle
-  */
 trait PlaylistService {
   /**
     * @return the saved playlists of user

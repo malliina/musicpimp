@@ -37,9 +37,9 @@ object PimpBuild extends Build {
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.1.0",
+    version := "3.1.2",
     organization := "org.musicpimp",
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.11.8",
     retrieveManaged := false,
     fork in Test := true,
     resolvers ++= Seq(
@@ -48,13 +48,8 @@ object PimpBuild extends Build {
       "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
       "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
     ),
-    javacOptions ++= Seq(
-      "-source", "1.8",
-      "-target", "1.8"
-    ),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
-      "-target:jvm-1.8",
       "-deprecation",
       "-encoding", "UTF-8",
       "-unchecked",
@@ -62,12 +57,9 @@ object PimpBuild extends Build {
       "-language:existentials",
       "-language:higherKinds",
       "-language:implicitConversions",
-      //      "-Xfatal-warnings",
-      //      "-Xlint",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen"),
-    updateOptions := updateOptions.value.withCachedResolution(true)
+      "-Ywarn-numeric-widen")
   )
 
   lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
@@ -156,7 +148,7 @@ object PimpBuild extends Build {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-base" % "2.8.0",
+        malliinaGroup %% "play-base" % "2.9.1",
         malliinaGroup %% "util-actor" % "2.4.1",
         malliinaGroup %% "util-rmi" % "2.4.1",
         malliinaGroup %% "util-audio" % "2.0.0",

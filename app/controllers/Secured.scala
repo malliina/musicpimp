@@ -6,12 +6,14 @@ import controllers.Secured.log
 import play.api.Logger
 import play.api.mvc._
 
-class Secured(auth: Authenticator, mat: Materializer) extends SecureBase(auth, mat) {
-  protected def logUnauthorized(implicit request: RequestHeader): Unit = {
+class Secured(auth: Authenticator, mat: Materializer)
+  extends SecureBase(auth, mat) {
+
+  protected def logUnauthorized(request: RequestHeader): Unit = {
     log warn "Unauthorized request: " + request.path + " from: " + request.remoteAddress
   }
 
-  protected override def onUnauthorized(implicit request: RequestHeader): Result = {
+  protected override def onUnauthorized(request: RequestHeader): Result = {
     logUnauthorized(request)
     log debug s"Intended: ${request.uri}"
     pimpResult(request)(

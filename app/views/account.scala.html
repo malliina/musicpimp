@@ -1,4 +1,6 @@
-@(username: String, helloForm: Form[(String, String, String)])(implicit flash: Flash)
+@import com.malliina.musicpimp.models.User
+
+@(username: User, helloForm: Form[(String, String, String)])(implicit flash: Flash)
 
 @manage("account") {
     @bs.headerRow("Account", "col-md-4")

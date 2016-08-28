@@ -7,7 +7,7 @@ import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PimpUrl, PlaylistID, PlaylistsMeta, User}
 import com.malliina.play.Authenticator
-import com.malliina.play.http.AuthRequest
+import com.malliina.play.http.CookiedRequest
 import controllers.Playlists.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -35,19 +35,19 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     Playlists.Tracks -> seq(text)
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
-  def playlists = recoveredAsync((req, user) => {
+  def playlists = recoveredAsync { req =>
     implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
-    service.playlistsMeta(user).map(playlists => {
+    service.playlistsMeta(req.user).map(playlists => {
       respond(req)(
         html = html.playlists(playlists.playlists),
         json = Json.toJson(playlists)
       )
     })
-  })
+  }
 
-  def playlist(id: PlaylistID) = recoveredAsync((req, user) => {
+  def playlist(id: PlaylistID) = recoveredAsync { req =>
     implicit val f = TrackMeta.format(req)
-    service.playlistMeta(id, user).map { result =>
+    service.playlistMeta(id, req.user).map { result =>
       result.map { playlist =>
         respond(req)(
           html = html.playlist(playlist.playlist, playlistForm),
@@ -55,39 +55,39 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
         )
       }.getOrElse(NotFound(s"Playlist not found: $id"))
     }
-  })
+  }
 
-  def savePlaylist = parsedRecoveredAsync(parse.json)((req, user) => {
+  def savePlaylist = parsedRecoveredAsync(parse.json) { req =>
     val json = req.body
     (json \ PlaylistKey).validate[PlaylistSubmission]
-      .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, user).map(meta => Accepted(Json.toJson(meta))))
+      .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, req.user).map(meta => Accepted(Json.toJson(meta))))
       .getOrElse(Future.successful(BadRequest(s"Invalid JSON: $json")))
-  })
+  }
 
-  def deletePlaylist(id: PlaylistID) = recoveredAsync((req, user) => {
-    service.delete(id, user).map(_ => Accepted)
-  })
+  def deletePlaylist(id: PlaylistID) = recoveredAsync { req =>
+    service.delete(id, req.user).map(_ => Accepted)
+  }
 
-  def edit = parsedRecoveredAsync(parse.json)((req, user) => {
+  def edit = parsedRecoveredAsync(parse.json) { req =>
     Future.successful(Ok)
-  })
+  }
 
-  def handleSubmission = recoveredAsync((req, user) => {
+  def handleSubmission = recoveredAsync { req =>
     playlistForm.bindFromRequest()(req).fold(
       errors => {
-        service.playlistsMeta(user).map(pls => BadRequest(html.playlists(pls.playlists)))
+        service.playlistsMeta(req.user).map(pls => BadRequest(html.playlists(pls.playlists)))
       },
       submission => {
         Future.successful(Redirect(routes.Playlists.playlists()))
       }
     )
-  })
+  }
 
-  protected def recoveredAsync(f: (AuthRequest[AnyContent], User) => Future[Result]) =
+  protected def recoveredAsync(f: CookiedRequest[AnyContent, User] => Future[Result]) =
     parsedRecoveredAsync(parse.anyContent)(f)
 
-  protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: (AuthRequest[T], User) => Future[Result]) =
-    pimpParsedActionAsync(parser)(auth => f(auth, User(auth.user)).recover(errorHandler))
+  protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: CookiedRequest[T, User] => Future[Result]) =
+    pimpParsedActionAsync(parser)(auth => f(auth).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {
     case ue: UnauthorizedException =>

@@ -1,7 +1,7 @@
 package com.malliina.play
 
 import com.malliina.musicpimp.models.User
-import com.malliina.play.http.AuthResult
+import com.malliina.play.http.AuthedRequest
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
@@ -14,5 +14,5 @@ trait Authenticator {
     */
   def authenticate(user: User, pass: String): Future[Boolean]
 
-  def authenticateFromCookie(req: RequestHeader): Future[Option[AuthResult]]
+  def authenticateFromCookie(req: RequestHeader): Future[Option[AuthedRequest]]
 }

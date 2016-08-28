@@ -18,7 +18,7 @@ import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo, User}
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.BaseController
-import com.malliina.play.http.{AuthRequest, OneFileUploadRequest}
+import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.{Util, Utils}
@@ -43,15 +43,15 @@ class Rest(webPlayer: WebPlayer,
 
   def ping = Action(NoCache(Ok))
 
-  def pingAuth = pimpAction(req => NoCacheOk(JsonMessages.version))
+  def pingAuth = pimpAction(_ => NoCacheOk(JsonMessages.version))
 
   /** Handles server playback commands POSTed as JSON.
     */
-  def playback = JsonAckAction(handler.onJson)
+  def playback = jsonAckAction(handler.onJson)
 
   /** Handles web browser player playback commands POSTed as JSON.
     */
-  def webPlayback = JsonAckAction(webPlayerHandler.onJson)
+  def webPlayback = jsonAckAction(webPlayerHandler.onJson)
 
   /** Alias for `playback`. Should be deprecated.
     */
@@ -83,7 +83,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: See and fix https://github.com/playframework/playframework/issues/1842
     */
-  def streamedPlayback = Authenticated { user =>
+  def streamedPlayback = authenticated { req =>
     EssentialAction { requestHeader =>
       val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
         .map(Json.parse(_).validate[BaseTrackMeta])
@@ -94,7 +94,7 @@ class Rest(webPlayer: WebPlayer,
       val authAction = metaOrError.fold(
         error => pimpAction(BadRequest(error)),
         meta => {
-          statsPlayer.updateUser(User(user.user))
+          statsPlayer.updateUser(User(req.user.name))
           localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
         }
       )
@@ -106,7 +106,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
-  def stream = pimpParsedAction(parse.json) { implicit req =>
+  def stream = pimpParsedAction(parse.json) { req =>
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
@@ -145,10 +145,13 @@ class Rest(webPlayer: WebPlayer,
 
   /** The status of the web player of the user making the request.
     */
-  def webStatus = pimpAction(req => Ok(webStatusJson(req.user, RemoteInfo(req.user, PimpUrl.hostOnly(req)))))
+  def webStatus = pimpAction { req =>
+    val user = req.user
+    Ok(webStatusJson(user, RemoteInfo(user, PimpUrl.hostOnly(req))))
+  }
 
   private def localPlaybackAction(id: String): Option[EssentialAction] =
-    Library.findMetaWithTempFallback(id).map(track => {
+    Library.findMetaWithTempFallback(id) map { track =>
       /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
         *
         * The request has already been authenticated at this point because this method is called from within an
@@ -161,7 +164,7 @@ class Rest(webPlayer: WebPlayer,
       MusicPlayer.setPlaylistAndPlay(track)
       log info s"Playing local file of: ${track.id}"
       pimpAction(Ok)
-    })
+    }
 
   private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
     val relative = Library.relativePath(meta.id)
@@ -217,15 +220,15 @@ class Rest(webPlayer: WebPlayer,
     (pipeIn, iteratee)
   }
 
-  private def webStatusJson(user: String, request: RemoteInfo) = {
+  private def webStatusJson(user: User, request: RemoteInfo) = {
     val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(request, webPlayer))
     Json.toJson(player.status)
   }
 
-  private def playlistFor(user: String): Seq[TrackMeta] =
+  private def playlistFor(user: User): Seq[TrackMeta] =
     webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
-  private def AckPimpAction[T](parser: BodyParser[T])(bodyHandler: AuthRequest[T] => Unit): EssentialAction =
+  private def ackPimpAction[T](parser: BodyParser[T])(bodyHandler: CookiedRequest[T, User] => Unit): EssentialAction =
     pimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
@@ -241,17 +244,17 @@ class Rest(webPlayer: WebPlayer,
       }
     }
 
-  private def JsonAckAction(jsonHandler: AuthRequest[JsValue] => Unit): EssentialAction =
-    AckPimpAction(parse.json)(jsonHandler)
+  private def jsonAckAction(jsonHandler: CookiedRequest[JsValue, User] => Unit): EssentialAction =
+    ackPimpAction(parse.json)(jsonHandler)
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
-    MetaUploadAction { req =>
+    metaUploadAction { req =>
       songAction(req.track)
       statsPlayer.updateUser(User(req.user))
       AckResponse(req)
     }
 
-  private def MetaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
+  private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)

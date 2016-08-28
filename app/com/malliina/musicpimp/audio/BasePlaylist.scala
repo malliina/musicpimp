@@ -1,11 +1,14 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.audio.IPlaylist
-import com.malliina.util.{Lists, Log}
+import com.malliina.musicpimp.audio.BasePlaylist.log
+import com.malliina.util.Lists
+import play.api.Logger
 
 import scala.concurrent.stm._
 
 object BasePlaylist {
+  private val log = Logger(getClass)
   val NoPosition = -1
 }
 
@@ -14,8 +17,7 @@ object BasePlaylist {
   * @tparam T type of playlist item
   */
 trait BasePlaylist[T]
-  extends IPlaylist[T]
-  with Log {
+  extends IPlaylist[T] {
 
   type PlaylistIndex = Int
   val NO_POSITION = BasePlaylist.NoPosition

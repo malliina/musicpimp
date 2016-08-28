@@ -2,8 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
-import com.malliina.musicpimp.models.{RemoteInfo, User}
-import com.malliina.play.http.RequestInfo
+import com.malliina.musicpimp.models.RemoteInfo
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
@@ -18,11 +17,11 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
   val playlist = MusicPlayer.playlist
 
   override def handleMessage(msg: JsValue, src: RemoteInfo): Unit = {
-    statsPlayer.updateUser(User(src.user))
+    statsPlayer.updateUser(src.user)
     super.handleMessage(msg, src)
   }
 
-  override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
+  override protected def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
     message match {
       case ResumeMsg =>
         player.play()
@@ -71,7 +70,7 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
   }
 
   def resolveTracksOrEmpty(folders: Seq[String], tracks: Seq[String]): Future[Seq[LocalTrack]] =
-    resolveTracks(folders, tracks).recover {
+    resolveTracks(folders, tracks) recover {
       case t: Throwable =>
         log error s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references"
         Nil

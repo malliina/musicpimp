@@ -4,6 +4,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.JsonHandlerBase
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.models.User
 import com.malliina.play.Authenticator
 import com.malliina.play.http.RequestInfo
 import controllers.PlayerSockets.log
@@ -30,7 +31,7 @@ abstract class PlayerSockets(auth: Authenticator, mat: Materializer)
   }
 
   def handleMessage(message: Message, client: Client): Unit =
-    messageHandler.onJson(message, RequestInfo(client.user, client.request))
+    messageHandler.onJson(message, RequestInfo[User](client.user, client.request))
 }
 
 object PlayerSockets {

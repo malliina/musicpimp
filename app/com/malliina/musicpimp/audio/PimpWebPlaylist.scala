@@ -2,16 +2,17 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.models.User
 import controllers.WebPlayer
 import play.api.libs.json.Json._
 import play.api.libs.json.Writes
-import play.api.mvc.RequestHeader
 
 import scala.concurrent.stm.Ref
 
-class PimpWebPlaylist(val user: String, val webPlayer: WebPlayer)(implicit w: Writes[TrackMeta])
+class PimpWebPlaylist(val user: User, val webPlayer: WebPlayer)(implicit w: Writes[TrackMeta])
   extends BasePlaylist[TrackMeta]
     with JsonSender {
+
   val songs = Ref[Seq[TrackMeta]](Nil)
   val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)
 
@@ -30,7 +31,7 @@ class PimpWebPlaylist(val user: String, val webPlayer: WebPlayer)(implicit w: Wr
 
   override def set(song: TrackMeta) {
     super.set(song)
-    send(obj(Cmd -> toJson(Play), TrackKey -> toJson(song)))
+    send(obj(Cmd -> toJson(Play), TrackKey -> toJson(song), Username -> user.name))
   }
 
   override protected def onPlaylistIndexChanged(idx: Int) =

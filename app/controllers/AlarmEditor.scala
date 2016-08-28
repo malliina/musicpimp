@@ -2,10 +2,11 @@ package controllers
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.play.Authenticator
-import com.malliina.play.http.AuthRequest
+import com.malliina.play.http.CookiedRequest
 import controllers.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -69,7 +70,7 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
       Ok(html.alarmEditor(form, Some("Saved."))(messages))
     })
 
-  private def formSubmission[T, C: Writeable](form: Form[T])(err: Form[T] => C, ok: (AuthRequest[AnyContent], Form[T], T) => Result) =
+  private def formSubmission[T, C: Writeable](form: Form[T])(err: Form[T] => C, ok: (CookiedRequest[AnyContent, User], Form[T], T) => Result) =
     pimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
 
   private def handle[T, C: Writeable](form: Form[T], request: Request[_])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result) = {

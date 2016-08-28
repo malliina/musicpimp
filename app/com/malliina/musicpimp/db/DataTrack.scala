@@ -1,9 +1,9 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.PimpPath
-import com.malliina.play.json.JsonFormats
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json
 import slick.jdbc.GetResult

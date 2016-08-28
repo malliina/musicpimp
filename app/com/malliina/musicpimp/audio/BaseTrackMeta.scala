@@ -2,9 +2,9 @@ package com.malliina.musicpimp.audio
 
 import java.io.InputStream
 
+import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.PimpPath
-import com.malliina.play.json.JsonFormats
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json
 

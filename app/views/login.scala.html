@@ -4,7 +4,7 @@
     @util.css2("login.css")
     @util.div("container") {
         @bs.rowColumn("col-md-4 form-signin") {
-            @flash.get(accounts.FEEDBACK).map { message =>
+            @flash.get(accounts.feedback).map { message =>
                 <div class="lead alert alert-success">@message</div>
             }
         }

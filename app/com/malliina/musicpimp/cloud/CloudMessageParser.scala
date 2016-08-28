@@ -7,14 +7,14 @@ import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID, User}
 import com.malliina.musicpimp.stats.DataRequest
-import com.malliina.play.json.JsonStrings.CMD
+import com.malliina.play.json.JsonStrings.Cmd
 import play.api.libs.json._
 
 object CloudMessageParser extends CloudMessageParser
 
 trait CloudMessageParser {
   def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
-    val cmd = (json \ CMD).validate[String]
+    val cmd = (json \ Cmd).validate[String]
     val request = (json \ RequestId).validate[RequestID]
     val user = (json \ Username).validate[User]
     val body = json \ Body
@@ -59,19 +59,21 @@ trait CloudMessageParser {
   }
 
   def parseEvent(json: JsValue): JsResult[PimpMessage] = {
-    val event = (json \ CMD).validate[String].orElse((json \ Event).validate[String])
+    val event = (json \ Cmd).validate[String].orElse((json \ Event).validate[String])
     val body = json \ Body
     event flatMap {
       case Registered =>
         body.validate[RegisteredMessage]
       case Player =>
-        body.toOption
-          .map(bodyJson => JsSuccess(PlaybackMessage(bodyJson)))
-          .getOrElse(JsError(s"Playback message does not contain JSON in key $Body."))
+        for {
+          b <- body.validate[JsValue]
+          user <- (json \ Username).validate[User]
+        } yield PlaybackMessage(b, user)
       case Ping =>
         JsSuccess(PingMessage)
       case other =>
         JsError(s"Unknown JSON event: $other in $json")
     }
   }
+
 }

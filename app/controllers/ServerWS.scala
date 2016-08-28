@@ -28,9 +28,9 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
   var previousPos = -1L
 
   def customBroadcast(message: ServerMessage) = {
-    Future.traverse(clients) { client =>
+    Future.traverse(clientsSync) { client =>
       val writer = ServerMessage.writer(PimpUrl.hostOnly(client.request))
-      client.channel.offer(writer.writes(message))
+      client.send(writer.writes(message))
     }
     val cloudHost = clouds.client.cloudHost
     val cloudJson = ServerMessage.writer(cloudHost).writes(message)
@@ -55,17 +55,17 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
     }
   }
 
-  override def onConnect(client: Client): Unit = {
+  override def onConnectSync(client: Client): Unit = {
     super.onConnect(client)
-    if (clients.size == 1) {
+    if (clientsSync.size == 1) {
       // first connection, start polling
       poller = Some(ticks.subscribe(_ => onTick()))
     }
   }
 
-  override def onDisconnect(client: Client): Unit = {
+  override def onDisconnectSync(client: Client): Unit = {
     super.onDisconnect(client)
-    if (clients.isEmpty) {
+    if (clientsSync.isEmpty) {
       // stop polling
       poller.foreach(_.unsubscribe())
       poller = None
@@ -77,7 +77,7 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
   def openSocketCall: Call = routes.ServerWS.openSocket()
 
   override def broadcast(message: Message): Future[Seq[QueueOfferResult]] = {
-    log debug s"$message to ${clients.map(_.describe).mkString(", ")}"
+    log debug s"$message to ${clientsSync.map(_.describe).mkString(", ")}"
     // sends the message to directly connected clients
     val ret = super.broadcast(message)
     // sends the message to the cloud, if this server is connected

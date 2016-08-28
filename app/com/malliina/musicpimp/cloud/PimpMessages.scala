@@ -10,6 +10,10 @@ object PimpMessages {
 
   trait PimpMessage
 
+  trait UserMessage extends PimpMessage {
+    def username: User
+  }
+
   trait RequestMessage extends PimpMessage {
     def request: RequestID
   }
@@ -42,33 +46,33 @@ object PimpMessages {
 
   case class AlarmAdd(payload: JsValue) extends PimpMessage
 
-  case class PlaybackMessage(payload: JsValue) extends PimpMessage
+  case class PlaybackMessage(payload: JsValue, username: User) extends UserMessage
 
-  case class Authenticate(username: User, password: String) extends PimpMessage
+  case class Authenticate(username: User, password: String) extends UserMessage
 
   case object GetVersion extends PimpMessage
 
   case object GetStatus extends PimpMessage
 
-  case class GetPlaylists(username: User) extends PimpMessage
+  case class GetPlaylists(username: User) extends UserMessage
 
-  case class GetPlaylist(id: PlaylistID, username: User) extends PimpMessage
+  case class GetPlaylist(id: PlaylistID, username: User) extends UserMessage
 
-  case class SavePlaylist(playlist: PlaylistSubmission, username: User) extends PimpMessage
+  case class SavePlaylist(playlist: PlaylistSubmission, username: User) extends UserMessage
 
-  case class DeletePlaylist(id: PlaylistID, username: User) extends PimpMessage
+  case class DeletePlaylist(id: PlaylistID, username: User) extends UserMessage
 
   implicit val searchFormat = Json.format[Search]
   implicit val folderFormat = Json.format[Folder]
   implicit val trackFormat = Json.format[Track]
   implicit val authFormat = Json.format[Authenticate]
-  implicit val meta = Json.format[GetMeta]
+  implicit val metaFormat = Json.format[GetMeta]
   implicit val registeredFormat = Json.format[RegisteredMessage]
   implicit val rangedFormat = Json.format[RangedTrack]
   implicit val playlistsGet = Json.format[GetPlaylists]
   implicit val playlistGet = Json.format[GetPlaylist]
   implicit val playlistSave = Json.format[SavePlaylist]
   implicit val playlistDelete = Json.format[DeletePlaylist]
-  implicit val popular = Json.format[GetPopular]
-  implicit val recent = Json.format[GetRecent]
+  implicit val popularFormat = Json.format[GetPopular]
+  implicit val recentFormat = Json.format[GetRecent]
 }

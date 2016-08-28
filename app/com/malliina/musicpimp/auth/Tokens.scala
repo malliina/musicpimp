@@ -5,6 +5,7 @@ import java.nio.file.Path
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.auth.{Token, TokenStore}
 import com.malliina.play.io.FileBackedList
+import com.malliina.play.models.Username
 import com.malliina.util.Utils
 
 import scala.concurrent.Future
@@ -21,13 +22,13 @@ class TokensStore(tokensFile: Path) extends TokenStore {
 
   override def remove(token: Token): Future[Unit] = fut(tokens remove token)
 
-  override def removeAll(user: String): Future[Unit] = removeWhere(_.user == user)
+  override def removeAll(user: Username): Future[Unit] = removeWhere(_.user == user)
 
-  override def remove(user: String, series: Long): Future[Unit] = removeWhere(t => t.user == user && t.series == series)
+  override def remove(user: Username, series: Long): Future[Unit] = removeWhere(t => t.user == user && t.series == series)
 
   def removeWhere(p: Token => Boolean): Future[Unit] = fut(tokens.get() filter p foreach remove)
 
-  override def findToken(user: String, series: Long): Future[Option[Token]] =
+  override def findToken(user: Username, series: Long): Future[Option[Token]] =
     fut(tokens.get().find(t => t.user == user && t.series == series))
 
   def fut[T](t: T) = Future.successful(t)
