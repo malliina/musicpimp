@@ -152,7 +152,7 @@ object PimpBuild extends Build {
         malliinaGroup %% "util-actor" % "2.4.1",
         malliinaGroup %% "util-rmi" % "2.4.1",
         malliinaGroup %% "util-audio" % "2.0.0",
-        malliinaGroup %% "mobile-push" % "1.5.0",
+        malliinaGroup %% "mobile-push" % "1.6.1",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -160,11 +160,11 @@ object PimpBuild extends Build {
         PlayImport.specs2 % Test,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.3.176",
+        "com.h2database" % "h2" % "1.4.192",
         "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
         "com.neovisionaries" % "nv-websocket-client" % "1.25",
-        "org.scalatest" %% "scalatest" % "2.2.5" % Test
+        "org.scalatest" %% "scalatest" % "3.0.0" % Test
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(

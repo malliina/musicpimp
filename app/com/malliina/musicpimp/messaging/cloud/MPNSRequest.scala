@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.messaging.cloud
 
+import com.malliina.push.WindowsMessage
 import com.malliina.push.mpns._
 import play.api.libs.json.Json
 
@@ -9,7 +10,7 @@ case class MPNSRequest(tokens: Seq[MPNSToken],
                        flip: Option[FlipData],
                        iconic: Option[IconicData],
                        cycle: Option[CycleTile]) {
-  val message: Option[MPNSMessage] = toast orElse tile orElse flip orElse iconic orElse cycle
+  val message: Option[WindowsMessage] = toast orElse tile orElse flip orElse iconic orElse cycle
 }
 
 object MPNSRequest {
