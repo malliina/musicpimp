@@ -22,7 +22,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
     val sortedHistory = playbackHistory(request.username)
       .sortBy(_._1.when.desc)
       .drop(request.from)
-      .take(request.until)
+      .take(request.maxItems)
     runQuery(sortedHistory).map(_.map {
       case (record, track) => RecentEntry(track, record.when)
     })
@@ -34,7 +34,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
       .map { case (track, rs) => (track, rs.length) }
       .sortBy { case (track, count) => count.desc }
       .drop(request.from)
-      .take(request.until)
+      .take(request.maxItems)
     runQuery(query).map(_.map {
       case (track, count) => PopularEntry(track, count)
     })

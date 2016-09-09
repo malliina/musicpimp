@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.models.User
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.mvc.QueryStringBindable
 import play.api.mvc.Security.AuthenticatedRequest
 
@@ -42,7 +42,7 @@ object DataRequest {
     } yield DataRequest(request.user, from, until)
   }
 
-  def fromJson(user: User, body: JsValue) = {
+  def fromJson(user: User, body: JsValue): JsResult[DataRequest] = {
     def readInt(key: String, default: Int) =
       (body \ key).validateOpt[Int].map(_ getOrElse default)
     for {
