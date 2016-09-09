@@ -25,7 +25,7 @@ import sbtassembly.Plugin._
 import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
 import sbtbuildinfo.BuildInfoPlugin
 
-object PimpBuild extends Build {
+object PimpBuild {
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
@@ -33,11 +33,11 @@ object PimpBuild extends Build {
 
   lazy val pimpProject = PlayProject("musicpimp")
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
-    .settings(playSettings: _*)
+    .settings(pimpPlaySettings: _*)
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.1.2",
+    version := "3.1.3",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -142,7 +142,7 @@ object PimpBuild extends Build {
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
 
-  lazy val playSettings = assemblyConf ++
+  lazy val pimpPlaySettings = assemblyConf ++
     jenkinsSettings ++
     commonSettings ++
     nativePackagingSettings ++

@@ -21,8 +21,6 @@ object DataRequest {
   val DefaultItemCount = 100
   val From = "from"
   val Until = "until"
-  val Page = "page"
-  val PageSize = "pageSize"
 
   val binder = QueryStringBindable.bindableInt
 

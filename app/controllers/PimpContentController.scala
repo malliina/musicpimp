@@ -37,7 +37,7 @@ trait PimpContentController {
     }
   }
 
-  def respond2[T](request: RequestHeader)(html: => Html, json: => T)(implicit w: Writes[T]) =
+  def respond2[T: Writes](request: RequestHeader)(html: => Html, json: => T) =
     respond(request)(html, Json.toJson(json))
 
   def respond(request: RequestHeader)(html: => Html, json: => JsValue, status: Status = Ok): Result =
