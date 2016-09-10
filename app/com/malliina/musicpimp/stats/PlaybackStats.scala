@@ -14,7 +14,14 @@ trait PlaybackStats {
     */
   def played(track: TrackMeta, user: User): Future[Unit]
 
-  /**
+  /** Returns the most played tracks.
+    *
+    * The returned entries are sorted by playback count primarily, and
+    * latest playback timestamp secondarily (latest first). This provides
+    * deterministically sorted results also in cases where the playback
+    * counts of two tracks equal. Deterministic sorting is required for
+    * proper paging support.
+    *
     * @param request request limits
     * @return the most played tracks, ordered by playback count
     */

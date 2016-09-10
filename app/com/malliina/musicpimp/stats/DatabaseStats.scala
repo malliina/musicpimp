@@ -31,8 +31,9 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
   override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
     val query = playbackHistory(request.username)
       .groupBy { case (record, track) => track }
-      .map { case (track, rs) => (track, rs.length) }
-      .sortBy { case (track, count) => count.desc }
+      .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(DateTime.now()))) }
+      .sortBy { case (track, (count, date)) => (count.desc, date.desc) }
+      .map { case (track, (count, date)) => (track, count) }
       .drop(request.from)
       .take(request.maxItems)
     runQuery(query).map(_.map {

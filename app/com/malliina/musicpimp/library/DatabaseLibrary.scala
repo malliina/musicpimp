@@ -8,16 +8,15 @@ import scala.concurrent.Future
 
 class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
 
-  def rootFolder: Future[MusicFolder] = {
+  def rootFolder: Future[MusicFolder] =
     folder(Library.RootId).map(_.getOrElse(MusicFolder.empty))
-  }
 
   def folder(id: String): Future[Option[MusicFolder]] = {
     for {
       parent <- db.folderOnly(id)
       content <- db.folder(id)
     } yield {
-      parent.map { folder =>
+      parent map { folder =>
         val (tracks, folders) = content
         MusicFolder(folder, folders, tracks)
       }
@@ -25,11 +24,11 @@ class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
   }
 
   def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = {
-    folder(id).flatMap(maybeFolder => {
+    folder(id) flatMap { maybeFolder =>
       maybeFolder
         .map(folder => Future.traverse(folder.folders)(sub => tracksInOrEmpty(sub.id)).map(subs => folder.tracks ++ subs.flatten)).map(_.map(Option.apply))
         .getOrElse(Future.successful(None))
-    })
+    }
   }
 
   private def tracksInOrEmpty(id: String) = tracksIn(id).map(_.getOrElse(Nil))
