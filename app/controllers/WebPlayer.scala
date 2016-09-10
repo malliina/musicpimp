@@ -32,12 +32,12 @@ class WebPlayer(auth: Authenticator, mat: Materializer)
   }
 
   override def onConnectSync(client: ClientInfo[JsValue]): Unit = {
-    super.onConnect(client)
+    super.onConnectSync(client)
     log info s"Connected ${client.describe}"
   }
 
   override def onDisconnectSync(client: ClientInfo[JsValue]): Unit = {
-    super.onDisconnect(client)
+    super.onDisconnectSync(client)
     log info s"Disconnected ${client.describe}"
   }
 

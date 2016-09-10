@@ -56,7 +56,7 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
   }
 
   override def onConnectSync(client: Client): Unit = {
-    super.onConnect(client)
+    super.onConnectSync(client)
     if (clientsSync.size == 1) {
       // first connection, start polling
       poller = Some(ticks.subscribe(_ => onTick()))
@@ -64,7 +64,7 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
   }
 
   override def onDisconnectSync(client: Client): Unit = {
-    super.onDisconnect(client)
+    super.onDisconnectSync(client)
     if (clientsSync.isEmpty) {
       // stop polling
       poller.foreach(_.unsubscribe())
