@@ -15,7 +15,7 @@ GET         /about                             controllers.Website.about
 GET         /manage                            controllers.SettingsController.manage
 GET         /account                           controllers.Accounts.account
 GET         /users                             controllers.Accounts.users
-POST        /users/delete/*id                  controllers.Accounts.delete(id)
+POST        /users/delete/*id                  controllers.Accounts.delete(id: Username)
 GET         /login                             controllers.Accounts.login
 GET         /logout                            controllers.Accounts.logout
 POST        /authenticate                      controllers.Accounts.formAuthenticate

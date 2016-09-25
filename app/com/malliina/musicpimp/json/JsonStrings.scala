@@ -65,7 +65,7 @@ trait JsonStrings {
   val PlayItems = "play_items"
 
   val AuthenticateKey = "authenticate"
-  val Username = "username"
+  val UsernameKey = "username"
   val Password = "password"
 
   val Event = "event"

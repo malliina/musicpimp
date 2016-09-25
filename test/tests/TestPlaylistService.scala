@@ -1,8 +1,9 @@
 package tests
 
-import com.malliina.musicpimp.models.{SavedPlaylist, PlaylistID, User}
 import com.malliina.musicpimp.db.DataTrack
-import com.malliina.musicpimp.library.{PlaylistSubmission, PlaylistService}
+import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
+import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
+import com.malliina.play.models.Username
 
 import scala.concurrent.Future
 
@@ -27,13 +28,13 @@ class TestPlaylistService extends PlaylistService {
   /**
    * @return the saved playlists of user
    */
-  override def playlists(user: User): Future[Seq[SavedPlaylist]] = Future.successful(playlists)
+  override def playlists(user: Username): Future[Seq[SavedPlaylist]] = Future.successful(playlists)
 
   /**
    * @param playlist playlist submission
    * @return a Future that completes when saving is done
    */
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
+  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] = {
     Future.successful(PlaylistID(0))
   }
 
@@ -41,7 +42,7 @@ class TestPlaylistService extends PlaylistService {
    * @param id playlist id
    * @return the playlist with ID `id`
    */
-  override def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = Future.successful(playlists.find(_.id == id))
+  override def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] = Future.successful(playlists.find(_.id == id))
 
-  override def delete(id: PlaylistID, user: User): Future[Unit] = Future.successful(())
+  override def delete(id: PlaylistID, user: Username): Future[Unit] = Future.successful(())
 }

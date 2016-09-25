@@ -5,11 +5,10 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.play.Authenticator
+import com.malliina.play.models.Username
 import com.malliina.play.ws.WebSocketController
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 import views.html
@@ -62,7 +61,7 @@ class Website(sockets: WebSocketController,
       )
     }
 
-  protected def userAction(f: AuthenticatedRequest[AnyContent, User] => Future[Result]) =
+  protected def userAction(f: AuthenticatedRequest[AnyContent, Username] => Future[Result]) =
     actionAsync(parse.default) { r =>
       f(new AuthenticatedRequest(r.user, r))
     }

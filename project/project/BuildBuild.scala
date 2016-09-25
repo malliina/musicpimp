@@ -16,9 +16,9 @@ object BuildBuild extends Build {
   ) ++ sbtPlugins
 
   def sbtPlugins = Seq(
-    "com.typesafe.play" % "sbt-plugin" % "2.5.6",
+    "com.typesafe.play" % "sbt-plugin" % "2.5.8",
     "com.malliina" %% "sbt-packager" % "2.1.0",
-    "com.malliina" %% "sbt-play" % "0.7.2",
+    "com.malliina" %% "sbt-play" % "0.8.2",
     "com.malliina" %% "sbt-jenkins-control" % "0.3.1",
     "com.eed3si9n" % "sbt-buildinfo" % "0.4.0",
     "com.eed3si9n" % "sbt-assembly" % "0.11.2"

@@ -9,7 +9,7 @@ import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
-import com.malliina.play.controllers.AccountController
+import com.malliina.play.controllers.AccountForms
 import controllers._
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
@@ -75,9 +75,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val as = new Assets(httpErrorHandler)
   lazy val libCtrl = new LibraryController(lib, auth, materializer)
   lazy val alarms = new Alarms(auth, messages, materializer)
-  lazy val accs = new AccountController {
-    override implicit val mat: Materializer = materializer
-  }
+  lazy val accs = new AccountForms
   lazy val accounts = new Accounts(auth, materializer, accs)
   lazy val cloud = new Cloud(c, auth, materializer)
   lazy val connect = new ConnectController(auth, materializer)

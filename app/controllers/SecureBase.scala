@@ -3,26 +3,28 @@ package controllers
 import java.nio.file.Path
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.http.PimpUploads
 import com.malliina.play.Authenticator
 import com.malliina.play.auth.BasicCredentials
 import com.malliina.play.concurrent.FutureOps2
 import com.malliina.play.controllers._
 import com.malliina.play.http._
+import com.malliina.play.models.{Password, Username}
 import controllers.SecureBase.log
 import play.api.Logger
 import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
 import scala.concurrent.Future
 
-class SecureBase(auth: Authenticator, val mat: Materializer)
-  extends PimpContentController
-    with BaseSecurity
-    with Controller{
+class SecureBase(auth: Authenticator, mat: Materializer)
+  extends BaseSecurity(mat)
+    with PimpContentController
+    with Controller {
+
+  val uploads = PimpUploads
 
   override def authenticate(request: RequestHeader): Future[Option[AuthedRequest]] =
     super.authenticate(request).checkOrElse(_.nonEmpty, auth.authenticateFromCookie(request))
@@ -39,11 +41,11 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
     * @param password the supplied password
     * @return true if the credentials are valid, false otherwise
     */
-  def validateCredentials(username: User, password: String): Future[Boolean] =
+  def validateCredentials(username: Username, password: Password): Future[Boolean] =
     auth.authenticate(username, password)
 
   override def validateCredentials(creds: BasicCredentials): Future[Boolean] =
-    validateCredentials(User(creds.username), creds.password)
+    validateCredentials(creds.username, creds.password)
 
   /** Authenticates, logs authenticated request, executes action, in that order.
     *
@@ -62,7 +64,7 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
       logged(user, user => Action(req => maybeWithCookie(user, f(user))))
     }
 
-  def okPimpAction(f: CookiedRequest[AnyContent, User] => Unit) =
+  def okPimpAction(f: CookiedRequest[AnyContent, Username] => Unit) =
     pimpAction { req =>
       f(req)
       Ok
@@ -71,7 +73,7 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
   def pimpAction(result: => Result): EssentialAction =
     pimpAction(_ => result)
 
-  def pimpAction(f: CookiedRequest[AnyContent, User] => Result): EssentialAction =
+  def pimpAction(f: CookiedRequest[AnyContent, Username] => Result): EssentialAction =
     pimpParsedAction(parse.default)(req => f(req))
 
   def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
@@ -80,31 +82,31 @@ class SecureBase(auth: Authenticator, val mat: Materializer)
       .getOrElse(BadRequest)
     }
 
-  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], User] => Result) =
+  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Result) =
     pimpParsedAction(parse.multipartFormData) { req =>
-      val files: Seq[Path] = saveFiles(req)
+      val files: Seq[Path] = uploads.save(req)
       f(new FileUploadRequest(files, req.user, req))
     }
 
-  def pimpParsedAction[T](parser: BodyParser[T])(f: CookiedRequest[T, User] => Result) =
+  def pimpParsedAction[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Result) =
     pimpParsedActionAsync(parser)(req => Future.successful(f(req)))
 
-  def pimpActionAsync(f: CookiedRequest[AnyContent, User] => Future[Result]) =
+  def pimpActionAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
     pimpParsedActionAsync(parse.default)(f)
 
-  def pimpActionAsync2[R: Writeable](f: CookiedRequest[AnyContent, User] => Future[R]) =
+  def pimpActionAsync2[R: Writeable](f: CookiedRequest[AnyContent, Username] => Future[R]) =
     okAsyncAction(parse.default)(f)
 
-  def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: CookiedRequest[T, User] => Future[R]) =
+  def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[R]) =
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
 
-  def actionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, User] => Future[Result]) =
+  def actionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
-  def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, User] => Future[Result]): EssentialAction =
+  def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
     authenticatedAndLogged { auth =>
       Action.async(parser) { req =>
-        val resultFuture = f(new CookiedRequest(User(auth.user.name), req, auth.cookie))
+        val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))
       }
     }

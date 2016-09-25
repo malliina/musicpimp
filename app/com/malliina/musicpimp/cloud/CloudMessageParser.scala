@@ -5,9 +5,10 @@ import com.malliina.musicpimp.cloud.CloudStrings.{Registered, RequestId}
 import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, DeletePlaylist, Folder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PimpMessage, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PlaylistID, RequestID, User}
+import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.json.JsonStrings.Cmd
+import com.malliina.play.models.Username
 import play.api.libs.json._
 
 object CloudMessageParser extends CloudMessageParser
@@ -16,14 +17,14 @@ trait CloudMessageParser {
   def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
     val cmd = (json \ Cmd).validate[String]
     val request = (json \ RequestId).validate[RequestID]
-    val user = (json \ Username).validate[User]
+    val user = (json \ UsernameKey).validate[Username]
     val body = json \ Body
 
     def withBody(f: JsValue => PimpMessage): JsResult[PimpMessage] = body.toOption
       .map(js => JsSuccess(f(js)))
       .getOrElse(JsError(s"Key $Body does not contain JSON."))
 
-    def withUser[T](transform: User => JsResult[T]): JsResult[T] = user.flatMap(transform)
+    def withUser[T](transform: Username => JsResult[T]): JsResult[T] = user.flatMap(transform)
 
     def readMeta: JsResult[DataRequest] = for {
       u <- user
@@ -67,7 +68,7 @@ trait CloudMessageParser {
       case Player =>
         for {
           b <- body.validate[JsValue]
-          user <- (json \ Username).validate[User]
+          user <- (json \ UsernameKey).validate[Username]
         } yield PlaybackMessage(b, user)
       case Ping =>
         JsSuccess(PingMessage)

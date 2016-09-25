@@ -1,9 +1,11 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist, User}
+import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
+import com.malliina.play.models.Username
 import com.malliina.util.Log
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
@@ -14,7 +16,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 
-  override protected def playlists(user: User): Future[Seq[SavedPlaylist]] = {
+  override protected def playlists(user: Username): Future[Seq[SavedPlaylist]] = {
     runQuery(playlistQuery(playlistsTable.filter(_.user === user))) map { data =>
       data.map((PlaylistEntry.apply _).tupled)
         .groupBy(_.id)
@@ -23,7 +25,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
     }
   }
 
-  override protected def playlist(id: PlaylistID, user: User): Future[Option[SavedPlaylist]] = {
+  override protected def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] = {
     val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
     val result = runQuery(q.sortBy(_._4))
     result map { data =>
@@ -32,7 +34,7 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
     }
   }
 
-  override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: User): Future[PlaylistID] = {
+  override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] = {
     val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
     owns flatMap { isOwner =>
       if (isOwner) {
@@ -53,13 +55,13 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
     }
   }
 
-  override def delete(id: PlaylistID, user: User): Future[Unit] =
+  override def delete(id: PlaylistID, user: Username): Future[Unit] =
     run(playlistsTable.filter(pl => pl.user === user && pl.id === id.id).delete).map(_ => ())
 
   // transient class
   case class PlaylistEntry(id: Long, name: String, track: DataTrack, index: Int)
 
-  protected def ownsPlaylist(id: PlaylistID, user: User): Future[Boolean] =
+  protected def ownsPlaylist(id: PlaylistID, user: Username): Future[Boolean] =
     runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id)).map(_.nonEmpty)
 
   private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) =

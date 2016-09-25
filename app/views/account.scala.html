@@ -1,6 +1,7 @@
-@import com.malliina.musicpimp.models.User
+@import com.malliina.play.models.PasswordChange
+@import com.malliina.play.models.Username
 
-@(username: User, helloForm: Form[(String, String, String)])(implicit flash: Flash)
+@(username: Username, helloForm: Form[PasswordChange])(implicit flash: Flash)
 
 @manage("account") {
     @bs.headerRow("Account", "col-md-4")

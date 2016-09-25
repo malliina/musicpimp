@@ -3,17 +3,18 @@ package com.malliina.musicpimp.db
 import java.sql.SQLException
 
 import com.malliina.musicpimp.auth.{Auth, DataUser, UserManager}
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.db.Mappings.username
+import com.malliina.play.models.{Password, Username}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import slick.driver.H2Driver.api._
 
 import scala.concurrent.Future
 
 object DatabaseUserManager {
-  val DefaultUser = User("admin")
+  val DefaultUser = Username("admin")
 }
 
-class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
+class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
 
   import PimpSchema.{tokens, usersTable}
 
@@ -24,13 +25,13 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
     })
   }
 
-  override def defaultUser: User = DatabaseUserManager.DefaultUser
+  override def defaultUser: Username = DatabaseUserManager.DefaultUser
 
-  override def defaultPass: String = "test"
+  override def defaultPass: Password = Password("test")
 
   protected def usersQuery = usersTable.map(_.user)
 
-  override def authenticate(user: User, pass: String): Future[Boolean] = {
+  override def authenticate(user: Username, pass: Password): Future[Boolean] = {
     val passHash = hash(user, pass)
     val userExists = usersTable.filter(u => u.user === user && u.passHash === passHash).exists
     for {
@@ -42,9 +43,9 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
   /**
     * @return all users
     */
-  override def users: Future[Seq[User]] = db.runQuery(usersQuery)
+  override def users: Future[Seq[Username]] = db.runQuery(usersQuery)
 
-  override def addUser(user: User, pass: String): Future[Option[AlreadyExists]] =
+  override def addUser(user: Username, pass: Password): Future[Option[AlreadyExists]] =
     addUser(DataUser(user, hash(user, pass)))
 
   def addUser(user: DataUser): Future[Option[AlreadyExists]] = {
@@ -54,7 +55,7 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
     }
   }
 
-  override def deleteUser(user: User): Future[Unit] = {
+  override def deleteUser(user: Username): Future[Unit] = {
     db.run {
       DBIO.seq(
         tokens.filter(_.user === user.name).delete,
@@ -63,8 +64,11 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[User, String] {
     }
   }
 
-  override def updatePassword(user: User, newPass: String): Future[Unit] =
-    db.run(usersTable.filter(u => u.user === user).map(_.passHash).update(hash(user, newPass))).map(_ => ())
+  override def updatePassword(user: Username, newPass: Password): Future[Unit] =
+    db.run(usersTable
+      .filter(u => u.user === user)
+      .map(_.passHash)
+      .update(hash(user, newPass))).map(_ => ())
 
-  private def hash(user: User, pass: String) = Auth.hash(user, pass)
+  private def hash(user: Username, pass: Password) = Auth.hash(user.name, pass.pass)
 }

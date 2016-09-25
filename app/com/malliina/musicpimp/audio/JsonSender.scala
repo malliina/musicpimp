@@ -2,14 +2,14 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.JsonSender.log
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.User
+import com.malliina.play.models.Username
 import controllers.WebPlayer
 import play.api.Logger
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Json, Writes}
 
 trait JsonSender {
-  def user: User
+  def user: Username
 
   def webPlayer: WebPlayer
 

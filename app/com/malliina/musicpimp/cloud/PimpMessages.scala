@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PlaylistID, RequestID, User}
+import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
+import com.malliina.play.models.{Password, Username}
 import play.api.libs.json.{JsValue, Json}
 
 object PimpMessages {
@@ -11,7 +12,7 @@ object PimpMessages {
   trait PimpMessage
 
   trait UserMessage extends PimpMessage {
-    def username: User
+    def username: Username
   }
 
   trait RequestMessage extends PimpMessage {
@@ -46,21 +47,21 @@ object PimpMessages {
 
   case class AlarmAdd(payload: JsValue) extends PimpMessage
 
-  case class PlaybackMessage(payload: JsValue, username: User) extends UserMessage
+  case class PlaybackMessage(payload: JsValue, username: Username) extends UserMessage
 
-  case class Authenticate(username: User, password: String) extends UserMessage
+  case class Authenticate(username: Username, password: Password) extends UserMessage
 
   case object GetVersion extends PimpMessage
 
   case object GetStatus extends PimpMessage
 
-  case class GetPlaylists(username: User) extends UserMessage
+  case class GetPlaylists(username: Username) extends UserMessage
 
-  case class GetPlaylist(id: PlaylistID, username: User) extends UserMessage
+  case class GetPlaylist(id: PlaylistID, username: Username) extends UserMessage
 
-  case class SavePlaylist(playlist: PlaylistSubmission, username: User) extends UserMessage
+  case class SavePlaylist(playlist: PlaylistSubmission, username: Username) extends UserMessage
 
-  case class DeletePlaylist(id: PlaylistID, username: User) extends UserMessage
+  case class DeletePlaylist(id: PlaylistID, username: Username) extends UserMessage
 
   implicit val searchFormat = Json.format[Search]
   implicit val folderFormat = Json.format[Folder]

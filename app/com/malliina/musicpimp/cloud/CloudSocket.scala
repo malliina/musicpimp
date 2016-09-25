@@ -19,6 +19,7 @@ import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.json.SimpleCommand
+import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
@@ -34,7 +35,7 @@ import scala.util.Try
 
 case class Deps(playlists: PlaylistService,
                 db: PimpDb,
-                userManager: UserManager[User, String],
+                userManager: UserManager[Username, Password],
                 handler: PlaybackMessageHandler,
                 lib: MusicLibrary,
                 stats: PlaybackStats)

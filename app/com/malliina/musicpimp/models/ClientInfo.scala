@@ -3,6 +3,7 @@ package com.malliina.musicpimp.models
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.musicpimp.json.JsonFormatVersions
 import com.malliina.musicpimp.models.ClientInfo.log
+import com.malliina.play.models.Username
 import com.malliina.play.ws.SocketClient
 import controllers.PimpRequest
 import play.api.Logger
@@ -13,7 +14,7 @@ import play.api.mvc.RequestHeader
   * @param request the request headers from the HTTP request that initiated the WebSocket connection
   * @param user    the authenticated username
   */
-case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: User)
+case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: Username)
   extends SocketClient[T] {
   val protocol = if (request.secure) "wss" else "ws"
   val remoteAddress = request.remoteAddress

@@ -4,18 +4,17 @@ import java.io.FileNotFoundException
 import java.nio.file.Files
 
 import com.malliina.file.FileUtilities
-import com.malliina.musicpimp.models.User
 import com.malliina.musicpimp.util.FileUtil
+import com.malliina.play.models.{Password, Username}
 import com.malliina.util.Utils
 
 import scala.concurrent.Future
 import scala.io.BufferedSource
 
-class FileUserManager extends UserManager[User, String] {
-  type Password = String
+class FileUserManager extends UserManager[Username, Password] {
   private val passFile = FileUtilities pathTo "credentials.txt"
-  val defaultUser = User("admin")
-  val defaultPass = "test"
+  val defaultUser = Username("admin")
+  val defaultPass = Password("test")
 
   def savedPassHash: Option[String] =
     Utils.opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
@@ -34,22 +33,22 @@ class FileUserManager extends UserManager[User, String] {
    * @param pass the supplied password
    * @return true if the credentials are valid, false otherwise
    */
-  override def authenticate(user: User, pass: Password): Future[Boolean] = fut {
+  override def authenticate(user: Username, pass: Password): Future[Boolean] = fut {
     savedPassHash.fold(ifEmpty = user == defaultUser && pass == defaultPass)(_ == Auth.hash(user, pass))
   }
 
-  override def deleteUser(user: User): Future[Unit] = fut(())
+  override def deleteUser(user: Username): Future[Unit] = fut(())
 
-  override def users: Future[Seq[User]] = fut(Seq(defaultUser))
+  override def users: Future[Seq[Username]] = fut(Seq(defaultUser))
 
-  override def updatePassword(user: User, newPass: Password): Future[Unit] = fut {
+  override def updatePassword(user: Username, newPass: Password): Future[Unit] = fut {
     FileUtilities.writerTo(passFile)(passWriter => {
       passWriter write Auth.hash(user, newPass)
     })
     FileUtil trySetOwnerOnlyPermissions passFile
   }
 
-  override def addUser(user: User, pass: Password): Future[Option[AlreadyExists]] = fut(None)
+  override def addUser(user: Username, pass: Password): Future[Option[AlreadyExists]] = fut(None)
 
   def hasCredentials(): Boolean = Files.exists(passFile)
 

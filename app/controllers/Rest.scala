@@ -7,7 +7,6 @@ import java.nio.file._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import com.malliina.audio.ExecutionContexts.defaultPlaybackContext
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
 import com.malliina.file.FileUtilities
 import com.malliina.http.TrustAllMultipartRequest
@@ -15,10 +14,11 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
-import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo, User}
+import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo}
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.BaseController
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
+import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.{Util, Utils}
@@ -94,7 +94,7 @@ class Rest(webPlayer: WebPlayer,
       val authAction = metaOrError.fold(
         error => pimpAction(BadRequest(error)),
         meta => {
-          statsPlayer.updateUser(User(req.user.name))
+          statsPlayer.updateUser(req.user)
           localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
         }
       )
@@ -220,15 +220,15 @@ class Rest(webPlayer: WebPlayer,
     (pipeIn, iteratee)
   }
 
-  private def webStatusJson(user: User, request: RemoteInfo) = {
+  private def webStatusJson(user: Username, request: RemoteInfo) = {
     val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(request, webPlayer))
     Json.toJson(player.status)
   }
 
-  private def playlistFor(user: User): Seq[TrackMeta] =
+  private def playlistFor(user: Username): Seq[TrackMeta] =
     webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
-  private def ackPimpAction[T](parser: BodyParser[T])(bodyHandler: CookiedRequest[T, User] => Unit): EssentialAction =
+  private def ackPimpAction[T](parser: BodyParser[T])(bodyHandler: CookiedRequest[T, Username] => Unit): EssentialAction =
     pimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
@@ -244,13 +244,13 @@ class Rest(webPlayer: WebPlayer,
       }
     }
 
-  private def jsonAckAction(jsonHandler: CookiedRequest[JsValue, User] => Unit): EssentialAction =
+  private def jsonAckAction(jsonHandler: CookiedRequest[JsValue, Username] => Unit): EssentialAction =
     ackPimpAction(parse.json)(jsonHandler)
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
     metaUploadAction { req =>
       songAction(req.track)
-      statsPlayer.updateUser(User(req.user))
+      statsPlayer.updateUser(req.username)
       AckResponse(req)
     }
 
@@ -274,15 +274,15 @@ class Rest(webPlayer: WebPlayer,
         new LocalTrack("", PimpPath.Empty, meta)
       }
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
-      val user = request.user
+      val user = Username(request.user)
       val mediaInfo = track.meta.media
       val fileSize = mediaInfo.size
       log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
       f(new TrackUploadRequest(track, file, user, request))
     }
 
-  class TrackUploadRequest[A](val track: LocalTrack, file: Path, user: String, request: Request[A])
-    extends OneFileUploadRequest(file, user, request)
+  class TrackUploadRequest[A](val track: LocalTrack, file: Path, val username: Username, request: Request[A])
+    extends OneFileUploadRequest(file, username.name, request)
 
 }
 

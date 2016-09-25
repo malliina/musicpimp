@@ -3,8 +3,9 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.{RemoteInfo, User}
+import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.http.{CookiedRequest, RequestInfo}
+import com.malliina.play.models.Username
 import play.api.Logger
 import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
 
@@ -14,12 +15,12 @@ trait JsonHandlerBase {
 
   protected def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit
 
-  def onJson(req: CookiedRequest[JsValue, User]): Unit =
+  def onJson(req: CookiedRequest[JsValue, Username]): Unit =
     onJson(req.body, RequestInfo(req.user, req))
 
   /** Handles messages sent by web players.
     */
-  def onJson(msg: JsValue, req: RequestInfo[User]): Unit = {
+  def onJson(msg: JsValue, req: RequestInfo[Username]): Unit = {
     val user = req.user
     log info s"User: $user from: ${req.request.remoteAddress} said: $msg"
     handleMessage(msg, RemoteInfo(req))

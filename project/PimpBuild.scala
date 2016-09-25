@@ -37,7 +37,7 @@ object PimpBuild {
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.1.4",
+    version := "3.2.0",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -148,7 +148,7 @@ object PimpBuild {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-base" % "2.9.1",
+        malliinaGroup %% "play-base" % "3.2.1",
         malliinaGroup %% "util-actor" % "2.4.1",
         malliinaGroup %% "util-rmi" % "2.4.1",
         malliinaGroup %% "util-audio" % "2.0.0",
@@ -168,7 +168,8 @@ object PimpBuild {
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
-        "com.malliina.musicpimp.models.PlaylistID"
+        "com.malliina.musicpimp.models.PlaylistID",
+        "com.malliina.play.models.Username"
       )
     )
 

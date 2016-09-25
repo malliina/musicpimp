@@ -1,9 +1,9 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.db.Mappings.jodaDate
-import com.malliina.musicpimp.db.{PimpDb, PimpSchema, PlaybackRecord, Sessionizer}
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.db.Mappings.{jodaDate, username}
+import com.malliina.musicpimp.db._
+import com.malliina.play.models.Username
 import org.joda.time.DateTime
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import slick.driver.H2Driver.api._
@@ -15,7 +15,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
   val tracks = PimpSchema.tracks
   val users = PimpSchema.usersTable
 
-  override def played(track: TrackMeta, user: User): Future[Unit] =
+  override def played(track: TrackMeta, user: Username): Future[Unit] =
     run(plays += PlaybackRecord(track.id, DateTime.now, user)).map(_ => ())
 
   override def mostRecent(request: DataRequest): Future[Seq[RecentEntry]] = {
@@ -41,7 +41,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
     })
   }
 
-  private def playbackHistory(user: User) = for {
+  private def playbackHistory(user: Username) = for {
     record <- plays if record.who === user
     track <- tracks if track.id === record.track
   } yield (record, track)

@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.models.User
+import com.malliina.play.models.Username
 
 import scala.concurrent.Future
 
@@ -12,7 +12,7 @@ trait PlaybackStats {
     * @param user  playing user
     * @return success on successful registration, failure otherwise
     */
-  def played(track: TrackMeta, user: User): Future[Unit]
+  def played(track: TrackMeta, user: Username): Future[Unit]
 
   /** Returns the most played tracks.
     *

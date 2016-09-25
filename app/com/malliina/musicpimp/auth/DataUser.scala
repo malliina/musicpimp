@@ -1,5 +1,5 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.musicpimp.models.User
+import com.malliina.play.models.Username
 
-case class DataUser(username: User, passwordHash: String)
+case class DataUser(username: Username, passwordHash: String)

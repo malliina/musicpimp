@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.musicpimp.models.User
+import com.malliina.musicpimp.db.Mappings.username
+import com.malliina.play.models.Username
 import slick.driver.H2Driver.api._
 
 class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
@@ -8,7 +9,7 @@ class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
 
   def name = column[String]("NAME")
 
-  def user = column[User]("USER")
+  def user = column[Username]("USER")
 
   def userConstraint = foreignKey("USER_FK", user, PimpSchema.usersTable)(
     _.user,
@@ -17,16 +18,16 @@ class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
 
   def * = (id.?, name, user) <>(build, unbuild)
 
-  def build(kvs: (Option[Long], String, User)): PlaylistRow = kvs match {
+  def build(kvs: (Option[Long], String, Username)): PlaylistRow = kvs match {
     case (i, n, u) => PlaylistRow(i, n, u)
   }
 
-  def unbuild(row: PlaylistRow): Option[(Option[Long], String, User)] = {
+  def unbuild(row: PlaylistRow): Option[(Option[Long], String, Username)] = {
     Option((row.id, row.name, row.user))
   }
 }
 
-case class PlaylistRow(id: Option[Long], name: String, user: User)
+case class PlaylistRow(id: Option[Long], name: String, user: Username)
 
 class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {
   def playlist = column[Long]("PLAYLIST")

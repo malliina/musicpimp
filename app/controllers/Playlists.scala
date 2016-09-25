@@ -5,14 +5,14 @@ import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PimpUrl, PlaylistID, PlaylistsMeta, User}
+import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta}
 import com.malliina.play.Authenticator
 import com.malliina.play.http.CookiedRequest
+import com.malliina.play.models.Username
 import controllers.Playlists.log
 import play.api.Logger
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, BodyParser, Result}
 import views.html
@@ -83,10 +83,10 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     )
   }
 
-  protected def recoveredAsync(f: CookiedRequest[AnyContent, User] => Future[Result]) =
+  protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
     parsedRecoveredAsync(parse.anyContent)(f)
 
-  protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: CookiedRequest[T, User] => Future[Result]) =
+  protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(auth => f(auth).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {

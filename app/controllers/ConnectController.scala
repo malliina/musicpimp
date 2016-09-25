@@ -5,9 +5,9 @@ import java.net.NetworkInterface
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.models.User
 import com.malliina.play.Authenticator
 import com.malliina.play.http.CookiedRequest
+import com.malliina.play.models.Username
 import controllers.ConnectController.{Protocols, log}
 import net.glxn.qrgen.QRCode
 import play.api.Logger
@@ -33,7 +33,7 @@ class ConnectController(auth: Authenticator, mat: Materializer)
     Ok.chunked(FileIO.fromPath(qrFile))
   }
 
-  def coordinate(req: CookiedRequest[AnyContent, User]): Coordinate =
+  def coordinate(req: CookiedRequest[AnyContent, Username]): Coordinate =
     Coordinate(protocol(req), systemIPs, RequestHelpers port req, req.user)
 
   def systemIPs: Seq[String] =
@@ -61,7 +61,7 @@ object ConnectController {
 case class Coordinate(protocol: Protocols.Protocol,
                       hosts: Seq[String],
                       port: Int,
-                      username: User)
+                      username: Username)
 
 object Coordinate {
   implicit val json = Json.format[Coordinate]
