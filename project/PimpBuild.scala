@@ -168,7 +168,7 @@ object PimpBuild {
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
-        "com.malliina.musicpimp.models.PlaylistID",
+        "com.malliina.musicpimp.models._",
         "com.malliina.play.models.Username"
       )
     )

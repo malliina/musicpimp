@@ -5,7 +5,7 @@ import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta}
+import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta, TrackID}
 import com.malliina.play.Authenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
@@ -29,10 +29,11 @@ object Playlists {
 class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
+  val tracksMapping: Mapping[Seq[TrackID]] = seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
   val playlistForm: Form[PlaylistSubmission] = Form(mapping(
     Playlists.Id -> optional(playlistIdField),
     Playlists.Name -> nonEmptyText,
-    Playlists.Tracks -> seq(text)
+    Playlists.Tracks -> tracksMapping
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync { req =>

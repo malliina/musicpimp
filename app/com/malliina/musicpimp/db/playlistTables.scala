@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.db.Mappings.username
+import com.malliina.musicpimp.models.TrackID
 import com.malliina.play.models.Username
 import slick.driver.H2Driver.api._
 
@@ -32,7 +33,7 @@ case class PlaylistRow(id: Option[Long], name: String, user: Username)
 class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {
   def playlist = column[Long]("PLAYLIST")
 
-  def track = column[String]("TRACK")
+  def track = column[TrackID]("TRACK")
 
   def idx = column[Int]("INDEX")
 
@@ -51,4 +52,4 @@ class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACK
   def * = (playlist, track, idx) <>((PlaylistTrack.apply _).tupled, PlaylistTrack.unapply)
 }
 
-case class PlaylistTrack(id: Long, track: String, index: Int)
+case class PlaylistTrack(id: Long, track: TrackID, index: Int)

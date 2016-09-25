@@ -58,8 +58,8 @@ case class Deps(playlists: PlaylistService,
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(uri: String, username: CloudID, password: String, deps: Deps)
-  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password)) {
+class CloudSocket(uri: String, username: CloudID, password: Password, deps: Deps)
+  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
 
   val messageParser = CloudMessageParser
   val cloudHost = PimpUrl(httpProtocol, hostPort, "")
@@ -283,7 +283,7 @@ class CloudSocket(uri: String, username: CloudID, password: String, deps: Deps)
     * @return
     */
   def upload(track: Track, request: RequestID): Future[Unit] =
-  withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
+    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
@@ -298,9 +298,9 @@ class CloudSocket(uri: String, username: CloudID, password: String, deps: Deps)
     })
   }
 
-  private def withUpload(trackID: String, request: RequestID, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
+  private def withUpload(trackID: TrackID, request: RequestID, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
     val uploadUri = s"${cloudHost.url}/track"
-    val trackOpt = Library.findAbsolute(trackID)
+    val trackOpt = Library.findAbsolute(trackID.id)
     if (trackOpt.isEmpty) {
       log warn s"Unable to find track: $trackID"
     }
@@ -335,7 +335,7 @@ object CloudSocket {
     else ("cloud.musicpimp.org", "https", "wss")
 
   def build(id: Option[CloudID], deps: Deps) = {
-    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse CloudID.empty, "pimp", deps)
+    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse CloudID.empty, Password("pimp"), deps)
   }
 
   val notConnected = new Exception("Not connected.")

@@ -1,16 +1,16 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.db.Mappings.{jodaDate, username}
-import com.malliina.musicpimp.models.PimpPath
+import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
 import com.malliina.play.models.Username
 import org.joda.time.DateTime
 import slick.driver.H2Driver.api._
 import slick.lifted.ProvenShape
 
-case class PlaybackRecord(track: String, when: DateTime, user: Username)
+case class PlaybackRecord(track: TrackID, when: DateTime, user: Username)
 
 class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
-  def track = column[String]("TRACK")
+  def track = column[TrackID]("TRACK")
 
   def when = column[DateTime]("WHEN")
 
@@ -33,7 +33,7 @@ class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
 }
 
 class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
-  def id = column[String]("ID", O.PrimaryKey)
+  def id = column[TrackID]("ID", O.PrimaryKey)
 
   def title = column[String]("TITLE")
 
@@ -45,7 +45,7 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 
   def size = column[Long]("SIZE")
 
-  def folder = column[String]("FOLDER")
+  def folder = column[FolderID]("FOLDER")
 
   def folderConstraint = foreignKey("FOLDER_FK", folder, PimpSchema.folders)(
     _.id,
@@ -56,13 +56,13 @@ class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
 }
 
 class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
-  def id = column[String]("ID", O.PrimaryKey)
+  def id = column[FolderID]("ID", O.PrimaryKey)
 
   def title = column[String]("TITLE")
 
   def path = column[PimpPath]("PATH")
 
-  def parent = column[String]("PARENT")
+  def parent = column[FolderID]("PARENT")
 
   // foreign key to itself; the root folder is its own parent
   def parentFolder = foreignKey("PARENT_FK", parent, PimpSchema.folders)(
@@ -74,12 +74,20 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
 }
 
 /**
-  * Temp table.
+  * Temp tables.
   */
-class Ids(tag: Tag) extends Table[Id](tag, "IDS") {
-  def id = column[String]("ID", O.PrimaryKey)
+class TempFolders(tag: Tag) extends Table[TempFolder](tag, "TEMP_FOLDERS") {
+  def id = column[FolderID]("ID", O.PrimaryKey)
 
-  def * = id <>(Id.apply, Id.unapply)
+  def * = id <>(TempFolder.apply, TempFolder.unapply)
 }
 
-case class Id(id: String)
+case class TempFolder(id: FolderID)
+
+class TempTracks(tag: Tag) extends Table[TempTrack](tag, "TEMP_TRACKS") {
+  def id = column[TrackID]("ID", O.PrimaryKey)
+
+  def * = id <>(TempTrack.apply, TempTrack.unapply)
+}
+
+case class TempTrack(id: TrackID)

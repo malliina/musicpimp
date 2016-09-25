@@ -6,9 +6,8 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
-import com.malliina.musicpimp.models.MusicColumn
+import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
 import com.malliina.play.{Authenticator, FileResults}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.Json
 import play.api.mvc._
 import views.html
@@ -25,18 +24,18 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
   /**
     * @return an action that provides the contents of the library with the supplied id
     */
-  def library(folderId: String) = pimpActionAsync { request =>
+  def library(folderId: FolderID) = pimpActionAsync { request =>
     lib.folder(folderId).map(_.fold(folderNotFound(folderId, request))(items => folderResult(items, request)))
   }
 
-  def tracksIn(folderID: String) = pimpActionAsync { request =>
+  def tracksIn(folderID: FolderID) = pimpActionAsync { request =>
     implicit val writer = TrackMeta.writer(request)
     lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID, request))(ts => Ok(Json.toJson(ts))))
   }
 
   def allTracks = tracksIn(Library.RootId)
 
-  private def folderNotFound(id: String, request: RequestHeader): Result = {
+  private def folderNotFound(id: FolderID, request: RequestHeader): Result = {
     pimpResult(request)(
       html = NotFound,
       json = NotFound(LibraryController.noFolderJson(id))
@@ -54,7 +53,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     *
     * @param trackId track to serve
     */
-  def supplyForPlayback(trackId: String) = download(trackId)
+  def supplyForPlayback(trackId: TrackID) = download(trackId)
 
   /** Responds with the song with the given ID.
     *
@@ -68,9 +67,9 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     *
     * @param trackId track to download
     */
-  def download(trackId: String): EssentialAction =
+  def download(trackId: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
-      Library.findAbsolute(URLDecoder.decode(trackId, "UTF-8"))
+      Library.findAbsolute(URLDecoder.decode(trackId.id, "UTF-8"))
         .map(path => FileResults.fileResult(path, authReq.request))
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
     }
@@ -80,13 +79,13 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     Unauthorized
   }
 
-  def meta(id: String) = pimpAction { request =>
+  def meta(id: TrackID) = pimpAction { request =>
     implicit val writer = TrackMeta.writer(request)
     val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
     metaResult.fold(trackNotFound(id))(json => Ok(json))
   }
 
-  private def trackNotFound(id: String) = BadRequest(LibraryController.noTrackJson(id))
+  private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))
 
   def toHtml(folder: MusicFolder): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(folder) match {
@@ -127,7 +126,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 }
 
 object LibraryController {
-  def noTrackJson(id: String) = JsonMessages.failure(s"Track not found: $id")
+  def noTrackJson(id: TrackID) = JsonMessages.failure(s"Track not found: $id")
 
-  def noFolderJson(id: String) = JsonMessages.failure(s"Folder not found: $id")
+  def noFolderJson(id: FolderID) = JsonMessages.failure(s"Folder not found: $id")
 }

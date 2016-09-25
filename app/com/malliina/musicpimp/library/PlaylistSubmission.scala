@@ -1,14 +1,11 @@
 package com.malliina.musicpimp.library
 
-import com.malliina.musicpimp.models.PlaylistID
+import com.malliina.musicpimp.models.{PlaylistID, TrackID}
 import play.api.libs.json.Json
 
-/**
-  * @author mle
-  */
 case class PlaylistSubmission(playlistId: Option[PlaylistID],
                               name: String,
-                              tracks: Seq[String]) {
+                              tracks: Seq[TrackID]) {
   val isUpdate = playlistId.nonEmpty
 }
 

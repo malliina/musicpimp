@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PlaylistID, RequestID}
+import com.malliina.musicpimp.models.{FolderID, PlaylistID, RequestID, TrackID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
 import com.malliina.play.models.{Password, Username}
@@ -27,17 +27,17 @@ object PimpMessages {
 
   case object RootFolder extends PimpMessage
 
-  case class Folder(id: String) extends PimpMessage
+  case class Folder(id: FolderID) extends PimpMessage
 
   case class GetPopular(meta: DataRequest) extends PimpMessage
 
   case class GetRecent(meta: DataRequest) extends PimpMessage
 
-  case class Track(id: String) extends PimpMessage
+  case class Track(id: TrackID) extends PimpMessage
 
-  case class RangedTrack(id: String, range: ContentRange) extends PimpMessage
+  case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
 
-  case class GetMeta(id: String) extends PimpMessage
+  case class GetMeta(id: TrackID) extends PimpMessage
 
   case class Search(term: String, limit: Int) extends PimpMessage
 

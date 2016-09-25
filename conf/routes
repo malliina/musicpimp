@@ -35,12 +35,12 @@ POST        /playlist/uploads                  controllers.Rest.addUpload
 GET         /webplaylist                       controllers.Rest.webPlaylist
 # Library
 GET         /folders                           controllers.LibraryController.rootLibrary
-GET         /folders/*folder                   controllers.LibraryController.library(folder)
-GET         /downloads/*id                     controllers.LibraryController.download(id)
+GET         /folders/*folder                   controllers.LibraryController.library(folder: FolderID)
+GET         /downloads/*id                     controllers.LibraryController.download(id: TrackID)
 GET         /tracks/folders                    controllers.LibraryController.allTracks
-GET         /tracks/folders/*id                controllers.LibraryController.tracksIn(id)
-GET         /tracks/meta/*id                   controllers.LibraryController.meta(id)
-GET         /tracks/*id                        controllers.LibraryController.supplyForPlayback(id)
+GET         /tracks/folders/*id                controllers.LibraryController.tracksIn(id: FolderID)
+GET         /tracks/meta/*id                   controllers.LibraryController.meta(id: TrackID)
+GET         /tracks/*id                        controllers.LibraryController.supplyForPlayback(id: TrackID)
 GET         /playlists                         controllers.Playlists.playlists
 POST        /playlists                         controllers.Playlists.savePlaylist
 GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: PlaylistID)

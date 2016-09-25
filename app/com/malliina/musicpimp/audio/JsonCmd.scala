@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import play.api.libs.json.{JsValue, Reads}
 
 class JsonCmd(json: JsValue) {
@@ -16,13 +17,13 @@ class JsonCmd(json: JsValue) {
 
   def asValue[T : Reads] = (json \ Value).validate[T]
 
-  def track = (json \ TrackKey).validate[String]
+  def track = (json \ TrackKey).validate[TrackID]
 
-  def tracks = (json \ Tracks).validate[Seq[String]]
+  def tracks = (json \ Tracks).validate[Seq[TrackID]]
 
   def tracksOrNil = tracks getOrElse Nil
 
-  def folders = (json \ Folders).validate[Seq[String]]
+  def folders = (json \ Folders).validate[Seq[FolderID]]
 
   def foldersOrNil = folders getOrElse Nil
 

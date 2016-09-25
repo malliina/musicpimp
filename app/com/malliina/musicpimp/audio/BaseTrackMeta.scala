@@ -4,20 +4,20 @@ import java.io.InputStream
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.PimpPath
+import com.malliina.musicpimp.models.{PimpPath, TrackID}
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json
 
 import scala.concurrent.duration.Duration
 
-case class BaseTrackMeta(id: String,
+case class BaseTrackMeta(id: TrackID,
                          title: String,
                          artist: String,
                          album: String,
                          duration: Duration,
                          size: StorageSize) extends TrackMeta {
 
-  override def path: PimpPath = PimpPath(Library relativePath id)
+  override def path: PimpPath = PimpPath(Library relativePath id.id)
 
   def buildTrack(inStream: InputStream) =
     StreamedTrack(id, title, artist, album, path, duration, size, inStream)

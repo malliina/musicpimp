@@ -5,10 +5,8 @@ import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
 import com.malliina.musicpimp.audio.ServerMessage._
-import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.Library
 import com.malliina.util.Log
-import play.api.libs.json.JsValue
 import rx.lang.scala.{Observable, Subject, Subscription}
 
 import scala.concurrent.duration.Duration

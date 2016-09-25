@@ -11,8 +11,10 @@ import com.malliina.musicpimp.messaging.adm.{AdmClient, AmazonDevices}
 import com.malliina.musicpimp.messaging.apns.{APNSDevices, PimpAPNSClient}
 import com.malliina.musicpimp.messaging.gcm.{GCMDevice, GcmClient, GoogleDevices}
 import com.malliina.musicpimp.messaging.mpns.{MicrosoftClient, PushUrls}
+import com.malliina.musicpimp.models.TrackID
+import com.malliina.musicpimp.scheduler.PlaybackJob.log
 import com.malliina.push.mpns.PushUrl
-import com.malliina.util.Log
+import play.api.Logger
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -20,7 +22,7 @@ import scala.concurrent.Future
 /**
   * @param track the track to play when this job runs
   */
-case class PlaybackJob(track: String) extends Job with Log {
+case class PlaybackJob(track: TrackID) extends Job {
   def trackInfo: Option[PlayableTrack] = Library.findMeta(track)
 
   def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
@@ -52,6 +54,7 @@ case class PlaybackJob(track: String) extends Job with Log {
 }
 
 object PlaybackJob {
+  private val log = Logger(getClass)
 
   implicit object pathFormat extends JsonFormats.SimpleFormat[Path](s => Paths.get(s))
 

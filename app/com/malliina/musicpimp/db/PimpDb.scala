@@ -4,8 +4,9 @@ import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.StorageFile
-import com.malliina.musicpimp.db.PimpSchema.{folders, idsTable, tracks}
+import com.malliina.musicpimp.db.PimpSchema.{folders, tempFoldersTable, tempTracksTable, tracks}
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.FolderID
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.{Log, Utils}
 import org.h2.jdbcx.JdbcConnectionPool
@@ -40,7 +41,7 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     run(action)
   }
 
-  def folder(id: String): Future[(Seq[DataTrack], Seq[DataFolder])] = {
+  def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' in slick-lang is the same as '!='
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
@@ -53,7 +54,7 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     } yield (ts, fs)
   }
 
-  def folderOnly(id: String): Future[Option[DataFolder]] =
+  def folderOnly(id: FolderID): Future[Option[DataFolder]] =
     run(folders.filter(folder => folder.id === id).result.headOption)
 
   def allTracks = runQuery(tracks)
@@ -132,13 +133,13 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     this.synchronized {
       val ((fileCount, foldersPurged, tracksPurged), duration) = Utils.timed {
         log info "Indexing..."
-        val firstIdsDeletion = idsTable.delete
+        val firstIdsDeletion = tempFoldersTable.delete
         val musicFolders = Library.folderStream
         val updateActions = musicFolders.map(folder => folders.insertOrUpdate(folder))
         val folderUpdates = DBIO.sequence(updateActions)
-        val idInsertion = idsTable ++= musicFolders.map(f => Id(f.id))
-        val foldersDeletion = folders.filterNot(f => f.id.in(idsTable.map(_.id))).delete
-        val secondIdsDeletion = idsTable.delete
+        val idInsertion = tempFoldersTable ++= musicFolders.map(f => TempFolder(f.id))
+        val foldersDeletion = folders.filterNot(f => f.id.in(tempFoldersTable.map(i => i.id))).delete
+        val secondIdsDeletion = tempFoldersTable.delete
         val foldersInit = DBIO.seq(
           firstIdsDeletion,
           folderUpdates,
@@ -154,15 +155,15 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
             val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
             val chunkInsertion = run(DBIO.seq(
               trackUpdates,
-              idsTable ++= chunk.map(t => Id(t.id))
+              tempTracksTable ++= chunk.map(t => TempTrack(t.id))
             ))
             Await.result(chunkInsertion, 1.hour)
             fileCount += chunk.size
             observer onNext fileCount
           })
         }
-        val tracksDeletion = tracks.filterNot(t => t.id.in(idsTable.map(_.id))).delete
-        val thirdIdsDeletion = idsTable.delete
+        val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
+        val thirdIdsDeletion = tempFoldersTable.delete
         def deleteNonExistentTracks() = for {
           tracksDeleted <- database.run(tracksDeletion)
           _ <- database.run(thirdIdsDeletion)

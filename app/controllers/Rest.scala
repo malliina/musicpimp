@@ -14,7 +14,7 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
-import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo}
+import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo, TrackID}
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.BaseController
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
@@ -150,7 +150,7 @@ class Rest(webPlayer: WebPlayer,
     Ok(webStatusJson(user, RemoteInfo(user, PimpUrl.hostOnly(req))))
   }
 
-  private def localPlaybackAction(id: String): Option[EssentialAction] =
+  private def localPlaybackAction(id: TrackID): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id) map { track =>
       /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
         *
@@ -167,7 +167,7 @@ class Rest(webPlayer: WebPlayer,
     }
 
   private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
-    val relative = Library.relativePath(meta.id)
+    val relative = Library.relativePath(meta.id.id)
     // Saves the streamed media to file if possible
     val fileOpt = Library.suggestAbsolute(relative).filter(canWriteNewFile) orElse
       Option(FileUtilities.tempDir resolve relative).filter(canWriteNewFile)
@@ -265,13 +265,13 @@ class Rest(webPlayer: WebPlayer,
       val requestFile = request.file
       val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
-      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(Library.findMeta))
+      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(p => Library.findMeta(TrackID(p))))
       def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new LocalTrack("", PimpPath.Empty, meta)
+        new LocalTrack(TrackID(""), PimpPath.Empty, meta)
       }
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
       val user = Username(request.user)

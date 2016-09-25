@@ -4,7 +4,7 @@ import com.malliina.musicpimp.app.{InitOptions, PimpLoader}
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PimpUrl, SavedPlaylist}
+import com.malliina.musicpimp.models.{PimpUrl, SavedPlaylist, TrackID}
 import com.malliina.ws.HttpUtil
 import org.specs2.mutable.Specification
 import play.api.Application
@@ -20,7 +20,7 @@ object TestOptions {
 }
 
 class PlaylistsSpec extends Specification {
-  val testTracks: Seq[String] = Nil
+  val testTracks: Seq[TrackID] = Nil
   implicit val f = TrackMeta.format(PimpUrl.build("http://www.google.com").get)
 
   "Playlist" should {

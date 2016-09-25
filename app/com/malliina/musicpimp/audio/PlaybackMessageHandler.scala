@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
-import com.malliina.musicpimp.models.RemoteInfo
+import com.malliina.musicpimp.models.{FolderID, RemoteInfo, TrackID}
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
@@ -69,14 +69,14 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
     }
   }
 
-  def resolveTracksOrEmpty(folders: Seq[String], tracks: Seq[String]): Future[Seq[LocalTrack]] =
+  def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
     resolveTracks(folders, tracks) recover {
       case t: Throwable =>
         log error s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references"
         Nil
     }
 
-  def resolveTracks(folders: Seq[String], tracks: Seq[String]): Future[Seq[LocalTrack]] = {
+  def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] = {
     Future.traverse(folders)(folder => lib.tracksIn(folder).map(_.getOrElse(Nil)).map(Library.localize))
       .map(_.flatten).map(subTracks => tracks.map(Library.meta) ++ subTracks)
   }

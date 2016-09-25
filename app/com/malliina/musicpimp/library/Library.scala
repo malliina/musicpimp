@@ -8,13 +8,16 @@ import com.malliina.audio.meta.SongMeta
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
-import com.malliina.musicpimp.models.PimpPath
-import com.malliina.util.{Log, Utils}
+import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.util.Utils
+import play.api.Logger
 
 import scala.concurrent.stm.{Ref, atomic}
 
 object Library extends Library {
-  val RootId = ""
+  private val log = Logger(getClass)
+
+  val RootId = FolderID("")
   val EmptyPath = Paths get ""
 
   def relativePath(itemId: String): Path = Paths get decode(itemId)
@@ -28,10 +31,14 @@ object Library extends Library {
     */
   def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
 
+  def encodeFolder(path: Path) = FolderID(encode(path))
+
+  def encodeTrack(path: Path) = TrackID(encode(path))
+
   def decode(id: String) = URLDecoder.decode(id, "UTF-8")
 }
 
-class Library extends Log {
+class Library {
 
   import Library._
 
@@ -83,8 +90,8 @@ class Library extends Log {
 
   def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(Library.relativePath(id).getParent) getOrElse EmptyPath
-    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encode(path))
+    val path = Option(Library.relativePath(id.id).getParent) getOrElse EmptyPath
+    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
   }
 
   /** This method has a bug.
@@ -98,17 +105,17 @@ class Library extends Log {
 
   def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
 
-  def meta(itemId: String): LocalTrack = meta(relativePath(itemId))
+  def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId.id))
 
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new LocalTrack(encode(song), PimpPath(pathData.relative), meta)
+    new LocalTrack(TrackID(encode(song)), PimpPath(pathData.relative), meta)
   }
 
   def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
-  def findMeta(id: String): Option[LocalTrack] = findMeta(relativePath(id))
+  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id.id))
 
   def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 
@@ -116,17 +123,17 @@ class Library extends Log {
     try {
       // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      Option(new LocalTrack(encode(pi.relative), PimpPath(pi.relative), meta))
+      Option(new LocalTrack(encodeTrack(pi.relative), PimpPath(pi.relative), meta))
     } catch {
       case e: Exception =>
         log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.")
         None
     }
 
-  def findMetaWithTempFallback(id: String) = findMeta(id).orElse(searchTempDir(id))
+  def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
 
-  def searchTempDir(id: String): Option[LocalTrack] = {
-    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
+  def searchTempDir(id: TrackID): Option[LocalTrack] = {
+    val pathInfo = PathInfo(relativePath(id.id), FileUtilities.tempDir)
     val absolute = pathInfo.absolute
     if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
     else None
@@ -163,7 +170,7 @@ class Library extends Log {
     * @return the folder, or an empty folder if the folder could not be read
     */
   private def tryReadFolder(f: => Folder): Folder =
-    Utils.opt[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
+  Utils.opt[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
 }
 
 case class PathInfo(relative: Path, root: Path) {

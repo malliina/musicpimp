@@ -2,12 +2,12 @@ package com.malliina.musicpimp.audio
 
 import java.io.InputStream
 
-import com.malliina.musicpimp.models.PimpPath
+import com.malliina.musicpimp.models.{PimpPath, TrackID}
 import com.malliina.storage.StorageSize
 
 import scala.concurrent.duration.Duration
 
-case class StreamedTrack(id: String,
+case class StreamedTrack(id: TrackID,
                          title: String,
                          artist: String,
                          album: String,

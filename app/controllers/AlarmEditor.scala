@@ -2,6 +2,7 @@ package controllers
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.play.Authenticator
@@ -31,18 +32,18 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
   )((id, hours, minutes, ds, _, trackID, enabledOpt) => {
     //    log.info(s"submitted track with ID: $trackID")
     // converts submitted form data to a case class
-    val (days, enabled, job) = parseDaysEnabledAndJob(ds, enabledOpt, trackID)
+    val (days, enabled, job) = parseDaysEnabledAndJob(ds, enabledOpt, TrackID(trackID))
     val s = ClockSchedule(hours, minutes, days)
     ClockPlayback(id, job, s, enabled)
   })(ap => {
     // decomposes a case class to an optional tuple of its constituent values
     val i = ap.when
     val trackID = ap.job.track
-    val trackTitle = Library.findMeta(trackID).fold(trackID)(_.title)
-    Some((ap.id, i.hour, i.minute, i.days.map(_.shortName), trackTitle, trackID, Some(if (ap.enabled) ON else OFF)))
+    val trackTitle = Library.findMeta(trackID).fold(trackID.id)(_.title)
+    Some((ap.id, i.hour, i.minute, i.days.map(_.shortName), trackTitle, trackID.id, Some(if (ap.enabled) ON else OFF)))
   }))
 
-  private def parseDaysEnabledAndJob(days: Seq[String], enabledOpt: Option[String], track: String): (Seq[WeekDay], Boolean, PlaybackJob) = {
+  private def parseDaysEnabledAndJob(days: Seq[String], enabledOpt: Option[String], track: TrackID): (Seq[WeekDay], Boolean, PlaybackJob) = {
     val weekDays = days.flatMap(WeekDay.withShortName)
     val enabled = enabledOpt.contains(SchedulerStrings.ON)
     val job = PlaybackJob(track)

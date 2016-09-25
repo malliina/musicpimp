@@ -6,6 +6,7 @@ import java.nio.file.{Files, Paths}
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
+import com.malliina.musicpimp.models.FolderID
 import com.malliina.play.Authenticator
 import com.malliina.util.EnvUtils
 import controllers.SettingsController.log

@@ -2,6 +2,7 @@ package com.malliina.musicpimp.library
 
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db.PimpDb
+import com.malliina.musicpimp.models.FolderID
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
@@ -11,7 +12,7 @@ class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
   def rootFolder: Future[MusicFolder] =
     folder(Library.RootId).map(_.getOrElse(MusicFolder.empty))
 
-  def folder(id: String): Future[Option[MusicFolder]] = {
+  def folder(id: FolderID): Future[Option[MusicFolder]] = {
     for {
       parent <- db.folderOnly(id)
       content <- db.folder(id)
@@ -23,7 +24,7 @@ class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
     }
   }
 
-  def tracksIn(id: String): Future[Option[Seq[TrackMeta]]] = {
+  def tracksIn(id: FolderID): Future[Option[Seq[TrackMeta]]] = {
     folder(id) flatMap { maybeFolder =>
       maybeFolder
         .map(folder => Future.traverse(folder.folders)(sub => tracksInOrEmpty(sub.id)).map(subs => folder.tracks ++ subs.flatten)).map(_.map(Option.apply))
@@ -31,5 +32,5 @@ class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
     }
   }
 
-  private def tracksInOrEmpty(id: String) = tracksIn(id).map(_.getOrElse(Nil))
+  private def tracksInOrEmpty(id: FolderID) = tracksIn(id).map(_.getOrElse(Nil))
 }

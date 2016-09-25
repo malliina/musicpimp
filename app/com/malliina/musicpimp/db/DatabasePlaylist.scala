@@ -6,13 +6,12 @@ import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.play.models.Username
-import com.malliina.util.Log
 import slick.driver.H2Driver.api._
 import slick.lifted.Query
 
 import scala.concurrent.Future
 
-class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService with Log {
+class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService {
 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 

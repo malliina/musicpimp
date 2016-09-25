@@ -7,9 +7,6 @@ import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Log
 import play.api.libs.json.Json
 
-/**
-  * @author Michael
-  */
 trait Settings extends Log {
   val settingsFile = FileUtil.localPath("settings.json")
   val FOLDERS = "folders"

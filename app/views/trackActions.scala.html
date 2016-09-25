@@ -1,4 +1,5 @@
-@(trackID: String, extraClass: String)
+@import com.malliina.musicpimp.models.TrackID
+@(trackID: TrackID, extraClass: String)
 <div class="btn-group @extraClass">
     <a class="btn btn-primary" href="#" onclick="return play('@trackID');"><i class="glyphicon glyphicon-play"></i></a>
     <a class="btn btn-default" href="#" onclick="return add('@trackID');"><i class="glyphicon glyphicon-plus"></i></a>

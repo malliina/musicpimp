@@ -3,7 +3,7 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.WebPlayerMessageHandler.log
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.RemoteInfo
+import com.malliina.musicpimp.models.{RemoteInfo, TrackID}
 import play.api.Logger
 import play.api.libs.json._
 
@@ -61,7 +61,7 @@ trait WebPlayerMessageHandler extends JsonHandlerBase {
     }
   }
 
-  private def newTrackInfo(trackId: String) = Library meta trackId
+  private def newTrackInfo(trackId: TrackID) = Library meta trackId
 }
 
 object WebPlayerMessageHandler {

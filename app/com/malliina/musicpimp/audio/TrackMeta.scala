@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.{PimpPath, PimpUrl}
+import com.malliina.musicpimp.models.{PimpPath, PimpUrl, TrackID}
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
 import play.api.libs.json.{Format, Reads, Writes}
@@ -11,7 +11,7 @@ import play.api.mvc.{Call, RequestHeader}
 import scala.concurrent.duration.Duration
 
 trait TrackMeta {
-  def id: String
+  def id: TrackID
 
   def title: String
 

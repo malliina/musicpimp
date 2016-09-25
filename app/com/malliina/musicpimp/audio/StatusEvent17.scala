@@ -3,12 +3,13 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.AudioImplicits._
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.models.TrackID
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Writes}
 
 import scala.concurrent.duration.Duration
 
-case class StatusEvent17(id: String,
+case class StatusEvent17(id: TrackID,
                          title: String,
                          artist: String,
                          album: String,
@@ -40,7 +41,7 @@ object StatusEvent17 {
     )
   }
   val empty = StatusEvent17(
-    "",
+    TrackID(""),
     "",
     "",
     "",
