@@ -8,7 +8,7 @@ class PimpUrlTests extends FunSuite {
     val raw = "http://www.google.com/p?a=b"
     val url = PimpUrl.build(raw).get
     assert(url.proto === "http")
-    assert(url.host === "www.google.com")
+    assert(url.hostAndPort === "www.google.com")
     assert(url.uri === "/p?a=b")
     assert(url.url === raw)
   }

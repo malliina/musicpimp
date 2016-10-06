@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import java.nio.file.{Files, Path}
+import javax.net.ssl.SNIHostName
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
@@ -11,7 +12,7 @@ import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
 import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SUCCESS, Unregister}
 import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
-import com.malliina.musicpimp.http.{HttpConstants, MultipartRequest, TrustAllMultipartRequest}
+import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants, MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Folder => _, _}
 import com.malliina.musicpimp.models._
@@ -21,7 +22,6 @@ import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
-import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Util
 import com.malliina.ws.HttpUtil
@@ -58,13 +58,16 @@ case class Deps(playlists: PlaylistService,
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(uri: String, username: CloudID, password: Password, deps: Deps)
-  extends JsonSocket8(uri, SSLUtils.trustAllSslContext(), HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
+class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Deps)
+  extends JsonSocket8(
+    uri,
+    CustomSSLSocketFactory.withSNI(SNIHostName.createSNIMatcher("cloud\\.musicpimp\\.org"), new SNIHostName(uri.host)),
+    HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
 
   val messageParser = CloudMessageParser
   val cloudHost = PimpUrl(httpProtocol, hostPort, "")
   log info s"Initializing cloud connection with user $username"
-//  val remoteInfo = RemoteInfo(username, cloudHost)
+  //  val remoteInfo = RemoteInfo(username, cloudHost)
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
   implicit val trackWriter = TrackMeta.format(cloudHost)
 
@@ -309,9 +312,7 @@ class CloudSocket(uri: String, username: CloudID, password: Password, deps: Deps
       Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
         req.addHeaders(RequestId -> request.id)
         Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))
-        trackOpt.foreach(path => {
-          content(path, req)
-        })
+        trackOpt.foreach(path => content(path, req))
         val response = req.execute()
         val code = response.getStatusLine.getStatusCode
         val isSuccess = code >= 200 && code < 300
@@ -329,13 +330,14 @@ class CloudSocket(uri: String, username: CloudID, password: Password, deps: Deps
 object CloudSocket {
   private val log = Logger(getClass)
 
-  val isDev = false
+  val isDev = true
   val (hostPort, httpProtocol, socketProtocol) =
     if (isDev) ("localhost:9000", "http", "ws")
     else ("cloud.musicpimp.org", "https", "wss")
 
   def build(id: Option[CloudID], deps: Deps) = {
-    new CloudSocket(s"$socketProtocol://$hostPort/servers/ws2", id getOrElse CloudID.empty, Password("pimp"), deps)
+    val url = PimpUrl(socketProtocol, hostPort, "/servers/ws2")
+    new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
   }
 
   val notConnected = new Exception("Not connected.")

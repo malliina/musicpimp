@@ -1,10 +1,10 @@
 package com.malliina.musicpimp.cloud
 
 import java.util
-import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
 
-import com.malliina.security.SSLUtils
 import com.malliina.musicpimp.cloud.Socket8.log
+import com.malliina.musicpimp.models.PimpUrl
 import com.malliina.ws.{NotConnectedException, WebSocketBase}
 import com.neovisionaries.ws.client._
 import play.api.Logger
@@ -17,15 +17,15 @@ object Socket8 {
   private val log = Logger(getClass)
 }
 
-abstract class Socket8[T](val uri: String, sslContext: SSLContext, headers: (String, String)*)
+abstract class Socket8[T](val uri: PimpUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
   extends WebSocketBase[T] {
 
   protected val connectPromise = Promise[Unit]()
   val connectTimeout = 20.seconds
 
   val factory = new WebSocketFactory()
-  factory.setSSLContext(SSLUtils.trustAllSslContext())
-  val socket = factory.createSocket(uri, connectTimeout.toMillis.toInt)
+  factory.setSSLSocketFactory(socketFactory)
+  val socket = factory.createSocket(uri.url, connectTimeout.toMillis.toInt)
   headers.foreach {
     case (key, value) => socket.addHeader(key, value)
   }

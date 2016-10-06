@@ -5,7 +5,6 @@ import java.io.InputStream
 import com.malliina.play.ContentRange
 
 /**
- * @author Michael
  * @see http://stackoverflow.com/a/28119691/1863674
  */
 class RangedInputStream(stream: InputStream, start: Int, rangeSize: Int) extends InputStream {

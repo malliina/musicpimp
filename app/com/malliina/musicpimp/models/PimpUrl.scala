@@ -4,14 +4,15 @@ import java.util.regex.Pattern
 
 import play.api.mvc.{Call, RequestHeader}
 
-case class PimpUrl(proto: String, host: String, uri: String) {
-  val protoAndHost = s"$proto://$host"
+case class PimpUrl(proto: String, hostAndPort: String, uri: String) {
+  val host = hostAndPort.takeWhile(_ != ':')
+  val protoAndHost = s"$proto://$hostAndPort"
   val url = s"$protoAndHost$uri"
 
   def absolute(call: Call): PimpUrl = {
     val fragment = Option(call.fragment) filter (_.trim.nonEmpty) map (f => s"#$f") getOrElse ""
     val callUri = s"${call.url}$fragment"
-    PimpUrl(proto, host, callUri)
+    PimpUrl(proto, hostAndPort, callUri)
   }
 
   override def toString: String = url

@@ -37,7 +37,7 @@ object PimpBuild {
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.2.0",
+    version := "3.2.1",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -163,7 +163,7 @@ object PimpBuild {
         "com.h2database" % "h2" % "1.4.192",
         "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-        "com.neovisionaries" % "nv-websocket-client" % "1.25",
+        "com.neovisionaries" % "nv-websocket-client" % "1.30",
         "org.scalatest" %% "scalatest" % "3.0.0" % Test
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
