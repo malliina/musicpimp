@@ -40,6 +40,23 @@ case class Deps(playlists: PlaylistService,
                 lib: MusicLibrary,
                 stats: PlaybackStats)
 
+object CloudSocket {
+  private val log = Logger(getClass)
+
+  val isDev = false
+  val (hostPort, httpProtocol, socketProtocol) =
+    if (isDev) ("localhost:9000", "http", "ws")
+    else ("cloud.musicpimp.org", "https", "wss")
+
+  def build(id: Option[CloudID], deps: Deps) = {
+    val url = PimpUrl(socketProtocol, hostPort, "/servers/ws2")
+    new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
+  }
+
+  val notConnected = new Exception("Not connected.")
+  val connectionClosed = new Exception("Connection closed.")
+}
+
 /**
   * Event format:
   *
@@ -325,21 +342,4 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       })
     }
   }
-}
-
-object CloudSocket {
-  private val log = Logger(getClass)
-
-  val isDev = true
-  val (hostPort, httpProtocol, socketProtocol) =
-    if (isDev) ("localhost:9000", "http", "ws")
-    else ("cloud.musicpimp.org", "https", "wss")
-
-  def build(id: Option[CloudID], deps: Deps) = {
-    val url = PimpUrl(socketProtocol, hostPort, "/servers/ws2")
-    new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
-  }
-
-  val notConnected = new Exception("Not connected.")
-  val connectionClosed = new Exception("Connection closed.")
 }
