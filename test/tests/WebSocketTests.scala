@@ -25,16 +25,19 @@ class WebSocketTests extends FunSuite {
     val url = new URL("https://cloud.musicpimp.org")
     sslParameters.setServerNames(Seq(new SNIHostName(url.getHost)))
     val factory = new CustomSSLSocketFactory(inner, sslParameters)
-    val s = new JsonSocket8(
-      PimpUrl.build("wss://cloud.musicpimp.org/servers/ws2").get,
-      factory,
-      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("u", "p"))
-    val _ = Await.result(s.connect(), 5.seconds)
+    openSocket(factory)
   }
 
-  test("can open connection") {
-    //    SNIHostName.createSNIMatcher()
-    //    SSLUtils.trustAllSslContext().
+  test("can open socket, without SNI") {
+    openSocket(SSLUtils.trustAllSslContext().getSocketFactory)
+  }
+
+  def openSocket(socketFactory: SSLSocketFactory) = {
+    val s = new JsonSocket8(
+      PimpUrl.build("wss://cloud.musicpimp.org/servers/ws2").get,
+      socketFactory,
+      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("u", "p"))
+    val _ = Await.result(s.connect(), 5.seconds)
   }
 }
 
