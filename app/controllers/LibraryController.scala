@@ -69,7 +69,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     */
   def download(trackId: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
-      Library.findAbsolute(URLDecoder.decode(trackId.id, "UTF-8"))
+      Library.findAbsolute(trackId)
         .map(path => FileResults.fileResult(path, authReq.request))
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
     }

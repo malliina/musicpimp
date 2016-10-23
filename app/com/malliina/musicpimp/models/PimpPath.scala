@@ -12,7 +12,8 @@ case class PimpPath(path: String) {
 }
 
 object PimpPath extends SimpleCompanion[String, PimpPath] {
-  val PathSeparator: Char = '/'
+  val UnixPathSeparator: Char = '/'
+  val WindowsPathSeparator = '\\'
   val Empty = PimpPath("")
   implicit val db = MappedColumnType.base[PimpPath, String](raw, fromRaw)
 
@@ -20,5 +21,5 @@ object PimpPath extends SimpleCompanion[String, PimpPath] {
 
   def apply(path: Path): PimpPath = fromRaw(path.toString)
 
-  def fromRaw(s: String): PimpPath = PimpPath(s.replace('\\', PathSeparator))
+  def fromRaw(s: String): PimpPath = PimpPath(s.replace(WindowsPathSeparator, UnixPathSeparator))
 }

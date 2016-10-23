@@ -17,7 +17,7 @@ case class BaseTrackMeta(id: TrackID,
                          duration: Duration,
                          size: StorageSize) extends TrackMeta {
 
-  override def path: PimpPath = PimpPath(Library relativePath id.id)
+  override def path: PimpPath = PimpPath(Library relativePath id)
 
   def buildTrack(inStream: InputStream) =
     StreamedTrack(id, title, artist, album, path, duration, size, inStream)

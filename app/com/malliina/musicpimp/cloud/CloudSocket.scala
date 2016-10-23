@@ -184,9 +184,9 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       case GetPlaylist(id, user) =>
         def notFound = JsonMessages.failure(s"Playlist not found: $id")
         withDatabaseExcuse(request) {
-          playlists.playlistMeta(id, user).map(maybePlaylist => {
+          playlists.playlistMeta(id, user).map { maybePlaylist =>
             maybePlaylist.fold(sendFailureResponse(notFound, request))(pl => sendResponse(pl, request))
-          })
+          }
         }
       case SavePlaylist(playlist, user) =>
         databaseResponse(playlists.saveOrUpdatePlaylistMeta(playlist, user))
@@ -318,9 +318,12 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
     })
   }
 
-  private def withUpload(trackID: TrackID, request: RequestID, sizeCalc: Path => StorageSize, content: (Path, MultipartRequest) => Unit): Future[Unit] = {
+  private def withUpload(trackID: TrackID,
+                         request: RequestID,
+                         sizeCalc: Path => StorageSize,
+                         content: (Path, MultipartRequest) => Unit): Future[Unit] = {
     val uploadUri = s"${cloudHost.url}/track"
-    val trackOpt = Library.findAbsolute(trackID.id)
+    val trackOpt = Library.findAbsolute(trackID)
     if (trackOpt.isEmpty) {
       log warn s"Unable to find track: $trackID"
     }

@@ -14,7 +14,7 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
-import com.malliina.musicpimp.models.{PimpPath, PimpUrl, RemoteInfo, TrackID}
+import com.malliina.musicpimp.models._
 import com.malliina.play.Authenticator
 import com.malliina.play.controllers.BaseController
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
@@ -167,7 +167,7 @@ class Rest(webPlayer: WebPlayer,
     }
 
   private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
-    val relative = Library.relativePath(meta.id.id)
+    val relative = Library.relativePath(meta.id)
     // Saves the streamed media to file if possible
     val fileOpt = Library.suggestAbsolute(relative).filter(canWriteNewFile) orElse
       Option(FileUtilities.tempDir resolve relative).filter(canWriteNewFile)
@@ -258,14 +258,14 @@ class Rest(webPlayer: WebPlayer,
     headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)
-      val pathParameterOpt = firstValue("path")
+      val pathParameterOpt = firstValue("path").map(TrackID.apply)
       // if a "path" parameter is specified, attempts to move the uploaded file to that library path
       val absolutePathOpt = pathParameterOpt.flatMap(Library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
       val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
-      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(p => Library.findMeta(TrackID(p))))
+      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(p => Library.findMeta(p)))
       def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
@@ -297,7 +297,7 @@ object Rest {
     try {
       val uri = cmd.uri
       Util.using(new TrustAllMultipartRequest(uri))(req => {
-        req.setAuth(cmd.username, cmd.password)
+        req.setAuth(cmd.username.name, cmd.password.pass)
         Library.findAbsolute(cmd.track).map(file => {
           val size = Files.size(file).bytes
           log info s"Beaming: $file of size: $size to: $uri..."

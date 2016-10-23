@@ -20,7 +20,4 @@ object DataFolder {
       p.getFileName.toString,
       PimpPath(p),
       Library.encodeFolder(Option(p.getParent).getOrElse(Library.EmptyPath)))
-
-  def fromId(id: String) =
-    fromPath(Library relativePath id)
 }

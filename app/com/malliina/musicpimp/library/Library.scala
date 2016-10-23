@@ -8,7 +8,7 @@ import com.malliina.audio.meta.SongMeta
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
-import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, Identifiable, PimpPath, TrackID}
 import com.malliina.util.Utils
 import play.api.Logger
 
@@ -17,10 +17,12 @@ import scala.concurrent.stm.{Ref, atomic}
 object Library extends Library {
   private val log = Logger(getClass)
 
+  val UTF8 = "UTF-8"
+
   val RootId = FolderID("")
   val EmptyPath = Paths get ""
 
-  def relativePath(itemId: String): Path = Paths get decode(itemId)
+  def relativePath(itemId: Identifiable): Path = Paths get decode(itemId)
 
   /** Generates a URL-safe ID of the given music item.
     *
@@ -29,13 +31,13 @@ object Library extends Library {
     * @param path path to music file or folder
     * @return the id
     */
-  def encode(path: Path) = URLEncoder.encode(path.toString, "UTF-8")
+  def encode(path: Path) = URLEncoder.encode(path.toString, UTF8)
 
   def encodeFolder(path: Path) = FolderID(encode(path))
 
   def encodeTrack(path: Path) = TrackID(encode(path))
 
-  def decode(id: String) = URLDecoder.decode(id, "UTF-8")
+  def decode(trackID: Identifiable) = URLDecoder.decode(trackID.id, UTF8)
 }
 
 class Library {
@@ -90,7 +92,7 @@ class Library {
 
   def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(Library.relativePath(id.id).getParent) getOrElse EmptyPath
+    val path = Option(Library.relativePath(id).getParent) getOrElse EmptyPath
     DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
   }
 
@@ -99,13 +101,13 @@ class Library {
     * @param trackId the music item id
     * @return the absolute path to the music item id, or None if no such track exists
     */
-  def findAbsolute(trackId: String): Option[Path] = findPathInfo(relativePath(trackId)).map(_.absolute)
+  def findAbsolute(trackId: TrackID): Option[Path] = findPathInfo(relativePath(trackId)).map(_.absolute)
 
   def suggestAbsolute(relative: Path): Option[Path] = roots.headOption.map(_ resolve relative)
 
-  def suggestAbsolute(path: String): Option[Path] = suggestAbsolute(relativePath(path))
+  def suggestAbsolute(path: TrackID): Option[Path] = suggestAbsolute(relativePath(path))
 
-  def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId.id))
+  def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId))
 
   def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
@@ -115,7 +117,7 @@ class Library {
 
   def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
-  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id.id))
+  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
 
   def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 
@@ -133,7 +135,7 @@ class Library {
   def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
 
   def searchTempDir(id: TrackID): Option[LocalTrack] = {
-    val pathInfo = PathInfo(relativePath(id.id), FileUtilities.tempDir)
+    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
     val absolute = pathInfo.absolute
     if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
     else None
