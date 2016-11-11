@@ -1,0 +1,7 @@
+@import com.malliina.musicpimp.audio.TrackMeta
+@(track: TrackMeta)
+@trackActions(track, "", extra())
+
+@extra() = {
+    <a class="btn btn-default" href="#" onclick="return play('@{track.id}');">@track.title</a>
+}

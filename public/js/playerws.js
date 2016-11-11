@@ -105,6 +105,13 @@ var updatePlaylist = function (playlist) {
     currentPlaylist = playlist;
     $('li').remove(".song");
     var playlistElement = $("#playlist");
+    var isEmpty = playlist.length == 0;
+    var emptyText = $('#empty_playlist_text');
+    if (isEmpty) {
+        emptyText.show();
+    } else {
+        emptyText.hide();
+    }
     for (var i = 0; i < playlist.length; i++) {
         playlistElement.append('<li class="song">' +
             '<a href="#" onclick="skip(' + i + ')">' + playlist[i].title + '</a>' +
@@ -141,7 +148,7 @@ var onerror = function (payload) {
 var setFeedback = function (fb) {
     $('#status').html(fb);
 };
-var onSave = function() {
+var onSave = function () {
 
 };
 

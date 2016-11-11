@@ -28,7 +28,7 @@
                 <li class="lead">@folderActions(f.id) @folderTitle(f)</li>
             }
             @col.tracks.map{ t =>
-                <li class="lead">@renderSong(t) @t.title</li>
+                <li class="lead">@renderSong(t)</li>
             }
         </ul>
     }
@@ -37,7 +37,7 @@
     <a href="@routes.LibraryController.library(dir.id)">@dir.title</a>
 }
 @renderSong(song: TrackMeta) = {
-    @trackActions(song.id, "")
+    @titledTrackActions(song)
 }
 
 @columnSpan(onlyColumn: Boolean) = {
