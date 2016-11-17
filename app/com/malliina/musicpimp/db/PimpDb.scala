@@ -87,14 +87,14 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     * TODO check when this throws and whether I'm calling it correctly
     */
   def initIndex(tableName: String): Future[Unit] =
-    executePlain(
-      "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
-      "CALL FT_INIT();",
-      s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
-    ).map { _ =>
-      log info s"Initialized index for table $tableName"
-      ()
-    }
+  executePlain(
+    "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
+    "CALL FT_INIT();",
+    s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
+  ).map { _ =>
+    log info s"Initialized index for table $tableName"
+    ()
+  }
 
   def dropAll() = {
     tableQueries.foreach(t => {
@@ -127,58 +127,72 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     *
     * @return progress: total amount of files indexed
     */
-  def refreshIndex(): Observable[Long] = observe(observer => {
+  def refreshIndex(): Observable[Long] = observe { observer =>
     observer onNext 0L
     // we only want one thread to index at a time
     this.synchronized {
-      val ((fileCount, foldersPurged, tracksPurged), duration) = Utils.timed {
-        log info "Indexing..."
-        val firstIdsDeletion = tempFoldersTable.delete
-        val musicFolders = Library.folderStream
-        val updateActions = musicFolders.map(folder => folders.insertOrUpdate(folder))
-        val folderUpdates = DBIO.sequence(updateActions)
-        val idInsertion = tempFoldersTable ++= musicFolders.map(f => TempFolder(f.id))
-        val foldersDeletion = folders.filterNot(f => f.id.in(tempFoldersTable.map(i => i.id))).delete
-        val secondIdsDeletion = tempFoldersTable.delete
-        val foldersInit = DBIO.seq(
-          firstIdsDeletion,
-          folderUpdates,
-          idInsertion)
-        def updateFolders() = for {
-          _ <- run(foldersInit)
-          foldersDeleted <- run(foldersDeletion)
-          _ <- run(secondIdsDeletion)
-        } yield foldersDeleted
-        var fileCount = 0L
-        def upsertAllTracks() = {
-          Library.dataTrackStream.grouped(100).foreach(chunk => {
-            val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
-            val chunkInsertion = run(DBIO.seq(
-              trackUpdates,
-              tempTracksTable ++= chunk.map(t => TempTrack(t.id))
-            ))
-            Await.result(chunkInsertion, 1.hour)
-            fileCount += chunk.size
-            observer onNext fileCount
-          })
-        }
-        val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
-        val thirdIdsDeletion = tempFoldersTable.delete
-        def deleteNonExistentTracks() = for {
-          tracksDeleted <- database.run(tracksDeletion)
-          _ <- database.run(thirdIdsDeletion)
-        } yield tracksDeleted
-        val f = for {
-          fs <- updateFolders()
-          _ = upsertAllTracks()
-          ts <- deleteNonExistentTracks()
-        } yield (fileCount, fs, ts)
+      val (result, duration) = Utils.timed {
         // TODO
-        Await.result(f, 3.hours)
+        Await.result(runIndexer(observer), 3.hours)
       }
-      log info s"Indexing complete in $duration. Indexed $fileCount files, purged $foldersPurged folders and $tracksPurged files."
+      log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
+        s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
     }
-  })
+  }
+
+  private def runIndexer(observer: Observer[Long]): Future[IndexResult] = {
+    log info "Indexing..."
+    // deletes any old rows from previous indexings
+    val firstIdsDeletion = tempFoldersTable.delete
+    val musicFolders = Library.folderStream
+    // upserts every folder in the library to the database
+    val updateActions = musicFolders.map(folder => folders.insertOrUpdate(folder))
+    val folderUpdates = DBIO.sequence(updateActions)
+    // adds every existing folder to the temp table
+    val idInsertion = tempFoldersTable ++= musicFolders.map(f => TempFolder(f.id))
+    // deletes non-existing folders
+    val foldersDeletion = folders.filterNot(f => f.id.in(tempFoldersTable.map(i => i.id))).delete
+    val secondIdsDeletion = tempFoldersTable.delete
+    val foldersInit = DBIO.seq(
+      firstIdsDeletion,
+      folderUpdates,
+      idInsertion)
+    def updateFolders() = for {
+      _ <- run(foldersInit)
+      foldersDeleted <- run(foldersDeletion)
+      _ <- run(secondIdsDeletion)
+    } yield foldersDeleted
+    // repeat above, but for tracks
+    val oldTrackDeletion = tempTracksTable.delete
+    var fileCount = 0L
+    def upsertAllTracks() = {
+      Library.dataTrackStream.grouped(100) foreach { chunk =>
+        val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
+        val chunkInsertion = run(DBIO.seq(
+          trackUpdates,
+          tempTracksTable ++= chunk.map(t => TempTrack(t.id))
+        ))
+        Await.result(chunkInsertion, 1.hour)
+        fileCount += chunk.size
+        observer onNext fileCount
+      }
+    }
+    val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
+    val thirdIdsDeletion = tempFoldersTable.delete
+    def deleteNonExistentTracks() = for {
+      tracksDeleted <- run(tracksDeletion)
+      _ <- run(thirdIdsDeletion)
+    } yield tracksDeleted
+    def updateTracks() = for {
+      _ <- run(oldTrackDeletion)
+      _ = upsertAllTracks()
+      ts <- deleteNonExistentTracks()
+    } yield ts
+    for {
+      fs <- updateFolders()
+      ts <- updateTracks()
+    } yield IndexResult(fileCount, fs, ts)
+  }
 
   def observe[T](f: Observer[T] => Unit): Observable[T] = {
     val subject = Subject[T]()
@@ -201,4 +215,4 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
   }
 }
 
-case class IndexResult(totalFiles: Int, foldersPurged: Int, tracksPurged: Int)
+case class IndexResult(totalFiles: Long, foldersPurged: Int, tracksPurged: Int)

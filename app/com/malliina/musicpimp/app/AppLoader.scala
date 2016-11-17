@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.app
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.cloud.{Clouds, Deps}
@@ -15,10 +14,11 @@ import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang, Messages}
 import play.api.mvc.EssentialFilter
-import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigurator}
+import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigurator, Mode}
 import play.filters.gzip.GzipFilter
-import router.Routes
+
 import scala.concurrent.Future
+import router.Routes
 
 case class InitOptions(alarms: Boolean = true,
                        database: Boolean = true,
@@ -26,13 +26,21 @@ case class InitOptions(alarms: Boolean = true,
                        indexer: Boolean = true,
                        cloud: Boolean = true)
 
+object InitOptions {
+  val prod = InitOptions()
+  val dev = InitOptions(alarms = false, database = false, users = false, indexer = false, cloud = false)
+}
+
 class PimpLoader(options: InitOptions) extends ApplicationLoader {
-  def this() = this(InitOptions())
+  def this() = this(InitOptions.prod)
 
   def load(context: Context) = {
-    LoggerConfigurator(context.environment.classLoader)
-      .foreach(_.configure(context.environment))
-    new PimpComponents(context, options).application
+    val env = context.environment
+    LoggerConfigurator(env.classLoader)
+      .foreach(_.configure(env))
+    // faster app restart when in dev
+    val opts = if(env.mode == Mode.Dev) InitOptions.dev else options
+    new PimpComponents(context, opts).application
   }
 }
 
