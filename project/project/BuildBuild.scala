@@ -1,9 +1,9 @@
 import sbt.Keys._
 import sbt._
 
-object BuildBuild extends Build {
+object BuildBuild {
   // "build.sbt" goes here
-  override lazy val settings = super.settings ++ Seq(
+  val settings = Seq(
     scalaVersion := "2.10.6",
     resolvers ++= Seq(
       "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
@@ -23,7 +23,4 @@ object BuildBuild extends Build {
     "com.eed3si9n" % "sbt-buildinfo" % "0.4.0",
     "com.eed3si9n" % "sbt-assembly" % "0.11.2"
   ) map addSbtPlugin
-
-  override lazy val projects = Seq(root)
-  lazy val root = Project("plugins", file("."))
 }

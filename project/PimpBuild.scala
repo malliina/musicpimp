@@ -37,7 +37,7 @@ object PimpBuild {
 
   lazy val commonSettings = PlayProject.assetSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.3.0",
+    version := "3.4.0-SNAPSHOT",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -142,7 +142,7 @@ object PimpBuild {
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
 
-  lazy val pimpPlaySettings = assemblyConf ++
+  lazy val pimpPlaySettings =
     jenkinsSettings ++
     commonSettings ++
     nativePackagingSettings ++
@@ -172,22 +172,4 @@ object PimpBuild {
         "com.malliina.play.models.Username"
       )
     )
-
-  def assemblyConf = assemblySettings ++ Seq(
-    jarName in assembly := s"app-${version.value}.jar",
-    test in assembly :=(),
-    fullClasspath in assembly += Attributed.blank(PlayKeys.playPackageAssets.value),
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) ((old: (String => MergeStrategy)) => {
-      case "application.conf" =>
-        MergeStrategy.concat
-      case x if (x startsWith """org\apache\commons\logging""") || (x startsWith """play\core\server""") =>
-        MergeStrategy.last
-      case x if x startsWith """rx\""" =>
-        MergeStrategy.first
-      case "logger.xml" =>
-        MergeStrategy.first
-      case x =>
-        old(x)
-    })
-  )
 }
