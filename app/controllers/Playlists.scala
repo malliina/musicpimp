@@ -56,7 +56,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
           html = html.playlist(playlist.playlist, playlistForm, user),
           json = Json.toJson(playlist)
         )
-      }.getOrElse(NotFound(s"Playlist not found: $id"))
+      }.getOrElse(Errors.notFound(s"Playlist not found: $id"))
     }
   }
 
@@ -64,7 +64,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     val json = req.body
     (json \ PlaylistKey).validate[PlaylistSubmission]
       .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, req.user).map(meta => Accepted(Json.toJson(meta))))
-      .getOrElse(Future.successful(BadRequest(s"Invalid JSON: $json")))
+      .getOrElse(fut(Errors.badRequest(s"Invalid JSON: $json")))
   }
 
   def deletePlaylist(id: PlaylistID) = recoveredAsync { req =>
@@ -72,7 +72,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   }
 
   def edit = parsedRecoveredAsync(parse.json) { req =>
-    Future.successful(Ok)
+    fut(Ok)
   }
 
   def handleSubmission = recoveredAsync { req =>
@@ -82,7 +82,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
         service.playlistsMeta(user).map(pls => BadRequest(html.playlists(pls.playlists, user)))
       },
       submission => {
-        Future.successful(Redirect(routes.Playlists.playlists()))
+        fut(Redirect(routes.Playlists.playlists()))
       }
     )
   }
@@ -99,9 +99,9 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
       Unauthorized
     case pe: PimpException =>
       log.error(s"Pimp error", pe)
-      InternalServerError
+      Errors.internalGeneric
     case t: Throwable =>
       log.error(s"Server error", t)
-      InternalServerError
+      Errors.internalGeneric
   }
 }

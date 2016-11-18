@@ -16,7 +16,7 @@ class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, m
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
     val term = query("term")
     val limit = query("limit").filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DefaultLimit
-    val results = term.fold(Future.successful(Seq.empty[DataTrack]))(databaseSearch(_, limit))
+    val results = term.fold(fut(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map { tracks =>
       respond(req)(
         html = views.html.search(term, tracks, s.wsUrl(req), req, req.user),

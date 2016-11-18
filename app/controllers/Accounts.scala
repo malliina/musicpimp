@@ -61,7 +61,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     if (user != request.user) {
       (userManager deleteUser user).map(_ => redir)
     } else {
-      Future.successful(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
+      fut(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
     }
   }
 
@@ -104,7 +104,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
-        Future.successful(BadRequest(html.login(accs, formWithErrors, None, request.flash)))
+        fut(BadRequest(html.login(accs, formWithErrors, None, request.flash)))
       },
       credentials => {
         val username = credentials.username
@@ -119,12 +119,12 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
               val cookie = rememberMe persistNewCookie username
               cookie.map(c => result.withCookies(c))
             } else {
-              Future.successful(result)
+              fut(result)
             }
           } else {
             log.warn(s"Invalid form authentication for user $username")
             // TODO show an "authentication failed" message to the user
-            Future.successful(Unauthorized)
+            fut(Unauthorized)
           }
         }
       }
@@ -138,7 +138,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     accs.changePasswordForm.bindFromRequest()(request).fold(
       errors => {
         log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
-        Future.successful(BadRequest(html.account(user, errors, request.flash)))
+        fut(BadRequest(html.account(user, errors, request.flash)))
       },
       pc => {
         validateCredentials(user, pc.oldPass) flatMap { isValid =>
@@ -148,7 +148,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
             }
           } else {
-            Future.successful(BadRequest(html.account(user, accs.changePasswordForm, request.flash)))
+            fut(BadRequest(html.account(user, accs.changePasswordForm, request.flash)))
           }
         }
       }

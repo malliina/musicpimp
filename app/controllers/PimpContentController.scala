@@ -71,8 +71,8 @@ object PimpContentController {
   def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains "json" => Future.successful(json)
-      case _ => Future.successful(Results.NotAcceptable)
+      case Some(format) if format contains "json" => fut(json)
+      case _ => fut(Results.NotAcceptable)
     }
 }
 

@@ -113,7 +113,7 @@ class Rest(webPlayer: WebPlayer,
         try {
           val (response, duration) = Utils.timed(Rest.beam(cmd))
           response.fold(
-            errorMsg => BadRequest(JsonMessages.failure(errorMsg)),
+            errorMsg => Errors.badRequest(errorMsg),
             httpResponse => {
               // relays MusicBeamer's response to the client
               val statusCode = httpResponse.getStatusLine.getStatusCode
@@ -126,8 +126,9 @@ class Rest(webPlayer: WebPlayer,
             })
         } catch {
           case uhe: UnknownHostException =>
-            NotFound(JsonMessages.failure(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}"))
+            Errors.notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
           case e: Exception =>
+            log.error("Stream failure", e)
             InternalServerError
         }
       }
@@ -236,11 +237,10 @@ class Rest(webPlayer: WebPlayer,
       } catch {
         case iae: IllegalArgumentException =>
           log error("Illegal argument", iae)
-          val errorMessage = JsonMessages.failure(iae.getMessage)
-          BadRequest(errorMessage)
+          Errors.badRequest(iae.getMessage)
         case t: Throwable =>
           log error("Unable to execute action", t)
-          InternalServerError
+          Errors.internalGeneric
       }
     }
 

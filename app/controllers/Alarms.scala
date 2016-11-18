@@ -53,8 +53,9 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
 
   private def simpleResult[T](json: JsValue, result: JsResult[T]): Result = {
     result.fold(
-      errors => BadRequest(JsonMessages.failure(s"Invalid JSON: $json. Errors: $errors.")),
-      valid => Ok)
+      errors => Errors.badRequest(s"Invalid JSON: $json. Errors: $errors."),
+      valid => Ok
+    )
   }
 }
 

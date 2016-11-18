@@ -56,7 +56,7 @@ class Website(sockets: WebSocketController,
   protected def metaAction(f: (DataRequest, RequestHeader) => Future[Result]) =
     userAction { req =>
       DataRequest.fromRequest(req).fold(
-        error => Future.successful(BadRequest(JsonMessages.failure(error))),
+        error => fut(Errors.badRequest(error)),
         meta => f(meta, req)
       )
     }

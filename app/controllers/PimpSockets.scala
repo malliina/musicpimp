@@ -23,7 +23,7 @@ abstract class PimpSockets(auth: Authenticator, val mat: Materializer)
 
   override def authenticateAsync(req: RequestHeader): Future[AuthedRequest] = {
     security.authenticate(req).flatMap(opt => opt
-      .map(Future.successful)
+      .map(fut)
       .getOrElse(Future.failed(new NoSuchElementException(s"Auth failed from ${req.remoteAddress}"))))
   }
 

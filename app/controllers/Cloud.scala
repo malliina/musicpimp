@@ -36,7 +36,7 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
         val redir = Redirect(routes.Cloud.cloud())
         if (clouds.client.isConnected) {
           clouds.disconnectAndForget()
-          Future.successful(redir)
+          fut(redir)
         } else {
           val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
           clouds.connect(maybeID).map(_ => redir).recover(errorMessage andThen (msg => redir.flashing(FEEDBACK -> msg)))

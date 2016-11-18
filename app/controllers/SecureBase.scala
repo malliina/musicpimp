@@ -89,7 +89,7 @@ class SecureBase(auth: Authenticator, mat: Materializer)
     }
 
   def pimpParsedAction[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Result) =
-    pimpParsedActionAsync(parser)(req => Future.successful(f(req)))
+    pimpParsedActionAsync(parser)(req => fut(f(req)))
 
   def pimpActionAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
     pimpParsedActionAsync(parse.default)(f)
