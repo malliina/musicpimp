@@ -23,7 +23,7 @@ class Alarms(auth: Authenticator, messages: Messages, mat: Materializer)
   def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
     respond(request)(
-      html = views.html.alarms(content),
+      html = views.html.alarms(content, request.user),
       json = Json.toJson(content)
     )
   }

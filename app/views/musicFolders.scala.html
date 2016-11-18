@@ -1,5 +1,6 @@
-@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String)(implicit messages: Messages)
-@manage("folders") {
+@import com.malliina.play.models.Username
+@(folders: Seq[String], newFolderForm: Form[String], folderPlaceHolder: String, username: Username, messages: Messages)
+@manage("folders", username) {
     @bs.headerRow("Music Folders", "col-md-8")
-    @editFolders(folders, newFolderForm, folderPlaceHolder)
+    @editFolders(folders, newFolderForm, folderPlaceHolder, messages)
 }

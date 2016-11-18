@@ -19,7 +19,7 @@ class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, m
     val results = term.fold(Future.successful(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map { tracks =>
       respond(req)(
-        html = views.html.search(term, tracks, s.wsUrl(req), req),
+        html = views.html.search(term, tracks, s.wsUrl(req), req, req.user),
         json = Json.toJson(tracks)
       )
     }

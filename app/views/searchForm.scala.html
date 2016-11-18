@@ -1,5 +1,5 @@
-@(query: Option[String] = None, size: String = "input-group-lg")
-<form action="@routes.SearchPage.search()" role="search" class="navbar-form">
+@(query: Option[String] = None, formClass: String, size: String = "input-group-lg")
+<form action="@routes.SearchPage.search()" role="search" class="@formClass">
     <div class="input-group @size">
         <input type="text" class="form-control" placeholder="@{query.getOrElse("artist, album or track...")}" name="term" id="term">
         <div class="input-group-btn">

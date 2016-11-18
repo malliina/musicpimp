@@ -1,7 +1,7 @@
 @import com.malliina.play.auth.RememberMeCredentials
 @import com.malliina.play.controllers.AccountForms
 
-@(accounts: AccountForms, loginForm: Form[RememberMeCredentials], motd: Option[String] = None)(implicit flash: Flash)
+@(accounts: AccountForms, loginForm: Form[RememberMeCredentials], motd: Option[String], flash: Flash)
 
 @basePage(title = "Welcome") {
     @util.css2("login.css")

@@ -30,7 +30,7 @@ class Website(sockets: WebSocketController,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    html.player(serverWS.wsUrl(req), feedback)(req)
+    html.player(serverWS.wsUrl(req), feedback, req.user, req)
   }
 
   def recent = metaAction { (meta, req) =>
@@ -77,9 +77,9 @@ class Website(sockets: WebSocketController,
       s"Playback could not be started. $msg"
   }
 
-  def popupPlayer = navigate(req => html.popupPlayer(sockets.wsUrl(req))(req))
+  def popupPlayer = navigate(req => html.popupPlayer(sockets.wsUrl(req), req))
 
-  def about = navigate(html.aboutBase())
+  def about = navigate(req => html.aboutBase(req.user))
 
-  def parameters = navigate(html.parameters())
+  def parameters = navigate(req => html.parameters(req.user))
 }

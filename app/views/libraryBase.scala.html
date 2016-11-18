@@ -1,6 +1,7 @@
-@(tab: String)(content: Html)
+@import com.malliina.play.models.Username
+@(tab: String, username: Username)(content: Html)
 
-@indexMain("library") {
+@indexMain("library", username) {
     <ul class="nav nav-tabs">
         @navItem("Folders", "folders", routes.LibraryController.rootLibrary(), "fa fa-folder-open")
         @navItem("Most Played", "popular", routes.Website.popular(), "fa fa-list")

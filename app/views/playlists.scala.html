@@ -1,8 +1,9 @@
 @import bs.rowColumn12
 @import com.malliina.musicpimp.models.SavedPlaylist
-@(lists: Seq[SavedPlaylist])
+@import com.malliina.play.models.Username
+@(lists: Seq[SavedPlaylist], username: Username)
 
-@indexMain("playlists") {
+@indexMain("playlists", username) {
     @bs.headerRow("Playlists")
     @if(lists.isEmpty) {
         @rowColumn12 {

@@ -1,6 +1,8 @@
-@(wsUrl: String, feedback: Option[String])(implicit request: RequestHeader)
+@import com.malliina.play.models.Username
 
-@basePlayer(feedback) {
+@(wsUrl: String, feedback: Option[String], username: Username, request: RequestHeader)
+
+@basePlayer(feedback, username, request) {
     @util.script2("json.js", "playerws.js")
-    @wsopen(wsUrl)
+    @wsopen(wsUrl, request)
 }

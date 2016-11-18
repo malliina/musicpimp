@@ -1,11 +1,12 @@
 @import com.malliina.play.models.Username
 @import com.malliina.musicpimp.models.NewUser
+@import util.div
 
-@(users: Seq[Username], addForm: Form[NewUser])(implicit flash: Flash)
-@manage("users") {
+@(users: Seq[Username], addForm: Form[NewUser], username: Username,  flash: Flash)
+@manage("users", username) {
     @bs.row {
-        @util.div("col-md-6") {
-            @util.div("page-header") {
+        @div("col-md-6") {
+            @div("page-header") {
                 <h1>Users</h1>
             }
             <table class="table table-striped table-hover">
@@ -26,11 +27,11 @@
                 <div class="lead alert alert-danger" role="alert">@feedback</div>
             }
         }
-        @util.div("col-md-4") {
-            @util.div("page-header") {
+        @div("col-md-4") {
+            @div("page-header") {
                 <h1>Add user</h1>
             }
-            @addUser(addForm)
+            @addUser(addForm, flash)
         }
     }
 }

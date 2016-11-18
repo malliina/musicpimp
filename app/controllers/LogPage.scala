@@ -7,7 +7,6 @@ import com.malliina.util.Logging
 import controllers.LogPage.log
 import play.api.Logger
 import play.api.data.{Form, Forms}
-import play.api.mvc.RequestHeader
 import views.html
 
 class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
@@ -32,8 +31,8 @@ class LogPage(sockets: PimpLogs, auth: Authenticator, mat: Materializer)
     )
   }
 
-  private def logPage(form: Form[Level], req: RequestHeader) =
-    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level)(req)
+  private def logPage(form: Form[Level], req: PimpRequest) =
+    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level, req.user, None, req)
 }
 
 object LogPage {

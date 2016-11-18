@@ -1,11 +1,11 @@
 @import com.malliina.play.models.PasswordChange
 @import com.malliina.play.models.Username
 
-@(username: Username, helloForm: Form[PasswordChange])(implicit flash: Flash)
+@(username: Username, helloForm: Form[PasswordChange], flash: Flash)
 
-@manage("account") {
+@indexMain("account", username) {
     @bs.headerRow("Account", "col-md-4")
     @bs.rowColumn("col-md-4") {
-        @changePassword(username, helloForm)
+        @changePassword(username, helloForm, flash)
     }
 }

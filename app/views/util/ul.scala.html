@@ -1,0 +1,7 @@
+@(clazz: String)(content: Html)
+
+@if(clazz.isEmpty) {
+    <ul>@content</ul>
+} else {
+    <ul class="@clazz">@content</ul>
+}

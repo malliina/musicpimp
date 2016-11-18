@@ -23,14 +23,14 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
 
   def cloud = pimpActionAsync { request =>
     val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
-    id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2)(request.flash)))
+    id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2, request.user, request.flash)))
   }
 
   def toggle = pimpParsedActionAsync(parse.default) { request =>
     cloudForm.bindFromRequest()(request).fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
-        Future successful BadRequest(html.cloud(this, formErrors)(request.flash))
+        Future successful BadRequest(html.cloud(this, formErrors, None, None, request.user, request.flash))
       },
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())

@@ -2,10 +2,11 @@
 @import com.malliina.musicpimp.audio.{FolderMeta,TrackMeta}
 @import util.div
 @import com.malliina.musicpimp.models.PimpPath
+@import com.malliina.play.models.Username
 
-@(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn)
+@(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username)
 
-@libraryBase("folders") {
+@libraryBase("folders", username) {
     @div("page-header") {
         <h1>Library <small>@relativePath.path</small></h1>
     }

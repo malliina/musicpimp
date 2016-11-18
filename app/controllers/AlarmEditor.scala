@@ -6,15 +6,13 @@ import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.play.Authenticator
-import com.malliina.play.http.CookiedRequest
-import com.malliina.play.models.Username
 import controllers.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
 import play.api.data.{Form, Forms}
 import play.api.http.Writeable
 import play.api.i18n.Messages
-import play.api.mvc.{AnyContent, Request, Result}
+import play.api.mvc.Result
 import views.html
 
 class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
@@ -59,26 +57,27 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
   }
 
   private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =
-    pimpAction(Ok(html.alarmEditor(form, feedback)(messages)))
+    pimpAction(req => Ok(html.alarmEditor(form, feedback, req.user)(messages)))
 
   def newClock() = formSubmission(clockForm)(
-    err => {
-      html.alarmEditor(err)(messages)
+    (req, err) => {
+      html.alarmEditor(err, None, req.user)(messages)
     },
     (req, form, ap) => {
       ScheduledPlaybackService.save(ap)
       log.info(s"User: ${req.user} from: ${req.remoteAddress} saved alarm: $ap")
-      Ok(html.alarmEditor(form, Some("Saved."))(messages))
+      Ok(html.alarmEditor(form, Some("Saved."), req.user)(messages))
     })
 
-  private def formSubmission[T, C: Writeable](form: Form[T])(err: Form[T] => C, ok: (CookiedRequest[AnyContent, Username], Form[T], T) => Result) =
+  private def formSubmission[T, C: Writeable](form: Form[T])(err: (PimpRequest, Form[T]) => C, ok: (PimpRequest, Form[T], T) => Result) =
     pimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
 
-  private def handle[T, C: Writeable](form: Form[T], request: Request[_])(errorContent: Form[T] => C, okRedir: (Form[T], T) => Result) = {
+  private def handle[T, C: Writeable](form: Form[T], request: PimpRequest)(errorContent: (PimpRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) = {
     val filledForm = form.bindFromRequest()(request)
     filledForm.fold(
-      errors => BadRequest(errorContent(errors)),
-      success => okRedir(filledForm, success))
+      errors => BadRequest(errorContent(request, errors)),
+      success => okRedir(filledForm, success)
+    )
   }
 }
 

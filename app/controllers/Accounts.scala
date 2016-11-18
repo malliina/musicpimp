@@ -49,11 +49,11 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     .verifying("The password was incorrectly repeated.", _.passwordsMatch))
 
   def account = pimpAction { request =>
-    Ok(html.account(request.user, accs.changePasswordForm)(request.flash))
+    Ok(html.account(request.user, accs.changePasswordForm, request.flash))
   }
 
   def users = pimpActionAsync { request =>
-    userManager.users.map(us => Ok(html.users(us, addUserForm)(request.flash)))
+    userManager.users.map(us => Ok(html.users(us, addUserForm, request.user, request.flash)))
   }
 
   def delete(user: Username) = pimpActionAsync { request =>
@@ -68,7 +68,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
   def login = Action.async { request =>
     userManager.isDefaultCredentials.map { isDefault =>
       val motd = if (isDefault) Option(defaultCredentialsMessage) else None
-      Ok(html.login(accs, rememberMeLoginForm, motd)(request.flash))
+      Ok(html.login(accs, rememberMeLoginForm, motd, request.flash))
     }
   }
 
@@ -86,7 +86,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Unable to add user: $user from: $remoteAddress, form: $formWithErrors"
-        userManager.users.map(users => BadRequest(html.users(users, formWithErrors)(request.flash)))
+        userManager.users.map(users => BadRequest(html.users(users, formWithErrors, request.user, request.flash)))
       },
       newUser => {
         val addCall = userManager.addUser(newUser.username, newUser.pass)
@@ -104,7 +104,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: $user from: $remoteAddress"
-        Future.successful(BadRequest(html.login(accs, formWithErrors)(request.flash)))
+        Future.successful(BadRequest(html.login(accs, formWithErrors, None, request.flash)))
       },
       credentials => {
         val username = credentials.username
@@ -138,7 +138,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     accs.changePasswordForm.bindFromRequest()(request).fold(
       errors => {
         log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
-        Future.successful(BadRequest(html.account(user, errors)(request.flash)))
+        Future.successful(BadRequest(html.account(user, errors, request.flash)))
       },
       pc => {
         validateCredentials(user, pc.oldPass) flatMap { isValid =>
@@ -148,7 +148,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
               Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
             }
           } else {
-            Future.successful(BadRequest(html.account(user, accs.changePasswordForm)(request.flash)))
+            Future.successful(BadRequest(html.account(user, accs.changePasswordForm, request.flash)))
           }
         }
       }

@@ -7,6 +7,7 @@ import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
+import com.malliina.play.models.Username
 import com.malliina.play.{Authenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -42,9 +43,9 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
     )
   }
 
-  private def folderResult(collection: => MusicFolder, request: RequestHeader): Result = {
+  private def folderResult(collection: => MusicFolder, request: PimpRequest): Result = {
     respond(request)(
-      html = toHtml(collection),
+      html = toHtml(collection, request.user),
       json = Json.toJson(collection)(MusicFolder.writer(request))
     )
   }
@@ -87,14 +88,14 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))
 
-  def toHtml(folder: MusicFolder): play.twirl.api.Html = {
+  def toHtml(folder: MusicFolder, username: Username): play.twirl.api.Html = {
     val (col1, col2, col3) = columnify(folder) match {
       case Nil => (MusicColumn.empty, MusicColumn.empty, MusicColumn.empty)
       case h :: Nil => (h, MusicColumn.empty, MusicColumn.empty)
       case f :: s :: Nil => (f, s, MusicColumn.empty)
       case f :: s :: t :: tail => (f, s, t)
     }
-    html.library(folder.folder.path, col1, col2, col3)
+    html.library(folder.folder.path, col1, col2, col3, username)
   }
 
   /** Arranges a music collection into columns.

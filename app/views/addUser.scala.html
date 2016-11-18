@@ -1,6 +1,6 @@
 @import com.malliina.musicpimp.models.NewUser
 
-@(addForm: Form[NewUser])(implicit flash: Flash)
+@(addForm: Form[NewUser], flash: Flash)
 <form role="form" action = "@routes.Accounts.formAddUser()" method="POST">
     <div class="form-group">
         <label for="username">Username</label>

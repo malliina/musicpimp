@@ -8,6 +8,7 @@ import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.musicpimp.models.FolderID
 import com.malliina.play.Authenticator
+import com.malliina.play.models.Username
 import com.malliina.util.EnvUtils
 import controllers.SettingsController.log
 import play.api.Logger
@@ -28,13 +29,13 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
 
   def manage = settings
 
-  def settings = navigate(foldersPage(newFolderForm))
+  def settings = navigate(req => foldersPage(newFolderForm, req.user))
 
   def newFolder = pimpAction { request =>
     newFolderForm.bindFromRequest()(request).fold(
       formWithErrors => {
         log warn s"Errors: ${formWithErrors.errors}"
-        BadRequest(foldersPage(formWithErrors))
+        BadRequest(foldersPage(formWithErrors, request.user))
       },
       path => {
         Settings.add(Paths get path)
@@ -55,9 +56,8 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
 
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
-  private def foldersPage(form: Form[String]) = {
-    html.musicFolders(Settings.readFolders, form, folderPlaceHolder)(messages)
-  }
+  private def foldersPage(form: Form[String], username: Username) =
+    html.musicFolders(Settings.readFolders, form, folderPlaceHolder, username, messages)
 
   private def onFoldersChanged() = {
     Library.reloadFolders()

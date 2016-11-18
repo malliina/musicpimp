@@ -1,9 +1,11 @@
 @import bs.rowColumn12
 @import com.malliina.musicpimp.models.SavedPlaylist
 @import com.malliina.musicpimp.library.PlaylistSubmission
-@(playlist: SavedPlaylist, form: Form[PlaylistSubmission])
+@import com.malliina.play.models.Username
 
-@indexMain("playlist") {
+@(playlist: SavedPlaylist, form: Form[PlaylistSubmission], username: Username)
+
+@indexMain("playlist", username) {
     @bs.headerRow("Playlist")
     <p class="lead">@playlist.name</p>
     @if(playlist.tracks.isEmpty) {

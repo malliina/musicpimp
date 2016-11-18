@@ -1,24 +1,27 @@
-@(cloud: Cloud, cloudForm: Form[Option[String]], serverID: Option[String] = None, feedback: Option[String] = None)(implicit flash: Flash)
+@import com.malliina.play.models.Username
+@import bs.{rowColumn, headerRow}
 
-@manage("cloud") {
-    @bs.headerRow("Cloud", "col-md-12", "Connect this server to the cloud.")
-    @bs.rowColumn("col-md-6") {
+@(cloud: Cloud, cloudForm: Form[Option[String]], serverID: Option[String], feedback: Option[String], username: Username, flash: Flash)
+
+@manage("cloud", username) {
+    @headerRow("Cloud", "col-md-12", "Connect this server to the cloud.")
+    @rowColumn("col-md-6") {
         @toggleButton(serverID.map(_ => "Disconnect").getOrElse("Connect"))
     }
-    @bs.rowColumn("col-md-6") {
+    @rowColumn("col-md-6") {
         @serverID.map(connectedHtml)
     }
-    @bs.rowColumn("col-md-6") {
+    @rowColumn("col-md-6") {
         @feedback.map { fb =>
             <p class="lead error">@fb</p>
         }
     }
-    @bs.rowColumn("col-md-6") {
+    @rowColumn("col-md-6") {
         @flash.get(cloud.FEEDBACK).map { message =>
             <p class="lead">@message</p>
         }
     }
-    @bs.rowColumn("col-md-6") {
+    @rowColumn("col-md-6") {
         <p>How does this work?</p>
         <p>This server will open a connection to a machine on the internet. Your mobile device connects to the
             same machine on the internet and communicates with this server through the machine both parties have

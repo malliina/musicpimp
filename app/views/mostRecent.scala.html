@@ -3,7 +3,7 @@
 @(entries: Seq[RecentEntry], user: Username)
 @import bs.rowColumn12
 
-@libraryBase("recent") {
+@libraryBase("recent", user) {
     @rowColumn12 {
         <div class="page-header">
             <h1>Most recent <small class="hidden-xs">by @user.name</small></h1>

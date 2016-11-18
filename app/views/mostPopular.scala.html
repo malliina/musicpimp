@@ -4,7 +4,7 @@
 
 @(entries: Seq[PopularEntry], user: Username)
 
-@libraryBase("popular") {
+@libraryBase("popular", user) {
     @rowColumn12 {
         <div class="page-header">
             <h1>Most popular <small class="hidden-xs">by @user.name</small></h1>

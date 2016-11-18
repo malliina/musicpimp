@@ -24,7 +24,7 @@ import scala.collection.JavaConversions._
 class ConnectController(auth: Authenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
 
-  def connect = navigate(html.connectApp())
+  def connect = navigate(req => html.connectApp(req.user))
 
   def image = pimpAction { req =>
     val qrText = stringify(Json.toJson(coordinate(req))(Coordinate.json))

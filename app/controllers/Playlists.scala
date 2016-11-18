@@ -38,9 +38,10 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
 
   def playlists = recoveredAsync { req =>
     implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
-    service.playlistsMeta(req.user).map(playlists => {
+    val user = req.user
+    service.playlistsMeta(user).map(playlists => {
       respond(req)(
-        html = html.playlists(playlists.playlists),
+        html = html.playlists(playlists.playlists, user),
         json = Json.toJson(playlists)
       )
     })
@@ -48,10 +49,11 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
 
   def playlist(id: PlaylistID) = recoveredAsync { req =>
     implicit val f = TrackMeta.format(req)
-    service.playlistMeta(id, req.user).map { result =>
+    val user = req.user
+    service.playlistMeta(id, user).map { result =>
       result.map { playlist =>
         respond(req)(
-          html = html.playlist(playlist.playlist, playlistForm),
+          html = html.playlist(playlist.playlist, playlistForm, user),
           json = Json.toJson(playlist)
         )
       }.getOrElse(NotFound(s"Playlist not found: $id"))
@@ -74,9 +76,10 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   }
 
   def handleSubmission = recoveredAsync { req =>
+    val user = req.user
     playlistForm.bindFromRequest()(req).fold(
       errors => {
-        service.playlistsMeta(req.user).map(pls => BadRequest(html.playlists(pls.playlists)))
+        service.playlistsMeta(user).map(pls => BadRequest(html.playlists(pls.playlists, user)))
       },
       submission => {
         Future.successful(Redirect(routes.Playlists.playlists()))

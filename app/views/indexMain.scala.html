@@ -1,5 +1,7 @@
-@(tabName: String)(content: Html)
-@import util.div
+@import com.malliina.play.models.Username
+@(tabName: String, user: Username)(content: Html)
+@import util.{div, li, ul}
+
 @basePage("MusicPimp") {
     @div("navbar navbar-default navbar-static-top") {
         @div("container") {
@@ -12,17 +14,24 @@
                 <a class="navbar-brand" href="@routes.LibraryController.rootLibrary()">MusicPimp</a>
             }
             @div("navbar-collapse collapse") {
-                <ul class="nav navbar-nav">
+                @ul("nav navbar-nav") {
                     @navItem("Library", routes.LibraryController.rootLibrary(), "list")
                     @navItem("Player", routes.Website.player(), "music")
-                </ul>
-                <ul class="nav navbar-nav navbar-right">
-                    @navItem("Manage", routes.SettingsController.manage(), "wrench")
-                    @navItem("About", routes.Website.about(), "globe")
-                    <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Logout</a></li>
-                </ul>
+                }
+                @ul("nav navbar-nav navbar-right") {
+                    @li("dropdown") {
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="glyphicon glyphicon-user"></i> @{user.name} <span class="caret"></span></a>
+                        @ul("dropdown-menu") {
+                            @navItem("Account", routes.Accounts.account(), "pencil")
+                            @navItem("Manage", routes.SettingsController.manage(), "wrench")
+                            @navItem("About", routes.Website.about(), "globe")
+                            <li role="separator" class="divider"></li>
+                            <li><a href="@routes.Accounts.logout()"><i class="glyphicon glyphicon-off"></i> Sign Out</a></li>
+                        }
+                    }
+                }
                 @div("col-md-4 pull-right") {
-                    @searchForm(None, "")
+                    @searchForm(None, formClass = "navbar-form", size = "")
                 }
             }
         }
