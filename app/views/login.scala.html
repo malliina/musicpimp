@@ -1,34 +1,41 @@
 @import com.malliina.play.auth.RememberMeCredentials
 @import com.malliina.play.controllers.AccountForms
-
+@import util.{div, css2}
+@import bs.rowColumn
 @(accounts: AccountForms, loginForm: Form[RememberMeCredentials], motd: Option[String], flash: Flash)
 
 @basePage(title = "Welcome") {
-    @util.css2("login.css")
-    @util.div("container") {
-        @bs.rowColumn("col-md-4 form-signin") {
+    @css2("login.css")
+    @div("container") {
+        @rowColumn("col-md-4 form-signin") {
             @flash.get(accounts.feedback).map { message =>
                 <div class="lead alert alert-success">@message</div>
             }
         }
-        @bs.rowColumn("col-md-4") {
+        @rowColumn("col-md-4") {
             <form class="form-signin" name="loginForm" action="@routes.Accounts.formAuthenticate()" method="POST">
-                <h2 class="form-signin-heading">Please sign in</h2>
-                <input type="text" class="form-control" name="@accounts.userFormKey" id="@accounts.userFormKey" placeholder="Username" autofocus>
-                <input type="password" class="form-control" name="@accounts.passFormKey" id="@accounts.passFormKey" placeholder="Password">
-                <label class="checkbox">
-                    <input type="checkbox" value="true" name="@accounts.rememberMeKey" id="@accounts.rememberMeKey">
-                    Remember me
-                </label>
-                <button type="submit" id="loginbutton" class="btn btn-lg btn-primary btn-block">Sign in</button>
+                <h2>Please sign in</h2>
+                @div("form-group") {
+                    <input type="text" class="form-control" name="@accounts.userFormKey" id="@accounts.userFormKey" placeholder="Username" autofocus>
+                }
+                @div("form-group") {
+                    <input type="password" class="form-control" name="@accounts.passFormKey" id="@accounts.passFormKey" placeholder="Password">
+                }
+                @div("checkbox") {
+                    <label>
+                        <input type="checkbox" value="true" name="@accounts.rememberMeKey" id="@accounts.rememberMeKey">
+                        Remember me
+                    </label>
+                }
+                <button type="submit" class="btn btn-lg btn-primary btn-block">Sign in</button>
             </form>
         }
-        @bs.rowColumn("col-md-4") {
+        @rowColumn("col-md-4") {
             @loginForm.globalError.map { error =>
                 <div class="alert alert-warning form-signin" role="alert">@error.message</div>
             }
         }
-        @bs.rowColumn("col-md-4 form-signin") {
+        @rowColumn("col-md-4 form-signin") {
             @motd.map { message =>
                 <p>@message</p>
             }
