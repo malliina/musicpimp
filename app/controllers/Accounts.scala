@@ -13,8 +13,6 @@ import play.api.data.Forms._
 import play.api.mvc._
 import views.html
 
-import scala.concurrent.Future
-
 object Accounts {
   private val log = Logger(getClass)
 
@@ -38,6 +36,8 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     s"Consider changing the password under the Manage tab once you have logged in."
   val passwordChangedMessage = "Password successfully changed."
   val logoutMessage = "You have now logged out."
+  val repeatPassFailureMessage = "The password was incorrectly repeated."
+  val cannotDeleteYourself = "You cannot delete yourself."
 
   val rememberMeLoginForm = accs.rememberMeLoginForm
 
@@ -46,7 +46,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     accs.newPassKey -> Password.mapping,
     accs.newPassAgainKey -> Password.mapping
   )(NewUser.apply)(NewUser.unapply)
-    .verifying("The password was incorrectly repeated.", _.passwordsMatch))
+    .verifying(repeatPassFailureMessage, _.passwordsMatch))
 
   def account = pimpAction { request =>
     Ok(html.account(request.user, accs.changePasswordForm, request.flash))
@@ -61,7 +61,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     if (user != request.user) {
       (userManager deleteUser user).map(_ => redir)
     } else {
-      fut(redir.flashing(Accounts.UsersFeedback -> "You cannot delete yourself."))
+      fut(redir.flashing(Accounts.UsersFeedback -> cannotDeleteYourself))
     }
   }
 
@@ -123,8 +123,8 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
             }
           } else {
             log.warn(s"Invalid form authentication for user $username")
-            // TODO show an "authentication failed" message to the user
-            fut(accessDenied)
+            val errorForm = rememberMeLoginForm.withGlobalError("Incorrect username or password.")
+            fut(BadRequest(html.login(accs, errorForm, None, request.flash)))
           }
         }
       }
