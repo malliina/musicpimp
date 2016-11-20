@@ -2,12 +2,15 @@ package controllers
 
 import com.malliina.musicpimp.json.JsonMessages
 import play.api.mvc.Results
-import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound}
+import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Unauthorized}
 
 object Errors extends Errors
 
 trait Errors {
   val genericMessage = "Something went wrong."
+  val accessDeniedMessage = "Access denied."
+
+  def accessDenied = withStatus(Unauthorized, accessDeniedMessage)
 
   def badRequest(message: String) = withStatus(BadRequest, message)
 

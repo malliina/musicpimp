@@ -14,7 +14,7 @@ import play.api.Logger
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.api.libs.json.Json
-import play.api.mvc.{AnyContent, BodyParser, Result}
+import play.api.mvc.{AnyContent, BodyParser, Result, Results}
 import views.html
 
 import scala.concurrent.Future
@@ -56,7 +56,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
           html = html.playlist(playlist.playlist, playlistForm, user),
           json = Json.toJson(playlist)
         )
-      }.getOrElse(Errors.notFound(s"Playlist not found: $id"))
+      }.getOrElse(notFound(s"Playlist not found: $id"))
     }
   }
 
@@ -64,7 +64,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     val json = req.body
     (json \ PlaylistKey).validate[PlaylistSubmission]
       .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, req.user).map(meta => Accepted(Json.toJson(meta))))
-      .getOrElse(fut(Errors.badRequest(s"Invalid JSON: $json")))
+      .getOrElse(fut(badRequest(s"Invalid JSON: $json")))
   }
 
   def deletePlaylist(id: PlaylistID) = recoveredAsync { req =>
@@ -96,12 +96,12 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
   override def errorHandler: PartialFunction[Throwable, Result] = {
     case ue: UnauthorizedException =>
       log.error(s"Unauthorized", ue)
-      Unauthorized
+      Errors.withStatus(Results.Unauthorized, "Access denied")
     case pe: PimpException =>
       log.error(s"Pimp error", pe)
-      Errors.internalGeneric
+      serverErrorGeneric
     case t: Throwable =>
       log.error(s"Server error", t)
-      Errors.internalGeneric
+      serverErrorGeneric
   }
 }

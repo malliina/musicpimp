@@ -29,13 +29,17 @@ trait PimpContentController {
         Ok(latest)
       //      case Some(JSONv24) => Ok(latest)
       case Some(other) =>
-        log.warn(s"Client requests unknown response format: $other")
-        NotAcceptable
+        val msg = s"Unknown response format: '$other'."
+        log.warn(msg)
+        notAcceptable(msg)
       case None =>
-        log.warn("No requested response format, unacceptable.")
-        NotAcceptable
+        val msg = "No requested response format, unacceptable. Please provide a value in the 'Accept' header."
+        log.warn(msg)
+        notAcceptable(msg)
     }
   }
+
+  def notAcceptable(msg: String) = PimpContentController.notAcceptable(msg)
 
   def respond2[T: Writes](request: RequestHeader)(html: => Html, json: => T) =
     respond(request)(html, Json.toJson(json))
@@ -47,7 +51,7 @@ trait PimpContentController {
     * @return the equivalent of "Unit" in JSON and HTML
     */
   def AckResponse(request: RequestHeader) =
-  pimpResult(request)(html = Accepted, json = Accepted)
+    pimpResult(request)(html = Accepted, json = Accepted)
 
   def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpContentController.pimpResult(request)(html, json)
@@ -58,25 +62,30 @@ trait PimpContentController {
 
 object PimpContentController {
   private val log = Logger(getClass)
+  val JsonKey = "json"
+
+  def notAcceptableGeneric = notAcceptable("Please use the 'Accept' header.")
+
+  def notAcceptable(msg: String) = Errors.withStatus(Results.NotAcceptable, msg)
 
   // TODO dry
 
   def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains "json" => json
-      case _ => Results.NotAcceptable
+      case Some(format) if format contains JsonKey => json
+      case _ => notAcceptableGeneric
     }
 
   def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains "json" => fut(json)
-      case _ => fut(Results.NotAcceptable)
+      case Some(format) if format contains JsonKey => fut(json)
+      case _ => fut(notAcceptableGeneric)
     }
 }
 
-object PimpRequest extends Log {
+object PimpRequest {
 
   import com.malliina.musicpimp.json.JsonFormatVersions._
 

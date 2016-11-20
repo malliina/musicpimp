@@ -79,7 +79,7 @@ class SecureBase(auth: Authenticator, mat: Materializer)
   def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     pimpUploadAction { req => req.files.headOption
       .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user.name, req)))
-      .getOrElse(BadRequest)
+      .getOrElse(badRequest(s"File missing"))
     }
 
   def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Result) =
@@ -112,7 +112,7 @@ class SecureBase(auth: Authenticator, mat: Materializer)
     }
 
   def errorHandler: PartialFunction[Throwable, Result] = {
-    case t => InternalServerError
+    case t => serverErrorGeneric
   }
 
   /** Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.

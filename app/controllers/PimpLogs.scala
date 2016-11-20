@@ -31,7 +31,9 @@ class PimpLogs(mat: Materializer) extends LogStreaming(mat) {
     toFuture(authenticate(req))
 
   def authenticate(request: RequestHeader): Option[AuthedRequest] =
-    request.session.get(Security.username).map(name => new AuthedRequest(Username(name), request, None))
+    request.session.get(Security.username).map { name =>
+      new AuthedRequest(Username(name), request, None)
+    }
 
   def toFuture[T](opt: Option[T]) =
     opt.fold[Future[T]](Future failed new NoSuchElementException)(fut)

@@ -124,7 +124,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
           } else {
             log.warn(s"Invalid form authentication for user $username")
             // TODO show an "authentication failed" message to the user
-            fut(Unauthorized)
+            fut(accessDenied)
           }
         }
       }

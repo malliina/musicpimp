@@ -39,7 +39,7 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
   private def folderNotFound(id: FolderID, request: RequestHeader): Result = {
     pimpResult(request)(
       html = NotFound,
-      json = NotFound(LibraryController.noFolderJson(id))
+      json = notFound(s"Folder not found: $id")
     )
   }
 
@@ -128,6 +128,4 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 
 object LibraryController {
   def noTrackJson(id: TrackID) = JsonMessages.failure(s"Track not found: $id")
-
-  def noFolderJson(id: FolderID) = JsonMessages.failure(s"Folder not found: $id")
 }

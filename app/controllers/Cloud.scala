@@ -10,7 +10,6 @@ import controllers.Cloud.log
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
 import views.html
 
@@ -23,7 +22,9 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
 
   def cloud = pimpActionAsync { request =>
     val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
-    id map (i => Ok(html.cloud(this, cloudForm, i._1.map(_.id), i._2, request.user, request.flash)))
+    id.map({ case (cloudId, errorMessage) =>
+      Ok(html.cloud(this, cloudForm, cloudId.map(_.id), errorMessage, request.user, request.flash))
+    })
   }
 
   def toggle = pimpParsedActionAsync(parse.default) { request =>

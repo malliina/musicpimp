@@ -18,7 +18,7 @@ class Secured(auth: Authenticator, mat: Materializer)
     log debug s"Intended: ${request.uri}"
     pimpResult(request)(
       html = Redirect(routes.Accounts.login()).withSession(Accounts.IntendedUri -> request.uri),
-      json = Unauthorized
+      json = accessDenied
     )
   }
 }

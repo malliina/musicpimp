@@ -53,7 +53,7 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
   def editAlarm(id: String, fb: Option[String] = None) = {
     ScheduledPlaybackService.find(id)
       .map(clockForm.fill)
-      .fold(ifEmpty = pimpAction(NotFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
+      .fold(ifEmpty = pimpAction(notFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
   }
 
   private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =
