@@ -2,6 +2,7 @@ package com.malliina.musicpimp.http
 
 import java.io.{FileInputStream, InputStream}
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.malliina.play.ContentRange
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -15,17 +16,17 @@ import org.apache.http.util.EntityUtils
 import play.api.http.ContentTypes._
 import play.api.http.HeaderNames._
 
-/**
- * The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
- * Apache HttpClient.
- *
- * @author mle
- */
+import scala.util.Try
+
+/** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
+  * Apache HttpClient.
+  */
 class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b) extends AutoCloseable {
   private val client = buildInstructions(HttpClientBuilder.create()).build()
   val request = new HttpPost(uri)
   request.addHeader(ACCEPT, JSON)
   private val reqContent = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+  private val isCancelled = new AtomicBoolean(false)
 
   @volatile private var streams: List[InputStream] = Nil
 
@@ -54,32 +55,36 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
   }
 
   def addKeyValues(kvs: (String, String)*): Unit =
-    kvs.foreach(kv => {
+    kvs.foreach { kv =>
       val (key, value) = kv
       reqContent.addTextBody(key, value)
-    })
+    }
 
   /**
-   * Executes the request.
-   *
-   * @return the response
-   */
+    * Executes the request.
+    *
+    * @return the response
+    */
   def execute() = {
     request setEntity reqContent.build()
     client execute request
   }
 
   /**
-   * Executes the request.
-   *
-   * @return the stringified response, if any
-   */
+    * Executes the request.
+    *
+    * @return the stringified response, if any
+    */
   def executeToString() = Option(execute().getEntity) map EntityUtils.toString
 
   override def close() {
-    client.close()
-    streams.foreach(_.close())
-    streams = Nil
+    val isFirstClose = isCancelled.compareAndSet(false, true)
+    if (isFirstClose) {
+      Try(request.abort())
+      Try(client.close())
+      streams.foreach(stream => Try(stream.close()))
+      streams = Nil
+    }
   }
 }
 

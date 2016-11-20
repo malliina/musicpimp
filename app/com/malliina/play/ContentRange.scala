@@ -20,6 +20,8 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
   def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$totalSizeBytes"
 
   def isAll = start == 0 && endInclusive == totalSizeBytes.toInt - 1
+
+  override def toString: String = s"bytes $start-$endExclusive of $totalSizeBytes bytes"
 }
 
 object ContentRange {

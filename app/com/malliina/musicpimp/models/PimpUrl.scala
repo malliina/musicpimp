@@ -15,6 +15,10 @@ case class PimpUrl(proto: String, hostAndPort: String, uri: String) {
     PimpUrl(proto, hostAndPort, callUri)
   }
 
+  def +(more: String) = append(more)
+
+  def append(more: String) = PimpUrl(proto, hostAndPort, s"$uri$more")
+
   override def toString: String = url
 }
 

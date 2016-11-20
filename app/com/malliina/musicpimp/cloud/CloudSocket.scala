@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.cloud
 
-import java.nio.file.{Files, Path}
 import javax.net.ssl.SNIHostName
 
 import com.malliina.concurrent.ExecutionContexts.cached
@@ -9,10 +8,10 @@ import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, Status
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
-import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SUCCESS, Unregister}
+import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SuccessKey, Unregister}
 import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
-import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants, MultipartRequest, TrustAllMultipartRequest}
+import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Folder => _, _}
 import com.malliina.musicpimp.models._
@@ -22,8 +21,6 @@ import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
-import com.malliina.storage.{StorageLong, StorageSize}
-import com.malliina.util.Util
 import com.malliina.ws.HttpUtil
 import controllers.{Alarms, LibraryController, Rest}
 import play.api.Logger
@@ -83,6 +80,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   val messageParser = CloudMessageParser
   val cloudHost = PimpUrl(httpProtocol, hostPort, "")
+  val uploader = TrackUploads(cloudHost)
   log info s"Initializing cloud connection with user $username"
   //  val remoteInfo = RemoteInfo(username, cloudHost)
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
@@ -148,9 +146,11 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
         val payload = Json.toJson(MusicPlayer.status)(StatusEvent.status18writer)
         sendJsonResponse(JsonMessages.withStatus(payload), request)
       case t: Track =>
-        upload(t, request).recoverAll(t => log.error("Upload failed", t))
+        uploader.upload(t, request).recoverAll(t => log.error("Upload failed", t))
       case rt: RangedTrack =>
-        rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
+        uploader.rangedUpload(rt, request).recoverAll(t => log.error("Ranged upload failed", t))
+      case CancelStream(req) =>
+        uploader.cancelSoon(req)
       case RootFolder =>
         lib.rootFolder map (folder => sendResponse(folder, request)) recover {
           case t =>
@@ -258,7 +258,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def requestJson(request: RequestID, success: Boolean) =
     Json.obj(
       RequestId -> request,
-      SUCCESS -> success,
+      SuccessKey -> success,
       Body -> Json.obj())
 
   def sendResponse[T: Writes](response: T, request: RequestID): Try[Unit] =
@@ -270,7 +270,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def sendFailureResponse(response: JsValue, request: RequestID) =
     sendJsonResponse(response, request, success = false)
 
-  def sendAckResponse(request: RequestID) = sendJsonResponse(Json.obj(), request, success = true)
+  def sendAckResponse(request: RequestID) =
+    sendJsonResponse(Json.obj(), request, success = true)
 
   def sendJsonResponse(response: JsValue, request: RequestID, success: Boolean = true) = {
     val payload = requestJson(request, success) + (Body -> response)
@@ -295,54 +296,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   def failRegistration(e: Exception) = registrationPromise tryFailure e
 
-  /**
-    * Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's ID as the username.
-    *
-    * @param track   track to upload
-    * @param request request id
-    * @return
-    */
-  def upload(track: Track, request: RequestID): Future[Unit] =
-    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
-
-  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
-    val range = rangedTrack.range
-    withUpload(rangedTrack.id, request, _ => range.contentSize, (file, req) => {
-      if (range.isAll) {
-        log info s"Uploading $file, request $request"
-        req.addFile(file)
-      } else {
-        log info s"Uploading $file, range $range, request $request"
-        req.addRangedFile(file, range)
-      }
-    })
-  }
-
-  private def withUpload(trackID: TrackID,
-                         request: RequestID,
-                         sizeCalc: Path => StorageSize,
-                         content: (Path, MultipartRequest) => Unit): Future[Unit] = {
-    val uploadUri = s"${cloudHost.url}/track"
-    val trackOpt = Library.findAbsolute(trackID)
-    if (trackOpt.isEmpty) {
-      log warn s"Unable to find track: $trackID"
-    }
-    Future {
-      def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
-      Util.using(new TrustAllMultipartRequest(uploadUri))(req => {
-        req.addHeaders(RequestId -> request.id)
-        Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))
-        trackOpt.foreach(path => content(path, req))
-        val response = req.execute()
-        val code = response.getStatusLine.getStatusCode
-        val isSuccess = code >= 200 && code < 300
-        if (!isSuccess) {
-          log error appendMeta(s"Non-success response code $code for track ID $trackID")
-        } else {
-          val prefix = trackOpt.map(f => s"Uploaded ${sizeCalc(f)} of $trackID").getOrElse("Uploaded no bytes")
-          log info appendMeta(s"$prefix with response $code")
-        }
-      })
-    }
+  override def close(): Unit = {
+    uploader.close()
+    super.close()
   }
 }

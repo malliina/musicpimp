@@ -35,6 +35,8 @@ object PimpMessages {
 
   case class Track(id: TrackID) extends PimpMessage
 
+  case class CancelStream(request: RequestID) extends RequestMessage
+
   case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
 
   case class GetMeta(id: TrackID) extends PimpMessage
