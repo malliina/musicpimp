@@ -5,9 +5,6 @@ var playButton;
 var pauseButton;
 
 var onconnect = function () {
-    setFeedback("Initializing...");
-    // update: sends status only after welcome message
-//    send(statusJson());
 };
 // user input handlers
 var stop = function () {
@@ -47,7 +44,6 @@ var send = function (json) {
 var onmessage = function (payload) {
     var json = jQuery.parseJSON(payload.data);
     var eventType = json.event;
-    console.log(payload);
     switch (eventType) {
         case "welcome":
             send(statusJson());
@@ -71,8 +67,8 @@ var onmessage = function (payload) {
             isMute = json.mute;
             break;
         case "status":
+            showConnected();
             onStatus(json);
-            setFeedback("Connected.");
             $("#playerDiv").show();
             break;
         default:
@@ -140,13 +136,20 @@ var onStatus = function (json) {
     updatePlayPauseButtons(json.state);
 };
 var onclose = function (payload) {
-    setFeedback("Connection closed.");
+    // setFeedback("Connection closed.");
+    showDisconnected();
 };
 var onerror = function (payload) {
-    setFeedback("Connection error.");
+    // setFeedback("Connection error.");
+    showDisconnected();
 };
-var setFeedback = function (fb) {
-    $('#status').html(fb);
+var showConnected = function () {
+    $("#okstatus").removeClass("hide");
+    $("#failstatus").addClass("hide");
+};
+var showDisconnected = function () {
+    $("#okstatus").addClass("hide");
+    $("#failstatus").removeClass("hide");
 };
 var onSave = function () {
 

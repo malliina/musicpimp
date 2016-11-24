@@ -1,7 +1,7 @@
 var webSocket;
 
 var onconnect = function (payload) {
-    setStatus("Connected.");
+    showConnected();
     sendCommand("subscribe");
 };
 var onmessage = function (payload) {
@@ -14,10 +14,12 @@ var onmessage = function (payload) {
     }
 };
 var onclose = function (payload) {
-    setStatus("Connection closed.");
+    // setStatus("Connection closed");
+    showDisconnected();
 };
 var onerror = function (payload) {
-    setStatus("Connection error.");
+    // setStatus("Connection error");
+    showDisconnected();
 };
 var refresh = function () {
     sendCommand("refresh");
@@ -25,8 +27,13 @@ var refresh = function () {
 var sendCommand = function (command) {
     webSocket.send(JSON.stringify({cmd: command}));
 };
-var setStatus = function(status) {
-  $("#status").html(status);
+var showConnected = function () {
+    $("#okstatus").removeClass("hide");
+    $("#failstatus").addClass("hide");
+};
+var showDisconnected = function () {
+    $("#okstatus").addClass("hide");
+    $("#failstatus").removeClass("hide");
 };
 var setIndexInfo = function (status) {
     $("#index-info").html(status);

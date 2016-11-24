@@ -30,6 +30,10 @@
                         }
                     }
                 }
+                @div("col-md-2 pull-right") {
+                    <p class="navbar-text pull-right hidden-xs hide" id="okstatus"><i class="glyphicon glyphicon-eye-open green"></i></p>
+                    <p class="navbar-text pull-right hidden-xs hide" id="failstatus"><i class="glyphicon glyphicon-eye-closed red"></i></p>
+                }
                 @div("col-md-4 pull-right") {
                     @searchForm(None, formClass = "navbar-form", size = "")
                 }

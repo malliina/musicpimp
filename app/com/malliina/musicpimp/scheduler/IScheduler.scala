@@ -61,6 +61,3 @@ trait ActionPoint[J <: Job, S <: DaySchedule] {
 trait PlaybackAP[S <: DaySchedule] extends ActionPoint[PlaybackJob, S]
 
 trait AP extends PlaybackAP[DaySchedule]
-
-
-

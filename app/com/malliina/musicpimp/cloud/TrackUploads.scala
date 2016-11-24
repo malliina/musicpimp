@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import java.io.FileNotFoundException
+import java.net.SocketException
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{Executors, TimeUnit}
 
@@ -34,10 +35,10 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
     *
     * @param track   track to upload
     * @param request request id
-    * @return
+    * @return a Future that completes when the upload completes
     */
   def upload(track: Track, request: RequestID): Future[Unit] =
-  withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
+    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
@@ -58,8 +59,9 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
     scheduler.schedule(Utils.runnable(cancel(request)), after.toSeconds, TimeUnit.SECONDS)
 
   def cancel(request: RequestID) = ongoing.remove(request) foreach { httpRequest =>
+    httpRequest.request.abort()
     httpRequest.close()
-    log info s"Canceled $request"
+    log info s"Cancelled $request"
   }
 
   private def withUpload(trackID: TrackID,
@@ -72,15 +74,19 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
       Future {
         uploadMedia(uploadUri, trackID, path, request, sizeCalc, content)
       } recover {
+        //
+        case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
+          // thrown when the upload is cancelled, see method cancel
+          // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
+          log info s"Aborted upload of $request"
         case e: Exception =>
-          log.warn(s"Upload of track $trackID with request ID $request terminated exceptionally.", e)
+          log.warn(s"Upload of track $trackID with request ID $request terminated exceptionally", e)
       }
     } getOrElse {
       val msg = s"Unable to find track: $trackID"
       log warn msg
       Future.failed(new FileNotFoundException(msg))
     }
-
   }
 
   /** Blocks until the upload completes.
@@ -91,7 +97,8 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
                           request: RequestID,
                           sizeCalc: Path => StorageSize,
                           content: (Path, MultipartRequest) => Unit): Unit = {
-    def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request."
+    def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request"
+
     Util.using(new TrustAllMultipartRequest(uploadUri.url)) { req =>
       req.addHeaders(CloudStrings.RequestId -> request.id)
       Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))

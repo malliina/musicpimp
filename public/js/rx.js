@@ -4,7 +4,7 @@ var tableContent;
 
 var onconnect = function (payload) {
     webSocket.send(JSON.stringify({cmd: "subscribe"}));
-    setFeedback("Connected.");
+    showConnected();
 };
 var onmessage = function (payload) {
     var event = jQuery.parseJSON(payload.data);
@@ -17,11 +17,11 @@ var onmessage = function (payload) {
 // case class LogEvent(timeStamp: Long, timeFormatted: String, message: String, loggerName: String, threadName: String, level: Level)
 var rowCounter = 0;
 var prependAll = function (es) {
-    for(var i = 0; i < es.length; i++) {
+    for (var i = 0; i < es.length; i++) {
         prepend(es[i]);
     }
 };
-var prepend = function(e) {
+var prepend = function (e) {
     var trc;
     var level = e.level;
     if (level == "ERROR") {
@@ -52,14 +52,24 @@ var toggle = function (row) {
     return false;
 };
 var onclose = function (payload) {
-    setFeedback("Connection closed.");
+    showDisconnected("Connection closed");
 };
 var onerror = function (payload) {
-    setFeedback("Connection error.");
+    showDisconnected("Connection error");
 };
-var setFeedback = function (fb) {
-    $('#status').html(fb);
+var showConnected = function () {
+    $("#okstatus").removeClass("hide");
+    $("#failstatus").addClass("hide");
 };
+var showDisconnected = function (reason) {
+    $("#okstatus").addClass("hide");
+    $("#failstatus").removeClass("hide");
+};
+// var setFeedback = function (fb) {
+//     var elem = $("#okstatus");
+//     elem.removeClass("hide");
+//     // elem.html(fb);
+// };
 $(document).ready(function () {
     tableContent = $("#logTableBody");
 });
