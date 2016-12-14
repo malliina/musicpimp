@@ -15,15 +15,19 @@ import com.malliina.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager
 import com.typesafe.sbt.SbtNativePackager._
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
+import com.typesafe.sbt.web.Import.{Assets, pipelineStages}
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.AutoImport.persistLauncher
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import play.sbt.PlayImport
 import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys
 import sbt.Keys._
 import sbt._
-import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin._
 import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
 import sbtbuildinfo.BuildInfoPlugin
+import webscalajs.ScalaJSWeb
+import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
 
@@ -31,11 +35,23 @@ object PimpBuild {
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
   val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
+  lazy val frontend = Project("frontend", file("frontend"))
+    .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
+    .settings(
+      persistLauncher := true,
+      libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "scalatags" % "0.6.2",
+        "com.lihaoyi" %%% "upickle" % "0.4.3",
+        "be.doeraene" %%% "scalajs-jquery" % "0.9.1"
+        //        "org.scala-js" %%% "scalajs-dom" % "0.9.1"
+      )
+    )
+
   lazy val pimpProject = PlayProject("musicpimp")
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
     .settings(pimpPlaySettings: _*)
 
-  lazy val commonSettings = PlayProject.assetSettings ++ Seq(
+  lazy val commonSettings = PlayProject.assetSettings ++ scalaJSSettings ++ Seq(
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
     version := "3.4.1",
     organization := "org.musicpimp",
@@ -59,7 +75,13 @@ object PimpBuild {
       "-language:implicitConversions",
       "-Yno-adapted-args",
       "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen")
+      "-Ywarn-numeric-widen"
+    )
+  )
+
+  def scalaJSSettings = Seq(
+    scalaJSProjects := Seq(frontend),
+    pipelineStages in Assets := Seq(scalaJSPipeline)
   )
 
   lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
@@ -164,6 +186,7 @@ object PimpBuild {
         "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
         "com.neovisionaries" % "nv-websocket-client" % "1.30",
+        "com.lihaoyi" %% "scalatags" % "0.6.2",
         "org.scalatest" %% "scalatest" % "3.0.0" % Test
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
