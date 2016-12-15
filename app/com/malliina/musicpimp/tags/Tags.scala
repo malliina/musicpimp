@@ -1,16 +1,20 @@
 package com.malliina.musicpimp.tags
 
-import scalatags.Text.TypedTag
 import scalatags.Text.all._
 
 object Tags extends Tags
 
 trait Tags {
+  val Button = "button"
   val Download = "download"
   val En = "en"
+  val FormRole = "form"
   val Lead = "lead"
   val Password = "password"
+  val Post = "POST"
+  val Search = "search"
   val Section = "section"
+  val Separator = "separator"
   val Submit = "submit"
   val Stylesheet = "stylesheet"
   val Text = "text"
@@ -23,7 +27,7 @@ trait Tags {
   val section = tag(Section)
   val titleTag = tag(Title)
 
-  def divClass(clazz: String) = div(`class` := clazz)
+  def divClass(clazz: String, more: Modifier*) = div(`class` := clazz, more)
 
   def spanClass(clazz: String) = span(`class` := clazz)
 
@@ -35,11 +39,10 @@ trait Tags {
 
   def ulClass(clazz: String) = ul(`class` := clazz)
 
-  def liHref(url: String, text: String) = li(aHref(url, text))
+  def liHref[V: AttrValue](url: V, more: Modifier*)(text: Modifier*) = li(aHref(url, more)(text))
 
-  def aHref(url: String): TypedTag[String] = aHref(url, url)
-
-  def aHref[V: AttrValue](url: V, text: Modifier*): TypedTag[String] = a(href := url)(text)
+  // WTF? Removing currying requires an AttrValue - should require Modifier?
+  def aHref[V: AttrValue](url: V, more: Modifier*)(text: Modifier*) = a(href := url, more)(text)
 
   def js[V: AttrValue](url: V) = script(src := url)
 
