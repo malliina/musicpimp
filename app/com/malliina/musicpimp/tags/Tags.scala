@@ -6,6 +6,7 @@ object Tags extends Tags
 
 trait Tags {
   val Button = "button"
+  val Checkbox ="checkbox"
   val Download = "download"
   val En = "en"
   val FormRole = "form"
@@ -27,6 +28,8 @@ trait Tags {
   val section = tag(Section)
   val titleTag = tag(Title)
 
+  def labelFor(forTarget: String, more: Modifier*) = label(`for` := forTarget, more)
+
   def divClass(clazz: String, more: Modifier*) = div(`class` := clazz, more)
 
   def spanClass(clazz: String) = span(`class` := clazz)
@@ -35,7 +38,7 @@ trait Tags {
 
   def leadPara = pClass(Lead)
 
-  def pClass(clazz: String) = p(`class` := clazz)
+  def pClass(clazz: String, more: Modifier*) = p(`class` := clazz, more)
 
   def ulClass(clazz: String) = ul(`class` := clazz)
 

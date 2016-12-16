@@ -18,10 +18,12 @@ trait Bootstrap {
   val AlertSuccess = "alert alert-success"
   val AlertWarning = "alert alert-warning"
   val Btn = "btn"
+  val BtnDanger = "btn btn-danger"
+  val BtnDefault = "btn btn-default"
   val BtnGroup = "btn-group"
   val BtnPrimary = "btn btn-primary"
-  val BtnDefault = "btn btn-default"
   val BtnLg = "btn-lg"
+  val BtnSm = "btn-sm"
   val BtnXs = "btn-xs"
   val BtnBlock = "btn-block"
   val Caret = "caret"
@@ -32,9 +34,16 @@ trait Bootstrap {
   val ColMd6 = "col-md-6"
   val ColMd8 = "col-md-8"
   val ColMd9 = "col-md-9"
+  val ColMd10 = "col-md-10"
+  val ColMd11 = "col-md-11"
   val ColMd12 = "col-md-12"
   val ColMdOffset2 = "col-md-offset-2"
+  val ColSm2 = "col-sm-2"
+  val ColSm4 = "col-sm-4"
+  val ColSm10 = "col-sm-10"
+  val ColSmOffset2 = "col-sm-offset-2"
   val Container = "container"
+  val ControlLabel = "control-label"
   val DataParent = "data-parent"
   val DataTarget = "data-target"
   val DataToggle = "data-toggle"
@@ -42,10 +51,13 @@ trait Bootstrap {
   val DropdownMenu = "dropdown-menu"
   val DropdownToggle = "dropdown-toggle"
   val FormGroup = "form-group"
+  val FormHorizontal = "form-horizontal"
   val Glyphicon = "glyphicon"
+  val HasError = "has-error"
   val HiddenXs = "hidden-xs"
   val IconBar = "icon-bar"
   val InputGroup = "input-group"
+  val InputGroupAddon = "input-group-addon"
   val InputGroupBtn = "input-group-btn"
   val InputGroupLg = "input-group-lg"
   val InputMd = "input-md"
@@ -53,6 +65,7 @@ trait Bootstrap {
   val ListUnstyled = "list-unstyled"
   val Nav = "nav"
   val NavStacked = "nav nav-stacked"
+  val NavTabs = "nav nav-tabs"
   val Navbar = "navbar"
   val NavbarBrand = "navbar-brand"
   val NavbarCollapse = "navbar-collapse"
@@ -78,6 +91,7 @@ trait Bootstrap {
   val TextPrimary = "text-primary"
   val TextSuccess = "text-success"
   val TextWarning = "text-warning"
+  val UneditableInput = "uneditable-input"
   val VisibleLg = "visible-lg"
   val VisibleMd = "visible-md"
   val VisibleSm = "visible-sm"
@@ -97,6 +111,8 @@ trait Bootstrap {
 
   def fullRow(inner: Modifier*) = rowColumn(ColMd12)(inner)
 
+  def halfRow(inner: Modifier*) = rowColumn(ColMd6)(inner)
+
   def rowColumn(clazz: String)(inner: Modifier*) = row(divClass(clazz)(inner))
 
   def row = divClass(Row)
@@ -105,7 +121,9 @@ trait Bootstrap {
 
   def divContainer = divClass(Container)
 
-  def glyphIcon(glyphName: String) = iClass(s"$Glyphicon $Glyphicon-$glyphName")
+  def glyphIcon(glyphName: String) = iClass(glyphClass(glyphName))
+
+  def glyphClass(glyphName: String) = s"$Glyphicon $Glyphicon-$glyphName"
 
   def hamburgerButton =
     button(`class` := NavbarToggle, dataToggle := Collapse, dataTarget := s".$NavbarCollapse")(

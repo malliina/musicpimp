@@ -1,18 +1,22 @@
 package com.malliina.musicpimp.tags
 
 import com.malliina.musicpimp.BuildInfo
-import com.malliina.musicpimp.models.{Licenses, NewUser}
+import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.models._
+import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
+import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.tags.Bootstrap._
 import com.malliina.musicpimp.tags.PimpTags.callAttr
 import com.malliina.musicpimp.tags.Tags._
 import com.malliina.play.models.{PasswordChange, Username}
-import controllers.{Accounts, routes}
 import controllers.routes.Assets.at
-import play.api.data.Form
-import play.api.mvc.{Call, Flash}
+import controllers.{Accounts, Cloud, routes}
+import play.api.data.{Field, Form}
+import play.api.i18n.Messages
+import play.api.mvc.{Call, Flash, RequestHeader}
 
-import scalatags.Text.GenericAttr
 import scalatags.Text.all._
+import scalatags.Text.{GenericAttr, TypedTag}
 
 object PimpTags {
   implicit val callAttr = new GenericAttr[Call]
@@ -27,6 +31,359 @@ object PimpTags {
 }
 
 class PimpTags(scripts: Modifier*) {
+
+  val alarmJs = js(at("js/scheduler.js"))
+
+  def library(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username) =
+    libraryBase("folders", username, jsLinks("js/json.js", "js/library.js"))(
+      div(PageHeader)(
+        h1("Library ", small(relativePath.path))
+      ),
+      row(
+        renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty),
+        renderColumn(col2),
+        renderColumn(col3)
+      ),
+      if (col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.path.isEmpty) {
+        leadPara("The library is empty. To get started, add music folders under ",
+          aHref(routes.SettingsController.settings())("Music Folders"), ".")
+      } else {
+        empty
+      }
+    )
+
+  def renderColumn(col: MusicColumn, onlyColumn: Boolean = false) =
+    divClass(if (onlyColumn) ColMd10 else ColMd4)(
+      ul(ListUnstyled)(
+        col.folders.map(f => Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title))),
+        col.tracks.map(t => li(`class` := Lead)())
+      )
+    )
+
+  def jsLinks(files: String*) = files map jsLink
+
+  def jsLink(file: String) = js(at(file))
+
+  def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
+    indexMain("library", username, extraHeader)(
+      ulClass(NavTabs)(
+        iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), "fa fa-folder-open"),
+        iconNavItem("Most Played", "popular", tab, routes.Website.popular(), "fa fa-list"),
+        iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), "fa fa-clock-o"),
+        iconNavItem("Search", "search", tab, routes.SearchPage.search(), "fa fa-search")
+      ),
+      section(inner)
+    )
+
+  def folderActions(folder: FolderID) =
+    musicItemActions(s"return playItems('$folder');", s"return addItems('$folder');", attr("aria-label") := "folder action")()
+
+  def titledTrackActions(track: TrackMeta) =
+    trackActions(track.id)(
+      onClickButtonBase(BtnDefault, s"return play('${track.id}');")(track.title)
+    )
+
+  def trackActions(track: TrackID)(inner: Modifier*) =
+    musicItemActions(s"return play('$track');", s"return add('$track');")(inner)
+
+  def musicItemActions(onPlay: String, onAdd: String, groupAttrs: Modifier*)(inner: Modifier*) =
+    divClass(BtnGroup, role := "group", groupAttrs)(
+      onClickButton(BtnPrimary, onAdd, "play"),
+      onClickButton(BtnDefault, onPlay, "plus")
+    )
+
+  def onClickButton(clazz: String, onClicked: String, glyph: String) =
+    onClickButtonBase(clazz, onClicked)(glyphIcon(glyph))
+
+  def onClickButtonBase(clazz: String, onClicked: String) =
+    button(`type` := Button, `class` := clazz, onclick := onClicked)
+
+  def editFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, messages: Messages) =
+    halfRow(
+      ulClass(ListUnstyled)(
+        folders.map(renderFolder)
+      ),
+      postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
+        divClass(InputGroup)(
+          spanClass(InputGroupAddon)(glyphIcon("folder-open")),
+          textInputBase(Text, "path", Option(folderPlaceholder), `class` := FormControl, required),
+          spanClass(InputGroupBtn)(
+            button(`type` := Submit, `class` := BtnPrimary)(glyphIcon("plus"), " Add")
+          )
+        ),
+        newFolderForm.errors.map(error => pClass("error")(Messages(error.message)(messages)))
+      )
+    )
+
+  def renderFolder(folder: String) =
+    postableForm(routes.SettingsController.deleteFolder(folder), `class` := FormHorizontal)(
+      divClass(InputGroup)(
+        spanClass(InputGroupAddon)(glyphIcon("folder-open")),
+        spanClass(s"$UneditableInput $FormControl")(folder),
+        spanClass(InputGroupBtn)(
+          button(`type` := Submit, `class` := BtnDefault)(glyphIcon("remove"), " Delete")
+        )
+      )
+    )
+
+  def cloud(c: Cloud, cloudForm: Form[Option[String]], serverId: Option[String], feedback: Option[String], username: Username, flash: Flash) =
+    manage("cloud", username)(
+      headerRow()("Cloud"),
+      halfRow(
+        toggleButton(serverId.map(_ => "Disconnect").getOrElse("Connect"), c, serverId)
+      ),
+      serverId.fold(empty) { server =>
+        halfRow {
+          leadPara(s"Connected. You can now access this server using your credentials and this cloud ID: $server")
+        }
+      },
+      feedback.fold(empty) { fb =>
+        halfRow(
+          pClass(s"$Lead error")(fb)
+        )
+      },
+      flash.get(c.FEEDBACK).fold(empty) { message =>
+        leadPara(message)
+      },
+      halfRow(
+        p("How does this work?"),
+        p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
+          "same machine on the internet and communicates with this server through the machine both parties have " +
+          "connected to. All traffic is encrypted. All music is streamed.")
+      )
+    )
+
+  def toggleButton(title: String, c: Cloud, serverId: Option[String]) =
+    postableForm(routes.Cloud.toggle(), name := "toggleForm")(
+      serverId.fold(empty) { server =>
+        divClass(FormGroup)(
+          labelFor(c.idFormKey)("Desired cloud ID (optional"),
+          textInputBase(Text, c.idFormKey, Option("Your desired ID or leave empty"))
+        )
+      },
+      blockSubmitButton(id := "toggleButton")(title)
+    )
+
+  def basePlayer(feedback: Option[String], username: Username, request: RequestHeader, scripts: Modifier*) =
+    indexMain("player", username, scripts ++ Seq(js(at("sliders.js"))))(
+      headerRow(ColMd9)("Player"),
+      div(id := "playerDiv", style := "display: none")(
+        feedback.fold(empty) { fb =>
+          rowColumn(ColMd9)(
+            pClass(s"$Lead $Alert", id := "feedback")(fb)
+          )
+        },
+        halfRow(
+          pClass(Lead, id := "notracktext")(
+            "No track. Play one from the ",
+            aHref(routes.LibraryController.rootLibrary())("library"),
+            " or stream from a mobile device."
+          )
+        ),
+        row(
+          playerControls,
+          divClass(ColMd3)(
+            h2("Playlist"),
+            pClass(Lead, id := "empty_playlist_text")("The playlist is empty."),
+            ol(id := "playlist")
+          )
+        )
+      )
+    )
+
+  def playerControls = {
+    val centerAttr = style := "text-align: center"
+    divClass(ColMd6)(
+      fullRow(
+        h2(id := "title", centerAttr)("No track"),
+        h4(id := "album", centerAttr),
+        h3(id := "artist", centerAttr)
+      ),
+      fullRow(
+        div(ColMd11)(
+          div(id := "slider")
+        ),
+        divClass(s"$Row $ColMd11", id := "progress")(
+          span(id := "pos")("00:00"), " / ", span(id := "duration")("00:00")
+        ),
+        divClass(s"$Row $ColMd11 text-center")(
+          imageInput(at("img/transport.rew.png"), onclick := "prev()"),
+          imageInput(at("img/light/transport.play.png"), id := "playButton", onclick := "resume()"),
+          imageInput(at("img/light/transport.pause.png"), id := "pauseButton", style := "display: none", onclick := "stop()"),
+          imageInput(at("img/light/transport/ff.png"), onclick := "next()")
+        ),
+        divClass(s"$Row $ColMd11 $VisibleLg")(
+          divClass(ColMd3)(
+            imageInput(at("img/light/appbar.sound.3.png"), `class` := PullRight, onclick := "togglemute()")
+          ),
+          divClass(ColMd8)(
+            divClass(s"$ColMd12 $PullLeft", id := "volume")
+          )
+        )
+      )
+    )
+  }
+
+  def imageInput[V: AttrValue](imageUrl: V, more: Modifier*) =
+    input(`type` := "image", src := imageUrl, more)
+
+  def alarms(clocks: Seq[ClockPlayback], username: Username) =
+    manage("alarms", username, alarmJs)(
+      headerRow()("Alarms"),
+      fullRow(
+        pimpTable(Seq("Description", "Enabled", "Actions"))(
+          tbody(clocks.map(alarmRow))
+        )
+      ),
+      fullRow(
+        aHref(routes.Alarms.newAlarm())("Add alarm")
+      )
+    )
+
+  def alarmRow(ap: ClockPlayback) = {
+    val (enabledText, enabledAttr) = if (ap.enabled) ("Yes", empty) else ("No", `class` := "danger")
+    tr(td(ap.describe), td(enabledAttr)(enabledText), td(alarmActions(ap.id.getOrElse("nonexistent"))))
+  }
+
+  def pimpTable(headers: Seq[Modifier])(tableBody: Modifier*) =
+    table(`class` := TableStripedHover)(
+      thead(headers.map(header => th(header))),
+      tableBody
+    )
+
+  def alarmActions(id: String) =
+    divClass(BtnGroup)(
+      aHref(routes.Alarms.editAlarm(id), `class` := s"$BtnDefault $BtnSm")(glyphIcon("edit"), " Edit"),
+      aHref("#", dataToggle := Dropdown, `class` := s"$BtnDefault $BtnSm $DropdownToggle")(spanClass(Caret)),
+      ulClass(DropdownMenu)(
+        jsListElem(s"deleteAP('$id')", "remove", "Delete"),
+        jsListElem(s"runAP('$id')", "play", "Play"),
+        jsListElem(s"stopPlayback()", "stop", "Stop")
+      )
+    )
+
+  def jsListElem(onClicked: String, glyph: String, linkText: String) =
+    liHref("#", onclick := onClicked)(glyphIcon(glyph), s" $linkText")
+
+  def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
+    manage("alarms", username, alarmJs, js(at("alarm-editor.js")))(
+      headerRow()("Edit alarm"),
+      halfRow(
+        postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
+          divClass("hidden")(
+            formTextIn(form(ID), "ID", m)
+          ),
+          numberTextIn(form(HOURS), "Hours", "hh", m),
+          numberTextIn(form(MINUTES), "Minute", "mm", m),
+          weekdayCheckboxes(form(DAYS), m),
+          formTextIn(form(TRACK_ID), "Track ID", m, formGroupClasses = Seq("hidden")),
+          formTextIn(form(TRACK), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
+          checkField(form(ENABLED), "Enabled"),
+          saveButton(),
+          feedback.fold(empty)(fb => pClass(s"$Lead $ColSmOffset2")(fb))
+        )
+      )
+    )
+
+  def checkField(field: Field, labelText: String) = {
+    val checkedAttr = if (field.value.contains("on")) checked else empty
+    divClass(FormGroup)(
+      divClass(s"$ColSmOffset2 $ColSm10")(
+        divClass(Checkbox)(
+          label(
+            input(`type` := Checkbox, name := field.name, checkedAttr)(labelText)
+          )
+        )
+      )
+    )
+  }
+
+  def weekdayCheckboxes(field: Field, messages: Messages) = {
+    val errorClass = if (field.hasErrors) s" $HasError" else ""
+    divClass(s"$FormGroup$errorClass")(
+      labelFor(field.id, `class` := s"$ColSm2 $ControlLabel")("Days"),
+      divClass(ColSm4, id := field.id)(
+        divClass(Checkbox)(
+          label(
+            input(`type` := Checkbox, value := "every", id := "every", onclick := "everyDayClicked()")("Every day")
+          )
+        ),
+        WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },
+        helpSpan(field, messages)
+      )
+    )
+  }
+
+  def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) = {
+    val isChecked = field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName)
+    val checkedAttr = if (isChecked) checked else empty
+    divClass("checkbox")(
+      label(
+        input(`type` := "checkbox",
+          value := field.value.getOrElse(weekDay.shortName),
+          id := weekDay.shortName,
+          name := s"${field.name}[$index]",
+          onclick := "updateEveryDayCheckbox()",
+          checkedAttr
+        )
+      )
+    )
+  }
+
+  def numberTextIn(field: Field, label: String, placeholderValue: String, m: Messages) =
+    formTextIn(field, label, m, Option(placeholderValue), typeName = "number", inputWidth = ColSm2)
+
+  def formTextIn(field: Field,
+                 labelText: String,
+                 m: Messages,
+                 placeholder: Option[String] = None,
+                 typeName: String = Text,
+                 inputWidth: String = ColSm10,
+                 inClasses: Seq[String] = Nil,
+                 formGroupClasses: Seq[String] = Nil,
+                 defaultValue: String = "") = {
+    val errorClass = if (field.hasErrors) Option("has-error") else None
+    val moreClasses = (errorClass.toSeq ++ formGroupClasses).mkString(" ", " ", "")
+    val inputClasses = inClasses.mkString(" ", " ", "")
+    divClass(s"$FormGroup$moreClasses")(
+      labelFor(field.name, `class` := s"$ControlLabel $ColSm2")(labelText),
+      divClass(inputWidth)(
+        inputField(field, typeName, defaultValue, placeholder, `class` := s"$FormControl$inputClasses"),
+        helpSpan(field, m)
+      )
+    )
+  }
+
+  def inputField(field: Field, typeName: String, defaultValue: String, placeHolder: Option[String], more: Modifier*) = {
+    val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
+    input(`type` := typeName, id := field.id, name := field.name, value := field.value.getOrElse(defaultValue), placeholderAttr, more)
+  }
+
+  def textInput(inType: String, clazz: String, idAndName: String, placeHolder: Option[String], more: Modifier*) =
+    textInputBase(inType, idAndName, placeHolder, `class` := clazz, more)
+
+  def textInputBase(inType: String, idAndName: String, placeHolder: Option[String], more: Modifier*) = {
+    val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
+    input(`type` := inType, name := idAndName, id := idAndName, placeholderAttr, more)
+  }
+
+  def helpSpan(field: Field, m: Messages) = {
+    field.error.map(error => Messages(error.message, error.args: _*)(m)).fold(empty) { formattedMessage =>
+      spanClass("help-block")(formattedMessage)
+    }
+  }
+
+  def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
+    indexMain("manage", username, extraHeader)(
+      ulClass(NavTabs)(
+        glyphNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), "folder-open"),
+        glyphNavItem("Users", "users", tab, routes.Accounts.users(), "user"),
+        glyphNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), "time"),
+        glyphNavItem("Cloud", "cloud", tab, routes.Cloud.cloud(), "cloud"),
+        glyphNavItem("Logs", "logs", tab, routes.LogPage.logs(), "list")
+      ),
+      section(inner)
+    )
 
   def addUser(addForm: Form[NewUser], flash: Flash) =
     postableForm(routes.Accounts.formAddUser())(
@@ -73,9 +430,9 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def alertDiv(alertClass: String, message: String) =
-    div(`class` := s"$Lead $alertClass", role := Alert)(message)
+    divClass(s"$Lead $alertClass", role := Alert)(message)
 
-  def postableForm(onAction: Call) = form(role := FormRole, action := onAction, method := Post)
+  def postableForm(onAction: Call, more: Modifier*) = form(role := FormRole, action := onAction, method := Post, more)
 
   def passwordInputs(firstLabel: String = "Password", repeatLabel: String = "Repeat password"): Modifier = Seq(
     passwordGroup("newPassword", firstLabel),
@@ -93,7 +450,7 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def blockSubmitButton = button(`type` := Submit, `class` := s"$BtnPrimary $BtnBlock")
+  def blockSubmitButton(more: Modifier*) = button(`type` := Submit, `class` := s"$BtnPrimary $BtnBlock", more)
 
   def aboutBase(user: Username) = indexMain("about", user)(
     headerRow(ColMd6)("About"),
@@ -121,12 +478,12 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) =
-    div(`class` := "panel-group", id := "accordion")(
+    divClass("panel-group", id := "accordion")(
       divClass("panel panel-default")(
         divClass("panel-heading")(
           spanClass("accordion-toggle")(toggleHtml)
         ),
-        div(`class` := s"accordion-body $Collapse", id := elemId)(
+        divClass(s"accordion-body $Collapse", id := elemId)(
           divClass("accordion-inner")(
             pre(`class` := "pre-scrollable")(innerContent)
           )
@@ -137,13 +494,12 @@ class PimpTags(scripts: Modifier*) {
   def panelSummary(prefix: String, elemId: String, linkText: String) =
     aHref(s"#$elemId", dataToggle := Collapse, dataParent := "#accordion")(linkText)
 
-  def indexMain(tabName: String, user: Username)(inner: Modifier*) = {
-    def navItem(thisTabName: String, url: Call, glyphiconName: String) = {
-      val maybeActive = if (thisTabName.toLowerCase == tabName) Option(`class` := "active") else None
-      li(maybeActive)(aHref(url)(glyphIcon(glyphiconName), s" $thisTabName"))
+  def indexMain(tabName: String, user: Username, extraHeader: Modifier*)(inner: Modifier*) = {
+    def navItem(thisTabName: String, url: Call, glyphiconName: String): TypedTag[String] = {
+      glyphNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, glyphiconName)
     }
 
-    basePage("MusicPimp")(
+    basePage("MusicPimp", extraHeader)(
       divClass(s"$Navbar $NavbarDefault $NavbarStaticTop")(
         divContainer(
           divClass(NavbarHeader)(
@@ -182,6 +538,21 @@ class PimpTags(scripts: Modifier*) {
     )
   }
 
+  def saveButton(buttonText: String = "Save") =
+    divClass(FormGroup)(
+      divClass(s"$ColSmOffset2 $ColSm10")(
+        button(`type` := Submit, `class` := BtnDefault)(buttonText)
+      )
+    )
+
+  def glyphNavItem(thisTabName: String, thisTabId: String, activeTab: String, url: Call, glyphiconName: String): TypedTag[String] =
+    iconNavItem(thisTabName, thisTabId, activeTab, url, glyphClass(glyphiconName))
+
+  def iconNavItem(thisTabName: String, thisTabId: String, activeTab: String, url: Call, iconClass: String): TypedTag[String] = {
+    val maybeActive = if (thisTabId == activeTab) Option(`class` := "active") else None
+    li(maybeActive)(aHref(url)(iClass(iconClass), s" $thisTabName"))
+  }
+
   def eye(elemId: String, glyphSuffix: String) =
     p(`class` := s"$NavbarText $PullRight $HiddenXs hide", id := elemId)(glyphIcon(glyphSuffix))
 
@@ -195,7 +566,7 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def basePage(title: String)(inner: Modifier*) = TagPage(
+  def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
       head(
         titleTag(title),
@@ -205,6 +576,7 @@ class PimpTags(scripts: Modifier*) {
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
         cssLink(at("css/custom.css")),
         cssLink(at("css/footer.css")),
+        extraHeader,
         js("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         js("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
         js("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
