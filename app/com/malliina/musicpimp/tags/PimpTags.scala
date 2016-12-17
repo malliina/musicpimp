@@ -1,19 +1,25 @@
 package com.malliina.musicpimp.tags
 
+import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
+import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
 import com.malliina.musicpimp.tags.Bootstrap._
 import com.malliina.musicpimp.tags.PimpTags.callAttr
 import com.malliina.musicpimp.tags.Tags._
+import com.malliina.play.auth.RememberMeCredentials
+import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.{PasswordChange, Username}
 import controllers.routes.Assets.at
 import controllers.{Accounts, Cloud, routes}
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
-import play.api.mvc.{Call, Flash, RequestHeader}
+import play.api.mvc.{Call, Flash}
 
 import scalatags.Text.all._
 import scalatags.Text.{GenericAttr, TypedTag}
@@ -27,15 +33,188 @@ object PimpTags {
   }
 
   def withJs(jsFiles: String*): PimpTags =
-    new PimpTags(jsFiles.map(file => js(at(file))): _*)
+    new PimpTags(jsFiles.map(file => jsScript(at(file))): _*)
 }
 
 class PimpTags(scripts: Modifier*) {
 
-  val alarmJs = js(at("js/scheduler.js"))
+  val alarmJs = jsLink("scheduler.js")
+
+  val FormSignin = "form-signin"
+  val ariaLabel = attr("aria-label")
+  val True = "true"
+
+  def users(us: Seq[Username], addForm: Form[NewUser], username: Username, flash: Flash) =
+    manage("users", username)(
+      row(
+        divClass(ColMd6)(
+          divClass(PageHeader)(
+            h1("Users")
+          ),
+          pimpTable(Seq("Username", "Actions"))(
+            tbody(
+              us map { u =>
+                tr(
+                  td(u.name),
+                  td(postableForm(routes.Accounts.delete(u))(button(`class` := s"$BtnDanger $BtnXs")(" Delete")))
+                )
+              }
+            )
+          ),
+          flash.get(Accounts.UsersFeedback).fold(empty) { feedback =>
+            alertDiv(AlertDanger, feedback)
+          }
+        ),
+        divClass(ColMd4)(
+          divClass(PageHeader)(
+            h1("Add user")
+          ),
+          addUser(addForm, flash)
+        )
+      )
+    )
+
+  def search(query: Option[String], results: Seq[DataTrack], username: Username) =
+    libraryBase("search", username, jsLinks("sarch.js", "json.js", "library.js"))(
+      headerRow()("Search"),
+      row(
+        divClass(ColMd4)(
+          searchForm(None, "")
+        ),
+        divClass(s"$ColMd4 $ColMdOffset4")(
+          onClickButton(s"$BtnDefault $BtnLg", "refresh()", "refresh"),
+          span(id := "index-info")
+        )
+      ),
+      fullRow(
+        if (results.nonEmpty) {
+          responsiveTable(results)("Track", "Artist", "Album", "Actions") { track =>
+            Seq(td(track.title), td(track.artist), td(track.album), td(trackActions(track.id, Option("flex"))()))
+          }
+        } else {
+          query.fold(empty) { term =>
+            h3(s"No results for '$term'.")
+          }
+        }
+      )
+    )
+
+  def playlist(playlist: SavedPlaylist, form: Form[PlaylistSubmission], username: Username) =
+    indexMain("playlist", username)(
+      headerRow()("Playlist"),
+      leadPara(playlist.name),
+      fullRow(
+        if (playlist.tracks.isEmpty) {
+          leadPara("This playlist is empty.")
+        } else {
+          responsiveTable(playlist.tracks)("Title", "Album", "Artist") { track =>
+            Seq(td(track.title), td(track.album), td(track.artist))
+          }
+        }
+      )
+    )
+
+  def responsiveTable[T](entries: Seq[T])(headers: String*)(cells: T => Seq[Modifier]) =
+    headeredTable(TableStripedHoverResponsive, headers.map(stringFrag))(
+      tbody(entries.map(entry => tr(cells(entry))))
+    )
+
+  def player(feedback: Option[String], username: Username) =
+    basePlayer(feedback, username, jsLinks("json.js", "playerws.js"))
+
+  def musicFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, username: Username, m: Messages) =
+    manage("folders", username)(
+      headerRow(ColMd8)("Music Folders"),
+      editFolders(folders, newFolderForm, folderPlaceholder, m)
+    )
+
+  def mostRecent(entries: Seq[RecentEntry], username: Username) =
+    topList[RecentEntry]("recent", username, "Most recent", entries, "When", _.whenFormatted)
+
+  def mostPopular(entries: Seq[PopularEntry], username: Username) =
+    topList[PopularEntry]("popular", username, "Most popular", entries, "Plays", _.playbackCount)
+
+  def topList[T <: TopEntry](tab: String,
+                             username: Username,
+                             headerText: String,
+                             entries: Seq[T],
+                             fourthHeader: String,
+                             fourthValue: T => Modifier) =
+    libraryBase(tab, username, jsLinks("json.js", "library.js"))(
+      headerRow()(headerText, small(`class` := HiddenXs)(s" by ${username.name}")),
+      fullRow(
+        responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
+          Seq(
+            td(entry.track.title),
+            td(entry.track.artist),
+            td(entry.track.album),
+            td(fourthValue(entry)),
+            td(trackActions(entry.track.id, Option("flex"))())
+          )
+        }
+      )
+    )
+
+  def logs(levelField: Field, levels: Seq[Level], currentLevel: Level, username: Username, errorMsg: Option[String]) =
+    manage("logs", username, jsLink("rx.js"))(
+      headerRow()("Logs"),
+      errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
+      rowColumn(ColMd4)(
+        postableForm(routes.LogPage.changeLogLevel())(
+          divClass(FormGroup)(
+            select(`class` := FormControl, id := levelField.id, name := levelField.name, onchange := "this.form.submit()")(
+              levels.map(level => option(if (level == currentLevel) selected else empty)(level.toString))
+            )
+          )
+        )
+      ),
+      fullRow(
+        headeredTable(s"$TableStripedHover $TableResponsive $TableCondensed",
+          Seq("Time", "Message", "Logger", "Thread", "Level"))(
+          tbody(id := "logTableBody")
+        )
+      )
+    )
+
+  def login(accounts: AccountForms, loginForm: Form[RememberMeCredentials], motd: Option[String], flash: Flash) =
+    basePage("Welcome", cssLink(at("css/login.css")))(
+      divContainer(
+        rowColumn(s"$ColMd4 $FormSignin")(
+          flash.get(accounts.feedback).fold(empty) { message =>
+            alertDiv(AlertSuccess, message)
+          }
+        ),
+        rowColumn(ColMd4)(
+          postableForm(routes.Accounts.formAuthenticate(), `class` := FormSignin, name := "loginForm")(
+            h2("Please sign in"),
+            divClass(FormGroup)(
+              textInputBase(Text, accounts.userFormKey, Option("Username"), `class` := FormControl, autofocus)
+            ),
+            divClass(FormGroup)(
+              textInputBase(Password, accounts.passFormKey, Option("Password"), `class` := FormControl)
+            ),
+            divClass(Checkbox)(
+              label(
+                input(`type` := Checkbox, value := True, name := accounts.rememberMeKey, id := accounts.rememberMeKey),
+                " Remember me"
+              )
+            ),
+            blockSubmitButton()("Sign in")
+          )
+        ),
+        rowColumn(ColMd4)(
+          loginForm.globalError.fold(empty) { error =>
+            alertDiv(s"$AlertWarning $FormSignin", error.message)
+          }
+        ),
+        rowColumn(s"$ColMd4 $FormSignin")(
+          motd.fold(empty)(message => p(message))
+        )
+      )
+    )
 
   def library(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username) =
-    libraryBase("folders", username, jsLinks("js/json.js", "js/library.js"))(
+    libraryBase("folders", username, jsLinks("json.js", "library.js"))(
       div(PageHeader)(
         h1("Library ", small(relativePath.path))
       ),
@@ -62,7 +241,7 @@ class PimpTags(scripts: Modifier*) {
 
   def jsLinks(files: String*) = files map jsLink
 
-  def jsLink(file: String) = js(at(file))
+  def jsLink(file: String) = jsScript(at(s"js/$file"))
 
   def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
     indexMain("library", username, extraHeader)(
@@ -76,21 +255,24 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def folderActions(folder: FolderID) =
-    musicItemActions(s"return playItems('$folder');", s"return addItems('$folder');", attr("aria-label") := "folder action")()
+    musicItemActions(s"return playItems('$folder');", s"return addItems('$folder');", None, ariaLabel := "folder action")()
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
       onClickButtonBase(BtnDefault, s"return play('${track.id}');")(track.title)
     )
 
-  def trackActions(track: TrackID)(inner: Modifier*) =
-    musicItemActions(s"return play('$track');", s"return add('$track');")(inner)
+  def trackActions(track: TrackID, extraClass: Option[String] = None)(inner: Modifier*) =
+    musicItemActions(s"return play('$track');", s"return add('$track');", extraClass)(inner)
 
-  def musicItemActions(onPlay: String, onAdd: String, groupAttrs: Modifier*)(inner: Modifier*) =
-    divClass(BtnGroup, role := "group", groupAttrs)(
+  def musicItemActions(onPlay: String, onAdd: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
+    val extra = extraClass.map(c => s" $c").getOrElse(empty)
+    divClass(s"$BtnGroup$extra", role := "group", groupAttrs)(
       onClickButton(BtnPrimary, onAdd, "play"),
-      onClickButton(BtnDefault, onPlay, "plus")
+      onClickButton(BtnDefault, onPlay, "plus"),
+      inner
     )
+  }
 
   def onClickButton(clazz: String, onClicked: String, glyph: String) =
     onClickButtonBase(clazz, onClicked)(glyphIcon(glyph))
@@ -155,17 +337,19 @@ class PimpTags(scripts: Modifier*) {
 
   def toggleButton(title: String, c: Cloud, serverId: Option[String]) =
     postableForm(routes.Cloud.toggle(), name := "toggleForm")(
-      serverId.fold(empty) { server =>
+      if (serverId.isEmpty) {
         divClass(FormGroup)(
           labelFor(c.idFormKey)("Desired cloud ID (optional"),
           textInputBase(Text, c.idFormKey, Option("Your desired ID or leave empty"))
         )
+      } else {
+        empty
       },
       blockSubmitButton(id := "toggleButton")(title)
     )
 
-  def basePlayer(feedback: Option[String], username: Username, request: RequestHeader, scripts: Modifier*) =
-    indexMain("player", username, scripts ++ Seq(js(at("sliders.js"))))(
+  def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
+    indexMain("player", username, scripts ++ Seq(jsLink("sliders.js")))(
       headerRow(ColMd9)("Player"),
       div(id := "playerDiv", style := "display: none")(
         feedback.fold(empty) { fb =>
@@ -225,7 +409,7 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def imageInput[V: AttrValue](imageUrl: V, more: Modifier*) =
-    input(`type` := "image", src := imageUrl, more)
+    input(`type` := Image, src := imageUrl, more)
 
   def alarms(clocks: Seq[ClockPlayback], username: Username) =
     manage("alarms", username, alarmJs)(
@@ -246,7 +430,10 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def pimpTable(headers: Seq[Modifier])(tableBody: Modifier*) =
-    table(`class` := TableStripedHover)(
+    headeredTable(TableStripedHover, headers)(tableBody)
+
+  def headeredTable(clazz: String, headers: Seq[Modifier])(tableBody: Modifier*) =
+    table(`class` := clazz)(
       thead(headers.map(header => th(header))),
       tableBody
     )
@@ -266,7 +453,7 @@ class PimpTags(scripts: Modifier*) {
     liHref("#", onclick := onClicked)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
-    manage("alarms", username, alarmJs, js(at("alarm-editor.js")))(
+    manage("alarms", username, alarmJs, jsLink("alarm-editor.js"))(
       headerRow()("Edit alarm"),
       halfRow(
         postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
@@ -319,7 +506,7 @@ class PimpTags(scripts: Modifier*) {
     val checkedAttr = if (isChecked) checked else empty
     divClass("checkbox")(
       label(
-        input(`type` := "checkbox",
+        input(`type` := Checkbox,
           value := field.value.getOrElse(weekDay.shortName),
           id := weekDay.shortName,
           name := s"${field.name}[$index]",
@@ -331,7 +518,7 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def numberTextIn(field: Field, label: String, placeholderValue: String, m: Messages) =
-    formTextIn(field, label, m, Option(placeholderValue), typeName = "number", inputWidth = ColSm2)
+    formTextIn(field, label, m, Option(placeholderValue), typeName = Number, inputWidth = ColSm2)
 
   def formTextIn(field: Field,
                  labelText: String,
@@ -342,7 +529,7 @@ class PimpTags(scripts: Modifier*) {
                  inClasses: Seq[String] = Nil,
                  formGroupClasses: Seq[String] = Nil,
                  defaultValue: String = "") = {
-    val errorClass = if (field.hasErrors) Option("has-error") else None
+    val errorClass = if (field.hasErrors) Option(HasError) else None
     val moreClasses = (errorClass.toSeq ++ formGroupClasses).mkString(" ", " ", "")
     val inputClasses = inClasses.mkString(" ", " ", "")
     divClass(s"$FormGroup$moreClasses")(
@@ -415,7 +602,7 @@ class PimpTags(scripts: Modifier*) {
       divClass(FormGroup)(
         label(`for` := "user")("Username"),
         divClass("controls")(
-          span(`class` := s"uneditable-input $InputMd", id := "user")(username.name)
+          span(`class` := s"$UneditableInput $InputMd", id := "user")(username.name)
         )
       ),
       passwordGroup("oldPassword", "Olad password"),
@@ -577,9 +764,9 @@ class PimpTags(scripts: Modifier*) {
         cssLink(at("css/custom.css")),
         cssLink(at("css/footer.css")),
         extraHeader,
-        js("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
-        js("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
-        js("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+        jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
+        jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
+        jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
       ),
       body(
         div(id := "wrap")(

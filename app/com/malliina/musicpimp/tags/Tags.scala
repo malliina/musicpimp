@@ -6,11 +6,13 @@ object Tags extends Tags
 
 trait Tags {
   val Button = "button"
-  val Checkbox ="checkbox"
+  val Checkbox = "checkbox"
   val Download = "download"
   val En = "en"
   val FormRole = "form"
+  val Image = "image"
   val Lead = "lead"
+  val Number ="number"
   val Password = "password"
   val Post = "POST"
   val Search = "search"
@@ -47,7 +49,7 @@ trait Tags {
   // WTF? Removing currying requires an AttrValue - should require Modifier?
   def aHref[V: AttrValue](url: V, more: Modifier*)(text: Modifier*) = a(href := url, more)(text)
 
-  def js[V: AttrValue](url: V) = script(src := url)
+  def jsScript[V: AttrValue](url: V) = script(src := url)
 
   def cssLink[V: AttrValue](url: V) = link(rel := Stylesheet, href := url)
 }
