@@ -6,6 +6,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import com.malliina.play.models.Username
 import com.malliina.play.ws.WebSocketController
@@ -15,7 +16,8 @@ import views.html
 
 import scala.concurrent.Future
 
-class Website(sockets: WebSocketController,
+class Website(tags: PimpTags,
+              sockets: WebSocketController,
               serverWS: ServerWS,
               auth: Authenticator,
               stats: PlaybackStats,
@@ -30,13 +32,14 @@ class Website(sockets: WebSocketController,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    html.player(serverWS.wsUrl(req), feedback, req.user, req)
+//    html.player(serverWS.wsUrl(req), feedback, req.user, req)
+    tags.player(feedback, req.user)
   }
 
   def recent = metaAction { (meta, req) =>
     implicit val f = TrackMeta.format(req)
     stats.mostRecent(meta) map { entries =>
-      respond2(req)(
+      respond(req)(
         html = html.mostRecent(entries, meta.username),
         json = RecentList(entries)
       )
@@ -46,7 +49,7 @@ class Website(sockets: WebSocketController,
   def popular = metaAction { (meta, req) =>
     implicit val f = TrackMeta.format(req)
     stats.mostPlayed(meta) map { entries =>
-      respond2(req)(
+      respond(req)(
         html = html.mostPopular(entries, meta.username),
         json = PopularList(entries)
       )

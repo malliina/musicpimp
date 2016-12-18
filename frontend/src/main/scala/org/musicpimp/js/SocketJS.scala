@@ -10,12 +10,35 @@ import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 abstract class SocketJS(wsPath: String) {
+  val Hidden = "hide"
+
   val statusElem = elem("status")
+  val okStatus = elem("okstatus")
+  val failStatus = elem("failstatus")
 
   println(s"Connecting to $wsPath")
   val socket: dom.WebSocket = openSocket(wsPath)
 
   def handlePayload(payload: String)
+
+  def send[T: PimpJSON.Writer](payload: T) =
+    socket.send(PimpJSON.write(payload))
+
+  def onConnected(e: Event): Unit = showConnected()
+
+  def onClosed(e: CloseEvent): Unit = showDisconnected()
+
+  def onError(e: ErrorEvent): Unit = showDisconnected()
+
+  def showConnected() = {
+    okStatus.removeClass(Hidden)
+    failStatus.addClass(Hidden)
+  }
+
+  def showDisconnected() = {
+    okStatus.addClass(Hidden)
+    failStatus.removeClass(Hidden)
+  }
 
   def openSocket(pathAndQuery: String) = {
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
@@ -33,16 +56,6 @@ abstract class SocketJS(wsPath: String) {
     s"$wsProto://${location.host}"
   }
 
-  def onConnected(e: Event) = {
-    socket.send(PimpJSON.write(Command.Subscribe))
-  }
-
-  def onError(e: ErrorEvent) = {
-  }
-
-  def onClosed(e: CloseEvent) = {
-  }
-
   def onMessage(msg: MessageEvent): Unit = {
     val event = JSON.parse(msg.data.toString)
     if (event.event.toString == "ping") {
@@ -58,7 +71,7 @@ abstract class SocketJS(wsPath: String) {
       println(s"Not JSON, '$errorMessage' in value '$in'.")
   }
 
-  def setFeedback(feedback: String) = statusElem html feedback
+//  def setFeedback(feedback: String) = statusElem html feedback
 
   def elem(id: String) = jQuery(s"#$id")
 

@@ -8,7 +8,6 @@ GET         /settings                          controllers.SettingsController.se
 GET         /connect                           controllers.ConnectController.connect
 GET         /image                             controllers.ConnectController.image
 GET         /logs                              controllers.LogPage.logs
-GET         /logs2                             controllers.LogPage.logs2
 POST        /logs/levels                       controllers.LogPage.changeLogLevel
 GET         /cloud                             controllers.Cloud.cloud
 POST        /cloud                             controllers.Cloud.toggle

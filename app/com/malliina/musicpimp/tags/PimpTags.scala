@@ -22,8 +22,8 @@ import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.{Call, Flash}
 
+import scalatags.Text.TypedTag
 import scalatags.Text.all._
-import scalatags.Text.{GenericAttr, TypedTag}
 
 object PimpTags {
   def forApp(isProd: Boolean): PimpTags = {
@@ -226,9 +226,9 @@ class PimpTags(scripts: Modifier*) {
 
   def renderColumn(col: MusicColumn, onlyColumn: Boolean = false) =
     divClass(if (onlyColumn) ColMd10 else ColMd4)(
-      ul(ListUnstyled)(
-        col.folders.map(f => Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title))),
-        col.tracks.map(t => li(`class` := Lead)(titledTrackActions(t)))
+      ulClass(ListUnstyled)(
+        col.folders.map(f => liClass(Lead)(Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title)))),
+        col.tracks.map(t => liClass(Lead)(titledTrackActions(t)))
       )
     )
 
@@ -255,10 +255,10 @@ class PimpTags(scripts: Modifier*) {
     musicItemActions(s"return play('$track');", s"return add('$track');", extraClass)(inner)
 
   def musicItemActions(onPlay: String, onAdd: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
-    val extra = extraClass.map(c => s" $c").getOrElse(empty)
-    divClass(s"$BtnGroup$extra", role := "group", groupAttrs)(
-      onClickButton(BtnPrimary, onAdd, "play"),
-      onClickButton(BtnDefault, onPlay, "plus"),
+    val extra = extraClass.map(c => s" $c").getOrElse("")
+    divClass(s"$BtnGroup$extra", role := Group, groupAttrs)(
+      onClickButton(BtnPrimary, onPlay, "play"),
+      onClickButton(BtnDefault, onAdd, "plus"),
       inner
     )
   }
@@ -338,7 +338,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
-    indexMain("player", username, scripts ++ Seq(jsLink("sliders.js")))(
+    indexMain("player", username, scripts ++ Seq(cssLink(at("css/player.css"))))(
       headerRow(ColMd9)("Player"),
       div(id := "playerDiv", style := "display: none")(
         feedback.fold(empty) { fb =>
@@ -373,21 +373,21 @@ class PimpTags(scripts: Modifier*) {
         h3(id := "artist", centerAttr)
       ),
       fullRow(
-        div(ColMd11)(
+        divClass(ColMd11)(
           div(id := "slider")
         ),
         divClass(s"$Row $ColMd11", id := "progress")(
           span(id := "pos")("00:00"), " / ", span(id := "duration")("00:00")
         ),
         divClass(s"$Row $ColMd11 text-center")(
-          imageInput(at("img/transport.rew.png"), onclick := "prev()"),
-          imageInput(at("img/light/transport.play.png"), id := "playButton", onclick := "resume()"),
-          imageInput(at("img/light/transport.pause.png"), id := "pauseButton", style := "display: none", onclick := "stop()"),
-          imageInput(at("img/light/transport/ff.png"), onclick := "next()")
+          imageInput(at("img/transport.rew.png"), id := "prevButton"),
+          imageInput(at("img/light/transport.play.png"), id := "playButton"),
+          imageInput(at("img/light/transport.pause.png"), id := "pauseButton", style := "display: none"),
+          imageInput(at("img/light/transport.ff.png"), id := "nextButton")
         ),
         divClass(s"$Row $ColMd11 $VisibleLg")(
           divClass(ColMd3)(
-            imageInput(at("img/light/appbar.sound.3.png"), `class` := PullRight, onclick := "togglemute()")
+            imageInput(at("img/light/appbar.sound.3.png"), id := "volumeButton", `class` := PullRight)
           ),
           divClass(ColMd8)(
             divClass(s"$ColMd12 $PullLeft", id := "volume")
@@ -671,7 +671,7 @@ class PimpTags(scripts: Modifier*) {
             ulClass(s"$Nav $NavbarNav $NavbarRight")(
               li(`class` := Dropdown)(
                 aHref("#", `class` := DropdownToggle, dataToggle := Dropdown, role := Button, ariaHasPopup := True, ariaExpanded := False)(
-                  glyphIcon("user"), s" ${user.name}", spanClass(Caret)
+                  glyphIcon("user"), s" ${user.name} ", spanClass(Caret)
                 ),
                 ulClass(DropdownMenu)(
                   navItem("Account", routes.Accounts.account(), "pencil"),

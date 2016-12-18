@@ -10,8 +10,9 @@ trait Tags {
   val Download = "download"
   val En = "en"
   val FormRole = "form"
+  val Group = "group"
   val Image = "image"
-  val Number ="number"
+  val Number = "number"
   val Password = "password"
   val Post = "POST"
   val Search = "search"
@@ -44,6 +45,8 @@ trait Tags {
   def pClass(clazz: String, more: Modifier*) = p(`class` := clazz, more)
 
   def ulClass(clazz: String) = ul(`class` := clazz)
+
+  def liClass(clazz: String) = li(`class` := clazz)
 
   def liHref[V: AttrValue](url: V, more: Modifier*)(text: Modifier*) = li(aHref(url, more)(text))
 

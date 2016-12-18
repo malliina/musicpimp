@@ -8,7 +8,6 @@ import com.malliina.util.Logging
 import controllers.LogPage.log
 import play.api.Logger
 import play.api.data.{Form, Forms}
-import views.html
 
 class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
@@ -16,15 +15,15 @@ class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Mater
 
   val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
 
-  def logs = navigate(req => logPage(levelForm, req))
+  def logs = navigate { req =>
+    logPage(levelForm, req)
+  }
 
-  def logs2 = navigate(req => tags.logs(levelForm(LEVEL), Logging.levels, Logging.level, req.user, None))
-
-  def changeLogLevel = pimpAction { request =>
-    levelForm.bindFromRequest()(request).fold(
+  def changeLogLevel = pimpAction { req =>
+    levelForm.bindFromRequest()(req).fold(
       erroredForm => {
         log warn s"Log level change submission failed"
-        BadRequest(logPage(erroredForm, request))
+        BadRequest(logPage(erroredForm, req))
       },
       level => {
         Logging.level = level
@@ -35,7 +34,7 @@ class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Mater
   }
 
   private def logPage(form: Form[Level], req: PimpRequest) =
-    html.logs(sockets.wsUrl(req), form(LEVEL), Logging.levels, Logging.level, req.user, None, req)
+    tags.logs(form(LEVEL), Logging.levels, Logging.level, req.user, None)
 }
 
 object LogPage {

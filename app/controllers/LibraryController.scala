@@ -1,19 +1,18 @@
 package controllers
 
-import java.net.URLDecoder
-
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
+import com.malliina.musicpimp.tags.{PimpTags, TagPage}
 import com.malliina.play.models.Username
 import com.malliina.play.{Authenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
 import views.html
 
-class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materializer)
+class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: Authenticator, mat: Materializer)
   extends Secured(auth, mat) {
 
   def siteRoot = rootLibrary
@@ -88,14 +87,15 @@ class LibraryController(lib: MusicLibrary, auth: Authenticator, mat: Materialize
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))
 
-  def toHtml(folder: MusicFolder, username: Username): play.twirl.api.Html = {
+  def toHtml(folder: MusicFolder, username: Username): TagPage = {
     val (col1, col2, col3) = columnify(folder) match {
       case Nil => (MusicColumn.empty, MusicColumn.empty, MusicColumn.empty)
       case h :: Nil => (h, MusicColumn.empty, MusicColumn.empty)
       case f :: s :: Nil => (f, s, MusicColumn.empty)
       case f :: s :: t :: tail => (f, s, t)
     }
-    html.library(folder.folder.path, col1, col2, col3, username)
+    tags.library(folder.folder.path, col1, col2, col3, username)
+//    html.library(folder.folder.path, col1, col2, col3, username)
   }
 
   /** Arranges a music collection into columns.

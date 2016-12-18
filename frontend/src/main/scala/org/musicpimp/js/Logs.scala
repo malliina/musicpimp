@@ -2,8 +2,7 @@ package org.musicpimp.js
 
 import java.util.UUID
 
-import org.scalajs.dom.CloseEvent
-import org.scalajs.dom.raw.{ErrorEvent, Event}
+import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 
 import scalatags.Text.all._
@@ -15,29 +14,13 @@ case class JVMLogEntry(level: String,
                        timeFormatted: String,
                        stackTrace: Option[String] = None)
 
-class Logs extends SocketJS("/ws/logs") {
-  val Hidden = "hide"
+class Logs extends SocketJS("/ws/logs?f=json") {
   val tableContent = elem("logTableBody")
-  val okStatus = elem("okstatus")
-  val failStatus = elem("failstatus")
+
 
   override def onConnected(e: Event) = {
+    send(Command.subscribe)
     super.onConnected(e)
-    showConnected()
-  }
-
-  override def onClosed(e: CloseEvent) = showDisconnected()
-
-  override def onError(e: ErrorEvent) = showDisconnected()
-
-  def showConnected() = {
-    okStatus.removeClass(Hidden)
-    failStatus.addClass(Hidden)
-  }
-
-  def showDisconnected() = {
-    okStatus.addClass(Hidden)
-    failStatus.removeClass(Hidden)
   }
 
   override def handlePayload(payload: String) =

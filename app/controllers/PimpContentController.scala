@@ -1,14 +1,12 @@
 package controllers
 
 import com.malliina.musicpimp.json.JsonFormatVersions
-import com.malliina.util.Log
 import controllers.PimpContentController.log
 import play.api.Logger
-import play.api.http.MimeTypes
+import play.api.http.{MimeTypes, Writeable}
 import play.api.libs.json.{JsValue, Json, Writes}
-import play.api.mvc.Results.{Accepted, NotAcceptable, Ok, Status}
+import play.api.mvc.Results.{Accepted, Ok, Status}
 import play.api.mvc.{RequestHeader, Result, Results}
-import play.twirl.api.Html
 
 import scala.concurrent.Future
 
@@ -41,11 +39,8 @@ trait PimpContentController {
 
   def notAcceptable(msg: String) = PimpContentController.notAcceptable(msg)
 
-  def respond2[T: Writes](request: RequestHeader)(html: => Html, json: => T) =
-    respond(request)(html, Json.toJson(json))
-
-  def respond(request: RequestHeader)(html: => Html, json: => JsValue, status: Status = Ok): Result =
-    pimpResult(request)(status(html), status(json))
+  def respond[C: Writeable, T: Writes](request: RequestHeader)(html: => C, json: => T, status: Status = Ok): Result =
+    pimpResult(request)(status(html), status(Json.toJson(json)))
 
   /**
     * @return the equivalent of "Unit" in JSON and HTML

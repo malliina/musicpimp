@@ -43,9 +43,11 @@ object PimpBuild {
       libraryDependencies ++= Seq(
         "com.lihaoyi" %%% "scalatags" % "0.6.2",
         "com.lihaoyi" %%% "upickle" % "0.4.3",
-        "be.doeraene" %%% "scalajs-jquery" % "0.9.1"
         //        "org.scala-js" %%% "scalajs-dom" % "0.9.1"
-      )
+        "be.doeraene" %%% "scalajs-jquery" % "0.9.1",
+        "com.lihaoyi" %%% "utest" % "0.4.4" % Test
+      ),
+      testFrameworks += new TestFramework("utest.runner.Framework")
     )
 
   lazy val pimpProject = PlayProject("musicpimp")
