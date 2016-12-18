@@ -6,6 +6,7 @@ import com.malliina.musicpimp.cloud.{Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.stats.DatabaseStats
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
@@ -18,6 +19,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigur
 import play.filters.gzip.GzipFilter
 
 import scala.concurrent.Future
+
 import router.Routes
 
 case class InitOptions(alarms: Boolean = true,
@@ -68,10 +70,11 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
   lazy val c = new Clouds(deps)
+  lazy val tags = PimpTags.forApp(environment.mode == Mode.Prod)
 
   // Controllers
   lazy val ls = new PimpLogs(materializer)
-  lazy val lp = new LogPage(ls, auth, materializer)
+  lazy val lp = new LogPage(tags, ls, auth, materializer)
   lazy val wp = new WebPlayer(auth, materializer)
   lazy val sws = new ServerWS(c, auth, handler, materializer)
   lazy val webCtrl = new Website(wp, sws, auth, stats, materializer)

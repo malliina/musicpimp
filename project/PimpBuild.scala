@@ -24,8 +24,9 @@ import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys
 import sbt.Keys._
 import sbt._
-import sbtbuildinfo.BuildInfoKeys.buildInfoPackage
+import sbtbuildinfo.BuildInfoKeys.{buildInfoPackage, buildInfoKeys}
 import sbtbuildinfo.BuildInfoPlugin
+import sbtbuildinfo.BuildInfoKey
 import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
@@ -52,6 +53,7 @@ object PimpBuild {
     .settings(pimpPlaySettings: _*)
 
   lazy val commonSettings = PlayProject.assetSettings ++ scalaJSSettings ++ Seq(
+    buildInfoKeys += BuildInfoKey("frontName" -> (name in frontend).value),
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
     version := "3.4.1",
     organization := "org.musicpimp",

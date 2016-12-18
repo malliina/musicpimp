@@ -10,10 +10,10 @@ object ScalaScripts {
     */
   def forApp(appName: String, isProd: Boolean): ScalaScripts = {
     val lowerName = appName.toLowerCase
-    val suffix = if (isProd) "opt" else "fastopt"
 
     def withSuffix(suff: String) = s"$lowerName-$suff.js"
 
+    val suffix = if (isProd) "opt" else "fastopt"
     val optimizedName = withSuffix(suffix)
     val launcherName = withSuffix("launcher")
     val libs = withSuffix("jsdeps")

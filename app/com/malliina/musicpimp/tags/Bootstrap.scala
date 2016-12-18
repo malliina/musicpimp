@@ -9,7 +9,6 @@ object Bootstrap extends Bootstrap
 /** Scalatags for Twitter Bootstrap.
   */
 trait Bootstrap {
-  val FormControl = "form-control"
   val FormSignin = "form-signin"
   val FormSigninHeading = "form-signin-heading"
 
@@ -51,6 +50,7 @@ trait Bootstrap {
   val Dropdown = "dropdown"
   val DropdownMenu = "dropdown-menu"
   val DropdownToggle = "dropdown-toggle"
+  val FormControl = "form-control"
   val FormGroup = "form-group"
   val FormHorizontal = "form-horizontal"
   val Glyphicon = "glyphicon"
@@ -64,6 +64,7 @@ trait Bootstrap {
   val InputGroupLg = "input-group-lg"
   val InputMd = "input-md"
   val Jumbotron = "jumbotron"
+  val Lead = "lead"
   val ListUnstyled = "list-unstyled"
   val Nav = "nav"
   val NavStacked = "nav nav-stacked"
@@ -107,9 +108,14 @@ trait Bootstrap {
   val dataTarget = attr(DataTarget)
   val dataToggle = attr(DataToggle)
 
+  def alertDiv(alertClass: String, message: String) =
+    divClass(s"$Lead $alertClass", role := Alert)(message)
+
+  def leadPara = pClass(Lead)
+
   def headerRow(clazz: String = ColMd12)(header: Modifier*) =
     rowColumn(clazz)(
-      divClass(PageHeader)(
+      headerDiv(
         h1(header)
       )
     )
@@ -124,7 +130,13 @@ trait Bootstrap {
 
   def div4 = divClass(ColMd4)
 
+  def div6 = divClass(ColMd6)
+
   def divContainer = divClass(Container)
+
+  def formGroup = divClass(FormGroup)
+
+  def headerDiv = divClass(PageHeader)
 
   def glyphIcon(glyphName: String) = iClass(glyphClass(glyphName))
 
@@ -135,5 +147,15 @@ trait Bootstrap {
       spanClass(IconBar),
       spanClass(IconBar),
       spanClass(IconBar)
+    )
+
+  def defaultSubmitButton = submitButton(`class` := BtnDefault)
+
+  def blockSubmitButton(more: Modifier*) =
+    submitButton(`class` := s"$BtnPrimary $BtnBlock", more)
+
+  def responsiveTable[T](entries: Seq[T])(headers: String*)(cells: T => Seq[Modifier]) =
+    headeredTable(TableStripedHoverResponsive, headers.map(stringFrag))(
+      tbody(entries.map(entry => tr(cells(entry))))
     )
 }

@@ -10,7 +10,8 @@ import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
 import com.malliina.musicpimp.tags.Bootstrap._
-import com.malliina.musicpimp.tags.PimpTags.callAttr
+import com.malliina.musicpimp.tags.PlayBootstrap._
+import com.malliina.musicpimp.tags.PlayTags._
 import com.malliina.musicpimp.tags.Tags._
 import com.malliina.play.auth.RememberMeCredentials
 import com.malliina.play.controllers.AccountForms
@@ -25,11 +26,9 @@ import scalatags.Text.all._
 import scalatags.Text.{GenericAttr, TypedTag}
 
 object PimpTags {
-  implicit val callAttr = new GenericAttr[Call]
-
   def forApp(isProd: Boolean): PimpTags = {
-    val scripts = ScalaScripts.forApp(BuildInfo.name, isProd)
-    new PimpTags(scripts.optimized, scripts.launcher)
+    val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
+    withJs(scripts.optimized, scripts.launcher)
   }
 
   def withJs(jsFiles: String*): PimpTags =
@@ -37,21 +36,20 @@ object PimpTags {
 }
 
 class PimpTags(scripts: Modifier*) {
-
   val alarmJs = jsLink("scheduler.js")
-
   val FormSignin = "form-signin"
-  val ariaLabel = attr("aria-label")
+  val False = "false"
   val True = "true"
+  val Hide = "hide"
 
   def users(us: Seq[Username], addForm: Form[NewUser], username: Username, flash: Flash) =
     manage("users", username)(
       row(
-        divClass(ColMd6)(
-          divClass(PageHeader)(
+        div6(
+          headerDiv(
             h1("Users")
           ),
-          pimpTable(Seq("Username", "Actions"))(
+          stripedHoverTable(Seq("Username", "Actions"))(
             tbody(
               us map { u =>
                 tr(
@@ -65,8 +63,8 @@ class PimpTags(scripts: Modifier*) {
             alertDiv(AlertDanger, feedback)
           }
         ),
-        divClass(ColMd4)(
-          divClass(PageHeader)(
+        div4(
+          headerDiv(
             h1("Add user")
           ),
           addUser(addForm, flash)
@@ -78,7 +76,7 @@ class PimpTags(scripts: Modifier*) {
     libraryBase("search", username, jsLinks("sarch.js", "json.js", "library.js"))(
       headerRow()("Search"),
       row(
-        divClass(ColMd4)(
+        div4(
           searchForm(None, "")
         ),
         divClass(s"$ColMd4 $ColMdOffset4")(
@@ -112,11 +110,6 @@ class PimpTags(scripts: Modifier*) {
           }
         }
       )
-    )
-
-  def responsiveTable[T](entries: Seq[T])(headers: String*)(cells: T => Seq[Modifier]) =
-    headeredTable(TableStripedHoverResponsive, headers.map(stringFrag))(
-      tbody(entries.map(entry => tr(cells(entry))))
     )
 
   def player(feedback: Option[String], username: Username) =
@@ -161,7 +154,7 @@ class PimpTags(scripts: Modifier*) {
       errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
       rowColumn(ColMd4)(
         postableForm(routes.LogPage.changeLogLevel())(
-          divClass(FormGroup)(
+          formGroup(
             select(`class` := FormControl, id := levelField.id, name := levelField.name, onchange := "this.form.submit()")(
               levels.map(level => option(if (level == currentLevel) selected else empty)(level.toString))
             )
@@ -187,10 +180,10 @@ class PimpTags(scripts: Modifier*) {
         rowColumn(ColMd4)(
           postableForm(routes.Accounts.formAuthenticate(), `class` := FormSignin, name := "loginForm")(
             h2("Please sign in"),
-            divClass(FormGroup)(
+            formGroup(
               textInputBase(Text, accounts.userFormKey, Option("Username"), `class` := FormControl, autofocus)
             ),
-            divClass(FormGroup)(
+            formGroup(
               textInputBase(Password, accounts.passFormKey, Option("Password"), `class` := FormControl)
             ),
             divClass(Checkbox)(
@@ -215,7 +208,7 @@ class PimpTags(scripts: Modifier*) {
 
   def library(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username) =
     libraryBase("folders", username, jsLinks("json.js", "library.js"))(
-      div(PageHeader)(
+      headerDiv(
         h1("Library ", small(relativePath.path))
       ),
       row(
@@ -235,13 +228,9 @@ class PimpTags(scripts: Modifier*) {
     divClass(if (onlyColumn) ColMd10 else ColMd4)(
       ul(ListUnstyled)(
         col.folders.map(f => Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title))),
-        col.tracks.map(t => li(`class` := Lead)())
+        col.tracks.map(t => li(`class` := Lead)(titledTrackActions(t)))
       )
     )
-
-  def jsLinks(files: String*) = files map jsLink
-
-  def jsLink(file: String) = jsScript(at(s"js/$file"))
 
   def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
     indexMain("library", username, extraHeader)(
@@ -290,7 +279,7 @@ class PimpTags(scripts: Modifier*) {
           spanClass(InputGroupAddon)(glyphIcon("folder-open")),
           textInputBase(Text, "path", Option(folderPlaceholder), `class` := FormControl, required),
           spanClass(InputGroupBtn)(
-            button(`type` := Submit, `class` := BtnPrimary)(glyphIcon("plus"), " Add")
+            submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
           )
         ),
         newFolderForm.errors.map(error => pClass("error")(Messages(error.message)(messages)))
@@ -303,7 +292,7 @@ class PimpTags(scripts: Modifier*) {
         spanClass(InputGroupAddon)(glyphIcon("folder-open")),
         spanClass(s"$UneditableInput $FormControl")(folder),
         spanClass(InputGroupBtn)(
-          button(`type` := Submit, `class` := BtnDefault)(glyphIcon("remove"), " Delete")
+          defaultSubmitButton(glyphIcon("remove"), " Delete")
         )
       )
     )
@@ -338,7 +327,7 @@ class PimpTags(scripts: Modifier*) {
   def toggleButton(title: String, c: Cloud, serverId: Option[String]) =
     postableForm(routes.Cloud.toggle(), name := "toggleForm")(
       if (serverId.isEmpty) {
-        divClass(FormGroup)(
+        formGroup(
           labelFor(c.idFormKey)("Desired cloud ID (optional"),
           textInputBase(Text, c.idFormKey, Option("Your desired ID or leave empty"))
         )
@@ -408,14 +397,11 @@ class PimpTags(scripts: Modifier*) {
     )
   }
 
-  def imageInput[V: AttrValue](imageUrl: V, more: Modifier*) =
-    input(`type` := Image, src := imageUrl, more)
-
   def alarms(clocks: Seq[ClockPlayback], username: Username) =
     manage("alarms", username, alarmJs)(
       headerRow()("Alarms"),
       fullRow(
-        pimpTable(Seq("Description", "Enabled", "Actions"))(
+        stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
           tbody(clocks.map(alarmRow))
         )
       ),
@@ -429,14 +415,8 @@ class PimpTags(scripts: Modifier*) {
     tr(td(ap.describe), td(enabledAttr)(enabledText), td(alarmActions(ap.id.getOrElse("nonexistent"))))
   }
 
-  def pimpTable(headers: Seq[Modifier])(tableBody: Modifier*) =
+  def stripedHoverTable(headers: Seq[Modifier])(tableBody: Modifier*) =
     headeredTable(TableStripedHover, headers)(tableBody)
-
-  def headeredTable(clazz: String, headers: Seq[Modifier])(tableBody: Modifier*) =
-    table(`class` := clazz)(
-      thead(headers.map(header => th(header))),
-      tableBody
-    )
 
   def alarmActions(id: String) =
     divClass(BtnGroup)(
@@ -474,7 +454,7 @@ class PimpTags(scripts: Modifier*) {
 
   def checkField(field: Field, labelText: String) = {
     val checkedAttr = if (field.value.contains("on")) checked else empty
-    divClass(FormGroup)(
+    formGroup(
       divClass(s"$ColSmOffset2 $ColSm10")(
         divClass(Checkbox)(
           label(
@@ -504,7 +484,7 @@ class PimpTags(scripts: Modifier*) {
   def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) = {
     val isChecked = field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName)
     val checkedAttr = if (isChecked) checked else empty
-    divClass("checkbox")(
+    divClass(Checkbox)(
       label(
         input(`type` := Checkbox,
           value := field.value.getOrElse(weekDay.shortName),
@@ -551,13 +531,7 @@ class PimpTags(scripts: Modifier*) {
 
   def textInputBase(inType: String, idAndName: String, placeHolder: Option[String], more: Modifier*) = {
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
-    input(`type` := inType, name := idAndName, id := idAndName, placeholderAttr, more)
-  }
-
-  def helpSpan(field: Field, m: Messages) = {
-    field.error.map(error => Messages(error.message, error.args: _*)(m)).fold(empty) { formattedMessage =>
-      spanClass("help-block")(formattedMessage)
-    }
+    namedInput(idAndName, `type` := inType, placeholderAttr, more)
   }
 
   def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
@@ -576,7 +550,7 @@ class PimpTags(scripts: Modifier*) {
     postableForm(routes.Accounts.formAddUser())(
       inGroup("username", Text, "Username"),
       passwordInputs(),
-      blockSubmitButton("Add User"),
+      blockSubmitButton()("Add User"),
       addForm.globalError.fold(empty) { error =>
         alertDiv(AlertDanger, error.message)
       },
@@ -599,10 +573,10 @@ class PimpTags(scripts: Modifier*) {
 
   def changePassword(username: Username, passwordForm: Form[PasswordChange], flash: Flash) =
     postableForm(routes.Accounts.formChangePassword())(
-      divClass(FormGroup)(
-        label(`for` := "user")("Username"),
+      formGroup(
+        labelFor("user")("Username"),
         divClass("controls")(
-          span(`class` := s"$UneditableInput $InputMd", id := "user")(username.name)
+          spanClass(s"$UneditableInput $InputMd", id := "user")(username.name)
         )
       ),
       passwordGroup("oldPassword", "Olad password"),
@@ -616,10 +590,8 @@ class PimpTags(scripts: Modifier*) {
       }
     )
 
-  def alertDiv(alertClass: String, message: String) =
-    divClass(s"$Lead $alertClass", role := Alert)(message)
-
-  def postableForm(onAction: Call, more: Modifier*) = form(role := FormRole, action := onAction, method := Post, more)
+  def postableForm(onAction: Call, more: Modifier*) =
+    form(role := FormRole, action := onAction, method := Post, more)
 
   def passwordInputs(firstLabel: String = "Password", repeatLabel: String = "Repeat password"): Modifier = Seq(
     passwordGroup("newPassword", firstLabel),
@@ -630,14 +602,12 @@ class PimpTags(scripts: Modifier*) {
     inGroup(elemId, Password, labelText)
 
   def inGroup(elemId: String, inType: String, labelText: String) =
-    divClass(FormGroup)(
-      label(`for` := elemId)(labelText),
+    formGroup(
+      labelFor(elemId)(labelText),
       divClass("controls")(
-        input(`type` := inType, id := elemId, name := elemId, `class` := s"$FormControl $InputMd", required)
+        namedInput(elemId, `type` := inType, `class` := s"$FormControl $InputMd", required)
       )
     )
-
-  def blockSubmitButton(more: Modifier*) = button(`type` := Submit, `class` := s"$BtnPrimary $BtnBlock", more)
 
   def aboutBase(user: Username) = indexMain("about", user)(
     headerRow(ColMd6)("About"),
@@ -649,7 +619,7 @@ class PimpTags(scripts: Modifier*) {
     rowColumn(ColMd8)(
       h2("Third Party Software"),
       p("This app uses the following third party software:"),
-      div(`class` := "panel-group", id := "accordion")(
+      divClass("panel-group", id := "accordion")(
         licensePanel("collapseOne", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
         licensePanel("collapseTwo", Licenses.MIT, "software licensed under the ", "MIT License"),
         licensePanel("collapseThree", Licenses.APACHE, "software licensed under ", "Apache License 2.0"),
@@ -700,7 +670,7 @@ class PimpTags(scripts: Modifier*) {
             ),
             ulClass(s"$Nav $NavbarNav $NavbarRight")(
               li(`class` := Dropdown)(
-                aHref("#", `class` := DropdownToggle, dataToggle := Dropdown, role := Button, attr("aria-haspopup") := "true", attr("aria-expanded") := "false")(
+                aHref("#", `class` := DropdownToggle, dataToggle := Dropdown, role := Button, ariaHasPopup := True, ariaExpanded := False)(
                   glyphIcon("user"), s" ${user.name}", spanClass(Caret)
                 ),
                 ulClass(DropdownMenu)(
@@ -714,21 +684,22 @@ class PimpTags(scripts: Modifier*) {
             ),
             divClass(s"$ColMd2 $PullRight")(
               eye("okstatus", "eye-open green"),
-              eye("failstatus", "eye-closed red")
+              eye("failstatus", "eye-close red")
             ),
             divClass(s"$ColMd4 $PullRight")(
               searchForm(None, formClass = NavbarForm, "")
             )
           )
         )
-      )
+      ),
+      section(divContainer(inner))
     )
   }
 
   def saveButton(buttonText: String = "Save") =
-    divClass(FormGroup)(
+    formGroup(
       divClass(s"$ColSmOffset2 $ColSm10")(
-        button(`type` := Submit, `class` := BtnDefault)(buttonText)
+        defaultSubmitButton(buttonText)
       )
     )
 
@@ -741,14 +712,14 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def eye(elemId: String, glyphSuffix: String) =
-    p(`class` := s"$NavbarText $PullRight $HiddenXs hide", id := elemId)(glyphIcon(glyphSuffix))
+    pClass(s"$NavbarText $PullRight $HiddenXs $Hide", id := elemId)(glyphIcon(glyphSuffix))
 
   def searchForm(query: Option[String] = None, formClass: String, size: String = InputGroupLg) =
     form(action := routes.SearchPage.search(), role := Search, `class` := formClass)(
       divClass(s"$InputGroup $size")(
         input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("artist, album or track..."), name := "term", id := "term"),
         divClass(InputGroupBtn)(
-          button(`class` := BtnDefault, `type` := Submit)(glyphIcon("search"))
+          defaultSubmitButton(glyphIcon("search"))
         )
       )
     )
@@ -757,16 +728,16 @@ class PimpTags(scripts: Modifier*) {
     html(lang := En)(
       head(
         titleTag(title),
-        meta(name := "viewport", content := "width=device-width, initial-scale=1.0"),
+        deviceWidthViewport,
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
         cssLink(at("css/custom.css")),
         cssLink(at("css/footer.css")),
-        extraHeader,
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
-        jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+        jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"),
+        extraHeader
       ),
       body(
         div(id := "wrap")(
