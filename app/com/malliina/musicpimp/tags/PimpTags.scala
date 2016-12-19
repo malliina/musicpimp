@@ -80,7 +80,7 @@ class PimpTags(scripts: Modifier*) {
           searchForm(None, "")
         ),
         divClass(s"$ColMd4 $ColMdOffset4")(
-          onClickButton(s"$BtnDefault $BtnLg", "refresh()", "refresh"),
+          button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := "refresh-button")(glyphIcon("refresh")),
           span(id := "index-info")
         )
       ),
@@ -244,30 +244,30 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def folderActions(folder: FolderID) =
-    musicItemActions(s"return playItems('$folder');", s"return addItems('$folder');", None, ariaLabel := "folder action")()
+    musicItemActions("folder", folder.id, None, ariaLabel := "folder action")()
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      onClickButtonBase(BtnDefault, s"return play('${track.id}');")(track.title)
+      dataButton(s"$BtnDefault track play", track.id.id)(track.title)
     )
 
   def trackActions(track: TrackID, extraClass: Option[String] = None)(inner: Modifier*) =
-    musicItemActions(s"return play('$track');", s"return add('$track');", extraClass)(inner)
+    musicItemActions("track", track.id, extraClass)(inner)
 
-  def musicItemActions(onPlay: String, onAdd: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
+  def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")
     divClass(s"$BtnGroup$extra", role := Group, groupAttrs)(
-      onClickButton(BtnPrimary, onPlay, "play"),
-      onClickButton(BtnDefault, onAdd, "plus"),
+      glyphButton(s"$BtnPrimary $itemClazz play", "play", itemId),
+      glyphButton(s"$BtnDefault $itemClazz add", "plus", itemId),
       inner
     )
   }
 
-  def onClickButton(clazz: String, onClicked: String, glyph: String) =
-    onClickButtonBase(clazz, onClicked)(glyphIcon(glyph))
+  def glyphButton(clazz: String, glyph: String, buttonId: String) =
+    dataButton(clazz, buttonId)(glyphIcon(glyph))
 
-  def onClickButtonBase(clazz: String, onClicked: String) =
-    button(`type` := Button, `class` := clazz, onclick := onClicked)
+  def dataButton(clazz: String, buttonId: String) =
+    button(`type` := Button, `class` := clazz, attr("data-id") := buttonId)
 
   def editFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, messages: Messages) =
     halfRow(

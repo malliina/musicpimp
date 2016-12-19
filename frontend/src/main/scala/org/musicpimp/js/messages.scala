@@ -23,3 +23,9 @@ object TrackCommand {
 case class ItemsCommand(cmd: String,
                         folders: Seq[String],
                         tracks: Seq[String])
+
+object ItemsCommand {
+  def playFolder(id: String) = ItemsCommand("play_items", Seq(id), Nil)
+
+  def addFolder(id: String) = ItemsCommand("add_items", Seq(id), Nil)
+}

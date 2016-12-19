@@ -3,13 +3,11 @@ package org.musicpimp.js
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
-import org.scalajs.jquery.jQuery
 import upickle.Invalid
 
-import scala.scalajs.js
 import scala.scalajs.js.JSON
 
-abstract class SocketJS(wsPath: String) {
+abstract class SocketJS(wsPath: String) extends BaseScript {
   val Hidden = "hide"
 
   val statusElem = elem("status")
@@ -70,13 +68,4 @@ abstract class SocketJS(wsPath: String) {
     case Invalid.Json(errorMessage, in) =>
       println(s"Not JSON, '$errorMessage' in value '$in'.")
   }
-
-//  def setFeedback(feedback: String) = statusElem html feedback
-
-  def elem(id: String) = jQuery(s"#$id")
-
-  def global = js.Dynamic.global
-
-  def validate[T: PimpJSON.Reader](in: String): Either[Invalid, T] =
-    PimpJSON.validate(in)
 }

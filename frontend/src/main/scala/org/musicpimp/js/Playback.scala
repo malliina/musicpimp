@@ -1,12 +1,13 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.JQueryEventObject
+import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, jQuery}
 import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
 
-case class Track(title: String,
+case class Track(id: String,
+                 title: String,
                  album: String,
                  artist: String,
                  duration: Duration)
@@ -28,6 +29,8 @@ object Playback {
   def volume(vol: Int) = ValuedCommand("volume", vol)
 
   def seek(pos: Int) = ValuedCommand("seek", pos)
+
+  def skip(idx: Int) = ValuedCommand("skip", idx)
 
   /**
     *
@@ -80,6 +83,9 @@ class Playback extends SocketJS("/ws/playback?f=json") {
       send(Playback.volume(ui.value))
     })
     volumeElemDyn.slider(volumeOptions)
+    jQuery("li").click((e: JQueryEventObject) => {
+      println(s"Clicked $e")
+    })
   }
 
   def toggleMute() = {
@@ -176,14 +182,19 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     val isEmpty = tracks.isEmpty
     if (isEmpty) playlistEmptyElem.show()
     else playlistEmptyElem.hide()
-    tracks.map(toRow).foreach(row => playlistElem.append(row.toString))
+    tracks.zipWithIndex foreach { case (t, index) =>
+      val rowId = s"playlist-$index"
+      playlistElem.append(toRow(t, rowId).toString())
+      elem(rowId).click((_: JQueryEventObject) => send(Playback.skip(index)))
+    }
   }
 
-  def toRow(track: Track) =
+  def toRow(track: Track, rowId: String) = {
     li(`class` := "song")(
-      a(href := "#")(track.title),
+      a(href := "#", id := rowId)(track.title),
       " ",
       a(href := "#")(i(`class` := "icon-remove")))
+  }
 
   def withFailure(code: => Any) =
     try {
