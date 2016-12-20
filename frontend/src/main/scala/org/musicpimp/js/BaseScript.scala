@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.jQuery
+import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, jQuery}
 import upickle.Invalid
 
 import scala.scalajs.js
@@ -17,4 +17,22 @@ trait BaseScript {
 
   def write[T: PimpJSON.Writer](t: T) =
     PimpJSON.write(t)
+
+  def postAjax[C: PimpJSON.Writer](resource: String, payload: C) =
+    jQuery.ajax(literal(
+      url = resource,
+      `type` = "POST",
+      contentType = "application/json",
+      data = write(payload)
+    ).asInstanceOf[JQueryAjaxSettings])
+
+  def withDataId[T](clazzSelector: String)(withId: String => T) =
+    installClick(clazzSelector) { e =>
+      Option(e.delegateTarget.getAttribute("data-id")) foreach { id =>
+        withId(id)
+      }
+    }
+
+  def installClick(clazzSelector: String)(f: JQueryEventObject => Any) =
+    jQuery(clazzSelector).click(f)
 }

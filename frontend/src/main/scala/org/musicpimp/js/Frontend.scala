@@ -16,8 +16,9 @@ object Frontend extends JSApp {
       case "/search" | "/player2" => new Search
       case "/logs" | "/logs2" => new Logs
       case "/player" | "/player2" => new Playback
+      case "/alarms" | "/alarms2" => new Alarms
       case p if p.isEmpty || p == "/" || p.startsWith("/folders") => new Library
     }
-    app = front.lift(path)
+    app = front lift path
   }
 }

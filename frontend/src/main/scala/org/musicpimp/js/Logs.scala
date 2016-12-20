@@ -17,7 +17,6 @@ case class JVMLogEntry(level: String,
 class Logs extends SocketJS("/ws/logs?f=json") {
   val tableContent = elem("logTableBody")
 
-
   override def onConnected(e: Event) = {
     send(Command.subscribe)
     super.onConnected(e)

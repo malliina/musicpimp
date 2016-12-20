@@ -423,14 +423,14 @@ class PimpTags(scripts: Modifier*) {
       aHref(routes.Alarms.editAlarm(id), `class` := s"$BtnDefault $BtnSm")(glyphIcon("edit"), " Edit"),
       aHref("#", dataToggle := Dropdown, `class` := s"$BtnDefault $BtnSm $DropdownToggle")(spanClass(Caret)),
       ulClass(DropdownMenu)(
-        jsListElem(s"deleteAP('$id')", "remove", "Delete"),
-        jsListElem(s"runAP('$id')", "play", "Play"),
-        jsListElem(s"stopPlayback()", "stop", "Stop")
+        jsListElem("delete", id, "remove", "Delete"),
+        jsListElem("play", id, "play", "Play"),
+        jsListElem("stop", id, "stop", "Stop")
       )
     )
 
-  def jsListElem(onClicked: String, glyph: String, linkText: String) =
-    liHref("#", onclick := onClicked)(glyphIcon(glyph), s" $linkText")
+  def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
+    liHref("#", `class` := clazz, attr("data-id") := dataId)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
     manage("alarms", username, alarmJs, jsLink("alarm-editor.js"))(
@@ -472,7 +472,7 @@ class PimpTags(scripts: Modifier*) {
       divClass(ColSm4, id := field.id)(
         divClass(Checkbox)(
           label(
-            input(`type` := Checkbox, value := "every", id := "every", onclick := "everyDayClicked()")("Every day")
+            input(`type` := Checkbox, value := "every", id := "every")("Every day")
           )
         ),
         WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },
@@ -490,7 +490,6 @@ class PimpTags(scripts: Modifier*) {
           value := field.value.getOrElse(weekDay.shortName),
           id := weekDay.shortName,
           name := s"${field.name}[$index]",
-          onclick := "updateEveryDayCheckbox()",
           checkedAttr
         )
       )
