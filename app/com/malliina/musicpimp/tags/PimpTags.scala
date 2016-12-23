@@ -36,7 +36,6 @@ object PimpTags {
 }
 
 class PimpTags(scripts: Modifier*) {
-  val alarmJs = jsLink("scheduler.js")
   val FormSignin = "form-signin"
   val False = "false"
   val True = "true"
@@ -73,7 +72,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def search(query: Option[String], results: Seq[DataTrack], username: Username) =
-    libraryBase("search", username, jsLinks("sarch.js", "json.js", "library.js"))(
+    libraryBase("search", username)(
       headerRow()("Search"),
       row(
         div4(
@@ -207,7 +206,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def library(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username) =
-    libraryBase("folders", username, jsLinks("json.js", "library.js"))(
+    libraryBase("folders", username)(
       headerDiv(
         h1("Library ", small(relativePath.path))
       ),
@@ -398,7 +397,7 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def alarms(clocks: Seq[ClockPlayback], username: Username) =
-    manage("alarms", username, alarmJs)(
+    manage("alarms", username)(
       headerRow()("Alarms"),
       fullRow(
         stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
@@ -433,7 +432,7 @@ class PimpTags(scripts: Modifier*) {
     liHref("#", `class` := clazz, attr("data-id") := dataId)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
-    manage("alarms", username, alarmJs)(
+    manage("alarms", username)(
       headerRow()("Edit alarm"),
       halfRow(
         postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(

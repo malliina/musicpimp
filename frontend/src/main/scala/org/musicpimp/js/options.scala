@@ -37,7 +37,7 @@ trait SliderOptions extends StopOptions {
 object SliderOptions {
   val Horizontal = "horizontal"
 
-  def horizontal(range: String, min: Int, max: Int, stop: Ui => Any) =
+  def horizontal(range: String, min: Int, max: Int)(stop: Ui => Any) =
     apply(Horizontal, range, min, max, (_: Event, ui: Ui) => stop(ui))
 
   def apply(orientation: String, range: String, min: Int, max: Int, stop: js.Function2[Event, Ui, Any]) =

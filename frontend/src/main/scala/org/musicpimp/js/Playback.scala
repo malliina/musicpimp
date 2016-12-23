@@ -79,9 +79,9 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     volumeButton.click((_: JQueryEventObject) => toggleMute())
     val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
     sliderDyn.slider(seekOptions)
-    val volumeOptions = SliderOptions.horizontal("min", 0, 100, ui => {
+    val volumeOptions = SliderOptions.horizontal("min", 0, 100) { ui =>
       send(Playback.volume(ui.value))
-    })
+    }
     volumeElemDyn.slider(volumeOptions)
   }
 
@@ -114,7 +114,6 @@ class Playback extends SocketJS("/ws/playback?f=json") {
       case "mute_toggled" =>
         isMute = read[Boolean]("mute")
       case "status" =>
-        println(s"Got status $jsValue")
         showConnected()
         onStatus(PimpJSON.readJs[Status](jsValue))
         playerDiv.show()
