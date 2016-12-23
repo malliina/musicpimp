@@ -40,6 +40,7 @@ class PimpTags(scripts: Modifier*) {
   val False = "false"
   val True = "true"
   val Hide = "hide"
+  val dataIdAttr = attr("data-id")
 
   def users(us: Seq[Username], addForm: Form[NewUser], username: Username, flash: Flash) =
     manage("users", username)(
@@ -59,7 +60,7 @@ class PimpTags(scripts: Modifier*) {
             )
           ),
           flash.get(Accounts.UsersFeedback).fold(empty) { feedback =>
-            alertDiv(AlertDanger, feedback)
+            alertDanger(feedback)
           }
         ),
         div4(
@@ -112,7 +113,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def player(feedback: Option[String], username: Username) =
-    basePlayer(feedback, username, jsLinks("json.js", "playerws.js"))
+    basePlayer(feedback, username)
 
   def musicFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, username: Username, m: Messages) =
     manage("folders", username)(
@@ -132,7 +133,7 @@ class PimpTags(scripts: Modifier*) {
                              entries: Seq[T],
                              fourthHeader: String,
                              fourthValue: T => Modifier) =
-    libraryBase(tab, username, jsLinks("json.js", "library.js"))(
+    libraryBase(tab, username)(
       headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${username.name}")),
       fullRow(
         responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
@@ -148,7 +149,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def logs(levelField: Field, levels: Seq[Level], currentLevel: Level, username: Username, errorMsg: Option[String]) =
-    manage("logs", username, jsLink("rx.js"))(
+    manage("logs", username)(
       headerRow()("Logs"),
       errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
       rowColumn(ColMd4)(
@@ -173,7 +174,7 @@ class PimpTags(scripts: Modifier*) {
       divContainer(
         rowColumn(s"$ColMd4 $FormSignin")(
           flash.get(accounts.feedback).fold(empty) { message =>
-            alertDiv(AlertSuccess, message)
+            alertSuccess(message)
           }
         ),
         rowColumn(ColMd4)(
@@ -266,7 +267,7 @@ class PimpTags(scripts: Modifier*) {
     dataButton(clazz, buttonId)(glyphIcon(glyph))
 
   def dataButton(clazz: String, buttonId: String) =
-    button(`type` := Button, `class` := clazz, attr("data-id") := buttonId)
+    button(`type` := Button, `class` := clazz, dataIdAttr := buttonId)
 
   def editFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, messages: Messages) =
     halfRow(
@@ -281,7 +282,7 @@ class PimpTags(scripts: Modifier*) {
             submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
           )
         ),
-        newFolderForm.errors.map(error => pClass("error")(Messages(error.message)(messages)))
+        newFolderForm.errors.map(error => alertDanger(Messages(error.message)(messages)))
       )
     )
 
@@ -291,7 +292,7 @@ class PimpTags(scripts: Modifier*) {
         spanClass(InputGroupAddon)(glyphIcon("folder-open")),
         spanClass(s"$UneditableInput $FormControl")(folder),
         spanClass(InputGroupBtn)(
-          defaultSubmitButton(glyphIcon("remove"), " Delete")
+          submitButton(`class` := BtnDanger)(glyphIcon("remove"), " Delete")
         )
       )
     )
@@ -429,7 +430,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
-    liHref("#", `class` := clazz, attr("data-id") := dataId)(glyphIcon(glyph), s" $linkText")
+    liHref("#", `class` := clazz, dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
     manage("alarms", username)(
@@ -550,7 +551,7 @@ class PimpTags(scripts: Modifier*) {
       passwordInputs(),
       blockSubmitButton()("Add User"),
       addForm.globalError.fold(empty) { error =>
-        alertDiv(AlertDanger, error.message)
+        alertDanger(error.message)
       },
       flash.get(Accounts.Feedback).fold(empty) { feedback =>
         alertDiv(alertClass(flash), feedback)
@@ -581,10 +582,10 @@ class PimpTags(scripts: Modifier*) {
       passwordInputs("New password", "Repeat new password"),
       blockSubmitButton("Change Password"),
       passwordForm.globalError.orElse(passwordForm.errors.headOption).fold(empty) { error =>
-        alertDiv(AlertDanger, error.message)
+        alertDanger(error.message)
       },
       flash.get(Accounts.Feedback).fold(empty) { feedback =>
-        alertDiv(AlertSuccess, feedback)
+        alertSuccess(feedback)
       }
     )
 

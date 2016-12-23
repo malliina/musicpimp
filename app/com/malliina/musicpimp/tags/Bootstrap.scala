@@ -108,6 +108,10 @@ trait Bootstrap {
   val dataTarget = attr(DataTarget)
   val dataToggle = attr(DataToggle)
 
+  def alertDanger(message: String) = alertDiv(AlertDanger, message)
+
+  def alertSuccess(message: String) = alertDiv(AlertSuccess, message)
+
   def alertDiv(alertClass: String, message: String) =
     divClass(s"$Lead $alertClass", role := Alert)(message)
 

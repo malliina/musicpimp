@@ -6,7 +6,7 @@ import java.nio.file.{Files, Paths}
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
-import com.malliina.musicpimp.models.FolderID
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import com.malliina.play.models.Username
 import com.malliina.util.EnvUtils
@@ -15,11 +15,14 @@ import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.Messages
-import views.html
 
 import scala.util.Try
 
-class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticator, mat: Materializer)
+class SettingsController(tags: PimpTags,
+                         messages: Messages,
+                         indexer: Indexer,
+                         auth: Authenticator,
+                         mat: Materializer)
   extends HtmlController(auth, mat) {
 
   protected val newFolderForm = Form(
@@ -57,7 +60,7 @@ class SettingsController(messages: Messages, indexer: Indexer, auth: Authenticat
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
   private def foldersPage(form: Form[String], username: Username) =
-    html.musicFolders(Settings.readFolders, form, folderPlaceHolder, username, messages)
+    tags.musicFolders(Settings.readFolders, form, folderPlaceHolder, username, messages)
 
   private def onFoldersChanged() = {
     Library.reloadFolders()
