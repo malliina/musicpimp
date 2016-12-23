@@ -14,6 +14,7 @@ import controllers.SettingsController.log
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.data.validation.{Constraint, Invalid, ValidationError, Valid}
 import play.api.i18n.Messages
 
 import scala.util.Try
@@ -25,10 +26,16 @@ class SettingsController(tags: PimpTags,
                          mat: Materializer)
   extends HtmlController(auth, mat) {
 
+  val dirConstraint = Constraint((dir: String) =>
+    if (validateDirectory(dir)) Valid
+    else Invalid(Seq(ValidationError(s"Invalid directory: '$dir'."))))
+
   protected val newFolderForm = Form(
-    "path" -> nonEmptyText.verifying("Not a directory", validateDirectory _)
+    "path" -> nonEmptyText.verifying(dirConstraint)
   )
-  private val folderPlaceHolder = if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\" else "/opt/music/"
+  private val folderPlaceHolder =
+    if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\"
+    else "/opt/music/"
 
   def manage = settings
 
