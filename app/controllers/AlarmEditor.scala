@@ -14,7 +14,6 @@ import play.api.data.{Form, Forms}
 import play.api.http.Writeable
 import play.api.i18n.Messages
 import play.api.mvc.Result
-import views.html
 
 class AlarmEditor(tags: PimpTags, auth: Authenticator, messages: Messages, mat: Materializer)
   extends Secured(auth, mat)
@@ -52,22 +51,25 @@ class AlarmEditor(tags: PimpTags, auth: Authenticator, messages: Messages, mat: 
   def newAlarm = clockAction(clockForm)
 
   def editAlarm(id: String, fb: Option[String] = None) = {
-    ScheduledPlaybackService.find(id)
-      .map(clockForm.fill)
-      .fold(ifEmpty = pimpAction(notFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
+    ScheduledPlaybackService.find(id) map { clock =>
+      val form = clockForm.fill(clock)
+      clockAction(form, UserFeedback.formed(form))
+    } getOrElse {
+      pimpAction(notFound(s"Unknown ID: $id"))
+    }
   }
-//  html.alarmEditor(form, feedback, req.user)(messages))
-  private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =
+
+  private def clockAction(form: Form[ClockPlayback], feedback: Option[UserFeedback] = None) =
     pimpAction(req => Ok(tags.alarmEditor(form, feedback, req.user, messages)))
 
   def newClock() = formSubmission(clockForm)(
     (req, err) => {
-      html.alarmEditor(err, None, req.user)(messages)
+      tags.alarmEditor(err, None, req.user, messages)
     },
     (req, form, ap) => {
       ScheduledPlaybackService.save(ap)
       log.info(s"User: ${req.user} from: ${req.remoteAddress} saved alarm: $ap")
-      Ok(html.alarmEditor(form, Some("Saved."), req.user)(messages))
+      Ok(tags.alarmEditor(form, Option(UserFeedback.success("Saved.")), req.user, messages))
     })
 
   private def formSubmission[T, C: Writeable](form: Form[T])(err: (PimpRequest, Form[T]) => C, ok: (PimpRequest, Form[T], T) => Result) =

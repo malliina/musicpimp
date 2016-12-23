@@ -7,13 +7,9 @@ import scala.scalajs.js.Any
 case class IdCommand(cmd: String, id: String)
 
 class Alarms extends BaseScript {
-  setup()
-
-  def setup(): Unit = {
-    withDataId(".play")(runAP)
-    withDataId(".delete")(deleteAP)
-    withDataId(".stop")(_ => stopPlayback())
-  }
+  withDataId(".play")(runAP)
+  withDataId(".delete")(deleteAP)
+  withDataId(".stop")(_ => stopPlayback())
 
   def deleteAP(id: String) =
     postThenReload(IdCommand("delete", id))

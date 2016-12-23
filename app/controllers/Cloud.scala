@@ -5,25 +5,27 @@ import java.net.ConnectException
 import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.{CloudID, Clouds}
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import controllers.Cloud.log
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
-import views.html
-
 import scala.concurrent.Future
 
-class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
+class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
   val idFormKey = "id"
   val FEEDBACK = "feedback"
   val cloudForm = Form(idFormKey -> optional(text))
 
   def cloud = pimpActionAsync { request =>
-    val id = clouds.registration.map(id => (Some(id), None)).recoverAll(t => (None, Some(t.getMessage)))
+    val id = clouds
+      .registration.map(id => (Some(id), None))
+      .recoverAll(t => (None, Some(t.getMessage)))
+    val formFeedback = UserFeedback.flashed(request)
     id.map({ case (cloudId, errorMessage) =>
-      Ok(html.cloud(this, cloudForm, cloudId.map(_.id), errorMessage, request.user, request.flash))
+      Ok(tags.cloud(this, cloudId.map(_.id), errorMessage, request.user, formFeedback))
     })
   }
 
@@ -31,7 +33,8 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
     cloudForm.bindFromRequest()(request).fold(
       formErrors => {
         log debug s"Form errors: $formErrors"
-        Future successful BadRequest(html.cloud(this, formErrors, None, None, request.user, request.flash))
+        val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
+        Future successful BadRequest(tags.cloud(this, None, None, request.user, feedback))
       },
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())
@@ -40,7 +43,11 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
           fut(redir)
         } else {
           val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
-          clouds.connect(maybeID).map(_ => redir).recover(errorMessage andThen (msg => redir.flashing(FEEDBACK -> msg)))
+          clouds
+            .connect(maybeID).map(_ => redir)
+            .recover(errorMessage andThen (msg => redir.flashing(
+              UserFeedback.Feedback -> msg,
+              UserFeedback.Success -> UserFeedback.No)))
         }
       }
     )
@@ -54,8 +61,6 @@ class Cloud(clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secu
       log.error(msg, t)
       msg
   }
-
-  def withError(result: Result, message: String) = result.flashing(FEEDBACK -> message)
 }
 
 object Cloud {

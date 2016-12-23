@@ -13,8 +13,8 @@ object Frontend extends JSApp {
   override def main() = {
     val path = dom.window.location.pathname
     val front: PartialFunction[String, BaseScript] = {
-      case "/search" | "/player2" => new Search
-      case "/logs" | "/logs2" => new Logs
+      case "/search" => new Search(new MusicItems)
+      case "/logs" => new Logs
       case "/player" => new Playback
       case "/alarms" => new Alarms
       case "/alarms/editor" => new AlarmEditor

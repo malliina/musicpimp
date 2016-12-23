@@ -2,6 +2,7 @@ package controllers
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import controllers.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
@@ -9,7 +10,12 @@ import play.api.libs.json.Json
 import scala.concurrent.Future
 import scala.util.Try
 
-class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, mat: Materializer)
+class SearchPage(tags: PimpTags,
+                 s: Search,
+                 indexer: Indexer,
+                 db: PimpDb,
+                 auth: Authenticator,
+                 mat: Materializer)
   extends HtmlController(auth, mat) {
 
   def search = pimpActionAsync { req =>
@@ -19,7 +25,7 @@ class SearchPage(s: Search, indexer: Indexer, db: PimpDb, auth: Authenticator, m
     val results = term.fold(fut(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map { tracks =>
       respond(req)(
-        html = views.html.search(term, tracks, s.wsUrl(req), req, req.user),
+        html = tags.search(term, tracks, req.user),
         json = Json.toJson(tracks)
       )
     }

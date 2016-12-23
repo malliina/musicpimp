@@ -16,20 +16,16 @@ class AlarmEditor extends BaseScript {
   val everyDay = Seq("mon", "tue", "wed", "thu", "fri", "sat", "sun")
   val trackIdElem = elem("track_id")
 
-  setup()
-
-  def setup() = {
-    elem(EveryId).click((_: JQueryEventObject) => onEveryDayClicked())
-    everyDay.map(elem) foreach { e =>
-      e.click((_: JQueryEventObject) => updateEveryDayCheckbox())
-    }
-    val autoOptionsFuture = AutoOptions.fromAsync(
-      req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
-      item => trackIdElem.value(item.id))
-    val ui: JQueryUI = jQuery(".selector")
-    ui.autocomplete(autoOptionsFuture)
-    updateEveryDayCheckbox()
+  elem(EveryId).click((_: JQueryEventObject) => onEveryDayClicked())
+  everyDay.map(elem) foreach { e =>
+    e.click((_: JQueryEventObject) => updateEveryDayCheckbox())
   }
+  val autoOptionsFuture = AutoOptions.fromAsync(
+    req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
+    item => trackIdElem.value(item.id))
+  val ui: JQueryUI = jQuery(".selector")
+  ui.autocomplete(autoOptionsFuture)
+  updateEveryDayCheckbox()
 
   def onEveryDayClicked() = {
     val newValue = elem(EveryId).is(CheckedSelector)
@@ -47,7 +43,7 @@ class AlarmEditor extends BaseScript {
     p.future
   }
 
-  def search[T: PimpJSON.Reader](term: Request)(onResults: Seq[T] => Unit) = {
+  def search[T: PimpJSON.Reader](term: Request)(onResults: Seq[T] => Unit) =
     pimpQuery.getJSON(
       "/search?f=json",
       term,
@@ -55,7 +51,6 @@ class AlarmEditor extends BaseScript {
         val results = PimpJSON.read[Seq[T]](JSON.stringify(data))
         onResults(results)
       })
-  }
 
   def isChecked(id: String) = elem(id).is(CheckedSelector)
 

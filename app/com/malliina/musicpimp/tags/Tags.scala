@@ -72,6 +72,5 @@ trait Tags {
     meta(name := "viewport", content := "width=device-width, initial-scale=1.0")
 
   def namedInput(idAndName: String, more: Modifier*) =
-    input(`type` := idAndName, name := idAndName, more)
-
+    input(id := idAndName, name := idAndName, more)
 }

@@ -71,7 +71,7 @@ class Playback extends SocketJS("/ws/playback?f=json") {
 
   installHandlers()
 
-  def installHandlers() = {
+  private def installHandlers() = {
     prevButton.click((_: JQueryEventObject) => send(Playback.prev))
     nextButton.click((_: JQueryEventObject) => send(Playback.next))
     playButton.click((_: JQueryEventObject) => send(Playback.resume))

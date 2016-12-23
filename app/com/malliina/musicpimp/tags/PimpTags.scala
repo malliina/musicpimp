@@ -86,7 +86,7 @@ class PimpTags(scripts: Modifier*) {
           searchForm(None, "")
         ),
         divClass(s"$ColMd4 $ColMdOffset4")(
-          button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := "refresh-button")(glyphIcon("refresh")),
+          button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := "refresh-button")(glyphIcon("refresh"), " "),
           span(id := "index-info")
         )
       ),
@@ -309,7 +309,11 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def cloud(c: Cloud, cloudForm: Form[Option[String]], serverId: Option[String], feedback: Option[String], username: Username, flash: Flash) =
+  def cloud(c: Cloud,
+            serverId: Option[String],
+            feedback: Option[String],
+            username: Username,
+            formFeedback: Option[UserFeedback]) =
     manage("cloud", username)(
       headerRow()("Cloud"),
       halfRow(
@@ -325,9 +329,7 @@ class PimpTags(scripts: Modifier*) {
           pClass(s"$Lead error")(fb)
         )
       },
-      flash.get(c.FEEDBACK).fold(empty) { message =>
-        leadPara(message)
-      },
+      formFeedback.fold(empty)(fb => halfRow(feedbackDiv(fb))),
       halfRow(
         p("How does this work?"),
         p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
@@ -340,8 +342,8 @@ class PimpTags(scripts: Modifier*) {
     postableForm(routes.Cloud.toggle(), name := "toggleForm")(
       if (serverId.isEmpty) {
         formGroup(
-          labelFor(c.idFormKey)("Desired cloud ID (optional"),
-          textInputBase(Text, c.idFormKey, Option("Your desired ID or leave empty"))
+          labelFor(c.idFormKey)("Desired cloud ID (optional)"),
+          textInput(Text, FormControl, c.idFormKey, Option("Your desired ID or leave empty"))
         )
       } else {
         empty
@@ -444,7 +446,7 @@ class PimpTags(scripts: Modifier*) {
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
     liHref("#", `class` := clazz, dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
-  def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
+  def alarmEditor(form: Form[ClockPlayback], feedback: Option[UserFeedback], username: Username, m: Messages) =
     manage("alarms", username)(
       headerRow()("Edit alarm"),
       halfRow(
@@ -459,7 +461,7 @@ class PimpTags(scripts: Modifier*) {
           formTextIn(form(TRACK), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
           checkField(form(ENABLED), "Enabled"),
           saveButton(),
-          feedback.fold(empty)(fb => pClass(s"$Lead $ColSmOffset2")(fb))
+          feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(feedbackDiv(fb)))
         )
       )
     )

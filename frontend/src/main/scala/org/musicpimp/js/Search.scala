@@ -4,14 +4,9 @@ import org.scalajs.jquery.JQueryEventObject
 
 case class StatusEvent(event: String, status: String)
 
-class Search extends SocketJS("/search/ws?f=json") {
-
-  setup()
-
-  def setup() = {
-    elem("refresh-button").click { (_: JQueryEventObject) =>
-      send(Command("refresh"))
-    }
+class Search(music: MusicItems) extends SocketJS("/search/ws?f=json") {
+  elem("refresh-button").click { (_: JQueryEventObject) =>
+    send(Command("refresh"))
   }
 
   override def handlePayload(payload: String) = {
@@ -22,5 +17,5 @@ class Search extends SocketJS("/search/ws?f=json") {
   }
 
   def onStatus(status: String) =
-    elem("index-info").html(status)
+    elem("index-info").html(s" $status")
 }
