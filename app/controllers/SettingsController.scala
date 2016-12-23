@@ -14,7 +14,7 @@ import controllers.SettingsController.log
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.{Constraint, Invalid, ValidationError, Valid}
+import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages
 
 import scala.util.Try
@@ -25,13 +25,13 @@ class SettingsController(tags: PimpTags,
                          auth: Authenticator,
                          mat: Materializer)
   extends HtmlController(auth, mat) {
-
+  val Success = "success"
   val dirConstraint = Constraint((dir: String) =>
     if (validateDirectory(dir)) Valid
     else Invalid(Seq(ValidationError(s"Invalid directory: '$dir'."))))
 
   protected val newFolderForm = Form(
-    "path" -> nonEmptyText.verifying(dirConstraint)
+    SettingsController.Path -> nonEmptyText.verifying(dirConstraint)
   )
   private val folderPlaceHolder =
     if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\"
@@ -39,18 +39,17 @@ class SettingsController(tags: PimpTags,
 
   def manage = settings
 
-  def settings = navigate(req => foldersPage(newFolderForm, req.user))
+  def settings = navigate(req => foldersPage(newFolderForm, req))
 
   def newFolder = pimpAction { request =>
     newFolderForm.bindFromRequest()(request).fold(
       formWithErrors => {
         log warn s"Errors: ${formWithErrors.errors}"
-        BadRequest(foldersPage(formWithErrors, request.user))
+        BadRequest(foldersPage(formWithErrors, request))
       },
       path => {
         Settings.add(Paths get path)
-        log info s"Added folder to music library: $path"
-        onFoldersChanged()
+        onFoldersChanged(s"Added folder '$path'.")
       }
     )
   }
@@ -60,23 +59,30 @@ class SettingsController(tags: PimpTags,
     log info s"Attempting to remove folder: $decoded"
     val path = Paths get decoded
     Settings delete path
-    log info s"Removed folder from music library: $decoded"
-    onFoldersChanged()
+    onFoldersChanged(s"Removed folder '$decoded'.")
   }
 
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
-  private def foldersPage(form: Form[String], username: Username) =
-    tags.musicFolders(Settings.readFolders, form, folderPlaceHolder, username, messages)
+  private def foldersPage(form: Form[String], req: PimpRequest) = {
+    val errorMessage = form.errors.headOption.map { error =>
+      UserFeedback.error(Messages(error.message)(messages))
+    }
+    val flashMessage = UserFeedback.flashed(req.flash)
+    val feedback = errorMessage orElse flashMessage
+    tags.musicFolders(Settings.readFolders, folderPlaceHolder, req.user, feedback)
+  }
 
-  private def onFoldersChanged() = {
+  private def onFoldersChanged(successMessage: String) = {
+    log info s"$successMessage"
     Library.reloadFolders()
-    log info s"Music folders changed, reindexing..."
     indexer.indexAndSave()
     Redirect(routes.SettingsController.settings())
+      .flashing(UserFeedback.Feedback -> successMessage)
   }
 }
 
 object SettingsController {
   private val log = Logger(getClass)
+  val Path = "path"
 }

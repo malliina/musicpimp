@@ -13,11 +13,10 @@ import com.malliina.musicpimp.tags.Bootstrap._
 import com.malliina.musicpimp.tags.PlayBootstrap._
 import com.malliina.musicpimp.tags.PlayTags._
 import com.malliina.musicpimp.tags.Tags._
-import com.malliina.play.auth.RememberMeCredentials
 import com.malliina.play.controllers.AccountForms
-import com.malliina.play.models.{PasswordChange, Username}
+import com.malliina.play.models.Username
 import controllers.routes.Assets.at
-import controllers.{Accounts, Cloud, routes}
+import controllers.{Search => _, _}
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.{Call, Flash}
@@ -42,7 +41,16 @@ class PimpTags(scripts: Modifier*) {
   val Hide = "hide"
   val dataIdAttr = attr("data-id")
 
-  def users(us: Seq[Username], addForm: Form[NewUser], username: Username, flash: Flash) =
+  def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
+    val message = feedback.message
+    if(feedback.isError) alertDanger(message)
+    else alertSuccess(message)
+  }
+
+  def users(us: Seq[Username],
+            username: Username,
+            listFeedback: Option[UserFeedback],
+            addFeedback: Option[UserFeedback]) =
     manage("users", username)(
       row(
         div6(
@@ -59,15 +67,13 @@ class PimpTags(scripts: Modifier*) {
               }
             )
           ),
-          flash.get(Accounts.UsersFeedback).fold(empty) { feedback =>
-            alertDanger(feedback)
-          }
+          listFeedback.fold(empty)(feedbackDiv)
         ),
         div4(
           headerDiv(
             h1("Add user")
           ),
-          addUser(addForm, flash)
+          addUser(addFeedback)
         )
       )
     )
@@ -115,10 +121,13 @@ class PimpTags(scripts: Modifier*) {
   def player(feedback: Option[String], username: Username) =
     basePlayer(feedback, username)
 
-  def musicFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, username: Username, m: Messages) =
+  def musicFolders(folders: Seq[String],
+                   folderPlaceholder: String,
+                   username: Username,
+                   feedback: Option[UserFeedback]) =
     manage("folders", username)(
       headerRow(ColMd8)("Music Folders"),
-      editFolders(folders, newFolderForm, folderPlaceholder, m)
+      editFolders(folders, folderPlaceholder, feedback)
     )
 
   def mostRecent(entries: Seq[RecentEntry], username: Username) =
@@ -169,13 +178,14 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def login(accounts: AccountForms, loginForm: Form[RememberMeCredentials], motd: Option[String], flash: Flash) =
+  def login(accounts: AccountForms,
+            motd: Option[String],
+            formFeedback: Option[UserFeedback],
+            topFeedback: Option[UserFeedback]) =
     basePage("Welcome", cssLink(at("css/login.css")))(
       divContainer(
         rowColumn(s"$ColMd4 $FormSignin")(
-          flash.get(accounts.feedback).fold(empty) { message =>
-            alertSuccess(message)
-          }
+          topFeedback.fold(empty)(feedbackDiv)
         ),
         rowColumn(ColMd4)(
           postableForm(routes.Accounts.formAuthenticate(), `class` := FormSignin, name := "loginForm")(
@@ -196,8 +206,8 @@ class PimpTags(scripts: Modifier*) {
           )
         ),
         rowColumn(ColMd4)(
-          loginForm.globalError.fold(empty) { error =>
-            alertDiv(s"$AlertWarning $FormSignin", error.message)
+          formFeedback.fold(empty) { fb =>
+            alertDiv(s"$AlertDanger $FormSignin", fb.message)
           }
         ),
         rowColumn(s"$ColMd4 $FormSignin")(
@@ -269,7 +279,9 @@ class PimpTags(scripts: Modifier*) {
   def dataButton(clazz: String, buttonId: String) =
     button(`type` := Button, `class` := clazz, dataIdAttr := buttonId)
 
-  def editFolders(folders: Seq[String], newFolderForm: Form[String], folderPlaceholder: String, messages: Messages) =
+  def editFolders(folders: Seq[String],
+                  folderPlaceholder: String,
+                  errorMessage: Option[UserFeedback]) =
     halfRow(
       ulClass(ListUnstyled)(
         folders.map(renderFolder)
@@ -277,12 +289,12 @@ class PimpTags(scripts: Modifier*) {
       postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
         divClass(InputGroup)(
           spanClass(InputGroupAddon)(glyphIcon("folder-open")),
-          textInputBase(Text, "path", Option(folderPlaceholder), `class` := FormControl, required),
+          textInputBase(Text, SettingsController.Path, Option(folderPlaceholder), `class` := FormControl, required),
           spanClass(InputGroupBtn)(
             submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
           )
         ),
-        newFolderForm.errors.map(error => alertDanger(Messages(error.message)(messages)))
+        errorMessage.fold(empty)(feedbackDiv)
       )
     )
 
@@ -545,32 +557,27 @@ class PimpTags(scripts: Modifier*) {
       section(inner)
     )
 
-  def addUser(addForm: Form[NewUser], flash: Flash) =
+  def addUser(addFeedback: Option[UserFeedback]) =
     postableForm(routes.Accounts.formAddUser())(
       inGroup("username", Text, "Username"),
       passwordInputs(),
       blockSubmitButton()("Add User"),
-      addForm.globalError.fold(empty) { error =>
-        alertDanger(error.message)
-      },
-      flash.get(Accounts.Feedback).fold(empty) { feedback =>
-        alertDiv(alertClass(flash), feedback)
-      }
+      addFeedback.fold(empty)(feedbackDiv)
     )
 
   def alertClass(flash: Flash) =
     if (flash.get(Accounts.Success) contains "yes") AlertSuccess
     else AlertDanger
 
-  def account(username: Username, passwordForm: Form[PasswordChange], flash: Flash) =
+  def account(username: Username, feedback: Option[UserFeedback]) =
     indexMain("account", username)(
       headerRow(ColMd4)("Account"),
       rowColumn(ColMd4)(
-        changePassword(username, passwordForm, flash)
+        changePassword(username, feedback)
       )
     )
 
-  def changePassword(username: Username, passwordForm: Form[PasswordChange], flash: Flash) =
+  def changePassword(username: Username, feedback: Option[UserFeedback]) =
     postableForm(routes.Accounts.formChangePassword())(
       formGroup(
         labelFor("user")("Username"),
@@ -578,15 +585,10 @@ class PimpTags(scripts: Modifier*) {
           spanClass(s"$UneditableInput $InputMd", id := "user")(username.name)
         )
       ),
-      passwordGroup("oldPassword", "Olad password"),
+      passwordGroup("oldPassword", "Old password"),
       passwordInputs("New password", "Repeat new password"),
       blockSubmitButton("Change Password"),
-      passwordForm.globalError.orElse(passwordForm.errors.headOption).fold(empty) { error =>
-        alertDanger(error.message)
-      },
-      flash.get(Accounts.Feedback).fold(empty) { feedback =>
-        alertSuccess(feedback)
-      }
+      feedback.fold(empty)(feedbackDiv)
     )
 
   def postableForm(onAction: Call, more: Modifier*) =

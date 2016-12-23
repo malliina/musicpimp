@@ -2,16 +2,16 @@ package controllers
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.models.NewUser
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.{Password, Username}
-import controllers.Accounts.log
+import controllers.Accounts.{Success, UsersFeedback, log}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
-import views.html
 
 object Accounts {
   private val log = Logger(getClass)
@@ -22,7 +22,7 @@ object Accounts {
   val IntendedUri = "intended_uri"
 }
 
-class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
+class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
   extends HtmlController(auth, mat) {
 
   val userFormKey = accs.userFormKey
@@ -36,6 +36,7 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     s"Consider changing the password under the Manage tab once you have logged in."
   val passwordChangedMessage = "Password successfully changed."
   val logoutMessage = "You have now logged out."
+  val incorrectPasswordMessage = "Incorrect password."
   val repeatPassFailureMessage = "The password was incorrectly repeated."
   val cannotDeleteYourself = "You cannot delete yourself."
 
@@ -49,26 +50,31 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     .verifying(repeatPassFailureMessage, _.passwordsMatch))
 
   def account = pimpAction { request =>
-    Ok(html.account(request.user, accs.changePasswordForm, request.flash))
+    Ok(tags.account(request.user, UserFeedback.flashed(request)))
   }
 
   def users = pimpActionAsync { request =>
-    userManager.users.map(us => Ok(html.users(us, addUserForm, request.user, request.flash)))
+    userManager.users.map(us => Ok(usersPage(us, addUserForm, request)))
   }
 
   def delete(user: Username) = pimpActionAsync { request =>
     val redir = Redirect(routes.Accounts.users())
     if (user != request.user) {
-      (userManager deleteUser user).map(_ => redir)
+      (userManager deleteUser user) map { _ =>
+        redir.flashing(UsersFeedback -> s"Deleted user '${user.name}'.")
+      }
     } else {
-      fut(redir.flashing(Accounts.UsersFeedback -> cannotDeleteYourself))
+      fut(redir.flashing(
+        UsersFeedback -> cannotDeleteYourself,
+        UserFeedback.Success -> UserFeedback.No))
     }
   }
 
   def login = Action.async { request =>
     userManager.isDefaultCredentials.map { isDefault =>
       val motd = if (isDefault) Option(defaultCredentialsMessage) else None
-      Ok(html.login(accs, rememberMeLoginForm, motd, request.flash))
+      val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
+      Ok(tags.login(accs, motd, None, flashFeedback))
     }
   }
 
@@ -85,32 +91,45 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     addUserForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Unable to add user: $user from: $remoteAddress, form: $formWithErrors"
-        userManager.users.map(users => BadRequest(html.users(users, formWithErrors, request.user, request.flash)))
+        log warn s"Unable to add user '$user' from: $remoteAddress, form: $formWithErrors"
+        userManager.users.map(users => BadRequest(usersPage(users, formWithErrors, request)))
       },
       newUser => {
         val addCall = userManager.addUser(newUser.username, newUser.pass)
         addCall.map { addError =>
-          val (isSuccess, feedback) = addError.fold((true, s"Created user ${newUser.username}."))(e => (false, s"User ${e.user} already exists."))
-          Redirect(routes.Accounts.users()).flashing(msg(feedback), "success" -> (if (isSuccess) "yes" else "no"))
+          val (isSuccess, feedback) = addError
+            .map(e => (false, s"User '${e.user}' already exists."))
+            .getOrElse((true, s"Created user '${newUser.username}'."))
+          Redirect(routes.Accounts.users())
+            .flashing(msg(feedback), Success -> (if (isSuccess) "yes" else "no"))
         }
       }
     )
   }
 
+  def usersPage(users: Seq[Username], form: Form[NewUser], req: PimpRequest) = {
+    val addFeedback =
+      form.globalError.map(err => UserFeedback.error(err.message))
+        .orElse(UserFeedback.flashed(req))
+    val listFeedback = UserFeedback.flashed(req.flash, textKey = UsersFeedback)
+    tags.users(users, req.user, listFeedback, addFeedback)
+  }
+
   def formAuthenticate = Action.async { request =>
     val remoteAddress = request.remoteAddress
+    val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
     rememberMeLoginForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Authentication failed for user: $user from: $remoteAddress"
-        fut(BadRequest(html.login(accs, formWithErrors, None, request.flash)))
+        log warn s"Authentication failed for user: '$user' from $remoteAddress"
+        val formFeedback = UserFeedback.formed(formWithErrors)
+        fut(BadRequest(tags.login(accs, None, formFeedback, flashFeedback)))
       },
       credentials => {
         val username = credentials.username
         validateCredentials(username, credentials.password) flatMap { isValid =>
           if (isValid) {
-            log info s"Authentication succeeded for user: $username from: $remoteAddress"
+            log info s"Authentication succeeded for user '$username' from $remoteAddress"
             val intendedUrl = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
             val result = Redirect(intendedUrl).withSession(Security.username -> username.name)
             if (credentials.rememberMe) {
@@ -122,9 +141,9 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
               fut(result)
             }
           } else {
-            log.warn(s"Invalid form authentication for user $username")
-            val errorForm = rememberMeLoginForm.withGlobalError("Incorrect username or password.")
-            fut(BadRequest(html.login(accs, errorForm, None, request.flash)))
+            log.warn(s"Invalid form authentication for user '$username'")
+            val formFeedback = UserFeedback.error("Incorrect username or password.")
+            fut(BadRequest(tags.login(accs, None, Option(formFeedback), flashFeedback)))
           }
         }
       }
@@ -137,23 +156,24 @@ class Accounts(auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
     val user = request.user
     accs.changePasswordForm.bindFromRequest()(request).fold(
       errors => {
-        log warn s"Unable to change password for user: $user from: ${request.remoteAddress}, form: $errors"
-        fut(BadRequest(html.account(user, errors, request.flash)))
+        log warn s"Unable to change password for user '$user' from ${request.remoteAddress}, form: $errors"
+        fut(BadRequest(tags.account(user, UserFeedback.formed(errors))))
       },
       pc => {
         validateCredentials(user, pc.oldPass) flatMap { isValid =>
           if (isValid) {
             userManager.updatePassword(user, pc.newPass) map { _ =>
-              log info s"Password changed for user: $user from: ${request.remoteAddress}"
-              Redirect(routes.Accounts.account()).flashing(msg(passwordChangedMessage))
+              log info s"Password changed for user '$user' from ${request.remoteAddress}"
+              Redirect(routes.Accounts.account())
+                .flashing(msg(passwordChangedMessage))
             }
           } else {
-            fut(BadRequest(html.account(user, accs.changePasswordForm, request.flash)))
+            fut(BadRequest(tags.account(user, Option(UserFeedback.error(incorrectPasswordMessage)))))
           }
         }
       }
     )
   }
 
-  def msg(message: String) = feedback -> message
+  def msg(message: String) = UserFeedback.Feedback -> message
 }

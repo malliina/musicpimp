@@ -87,7 +87,7 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val libCtrl = new LibraryController(tags, lib, auth, materializer)
   lazy val alarms = new Alarms(tags, auth, messages, materializer)
   lazy val accs = new AccountForms
-  lazy val accounts = new Accounts(auth, materializer, accs)
+  lazy val accounts = new Accounts(tags, auth, materializer, accs)
   lazy val cloud = new Cloud(c, auth, materializer)
   lazy val connect = new ConnectController(auth, materializer)
   lazy val assetsCtrl = new Assets(httpErrorHandler)
