@@ -1,12 +1,12 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, jQuery}
+import org.scalajs.jquery.{JQuery, JQueryAjaxSettings, JQueryEventObject, jQuery}
 import upickle.Invalid
 
 import scala.scalajs.js
 
 trait BaseScript {
-  def elem(id: String) = jQuery(s"#$id")
+  def elem(id: String): JQuery = jQuery(s"#$id")
 
   def global = js.Dynamic.global
 

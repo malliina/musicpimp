@@ -1,8 +1,6 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQueryEventObject, jQuery}
-
-class Library extends BaseScript {
+class MusicItems extends BaseScript {
   setup()
 
   def setup() = {
@@ -14,8 +12,6 @@ class Library extends BaseScript {
 
   def installHandler[C: PimpJSON.Writer](clazzSelector: String, toMessage: String => C) =
     withDataId(clazzSelector)(id => postPlayback(toMessage(id)))
-
-
 
   def postPlayback[C: PimpJSON.Writer](json: C) =
     postAjax("/playback", json)

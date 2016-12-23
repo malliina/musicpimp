@@ -134,7 +134,7 @@ class PimpTags(scripts: Modifier*) {
                              fourthHeader: String,
                              fourthValue: T => Modifier) =
     libraryBase(tab, username, jsLinks("json.js", "library.js"))(
-      headerRow()(headerText, small(`class` := HiddenXs)(s" by ${username.name}")),
+      headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${username.name}")),
       fullRow(
         responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
           Seq(
@@ -433,7 +433,7 @@ class PimpTags(scripts: Modifier*) {
     liHref("#", `class` := clazz, attr("data-id") := dataId)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[String], username: Username, m: Messages) =
-    manage("alarms", username, alarmJs, jsLink("alarm-editor.js"))(
+    manage("alarms", username, alarmJs)(
       headerRow()("Edit alarm"),
       halfRow(
         postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
@@ -492,7 +492,7 @@ class PimpTags(scripts: Modifier*) {
           name := s"${field.name}[$index]",
           checkedAttr
         )
-      )
+      )(s" ${weekDay.longName}")
     )
   }
 

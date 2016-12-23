@@ -15,10 +15,15 @@ object Frontend extends JSApp {
     val front: PartialFunction[String, BaseScript] = {
       case "/search" | "/player2" => new Search
       case "/logs" | "/logs2" => new Logs
-      case "/player" | "/player2" => new Playback
-      case "/alarms" | "/alarms2" => new Alarms
-      case p if p.isEmpty || p == "/" || p.startsWith("/folders") => new Library
+      case "/player" => new Playback
+      case "/alarms" => new Alarms
+      case "/alarms/editor" => new AlarmEditor
+      case p if containsMusic(p) => new MusicItems
     }
     app = front lift path
   }
+
+  def containsMusic(p: String) =
+    p.isEmpty || p == "/" || p.startsWith("/folders") ||
+      p == "/player/recent" || p == "/player/popular"
 }

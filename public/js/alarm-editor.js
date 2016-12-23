@@ -12,7 +12,7 @@ $(document).ready(function () {
     $(".selector").autocomplete({
         source: function (request, response) {
             $.getJSON("/search?f=json", request, function (data, status, xhr) {
-                response($.map(data, function (v, i) {
+                response($.map(data, function (v, index) {
                     return {
                         label: v.artist + " - " + v.title,
                         value: v.artist + " - " + v.title,

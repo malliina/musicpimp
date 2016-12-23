@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, jQuery}
+import org.scalajs.jquery.JQueryEventObject
 import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -83,9 +83,6 @@ class Playback extends SocketJS("/ws/playback?f=json") {
       send(Playback.volume(ui.value))
     })
     volumeElemDyn.slider(volumeOptions)
-    jQuery("li").click((e: JQueryEventObject) => {
-      println(s"Clicked $e")
-    })
   }
 
   def toggleMute() = {

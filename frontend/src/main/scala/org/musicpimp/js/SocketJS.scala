@@ -14,7 +14,6 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
   val okStatus = elem("okstatus")
   val failStatus = elem("failstatus")
 
-  println(s"Connecting to $wsPath")
   val socket: dom.WebSocket = openSocket(wsPath)
 
   def handlePayload(payload: String)
@@ -42,7 +41,7 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
     val socket = new dom.WebSocket(wsUrl)
     socket.onopen = (e: Event) => onConnected(e)
-    socket.onmessage = (event: MessageEvent) => onMessage(event)
+    socket.onmessage = (e: MessageEvent) => onMessage(e)
     socket.onclose = (e: CloseEvent) => onClosed(e)
     socket.onerror = (e: ErrorEvent) => onError(e)
     socket

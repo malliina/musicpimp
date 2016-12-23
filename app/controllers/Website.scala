@@ -32,7 +32,6 @@ class Website(tags: PimpTags,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-//    html.player(serverWS.wsUrl(req), feedback, req.user, req)
     tags.player(feedback, req.user)
   }
 
@@ -40,7 +39,7 @@ class Website(tags: PimpTags,
     implicit val f = TrackMeta.format(req)
     stats.mostRecent(meta) map { entries =>
       respond(req)(
-        html = html.mostRecent(entries, meta.username),
+        html = tags.mostRecent(entries, meta.username),
         json = RecentList(entries)
       )
     }
@@ -50,7 +49,7 @@ class Website(tags: PimpTags,
     implicit val f = TrackMeta.format(req)
     stats.mostPlayed(meta) map { entries =>
       respond(req)(
-        html = html.mostPopular(entries, meta.username),
+        html = tags.mostPopular(entries, meta.username),
         json = PopularList(entries)
       )
     }

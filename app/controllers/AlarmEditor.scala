@@ -5,6 +5,7 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import controllers.AlarmEditor.log
 import play.api.Logger
@@ -15,7 +16,7 @@ import play.api.i18n.Messages
 import play.api.mvc.Result
 import views.html
 
-class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
+class AlarmEditor(tags: PimpTags, auth: Authenticator, messages: Messages, mat: Materializer)
   extends Secured(auth, mat)
     with SchedulerStrings {
 
@@ -55,9 +56,9 @@ class AlarmEditor(auth: Authenticator, messages: Messages, mat: Materializer)
       .map(clockForm.fill)
       .fold(ifEmpty = pimpAction(notFound(s"Unknown ID: $id")))(form => clockAction(form, fb))
   }
-
+//  html.alarmEditor(form, feedback, req.user)(messages))
   private def clockAction(form: Form[ClockPlayback], feedback: Option[String] = None) =
-    pimpAction(req => Ok(html.alarmEditor(form, feedback, req.user)(messages)))
+    pimpAction(req => Ok(tags.alarmEditor(form, feedback, req.user, messages)))
 
   def newClock() = formSubmission(clockForm)(
     (req, err) => {
