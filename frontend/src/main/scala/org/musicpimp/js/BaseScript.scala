@@ -1,7 +1,7 @@
 package org.musicpimp.js
 
 import org.scalajs.jquery.{JQuery, JQueryAjaxSettings, JQueryEventObject, jQuery}
-import upickle.Invalid
+import upickle.{Invalid, Js}
 
 import scala.scalajs.js
 
@@ -12,8 +12,8 @@ trait BaseScript {
 
   def literal = js.Dynamic.literal
 
-  def validate[T: PimpJSON.Reader](in: String): Either[Invalid, T] =
-    PimpJSON.validate(in)
+  def validate[T: PimpJSON.Reader](in: Js.Value): Either[Invalid, T] =
+    PimpJSON.validateJs(in)
 
   def write[T: PimpJSON.Writer](t: T) =
     PimpJSON.write(t)

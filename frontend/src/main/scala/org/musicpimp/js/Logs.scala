@@ -4,6 +4,7 @@ import java.util.UUID
 
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
+import upickle.Js
 
 import scalatags.Text.all._
 
@@ -22,8 +23,8 @@ class Logs extends SocketJS("/ws/logs?f=json") {
     super.onConnected(e)
   }
 
-  override def handlePayload(payload: String) =
-    PimpJSON.validate[Seq[JVMLogEntry]](payload).fold(
+  override def handlePayload(payload: Js.Value) =
+    PimpJSON.validateJs[Seq[JVMLogEntry]](payload).fold(
       invalid => onInvalidData(invalid),
       entries => entries foreach prepend
     )

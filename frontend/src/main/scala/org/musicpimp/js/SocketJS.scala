@@ -3,11 +3,11 @@ package org.musicpimp.js
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
-import upickle.Invalid
-
-import scala.scalajs.js.JSON
+import upickle.{Invalid, Js}
 
 abstract class SocketJS(wsPath: String) extends BaseScript {
+  val EventField = "event"
+  val Ping = "ping"
   val Hidden = "hide"
 
   val statusElem = elem("status")
@@ -16,7 +16,7 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
 
   val socket: dom.WebSocket = openSocket(wsPath)
 
-  def handlePayload(payload: String)
+  def handlePayload(payload: Js.Value)
 
   def send[T: PimpJSON.Writer](payload: T) =
     socket.send(PimpJSON.write(payload))
@@ -54,12 +54,21 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
   }
 
   def onMessage(msg: MessageEvent): Unit = {
-    val event = JSON.parse(msg.data.toString)
-    if (event.event.toString == "ping") {
-    } else {
-      handlePayload(JSON.stringify(event))
-    }
+    val asString = msg.data.toString
+    PimpJSON.parse(asString).fold(onInvalidData, json => {
+      if (readField[String](json, EventField).right.exists(_ == Ping)) {
+      } else {
+        handlePayload(json)
+      }
+    })
   }
+
+  def readField[T: PimpJSON.Reader](json: Js.Value, field: String): Either[Invalid, T] =
+    for {
+      jsObject <- validate[Js.Obj](json).right
+      fieldJson <- jsObject.value.toMap.get(field).toRight(Invalid.Data(json, s"Missing field: '$field'.")).right
+      parsed <- validate[T](fieldJson).right
+    } yield parsed
 
   def onInvalidData(invalid: Invalid): PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>

@@ -1,6 +1,5 @@
 package org.musicpimp.js
 
-import upickle.Js.Value
 import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.{Duration, DurationDouble}
@@ -9,6 +8,8 @@ object PimpJSON extends upickle.AttributeTagged {
   implicit val durationJson = PimpJSON.ReadWriter[Duration](
     dur => Js.Num(dur.toSeconds), { case Js.Num(num) => num.seconds })
 
+  // Serializes Options to nullable values.
+  // By default, uPickle (undesirably) serializes Options to JSON arrays (of 0 or 1 elements).
   override implicit def OptionW[T: Writer]: Writer[Option[T]] = Writer {
     case None => Js.Null
     case Some(s) => implicitly[Writer[T]].write(s)
@@ -19,7 +20,7 @@ object PimpJSON extends upickle.AttributeTagged {
     case v: Js.Value => Some(implicitly[Reader[T]].read.apply(v))
   }
 
-  def parseObj(raw: String): Either[Invalid, Map[String, Value]] =
+  def parseObj(raw: String): Either[Invalid, Map[String, Js.Value]] =
     toEither(read[Js.Value](raw).obj)
 
   def parse(raw: String): Either[Invalid, Js.Value] =

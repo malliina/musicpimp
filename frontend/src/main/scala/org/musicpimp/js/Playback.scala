@@ -90,13 +90,12 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     send(ValuedCommand.mute(isMute))
   }
 
-  override def handlePayload(payload: String) = withFailure {
-    val jsValue = PimpJSON.read[Js.Value](payload)
-    val obj = jsValue.obj
+  override def handlePayload(payload: Js.Value) = withFailure {
+    val obj = payload.obj
 
     def read[T: PimpJSON.Reader](key: String) = obj.get(key)
       .map(json => PimpJSON.readJs[T](json))
-      .getOrElse(throw Invalid.Data(jsValue, s"Missing key: '$key'."))
+      .getOrElse(throw Invalid.Data(payload, s"Missing key: '$key'."))
 
     read[String]("event") match {
       case "welcome" =>
@@ -115,7 +114,7 @@ class Playback extends SocketJS("/ws/playback?f=json") {
         isMute = read[Boolean]("mute")
       case "status" =>
         showConnected()
-        onStatus(PimpJSON.readJs[Status](jsValue))
+        onStatus(PimpJSON.readJs[Status](payload))
         playerDiv.show()
       case "playlist_index_changed" =>
 

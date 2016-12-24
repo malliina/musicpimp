@@ -3,7 +3,7 @@ package org.musicpimp.js
 import upickle.Js
 import utest._
 
-import scala.concurrent.duration.{Duration, DurationDouble, DurationInt}
+import scala.concurrent.duration.{Duration, DurationInt}
 
 case class GenClass[T](cmd: String, value: T)
 
@@ -18,6 +18,12 @@ object FrontTests extends TestSuite {
       assert(str contains ":123}")
       val str2 = PimpJSON.write(GenClass("hey2", false))
       assert(str2 contains ":false}")
+    }
+
+    'ReadOneKey {
+      val obj = Js.Obj("cmd" -> Js.Str("hey"))
+      val maybeCmd = obj.obj get "cmd"
+      assert(maybeCmd.exists(json => json.str == "hey"))
     }
 
     'DurationJSON {
