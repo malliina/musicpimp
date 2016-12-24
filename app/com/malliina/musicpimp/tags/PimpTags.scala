@@ -41,11 +41,35 @@ class PimpTags(scripts: Modifier*) {
   val Hide = "hide"
   val dataIdAttr = attr("data-id")
 
-  def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
-    val message = feedback.message
-    if (feedback.isError) alertDanger(message)
-    else alertSuccess(message)
-  }
+  def playlist(playlist: SavedPlaylist, username: Username) =
+    manage("playlist", username)(
+      headerRow()("Playlist"),
+      leadPara(playlist.name),
+      tableView("This playlist is empty.", playlist.tracks, "Title", "Album", "Artist") { track =>
+        Seq(td(track.title), td(track.album), td(track.artist))
+      }
+    )
+
+  def playlists(lists: Seq[SavedPlaylist], username: Username) =
+    manage("playlists", username)(
+      headerRow()("Playlists"),
+      tableView("No saved playlists.", lists, "Name", "Tracks", "Actions") { list =>
+        Seq(
+          td(aHref(routes.Playlists.playlist(list.id))(list.name)),
+          td(list.tracks.size),
+          td("Add/Edit/Delete")
+        )
+      }
+    )
+
+  def tableView[T](emptyText: String, items: Seq[T], headers: String*)(cells: T => Seq[Modifier]) =
+    fullRow(
+      if (items.isEmpty) {
+        leadPara(emptyText)
+      } else {
+        responsiveTable(items)(headers: _*)(cells)
+      }
+    )
 
   def users(us: Seq[Username],
             username: Username,
@@ -724,6 +748,12 @@ class PimpTags(scripts: Modifier*) {
         )
       )
     )
+
+  def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
+    val message = feedback.message
+    if (feedback.isError) alertDanger(message)
+    else alertSuccess(message)
+  }
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(

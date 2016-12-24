@@ -20,7 +20,6 @@ GET         /logout                            controllers.Accounts.logout
 POST        /authenticate                      controllers.Accounts.formAuthenticate
 POST        /changePassword                    controllers.Accounts.formChangePassword
 POST        /addUser                           controllers.Accounts.formAddUser
-GET         /parameters                        controllers.Website.parameters
 # Player
 GET         /playback                          controllers.Rest.status
 POST        /playback                          controllers.Rest.playback

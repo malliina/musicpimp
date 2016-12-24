@@ -6,6 +6,7 @@ import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta, TrackID}
+import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
@@ -26,7 +27,10 @@ object Playlists {
   val Tracks = "tracks"
 }
 
-class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
+class Playlists(tags: PimpTags,
+                service: PlaylistService,
+                auth: Authenticator,
+                mat: Materializer) extends Secured(auth, mat) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val tracksMapping: Mapping[Seq[TrackID]] = seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
@@ -41,7 +45,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     val user = req.user
     service.playlistsMeta(user).map(playlists => {
       respond(req)(
-        html = html.playlists(playlists.playlists, user),
+        html = tags.playlists(playlists.playlists, user),
         json = Json.toJson(playlists)
       )
     })
@@ -53,7 +57,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     service.playlistMeta(id, user).map { result =>
       result.map { playlist =>
         respond(req)(
-          html = html.playlist(playlist.playlist, playlistForm, user),
+          html = tags.playlist(playlist.playlist, user),
           json = Json.toJson(playlist)
         )
       }.getOrElse(notFound(s"Playlist not found: $id"))
@@ -79,7 +83,7 @@ class Playlists(service: PlaylistService, auth: Authenticator, mat: Materializer
     val user = req.user
     playlistForm.bindFromRequest()(req).fold(
       errors => {
-        service.playlistsMeta(user).map(pls => BadRequest(html.playlists(pls.playlists, user)))
+        service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user)))
       },
       submission => {
         fut(Redirect(routes.Playlists.playlists()))

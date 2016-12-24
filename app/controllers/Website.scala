@@ -80,6 +80,4 @@ class Website(tags: PimpTags,
   }
 
   def about = navigate(req => tags.aboutBase(req.user))
-
-  def parameters = navigate(req => html.parameters(req.user))
 }
