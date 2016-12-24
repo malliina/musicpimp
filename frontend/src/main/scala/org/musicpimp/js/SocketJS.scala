@@ -65,8 +65,8 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
 
   def readField[T: PimpJSON.Reader](json: Js.Value, field: String): Either[Invalid, T] =
     for {
-      jsObject <- validate[Js.Obj](json).right
-      fieldJson <- jsObject.value.toMap.get(field).toRight(Invalid.Data(json, s"Missing field: '$field'.")).right
+      map <- PimpJSON.toEither(json.obj).right
+      fieldJson <- map.get(field).toRight(Invalid.Data(json, s"Missing field: '$field'.")).right
       parsed <- validate[T](fieldJson).right
     } yield parsed
 
