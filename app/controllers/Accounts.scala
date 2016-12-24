@@ -156,8 +156,10 @@ class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs:
     val user = request.user
     accs.changePasswordForm.bindFromRequest()(request).fold(
       errors => {
-        log warn s"Unable to change password for user '$user' from ${request.remoteAddress}, form: $errors"
-        fut(BadRequest(tags.account(user, UserFeedback.formed(errors))))
+        val feedback = UserFeedback.formed(errors)
+        val msg = feedback.fold("")(m => s" ${m.message}")
+        log warn s"Unable to change password for user '$user' from ${request.remoteAddress}.$msg"
+        fut(BadRequest(tags.account(user, feedback)))
       },
       pc => {
         validateCredentials(user, pc.oldPass) flatMap { isValid =>
