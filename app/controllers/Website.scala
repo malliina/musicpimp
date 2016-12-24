@@ -79,9 +79,7 @@ class Website(tags: PimpTags,
       s"Playback could not be started. $msg"
   }
 
-  def popupPlayer = navigate(req => html.popupPlayer(sockets.wsUrl(req), req))
-
-  def about = navigate(req => html.aboutBase(req.user))
+  def about = navigate(req => tags.aboutBase(req.user))
 
   def parameters = navigate(req => html.parameters(req.user))
 }

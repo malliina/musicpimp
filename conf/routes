@@ -1,7 +1,6 @@
 # Web specific
 GET         /                                  controllers.LibraryController.siteRoot
 GET         /player                            controllers.Website.player
-GET         /popupPlayer                       controllers.Website.popupPlayer
 GET         /player/recent                     controllers.Website.recent
 GET         /player/popular                    controllers.Website.popular
 GET         /settings                          controllers.SettingsController.settings

@@ -43,7 +43,7 @@ class PimpTags(scripts: Modifier*) {
 
   def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
     val message = feedback.message
-    if(feedback.isError) alertDanger(message)
+    if (feedback.isError) alertDanger(message)
     else alertSuccess(message)
   }
 
@@ -620,7 +620,7 @@ class PimpTags(scripts: Modifier*) {
       p("Check out ", aHref("https://www.musicpimp.org")("www.musicpimp.org"), " for the latest documentation.")
     ),
     rowColumn(ColMd8)(
-      h2("Third Party Software"),
+      h3("Third Party Software"),
       p("This app uses the following third party software:"),
       divClass("panel-group", id := "accordion")(
         licensePanel("collapseOne", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
@@ -634,19 +634,17 @@ class PimpTags(scripts: Modifier*) {
 
   def licensePanel(elemId: String, licenseText: String, prefix: String, linkText: String) =
     thirdPartyPanel(elemId, licenseText)(
-      panelSummary(prefix, elemId, linkText)
+      prefix, panelSummary(prefix, elemId, linkText)
     )
 
   def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) =
-    divClass("panel-group", id := "accordion")(
-      divClass("panel panel-default")(
-        divClass("panel-heading")(
-          spanClass("accordion-toggle")(toggleHtml)
-        ),
-        divClass(s"accordion-body $Collapse", id := elemId)(
-          divClass("accordion-inner")(
-            pre(`class` := "pre-scrollable")(innerContent)
-          )
+    divClass("panel panel-default")(
+      divClass("panel-heading")(
+        spanClass("accordion-toggle")(toggleHtml)
+      ),
+      divClass(s"accordion-body $Collapse", id := elemId)(
+        divClass("accordion-inner")(
+          pre(`class` := "pre-scrollable")(innerContent)
         )
       )
     )
