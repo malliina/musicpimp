@@ -18,8 +18,10 @@ import scala.concurrent.duration.DurationInt
 
 /** Emits playback events to and accepts commands from listening clients.
   */
-class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessageHandler, mat: Materializer)
-  extends PlayerSockets(auth, mat) {
+class ServerWS(val clouds: Clouds,
+               security: SecureBase,
+               handler: PlaybackMessageHandler)
+  extends PlayerSockets(security) {
 
   val subscription = MusicPlayer.allEvents.subscribe(event => customBroadcast(event))
   override val messageHandler: JsonHandlerBase = handler
@@ -32,7 +34,7 @@ class ServerWS(val clouds: Clouds, auth: Authenticator, handler: PlaybackMessage
       val writer = ServerMessage.writer(PimpUrl.hostOnly(client.request))
       client.send(writer.writes(message))
     }
-    val cloudHost = clouds.client.cloudHost
+    val cloudHost = clouds.cloudHost
     val cloudJson = ServerMessage.writer(cloudHost).writes(message)
     clouds.sendIfConnected(cloudJson)
   }

@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.cloud
 
+import java.net.URI
 import java.util
 import javax.net.ssl.SSLSocketFactory
 
@@ -26,19 +27,23 @@ abstract class Socket8[T](val uri: PimpUrl, socketFactory: SSLSocketFactory, hea
   val factory = new WebSocketFactory()
   factory.setSSLSocketFactory(socketFactory)
   val socket = factory.createSocket(uri.url, connectTimeout.toMillis.toInt)
-  headers.foreach {
+  headers foreach {
     case (key, value) => socket.addHeader(key, value)
   }
   socket.addListener(new WebSocketAdapter {
     override def onConnected(websocket: WebSocket, headers: util.Map[String, util.List[String]]): Unit = {
       connectPromise.trySuccess(())
+      Socket8.this.onConnect(websocket.getURI)
     }
 
     override def onTextMessage(websocket: WebSocket, text: String): Unit = {
       Socket8.this.onRawMessage(text)
     }
 
-    override def onDisconnected(websocket: WebSocket, serverCloseFrame: WebSocketFrame, clientCloseFrame: WebSocketFrame, closedByServer: Boolean): Unit = {
+    override def onDisconnected(websocket: WebSocket,
+                                serverCloseFrame: WebSocketFrame,
+                                clientCloseFrame: WebSocketFrame,
+                                closedByServer: Boolean): Unit = {
       val uri = websocket.getURI
       val suffix = if (closedByServer) " by the server" else ""
       connectPromise tryFailure new NotConnectedException(s"The websocket to $uri was closed$suffix.")
@@ -68,9 +73,11 @@ abstract class Socket8[T](val uri: PimpUrl, socketFactory: SSLSocketFactory, hea
 
   def onMessage(message: T): Unit = ()
 
-  protected def onRawMessage(raw: String) = parse(raw).foreach(onMessage)
+  protected def onRawMessage(raw: String) = parse(raw).map(onMessage) getOrElse {
+    log.warn(s"Unable to parse message: $raw")
+  }
 
-  override def send(json: T): Try[Unit] = Try(socket.sendText(stringify(json)))
+  def onConnect(uri: URI): Unit = ()
 
   override def onError(t: Exception): Unit = ()
 
@@ -79,4 +86,6 @@ abstract class Socket8[T](val uri: PimpUrl, socketFactory: SSLSocketFactory, hea
   def close(): Unit = socket.disconnect()
 
   def isConnected = socket.isOpen
+
+  override def send(json: T): Try[Unit] = Try(socket.sendText(stringify(json)))
 }

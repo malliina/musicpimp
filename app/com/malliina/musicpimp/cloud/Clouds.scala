@@ -5,13 +5,15 @@ import java.nio.file.{Files, Path}
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
+import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.json.SimpleCommand
 import com.malliina.util.Utils
 import play.api.Logger
 import play.api.libs.json.JsValue
+import rx.lang.scala.subjects.BehaviorSubject
 import rx.lang.scala.{Observable, Subscription}
-import com.malliina.musicpimp.cloud.Clouds.log
+
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
@@ -38,11 +40,21 @@ object Clouds {
 }
 
 class Clouds(deps: Deps) {
-  var client: CloudSocket = newSocket(None)
+  private var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(60.seconds)
   var poller: Option[Subscription] = None
   val MaxFailures = 720
   var successiveFailures = 0
+  private val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
+  private var activeSubscription: Subscription = client.registrations.subscribe(registrations)
+
+  def connection: Observable[Option[CloudID]] = registrations
+
+  def cloudHost = client.cloudHost
+
+  def uri = client.uri
+
+  def isConnected = client.isConnected
 
   def init(): Unit = {
     ensureConnectedIfEnabled()
@@ -50,11 +62,12 @@ class Clouds(deps: Deps) {
   }
 
   def maintainConnectivity(): Unit = {
-    if(poller.isEmpty) {
+    if (poller.isEmpty) {
       val subscription = timer.subscribe(
         _ => ensureConnectedIfEnabled(),
         (err: Throwable) => log.error("Cloud poller failed", err),
-        () => log.warn("Cloud poller completed"))
+        () => log.error("Cloud poller completed")
+      )
       poller = Some(subscription)
     }
   }
@@ -79,7 +92,9 @@ class Clouds(deps: Deps) {
     closeAnyConnection()
     val name = id.map(_.id) getOrElse "a random client"
     log info s"Connecting to ${client.uri} as $name..."
+    activeSubscription.unsubscribe()
     client = newSocket(id)
+    activeSubscription = client.registrations.subscribe(registrations)
     client.connectID() map { id =>
       successiveFailures = 0
       Clouds.saveID(id)

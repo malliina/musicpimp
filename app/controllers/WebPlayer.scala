@@ -14,8 +14,7 @@ import play.api.mvc.Call
 import scala.collection.mutable
 import scala.concurrent.Future
 
-class WebPlayer(auth: Authenticator, mat: Materializer)
-  extends PlayerSockets(auth, mat) {
+class WebPlayer(security: SecureBase) extends PlayerSockets(security) {
 
   override val messageHandler: JsonHandlerBase = new WebPlayerMessageHandler {
     override def player(request: RemoteInfo): PimpWebPlayer = WebPlayer.this.player(request)

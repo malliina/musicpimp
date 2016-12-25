@@ -25,6 +25,7 @@ import com.malliina.ws.HttpUtil
 import controllers.{Alarms, LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
+import rx.lang.scala.subjects.BehaviorSubject
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
@@ -52,6 +53,7 @@ object CloudSocket {
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
+  val manuallyClosed = new Exception("Connection closed manually.")
 }
 
 /**
@@ -82,7 +84,6 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   val cloudHost = PimpUrl(httpProtocol, hostPort, "")
   val uploader = TrackUploads(cloudHost)
   log info s"Initializing cloud connection with user $username"
-  //  val remoteInfo = RemoteInfo(username, cloudHost)
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
   implicit val trackWriter = TrackMeta.format(cloudHost)
 
@@ -92,6 +93,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   private val registrationPromise = Promise[CloudID]()
   val registration = registrationPromise.future
   val playlists = deps.playlists
+
+  val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
 
   def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
 
@@ -222,7 +225,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
         val response = metaResult getOrElse LibraryController.noTrackJson(id)
         sendJsonResponse(response, request, metaResult.isDefined)
       case RegistrationEvent(event, id) =>
-        registrationPromise trySuccess id
+        onRegistered(id)
       case PlaybackMessage(payload, user) =>
         handler.handleMessage(payload, RemoteInfo(user, cloudHost))
       case beamCommand: BeamCommand =>
@@ -244,9 +247,9 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def handleEvent(e: PimpMessage): Unit =
     e match {
       case RegisteredMessage(id) =>
-        registrationPromise trySuccess id
+        onRegistered(id)
       case RegistrationEvent(event, id) =>
-        registrationPromise trySuccess id
+        onRegistered(id)
       case PlaybackMessage(payload, user) =>
         handler.handleMessage(payload, RemoteInfo(user, cloudHost))
       case PingMessage =>
@@ -290,14 +293,28 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def errorMessage(errors: JsError, json: JsValue): String =
     s"JSON error: $errors. Message: $json"
 
-  override def onClose(): Unit = failRegistration(CloudSocket.connectionClosed)
+  def onRegistered(id: CloudID) ={
+    registrationPromise trySuccess id
+    registrations onNext Option(id)
+  }
 
-  override def onError(e: Exception): Unit = failRegistration(e)
+  override def onClose(): Unit = {
+    failSocket(CloudSocket.connectionClosed)
+  }
 
-  def failRegistration(e: Exception) = registrationPromise tryFailure e
+  override def onError(e: Exception): Unit = {
+    failSocket(e)
+  }
 
   override def close(): Unit = {
+    failSocket(CloudSocket.manuallyClosed)
     uploader.close()
     super.close()
+  }
+
+  def failSocket(e: Exception) = {
+    registrationPromise tryFailure e
+    registrations onNext None
+    registrations.onCompleted()
   }
 }

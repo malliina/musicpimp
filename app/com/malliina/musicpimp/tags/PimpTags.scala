@@ -3,6 +3,7 @@ package com.malliina.musicpimp.tags
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.cloud.CloudID
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models._
@@ -333,27 +334,17 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def cloud(c: Cloud,
-            serverId: Option[String],
-            feedback: Option[String],
-            username: Username,
-            formFeedback: Option[UserFeedback]) =
+  def cloud(cloudId: Option[CloudID],
+            feedback: Option[UserFeedback],
+            username: Username) = {
+    val successFeedback = cloudId
+      .map(id => s"Connected. You can now access this server using your credentials and this cloud ID: $id")
+      .map(UserFeedback.success)
+    val fb = feedback orElse successFeedback
     manage("cloud", username)(
       headerRow()("Cloud"),
-      halfRow(
-        toggleButton(serverId.map(_ => "Disconnect").getOrElse("Connect"), c, serverId)
-      ),
-      serverId.fold(empty) { server =>
-        halfRow {
-          leadPara(s"Connected. You can now access this server using your credentials and this cloud ID: $server")
-        }
-      },
-      feedback.fold(empty) { fb =>
-        halfRow(
-          pClass(s"$Lead error")(fb)
-        )
-      },
-      formFeedback.fold(empty)(fb => halfRow(feedbackDiv(fb))),
+      halfRow(cloudForm(cloudId)),
+      fb.fold(empty) { f => halfRow(feedbackDiv(f)) },
       halfRow(
         p("How does this work?"),
         p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
@@ -361,19 +352,24 @@ class PimpTags(scripts: Modifier*) {
           "connected to. All traffic is encrypted. All music is streamed.")
       )
     )
+  }
 
-  def toggleButton(title: String, c: Cloud, serverId: Option[String]) =
+
+  def cloudForm(cloudId: Option[CloudID]) = {
+    val title = cloudId.fold("Connect")(_ => "Disconnect")
     postableForm(routes.Cloud.toggle(), name := "toggleForm")(
-      if (serverId.isEmpty) {
+      if (cloudId.isEmpty) {
         formGroup(
-          labelFor(c.idFormKey)("Desired cloud ID (optional)"),
-          textInput(Text, FormControl, c.idFormKey, Option("Your desired ID or leave empty"))
+          labelFor(Cloud.idFormKey)("Desired cloud ID (optional)"),
+          textInput(Text, FormControl, Cloud.idFormKey, Option("Your desired ID or leave empty"))
         )
       } else {
         empty
       },
       blockSubmitButton(id := "toggleButton")(title)
     )
+  }
+
 
   def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
     indexMain("player", username, scripts ++ Seq(cssLink(at("css/player.css"))))(

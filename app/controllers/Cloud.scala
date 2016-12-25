@@ -14,19 +14,23 @@ import play.api.data.Forms._
 import play.api.mvc._
 import scala.concurrent.Future
 
-class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
+object Cloud {
+  private val log = Logger(getClass)
   val idFormKey = "id"
+}
+
+class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
   val FEEDBACK = "feedback"
-  val cloudForm = Form(idFormKey -> optional(text))
+  val cloudForm = Form(Cloud.idFormKey -> optional(text))
 
   def cloud = pimpActionAsync { request =>
     val id = clouds
       .registration.map(id => (Some(id), None))
-      .recoverAll(t => (None, Some(t.getMessage)))
-    val formFeedback = UserFeedback.flashed(request)
-    id.map({ case (cloudId, errorMessage) =>
-      Ok(tags.cloud(this, cloudId.map(_.id), errorMessage, request.user, formFeedback))
-    })
+      .recoverAll(t => (None, Option(UserFeedback.error(t.getMessage))))
+    id.map { case (cloudId, errorMessage) =>
+      val feedback = UserFeedback.flashed(request) orElse errorMessage
+      Ok(tags.cloud(cloudId, feedback, request.user))
+    }
   }
 
   def toggle = pimpParsedActionAsync(parse.default) { request =>
@@ -34,11 +38,11 @@ class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializ
       formErrors => {
         log debug s"Form errors: $formErrors"
         val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
-        Future successful BadRequest(tags.cloud(this, None, None, request.user, feedback))
+        Future successful BadRequest(tags.cloud(None, feedback, request.user))
       },
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())
-        if (clouds.client.isConnected) {
+        if (clouds.isConnected) {
           clouds.disconnectAndForget()
           fut(redir)
         } else {
@@ -55,14 +59,11 @@ class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializ
 
   def errorMessage: PartialFunction[Throwable, String] = {
     case ce: ConnectException =>
+      log.error(s"Unable to connect to ${clouds.uri}.", ce)
       "Unable to connect to the cloud. Please try again later."
     case t: Throwable =>
       val msg = "Unable to connect to the cloud."
       log.error(msg, t)
       msg
   }
-}
-
-object Cloud {
-  private val log = Logger(getClass)
 }

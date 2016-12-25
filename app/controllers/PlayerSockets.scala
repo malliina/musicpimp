@@ -1,18 +1,16 @@
 package controllers
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.audio.JsonHandlerBase
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
-import com.malliina.play.Authenticator
 import com.malliina.play.http.RequestInfo
 import com.malliina.play.models.Username
 import controllers.PlayerSockets.log
 import play.api.Logger
 import play.api.libs.json.JsValue
 
-abstract class PlayerSockets(auth: Authenticator, mat: Materializer)
-  extends PimpSockets(auth, mat) {
+abstract class PlayerSockets(security: SecureBase)
+  extends PimpSockets(security) {
 
   def messageHandler: JsonHandlerBase
 

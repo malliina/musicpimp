@@ -18,8 +18,8 @@ object Search {
   val DefaultLimit = 1000
 }
 
-class Search(indexer: Indexer, auth: Authenticator, mat: Materializer)
-  extends PimpSockets(auth, mat) {
+class Search(indexer: Indexer, security: SecureBase)
+  extends PimpSockets(security) {
 
   val socketBroadcaster = indexingObserver(
     msg => broadcastStatus(msg),

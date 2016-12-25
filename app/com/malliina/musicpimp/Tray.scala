@@ -5,13 +5,15 @@ import java.awt.event.{ActionEvent, ActionListener}
 import javax.swing.{ImageIcon, UIManager}
 
 import com.malliina.util.{Log, Util}
+import play.api.Logger
 
 import scala.util.Try
 
 /**
   * @see http://docs.oracle.com/javase/tutorial/uiswing/misc/systemtray.html
   */
-object Tray extends Log {
+object Tray {
+  private val log = Logger(getClass)
   val iconResource = "guitar-16x16.png"
 
   /** Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
