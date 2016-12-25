@@ -45,10 +45,10 @@ class Clouds(deps: Deps) {
   var poller: Option[Subscription] = None
   val MaxFailures = 720
   var successiveFailures = 0
-  private val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
-  private var activeSubscription: Subscription = client.registrations.subscribe(registrations)
+  val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
+  private var activeSubscription: Option[Subscription] = None
 
-  def connection: Observable[Option[CloudID]] = registrations
+  val connection: Observable[Option[CloudID]] = registrations
 
   def cloudHost = client.cloudHost
 
@@ -92,9 +92,14 @@ class Clouds(deps: Deps) {
     closeAnyConnection()
     val name = id.map(_.id) getOrElse "a random client"
     log info s"Connecting to ${client.uri} as $name..."
-    activeSubscription.unsubscribe()
+    activeSubscription.foreach(_.unsubscribe())
     client = newSocket(id)
-    activeSubscription = client.registrations.subscribe(registrations)
+    val sub = client.registrations.subscribe(
+      n => registrations.onNext(n),
+      err => (),
+      () => ()
+    )
+    activeSubscription = Option(sub)
     client.connectID() map { id =>
       successiveFailures = 0
       Clouds.saveID(id)
@@ -104,7 +109,8 @@ class Clouds(deps: Deps) {
     }
   }
 
-  def newSocket(id: Option[CloudID]) = CloudSocket.build(id orElse Clouds.loadID(), deps)
+  def newSocket(id: Option[CloudID]) =
+    CloudSocket.build(id orElse Clouds.loadID(), deps)
 
   def disconnectAndForget() = {
     client sendMessage SimpleCommand(CloudStrings.Unregister)

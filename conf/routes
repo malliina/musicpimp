@@ -57,6 +57,7 @@ GET         /ws/playback                       controllers.ServerWS.openSocket
 GET         /ws/playback2                      controllers.ServerWS.openSocket2
 GET         /ws/webplay                        controllers.WebPlayer.openSocket
 GET         /ws/logs                           controllers.PimpLogs.openSocket
+GET         /ws/cloud                          controllers.CloudWS.openSocket
 # Alarms
 GET         /alarms                            controllers.Alarms.alarms
 POST        /alarms                            controllers.Alarms.handleJson

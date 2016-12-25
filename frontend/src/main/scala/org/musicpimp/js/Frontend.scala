@@ -18,6 +18,7 @@ object Frontend extends JSApp {
       case "/player" => new Playback
       case "/alarms" => new Alarms
       case "/alarms/editor" => new AlarmEditor
+      case "/cloud" => new Cloud
       case p if containsMusic(p) => new MusicItems
     }
     app = front lift path

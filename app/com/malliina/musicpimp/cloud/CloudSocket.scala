@@ -186,6 +186,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
         databaseResponse(playlists.playlistsMeta(user))
       case GetPlaylist(id, user) =>
         def notFound = JsonMessages.failure(s"Playlist not found: $id")
+
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
             maybePlaylist.fold(sendFailureResponse(notFound, request))(pl => sendResponse(pl, request))
@@ -293,7 +294,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def errorMessage(errors: JsError, json: JsValue): String =
     s"JSON error: $errors. Message: $json"
 
-  def onRegistered(id: CloudID) ={
+  def onRegistered(id: CloudID) = {
     registrationPromise trySuccess id
     registrations onNext Option(id)
   }

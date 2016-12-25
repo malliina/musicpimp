@@ -40,7 +40,8 @@ class Search(indexer: Indexer, security: SecureBase)
 
   override def openSocketCall: Call = routes.Search.openSocket()
 
-  override def welcomeMessage(client: Client): Option[Message] = Some(JsonMessages.searchStatus(""))
+  override def welcomeMessage(client: Client): Option[Message] =
+    Some(JsonMessages.searchStatus(""))
 
   override def onMessage(msg: Message, client: Client): Boolean = {
     (msg \ Cmd).asOpt[String].fold(log warn s"Unknown message: $msg")({
@@ -68,5 +69,3 @@ class Search(indexer: Indexer, security: SecureBase)
     ret
   }
 }
-
-

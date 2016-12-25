@@ -69,14 +69,14 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
-  lazy val c = new Clouds(deps)
+  lazy val clouds = new Clouds(deps)
   lazy val tags = PimpTags.forApp(environment.mode == Mode.Prod)
   // Controllers
   lazy val security = new SecureBase(auth, materializer)
   lazy val ls = new PimpLogs(materializer)
   lazy val lp = new LogPage(tags, ls, auth, materializer)
   lazy val wp = new WebPlayer(security)
-  lazy val sws = new ServerWS(c, security, handler)
+  lazy val sws = new ServerWS(clouds, security, handler)
   lazy val webCtrl = new Website(tags, wp, sws, auth, stats, materializer)
   lazy val s = new Search(indexer, security)
   lazy val sp = new SearchPage(tags, s, indexer, db, auth, materializer)
@@ -88,19 +88,20 @@ class PimpComponents(context: Context, options: InitOptions)
   lazy val alarms = new Alarms(tags, auth, messages, materializer)
   lazy val accs = new AccountForms
   lazy val accounts = new Accounts(tags, auth, materializer, accs)
-  lazy val cloud = new Cloud(tags, c, auth, materializer)
+  lazy val cloud = new Cloud(tags, clouds, auth, materializer)
   lazy val connect = new ConnectController(auth, materializer)
   lazy val assetsCtrl = new Assets(httpErrorHandler)
+  lazy val cloudWS = new CloudWS(clouds, security)
 
-  Starter.startServices(options, c, db, indexer)
+  Starter.startServices(options, clouds, db, indexer)
   val dummyForInit = statsPlayer
 
   lazy val router: Routes = new Routes(
     httpErrorHandler, libCtrl, webCtrl,
     settingsCtrl, connect, lp,
     cloud, accounts, r, pl,
-    alarms, sp, s, sws,
-    wp, ls, assetsCtrl)
+     alarms, sp, s, sws,
+    wp, ls,cloudWS, assetsCtrl)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
