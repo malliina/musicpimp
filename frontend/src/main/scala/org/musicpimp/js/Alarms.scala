@@ -4,7 +4,6 @@ import org.scalajs.dom
 
 import scala.scalajs.js.Any
 
-case class IdCommand(cmd: String, id: String)
 
 class Alarms extends BaseScript {
   withDataId(".play")(runAP)

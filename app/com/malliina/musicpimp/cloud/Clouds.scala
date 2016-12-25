@@ -9,6 +9,7 @@ import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.json.SimpleCommand
 import com.malliina.util.Utils
+import controllers.{CloudEvent, Connected, Connecting, Disconnected}
 import play.api.Logger
 import play.api.libs.json.JsValue
 import rx.lang.scala.subjects.BehaviorSubject
@@ -45,10 +46,11 @@ class Clouds(deps: Deps) {
   var poller: Option[Subscription] = None
   val MaxFailures = 720
   var successiveFailures = 0
-  val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
+  val notConnected = Disconnected("Not connected.")
+  val registrations = BehaviorSubject[CloudEvent](notConnected).toSerialized
   private var activeSubscription: Option[Subscription] = None
 
-  val connection: Observable[Option[CloudID]] = registrations
+  val connection: Observable[CloudEvent] = registrations
 
   def cloudHost = client.cloudHost
 
@@ -94,9 +96,10 @@ class Clouds(deps: Deps) {
     log info s"Connecting to ${client.uri} as $name..."
     activeSubscription.foreach(_.unsubscribe())
     client = newSocket(id)
+    registrations onNext Connecting
     val sub = client.registrations.subscribe(
-      n => registrations.onNext(n),
-      err => (),
+      id => registrations.onNext(Connected(id)),
+      _ => registrations.onNext(Disconnected("The connection failed.")),
       () => ()
     )
     activeSubscription = Option(sub)

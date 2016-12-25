@@ -19,7 +19,9 @@ object Cloud {
   val idFormKey = "id"
 }
 
-class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer) extends Secured(auth, mat) {
+class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer)
+  extends Secured(auth, mat) {
+
   val FEEDBACK = "feedback"
   val cloudForm = Form(Cloud.idFormKey -> optional(text))
 

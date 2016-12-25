@@ -25,6 +25,7 @@ import com.malliina.ws.HttpUtil
 import controllers.{Alarms, LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
+import rx.lang.scala.Subject
 import rx.lang.scala.subjects.BehaviorSubject
 
 import scala.concurrent.duration.DurationInt
@@ -94,7 +95,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   val registration = registrationPromise.future
   val playlists = deps.playlists
 
-  val registrations = BehaviorSubject[Option[CloudID]](None).toSerialized
+  val registrations = Subject[CloudID]().toSerialized
 
   def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
 
@@ -296,7 +297,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   def onRegistered(id: CloudID) = {
     registrationPromise trySuccess id
-    registrations onNext Option(id)
+    registrations onNext id
   }
 
   override def onClose(): Unit = {
@@ -315,7 +316,6 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   def failSocket(e: Exception) = {
     registrationPromise tryFailure e
-    registrations onNext None
-    registrations.onCompleted()
+    registrations onError e
   }
 }

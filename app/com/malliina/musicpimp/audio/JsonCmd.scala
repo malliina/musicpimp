@@ -5,7 +5,7 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 import play.api.libs.json.{JsValue, Reads}
 
 class JsonCmd(json: JsValue) {
-  val command = (json \ Cmd).validate[String]
+  val command = key[String](Cmd)
 
   def intValue = asValue[Int]
 
@@ -15,21 +15,23 @@ class JsonCmd(json: JsValue) {
 
   def stringValue = asValue[String]
 
-  def asValue[T : Reads] = (json \ Value).validate[T]
+  def asValue[T: Reads] = key[T](Value)
 
-  def track = (json \ TrackKey).validate[TrackID]
+  def track = key[TrackID](TrackKey)
 
-  def tracks = (json \ Tracks).validate[Seq[TrackID]]
+  def tracks = key[Seq[TrackID]](Tracks)
 
   def tracksOrNil = tracks getOrElse Nil
 
-  def folders = (json \ Folders).validate[Seq[FolderID]]
+  def folders = key[Seq[FolderID]](Folders)
 
   def foldersOrNil = folders getOrElse Nil
 
-  def id = (json \ Id).validate[String]
+  def id = key[String](Id)
 
-  def index = (json \ PlaylistIndex).validate[Int]
+  def index = key[Int](PlaylistIndex)
 
   def indexOrValue = index orElse intValue
+
+  def key[T: Reads](key: String) = (json \ key).validate[T]
 }
