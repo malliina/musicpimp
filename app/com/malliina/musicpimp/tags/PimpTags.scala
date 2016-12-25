@@ -343,8 +343,11 @@ class PimpTags(scripts: Modifier*) {
     val fb = feedback orElse successFeedback
     manage("cloud", username)(
       headerRow()("Cloud"),
-      halfRow(cloudForm(cloudId)),
-      fb.fold(empty) { f => halfRow(feedbackDiv(f)) },
+      div(id := "cloud-form")(
+        leadPara("Connecting...")
+//        halfRow(cloudForm(cloudId)),
+//        fb.fold(empty)(f => halfRow(feedbackDiv(f)))
+      ),
       halfRow(
         p("How does this work?"),
         p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
@@ -353,7 +356,6 @@ class PimpTags(scripts: Modifier*) {
       )
     )
   }
-
 
   def cloudForm(cloudId: Option[CloudID]) = {
     val title = cloudId.fold("Connect")(_ => "Disconnect")
@@ -369,7 +371,6 @@ class PimpTags(scripts: Modifier*) {
       blockSubmitButton(id := "toggleButton")(title)
     )
   }
-
 
   def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
     indexMain("player", username, scripts ++ Seq(cssLink(at("css/player.css"))))(

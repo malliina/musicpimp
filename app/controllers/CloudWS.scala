@@ -9,7 +9,6 @@ import com.malliina.play.models.Username
 import play.api.Logger
 import play.api.mvc.{RequestHeader, Security}
 import rx.lang.scala.Subscription
-import CloudWS.log
 import scala.concurrent.Future
 
 object CloudWS {

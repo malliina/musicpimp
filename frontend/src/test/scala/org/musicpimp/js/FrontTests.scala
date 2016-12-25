@@ -4,6 +4,7 @@ import upickle.Js
 import utest._
 
 import scala.concurrent.duration.{Duration, DurationInt}
+import scalatags.Text.all._
 
 case class GenClass[T](cmd: String, value: T)
 
@@ -11,6 +12,11 @@ object FrontTests extends TestSuite {
   override def tests = TestSuite {
     'Trivial {
       assert(2 - 1 == 1)
+    }
+
+    'ScalaTags {
+      val m = SeqFrag(Seq(p("a"), p("b")))
+      assert(m.render startsWith "<p>")
     }
 
     'Json {
