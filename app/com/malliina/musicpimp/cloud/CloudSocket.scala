@@ -13,7 +13,7 @@ import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.library.{Folder => _, _}
+import com.malliina.musicpimp.library._
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
@@ -26,7 +26,6 @@ import controllers.{Alarms, LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
 import rx.lang.scala.Subject
-import rx.lang.scala.subjects.BehaviorSubject
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
@@ -161,7 +160,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
             log.error(s"Root folder failure", t)
             sendJsonResponse(JsonMessages.failure("Library failure"), request, success = false)
         }
-      case Folder(id) =>
+      case GetFolder(id) =>
         val folderFuture = lib.folder(id) recover {
           case t =>
             log.error(s"Library failure for folder $id", t)

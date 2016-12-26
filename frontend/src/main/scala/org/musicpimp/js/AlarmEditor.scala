@@ -44,11 +44,11 @@ class AlarmEditor extends BaseScript {
   }
 
   def search[T: PimpJSON.Reader](term: Request)(onResults: Seq[T] => Unit) =
-    pimpQuery.getJSON(
+    PimpQuery.getJSON(
       "/search?f=json",
       term,
-      (data: js.Dynamic, _: String, _: JQueryXHR) => {
-        val results = PimpJSON.read[Seq[T]](JSON.stringify(data))
+      response => {
+        val results = PimpJSON.read[Seq[T]](response.body)
         onResults(results)
       })
 

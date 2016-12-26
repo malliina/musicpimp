@@ -7,12 +7,12 @@ import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.play.controllers.Streaming
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username
-import controllers.CloudWS.{ConnectCmd, DisconnectCmd, Id}
+import controllers.CloudCommand.{Connect, Disconnect, Noop}
+import controllers.CloudWS.{ConnectCmd, DisconnectCmd, Id, log}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{RequestHeader, Security}
 import rx.lang.scala.Subscription
-import CloudWS.log
 
 import scala.concurrent.Future
 
@@ -30,23 +30,25 @@ object CloudEvent {
     case Connecting => JsonMessages.event(ConnectingStr)
   }
 
-  def connected(id: CloudID) = Connected(id)
+  case class Connected(id: CloudID) extends CloudEvent(ConnectedStr)
 
-  def connecting = Connecting
+  case class Disconnected(reason: String) extends CloudEvent(DisconnectedStr)
 
-  def disconnected = Disconnected
+  case object Connecting extends CloudEvent(ConnectingStr)
+
 }
 
-case class Connected(id: CloudID) extends CloudEvent(CloudEvent.ConnectedStr)
-
-case class Disconnected(reason: String) extends CloudEvent(CloudEvent.DisconnectedStr)
-
-case object Connecting extends CloudEvent(CloudEvent.ConnectingStr)
-
 sealed trait CloudCommand
-case class Connect(id: CloudID) extends CloudCommand
-case object Disconnect extends CloudCommand
-case object Noop extends CloudCommand
+
+object CloudCommand {
+
+  case class Connect(id: CloudID) extends CloudCommand
+
+  case object Disconnect extends CloudCommand
+
+  case object Noop extends CloudCommand
+
+}
 
 object CloudWS {
   private val log = Logger(getClass)

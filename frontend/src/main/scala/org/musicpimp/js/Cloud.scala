@@ -2,13 +2,14 @@ package org.musicpimp.js
 
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
+import org.musicpimp.js.Cloud._
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 import upickle.Invalid
 import upickle.Js.Value
-import Cloud._
+
+import scalatags.Text.Frag
 import scalatags.Text.all._
-import scalatags.Text.{Frag, TypedTag}
 
 case class UserFeedback(message: String, isError: Boolean)
 
@@ -23,6 +24,9 @@ object Cloud {
   val DisconnectCmd = "disconnect"
   val ToggleButton = "toggleButton"
   val inputId = "id"
+  val EventKey = "event"
+  val Reason ="reason"
+  val IdKey ="id"
 
   def connectingContent: Frag = leadPara("Connecting...")
 
@@ -41,35 +45,26 @@ object Cloud {
     ))
   }
 
-  private def disconnectedForm() = cloudForm(
-    formGroup(
-      labelFor(inputId)("Desired cloud ID (optional)"),
-      input(`type` := Text,
-        id := CloudId,
-        name := inputId,
-        placeholder := "Your desired ID or leave empty",
-        `class` := FormControl)
-    ),
-    cloudButton("Connect", ConnectId)
-  )
+  private def disconnectedForm() =
+    div(
+      formGroup(
+        labelFor(inputId)("Desired cloud ID (optional)"),
+        input(`type` := Text,
+          id := CloudId,
+          name := inputId,
+          placeholder := "Your desired ID or leave empty",
+          `class` := FormControl)
+      ),
+      cloudButton("Connect", ConnectId)
+    )
 
-  private def connectedForm() = cloudForm(
-    cloudButton("Disconnect", DisconnectId)
-  )
+  private def connectedForm() =
+    div(
+      cloudButton("Disconnect", DisconnectId)
+    )
 
   private def cloudButton(title: String, buttonId: String) =
     blockSubmitButton(id := buttonId)(title)
-
-  private def cloudForm = postableForm("/cloud", name := "toggleForm")
-
-  private def postableForm(onAction: String, more: Modifier*) =
-    div
-
-  private def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
-    val message = feedback.message
-    if (feedback.isError) alertDanger(message)
-    else alertSuccess(message)
-  }
 }
 
 class Cloud extends SocketJS("/ws/cloud?f=json") {
@@ -86,15 +81,15 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
 
   def onSocketEvent(payload: Value) = {
     val fragment: Either[Invalid, Frag] =
-      readField[String](payload, "event").right.flatMap {
+      readField[String](payload, EventKey).right.flatMap {
         case Connecting =>
           Right(Cloud.connectingContent)
         case Connected =>
-          readField[String](payload, "id").right.map { id =>
+          readField[String](payload, IdKey).right.map { id =>
             Cloud.connectedContent(id)
           }
         case Disconnected =>
-          readField[String](payload, "reason").right.map { reason =>
+          readField[String](payload, Reason).right.map { reason =>
             Cloud.disconnectedContent(reason)
           }
         case other =>

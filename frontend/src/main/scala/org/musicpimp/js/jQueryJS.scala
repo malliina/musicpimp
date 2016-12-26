@@ -1,10 +1,11 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQuery, JQueryEventObject, JQueryStatic, JQueryXHR}
+import org.scalajs.jquery._
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.scalajs.js.{JSON, |}
 
 @js.native
 trait AutoItem extends js.Object {
@@ -88,18 +89,12 @@ trait SelectUi extends js.Object {
   def item: AutoItem = js.native
 }
 
-object SelectUi {
-  def apply(item: AutoItem) = {
-    ???
-  }
-}
-
 /**
   * @see http://stackoverflow.com/questions/28065804/implementing-jquery-ui-in-scala-js
   */
 @js.native
 trait JQueryUI extends JQuery {
-  def autocomplete(options: AutoOptions) = js.native
+  def autocomplete(options: AutoOptions): js.Dynamic = js.native
 }
 
 object JQueryUI {
@@ -110,11 +105,33 @@ object JQueryUI {
 @js.native
 trait PimpQuery extends js.Object {
   def getJSON(url: String,
-              data: js.Object,
+              data: String | js.Object,
               success: js.Function3[js.Dynamic, String, JQueryXHR, Any]): JQueryXHR = js.native
 }
 
 object PimpQuery {
+  val dyn = js.Dynamic
+  val literal = dyn.literal
+  val pimpQuery = dyn.global.jQuery.asInstanceOf[PimpQuery]
+  val jQuery = org.scalajs.jquery.jQuery
+
+  def postSettings(url: String, contentType: String, data: String): JQueryAjaxSettings =
+    literal(url = url, `type` = "POST", contentType = contentType, data = data).asInstanceOf[JQueryAjaxSettings]
+
+  def ajax(settings: JQueryAjaxSettings) =
+    jQuery.ajax(settings)
+
+  def getJSON(url: String,
+              data: String | js.Object,
+              success: JsonResponse => Any): JQueryXHR =
+    pimpQuery.getJSON(url, data, (response: js.Dynamic, status: String, xhr: JQueryXHR) => {
+      val asString = JSON.stringify(response)
+      success(JsonResponse(asString, status, xhr))
+    })
+
   implicit def extensions(jQuery: JQueryStatic): PimpQuery =
     jQuery.asInstanceOf[PimpQuery]
+
+  case class JsonResponse(body: String, status: String, xhr: JQueryXHR)
+
 }

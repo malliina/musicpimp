@@ -27,7 +27,7 @@ object PimpMessages {
 
   case object RootFolder extends PimpMessage
 
-  case class Folder(id: FolderID) extends PimpMessage
+  case class GetFolder(id: FolderID) extends PimpMessage
 
   case class GetPopular(meta: DataRequest) extends PimpMessage
 
@@ -66,7 +66,7 @@ object PimpMessages {
   case class DeletePlaylist(id: PlaylistID, username: Username) extends UserMessage
 
   implicit val searchFormat = Json.format[Search]
-  implicit val folderFormat = Json.format[Folder]
+  implicit val folderFormat = Json.format[GetFolder]
   implicit val trackFormat = Json.format[Track]
   implicit val authFormat = Json.format[Authenticate]
   implicit val metaFormat = Json.format[GetMeta]

@@ -2,7 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered, RequestId}
-import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, Folder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PimpMessage, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
+import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PimpMessage, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
@@ -41,7 +41,7 @@ trait CloudMessageParser {
         case Ping => JsSuccess(PingMessage)
         case AuthenticateKey => body.validate[Authenticate]
         case RootFolderKey => JsSuccess(RootFolder)
-        case FolderKey => body.validate[Folder]
+        case FolderKey => body.validate[GetFolder]
         case SearchKey => body.validate[Search]
         case PlaylistsGet => user.map(u => GetPlaylists(u))
         case PlaylistGet => withUser(u => (body \ Id).validate[PlaylistID].map(GetPlaylist(_, u)))
