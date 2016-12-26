@@ -100,10 +100,10 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
   }
 
   def installHandlers() = {
-    elem(ConnectId).click((e: JQueryEventObject) => {
+    elem(ConnectId).click((_: JQueryEventObject) => {
       send(IdCommand(ConnectCmd, elem(CloudId).value().toString))
     })
-    elem(DisconnectId).click((e: JQueryEventObject) => {
+    elem(DisconnectId).click((_: JQueryEventObject) => {
       send(Command(DisconnectCmd))
     })
   }

@@ -2,22 +2,67 @@ package controllers
 
 import akka.stream.Materializer
 import ch.qos.logback.classic.Level
+import com.malliina.logbackrx.LogEvent
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import com.malliina.util.Logging
 import controllers.LogPage.log
 import play.api.Logger
 import play.api.data.{Form, Forms}
+import play.api.libs.json.Json
+import play.api.mvc.Result
+
+case class FrontLogEvents(events: Seq[FrontLogEvent])
+
+object FrontLogEvents {
+  implicit val eventJson = FrontLogEvent.json
+  implicit val json = Json.format[FrontLogEvents]
+}
+
+case class FrontLogEvent(message: String, module: String, level: Level)
+
+object FrontLogEvent {
+  implicit val levelJson = LogEvent.LevelFormat
+  implicit val json = Json.format[FrontLogEvent]
+}
 
 class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
-  val LEVEL = "level"
+  val LevelKey = "level"
 
-  val levelForm = Form[Level](LEVEL -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
+  val levelForm = Form[Level](LevelKey -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
+  val frontLog = Logger("frontend")
 
   def logs = navigate { req =>
     logPage(levelForm, req)
   }
+
+  def frontendLog = pimpParsedAction(parse.json) { req =>
+    implicit val json = FrontLogEvents.json
+
+    req.body.validate[FrontLogEvents].fold[Result](
+      invalid => {
+        val msg = "Invalid JSON for log events."
+        log.warn(s"$msg $invalid")
+        badRequest(msg)
+      },
+      es => {
+        es.events foreach handleLog
+        Accepted
+      }
+    )
+  }
+
+  def handleLog(event: FrontLogEvent): Unit = {
+    logFunc(Logger(event.module), event.level)(event.message)
+  }
+
+  def logFunc(logger: Logger, level: Level): String => Unit =
+    if (level == Level.DEBUG) logger.debug(_)
+    else if (level == Level.INFO) logger.info(_)
+    else if (level == Level.WARN) logger.warn(_)
+    else if (level == Level.ERROR) logger.error(_)
+    else logger.trace(_)
 
   def changeLogLevel = pimpAction { req =>
     levelForm.bindFromRequest()(req).fold(
@@ -34,7 +79,7 @@ class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Mater
   }
 
   private def logPage(form: Form[Level], req: PimpRequest) =
-    tags.logs(form(LEVEL), Logging.levels, Logging.level, req.user, None)
+    tags.logs(form(LevelKey), Logging.levels, Logging.level, req.user, None)
 }
 
 object LogPage {

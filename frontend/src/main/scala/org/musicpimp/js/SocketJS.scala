@@ -5,7 +5,8 @@ import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
 import upickle.{Invalid, Js}
 
-abstract class SocketJS(wsPath: String) extends BaseScript {
+abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
+  def this(wsPath: String) = this(wsPath, Logger.default)
   val EventField = "event"
   val Ping = "ping"
   val Hidden = "hide"
@@ -72,8 +73,8 @@ abstract class SocketJS(wsPath: String) extends BaseScript {
 
   def onInvalidData(invalid: Invalid): PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
-      println(s"JSON failed to parse: '$errorMessage' in value '$jsValue'.")
+      log.info(s"JSON failed to parse: '$errorMessage' in value '$jsValue'.")
     case Invalid.Json(errorMessage, in) =>
-      println(s"Not JSON, '$errorMessage' in value '$in'.")
+      log.info(s"Not JSON, '$errorMessage' in value '$in'.")
   }
 }

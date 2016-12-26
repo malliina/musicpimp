@@ -16,7 +16,10 @@ case class JVMLogEntry(level: String,
                        stackTrace: Option[String] = None)
 
 class Logs extends SocketJS("/ws/logs?f=json") {
-  val tableContent = elem("logTableBody")
+  val LogTableId = "logTableBody"
+  val tableContent = elem(LogTableId)
+
+  log.info("This is a test JS error")
 
   override def onConnected(e: Event) = {
     send(Command.subscribe)

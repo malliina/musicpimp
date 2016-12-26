@@ -8,7 +8,6 @@ object Command {
 
 case class IdCommand(cmd: String, id: String)
 
-//case class IdCommand(cmd: String, id: String)
 case class ValuedCommand[T](cmd: String, value: T)
 
 object ValuedCommand {
