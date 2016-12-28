@@ -119,7 +119,7 @@ class Playback extends SocketJS("/ws/playback?f=json") {
       case "playlist_index_changed" =>
 
       case other =>
-        println(s"Unknown event: $other")
+        log.info(s"Unknown event: $other")
     }
   }
 

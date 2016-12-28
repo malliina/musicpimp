@@ -345,8 +345,8 @@ class PimpTags(scripts: Modifier*) {
       headerRow()("Cloud"),
       div(id := "cloud-form")(
         leadPara("Connecting...")
-//        halfRow(cloudForm(cloudId)),
-//        fb.fold(empty)(f => halfRow(feedbackDiv(f)))
+        //        halfRow(cloudForm(cloudId)),
+        //        fb.fold(empty)(f => halfRow(feedbackDiv(f)))
       ),
       halfRow(
         p("How does this work?"),
@@ -768,16 +768,35 @@ class PimpTags(scripts: Modifier*) {
         extraHeader
       ),
       body(
-        div(id := "wrap")(
+        //        div(id := "wrap")(
+        //          inner,
+        //          scripts,
+        //          div(id := "push")(
+        //          )
+        //        ),
+        //        div(id := "footer")(
+        div(
           inner,
-          scripts,
-          div(id := "push")(
-          )
+          scripts
         ),
-        div(id := "footer")(
-          divContainer(
-            p(
-              spanClass(s"$TextMuted credit $PullRight")("Developed by ", aHref("https://github.com/malliina")("Michael Skogberg"), ".")
+        div(
+          nav(`class` := s"$Navbar $NavbarDefault navbar-fixed-bottom")(
+            divContainer(
+              divClass(s"$Collapse $NavbarCollapse")(
+                ulClass(s"$Nav $NavbarNav")(
+                  liHref("#")(iClass("fa fa-step-backward")),
+                  liHref("#")(iClass("fa fa-play")),
+                  liHref("#")(iClass("fa fa-step-forward"))
+                ),
+                pClass(NavbarText, id := "footer-progress")(""),
+                pClass(NavbarText, id := "footer-title")(""),
+                pClass(NavbarText, id := "footer-artist")(""),
+                divClass(s"$Nav $NavbarNav $NavbarRight")(
+                  p(
+                    spanClass(s"$TextMuted $NavbarText $PullRight")("Developed by ", aHref("https://github.com/malliina")("Michael Skogberg"), ".")
+                  )
+                )
+              )
             )
           )
         )
