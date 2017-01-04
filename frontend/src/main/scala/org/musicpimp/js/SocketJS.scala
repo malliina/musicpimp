@@ -3,6 +3,7 @@ package org.musicpimp.js
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
+import org.scalajs.jquery.{JQuery, JQueryEventObject}
 import upickle.{Invalid, Js}
 
 abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
@@ -17,6 +18,15 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
 
   val socket: dom.WebSocket = openSocket(wsPath)
 
+  def onClick(element: JQuery, cmd: Command) =
+    install(element, send(cmd))
+
+  def install(element: JQuery, onClick: => Unit) =
+    element click { (e: JQueryEventObject) =>
+      onClick
+      e.preventDefault()
+    }
+
   def handlePayload(payload: Js.Value)
 
   def send[T: PimpJSON.Writer](payload: T) =
@@ -29,13 +39,13 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def onError(e: ErrorEvent): Unit = showDisconnected()
 
   def showConnected() = {
-    okStatus.removeClass(Hidden)
-    failStatus.addClass(Hidden)
+    okStatus removeClass Hidden
+    failStatus addClass Hidden
   }
 
   def showDisconnected() = {
-    okStatus.addClass(Hidden)
-    failStatus.removeClass(Hidden)
+    okStatus addClass Hidden
+    failStatus removeClass Hidden
   }
 
   def openSocket(pathAndQuery: String) = {

@@ -8,6 +8,7 @@ import scala.scalajs.js.annotation.JSExport
 object Frontend extends JSApp {
 
   var app: Option[BaseScript] = None
+  var footer: Option[FooterSocket] = None
 
   @JSExport
   override def main() = {
@@ -22,6 +23,7 @@ object Frontend extends JSApp {
       case p if containsMusic(p) => new MusicItems
     }
     app = front lift path
+    footer = Option(new FooterSocket)
   }
 
   def containsMusic(p: String) =

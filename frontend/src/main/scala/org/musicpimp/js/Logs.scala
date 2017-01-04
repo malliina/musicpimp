@@ -19,8 +19,6 @@ class Logs extends SocketJS("/ws/logs?f=json") {
   val LogTableId = "logTableBody"
   val tableContent = elem(LogTableId)
 
-  log.info("This is a test JS error")
-
   override def onConnected(e: Event) = {
     send(Command.subscribe)
     super.onConnected(e)

@@ -8,6 +8,14 @@ object PimpJSON extends upickle.AttributeTagged {
   implicit val durationJson = PimpJSON.ReadWriter[Duration](
     dur => Js.Num(dur.toSeconds), { case Js.Num(num) => num.seconds })
 
+  implicit val stateReader = PimpJSON.Reader[PlayerState] {
+    case Js.Str(state) => PlayerState.forString(state)
+  }
+
+  implicit val volumeReader = PimpJSON.Reader[Volume] {
+    case Volume(vol) => vol
+  }
+
   // Serializes Options to nullable values.
   // By default, uPickle (undesirably) serializes Options to JSON arrays (of 0 or 1 elements).
   override implicit def OptionW[T: Writer]: Writer[Option[T]] = Writer {

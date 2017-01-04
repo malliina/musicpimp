@@ -783,15 +783,16 @@ class PimpTags(scripts: Modifier*) {
           nav(`class` := s"$Navbar $NavbarDefault navbar-fixed-bottom")(
             divContainer(
               divClass(s"$Collapse $NavbarCollapse")(
-                ulClass(s"$Nav $NavbarNav")(
-                  liHref("#")(iClass("fa fa-step-backward")),
-                  liHref("#")(iClass("fa fa-play")),
-                  liHref("#")(iClass("fa fa-step-forward"))
+                ulClass(s"$Nav $NavbarNav $HiddenXs")(
+                  li(id := "footer-backward")(aHref("#")(iClass("fa fa-step-backward"))),
+                  li(id := "footer-play")(aHref("#")(iClass("fa fa-play"))),
+                  li(id := "footer-pause")(aHref("#")(iClass("fa fa-pause"))),
+                  liHref("#", id := "footer-forward")(iClass("fa fa-step-forward"))
                 ),
                 pClass(NavbarText, id := "footer-progress")(""),
                 pClass(NavbarText, id := "footer-title")(""),
                 pClass(NavbarText, id := "footer-artist")(""),
-                divClass(s"$Nav $NavbarNav $NavbarRight")(
+                div(`class` := s"$Nav $NavbarNav $NavbarRight", id := "footer-credit")(
                   p(
                     spanClass(s"$TextMuted $NavbarText $PullRight")("Developed by ", aHref("https://github.com/malliina")("Michael Skogberg"), ".")
                   )

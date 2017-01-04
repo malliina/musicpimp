@@ -1,7 +1,7 @@
 package org.musicpimp.js
 
+import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
-import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
@@ -17,9 +17,11 @@ case class Status(track: Track,
                   volume: Int,
                   mute: Boolean,
                   playlist: Seq[Track],
-                  state: String)
+                  state: PlayerState)
 
 object Playback {
+  val SocketUrl = "/ws/playback?f=json"
+
   val status = Command("status")
   val next = Command("next")
   val prev = Command("prev")
@@ -45,7 +47,7 @@ object Playback {
   }
 }
 
-class Playback extends SocketJS("/ws/playback?f=json") {
+class Playback extends PlaybackSocket {
   val playerDiv = elem("playerDiv")
   val durationElem = elem("duration")
   val sliderElem = elem("slider")
@@ -90,40 +92,13 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     send(ValuedCommand.mute(isMute))
   }
 
-  override def handlePayload(payload: Js.Value) = withFailure {
-    val obj = payload.obj
-
-    def read[T: PimpJSON.Reader](key: String) = obj.get(key)
-      .map(json => PimpJSON.readJs[T](json))
-      .getOrElse(throw Invalid.Data(payload, s"Missing key: '$key'."))
-
-    read[String]("event") match {
-      case "welcome" =>
-        send(Playback.status)
-      case "time_updated" =>
-        updateTime(read[Duration]("position"))
-      case "playstate_changed" =>
-        updatePlayPauseButtons(read[String]("state"))
-      case "track_changed" =>
-        updateTrack(read[Track]("track"))
-      case "playlist_modified" =>
-        updatePlaylist(read[Seq[Track]]("playlist"))
-      case "volume_changed" =>
-        updateVolume(read[Int]("volume"))
-      case "mute_toggled" =>
-        isMute = read[Boolean]("mute")
-      case "status" =>
-        showConnected()
-        onStatus(PimpJSON.readJs[Status](payload))
-        playerDiv.show()
-      case "playlist_index_changed" =>
-
-      case other =>
-        log.info(s"Unknown event: $other")
-    }
+  override def muteToggled(mute: Boolean) = {
+    isMute = mute
   }
 
   def onStatus(status: Status) = {
+    showConnected()
+
     val track = status.track
     if (track.title.nonEmpty) {
       updateTrack(track)
@@ -134,6 +109,8 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     updateTimeAndDuration(status.position, track.duration)
     updatePlaylist(status.playlist)
     updatePlayPauseButtons(status.state)
+
+    playerDiv.show()
   }
 
   def updateVolume(vol: Int) =
@@ -154,8 +131,8 @@ class Playback extends SocketJS("/ws/playback?f=json") {
     sliderDyn.slider("option", "max", duration.toSeconds)
   }
 
-  def updatePlayPauseButtons(state: String) = {
-    if (state == "Started") {
+  def updatePlayPauseButtons(state: PlayerState) = {
+    if (state == Started) {
       playButton.hide()
       pauseButton.show()
     } else {
@@ -190,13 +167,6 @@ class Playback extends SocketJS("/ws/playback?f=json") {
       " ",
       a(href := "#")(i(`class` := "icon-remove")))
   }
-
-  def withFailure(code: => Any) =
-    try {
-      code
-    } catch {
-      case i: Invalid => onInvalidData(i)
-    }
 
   def format(time: Duration) = Playback.toHHMMSS(time)
 }
