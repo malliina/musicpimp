@@ -768,30 +768,24 @@ class PimpTags(scripts: Modifier*) {
         extraHeader
       ),
       body(
-        //        div(id := "wrap")(
-        //          inner,
-        //          scripts,
-        //          div(id := "push")(
-        //          )
-        //        ),
-        //        div(id := "footer")(
-        div(
+        div(id := "wrap")(
           inner,
-          scripts
+          scripts,
+          div(id := "push")()
         ),
-        div(
-          nav(`class` := s"$Navbar $NavbarDefault navbar-fixed-bottom")(
+        div(id := "footer")(
+          nav(`class` := s"$Navbar $NavbarDefault", id := "bottom-navbar")(
             divContainer(
               divClass(s"$Collapse $NavbarCollapse")(
                 ulClass(s"$Nav $NavbarNav $HiddenXs")(
-                  li(id := "footer-backward")(aHref("#")(iClass("fa fa-step-backward"))),
-                  li(id := "footer-play")(aHref("#")(iClass("fa fa-play"))),
-                  li(id := "footer-pause")(aHref("#")(iClass("fa fa-pause"))),
-                  liHref("#", id := "footer-forward")(iClass("fa fa-step-forward"))
+                  awesomeLi("footer-backward", "step-backward"),
+                  awesomeLi("footer-play", "play"),
+                  awesomeLi("footer-pause", "pause"),
+                  awesomeLi("footer-forward", "step-forward")
                 ),
-                pClass(NavbarText, id := "footer-progress")(""),
-                pClass(NavbarText, id := "footer-title")(""),
-                pClass(NavbarText, id := "footer-artist")(""),
+                navbarPara("footer-progress"),
+                navbarPara("footer-title"),
+                navbarPara("footer-artist"),
                 div(`class` := s"$Nav $NavbarNav $NavbarRight", id := "footer-credit")(
                   p(
                     spanClass(s"$TextMuted $NavbarText $PullRight")("Developed by ", aHref("https://github.com/malliina")("Michael Skogberg"), ".")
@@ -804,4 +798,11 @@ class PimpTags(scripts: Modifier*) {
       )
     )
   )
+
+  def navbarPara(elemId: String) =
+    pClass(NavbarText, id := elemId)("")
+
+  def awesomeLi(elemId: String, faIcon: String) =
+    li(id := elemId, `class` := Hide)(aHref("#")(iClass(s"fa fa-$faIcon")))
+
 }

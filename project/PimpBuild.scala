@@ -50,14 +50,14 @@ object PimpBuild {
       testFrameworks += new TestFramework("utest.runner.Framework")
     )
 
-  lazy val pimpProject = PlayProject("musicpimp")
+  lazy val pimpProject = PlayProject.default("musicpimp")
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
     .settings(pimpPlaySettings: _*)
 
   lazy val commonSettings = PlayProject.assetSettings ++ scalaJSSettings ++ Seq(
     buildInfoKeys += BuildInfoKey("frontName" -> (name in frontend).value),
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.4.1",
+    version := "3.5.0",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -174,7 +174,7 @@ object PimpBuild {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-base" % "3.2.1",
+        malliinaGroup %% "util-play" % "3.3.3",
         malliinaGroup %% "util-actor" % "2.4.1",
         malliinaGroup %% "util-rmi" % "2.4.1",
         malliinaGroup %% "util-audio" % "2.0.0",

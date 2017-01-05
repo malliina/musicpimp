@@ -55,7 +55,7 @@ GET         /search/ws                         controllers.Search.openSocket
 POST        /search/refresh                    controllers.SearchPage.refresh
 # WebSockets
 GET         /ws/playback                       controllers.ServerWS.openSocket
-GET         /ws/playback2                      controllers.ServerWS.openSocket2
+GET         /ws/playback2                      controllers.ServerWS.openSocket
 GET         /ws/webplay                        controllers.WebPlayer.openSocket
 GET         /ws/logs                           controllers.PimpLogs.openSocket
 GET         /ws/cloud                          controllers.CloudWS.openSocket

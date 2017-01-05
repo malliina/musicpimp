@@ -75,6 +75,7 @@ trait Bootstrap {
   val NavbarForm = "navbar-form"
   val NavbarHeader = "navbar-header"
   val NavbarDefault = "navbar-default"
+  val NavbarFixedBottom = "navbar-fixed-bottom"
   val NavbarNav = "navbar-nav"
   val NavbarRight = "navbar-right"
   val NavbarStaticTop = "navbar-static-top"

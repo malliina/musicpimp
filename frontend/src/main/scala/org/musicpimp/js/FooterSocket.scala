@@ -7,16 +7,20 @@ import org.scalajs.jquery.JQuery
 import scala.concurrent.duration.Duration
 
 class FooterSocket extends PlaybackSocket {
-  // Why do these need to be defs?
+  // Why do these need to be lazy?
   lazy val playButton: JQuery = elem("footer-play")
   lazy val pauseButton = elem("footer-pause")
   lazy val backwardButton = elem("footer-backward")
   lazy val forwardButton = elem("footer-forward")
+  lazy val playbackButtons = Seq(playButton, pauseButton, backwardButton, forwardButton)
 
   lazy val progress = elem("footer-progress")
   lazy val title = elem("footer-title")
   lazy val artist = elem("footer-artist")
   lazy val footerCredit = elem("footer-credit")
+  lazy val bottomNavbar = elem("bottom-navbar")
+
+  val NavbarFixedBottom = "navbar-fixed-bottom"
 
   override def onConnected(e: Event) = {
     installHandlers()
@@ -37,8 +41,9 @@ class FooterSocket extends PlaybackSocket {
   }
 
   override def updateTrack(track: Track) = {
-    if (!(footerCredit hasClass Hidden))
-      footerCredit addClass Hidden
+    hide(footerCredit)
+    show(backwardButton, forwardButton)
+    ensureClass(bottomNavbar, NavbarFixedBottom)
     title html track.title
     artist html track.artist
   }
@@ -50,30 +55,38 @@ class FooterSocket extends PlaybackSocket {
   override def muteToggled(isMute: Boolean) = ()
 
   override def onStatus(status: Status) = {
-    updatePlayPause(status.state)
     val track = status.track
     if (track.title.nonEmpty) {
       updateTrack(track)
+      updatePlayPause(status.state)
+    } else {
+      hidePlaybackFooterShowCredits()
     }
+  }
+
+  def hidePlaybackFooterShowCredits() = {
+    hide(playbackButtons: _*)
+    show(footerCredit)
+    bottomNavbar removeClass NavbarFixedBottom
   }
 
   def updatePlayPause(state: PlayerState) = {
     state match {
       case Started =>
-        //        if (playButton.is(":visible"))
-        //          playButton.fadeOut()
-        //        if (!pauseButton.is(":visible"))
-        //          pauseButton.fadeIn()
-        playButton addClass Hidden
-        pauseButton removeClass Hidden
+        hide(playButton)
+        show(pauseButton)
       case _ =>
-
-        //        if (pauseButton.is(":visible"))
-        //          pauseButton.fadeOut()
-        //        if (!playButton.is(":visible"))
-        //          playButton.fadeIn()
-        pauseButton addClass Hidden
-        playButton removeClass Hidden
+        hide(pauseButton)
+        show(playButton)
     }
   }
+
+  def hide(elems: JQuery*) =
+    elems foreach { elem => ensureClass(elem, Hidden) }
+
+  def ensureClass(elem: JQuery, clazz: String) =
+    if (!(elem hasClass clazz)) elem addClass clazz
+
+  def show(elems: JQuery*) =
+    elems foreach (_ removeClass Hidden)
 }
