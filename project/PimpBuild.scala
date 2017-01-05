@@ -57,7 +57,7 @@ object PimpBuild {
   lazy val commonSettings = PlayProject.assetSettings ++ scalaJSSettings ++ Seq(
     buildInfoKeys += BuildInfoKey("frontName" -> (name in frontend).value),
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.5.0",
+    version := "3.5.1",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
     retrieveManaged := false,
@@ -197,6 +197,7 @@ object PimpBuild {
       RoutesKeys.routesImport ++= Seq(
         "com.malliina.musicpimp.models._",
         "com.malliina.play.models.Username"
-      )
+      ),
+      libs += (packageBin in Assets).value.toPath
     )
 }
