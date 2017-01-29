@@ -15,7 +15,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 class WebSocketTests extends FunSuite {
-  test("can open socket") {
+  ignore("can open socket") {
     val ctx = SSLUtils.trustAllSslContext()
     val matcher = SNIHostName.createSNIMatcher("cloud\\.musicpimp\\.org")
     val matchers = Seq(matcher)
@@ -28,7 +28,7 @@ class WebSocketTests extends FunSuite {
     openSocket(factory)
   }
 
-  test("can open socket, without SNI") {
+  ignore("can open socket, without SNI") {
     openSocket(SSLUtils.trustAllSslContext().getSocketFactory)
   }
 

@@ -2,12 +2,10 @@ package tests
 
 import java.nio.file.Paths
 
-import com.malliina.util.Log
-import org.java_websocket.util.Base64
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-class Tests extends FunSuite with Log {
+class Tests extends FunSuite {
   //  val testPath = Paths get ""
   test("can run test") {
 
@@ -31,9 +29,11 @@ class Tests extends FunSuite with Log {
   test("for comp.") {
     def eval(in: String) = {
       def isA(input: String) = input == "a"
+
       val maybeV = Some(in)
       for (actual <- maybeV if isA(actual)) yield actual
     }
+
     assert(eval("a") === Some("a"))
     assert(eval("b") === None)
   }
@@ -52,10 +52,10 @@ class Tests extends FunSuite with Log {
     assert(jsValue === "42")
     assert(none === "null")
   }
-//  test("base64") {
-//    val username = "test"
-//    val password = "test"
-//    val value = Base64.encodeBytes((username + ":" + password).getBytes("UTF-8"))
-//    println(value)
-//  }
+  //  test("base64") {
+  //    val username = "test"
+  //    val password = "test"
+  //    val value = Base64.encodeBytes((username + ":" + password).getBytes("UTF-8"))
+  //    println(value)
+  //  }
 }

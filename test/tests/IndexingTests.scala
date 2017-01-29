@@ -1,12 +1,14 @@
 package tests
 
+import com.malliina.musicpimp.db.{Indexer, PimpDb}
+import com.malliina.util.Utils
 import org.scalatest.FunSuite
 
 class IndexingTests extends FunSuite {
-  test("indexing performance") {
-    //    val (fileCount, indexDuration) = Utils.timed {
-    //      Indexer.index().toBlocking.last
-    //    }
-    //    println(s"Indexed $fileCount files in $indexDuration")
+  ignore("indexing performance") {
+    val (fileCount, indexDuration) = Utils.timed {
+      new Indexer(new PimpDb).index().toBlocking.last
+    }
+    println(s"Indexed $fileCount files in $indexDuration")
   }
 }

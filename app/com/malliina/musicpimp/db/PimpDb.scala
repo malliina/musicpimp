@@ -4,20 +4,27 @@ import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.StorageFile
+import com.malliina.musicpimp.db.PimpDb.log
 import com.malliina.musicpimp.db.PimpSchema.{folders, tempFoldersTable, tempTracksTable, tracks}
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.FolderID
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.util.{Log, Utils}
+import com.malliina.util.Utils
 import org.h2.jdbcx.JdbcConnectionPool
+import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
 import slick.driver.H2Driver.api._
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
+import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
-class PimpDb extends DatabaseLike with Log with AutoCloseable {
+object PimpDb {
+  private val log = Logger(getClass)
+}
+
+class PimpDb extends DatabaseLike with AutoCloseable {
   val H2_URL_SETTINGS = "h2.url.settings"
   val H2_HOME = "h2.home"
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
@@ -87,14 +94,14 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
     * TODO check when this throws and whether I'm calling it correctly
     */
   def initIndex(tableName: String): Future[Unit] =
-  executePlain(
-    "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
-    "CALL FT_INIT();",
-    s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
-  ).map { _ =>
-    log info s"Initialized index for table $tableName"
-    ()
-  }
+    executePlain(
+      "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
+      "CALL FT_INIT();",
+      s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
+    ).map { _ =>
+      log info s"Initialized index for table $tableName"
+      ()
+    }
 
   def dropAll() = {
     tableQueries.foreach(t => {
@@ -157,14 +164,17 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
       firstIdsDeletion,
       folderUpdates,
       idInsertion)
+
     def updateFolders() = for {
       _ <- run(foldersInit)
       foldersDeleted <- run(foldersDeletion)
       _ <- run(secondIdsDeletion)
     } yield foldersDeleted
+
     // repeat above, but for tracks
     val oldTrackDeletion = tempTracksTable.delete
     var fileCount = 0L
+
     def upsertAllTracks() = {
       Library.dataTrackStream.grouped(100) foreach { chunk =>
         val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
@@ -177,17 +187,21 @@ class PimpDb extends DatabaseLike with Log with AutoCloseable {
         observer onNext fileCount
       }
     }
+
     val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
     val thirdIdsDeletion = tempFoldersTable.delete
+
     def deleteNonExistentTracks() = for {
       tracksDeleted <- run(tracksDeletion)
       _ <- run(thirdIdsDeletion)
     } yield tracksDeleted
+
     def updateTracks() = for {
       _ <- run(oldTrackDeletion)
       _ = upsertAllTracks()
       ts <- deleteNonExistentTracks()
     } yield ts
+
     for {
       fs <- updateFolders()
       ts <- updateTracks()

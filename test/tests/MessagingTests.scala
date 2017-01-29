@@ -21,13 +21,13 @@ class MessagingTests extends FunSuite {
     None
   )
 
-  test("can retrieve access token") {
+  ignore("can retrieve access token") {
     val tokenFuture = AdmClient.accessToken
     val token = Await.result(tokenFuture, 5.seconds)
     assert(token.expires_in === 3600.seconds)
   }
 
-  test("can push notification using pimpcloud") {
+  ignore("can push notification using pimpcloud") {
     val request = CloudPushClient.default.push(testTask)
     val result = Await.result(request, 5.seconds)
     assert(result.getStatusCode === 200)

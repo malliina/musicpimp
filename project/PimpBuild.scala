@@ -156,6 +156,7 @@ object PimpBuild {
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.5.2"
 
   lazy val pimpPlaySettings =
     jenkinsSettings ++
@@ -163,7 +164,8 @@ object PimpBuild {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-play" % "3.5.2",
+        utilPlayDep,
+        utilPlayDep % Test classifier "tests",
         malliinaGroup %% "util-actor" % "2.5.5",
         malliinaGroup %% "util-rmi" % "2.5.5",
         malliinaGroup %% "util-audio" % "2.0.0",

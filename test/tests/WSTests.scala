@@ -16,6 +16,6 @@ class WSTests extends FunSuite with Controller {
     )
     implicit val commandFormat = Json.format[BeamCommand]
     val cmd = Json.fromJson[BeamCommand](json).get
-    assert(cmd.track === "123")
+    assert(cmd.track.id === "123")
   }
 }

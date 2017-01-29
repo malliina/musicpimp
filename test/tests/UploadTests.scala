@@ -13,17 +13,8 @@ class UploadTests extends FunSuite {
 
   val tempFile = Paths get "nonexistent"
 
-  test("server plays uploaded track") {
+  ignore("server plays uploaded track") {
     multiPartUpload("http://localhost:9000/playback/uploads")
-  }
-
-  test("upload works") {
-    //    org.slf4j.LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
-    //      .asInstanceOf[ch.qos.logback.classic.Logger]
-    //      .setLevel(ch.qos.logback.classic.Level.WARN)
-    //
-    //    val assertions = Future.sequence(List.fill(3)(uploadFuture))
-    //    Await.result(assertions, 10.seconds)
   }
 
   def multiPartUpload(uri: String) {

@@ -49,7 +49,7 @@ class DatabaseTests extends FunSuite {
     //    })
   }
 
-  test("can create database table, query") {
+  ignore("can create database table, query") {
     //    PimpDb.dropAll()
     //    PimpDb.init()
     //    PimpDb.withSession(implicit session => {
