@@ -60,8 +60,6 @@ object PimpBuild {
     version := "3.5.1",
     organization := "org.musicpimp",
     scalaVersion := "2.11.8",
-    retrieveManaged := false,
-    fork in Test := true,
     resolvers ++= Seq(
       Resolver.jcenterRepo,
       Resolver.bintrayRepo("malliina", "maven"),
@@ -70,16 +68,7 @@ object PimpBuild {
     ),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
-      "-deprecation",
-      "-encoding", "UTF-8",
-      "-unchecked",
-      "-feature",
-      "-language:existentials",
-      "-language:higherKinds",
-      "-language:implicitConversions",
-      "-Yno-adapted-args",
-      "-Ywarn-dead-code",
-      "-Ywarn-numeric-widen"
+      "-encoding", "UTF-8"
     )
   )
 
@@ -174,24 +163,21 @@ object PimpBuild {
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-play" % "3.3.3",
-        malliinaGroup %% "util-actor" % "2.4.1",
-        malliinaGroup %% "util-rmi" % "2.4.1",
+        malliinaGroup %% "util-play" % "3.5.2",
+        malliinaGroup %% "util-actor" % "2.5.5",
+        malliinaGroup %% "util-rmi" % "2.5.5",
         malliinaGroup %% "util-audio" % "2.0.0",
-        malliinaGroup %% "mobile-push" % "1.6.1",
+        malliinaGroup %% "mobile-push" % "1.7.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         PlayImport.filters,
-        PlayImport.specs2 % Test,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.4.192",
+        "com.h2database" % "h2" % "1.4.193",
         "com.typesafe.slick" %% "slick" % "3.1.1",
         "org.java-websocket" % "Java-WebSocket" % "1.3.0",
-        "com.neovisionaries" % "nv-websocket-client" % "1.30",
-        "com.lihaoyi" %% "scalatags" % "0.6.2",
-        "org.scalatest" %% "scalatest" % "3.0.0" % Test
+        "com.neovisionaries" % "nv-websocket-client" % "1.31"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
