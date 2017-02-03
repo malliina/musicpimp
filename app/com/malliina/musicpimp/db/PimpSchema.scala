@@ -13,6 +13,9 @@ object PimpSchema {
   val playlistTracksTable = TableQuery[PlaylistTracks]
   val plays = TableQuery[Plays]
 
-  val tableQueries: Seq[TableQuery[_ <: Table[_]]] =
-    Seq(plays, playlistTracksTable, playlistsTable, tempFoldersTable, tempTracksTable, tracks, folders, tokens, usersTable)
+  val tableQueries: Seq[TableQuery[_ <: Table[_]]] = Seq(
+    plays, playlistTracksTable, playlistsTable,
+    tempFoldersTable, tempTracksTable, tracks,
+    folders, tokens, usersTable
+  )
 }

@@ -19,10 +19,10 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
   import PimpSchema.{tokens, usersTable}
 
   def ensureAtLeastOneUserExists(): Future[Unit] = {
-    users.flatMap(us => {
+    users flatMap { us =>
       if (us.isEmpty) addUser(defaultUser, defaultPass).map(_ => ())
       else Future.successful(())
-    })
+    }
   }
 
   override def defaultUser: Username = DatabaseUserManager.DefaultUser
@@ -49,7 +49,7 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
     addUser(DataUser(user, hash(user, pass)))
 
   def addUser(user: DataUser): Future[Option[AlreadyExists]] = {
-    db.run(usersTable += user).map(_ => None).recover {
+    db.run(usersTable += user).map(_ => None) recover {
       case sqle: SQLException if sqle.getMessage contains "primary key violation" =>
         Some(AlreadyExists(user.username))
     }
@@ -58,7 +58,7 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
   override def deleteUser(user: Username): Future[Unit] = {
     db.run {
       DBIO.seq(
-        tokens.filter(_.user === user.name).delete,
+        tokens.filter(_.user === user).delete,
         usersTable.filter(_.user === user).delete
       )
     }

@@ -14,8 +14,10 @@ import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
 import slick.driver.H2Driver.api._
+import slick.jdbc.{GetResult, PositionedResult}
+import slick.jdbc.GetResult.GetInt
 
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
 import scala.language.higherKinds
 import scala.util.{Failure, Success}
@@ -70,7 +72,7 @@ class PimpDb extends DatabaseLike with AutoCloseable {
 
   def merge(items: Seq[DataTrack]) = {
     val inserts = items map sqlify mkString ","
-    val sql = s"MERGE INTO $tracksName KEY(ID) VALUES $inserts"
+    val sql = sqlu"MERGE INTO $tracksName KEY(ID) VALUES $inserts"
     executePlain(sql)
   }
 
@@ -82,42 +84,50 @@ class PimpDb extends DatabaseLike with AutoCloseable {
     super.initTable(table)
     val name = table.baseTableRow.tableName
     if (name == tracksName) {
-      initIndex(tracksName).recover {
-        case t: Throwable => log.warn(s"Indexing failed: $t: ${t.getMessage}", t)
+      await {
+        initIndex(tracksName) recover {
+          case t: Throwable =>
+            log.warn(s"Initialization of index of table $tracksName failed", t)
+            throw t
+        }
       }
     }
   }
+  object GetDummy extends GetResult[Int] {
+    override def apply(v1: PositionedResult) = 0
+  }
 
-  /**
-    * Fails if the index is already created or if the table does not exist.
+  /** Fails if the index is already created or if the table does not exist.
     *
     * TODO check when this throws and whether I'm calling it correctly
     */
-  def initIndex(tableName: String): Future[Unit] =
-    executePlain(
-      "CREATE ALIAS IF NOT EXISTS FT_INIT FOR \"org.h2.fulltext.FullText.init\";",
-      "CALL FT_INIT();",
-      s"CALL FT_CREATE_INDEX('PUBLIC', '$tableName', NULL);"
-    ).map { _ =>
+  def initIndex(tableName: String): Future[Unit] = {
+    val clazz = "\"org.h2.fulltext.FullText.init\""
+    for {
+      _ <- executePlain(sqlu"CREATE ALIAS IF NOT EXISTS FT_INIT FOR #$clazz;")
+      _ <- database.run(sql"CALL FT_INIT();".as[Int](GetDummy))
+      _ <- database.run(sql"CALL FT_CREATE_INDEX('PUBLIC', '#$tableName', NULL);".as[Int](GetDummy))
+    } yield {
       log info s"Initialized index for table $tableName"
-      ()
     }
+  }
 
   def dropAll() = {
-    tableQueries.foreach(t => {
+    tableQueries foreach { t =>
       if (exists(t)) {
-
-        Await.result(executePlain(s"DROP TABLE ${t.baseTableRow.tableName}"), 5.seconds)
+        await(executePlain(sqlu"DROP TABLE ${t.baseTableRow.tableName};"))
         // ddl.drop fails if the table has a constraint to something nonexistent
         //        t.ddl.drop
         log info s"Dropped table: ${t.baseTableRow.tableName}"
       }
-    })
+    }
     dropIndex(tracksName)
   }
 
-  def dropIndex(tableName: String): Future[Unit] =
-    executePlain(s"CALL FT_DROP_INDEX('PUBLIC','$tableName');").map(_ => ())
+  def dropIndex(tableName: String): Future[Unit] = {
+    val q = sqlu"CALL FT_DROP_INDEX('PUBLIC','#${tableName}');"
+    executePlain(q).map(_ => ())
+  }
 
   /** Starts indexing on a background thread and returns an [[Observable]] with progress updates.
     *
@@ -139,8 +149,7 @@ class PimpDb extends DatabaseLike with AutoCloseable {
     // we only want one thread to index at a time
     this.synchronized {
       val (result, duration) = Utils.timed {
-        // TODO
-        Await.result(runIndexer(observer), 3.hours)
+        await(runIndexer(observer), 3.hours)
       }
       log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
         s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
@@ -182,7 +191,7 @@ class PimpDb extends DatabaseLike with AutoCloseable {
           trackUpdates,
           tempTracksTable ++= chunk.map(t => TempTrack(t.id))
         ))
-        Await.result(chunkInsertion, 1.hour)
+        await(chunkInsertion, 1.hour)
         fileCount += chunk.size
         observer onNext fileCount
       }
@@ -210,8 +219,8 @@ class PimpDb extends DatabaseLike with AutoCloseable {
 
   def observe[T](f: Observer[T] => Unit): Observable[T] = {
     val subject = Subject[T]()
-    Future(f(subject)).onComplete {
-      case Success(u) => subject.onCompleted()
+    Future(f(subject)) onComplete {
+      case Success(_) => subject.onCompleted()
       case Failure(t) => subject.onError(t)
     }
     subject
@@ -221,7 +230,8 @@ class PimpDb extends DatabaseLike with AutoCloseable {
 
   def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = database.run(a)
 
-  def await[T](f: Future[T]): T = Await.result(f, 5.seconds)
+  def await[T](f: Future[T], dur: FiniteDuration = 5.seconds): T =
+    Await.result(f, dur)
 
   def close(): Unit = {
     database.close()

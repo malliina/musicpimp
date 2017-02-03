@@ -22,8 +22,6 @@ trait DatabaseLike {
     createIfNotExists(tableQueries: _*)
   }
 
-  //  def withSession[T](f: Session => T): Future[T] = Future.fromTry(Try(database withSession f))
-
   def exists[T <: AbstractTable[_]](table: TableQuery[T]): Boolean = {
     val tableName = table.baseTableRow.tableName
     try {
@@ -45,8 +43,21 @@ trait DatabaseLike {
     log info s"Created table: ${table.baseTableRow.tableName}"
   }
 
-  def executePlain(queries: String*): Future[Seq[Int]] =
-    Future.traverse(queries)(query => database.run(sqlu"""$query"""))
+  def executePlain(queries: DBIOAction[Int, NoStream, Nothing]*): Future[Seq[Int]] =
+    sequentially(queries.toList)
+
+  def sequentially(queries: List[DBIOAction[Int, NoStream, Nothing]]): Future[List[Int]] =
+    queries match {
+      case head :: tail =>
+        //      val test: SqlAction[Int, NoStream, Effect] = sqlu"create boom"
+        //      println(s"Test: ${test.statements.toList}")
+        //      println("head: " + head)
+        //      val q = sqlu"${head}"
+        //      println(q.statements.toList)
+        database.run(head).flatMap(i => sequentially(tail).map(is => i :: is))
+      case Nil =>
+        Future.successful(Nil)
+    }
 
   //  def queryPlain[R](query: String)(implicit rconv: GetResult[R]): Future[Seq[R]] = {
   //    val action = sql"""$query""".as[R]

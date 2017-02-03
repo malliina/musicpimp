@@ -44,7 +44,7 @@ class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACK
     onUpdate = ForeignKeyAction.Cascade,
     onDelete = ForeignKeyAction.Cascade)
 
-  def trackConstraint = foreignKey("TRACK_FK", track, PimpSchema.tracks)(
+  def trackConstraint = foreignKey("PL_TRACK_FK", track, PimpSchema.tracks)(
     _.id,
     onUpdate = ForeignKeyAction.Cascade,
     onDelete = ForeignKeyAction.Cascade)

@@ -1,6 +1,6 @@
 package tests
 
-import com.malliina.musicpimp.app.{InitOptions, PimpComponents, PimpLoader}
+import com.malliina.musicpimp.app.{InitOptions, PimpComponents}
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
@@ -9,10 +9,8 @@ import com.malliina.ws.HttpUtil
 import play.api.Application
 import play.api.http.{HeaderNames, MimeTypes, Writeable}
 import play.api.libs.json.Json
+import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.test.{FakeRequest, WithApplicationLoader}
-
-class TestAppLoader extends WithApplicationLoader(new PimpLoader(TestOptions.default))
 
 object TestOptions {
   val default = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)

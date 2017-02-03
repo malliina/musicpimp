@@ -1,11 +1,12 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.auth.Token
 import com.malliina.play.models.Username
 import slick.driver.H2Driver.api._
 
 class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
-  def user = column[String]("USER")
+  def user = column[Username]("USER")
 
   def series = column[Long]("SERIES")
 
@@ -15,8 +16,9 @@ class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
 }
 
 object TokensTable {
-  def fromRaw(user: String, series: Long, token: Long): Token =
-    Token(Username(user), series, token)
+  def fromRaw(user: Username, series: Long, token: Long): Token =
+    Token(user, series, token)
 
-  def write(t: Token): Option[(String, Long, Long)] = Option((t.user.name, t.series, t.token))
+  def write(t: Token): Option[(Username, Long, Long)] =
+    Option((t.user, t.series, t.token))
 }
