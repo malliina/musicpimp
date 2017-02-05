@@ -12,7 +12,7 @@ object CustomSSLSocketFactory {
     val sslParameters = new SSLParameters()
     sslParameters.setSNIMatchers(Seq(sniMatcher))
     sslParameters.setServerNames(Seq(sniHost))
-    val ctx = SSLUtils.trustAllSslContext()
+    val ctx = SSLContext.getDefault
     val inner = ctx.getSocketFactory
     new CustomSSLSocketFactory(inner, sslParameters)
   }

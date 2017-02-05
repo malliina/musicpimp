@@ -34,7 +34,6 @@ trait DatabaseLike {
     }
   }
 
-
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
     tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
@@ -49,20 +48,10 @@ trait DatabaseLike {
   def sequentially(queries: List[DBIOAction[Int, NoStream, Nothing]]): Future[List[Int]] =
     queries match {
       case head :: tail =>
-        //      val test: SqlAction[Int, NoStream, Effect] = sqlu"create boom"
-        //      println(s"Test: ${test.statements.toList}")
-        //      println("head: " + head)
-        //      val q = sqlu"${head}"
-        //      println(q.statements.toList)
         database.run(head).flatMap(i => sequentially(tail).map(is => i :: is))
       case Nil =>
         Future.successful(Nil)
     }
-
-  //  def queryPlain[R](query: String)(implicit rconv: GetResult[R]): Future[Seq[R]] = {
-  //    val action = sql"""$query""".as[R]
-  //    database.run(action)
-  //  }
 
   private def await[T](f: Future[T]): T = Await.result(f, 10.seconds)
 }
