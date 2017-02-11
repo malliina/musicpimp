@@ -156,7 +156,7 @@ object PimpBuild {
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
-  val utilPlayDep = malliinaGroup %% "util-play" % "3.5.2"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.5.3"
 
   lazy val pimpPlaySettings =
     jenkinsSettings ++

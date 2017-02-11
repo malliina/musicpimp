@@ -16,7 +16,6 @@ import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models._
 import com.malliina.play.Authenticator
-import com.malliina.play.controllers.BaseController
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
 import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
@@ -28,7 +27,7 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
-
+import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import scala.concurrent.Future
 
 class Rest(webPlayer: WebPlayer,
@@ -36,8 +35,7 @@ class Rest(webPlayer: WebPlayer,
            handler: PlaybackMessageHandler,
            statsPlayer: StatsPlayer,
            mat: Materializer)
-  extends Secured(auth, mat)
-    with BaseController {
+  extends Secured(auth, mat) {
 
   val webPlayerHandler = webPlayer.messageHandler
 

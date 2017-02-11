@@ -6,9 +6,6 @@ import com.malliina.json.JsonFormats.SimpleFormat
 import com.malliina.musicpimp.cloud.PimpMessages.PimpMessage
 import play.api.libs.json.Json
 
-/**
- * @author Michael
- */
 case class ServerRequest(cmd: String, id: String, requestID: UUID, server: ServerInfo) extends PimpMessage {
   val request: String = requestID.toString
 }

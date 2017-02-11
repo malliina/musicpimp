@@ -755,6 +755,7 @@ class PimpTags(scripts: Modifier*) {
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
       head(
+        meta(charset := "UTF-8"),
         titleTag(title),
         deviceWidthViewport,
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
