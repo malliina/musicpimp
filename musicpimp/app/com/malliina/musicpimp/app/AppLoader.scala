@@ -11,6 +11,7 @@ import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
 import controllers._
+import musicpimp.Routes
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang, Messages}
@@ -19,8 +20,6 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigur
 import play.filters.gzip.GzipFilter
 
 import scala.concurrent.Future
-
-import router.Routes
 
 case class InitOptions(alarms: Boolean = true,
                        database: Boolean = true,
@@ -41,14 +40,14 @@ class PimpLoader(options: InitOptions) extends ApplicationLoader {
     LoggerConfigurator(env.classLoader)
       .foreach(_.configure(env))
     // faster app restart when in dev
-    val opts = if(env.mode == Mode.Dev) InitOptions.dev else options
+    val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
     new PimpComponents(context, opts).application
   }
 }
 
 class PimpComponents(context: Context, options: InitOptions)
   extends BuiltInComponentsFromContext(context)
-  with I18nComponents {
+    with I18nComponents {
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
@@ -100,8 +99,8 @@ class PimpComponents(context: Context, options: InitOptions)
     httpErrorHandler, libCtrl, webCtrl,
     settingsCtrl, connect, lp,
     cloud, accounts, r, pl,
-     alarms, sp, s, sws,
-    wp, ls,cloudWS, assetsCtrl)
+    alarms, sp, s, sws,
+    wp, ls, cloudWS, assetsCtrl)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
