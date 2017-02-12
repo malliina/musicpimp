@@ -50,7 +50,7 @@ object PimpBuild {
       testFrameworks += new TestFramework("utest.runner.Framework")
     )
 
-  lazy val pimpProject = PlayProject.default("musicpimp")
+  lazy val pimpProject = PlayProject.default("musicpimp", file("musicpimp"))
     .enablePlugins(BuildInfoPlugin, SbtNativePackager)
     .settings(pimpPlaySettings: _*)
 
