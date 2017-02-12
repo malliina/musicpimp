@@ -22,7 +22,7 @@ trait FolderMeta extends MusicItem {
 
 object FolderMeta {
   def writer(host: PimpUrl) = Writes[FolderMeta] { f =>
-    val libraryController = controllers.routes.LibraryController
+    val libraryController = controllers.musicpimp.routes.LibraryController
     val call: Call =
       if (f.id == Library.RootId) libraryController.rootLibrary
       else libraryController.library(f.id)

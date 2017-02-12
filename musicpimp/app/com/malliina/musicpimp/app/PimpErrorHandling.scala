@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.app
 
-import com.malliina.musicpimp.json.JsonMessages
-import controllers.{Errors, PimpContentController}
+import controllers.musicpimp.{Errors, PimpContentController}
 import play.api.http.HttpErrorHandler
 import play.api.mvc.{RequestHeader, Result, Results}
 

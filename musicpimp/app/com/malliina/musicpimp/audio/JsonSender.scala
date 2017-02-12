@@ -3,7 +3,7 @@ package com.malliina.musicpimp.audio
 import com.malliina.musicpimp.audio.JsonSender.log
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.play.models.Username
-import controllers.WebPlayer
+import controllers.musicpimp.WebPlayer
 import play.api.Logger
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Json, Writes}

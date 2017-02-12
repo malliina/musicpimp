@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.app
 
+import _root_.musicpimp.Routes
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.cloud.{Clouds, Deps}
@@ -11,7 +12,7 @@ import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
 import controllers._
-import musicpimp.Routes
+import controllers.musicpimp._
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang, Messages}

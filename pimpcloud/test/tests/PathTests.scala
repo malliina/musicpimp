@@ -3,7 +3,7 @@ package tests
 import java.nio.file.Paths
 
 import com.malliina.pimpcloud.models.TrackID
-import controllers.Phones
+import controllers.pimpcloud.Phones
 import org.scalatest.FunSuite
 
 class PathTests extends FunSuite {

@@ -12,7 +12,7 @@ import com.malliina.musicpimp.audio.Track
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.storage.StorageLong
 import com.malliina.ws.Streamer
-import controllers.{StreamReceiver, Uploads}
+import controllers.pimpcloud.{StreamReceiver, Uploads}
 import org.scalatest.FunSuite
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.MultipartFormData.FilePart

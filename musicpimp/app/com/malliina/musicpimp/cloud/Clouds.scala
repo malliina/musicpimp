@@ -9,8 +9,8 @@ import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.json.SimpleCommand
 import com.malliina.util.Utils
-import controllers.CloudEvent
-import controllers.CloudEvent.{Connected, Connecting, Disconnected}
+import controllers.musicpimp.CloudEvent
+import controllers.musicpimp.CloudEvent.{Connected, Connecting, Disconnected}
 import play.api.Logger
 import play.api.libs.json.JsValue
 import rx.lang.scala.subjects.BehaviorSubject

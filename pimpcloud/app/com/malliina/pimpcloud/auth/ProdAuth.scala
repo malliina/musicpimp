@@ -10,7 +10,7 @@ import com.malliina.pimpcloud.{CloudCredentials, PimpAuth}
 import com.malliina.play.auth.Auth
 import com.malliina.play.models.Username
 import com.malliina.ws.JsonFutureSocket
-import controllers._
+import controllers.pimpcloud.{PhoneConnection, Phones, ServerRequest, Servers}
 import play.api.mvc.{RequestHeader, Security}
 
 import scala.concurrent.Future

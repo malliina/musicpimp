@@ -1,72 +1,72 @@
 # Web specific
-GET         /                                  controllers.LibraryController.siteRoot
-GET         /player                            controllers.Website.player
-GET         /player/recent                     controllers.Website.recent
-GET         /player/popular                    controllers.Website.popular
-GET         /settings                          controllers.SettingsController.settings
-GET         /connect                           controllers.ConnectController.connect
-GET         /image                             controllers.ConnectController.image
-GET         /logs                              controllers.LogPage.logs
-POST        /logs                              controllers.LogPage.frontendLog
-POST        /logs/levels                       controllers.LogPage.changeLogLevel
-GET         /cloud                             controllers.Cloud.cloud
-POST        /cloud                             controllers.Cloud.toggle
-GET         /about                             controllers.Website.about
-GET         /manage                            controllers.SettingsController.manage
-GET         /account                           controllers.Accounts.account
-GET         /users                             controllers.Accounts.users
-POST        /users/delete/*id                  controllers.Accounts.delete(id: Username)
-GET         /login                             controllers.Accounts.login
-GET         /logout                            controllers.Accounts.logout
-POST        /authenticate                      controllers.Accounts.formAuthenticate
-POST        /changePassword                    controllers.Accounts.formChangePassword
-POST        /addUser                           controllers.Accounts.formAddUser
+GET         /                                  controllers.musicpimp.LibraryController.siteRoot
+GET         /player                            controllers.musicpimp.Website.player
+GET         /player/recent                     controllers.musicpimp.Website.recent
+GET         /player/popular                    controllers.musicpimp.Website.popular
+GET         /settings                          controllers.musicpimp.SettingsController.settings
+GET         /connect                           controllers.musicpimp.ConnectController.connect
+GET         /image                             controllers.musicpimp.ConnectController.image
+GET         /logs                              controllers.musicpimp.LogPage.logs
+POST        /logs                              controllers.musicpimp.LogPage.frontendLog
+POST        /logs/levels                       controllers.musicpimp.LogPage.changeLogLevel
+GET         /cloud                             controllers.musicpimp.Cloud.cloud
+POST        /cloud                             controllers.musicpimp.Cloud.toggle
+GET         /about                             controllers.musicpimp.Website.about
+GET         /manage                            controllers.musicpimp.SettingsController.manage
+GET         /account                           controllers.musicpimp.Accounts.account
+GET         /users                             controllers.musicpimp.Accounts.users
+POST        /users/delete/*id                  controllers.musicpimp.Accounts.delete(id: Username)
+GET         /login                             controllers.musicpimp.Accounts.login
+GET         /logout                            controllers.musicpimp.Accounts.logout
+POST        /authenticate                      controllers.musicpimp.Accounts.formAuthenticate
+POST        /changePassword                    controllers.musicpimp.Accounts.formChangePassword
+POST        /addUser                           controllers.musicpimp.Accounts.formAddUser
 # Player
-GET         /playback                          controllers.Rest.status
-POST        /playback                          controllers.Rest.playback
-POST        /playback/uploads                  controllers.Rest.playUploadedFile
-POST        /playback/stream                   controllers.Rest.stream
-POST        /playback/server                   controllers.Rest.streamedPlayback
-GET         /webplay                           controllers.Rest.webStatus
-POST        /webplay                           controllers.Rest.webPlayback
-POST        /playlist                          controllers.Rest.playlist
-POST        /playlist/uploads                  controllers.Rest.addUpload
-GET         /webplaylist                       controllers.Rest.webPlaylist
+GET         /playback                          controllers.musicpimp.Rest.status
+POST        /playback                          controllers.musicpimp.Rest.playback
+POST        /playback/uploads                  controllers.musicpimp.Rest.playUploadedFile
+POST        /playback/stream                   controllers.musicpimp.Rest.stream
+POST        /playback/server                   controllers.musicpimp.Rest.streamedPlayback
+GET         /webplay                           controllers.musicpimp.Rest.webStatus
+POST        /webplay                           controllers.musicpimp.Rest.webPlayback
+POST        /playlist                          controllers.musicpimp.Rest.playlist
+POST        /playlist/uploads                  controllers.musicpimp.Rest.addUpload
+GET         /webplaylist                       controllers.musicpimp.Rest.webPlaylist
 # Library
-GET         /folders                           controllers.LibraryController.rootLibrary
-GET         /folders/*folder                   controllers.LibraryController.library(folder: FolderID)
-GET         /downloads/*id                     controllers.LibraryController.download(id: TrackID)
-GET         /tracks/folders                    controllers.LibraryController.allTracks
-GET         /tracks/folders/*id                controllers.LibraryController.tracksIn(id: FolderID)
-GET         /tracks/meta/*id                   controllers.LibraryController.meta(id: TrackID)
-GET         /tracks/*id                        controllers.LibraryController.supplyForPlayback(id: TrackID)
-GET         /playlists                         controllers.Playlists.playlists
-POST        /playlists                         controllers.Playlists.savePlaylist
-GET         /playlists/*playlist               controllers.Playlists.playlist(playlist: PlaylistID)
-POST        /playlists/delete/*playlist        controllers.Playlists.deletePlaylist(playlist: PlaylistID)
-POST        /playlists/edit                    controllers.Playlists.edit
-POST        /playlists/handle                  controllers.Playlists.handleSubmission
-POST        /rootfolders                       controllers.SettingsController.newFolder
-POST        /rootfolders/delete/*id            controllers.SettingsController.deleteFolder(id)
-GET         /tracks                            controllers.Alarms.tracks
-GET         /pathsOnly                         controllers.Alarms.paths
-GET         /search                            controllers.SearchPage.search
-GET         /search/ws                         controllers.Search.openSocket
-POST        /search/refresh                    controllers.SearchPage.refresh
+GET         /folders                           controllers.musicpimp.LibraryController.rootLibrary
+GET         /folders/*folder                   controllers.musicpimp.LibraryController.library(folder: FolderID)
+GET         /downloads/*id                     controllers.musicpimp.LibraryController.download(id: TrackID)
+GET         /tracks/folders                    controllers.musicpimp.LibraryController.allTracks
+GET         /tracks/folders/*id                controllers.musicpimp.LibraryController.tracksIn(id: FolderID)
+GET         /tracks/meta/*id                   controllers.musicpimp.LibraryController.meta(id: TrackID)
+GET         /tracks/*id                        controllers.musicpimp.LibraryController.supplyForPlayback(id: TrackID)
+GET         /playlists                         controllers.musicpimp.Playlists.playlists
+POST        /playlists                         controllers.musicpimp.Playlists.savePlaylist
+GET         /playlists/*playlist               controllers.musicpimp.Playlists.playlist(playlist: PlaylistID)
+POST        /playlists/delete/*playlist        controllers.musicpimp.Playlists.deletePlaylist(playlist: PlaylistID)
+POST        /playlists/edit                    controllers.musicpimp.Playlists.edit
+POST        /playlists/handle                  controllers.musicpimp.Playlists.handleSubmission
+POST        /rootfolders                       controllers.musicpimp.SettingsController.newFolder
+POST        /rootfolders/delete/*id            controllers.musicpimp.SettingsController.deleteFolder(id)
+GET         /tracks                            controllers.musicpimp.Alarms.tracks
+GET         /pathsOnly                         controllers.musicpimp.Alarms.paths
+GET         /search                            controllers.musicpimp.SearchPage.search
+GET         /search/ws                         controllers.musicpimp.Search.openSocket
+POST        /search/refresh                    controllers.musicpimp.SearchPage.refresh
 # WebSockets
-GET         /ws/playback                       controllers.ServerWS.openSocket
-GET         /ws/playback2                      controllers.ServerWS.openSocket
-GET         /ws/webplay                        controllers.WebPlayer.openSocket
-GET         /ws/logs                           controllers.PimpLogs.openSocket
-GET         /ws/cloud                          controllers.CloudWS.openSocket
+GET         /ws/playback                       controllers.musicpimp.ServerWS.openSocket
+GET         /ws/playback2                      controllers.musicpimp.ServerWS.openSocket
+GET         /ws/webplay                        controllers.musicpimp.WebPlayer.openSocket
+GET         /ws/logs                           controllers.musicpimp.PimpLogs.openSocket
+GET         /ws/cloud                          controllers.musicpimp.CloudWS.openSocket
 # Alarms
-GET         /alarms                            controllers.Alarms.alarms
-POST        /alarms                            controllers.Alarms.handleJson
-GET         /alarms/editor                     controllers.Alarms.newAlarm
-GET         /alarms/editor/*id                 controllers.Alarms.editAlarm(id)
-POST        /alarms/editor/add                 controllers.Alarms.newClock
+GET         /alarms                            controllers.musicpimp.Alarms.alarms
+POST        /alarms                            controllers.musicpimp.Alarms.handleJson
+GET         /alarms/editor                     controllers.musicpimp.Alarms.newAlarm
+GET         /alarms/editor/*id                 controllers.musicpimp.Alarms.editAlarm(id)
+POST        /alarms/editor/add                 controllers.musicpimp.Alarms.newClock
 # Miscellaneous
-GET         /ping                              controllers.Rest.ping
-GET         /pingauth                          controllers.Rest.pingAuth
+GET         /ping                              controllers.musicpimp.Rest.ping
+GET         /pingauth                          controllers.musicpimp.Rest.pingAuth
 # Maps static resources from the /public folder to the /assets URL path
 GET         /assets/*file                      controllers.Assets.at(path = "/public", file)

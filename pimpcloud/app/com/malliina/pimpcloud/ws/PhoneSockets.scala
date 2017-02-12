@@ -9,7 +9,7 @@ import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneSockets.log
 import com.malliina.play.ws.SocketClient
 import com.malliina.ws.{PhoneActorSockets, RxStmStorage}
-import controllers.PhoneConnection
+import controllers.pimpcloud.PhoneConnection
 import play.api.Logger
 import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 import play.api.mvc.{Call, RequestHeader}

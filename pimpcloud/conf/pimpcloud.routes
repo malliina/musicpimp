@@ -1,48 +1,45 @@
-GET         /                                  controllers.Phones.rootFolder
-GET         /health                            controllers.Web.ping
-GET         /login                             controllers.Web.login
-POST        /authenticate                      controllers.Web.formAuthenticate
+GET         /                                  controllers.pimpcloud.Phones.rootFolder
+GET         /health                            controllers.pimpcloud.Web.ping
+GET         /login                             controllers.pimpcloud.Web.login
+POST        /authenticate                      controllers.pimpcloud.Web.formAuthenticate
 # Push notifications
-POST        /push                              controllers.Push.push
+POST        /push                              controllers.pimpcloud.Push.push
 # Proxy
-GET         /ping                              controllers.Phones.ping
-GET         /pingauth                          controllers.Phones.pingAuth
-GET         /playback                          controllers.Phones.status
-POST        /playback/stream                   controllers.Phones.beam
-GET         /folders                           controllers.Phones.rootFolder
-GET         /folders/*folder                   controllers.Phones.folder(folder: com.malliina.pimpcloud.models.FolderID)
-GET         /player/recent                     controllers.Phones.recent
-GET         /player/popular                    controllers.Phones.popular
-GET         /tracks/*id                        controllers.Phones.track(id: com.malliina.pimpcloud.models.TrackID)
-GET         /downloads/*id                     controllers.Phones.track(id: com.malliina.pimpcloud.models.TrackID)
-GET         /search                            controllers.Phones.search
-GET         /alarms                            controllers.Phones.alarms
-POST        /alarms                            controllers.Phones.editAlarm
-POST        /alarms/editor/add                 controllers.Phones.newAlarm
-GET         /playlists                         controllers.Phones.playlists
-POST        /playlists                         controllers.Phones.savePlaylist
-GET         /playlists/*playlist               controllers.Phones.playlist(playlist: com.malliina.musicpimp.models.PlaylistID)
-POST        /playlists/delete/*playlist        controllers.Phones.deletePlaylist(playlist: com.malliina.musicpimp.models.PlaylistID)
-POST        /proxied/*cmd                      controllers.Phones.bodyProxied(cmd: String)
+GET         /ping                              controllers.pimpcloud.Phones.ping
+GET         /pingauth                          controllers.pimpcloud.Phones.pingAuth
+GET         /playback                          controllers.pimpcloud.Phones.status
+POST        /playback/stream                   controllers.pimpcloud.Phones.beam
+GET         /folders                           controllers.pimpcloud.Phones.rootFolder
+GET         /folders/*folder                   controllers.pimpcloud.Phones.folder(folder: com.malliina.pimpcloud.models.FolderID)
+GET         /player/recent                     controllers.pimpcloud.Phones.recent
+GET         /player/popular                    controllers.pimpcloud.Phones.popular
+GET         /tracks/*id                        controllers.pimpcloud.Phones.track(id: com.malliina.pimpcloud.models.TrackID)
+GET         /downloads/*id                     controllers.pimpcloud.Phones.track(id: com.malliina.pimpcloud.models.TrackID)
+GET         /search                            controllers.pimpcloud.Phones.search
+GET         /alarms                            controllers.pimpcloud.Phones.alarms
+POST        /alarms                            controllers.pimpcloud.Phones.editAlarm
+POST        /alarms/editor/add                 controllers.pimpcloud.Phones.newAlarm
+GET         /playlists                         controllers.pimpcloud.Phones.playlists
+POST        /playlists                         controllers.pimpcloud.Phones.savePlaylist
+GET         /playlists/*playlist               controllers.pimpcloud.Phones.playlist(playlist: com.malliina.musicpimp.models.PlaylistID)
+POST        /playlists/delete/*playlist        controllers.pimpcloud.Phones.deletePlaylist(playlist: com.malliina.musicpimp.models.PlaylistID)
+POST        /proxied/*cmd                      controllers.pimpcloud.Phones.bodyProxied(cmd: String)
 GET         /mobile/ws                         com.malliina.pimpcloud.ws.PhoneSockets.openSocket
 GET         /mobile/ws2                        com.malliina.pimpcloud.ws.PhoneSockets.openSocket
 GET         /ws/playback                       com.malliina.pimpcloud.ws.PhoneSockets.openSocket
 GET         /ws/playback2                      com.malliina.pimpcloud.ws.PhoneSockets.openSocket
 # Servers
-POST        /track                             controllers.ServersController.receiveUpload
-GET         /servers/ws                        controllers.Servers.openSocket
-GET         /servers/ws2                       controllers.Servers.openSocket
+POST        /track                             controllers.pimpcloud.ServersController.receiveUpload
+GET         /servers/ws                        controllers.pimpcloud.Servers.openSocket
+GET         /servers/ws2                       controllers.pimpcloud.Servers.openSocket
 GET         /assets/*file                      controllers.Assets.at(path = "/public", file)
 # Admin
-GET         /admin                             controllers.Logs.index
-GET         /admin/logs                        controllers.Logs.logs
-GET         /oauth                             controllers.AdminOAuth.initiate
+GET         /admin                             controllers.pimpcloud.Logs.index
+GET         /admin/logs                        controllers.pimpcloud.Logs.logs
+GET         /oauth                             controllers.pimpcloud.AdminOAuth.initiate
 # Must match a callback defined in the Google OAuth developer console
-GET         /oauthcb                           controllers.AdminOAuth.redirResponse
-GET         /admin/eject                       controllers.AdminAuth.eject
-GET         /admin/ws                          controllers.Logs.openSocket
-GET         /admin/usage                       controllers.UsageStreaming.openSocket
-GET         /admin/logout                      controllers.AdminAuth.logout
-# Test endpoints
-#GET         /testfile                          controllers.ServersController.registerListener
-#POST        /testup                            controllers.ServersController.receiveStream
+GET         /oauthcb                           controllers.pimpcloud.AdminOAuth.redirResponse
+GET         /admin/eject                       controllers.pimpcloud.AdminAuth.eject
+GET         /admin/ws                          controllers.pimpcloud.Logs.openSocket
+GET         /admin/usage                       controllers.pimpcloud.UsageStreaming.openSocket
+GET         /admin/logout                      controllers.pimpcloud.AdminAuth.logout

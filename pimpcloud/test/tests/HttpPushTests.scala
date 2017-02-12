@@ -6,7 +6,7 @@ import com.malliina.pimpcloud.CloudComponents
 import com.malliina.play.http.{AuthedRequest, FullRequest}
 import com.malliina.play.models.Username
 import com.malliina.push.apns.{APNSMessage, APNSToken}
-import controllers.{PimpAuth, Push}
+import controllers.pimpcloud.{PimpAuth, Push}
 import play.api.ApplicationLoader.Context
 import play.api.libs.json.Json
 import play.api.mvc._

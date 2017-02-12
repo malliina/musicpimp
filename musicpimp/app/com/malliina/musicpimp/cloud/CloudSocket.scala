@@ -22,7 +22,7 @@ import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
 import com.malliina.ws.HttpUtil
-import controllers.{Alarms, LibraryController, Rest}
+import controllers.musicpimp.{Alarms, LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
 import rx.lang.scala.Subject

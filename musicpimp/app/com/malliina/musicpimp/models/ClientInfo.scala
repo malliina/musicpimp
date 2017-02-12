@@ -5,7 +5,7 @@ import com.malliina.musicpimp.json.JsonFormatVersions
 import com.malliina.musicpimp.models.ClientInfo.log
 import com.malliina.play.models.Username
 import com.malliina.play.ws.SocketClient
-import controllers.PimpRequest
+import controllers.musicpimp.PimpRequest
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.mvc.RequestHeader

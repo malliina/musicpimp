@@ -16,11 +16,13 @@ import com.malliina.musicpimp.tags.PlayTags._
 import com.malliina.musicpimp.tags.Tags._
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
+import controllers.musicpimp.{Accounts, Cloud, SettingsController, UserFeedback}
 import controllers.routes.Assets.at
-import controllers.{Search => _, _}
+import controllers.musicpimp.{Search => _, _}
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.{Call, Flash}
+import controllers.musicpimp.routes
 
 import scalatags.Text.TypedTag
 import scalatags.Text.all._

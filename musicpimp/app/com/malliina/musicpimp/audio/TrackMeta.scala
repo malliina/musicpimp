@@ -34,7 +34,7 @@ object TrackMeta {
     writer(PimpUrl.hostOnly(request))
 
   def writer(host: PimpUrl): Writes[TrackMeta] = Writes[TrackMeta] { t =>
-    val call: Call = controllers.routes.LibraryController.supplyForPlayback(t.id)
+    val call: Call = controllers.musicpimp.routes.LibraryController.supplyForPlayback(t.id)
     obj(
       Id -> t.id,
       Title -> t.title,

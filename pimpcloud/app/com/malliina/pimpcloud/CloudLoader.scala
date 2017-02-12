@@ -1,16 +1,17 @@
 package com.malliina.pimpcloud
 
+import _root_.pimpcloud.Routes
 import buildinfo.BuildInfo
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.{GoogleOAuthCredentials, GoogleOAuthReader}
 import com.malliina.play.app.DefaultApp
 import com.malliina.play.controllers.AccountForms
 import controllers._
+import controllers.pimpcloud._
 import play.api.ApplicationLoader.Context
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Mode}
 import play.filters.gzip.GzipFilter
-import pimpcloud.Routes
 
 class CloudLoader extends DefaultApp(new ProdComponents(_))
 

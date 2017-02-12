@@ -6,7 +6,7 @@ import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.LocalTrack
 import com.malliina.musicpimp.models.RemoteInfo
-import controllers.WebPlayer
+import controllers.musicpimp.WebPlayer
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 

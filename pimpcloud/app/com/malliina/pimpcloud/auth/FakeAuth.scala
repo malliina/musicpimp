@@ -8,7 +8,7 @@ import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.pimpcloud.CloudCredentials
 import com.malliina.pimpcloud.models.CloudID
 import com.malliina.play.models.Username
-import controllers.{PhoneConnection, ServerRequest}
+import controllers.pimpcloud.{PhoneConnection, ServerRequest}
 import play.api.libs.json.JsValue
 import play.api.mvc.RequestHeader
 
