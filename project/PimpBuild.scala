@@ -32,12 +32,15 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
+  val musicpimpVersion = "3.5.1"
   val pimpcloudVersion = "1.6.9"
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
   // wtf?
   val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
+
+  lazy val root = Project("root", file(".")).aggregate(musicpimp, pimpcloud, it)
 
   lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
 
@@ -82,9 +85,7 @@ object PimpBuild {
   lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
     buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-    version := "3.5.1",
-    organization := "org.musicpimp",
-    scalaVersion := "2.11.8",
+    version := musicpimpVersion,
     resolvers ++= Seq(
       Resolver.jcenterRepo,
       Resolver.bintrayRepo("malliina", "maven"),
@@ -266,6 +267,7 @@ object PimpBuild {
   )
 
   lazy val baseSettings = Seq(
-    scalaVersion := "2.11.8"
+    scalaVersion := "2.11.8",
+    organization := "org.musicpimp"
   )
 }
