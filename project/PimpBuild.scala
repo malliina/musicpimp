@@ -57,7 +57,7 @@ object PimpBuild {
     .settings(pimpcloudSettings: _*)
 
   lazy val shared = Project("pimp-shared", file("shared"))
-    .settings(baseSettings: _*)
+    .settings(sharedSettings: _*)
 
   lazy val it = Project("it", file("it"))
     .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
@@ -264,6 +264,14 @@ object PimpBuild {
     },
     packageSummary in Linux := "This is the pimpcloud summary.",
     rpmVendor := "Skogberg Labs"
+  )
+
+  lazy val sharedSettings = baseSettings ++ Seq(
+    libraryDependencies ++= Seq(
+      "com.typesafe.slick" %% "slick" % "3.1.1",
+      PlayImport.json,
+      utilPlayDep
+    )
   )
 
   lazy val baseSettings = Seq(

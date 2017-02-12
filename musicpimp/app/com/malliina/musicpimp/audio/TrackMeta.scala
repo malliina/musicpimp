@@ -47,10 +47,10 @@ object TrackMeta {
     )
   }
 
-  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map(base => {
+  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map { base =>
     val meta: TrackMeta = base
     meta
-  })
+  }
 
   def format(request: RequestHeader): Format[TrackMeta] =
     format(PimpUrl.hostOnly(request))

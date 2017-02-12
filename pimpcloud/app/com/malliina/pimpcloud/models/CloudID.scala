@@ -1,5 +1,7 @@
 package com.malliina.pimpcloud.models
 
+import com.malliina.musicpimp.models.Identifiable
+
 /**
   * @param id the cloud ID of a connected MusicPimp server
   */

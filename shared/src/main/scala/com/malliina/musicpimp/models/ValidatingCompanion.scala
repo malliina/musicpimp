@@ -2,7 +2,7 @@ package com.malliina.musicpimp.models
 
 import play.api.libs.json._
 
-abstract class ValidatingCompanion[In, T](implicit r: Format[In]) {
+abstract class ValidatingCompanion[In: Format, T] {
   private val reader = Reads[T](json => {
     json.validate[In].flatMap(s => build(s)
       .map[JsResult[T]](t => JsSuccess(t))

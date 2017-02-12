@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
-import com.malliina.pimpcloud.models.TrackID
+import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json
 

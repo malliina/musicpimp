@@ -1,5 +1,6 @@
 package com.malliina.pimpcloud.models
 
+import com.malliina.musicpimp.models.Identifiable
 import com.malliina.play.json.SimpleCompanion
 import play.api.data.format.Formats.stringFormat
 

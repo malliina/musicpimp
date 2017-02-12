@@ -2,7 +2,7 @@ package tests
 
 import java.nio.file.Paths
 
-import com.malliina.pimpcloud.models.TrackID
+import com.malliina.musicpimp.models.TrackID
 import controllers.pimpcloud.Phones
 import org.scalatest.FunSuite
 

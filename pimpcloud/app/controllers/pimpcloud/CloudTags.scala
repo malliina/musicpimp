@@ -1,7 +1,7 @@
 package controllers.pimpcloud
 
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
-import com.malliina.pimpcloud.models.TrackID
+import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.tags.Bootstrap._
 import com.malliina.pimpcloud.tags.Tags._
 import com.malliina.pimpcloud.tags.{ScalaScripts, TagPage}
