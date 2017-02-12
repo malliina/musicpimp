@@ -1,2 +1,5 @@
-lazy val frontend = PimpBuild.frontend
-lazy val musicpimp = PimpBuild.pimpProject
+lazy val frontend = PimpBuild.musicpimpFrontend
+lazy val musicpimp = PimpBuild.musicpimp
+lazy val cloudFrontend = PimpBuild.pimpcloudFrontend
+lazy val pimpcloud = PimpBuild.pimpcloud
+lazy val shared = PimpBuild.shared

@@ -1,0 +1,33 @@
+<configuration>
+    <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel"/>
+    <appender name="RX" class="com.malliina.logbackrx.BasicBoundedReplayRxAppender">
+        <bufferSize>100</bufferSize>
+        <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${log.dir}/pimpcloud.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${log.dir}/pimpcloud-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- or whenever the file size reaches 100MB -->
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    <logger name="play" level="INFO"/>
+    <logger name="controllers" level="INFO"/>
+    <logger name="application" level="INFO"/>
+    <logger name="org.apache.http" level="INFO"/>
+    <logger name="com" level="INFO"/>
+    <logger name="play.core.server.netty.NettyModelConversion" level="ERROR"/>
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="RX"/>
+    </root>
+</configuration>

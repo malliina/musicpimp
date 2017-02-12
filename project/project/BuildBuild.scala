@@ -16,7 +16,7 @@ object BuildBuild {
 
   def sbtPlugins = Seq(
     "com.malliina" %% "sbt-packager" % "2.1.0",
-    "com.malliina" %% "sbt-play" % "0.9.1",
+    "com.malliina" %% "sbt-play" % "0.9.2",
     "com.malliina" %% "sbt-jenkins-control" % "0.3.1",
     "com.eed3si9n" % "sbt-buildinfo" % "0.4.0",
     "com.eed3si9n" % "sbt-assembly" % "0.11.2",

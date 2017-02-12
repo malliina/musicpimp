@@ -1,0 +1,7 @@
+APP_NAME=pimpcloud
+APP_HOME=/opt/pimpcloud
+APP_USER=pimpcloud
+JAVA_OPTS="-Dpimpcloud.home=/opt/pimpcloud -Dlogger.resource=prod-logger.xml"
+JAVA_CMD=/usr/bin/java
+PID_FILE=/var/run/pimpcloud.pid
+MAIN_CLASS=com.malliina.pimpcloud.Starter
