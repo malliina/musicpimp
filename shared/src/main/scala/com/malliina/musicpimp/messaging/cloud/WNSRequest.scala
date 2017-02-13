@@ -1,4 +1,4 @@
-package com.malliina.musicpimp.messaging
+package com.malliina.musicpimp.messaging.cloud
 
 import com.malliina.json.JsonFormats
 import com.malliina.push.wns._

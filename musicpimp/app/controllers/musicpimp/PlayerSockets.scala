@@ -18,7 +18,7 @@ abstract class PlayerSockets(security: SecureBase)
 
   override def onMessage(msg: Message, client: Client): Boolean = {
     (msg \ Cmd).asOpt[String].fold(log warn s"Unknown message: $msg")({
-      case JsonStrings.Status =>
+      case JsonStrings.StatusKey =>
         log info s"User: ${client.user} from: ${client.remoteAddress} said: $msg"
         val event = JsonMessages.withStatus(status(client))
         client.channel offer event

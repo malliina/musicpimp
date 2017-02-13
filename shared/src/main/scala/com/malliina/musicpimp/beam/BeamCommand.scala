@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.beam
 
-import com.malliina.musicpimp.cloud.PimpMessages.PimpMessage
+import com.malliina.musicpimp.cloud.PimpMessage
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.play.models.{Password, Username}
 import play.api.libs.json.Json

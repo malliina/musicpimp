@@ -7,7 +7,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.{Directory, Track}
 import com.malliina.musicpimp.cloud.PimpMessages.Version
 import com.malliina.musicpimp.cloud.PimpServerSocket.{body, idBody, nobody}
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.models._
 import com.malliina.pimpcloud.ws.NoCacheByteStreams
@@ -66,9 +66,9 @@ class PimpServerSocket(channel: SourceQueue[JsValue],
     authenticate3(user, pass).map(_ => true).recoverAll(_ => false)
 
   def authenticate3(user: Username, pass: Password): Future[Version] =
-    proxied[Version](nobody, Authenticate, UsernameKey -> user, PasswordKey -> pass)
+    proxied[Version](nobody, AuthenticateKey, UsernameKey -> user, PasswordKey -> pass)
 
-  def rootFolder = proxied[Directory](nobody, RootFolder)
+  def rootFolder = proxied[Directory](nobody, RootFolderKey)
 
   def folder(id: FolderID) = proxyD[Directory](PhoneRequest(FolderKey, idBody(id)), nobody)
 

@@ -9,7 +9,7 @@ import akka.util.ByteString
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
-import com.malliina.musicpimp.json.JsonStrings.{Cancel, Id, Range, TrackKey}
+import com.malliina.pimpcloud.json.JsonStrings.{Cancel, Id, Range, TrackKey}
 import com.malliina.pimpcloud.models.CloudID
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.log

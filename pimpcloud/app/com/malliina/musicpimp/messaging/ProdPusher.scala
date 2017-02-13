@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.push.adm.ADMClient
 import com.malliina.push.apns.APNSClient
 import com.malliina.push.gcm.GCMClient

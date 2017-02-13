@@ -146,10 +146,10 @@ class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
   }
 
   def statusEvent =
-    obj(Event -> toJson(Status)) ++ status.as[JsObject]
+    obj(Event -> toJson(StatusKey)) ++ status.as[JsObject]
 
   def statusEvent17 =
-    obj(Event -> toJson(Status)) ++ toJson(status17)(StatusEvent17.status17writer).as[JsObject]
+    obj(Event -> toJson(StatusKey)) ++ toJson(status17)(StatusEvent17.status17writer).as[JsObject]
 
   def status17 = {
     val track = playlist.current getOrElse LocalTrack.empty

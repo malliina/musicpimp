@@ -5,8 +5,8 @@ import java.util.UUID
 import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.json.JsonStrings
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.auth.Auth
 import com.malliina.play.http.AuthedRequest

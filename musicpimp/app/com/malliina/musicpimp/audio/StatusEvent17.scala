@@ -24,7 +24,7 @@ case class StatusEvent17(id: TrackID,
 object StatusEvent17 {
   implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] = Writes[StatusEvent17] { o =>
     obj(
-      Event -> Status,
+      Event -> StatusKey,
       Id -> toJson(o.id),
       Title -> o.title,
       Artist -> o.artist,

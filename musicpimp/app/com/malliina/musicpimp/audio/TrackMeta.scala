@@ -30,27 +30,32 @@ object TrackMeta {
   implicit val sto = JsonFormats.storageSizeFormat
   implicit val dur = JsonFormats.durationFormat
 
-  def writer(request: RequestHeader): Writes[TrackMeta] =
-    writer(PimpUrl.hostOnly(request))
-
-  def writer(host: PimpUrl): Writes[TrackMeta] = Writes[TrackMeta] { t =>
-    val call: Call = controllers.musicpimp.routes.LibraryController.supplyForPlayback(t.id)
-    obj(
-      Id -> t.id,
-      Title -> t.title,
-      Artist -> t.artist,
-      Album -> t.album,
-      PathKey -> t.path,
-      DurationKey -> t.duration,
-      Size -> t.size,
-      Url -> host.absolute(call)
-    )
-  }
-
   val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map { base =>
     val meta: TrackMeta = base
     meta
   }
+
+  def writer(request: RequestHeader): Writes[TrackMeta] =
+    writer(PimpUrl.hostOnly(request))
+
+  def writer(host: PimpUrl): Writes[TrackMeta] = writer(
+    host,
+    controllers.musicpimp.routes.LibraryController.supplyForPlayback
+  )
+
+  def writer(host: PimpUrl, url: TrackID => Call): Writes[TrackMeta] =
+    Writes[TrackMeta] { t =>
+      obj(
+        Id -> t.id,
+        Title -> t.title,
+        Artist -> t.artist,
+        Album -> t.album,
+        PathKey -> t.path,
+        DurationKey -> t.duration,
+        Size -> t.size,
+        Url -> host.absolute(url(t.id))
+      )
+    }
 
   def format(request: RequestHeader): Format[TrackMeta] =
     format(PimpUrl.hostOnly(request))

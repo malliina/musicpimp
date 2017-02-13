@@ -1,7 +1,8 @@
 package controllers.pimpcloud
 
 import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.musicpimp.messaging.{PushTask, Pusher}
+import com.malliina.musicpimp.messaging.Pusher
+import com.malliina.musicpimp.messaging.cloud.PushTask
 import com.malliina.pimpcloud.ErrorResponse
 import controllers.pimpcloud.Push.{Body, Cmd, PushValue, ResultKey}
 import play.api.libs.json.{JsError, JsResult, JsValue, Json}

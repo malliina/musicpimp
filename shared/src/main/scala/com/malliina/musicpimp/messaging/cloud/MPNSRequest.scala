@@ -10,7 +10,8 @@ case class MPNSRequest(tokens: Seq[MPNSToken],
                        flip: Option[FlipData],
                        iconic: Option[IconicData],
                        cycle: Option[CycleTile]) {
-  val message: Option[WindowsMessage] = toast orElse tile orElse flip orElse iconic orElse cycle
+  val message: Option[WindowsMessage] =
+    toast orElse tile orElse flip orElse iconic orElse cycle
 }
 
 object MPNSRequest {

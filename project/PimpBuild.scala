@@ -40,7 +40,7 @@ object PimpBuild {
   // wtf?
   val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
-  lazy val root = Project("root", file(".")).aggregate(musicpimp, pimpcloud, it)
+  lazy val root = Project("root", file(".")).aggregate(musicpimp, pimpcloud)
 
   lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
 
@@ -210,7 +210,6 @@ object PimpBuild {
     libraryDependencies ++= Seq(
       utilPlayDep,
       utilPlayDep % Test classifier "tests",
-      malliinaGroup %% "mobile-push" % "1.7.0",
       "org.java-websocket" % "Java-WebSocket" % "1.3.0",
       PlayImport.filters
     ).map(dep => dep.withSources()),
@@ -269,6 +268,7 @@ object PimpBuild {
   lazy val sharedSettings = baseSettings ++ Seq(
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % "3.1.1",
+      malliinaGroup %% "mobile-push" % "1.7.0",
       PlayImport.json,
       utilPlayDep
     )

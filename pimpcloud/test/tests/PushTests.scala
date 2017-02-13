@@ -1,6 +1,7 @@
 package tests
 
-import com.malliina.musicpimp.messaging.{APNSRequest, ProdPusher, PushTask}
+import com.malliina.musicpimp.messaging.ProdPusher
+import com.malliina.musicpimp.messaging.cloud.{APNSRequest, PushTask}
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import org.scalatest.FunSuite
 

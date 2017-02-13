@@ -1,6 +1,7 @@
 package tests
 
-import com.malliina.musicpimp.messaging.{APNSRequest, PushResult, PushTask, Pusher}
+import com.malliina.musicpimp.messaging.Pusher
+import com.malliina.musicpimp.messaging.cloud.{APNSRequest, PushResult, PushTask}
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.CloudComponents
 import com.malliina.play.http.{AuthedRequest, FullRequest}

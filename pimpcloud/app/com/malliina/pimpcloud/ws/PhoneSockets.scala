@@ -4,8 +4,8 @@ import akka.stream.{Materializer, QueueOfferResult}
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.json.JsonStrings
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.ws.PhoneSockets.log
 import com.malliina.play.ws.SocketClient
 import com.malliina.ws.{PhoneActorSockets, RxStmStorage}

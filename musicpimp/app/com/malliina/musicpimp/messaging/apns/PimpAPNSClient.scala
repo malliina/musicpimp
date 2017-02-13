@@ -12,12 +12,14 @@ import scala.concurrent.Future
 /** Sends a push notification using pimpcloud.
   */
 object PimpAPNSClient extends MessagingClient[APNSDevice] {
+  val Message = "Open to stop"
+
   override def send(dest: APNSDevice): Future[Response] = {
-    val payload = APSPayload(Some(Left("Open to stop")))
+    val payload = APSPayload(Some(Left(Message)))
     val extra = Map(Cmd -> toJson(Stop), Tag -> toJson(dest.tag))
     val message = APNSMessage(payload, extra)
     val request = APNSRequest(Seq(dest.id), message)
-    val task = PushTask(Option(request), None, None, None)
+    val task = PushTask(Option(request), None, None, None, None)
     CloudPushClient.default.push(task)
   }
 }

@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.messaging.cloud.{APNSRequest, APNSResult}
 import com.malliina.push.apns.APNSClient
 
 import scala.concurrent.Future

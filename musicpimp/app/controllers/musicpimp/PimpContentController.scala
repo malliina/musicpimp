@@ -15,7 +15,7 @@ import scala.concurrent.Future
   */
 trait PimpContentController {
 
-  import com.malliina.musicpimp.json.JsonFormatVersions._
+  import JsonFormatVersions._
 
   def pimpResponse(request: RequestHeader)(html: => Result, json17: => JsValue, latest: => JsValue): Result = {
     PimpRequest.requestedResponseFormat(request) match {
@@ -82,7 +82,7 @@ object PimpContentController {
 
 object PimpRequest {
 
-  import com.malliina.musicpimp.json.JsonFormatVersions._
+  import JsonFormatVersions._
 
   /**
     * @param request the request

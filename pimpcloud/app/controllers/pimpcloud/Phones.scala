@@ -7,7 +7,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID}
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.auth.CloudAuthentication
@@ -59,7 +59,7 @@ class Phones(tags: CloudTags,
 
   def rootFolder = folderAction(
     _.rootFolder,
-    _ => PhoneRequest(RootFolder, Json.obj())
+    _ => PhoneRequest(RootFolderKey, Json.obj())
   )
 
   def folder(id: FolderID) = folderAction(
@@ -217,7 +217,7 @@ class Phones(tags: CloudTags,
     }
   }
 
-  def proxiedJson(req: PhoneRequest, conn: PhoneConnection) =
+  def proxiedJson(req: PhoneRequest, conn: PhoneConnection): Future[Result] =
     conn.server.defaultProxy(req, conn.user) map (js => Ok(js))
 
   def phoneAction(f: PhoneConnection => EssentialAction) =

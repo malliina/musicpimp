@@ -2,7 +2,7 @@ package com.malliina.ws
 
 import java.util.UUID
 
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.ws.IterateeStore.log
 import play.api.Logger
 import play.api.libs.iteratee.Concurrent.Channel

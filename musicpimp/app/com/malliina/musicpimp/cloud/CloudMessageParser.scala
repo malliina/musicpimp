@@ -2,7 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered, RequestId}
-import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PimpMessage, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
+import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
@@ -34,7 +34,7 @@ trait CloudMessageParser {
 
     request flatMap { req =>
       val message = cmd flatMap {
-        case Version => JsSuccess(GetVersion)
+        case VersionKey => JsSuccess(GetVersion)
         case TrackKey => body.validate[RangedTrack] orElse body.validate[Track] // the fallback is not needed I think
         case Cancel => JsSuccess(CancelStream(req))
         case Meta => body.validate[GetMeta]
@@ -51,7 +51,7 @@ trait CloudMessageParser {
         case AlarmsEdit => withBody(AlarmEdit.apply)
         case AlarmsAdd => withBody(AlarmAdd.apply)
         case Beam => body.validate[BeamCommand]
-        case Status => JsSuccess(GetStatus)
+        case StatusKey => JsSuccess(GetStatus)
         case Recent => readMeta.map(GetRecent.apply)
         case Popular => readMeta.map(GetPopular.apply)
         case other => JsError(s"Unknown JSON command: $other in $json")

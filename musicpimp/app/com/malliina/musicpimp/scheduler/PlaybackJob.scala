@@ -34,6 +34,7 @@ case class PlaybackJob(track: TrackID) extends Job {
   override def run(): Unit = {
     trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback.")) { t =>
       MusicPlayer.setPlaylistAndPlay(t).map { _ =>
+        // APNS delegates to pimpcloud, TODO others should as well
         val apns = APNSDevices.get().map(PimpAPNSClient.sendLogged)
         val toasts = PushUrls.get().map(MicrosoftClient.sendLogged)
         val gcms = GoogleDevices.get().map(GcmClient.sendLogged)

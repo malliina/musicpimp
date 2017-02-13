@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.messaging.cloud.{BasicResult, MPNSRequest}
 import com.malliina.push.mpns.MPNSClient
 
 import scala.concurrent.Future

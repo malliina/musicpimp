@@ -24,7 +24,7 @@ object FolderMeta {
   def writer(host: PimpUrl) = Writes[FolderMeta] { f =>
     val libraryController = controllers.musicpimp.routes.LibraryController
     val call: Call =
-      if (f.id == Library.RootId) libraryController.rootLibrary
+      if (f.id == Library.RootId) libraryController.rootLibrary()
       else libraryController.library(f.id)
     obj(
       Id -> f.id,

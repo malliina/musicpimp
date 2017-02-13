@@ -11,7 +11,7 @@ import scala.concurrent.duration.Duration
 object JsonMessages extends JsonMessages
 
 trait JsonMessages {
-  val version = obj(Version -> com.malliina.musicpimp.BuildInfo.version)
+  val version = obj(VersionKey -> com.malliina.musicpimp.BuildInfo.version)
   val noMedia = obj(State -> PlayerStates.NoMedia.toString)
   val unAuthorized = failure(AccessDenied)
   val databaseFailure = failure(DatabaseError)
@@ -51,10 +51,10 @@ trait JsonMessages {
     event(PlaystateChanged, State -> newState.toString)
 
   def searchStatus(status: String) =
-    event(SearchStatus, Status -> status)
+    event(SearchStatus, StatusKey -> status)
 
   def withStatus(json: JsValue): JsValue =
-    event(Status) ++ json.as[JsObject]
+    event(StatusKey) ++ json.as[JsObject]
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject =
     obj(Event -> eventType) ++ obj(valuePairs: _*)
