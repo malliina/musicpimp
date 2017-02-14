@@ -32,7 +32,7 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
-  val musicpimpVersion = "3.5.1"
+  val musicpimpVersion = "3.5.2"
   val pimpcloudVersion = "1.6.9"
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
