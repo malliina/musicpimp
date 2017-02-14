@@ -32,8 +32,9 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
-  val musicpimpVersion = "3.5.2"
+  val musicpimpVersion = "3.5.3"
   val pimpcloudVersion = "1.6.9"
+  val sharedVersion = "1.0.0"
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
@@ -203,7 +204,10 @@ object PimpBuild {
           "com.malliina.musicpimp.models._",
           "com.malliina.play.models.Username"
         ),
-        libs += (packageBin in Assets).value.toPath
+        libs ++= Seq(
+          (packageBin in Assets).value.toPath,
+          (packageBin in shared in Compile).value.toPath
+        )
       )
 
   lazy val commonServerSettings = baseSettings ++ Seq(
@@ -232,7 +236,10 @@ object PimpBuild {
           PlayImport.cache
         ),
         PlayKeys.externalizeResources := false,
-        libs += (packageBin in Assets).value.toPath
+        libs ++= Seq(
+          (packageBin in Assets).value.toPath,
+          (packageBin in shared in Compile).value.toPath
+        )
       )
 
   lazy val pimpcloudScalaJSSettings = Seq(
@@ -266,6 +273,7 @@ object PimpBuild {
   )
 
   lazy val sharedSettings = baseSettings ++ Seq(
+    version := sharedVersion,
     libraryDependencies ++= Seq(
       "com.typesafe.slick" %% "slick" % "3.1.1",
       malliinaGroup %% "mobile-push" % "1.7.0",
