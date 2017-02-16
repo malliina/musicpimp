@@ -34,6 +34,7 @@ object InitOptions {
 }
 
 class PimpLoader(options: InitOptions) extends ApplicationLoader {
+  // Probably needed due to reference in application.conf to only the class name
   def this() = this(InitOptions.prod)
 
   def load(context: Context) = {
@@ -42,23 +43,23 @@ class PimpLoader(options: InitOptions) extends ApplicationLoader {
       .foreach(_.configure(env))
     // faster app restart when in dev
     val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
-    new PimpComponents(context, opts).application
+    new PimpComponents(context, opts, PimpDb.default()).application
   }
 }
 
-class PimpComponents(context: Context, options: InitOptions)
+class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   extends BuiltInComponentsFromContext(context)
     with I18nComponents {
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
-    new DefaultHttpErrorHandler(environment, configuration, sourceMapper, Some(router)) with PimpErrorHandling
+    new DefaultHttpErrorHandler(environment, configuration, sourceMapper, Some(router))
+      with PimpErrorHandling
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = Messages(language, messagesApi)
 
   // Services
-  lazy val db = new PimpDb
   lazy val indexer = new Indexer(db)
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db)

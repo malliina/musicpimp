@@ -42,9 +42,9 @@ object TestPusher extends Pusher {
     Future.successful(PushResult.empty)
 }
 
-class TestSuite extends AppSuite(new TestComponents(_))
+class PimpcloudSuite extends AppSuite(new TestComponents(_))
 
-class HttpPushTests extends TestSuite {
+class HttpPushTests extends PimpcloudSuite {
   //  val tokenString = "193942675140b3d429311de140bd08ff423712ec9c3ea365b12e61b84609afa9"
   val tokenString = "81bae54a590a3ae871408bd565d7e441aa952744770783209b2fd54219e3d9fe"
   val testToken = APNSToken.build(tokenString).get

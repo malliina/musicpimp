@@ -14,8 +14,8 @@ import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
 import slick.driver.H2Driver.api._
-import slick.jdbc.{GetResult, PositionedResult}
 import slick.jdbc.GetResult.GetInt
+import slick.jdbc.{GetResult, PositionedResult}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
@@ -24,20 +24,36 @@ import scala.util.{Failure, Success}
 
 object PimpDb {
   private val log = Logger(getClass)
-}
+  val H2UrlSettings = "h2.url.settings"
+  val H2Home = "h2.home"
 
-class PimpDb extends DatabaseLike with AutoCloseable {
-  val H2_URL_SETTINGS = "h2.url.settings"
-  val H2_HOME = "h2.home"
+  def default() = {
+    val dirByConf: Option[Path] = sys.props.get(H2Home).map(p => Paths.get(p))
+    val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
+    file(dataHome / "pimp291")
+  }
+
+  /**
+    * @param path path to database file
+    * @return a file-based database stored at `path`
+    */
+  def file(path: Path) = {
+    Option(path.getParent).foreach(p => Files.createDirectories(p))
+    new PimpDb(path.toString)
+  }
+
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
-  //  override val database = Database.forURL("jdbc:h2:~/.musicpimp/pimp;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-  val databaseUrlSettings = sys.props.get(H2_URL_SETTINGS).map(_.trim).filter(_.nonEmpty).map(ss => s";$ss") getOrElse ""
-  val dirByConf: Option[Path] = sys.props.get(H2_HOME).map(p => Paths.get(p))
-  val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
-  Files.createDirectories(dataHome)
-  val databaseFile = dataHome / "pimp291"
-  val url = s"jdbc:h2:$databaseFile;DB_CLOSE_DELAY=-1$databaseUrlSettings"
+  def test() = new PimpDb("mem:test")
+}
+
+class PimpDb(conn: String) extends DatabaseLike with AutoCloseable {
+  val databaseUrlSettings = sys.props.get(PimpDb.H2UrlSettings)
+    .map(_.trim)
+    .filter(_.nonEmpty)
+    .map(ss => s";$ss")
+    .getOrElse("")
+  val url = s"jdbc:h2:$conn;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
   override val database = Database.forDataSource(pool)
@@ -93,6 +109,7 @@ class PimpDb extends DatabaseLike with AutoCloseable {
       }
     }
   }
+
   object GetDummy extends GetResult[Int] {
     override def apply(v1: PositionedResult) = 0
   }

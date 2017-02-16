@@ -7,7 +7,7 @@ import org.scalatest.FunSuite
 class IndexingTests extends FunSuite {
   ignore("indexing performance") {
     val (fileCount, indexDuration) = Utils.timed {
-      new Indexer(new PimpDb).index().toBlocking.last
+      new Indexer(PimpDb.test()).index().toBlocking.last
     }
     println(s"Indexed $fileCount files in $indexDuration")
   }

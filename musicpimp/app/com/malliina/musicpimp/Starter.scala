@@ -76,12 +76,12 @@ object Starter extends PlayLifeCycle with Log {
       server.foreach(_.stop())
     } finally {
       /**
-       * Well the following is lame, but some threads are left hanging
-       * and I don't know how to stop them gracefully.
-       *
-       * Likely guilty: play! framework, because if no web requests have
-       * been made, the app exits normally without this
-       */
+        * Well the following is lame, but some threads are left hanging
+        * and I don't know how to stop them gracefully.
+        *
+        * Likely guilty: play! framework, because if no web requests have
+        * been made, the app exits normally without this
+        */
       Future(System.exit(0))
     }
   }
@@ -130,9 +130,9 @@ object Starter extends PlayLifeCycle with Log {
 
   def printThreads() {
     val threads = Thread.getAllStackTraces.keySet()
-    threads.foreach(thread => {
+    threads.foreach { thread =>
       println("T: " + thread.getName + ", state: " + thread.getState)
-    })
+    }
     println("Threads in total: " + threads.size())
   }
 

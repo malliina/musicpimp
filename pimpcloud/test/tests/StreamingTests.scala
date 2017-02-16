@@ -25,7 +25,7 @@ import play.api.test.FakeRequest
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future, Promise}
 
-class StreamingTests extends TestSuite with BaseSuite {
+class StreamingTests extends PimpcloudSuite with BaseSuite {
   implicit val mat = app.materializer
   implicit val ec = mat.executionContext
 
