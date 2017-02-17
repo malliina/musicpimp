@@ -1,7 +1,7 @@
 package controllers.musicpimp
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
@@ -37,7 +37,7 @@ class Alarms(tags: PimpTags, auth: Authenticator, messages: Messages, mat: Mater
 
   def tracks = pimpAction { request =>
     val tracks: Iterable[TrackMeta] = Library.tracksRecursive
-    implicit val w = TrackMeta.writer(request)
+    implicit val w = TrackJson.writer(request)
     Ok(Json.toJson(tracks))
   }
 

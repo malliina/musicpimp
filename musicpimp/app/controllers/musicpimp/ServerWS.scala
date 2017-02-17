@@ -38,7 +38,7 @@ class ServerWS(val clouds: Clouds,
   }
 
   override def status(client: Client) = {
-    implicit val w = TrackMeta.writer(client.request)
+    implicit val w = TrackJson.writer(client.request)
     apiVersion(client) match {
       case JsonFormatVersions.JSONv17 => toJson(MusicPlayer.status17)
       case _ => toJson(MusicPlayer.status)

@@ -11,7 +11,7 @@ sealed trait ServerMessage
 
 object ServerMessage {
   def writer(host: PimpUrl): Writes[ServerMessage] = {
-    implicit val tw = TrackMeta.writer(host)
+    implicit val tw = TrackJson.writer(host)
     Writes[ServerMessage] {
       case TrackChangedMessage(track) =>
         JsonMessages.trackChanged(track)

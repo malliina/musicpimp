@@ -27,7 +27,7 @@ class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializ
 
   def cloud = pimpActionAsync { request =>
     val id = clouds
-      .registration.map(id => (Some(id), None))
+      .registration.map[(Option[CloudID], Option[UserFeedback])](id => (Some(id), None))
       .recoverAll(t => (None, Option(UserFeedback.error(t.getMessage))))
     id.map { case (cloudId, errorMessage) =>
       val feedback = UserFeedback.flashed(request) orElse errorMessage

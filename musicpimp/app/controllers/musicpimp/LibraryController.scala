@@ -1,7 +1,7 @@
 package controllers.musicpimp
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
@@ -28,7 +28,7 @@ class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: Authenticator, 
   }
 
   def tracksIn(folderID: FolderID) = pimpActionAsync { request =>
-    implicit val writer = TrackMeta.writer(request)
+    implicit val writer = TrackJson.writer(request)
     lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID, request))(ts => Ok(Json.toJson(ts))))
   }
 
@@ -79,7 +79,7 @@ class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: Authenticator, 
   }
 
   def meta(id: TrackID) = pimpAction { request =>
-    implicit val writer = TrackMeta.writer(request)
+    implicit val writer = TrackJson.writer(request)
     val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
     metaResult.fold(trackNotFound(id))(json => Ok(json))
   }

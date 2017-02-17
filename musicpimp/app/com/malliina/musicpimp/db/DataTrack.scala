@@ -1,8 +1,7 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json
@@ -17,7 +16,7 @@ case class DataTrack(id: TrackID,
                      duration: Duration,
                      size: StorageSize,
                      folder: FolderID) extends TrackMeta {
-  val path = PimpPath.fromRaw(Library decode folder)
+  val path = PimpPath.fromRaw(PimpEnc decode folder)
 
   def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
 }

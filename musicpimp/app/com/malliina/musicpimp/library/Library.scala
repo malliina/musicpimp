@@ -1,14 +1,14 @@
 package com.malliina.musicpimp.library
 
 import java.io.FileNotFoundException
-import java.net.{URLDecoder, URLEncoder}
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.malliina.audio.meta.SongMeta
 import com.malliina.file.FileUtilities
+import com.malliina.musicpimp.audio.PimpEnc._
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
-import com.malliina.musicpimp.models.{FolderID, Identifiable, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
 import com.malliina.util.Utils
 import play.api.Logger
 
@@ -17,27 +17,8 @@ import scala.concurrent.stm.{Ref, atomic}
 object Library extends Library {
   private val log = Logger(getClass)
 
-  val UTF8 = "UTF-8"
-
   val RootId = FolderID("")
   val EmptyPath = Paths get ""
-
-  def relativePath(itemId: Identifiable): Path = Paths get decode(itemId)
-
-  /** Generates a URL-safe ID of the given music item.
-    *
-    * TODO: make item unique
-    *
-    * @param path path to music file or folder
-    * @return the id
-    */
-  def encode(path: Path) = URLEncoder.encode(path.toString, UTF8)
-
-  def encodeFolder(path: Path) = FolderID(encode(path))
-
-  def encodeTrack(path: Path) = TrackID(encode(path))
-
-  def decode(trackID: Identifiable) = URLDecoder.decode(trackID.id, UTF8)
 }
 
 class Library {
@@ -66,6 +47,7 @@ class Library {
             .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
       }
     }
+
     Map(items(root).toSeq.flatMap(f => recurse(f, Map(EmptyPath -> f))): _*)
   }
 
@@ -92,7 +74,7 @@ class Library {
 
   def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(Library.relativePath(id).getParent) getOrElse EmptyPath
+    val path = Option(relativePath(id).getParent) getOrElse EmptyPath
     DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
   }
 
@@ -172,7 +154,7 @@ class Library {
     * @return the folder, or an empty folder if the folder could not be read
     */
   private def tryReadFolder(f: => Folder): Folder =
-  Utils.opt[Folder, AccessDeniedException](f).getOrElse(Folder.empty)
+    Utils.opt[Folder, AccessDeniedException](f) getOrElse Folder.empty
 }
 
 case class PathInfo(relative: Path, root: Path) {

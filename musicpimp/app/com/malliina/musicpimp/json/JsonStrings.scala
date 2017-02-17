@@ -16,14 +16,10 @@ trait JsonStrings extends PimpStrings {
   val GenericError = "A generic error occurred"
 
   val Folders = "folders"
-  val PathKey = "path"
   val Parent = "parent"
   val Tracks = "tracks"
   val Contents = "contents"
-  val Title = "title"
-  val Album = "album"
-  val Artist = "artist"
-  val Size = "size"
+
   val Gain = "gain"
   val Mute = "mute"
   val IsDir = "is_dir"
@@ -36,7 +32,6 @@ trait JsonStrings extends PimpStrings {
   val Position = "position"
   //  @deprecated("Use POSITION", "1.8.0")
   val PosSeconds = "pos_seconds"
-  val DurationKey = "duration"
   //  @deprecated("Use DURATION", "1.8.0")
   val DurationSeconds = "duration_seconds"
   val Msg = "msg"
@@ -99,5 +94,4 @@ trait JsonStrings extends PimpStrings {
   val Push = "push"
   val Result = "result"
 
-  val Url = "url"
 }

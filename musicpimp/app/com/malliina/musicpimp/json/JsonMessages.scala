@@ -3,6 +3,7 @@ package com.malliina.musicpimp.json
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.models.{FailReason, Version}
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 
@@ -11,22 +12,22 @@ import scala.concurrent.duration.Duration
 object JsonMessages extends JsonMessages
 
 trait JsonMessages {
-  val version = obj(VersionKey -> com.malliina.musicpimp.BuildInfo.version)
+  val version = Version(com.malliina.musicpimp.BuildInfo.version)
   val noMedia = obj(State -> PlayerStates.NoMedia.toString)
-  val unAuthorized = failure(AccessDenied)
-  val databaseFailure = failure(DatabaseError)
-  val genericFailure = failure(GenericError)
-  val invalidParameter = failure(InvalidParameter)
-  val invalidCredentials = failure(InvalidCredentials)
-  val invalidJson = failure(InvalidJson)
-  val noFileInMultipart = failure(NoFileInMultipart)
+  val unAuthorized = FailReason(AccessDenied)
+  val databaseFailure = FailReason(DatabaseError)
+  val genericFailure = FailReason(GenericError)
+  val invalidParameter = FailReason(InvalidParameter)
+  val invalidCredentials = FailReason(InvalidCredentials)
+  val invalidJson = FailReason(InvalidJson)
+  val noFileInMultipart = FailReason(NoFileInMultipart)
   val ping = event(Ping)
 
   def failure(reason: String) =
     obj(Reason -> reason)
 
   def exception(e: Throwable) =
-    failure(e.getMessage)
+    FailReason(e.getMessage)
 
   def trackChanged(track: TrackMeta)(implicit w: Writes[TrackMeta]) =
     event(TrackChanged, TrackKey -> toJson(track))

@@ -1,16 +1,16 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.{PimpPath, PimpUrl, TrackID}
+import com.malliina.musicpimp.json.PimpStrings._
+import com.malliina.musicpimp.models.{MusicItem, PimpPath, PimpUrl, TrackID}
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
-import play.api.libs.json.{Format, Reads, Writes}
-import play.api.mvc.{Call, RequestHeader}
+import play.api.libs.json.{Reads, Writes}
+import play.api.mvc.Call
 
 import scala.concurrent.duration.Duration
 
-trait TrackMeta {
+trait TrackMeta extends MusicItem {
   def id: TrackID
 
   def title: String
@@ -30,18 +30,10 @@ object TrackMeta {
   implicit val sto = JsonFormats.storageSizeFormat
   implicit val dur = JsonFormats.durationFormat
 
-  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map { base =>
+  val reader: Reads[TrackMeta] = Track.jsonFormat.map { base =>
     val meta: TrackMeta = base
     meta
   }
-
-  def writer(request: RequestHeader): Writes[TrackMeta] =
-    writer(PimpUrl.hostOnly(request))
-
-  def writer(host: PimpUrl): Writes[TrackMeta] = writer(
-    host,
-    controllers.musicpimp.routes.LibraryController.supplyForPlayback
-  )
 
   def writer(host: PimpUrl, url: TrackID => Call): Writes[TrackMeta] =
     Writes[TrackMeta] { t =>
@@ -57,9 +49,17 @@ object TrackMeta {
       )
     }
 
-  def format(request: RequestHeader): Format[TrackMeta] =
-    format(PimpUrl.hostOnly(request))
+  //  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map { base =>
+  //    val meta: TrackMeta = base
+  //    meta
+  //  }
 
-  def format(host: PimpUrl): Format[TrackMeta] =
-    Format(reader, writer(host))
+  //  def writer(request: RequestHeader): Writes[TrackMeta] =
+  //    writer(PimpUrl.hostOnly(request))
+
+  //  def format(request: RequestHeader): Format[TrackMeta] =
+  //    format(PimpUrl.hostOnly(request))
+
+  //    def format(host: PimpUrl): Format[TrackMeta] =
+  //      Format(reader, writer(host))
 }

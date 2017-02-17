@@ -15,12 +15,12 @@ import scala.util.{Success, Try}
 
 class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
   extends IPlayer
-  with PlaylistSupport[TrackMeta]
-  with StateAwarePlayer
-  with JsonSender {
+    with PlaylistSupport[TrackMeta]
+    with StateAwarePlayer
+    with JsonSender {
 
   val user = request.user
-  implicit val trackWriter = TrackMeta.writer(request.host)
+  implicit val trackWriter = TrackJson.writer(request.host)
   val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, webPlayer)
   private val DEFAULT_BROWSER_VOLUME = 100
 
@@ -79,7 +79,6 @@ class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
   }
 
   def seek(pos: Duration): Unit = {
-    //    send(timeUpdated(pos))
     sendCommand(Seek, pos.toSeconds)
   }
 
@@ -168,5 +167,3 @@ class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
     )
   }
 }
-
-

@@ -1,7 +1,7 @@
 package controllers.musicpimp
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
@@ -40,7 +40,7 @@ class Playlists(tags: PimpTags,
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync { req =>
-    implicit val f = PlaylistsMeta.format(TrackMeta.format(req))
+    implicit val f = PlaylistsMeta.format(TrackJson.format(req))
     val user = req.user
     service.playlistsMeta(user).map(playlists => {
       respond(req)(
@@ -51,7 +51,7 @@ class Playlists(tags: PimpTags,
   }
 
   def playlist(id: PlaylistID) = recoveredAsync { req =>
-    implicit val f = TrackMeta.format(req)
+    implicit val f = TrackJson.format(req)
     val user = req.user
     service.playlistMeta(id, user).map { result =>
       result.map { playlist =>

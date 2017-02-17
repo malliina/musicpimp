@@ -4,7 +4,7 @@ import javax.net.ssl.SNIHostName
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatusEvent, TrackMeta}
+import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
@@ -85,7 +85,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   val uploader = TrackUploads(cloudHost)
   log info s"Initializing cloud connection with user $username"
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
-  implicit val trackWriter = TrackMeta.format(cloudHost)
+  implicit val trackWriter = TrackJson.format(cloudHost)
 
   val lib = deps.lib
   val handler = deps.handler
@@ -100,8 +100,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   def unregister() = Try(sendMessage(SimpleCommand(Unregister)))
 
-  /**
-    * Reconnections are currently not supported; only call this method once per instance.
+  /** Reconnections are currently not supported; only call this method once per instance.
     *
     * Impl: On subsequent calls, the returned future will always be completed regardless of connection result
     *
@@ -122,7 +121,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       case e: Exception =>
         log.warn(s"Failed while handling JSON: $json.", e)
         (json \ RequestId).validate[RequestID] map { request =>
-          sendFailureResponse(JsonMessages.failure(s"The MusicPimp server failed while dealing with the request: $json"), request)
+          sendFailureResponse(FailReason(s"The MusicPimp server failed while dealing with the request: $json"), request)
         }
     }
   }
@@ -175,7 +174,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       case Search(term, limit) =>
         databaseResponse(deps.db.fullText(term, limit))
       case PingAuth =>
-        sendJsonResponse(JsonMessages.version, request)
+        sendJsonResponse(Json.toJson(JsonMessages.version), request)
       case PingMessage =>
         sendJsonResponse(JsonMessages.ping, request)
       case GetPopular(meta) =>
@@ -185,7 +184,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       case GetPlaylists(user) =>
         databaseResponse(playlists.playlistsMeta(user))
       case GetPlaylist(id, user) =>
-        def notFound = JsonMessages.failure(s"Playlist not found: $id")
+        def notFound = FailReason(s"Playlist not found: $id")
 
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
@@ -215,12 +214,12 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
         }
         authentication map { isValid =>
           val response =
-            if (isValid) JsonMessages.version
-            else JsonMessages.invalidCredentials
+            if (isValid) Json.toJson(JsonMessages.version)
+            else Json.toJson(JsonMessages.invalidCredentials)
           sendJsonResponse(response, request, success = isValid)
         }
       case GetVersion =>
-        sendJsonResponse(JsonMessages.version, request)
+        sendResponse(JsonMessages.version, request)
       case GetMeta(id) =>
         val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
         val response = metaResult getOrElse LibraryController.noTrackJson(id)
@@ -271,8 +270,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   def sendDefaultFailure(request: RequestID) =
     sendFailureResponse(JsonMessages.genericFailure, request)
 
-  def sendFailureResponse(response: JsValue, request: RequestID) =
-    sendJsonResponse(response, request, success = false)
+  def sendFailureResponse(response: FailReason, request: RequestID) =
+    sendJsonResponse(Json.toJson(response), request, success = false)
 
   def sendAckResponse(request: RequestID) =
     sendJsonResponse(Json.obj(), request, success = true)

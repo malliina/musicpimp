@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.library
 
-import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
+import com.malliina.musicpimp.audio.{FolderMeta, TrackJson, TrackMeta}
 import com.malliina.musicpimp.db.DataFolder
 import com.malliina.musicpimp.models.PimpUrl
 import play.api.libs.json.{Json, Writes}
@@ -18,7 +18,7 @@ object MusicFolder {
 
   def writer(host: PimpUrl): Writes[MusicFolder] = {
     implicit val f = FolderMeta.writer(host)
-    implicit val t = TrackMeta.format(host)
+    implicit val t = TrackJson.format(host)
     Json.writes[MusicFolder]
   }
 }

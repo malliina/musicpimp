@@ -3,7 +3,7 @@ package controllers.musicpimp
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
 import akka.stream.Materializer
-import com.malliina.musicpimp.audio.{MusicPlayer, TrackMeta}
+import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
@@ -34,7 +34,7 @@ class Website(tags: PimpTags,
   }
 
   def recent = metaAction { (meta, req) =>
-    implicit val f = TrackMeta.format(req)
+    implicit val f = TrackJson.format(req)
     stats.mostRecent(meta) map { entries =>
       respond(req)(
         html = tags.mostRecent(entries, meta.username),
@@ -44,7 +44,7 @@ class Website(tags: PimpTags,
   }
 
   def popular = metaAction { (meta, req) =>
-    implicit val f = TrackMeta.format(req)
+    implicit val f = TrackJson.format(req)
     stats.mostPlayed(meta) map { entries =>
       respond(req)(
         html = tags.mostPopular(entries, meta.username),

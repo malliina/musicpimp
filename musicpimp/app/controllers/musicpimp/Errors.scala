@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.json.JsonMessages
+import com.malliina.musicpimp.models.FailReason
 import play.api.mvc.Results
 import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Unauthorized}
 
@@ -20,5 +20,5 @@ trait Errors {
 
   def internal(message: String) = withStatus(InternalServerError, message)
 
-  def withStatus(status: Results.Status, message: String) = status(JsonMessages.failure(message))
+  def withStatus(status: Results.Status, message: String) = status(FailReason(message))
 }

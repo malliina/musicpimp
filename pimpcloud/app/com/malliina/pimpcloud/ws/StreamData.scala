@@ -7,7 +7,10 @@ import com.malliina.pimpcloud.models.CloudID
 import com.malliina.play.ContentRange
 import play.api.libs.json.Json
 
-case class StreamData(uuid: UUID, serverID: CloudID, track: Track, range: ContentRange)
+case class StreamData(uuid: UUID,
+                      serverID: CloudID,
+                      track: Track,
+                      range: ContentRange)
 
 object StreamData {
   implicit val format = Json.format[StreamData]

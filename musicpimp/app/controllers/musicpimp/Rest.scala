@@ -61,7 +61,7 @@ class Rest(webPlayer: WebPlayer,
   }
 
   def webPlaylist = pimpAction { req =>
-    implicit val w = TrackMeta.writer(req)
+    implicit val w = TrackJson.writer(req)
     Ok(Json.toJson(playlistFor(req.user)))
   }
 
@@ -85,7 +85,7 @@ class Rest(webPlayer: WebPlayer,
   def streamedPlayback = authenticated { req =>
     EssentialAction { requestHeader =>
       val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
-        .map(Json.parse(_).validate[BaseTrackMeta])
+        .map(Json.parse(_).validate[Track])
       val metaOrError = headerValue.map(jsonResult => jsonResult.fold(
         invalid => Left(loggedJson(s"Invalid JSON: $invalid")),
         valid => Right(valid))
@@ -107,7 +107,7 @@ class Rest(webPlayer: WebPlayer,
     */
   def stream = pimpParsedAction(parse.json) { req =>
     Json.fromJson[BeamCommand](req.body).fold(
-      invalid = jsonErrors => BadRequest(JsonMessages.invalidJson),
+      invalid = _ => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
         try {
           val (response, duration) = Utils.timed(Rest.beam(cmd))
@@ -135,7 +135,7 @@ class Rest(webPlayer: WebPlayer,
   }
 
   def status = pimpAction { req =>
-    implicit val w = TrackMeta.writer(req)
+    implicit val w = TrackJson.writer(req)
     pimpResponse(req)(
       html = NoContent,
       json17 = Json.toJson(MusicPlayer.status17),
@@ -166,8 +166,8 @@ class Rest(webPlayer: WebPlayer,
       pimpAction(Ok)
     }
 
-  private def streamingAction(meta: BaseTrackMeta): EssentialAction = {
-    val relative = Library.relativePath(meta.id)
+  private def streamingAction(meta: Track): EssentialAction = {
+    val relative = PimpEnc.relativePath(meta.id)
     // Saves the streamed media to file if possible
     val fileOpt = Library.suggestAbsolute(relative).filter(canWriteNewFile) orElse
       Option(FileUtilities.tempDir resolve relative).filter(canWriteNewFile)
@@ -181,7 +181,7 @@ class Rest(webPlayer: WebPlayer,
     // first. When the OutputStream onto which the InputStream is connected is closed,
     // the Future, if still not completed, will complete exceptionally with an IOException.
     Future {
-      val track = meta.buildTrack(inStream)
+      val track = StreamedTrack.fromTrack(meta, inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
     pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat))(req => {
