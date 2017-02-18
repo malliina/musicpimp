@@ -3,7 +3,7 @@ package com.malliina.ws
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.pimpcloud.models.CloudID
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.http.AuthedRequest
 import play.api.libs.json.JsValue
 import play.api.mvc._

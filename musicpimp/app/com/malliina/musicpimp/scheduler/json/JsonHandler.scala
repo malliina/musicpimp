@@ -6,15 +6,20 @@ import com.malliina.musicpimp.messaging.adm.{ADMDevice, AmazonDevices}
 import com.malliina.musicpimp.messaging.apns.{APNSDevice, APNSDevices}
 import com.malliina.musicpimp.messaging.gcm.{GCMDevice, GoogleDevices}
 import com.malliina.musicpimp.messaging.mpns.PushUrls
+import com.malliina.musicpimp.scheduler.json.JsonHandler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, ScheduledPlaybackService}
 import com.malliina.push.mpns.PushUrl
-import com.malliina.util.Log
+import play.api.Logger
 import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
 
 object AlarmJsonHandler extends JsonHandler
 
-trait JsonHandler extends SchedulerStrings with Log {
+object JsonHandler {
+  private val log = Logger(getClass)
+}
+
+trait JsonHandler extends SchedulerStrings {
 
   def musicPlayer = MusicPlayer
 

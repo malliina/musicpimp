@@ -5,8 +5,9 @@ import java.util.UUID
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.UuidFutureMessaging
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings.{Body, RequestId, SuccessKey}
-import com.malliina.pimpcloud.models.{CloudID, PhoneRequest}
+import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.play.models.Username
 import com.malliina.util.Utils
 import play.api.libs.json._

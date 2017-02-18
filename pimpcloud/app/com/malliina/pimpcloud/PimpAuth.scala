@@ -1,6 +1,6 @@
 package com.malliina.pimpcloud
 
-import com.malliina.pimpcloud.models.CloudID
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.auth.Auth
 import com.malliina.play.models.{Password, Username}
 import play.api.mvc.RequestHeader

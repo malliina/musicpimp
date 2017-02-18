@@ -6,7 +6,7 @@ import akka.stream.QueueOfferResult
 import akka.stream.scaladsl.SourceQueue
 import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
-import com.malliina.pimpcloud.models.CloudID
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.ContentRange
 import play.api.Logger
 

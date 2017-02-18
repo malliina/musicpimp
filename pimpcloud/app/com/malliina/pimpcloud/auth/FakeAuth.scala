@@ -5,8 +5,8 @@ import java.util.UUID
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.stream.{Materializer, OverflowStrategy}
 import com.malliina.musicpimp.cloud.PimpServerSocket
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.CloudCredentials
-import com.malliina.pimpcloud.models.CloudID
 import com.malliina.play.models.Username
 import controllers.pimpcloud.{PhoneConnection, ServerRequest}
 import play.api.libs.json.JsValue

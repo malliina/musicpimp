@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.cloud
 
+import com.malliina.musicpimp.models.CloudID
 import play.api.libs.json.Json
 
 case class RegistrationEvent(event: String, id: CloudID) extends PimpMessage

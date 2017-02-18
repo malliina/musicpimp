@@ -9,9 +9,8 @@ import akka.util.ByteString
 import com.malliina.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.TrackID
+import com.malliina.musicpimp.models.{CloudID, TrackID}
 import com.malliina.pimpcloud.auth.FakeAuth
-import com.malliina.pimpcloud.models.CloudID
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.storage.StorageInt
 import com.malliina.util.Util

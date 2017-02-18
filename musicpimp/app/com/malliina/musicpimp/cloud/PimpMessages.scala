@@ -1,13 +1,14 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PlaylistID, RequestID, TrackID}
+import com.malliina.musicpimp.models.{CloudID, PlaylistID, RequestID, TrackID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
 import com.malliina.play.models.{Password, Username}
 import play.api.libs.json.{JsValue, Json}
 
 object PimpMessages extends BaseMessages {
+
   trait UserMessage extends PimpMessage {
     def username: Username
   }

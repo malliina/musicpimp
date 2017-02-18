@@ -2,7 +2,7 @@ package com.malliina.pimpcloud.actors
 
 import akka.actor.ActorLogging
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.pimpcloud.models.CloudID
+import com.malliina.musicpimp.models.CloudID
 import play.api.libs.json.JsValue
 
 /** Manager of server websockets.

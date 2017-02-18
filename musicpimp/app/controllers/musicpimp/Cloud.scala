@@ -4,7 +4,8 @@ import java.net.ConnectException
 
 import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.cloud.{CloudID, Clouds}
+import com.malliina.musicpimp.cloud.Clouds
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.Authenticator
 import controllers.musicpimp.Cloud.log

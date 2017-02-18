@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.musicpimp.models.SimpleCompanion
+import com.malliina.play.json.SimpleCompanion
+import play.api.data.format.Formats.stringFormat
 
 case class ServerTag(tag: String)
 

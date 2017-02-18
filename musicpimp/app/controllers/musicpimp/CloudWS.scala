@@ -2,8 +2,9 @@ package controllers.musicpimp
 
 import com.malliina.maps.StmItemMap
 import com.malliina.musicpimp.audio.JsonCmd
-import com.malliina.musicpimp.cloud.{CloudID, Clouds}
+import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.controllers.Streaming
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username

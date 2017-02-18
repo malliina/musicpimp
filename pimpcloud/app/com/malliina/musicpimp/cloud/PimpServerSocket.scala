@@ -32,11 +32,7 @@ object PimpServerSocket {
 }
 
 /**
-  * @param channel
   * @param id the cloud ID of the server
-  * @param headers
-  * @param mat
-  * @param onUpdate
   */
 class PimpServerSocket(channel: SourceQueue[JsValue],
                        id: CloudID,
@@ -74,10 +70,10 @@ class PimpServerSocket(channel: SourceQueue[JsValue],
   def search(term: String, limit: Int = PimpServerSocket.DefaultSearchLimit) =
     proxied[Seq[Track]](nobody, SearchKey, Term -> term, Limit -> limit)
 
-  def playlists(user: Username) = proxied[PlaylistsMeta](nobody, PlaylistsGet, UsernameKey -> user.name)
+//  def playlists(user: Username) = proxied[PlaylistsMeta](nobody, PlaylistsGet, UsernameKey -> user.name)
 
-  def playlist(id: PlaylistID, user: Username) =
-    proxied[PlaylistMeta](user, PlaylistGet, Id -> id.id, UsernameKey -> user.name)
+//  def playlist(id: PlaylistID, user: Username) =
+//    proxied[PlaylistMeta](user, PlaylistGet, Id -> id.id, UsernameKey -> user.name)
 
   def deletePlaylist(id: PlaylistID, user: Username) =
     defaultProxy(PhoneRequest(PlaylistDelete, body(Id -> id.id, UsernameKey -> user.name)), user)
