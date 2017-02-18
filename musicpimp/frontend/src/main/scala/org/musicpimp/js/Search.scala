@@ -16,7 +16,7 @@ class Search(music: MusicItems) extends SocketJS("/search/ws?f=json") {
 
   override def handlePayload(payload: Js.Value) = {
     validate[StatusEvent](payload).fold(
-      onInvalidData,
+      onJsonFailure,
       event => onStatus(event.status)
     )
   }

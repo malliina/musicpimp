@@ -28,7 +28,7 @@ class AdminJS extends SocketJS("/admin/usage") {
   override def handlePayload(payload: String) = {
     val event = validate[AdminEvent](payload)
     event.fold(
-      invalid => onInvalidData(invalid),
+      invalid => onJsonFailure(invalid),
       e => handleEvent(e)
     )
   }
@@ -48,7 +48,7 @@ class AdminJS extends SocketJS("/admin/usage") {
       case other =>
         Left(Invalid.Data(PimpJSON.writeJs(other), s"Unknown event: '$other'."))
     }
-    result.left foreach onInvalidData
+    result.left foreach onJsonFailure
   }
 
   def updateRequests(requests: Seq[Request]) = {

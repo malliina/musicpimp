@@ -66,7 +66,7 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
 
   def onMessage(msg: MessageEvent): Unit = {
     val asString = msg.data.toString
-    PimpJSON.parse(asString).fold(onInvalidData, json => {
+    PimpJSON.parse(asString).fold(onJsonFailure, json => {
       if (readField[String](json, EventField).right.exists(_ == Ping)) {
       } else {
         handlePayload(json)
@@ -81,7 +81,9 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
       parsed <- validate[T](fieldJson).right
     } yield parsed
 
-  def onInvalidData(invalid: Invalid): PartialFunction[Invalid, Unit] = {
+  def onJsonFailure = onInvalidData.lift
+
+  private def onInvalidData: PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
       log.info(s"JSON failed to parse: '$errorMessage' in value '$jsValue'.")
     case Invalid.Json(errorMessage, in) =>

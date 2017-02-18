@@ -25,7 +25,7 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
 
   def handlePayload(payload: String) = {
     PimpJSON.validate[Seq[JVMLogEntry]](payload).fold(
-      invalid => onInvalidData(invalid),
+      invalid => onJsonFailure(invalid),
       entries => entries foreach prepend
     )
   }

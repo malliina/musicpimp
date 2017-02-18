@@ -6,19 +6,13 @@ import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
 class Tests extends FunSuite {
-  //  val testPath = Paths get ""
-  test("can run test") {
-
-  }
-  test("stream of paths") {
-    //    FileUtils.pathTree(testPath).foreach(println)
-  }
   test("paths") {
     val root = Paths get "a/b/c"
     val rel = Paths get ""
     val combined = root resolve rel
     assert(root.toAbsolutePath.toString === combined.toAbsolutePath.toString)
   }
+
   test("deconstruct array") {
     val arr = "a:b".split(":")
     arr match {
@@ -26,6 +20,7 @@ class Tests extends FunSuite {
       case _ => assert(1 === 2)
     }
   }
+
   test("for comp.") {
     def eval(in: String) = {
       def isA(input: String) = input == "a"
@@ -37,6 +32,7 @@ class Tests extends FunSuite {
     assert(eval("a") === Some("a"))
     assert(eval("b") === None)
   }
+
   test("json") {
     val in = Seq("a", "b", "c")
     val jsV = Json.toJson(Map("folders" -> in))
@@ -45,6 +41,7 @@ class Tests extends FunSuite {
     val list = (readV \ "folders").as[Seq[String]]
     assert(in === list)
   }
+
   test("serialize Option") {
     import play.api.libs.json.Json._
     val jsValue = stringify(toJson(Some(42)))
@@ -52,10 +49,4 @@ class Tests extends FunSuite {
     assert(jsValue === "42")
     assert(none === "null")
   }
-  //  test("base64") {
-  //    val username = "test"
-  //    val password = "test"
-  //    val value = Base64.encodeBytes((username + ":" + password).getBytes("UTF-8"))
-  //    println(value)
-  //  }
 }

@@ -87,6 +87,6 @@ abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) {
     try {
       code
     } catch {
-      case i: Invalid => onInvalidData(i)
+      case i: Invalid => onJsonFailure(i)
     }
 }

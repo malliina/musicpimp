@@ -95,7 +95,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
         case other =>
           Left(Invalid.Data(payload, s"Unknown event: '$other'."))
       }
-    fragment.fold(onInvalidData, frag => formDiv.html(frag.render))
+    fragment.fold(onJsonFailure, frag => formDiv.html(frag.render))
     installHandlers()
   }
 

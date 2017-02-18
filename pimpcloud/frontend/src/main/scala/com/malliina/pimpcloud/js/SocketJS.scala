@@ -43,7 +43,9 @@ abstract class SocketJS(wsPath: String) {
     }
   }
 
-  def onInvalidData(invalid: Invalid): PartialFunction[Invalid, Unit] = {
+  def onJsonFailure = onInvalidData.lift
+
+  private def onInvalidData: PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
       println(s"JSON failed to parse: '$errorMessage' in value '$jsValue'")
     case Invalid.Json(errorMessage, in) =>
