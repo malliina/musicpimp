@@ -6,6 +6,8 @@ import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
 import org.scalajs.jquery.{JQuery, JQueryEventObject}
 import upickle.{Invalid, Js}
 
+import scala.util.Either.RightProjection
+
 abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def this(wsPath: String) = this(wsPath, Logger.default)
   val EventField = "event"
@@ -67,19 +69,21 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def onMessage(msg: MessageEvent): Unit = {
     val asString = msg.data.toString
     PimpJSON.parse(asString).fold(onJsonFailure, json => {
-      if (readField[String](json, EventField).right.exists(_ == Ping)) {
+      if (readField[String](json, EventField).exists(_ == Ping)) {
       } else {
         handlePayload(json)
       }
     })
   }
 
-  def readField[T: PimpJSON.Reader](json: Js.Value, field: String): Either[Invalid, T] =
-    for {
+  def readField[T: PimpJSON.Reader](json: Js.Value, field: String): RightProjection[Invalid, T] = {
+    val either = for {
       map <- PimpJSON.toEither(json.obj).right
       fieldJson <- map.get(field).toRight(Invalid.Data(json, s"Missing field: '$field'.")).right
       parsed <- validate[T](fieldJson).right
     } yield parsed
+    either.right
+  }
 
   def onJsonFailure = onInvalidData.lift
 

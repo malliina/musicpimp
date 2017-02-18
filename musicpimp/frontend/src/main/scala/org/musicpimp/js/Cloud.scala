@@ -81,15 +81,15 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
 
   def onSocketEvent(payload: Value) = {
     val fragment: Either[Invalid, Frag] =
-      readField[String](payload, EventKey).right.flatMap {
+      readField[String](payload, EventKey).flatMap {
         case Connecting =>
           Right(Cloud.connectingContent)
         case Connected =>
-          readField[String](payload, IdKey).right.map { id =>
+          readField[String](payload, IdKey).map { id =>
             Cloud.connectedContent(id)
           }
         case Disconnected =>
-          readField[String](payload, Reason).right.map { reason =>
+          readField[String](payload, Reason).map { reason =>
             Cloud.disconnectedContent(reason)
           }
         case other =>
