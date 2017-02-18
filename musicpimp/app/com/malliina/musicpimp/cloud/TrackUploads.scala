@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.malliina.concurrent.ExecutionContexts
-import com.malliina.musicpimp.cloud.PimpMessages.{RangedTrack, Track}
+import com.malliina.musicpimp.cloud.PimpMessages.{RangedTrack, GetTrack}
 import com.malliina.musicpimp.cloud.TrackUploads.log
 import com.malliina.musicpimp.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.library.Library
@@ -37,7 +37,7 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
     * @param request request id
     * @return a Future that completes when the upload completes
     */
-  def upload(track: Track, request: RequestID): Future[Unit] =
+  def upload(track: GetTrack, request: RequestID): Future[Unit] =
     withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {

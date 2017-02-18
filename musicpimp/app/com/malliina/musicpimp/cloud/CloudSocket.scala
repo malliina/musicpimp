@@ -147,7 +147,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
       case GetStatus =>
         val payload = Json.toJson(MusicPlayer.status)(StatusEvent.status18writer)
         sendJsonResponse(JsonMessages.withStatus(payload), request)
-      case t: Track =>
+      case t: GetTrack =>
         uploader.upload(t, request).recoverAll(t => log.error(s"Upload failed for $request", t))
       case rt: RangedTrack =>
         uploader.rangedUpload(rt, request).recoverAll(t => log.error(s"Ranged upload failed for $request", t))

@@ -15,7 +15,7 @@ trait BaseMessages {
 
   case class GetFolder(id: FolderID) extends PimpMessage
 
-  case class Track(id: TrackID) extends PimpMessage
+  case class GetTrack(id: TrackID) extends PimpMessage
 
   case class Search(term: String, limit: Int) extends PimpMessage
 
@@ -23,5 +23,5 @@ trait BaseMessages {
 
   implicit val searchFormat = Json.format[Search]
   implicit val folderFormat = Json.format[GetFolder]
-  implicit val trackFormat = Json.format[Track]
+  implicit val trackFormat = Json.format[GetTrack]
 }

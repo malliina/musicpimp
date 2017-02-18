@@ -2,7 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered, RequestId}
-import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, Track}
+import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, GetTrack}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
@@ -35,7 +35,7 @@ trait CloudMessageParser {
     request flatMap { req =>
       val message = cmd flatMap {
         case VersionKey => JsSuccess(GetVersion)
-        case TrackKey => body.validate[RangedTrack] orElse body.validate[Track] // the fallback is not needed I think
+        case TrackKey => body.validate[RangedTrack] orElse body.validate[GetTrack] // the fallback is not needed I think
         case Cancel => JsSuccess(CancelStream(req))
         case Meta => body.validate[GetMeta]
         case Ping => JsSuccess(PingMessage)
