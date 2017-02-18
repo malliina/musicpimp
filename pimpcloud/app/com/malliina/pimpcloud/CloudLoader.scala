@@ -10,7 +10,7 @@ import controllers._
 import controllers.pimpcloud._
 import play.api.ApplicationLoader.Context
 import play.api.mvc.EssentialFilter
-import play.api.{BuiltInComponentsFromContext, Mode}
+import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.gzip.GzipFilter
 
 class CloudLoader extends DefaultApp(new ProdComponents(_))
@@ -22,12 +22,11 @@ class ProdComponents(context: Context) extends CloudComponents(context, ProdPush
 abstract class CloudComponents(context: Context,
                                pusher: Pusher,
                                oauthCreds: GoogleOAuthCredentials) extends BuiltInComponentsFromContext(context) {
-  val adminAuth = new AdminOAuth(oauthCreds, materializer)
-
   def prodAuth: PimpAuth
 
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
+  val adminAuth = new AdminOAuth(oauthCreds, materializer)
   lazy val auth = new CloudAuth(materializer)
   val forms = new AccountForms
   lazy val joined = new JoinedSockets(materializer)
@@ -45,5 +44,10 @@ abstract class CloudComponents(context: Context,
   lazy val w = new Web(tags, cloudAuths, materializer.executionContext, forms)
   lazy val us = new UsageStreaming(s, ps, prodAuth)
   lazy val as = new Assets(httpErrorHandler)
-  lazy val router = new Routes(httpErrorHandler, p, w, push, ps, sc, s, as, l, adminAuth, aa, us)
+  lazy val router = new Routes(httpErrorHandler, p, w, push, ps, sc, s, l, adminAuth, aa, us, as)
+  CloudComponents.log.info(s"Started pimpcloud ${BuildInfo.version}")
+}
+
+object CloudComponents {
+  private val log = Logger(getClass)
 }

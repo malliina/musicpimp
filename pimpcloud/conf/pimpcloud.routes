@@ -32,7 +32,6 @@ GET         /ws/playback2                      com.malliina.pimpcloud.ws.PhoneSo
 POST        /track                             controllers.pimpcloud.ServersController.receiveUpload
 GET         /servers/ws                        controllers.pimpcloud.Servers.openSocket
 GET         /servers/ws2                       controllers.pimpcloud.Servers.openSocket
-GET         /assets/*file                      controllers.Assets.at(path = "/public", file)
 # Admin
 GET         /admin                             controllers.pimpcloud.Logs.index
 GET         /admin/logs                        controllers.pimpcloud.Logs.logs
@@ -43,3 +42,4 @@ GET         /admin/eject                       controllers.pimpcloud.AdminAuth.e
 GET         /admin/ws                          controllers.pimpcloud.Logs.openSocket
 GET         /admin/usage                       controllers.pimpcloud.UsageStreaming.openSocket
 GET         /admin/logout                      controllers.pimpcloud.AdminAuth.logout
+GET         /assets/*file                      controllers.Assets.at(path = "/public", file)

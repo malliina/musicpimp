@@ -91,8 +91,9 @@ abstract class Servers(mat: Materializer)
   }
 
 
-  override def welcomeMessage(client: PimpServerSocket): Option[JsValue] =
+  override def welcomeMessage(client: PimpServerSocket): Option[JsValue] = {
     Some(Json.obj(Cmd -> RegisteredKey, Body -> Json.obj(Id -> client.id)))
+  }
 
   def isConnected(serverID: Username): Future[Boolean] =
     connectedServers.exists(cs => cs.exists(_.id.id == serverID.name))

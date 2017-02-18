@@ -17,7 +17,8 @@ object TestOptions {
   val default = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
 }
 
-class MusicPimpSuite extends AppSuite(ctx => new PimpComponents(ctx, TestOptions.default, PimpDb.test()))
+class MusicPimpSuite(options: InitOptions = TestOptions.default)
+  extends AppSuite(ctx => new PimpComponents(ctx, options, PimpDb.test()))
 
 class PlaylistsTests extends MusicPimpSuite {
   val testTracks: Seq[TrackID] = Nil

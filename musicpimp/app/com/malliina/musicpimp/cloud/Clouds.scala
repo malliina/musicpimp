@@ -6,7 +6,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.cloud.Clouds.log
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.{CloudID, PimpUrl}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.json.SimpleCommand
 import com.malliina.util.Utils
@@ -42,7 +42,7 @@ object Clouds {
   }
 }
 
-class Clouds(deps: Deps) {
+class Clouds(deps: Deps, cloudEndpoint: PimpUrl) {
   private var client: CloudSocket = newSocket(None)
   val timer = Observable.interval(60.seconds)
   var poller: Option[Subscription] = None
@@ -115,7 +115,7 @@ class Clouds(deps: Deps) {
   }
 
   def newSocket(id: Option[CloudID]) =
-    CloudSocket.build(id orElse Clouds.loadID(), deps)
+    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, deps)
 
   def disconnectAndForget() = {
     client sendMessage SimpleCommand(CloudStrings.Unregister)

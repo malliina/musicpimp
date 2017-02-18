@@ -6,7 +6,6 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{Executors, TimeUnit}
 
 import com.malliina.concurrent.ExecutionContexts
-import com.malliina.musicpimp.cloud.PimpMessages.{RangedTrack, GetTrack}
 import com.malliina.musicpimp.cloud.TrackUploads.log
 import com.malliina.musicpimp.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.library.Library

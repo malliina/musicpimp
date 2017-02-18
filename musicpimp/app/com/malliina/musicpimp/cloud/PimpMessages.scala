@@ -7,56 +7,82 @@ import com.malliina.play.ContentRange
 import com.malliina.play.models.{Password, Username}
 import play.api.libs.json.{JsValue, Json}
 
-object PimpMessages extends BaseMessages {
-
-  trait UserMessage extends PimpMessage {
-    def username: Username
-  }
-
-  trait RequestMessage extends PimpMessage {
-    def request: RequestID
-  }
-
-  case class RegisteredMessage(id: CloudID) extends PimpMessage
-
-  case class GetPopular(meta: DataRequest) extends PimpMessage
-
-  case class GetRecent(meta: DataRequest) extends PimpMessage
-
-  case class CancelStream(request: RequestID) extends RequestMessage
-
-  case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
-
-  case class GetMeta(id: TrackID) extends PimpMessage
-
-  case class AlarmEdit(payload: JsValue) extends PimpMessage
-
-  case class AlarmAdd(payload: JsValue) extends PimpMessage
-
-  case class PlaybackMessage(payload: JsValue, username: Username) extends UserMessage
-
-  case class Authenticate(username: Username, password: Password) extends UserMessage
-
-  case object GetVersion extends PimpMessage
-
-  case object GetStatus extends PimpMessage
-
-  case class GetPlaylists(username: Username) extends UserMessage
-
-  case class GetPlaylist(id: PlaylistID, username: Username) extends UserMessage
-
-  case class SavePlaylist(playlist: PlaylistSubmission, username: Username) extends UserMessage
-
-  case class DeletePlaylist(id: PlaylistID, username: Username) extends UserMessage
-
-  implicit val authFormat = Json.format[Authenticate]
-  implicit val metaFormat = Json.format[GetMeta]
-  implicit val registeredFormat = Json.format[RegisteredMessage]
-  implicit val rangedFormat = Json.format[RangedTrack]
-  implicit val playlistsGet = Json.format[GetPlaylists]
-  implicit val playlistGet = Json.format[GetPlaylist]
-  implicit val playlistSave = Json.format[SavePlaylist]
-  implicit val playlistDelete = Json.format[DeletePlaylist]
-  implicit val popularFormat = Json.format[GetPopular]
-  implicit val recentFormat = Json.format[GetRecent]
+trait UserMessage extends PimpMessage {
+  def username: Username
 }
+
+trait RequestMessage extends PimpMessage {
+  def request: RequestID
+}
+
+case class RegisteredMessage(id: CloudID) extends PimpMessage
+
+object RegisteredMessage {
+  implicit val json = Json.format[RegisteredMessage]
+}
+
+case class Authenticate(username: Username, password: Password) extends UserMessage
+
+object Authenticate {
+  implicit val json = Json.format[Authenticate]
+}
+
+case class GetMeta(id: TrackID) extends PimpMessage
+
+object GetMeta {
+  implicit val json = Json.format[GetMeta]
+}
+
+case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
+
+object RangedTrack {
+  implicit val json = Json.format[RangedTrack]
+}
+
+case class GetPlaylists(username: Username) extends UserMessage
+
+object GetPlaylists {
+  implicit val json = Json.format[GetPlaylists]
+}
+
+case class GetPlaylist(id: PlaylistID, username: Username) extends UserMessage
+
+object GetPlaylist {
+  implicit val json = Json.format[GetPlaylist]
+}
+
+case class SavePlaylist(playlist: PlaylistSubmission, username: Username) extends UserMessage
+
+object SavePlaylist {
+  implicit val json = Json.format[SavePlaylist]
+}
+
+case class DeletePlaylist(id: PlaylistID, username: Username) extends UserMessage
+
+object DeletePlaylist {
+  implicit val json = Json.format[DeletePlaylist]
+}
+
+case class GetPopular(meta: DataRequest) extends PimpMessage
+
+object GetPopular {
+  implicit val json = Json.format[GetPopular]
+}
+
+case class GetRecent(meta: DataRequest) extends PimpMessage
+
+object GetRecent {
+  implicit val json = Json.format[GetRecent]
+}
+
+case class CancelStream(request: RequestID) extends RequestMessage
+
+case class AlarmEdit(payload: JsValue) extends PimpMessage
+
+case class AlarmAdd(payload: JsValue) extends PimpMessage
+
+case class PlaybackMessage(payload: JsValue, username: Username) extends UserMessage
+
+case object GetVersion extends PimpMessage
+
+case object GetStatus extends PimpMessage

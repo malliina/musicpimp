@@ -7,9 +7,8 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
-import com.malliina.musicpimp.cloud.CloudSocket.{hostPort, httpProtocol, log}
+import com.malliina.musicpimp.cloud.CloudSocket.log
 import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SuccessKey, Unregister}
-import com.malliina.musicpimp.cloud.PimpMessages._
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
 import com.malliina.musicpimp.json.JsonMessages
@@ -41,13 +40,11 @@ case class Deps(playlists: PlaylistService,
 object CloudSocket {
   private val log = Logger(getClass)
 
-  val isDev = false
-  val (hostPort, httpProtocol, socketProtocol) =
-    if (isDev) ("localhost:9000", "http", "ws")
-    else ("cloud.musicpimp.org", "https", "wss")
+  val path = "/servers/ws2"
+  val devUri = PimpUrl("ws", "localhost:9000", path)
+  val prodUri = PimpUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(id: Option[CloudID], deps: Deps) = {
-    val url = PimpUrl(socketProtocol, hostPort, "/servers/ws2")
+  def build(id: Option[CloudID], url: PimpUrl, deps: Deps) = {
     new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
   }
 
@@ -81,7 +78,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
     HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
 
   val messageParser = CloudMessageParser
-  val cloudHost = PimpUrl(httpProtocol, hostPort, "")
+  val httpProto = if (uri.proto == "ws") "http" else "https"
+  val cloudHost = PimpUrl(httpProto, uri.hostAndPort, "")
   val uploader = TrackUploads(cloudHost)
   log info s"Initializing cloud connection with user $username"
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
@@ -288,7 +286,8 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
         case t => log.error(s"Unable to send message to the cloud, payload: $payload", t)
       }
 
-  def handleError(errors: JsError, json: JsValue): Unit = log warn errorMessage(errors, json)
+  def handleError(errors: JsError, json: JsValue): Unit =
+    log warn errorMessage(errors, json)
 
   def errorMessage(errors: JsError, json: JsValue): String =
     s"JSON error: $errors. Message: $json"

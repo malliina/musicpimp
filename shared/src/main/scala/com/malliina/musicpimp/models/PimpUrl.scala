@@ -10,7 +10,7 @@ case class PimpUrl(proto: String, hostAndPort: String, uri: String) {
   val url = s"$protoAndHost$uri"
 
   def absolute(call: Call): PimpUrl = {
-    val fragment = Option(call.fragment) filter (_.trim.nonEmpty) map (f => s"#$f") getOrElse ""
+    val fragment = Option(call.fragment).filter(_.trim.nonEmpty).map(f => s"#$f") getOrElse ""
     val callUri = s"${call.url}$fragment"
     PimpUrl(proto, hostAndPort, callUri)
   }

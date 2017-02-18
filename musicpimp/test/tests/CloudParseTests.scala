@@ -1,7 +1,6 @@
 package tests
 
-import com.malliina.musicpimp.cloud.CloudMessageParser
-import com.malliina.musicpimp.cloud.PimpMessages.GetRecent
+import com.malliina.musicpimp.cloud.{CloudMessageParser, GetRecent}
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
 

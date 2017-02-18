@@ -1,17 +1,20 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
+import com.malliina.musicpimp.cloud.CloudMessageParser.log
 import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered, RequestId}
-import com.malliina.musicpimp.cloud.PimpMessages.{AlarmAdd, AlarmEdit, Authenticate, CancelStream, DeletePlaylist, GetFolder, GetAlarms, GetMeta, GetPlaylist, GetPlaylists, GetPopular, GetRecent, GetStatus, GetVersion, PingMessage, PlaybackMessage, RangedTrack, RegisteredMessage, RootFolder, SavePlaylist, Search, GetTrack}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.json.JsonStrings.Cmd
 import com.malliina.play.models.Username
+import play.api.Logger
 import play.api.libs.json._
 
-object CloudMessageParser extends CloudMessageParser
+object CloudMessageParser extends CloudMessageParser {
+  private val log = Logger(getClass)
+}
 
 trait CloudMessageParser {
   def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
