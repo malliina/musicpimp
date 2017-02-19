@@ -25,6 +25,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   val pimpcloudUri = PimpUrl("ws", cloudHostPort, CloudSocket.path)
   val pimpOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
   val musicpimp = new MusicPimpSuite(pimpOptions)
+  val cloudClient = musicpimp.components.clouds
   val pimp = musicpimp.app
   val httpClient = AhcWSClient()
 
@@ -34,11 +35,10 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   test("musicpimp can connect to pimpcloud") {
-    val clouds = musicpimp.components.clouds
     val expectedId = CloudID("connect-test")
-    val id = await(clouds.connect(Option(expectedId)))
+    val id = await(cloudClient.connect(Option(expectedId)))
     assert(id === expectedId)
-    clouds.disconnectAndForget()
+    cloudClient.disconnectAndForget()
   }
 
   test("can serve track") {
@@ -54,15 +54,18 @@ class IntegrationTest extends PimpcloudServerSuite {
     val file = Library.findAbsolute(trackId)
     assert(file.isDefined)
     // connect to pimpcloud
-    val clouds = musicpimp.components.clouds
     val cloudId = CloudID("track-test")
-    val id = await(clouds.connect(Option(cloudId)))
+    val id = await(cloudClient.connect(Option(cloudId)))
     assert(id === cloudId)
     // request track
     val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get())
     assert(r.status === 200)
     assert(r.bodyAsBytes.size.toLong === fileSize)
-    clouds.disconnectAndForget()
+    cloudClient.disconnectAndForget()
+  }
+
+  test("ranged request") {
+
   }
 
   def req(url: String, cloudId: CloudID) = {
