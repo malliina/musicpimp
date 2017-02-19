@@ -3,7 +3,7 @@ package controllers.musicpimp
 import akka.stream.QueueOfferResult
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.json.JsonFormatVersions
-import com.malliina.musicpimp.models.{ClientInfo, PimpUrl, RemoteInfo}
+import com.malliina.musicpimp.models.{ClientInfo, FullUrl, RemoteInfo}
 import com.malliina.play.models.Username
 import controllers.musicpimp.WebPlayer.log
 import play.api.Logger
@@ -44,7 +44,7 @@ class WebPlayer(security: SecureBase) extends PlayerSockets(security) {
 
   def status(client: Client): JsValue = {
     val req = client.request
-    val p = player(RemoteInfo(client.user, PimpUrl.hostOnly(req)))
+    val p = player(RemoteInfo(client.user, FullUrl.hostOnly(req)))
     PimpRequest.apiVersion(req) match {
       case JsonFormatVersions.JSONv17 => p.statusEvent17
       case _ => p.statusEvent

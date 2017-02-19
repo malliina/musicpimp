@@ -2,12 +2,12 @@ package com.malliina.musicpimp.cloud
 
 import javax.net.ssl.SSLSocketFactory
 
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.util.Try
 
-class JsonSocket8(uri: PimpUrl,
+class JsonSocket8(uri: FullUrl,
                   socketFactory: SSLSocketFactory,
                   headers: (String, String)*)
   extends Socket8[JsValue](uri, socketFactory, headers: _*) {

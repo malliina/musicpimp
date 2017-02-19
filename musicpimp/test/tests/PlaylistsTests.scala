@@ -5,7 +5,7 @@ import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{PimpUrl, SavedPlaylist, TrackID}
+import com.malliina.musicpimp.models.{FullUrl, SavedPlaylist, TrackID}
 import com.malliina.ws.HttpUtil
 import play.api.Application
 import play.api.http.{HeaderNames, MimeTypes, Writeable}
@@ -22,7 +22,7 @@ class MusicPimpSuite(options: InitOptions = TestOptions.default)
 
 class PlaylistsTests extends MusicPimpSuite {
   val testTracks: Seq[TrackID] = Nil
-  implicit val f = TrackJson.format(PimpUrl.build("http://www.google.com").get)
+  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").get)
 
   ignore("GET /playlists") {
     val response = fetch(app, FakeRequest(GET, "/playlists"))

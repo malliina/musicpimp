@@ -41,10 +41,10 @@ object CloudSocket {
   private val log = Logger(getClass)
 
   val path = "/servers/ws"
-  val devUri = PimpUrl("ws", "localhost:9000", path)
-  val prodUri = PimpUrl("wss", "cloud.musicpimp.org", path)
+  val devUri = FullUrl("ws", "localhost:9000", path)
+  val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(id: Option[CloudID], url: PimpUrl, deps: Deps) = {
+  def build(id: Option[CloudID], url: FullUrl, deps: Deps) = {
     new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
   }
 
@@ -71,7 +71,7 @@ object CloudSocket {
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Deps)
+class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Deps)
   extends JsonSocket8(
     uri,
     CustomSSLSocketFactory.withSNI(SNIHostName.createSNIMatcher("cloud\\.musicpimp\\.org"), new SNIHostName(uri.host)),
@@ -79,7 +79,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
 
   val messageParser = CloudMessageParser
   val httpProto = if (uri.proto == "ws") "http" else "https"
-  val cloudHost = PimpUrl(httpProto, uri.hostAndPort, "")
+  val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
   val uploader = TrackUploads(cloudHost)
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
   implicit val trackWriter = TrackJson.format(cloudHost)

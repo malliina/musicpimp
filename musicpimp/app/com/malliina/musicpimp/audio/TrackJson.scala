@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import play.api.libs.json.{Format, Writes}
 import play.api.mvc.RequestHeader
 
@@ -10,16 +10,16 @@ object TrackJson {
   implicit val dur = JsonFormats.durationFormat
 
   def writer(request: RequestHeader): Writes[TrackMeta] =
-    writer(PimpUrl.hostOnly(request))
+    writer(FullUrl.hostOnly(request))
 
-  def writer(host: PimpUrl): Writes[TrackMeta] = TrackMeta.writer(
+  def writer(host: FullUrl): Writes[TrackMeta] = TrackMeta.writer(
     host,
     controllers.musicpimp.routes.LibraryController.supplyForPlayback
   )
 
   def format(request: RequestHeader): Format[TrackMeta] =
-    format(PimpUrl.hostOnly(request))
+    format(FullUrl.hostOnly(request))
 
-  def format(host: PimpUrl): Format[TrackMeta] =
+  def format(host: FullUrl): Format[TrackMeta] =
     Format(TrackMeta.reader, writer(host))
 }

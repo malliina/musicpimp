@@ -5,7 +5,7 @@ import java.util
 import javax.net.ssl.SSLSocketFactory
 
 import com.malliina.musicpimp.cloud.Socket8.log
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import com.malliina.ws.{NotConnectedException, WebSocketBase}
 import com.neovisionaries.ws.client._
 import play.api.Logger
@@ -18,7 +18,7 @@ object Socket8 {
   private val log = Logger(getClass)
 }
 
-abstract class Socket8[T](val uri: PimpUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
+abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
   extends WebSocketBase[T] {
 
   protected val connectPromise = Promise[Unit]()

@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import play.api.libs.json.Writes
 
 import scala.concurrent.duration.Duration
@@ -10,7 +10,7 @@ import scala.concurrent.duration.Duration
 sealed trait ServerMessage
 
 object ServerMessage {
-  def writer(host: PimpUrl): Writes[ServerMessage] = {
+  def writer(host: FullUrl): Writes[ServerMessage] = {
     implicit val tw = TrackJson.writer(host)
     Writes[ServerMessage] {
       case TrackChangedMessage(track) =>

@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.json.PimpStrings._
-import com.malliina.musicpimp.models.{MusicItem, PimpPath, PimpUrl, TrackID}
+import com.malliina.musicpimp.models.{MusicItem, PimpPath, FullUrl, TrackID}
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
 import play.api.libs.json.{Reads, Writes}
@@ -35,7 +35,7 @@ object TrackMeta {
     meta
   }
 
-  def writer(host: PimpUrl, url: TrackID => Call): Writes[TrackMeta] =
+  def writer(host: FullUrl, url: TrackID => Call): Writes[TrackMeta] =
     Writes[TrackMeta] { t =>
       obj(
         Id -> t.id,

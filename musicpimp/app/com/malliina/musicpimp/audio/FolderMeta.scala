@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{FolderID, MusicItem, PimpPath, PimpUrl}
+import com.malliina.musicpimp.models.{FolderID, MusicItem, PimpPath, FullUrl}
 import play.api.libs.json.Json.obj
 import play.api.libs.json.Writes
 import play.api.mvc.Call
@@ -21,7 +21,7 @@ trait FolderMeta extends MusicItem {
 }
 
 object FolderMeta {
-  def writer(host: PimpUrl) = Writes[FolderMeta] { f =>
+  def writer(host: FullUrl) = Writes[FolderMeta] { f =>
     val libraryController = controllers.musicpimp.routes.LibraryController
     val call: Call =
       if (f.id == Library.RootId) libraryController.rootLibrary()

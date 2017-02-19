@@ -5,7 +5,7 @@ import java.nio.file.Files
 
 import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{CloudID, PimpUrl, TrackID}
+import com.malliina.musicpimp.models.{CloudID, FullUrl, TrackID}
 import org.apache.commons.codec.binary.Base64
 import play.api.Application
 import play.api.http.HeaderNames
@@ -23,7 +23,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   val cloudPort = port
   implicit val mat = components.materializer
   val cloudHostPort = s"localhost:$cloudPort"
-  val pimpcloudUri = PimpUrl("ws", cloudHostPort, CloudSocket.path)
+  val pimpcloudUri = FullUrl("ws", cloudHostPort, CloudSocket.path)
   val pimpOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
   val musicpimp = new MusicPimpSuite(pimpOptions)
   val cloudClient = musicpimp.components.clouds

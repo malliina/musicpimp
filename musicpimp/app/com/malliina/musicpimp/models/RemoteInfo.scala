@@ -3,9 +3,9 @@ package com.malliina.musicpimp.models
 import com.malliina.play.http.RequestInfo
 import com.malliina.play.models.Username
 
-case class RemoteInfo(user: Username, host: PimpUrl)
+case class RemoteInfo(user: Username, host: FullUrl)
 
 object RemoteInfo {
   def apply(req: RequestInfo[Username]): RemoteInfo =
-    RemoteInfo(req.user, PimpUrl.hostOnly(req.request))
+    RemoteInfo(req.user, FullUrl.hostOnly(req.request))
 }

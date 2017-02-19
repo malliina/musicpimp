@@ -6,7 +6,7 @@ import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.PimpAuthenticator
@@ -28,7 +28,7 @@ case class InitOptions(alarms: Boolean = true,
                        users: Boolean = true,
                        indexer: Boolean = true,
                        cloud: Boolean = true,
-                       cloudUri: PimpUrl = CloudSocket.prodUri)
+                       cloudUri: FullUrl = CloudSocket.prodUri)
 
 object InitOptions {
   val prod = InitOptions()

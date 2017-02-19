@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.models
 
+import com.malliina.play.json.ValidatingCompanion
 import play.api.libs.json._
 
 abstract class ValidatorLike[In: Format, T]

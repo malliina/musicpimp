@@ -6,7 +6,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.cloud.Clouds.log
-import com.malliina.musicpimp.models.{CloudID, PimpUrl}
+import com.malliina.musicpimp.models.{CloudID, FullUrl}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils
 import controllers.musicpimp.CloudEvent
@@ -41,7 +41,7 @@ object Clouds {
   }
 }
 
-class Clouds(deps: Deps, cloudEndpoint: PimpUrl) {
+class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
   private var client: CloudSocket = newSocket(None)
   private val timer = Observable.interval(60.seconds)
   private var poller: Option[Subscription] = None

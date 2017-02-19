@@ -4,7 +4,7 @@ import akka.stream.QueueOfferResult
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
-import com.malliina.musicpimp.models.PimpUrl
+import com.malliina.musicpimp.models.FullUrl
 import controllers.musicpimp.ServerWS.log
 import play.api.Logger
 import play.api.libs.json.Json.toJson
@@ -29,7 +29,7 @@ class ServerWS(val clouds: Clouds,
 
   def customBroadcast(message: ServerMessage) = {
     Future.traverse(clientsSync) { client =>
-      val writer = ServerMessage.writer(PimpUrl.hostOnly(client.request))
+      val writer = ServerMessage.writer(FullUrl.hostOnly(client.request))
       client.send(writer.writes(message))
     }
     val cloudHost = clouds.cloudHost

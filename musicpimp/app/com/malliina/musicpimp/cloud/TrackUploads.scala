@@ -9,7 +9,7 @@ import com.malliina.concurrent.ExecutionContexts
 import com.malliina.musicpimp.cloud.TrackUploads.log
 import com.malliina.musicpimp.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{PimpUrl, RequestID, TrackID}
+import com.malliina.musicpimp.models.{FullUrl, RequestID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.{Util, Utils}
 import play.api.Logger
@@ -23,10 +23,10 @@ object TrackUploads {
 
   val uploadPath = "/track"
 
-  def apply(host: PimpUrl) = new TrackUploads(host + uploadPath, ExecutionContexts.cached)
+  def apply(host: FullUrl) = new TrackUploads(host + uploadPath, ExecutionContexts.cached)
 }
 
-class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseable {
+class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
   val scheduler = Executors.newSingleThreadScheduledExecutor()
   private val ongoing = TrieMap.empty[RequestID, TrustAllMultipartRequest]
 
@@ -91,7 +91,7 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
 
   /** Blocks until the upload completes.
     */
-  private def uploadMedia(uploadUri: PimpUrl,
+  private def uploadMedia(uploadUri: FullUrl,
                           trackID: TrackID,
                           path: Path,
                           request: RequestID,

@@ -147,7 +147,7 @@ class Rest(webPlayer: WebPlayer,
     */
   def webStatus = pimpAction { req =>
     val user = req.user
-    Ok(webStatusJson(user, RemoteInfo(user, PimpUrl.hostOnly(req))))
+    Ok(webStatusJson(user, RemoteInfo(user, FullUrl.hostOnly(req))))
   }
 
   private def localPlaybackAction(id: TrackID): Option[EssentialAction] =
