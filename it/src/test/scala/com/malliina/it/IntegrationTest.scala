@@ -14,6 +14,7 @@ import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import tests._
+import com.malliina.storage.{StorageLong, StorageSize}
 
 abstract class PimpcloudServerSuite extends ServerSuite(new TestComponents(_))
 
@@ -41,36 +42,50 @@ class IntegrationTest extends PimpcloudServerSuite {
     cloudClient.disconnectAndForget()
   }
 
-  test("can serve track") {
-    import com.malliina.storage.StorageLong
-
-    // make sure musicpimp server has a track to serve
-    val trackFile = TestUtils.makeTestMp3()
-    val fileSize = Files.size(trackFile).bytes.toBytes
-    assert(fileSize === 198658L)
-    val trackFolder = trackFile.getParent
-    Library.setFolders(Seq(trackFolder))
-    val trackId = TrackID(trackFile.getFileName.toString)
-    val file = Library.findAbsolute(trackId)
-    assert(file.isDefined)
-    // connect to pimpcloud
-    val cloudId = CloudID("track-test")
-    val id = await(cloudClient.connect(Option(cloudId)))
-    assert(id === cloudId)
-    // request track
-    val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get())
-    assert(r.status === 200)
-    assert(r.bodyAsBytes.size.toLong === fileSize)
-    cloudClient.disconnectAndForget()
+  test("serve entire track") {
+    withCloudTrack("track-test") { (trackId, fileSize, cloudId) =>
+      // request track
+      val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get())
+      assert(r.status === 200)
+      assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
+    }
   }
 
-  test("ranged request") {
-
+  test("serve ranged track") {
+    withCloudTrack("range-test") { (trackId, _, cloudId) =>
+      // request track
+      // the end of the range is inclusive
+      val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20").get())
+      assert(r.status === 206)
+      assert(r.bodyAsBytes.size.toLong === 11)
+    }
   }
 
-  def req(url: String, cloudId: CloudID) = {
+  def withCloudTrack(desiredId: String)(code: (TrackID, StorageSize, CloudID) => Any) = {
+    try {
+      // make sure musicpimp server has a track to serve
+      val trackFile = TestUtils.makeTestMp3()
+      val fileSize = Files.size(trackFile).bytes
+      assert(fileSize.toBytes === 198658L)
+      val trackFolder = trackFile.getParent
+      Library.setFolders(Seq(trackFolder))
+      val trackId = TrackID(trackFile.getFileName.toString)
+      val file = Library.findAbsolute(trackId)
+      assert(file.isDefined)
+      // connect to pimpcloud
+      val cloudId = CloudID(desiredId)
+      val id = await(cloudClient.connect(Option(cloudId)))
+      assert(id === cloudId)
+      code(trackId, fileSize, id)
+    } finally  {
+      cloudClient.disconnectAndForget()
+    }
+  }
+
+  def req(url: String, cloudId: CloudID, headers: (String, String)*) = {
     val enc = Base64.encodeBase64String(s"$cloudId:admin:test".getBytes(StandardCharsets.UTF_8))
-    httpClient.url(url).withHeaders(HeaderNames.AUTHORIZATION -> s"Basic $enc")
+    val hs = headers :+ (HeaderNames.AUTHORIZATION -> s"Basic $enc")
+    httpClient.url(url).withHeaders(hs: _*)
   }
 
   def statusCode(uri: String, chosenApp: Application): Int =
