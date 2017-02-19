@@ -3,7 +3,7 @@ package com.malliina.play
 import com.malliina.json.JsonFormats
 import com.malliina.storage.{StorageInt, StorageSize}
 import play.api.http.HeaderNames._
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json, Writes}
 import play.api.mvc.RequestHeader
 
 import scala.util.{Failure, Try}
@@ -21,15 +21,27 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
 
   def isAll = start == 0 && endInclusive == totalSizeBytes.toInt - 1
 
-  override def toString: String = s"bytes $start-$endExclusive of $totalSizeBytes bytes"
+  def description = {
+    val total = s"${size.toBytes} bytes"
+    if (isAll) total
+    else s"($start-$endInclusive)/$total"
+  }
+
+  override def toString: String = description
 }
 
 object ContentRange {
+  val BYTES = "bytes"
 
   implicit val ssf = JsonFormats.storageSizeFormat
-  implicit val json = Json.format[ContentRange]
-
-  val BYTES = "bytes"
+  val writer = Writes[ContentRange](range => Json.obj(
+    "start" -> range.start,
+    "endInclusive" -> range.endInclusive,
+    "size" -> range.size,
+    "isAll" -> range.isAll,
+    "description" -> range.description
+  ))
+  implicit val json = Format(Json.reads[ContentRange], writer)
 
   def all(size: StorageSize) = ContentRange(0, size.toBytes.toInt - 1, size)
 
@@ -66,27 +78,3 @@ object ContentRange {
     }
   }
 }
-
-//  /**
-//   * Removes any overlap between `ranges`.
-//   *
-//   * For example, given ranges 500-700,601-999, returns one range 500-999.
-//   *
-//   * @param ranges ranges to minimize
-//   * @return
-//   */
-//  def minimize(ranges: Seq[ContentRange]) = removeOverlap(ranges.sortBy(_.start).toList)
-//
-//  private def removeOverlap(sortedRanges: List[ContentRange]): List[ContentRange] = {
-//    sortedRanges match {
-//      case Nil => Nil
-//      case onlyOne :: Nil => List(onlyOne)
-//      case first :: second :: rest =>
-//        if (first.endExclusive >= second.start) {
-//          val merged = ContentRange(first.start, math.max(first.endInclusive, second.endInclusive), first.size)
-//          removeOverlap(merged +: rest)
-//        } else {
-//          first :: removeOverlap(second :: rest)
-//        }
-//    }
-//  }

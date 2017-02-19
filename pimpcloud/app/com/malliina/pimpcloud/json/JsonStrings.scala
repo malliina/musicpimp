@@ -6,7 +6,7 @@ object JsonStrings extends PimpStrings {
   val RequestId = "request"
   val ServerKey = "s"
   val RegisteredKey = "registered"
-  val UnregisterCmd = "unregister"
+//  val UnregisterCmd = "unregister"
   val SuccessKey = "success"
   val PhonesKey = "phones"
   val ServersKey = "servers"

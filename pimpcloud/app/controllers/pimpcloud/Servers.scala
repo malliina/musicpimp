@@ -101,25 +101,18 @@ abstract class Servers(mat: Materializer)
   def connectedServers: Future[Set[PimpServerSocket]] = Future.successful(storage.clients.toSet)
 
   override def onMessage(msg: JsValue, client: PimpServerSocket): Boolean = {
-    log debug s"Got message: $msg from client: $client"
+    log debug s"Got message: $msg from client: ${client.id}"
+    val clientHandledMessage = client complete msg
+    // forwards non-requested events to any connected phones
 
-    val isUnregister = false // (msg \ CMD).validate[String].filter(_ == UNREGISTER).isSuccess
-    if (isUnregister) {
-      //      identities remove client.id
-      false
-    } else {
-      val clientHandledMessage = client complete msg
-      // forwards non-requested events to any connected phones
-
-      // The fact a client refuses to handle a response doesn't mean it's meant for someone else. The response may for
-      // example have been ignored by the client because it arrived too late. This logic is thus not solid. The
-      // consequence is that clients may receive unsolicited messages occasionally. But they should ignore those anyway,
-      // so we accept this failure.
-      if (!clientHandledMessage) {
-        sendToPhone(msg, client)
-      }
-      clientHandledMessage
+    // The fact a client refuses to handle a response doesn't mean it's meant for someone else. The response may for
+    // example have been ignored by the client because it arrived too late. This logic is thus not solid. The
+    // consequence is that clients may receive unsolicited messages occasionally. But they should ignore those anyway,
+    // so we accept this failure.
+    if (!clientHandledMessage) {
+      sendToPhone(msg, client)
     }
+    clientHandledMessage
   }
 
   def sendToPhone(msg: JsValue, client: PimpServerSocket): Unit

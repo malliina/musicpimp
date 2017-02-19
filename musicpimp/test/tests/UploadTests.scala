@@ -1,6 +1,6 @@
 package tests
 
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{Files, Path}
 
 import com.malliina.http.MultipartRequest
 import com.malliina.util.Util
@@ -9,16 +9,12 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
 class UploadTests extends FunSuite {
-  val fileName = "mpthreetest.mp3"
-
-  val tempFile = Paths get "nonexistent"
-
   ignore("server plays uploaded track") {
     multiPartUpload("http://localhost:9000/playback/uploads")
   }
 
   def multiPartUpload(uri: String) {
-    val file = ensureTestMp3Exists()
+    val file = TestUtils.makeTestMp3()
     using(new MultipartRequest(uri)) { req =>
       req.setAuth("admin", "test")
       req addFile file
@@ -27,19 +23,20 @@ class UploadTests extends FunSuite {
       assert(statusCode === 200)
     }
   }
+}
 
-  def ensureTestMp3Exists(): Path = {
-    if (!Files.exists(tempFile)) {
-      val dest = Files.createTempFile(null, null)
-      val resourceURL = Util.resourceOpt(fileName)
-      val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: " + fileName))
-      FileUtils.copyURLToFile(url, dest.toFile)
-      if (!Files.exists(dest)) {
-        throw new Exception(s"Unable to access $dest")
-      }
-      dest
-    } else {
-      tempFile
+object TestUtils {
+  def makeTestMp3() = TestUtils.resourceToFile("mpthreetest.mp3")
+
+  def resourceToFile(resource: String, suffix: String = ".mp3"): Path = {
+    val dir = Files.createTempDirectory(null)
+    val dest = Files.createTempFile(dir, null, suffix)
+    val resourceURL = Util.resourceOpt(resource)
+    val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: $resource"))
+    FileUtils.copyURLToFile(url, dest.toFile)
+    if (!Files.exists(dest)) {
+      throw new Exception(s"Unable to access $dest")
     }
+    dest
   }
 }

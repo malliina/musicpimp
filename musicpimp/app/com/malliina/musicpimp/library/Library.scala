@@ -27,17 +27,17 @@ class Library {
 
   private val rootFolders: Ref[Seq[Path]] = Ref(Settings.read)
 
-  def roots = rootFolders.single.get
+  private def roots = rootFolders.single.get
 
   def reloadFolders(): Unit = setFolders(Settings.read)
 
   def setFolders(folders: Seq[Path]) = atomic(txn => rootFolders.set(folders)(txn))
 
-  def rootStream = roots.toStream
+  private def rootStream = roots.toStream
 
   def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.id))
 
-  def all(root: Path): Map[Path, Folder] = {
+  private def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
       if (folder.dirs.isEmpty) {
         acc
@@ -59,11 +59,11 @@ class Library {
 
   def trackFiles: Stream[Path] = recursivePaths(audioFiles)
 
-  def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
+  private def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
 
-  def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
+  private def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
 
-  def audioFiles(root: Path) = FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
+  private def audioFiles(root: Path) = FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
 
   def folderStream: Stream[DataFolder] = recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
 
@@ -72,7 +72,7 @@ class Library {
 
   def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
 
-  def toDataTrack(track: LocalTrack) = {
+  private def toDataTrack(track: LocalTrack) = {
     val id = track.id
     val path = Option(relativePath(id).getParent) getOrElse EmptyPath
     DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
@@ -91,32 +91,32 @@ class Library {
 
   def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId))
 
-  def meta(song: Path): LocalTrack = {
+  private def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
     new LocalTrack(TrackID(encode(song)), PimpPath(pathData.relative), meta)
   }
 
-  def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
-
   def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
 
-  def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
+  private def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
-  def parseMeta(pi: PathInfo): Option[LocalTrack] =
+//  def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
+
+  private def parseMeta(pi: PathInfo): Option[LocalTrack] =
     try {
       // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
       Option(new LocalTrack(encodeTrack(pi.relative), PimpPath(pi.relative), meta))
     } catch {
       case e: Exception =>
-        log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.")
+        log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)
         None
     }
 
   def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
 
-  def searchTempDir(id: TrackID): Option[LocalTrack] = {
+  private def searchTempDir(id: TrackID): Option[LocalTrack] = {
     val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
     val absolute = pathInfo.absolute
     if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)

@@ -36,8 +36,9 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
     * @param request request id
     * @return a Future that completes when the upload completes
     */
-  def upload(track: GetTrack, request: RequestID): Future[Unit] =
+  def upload(track: GetTrack, request: RequestID): Future[Unit] = {
     withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
+  }
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
@@ -106,7 +107,7 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
       val code = response.getStatusLine.getStatusCode
       val isSuccess = code >= 200 && code < 300
       if (!isSuccess) {
-        log error appendMeta(s"Non-success response code $code for track ID $trackID")
+        log error appendMeta(s"Non-success response code $code for track $trackID")
       } else {
         val prefix = s"Uploaded ${sizeCalc(path)} of $trackID"
         log info appendMeta(s"$prefix with response $code")
@@ -123,5 +124,8 @@ class TrackUploads(uploadUri: PimpUrl, ec: ExecutionContext) extends AutoCloseab
     }
   }
 
-  def close(): Unit = scheduler.shutdown()
+  def close(): Unit = {
+    scheduler.awaitTermination(3, TimeUnit.SECONDS)
+    scheduler.shutdown()
+  }
 }

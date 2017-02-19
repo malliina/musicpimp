@@ -8,7 +8,6 @@ import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.models.{CloudID, PimpUrl}
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.json.SimpleCommand
 import com.malliina.util.Utils
 import controllers.musicpimp.CloudEvent
 import controllers.musicpimp.CloudEvent.{Connected, Connecting, Disconnected}
@@ -44,8 +43,8 @@ object Clouds {
 
 class Clouds(deps: Deps, cloudEndpoint: PimpUrl) {
   private var client: CloudSocket = newSocket(None)
-  val timer = Observable.interval(60.seconds)
-  var poller: Option[Subscription] = None
+  private val timer = Observable.interval(60.seconds)
+  private var poller: Option[Subscription] = None
   val MaxFailures = 720
   var successiveFailures = 0
   val notConnected = Disconnected("Not connected.")
@@ -61,6 +60,7 @@ class Clouds(deps: Deps, cloudEndpoint: PimpUrl) {
   def isConnected = client.isConnected
 
   def init(): Unit = {
+    log info s"Initializing cloud connection..."
     ensureConnectedIfEnabled()
     maintainConnectivity()
   }
@@ -118,7 +118,6 @@ class Clouds(deps: Deps, cloudEndpoint: PimpUrl) {
     CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, deps)
 
   def disconnectAndForget() = {
-    client sendMessage SimpleCommand(CloudStrings.Unregister)
     disconnect()
     Files.deleteIfExists(Clouds.idFile)
   }

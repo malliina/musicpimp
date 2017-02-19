@@ -40,7 +40,7 @@ case class Deps(playlists: PlaylistService,
 object CloudSocket {
   private val log = Logger(getClass)
 
-  val path = "/servers/ws2"
+  val path = "/servers/ws"
   val devUri = PimpUrl("ws", "localhost:9000", path)
   val prodUri = PimpUrl("wss", "cloud.musicpimp.org", path)
 
@@ -81,7 +81,6 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = PimpUrl(httpProto, uri.hostAndPort, "")
   val uploader = TrackUploads(cloudHost)
-  log info s"Initializing cloud connection with user $username"
   implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
   implicit val trackWriter = TrackJson.format(cloudHost)
 
@@ -105,7 +104,7 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
     * @return a future that completes when the connection has successfully been established
     */
   override def connect(): Future[Unit] = {
-    log debug s"Connecting as user: $username"
+    log info s"Connecting as user '$username' to $uri..."
     Observables.timeoutAfter(10.seconds, registrationPromise)
     super.connect()
   }
@@ -137,7 +136,6 @@ class CloudSocket(uri: PimpUrl, username: CloudID, password: Password, deps: Dep
     messageParser.parseEvent(json)
 
   def handleRequest(message: PimpMessage, request: RequestID): Unit = {
-
     def databaseResponse[T: Writes](f: Future[T]): Future[Any] =
       withDatabaseExcuse(request)(f.map(t => sendResponse(t, request)))
 
