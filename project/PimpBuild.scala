@@ -67,7 +67,7 @@ object PimpBuild {
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
-  val utilPlayDep = malliinaGroup %% "util-play" % "3.5.3"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.1-SNAPSHOT"
 
   def scalajsProject(name: String, path: File) =
     Project(name, path)
@@ -187,9 +187,9 @@ object PimpBuild {
       nativePackagingSettings ++
       Seq(
         libraryDependencies ++= Seq(
-          malliinaGroup %% "util-actor" % "2.5.5",
-          malliinaGroup %% "util-rmi" % "2.5.5",
-          malliinaGroup %% "util-audio" % "2.0.0",
+          malliinaGroup %% "util-actor" % "2.5.6",
+          malliinaGroup %% "util-rmi" % "2.5.6",
+          malliinaGroup %% "util-audio" % "2.0.2",
           httpGroup % "httpclient" % httpVersion,
           httpGroup % "httpcore" % httpVersion,
           httpGroup % "httpmime" % httpVersion,

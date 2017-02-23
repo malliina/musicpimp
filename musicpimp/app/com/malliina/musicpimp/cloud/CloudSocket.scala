@@ -104,7 +104,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
     * @return a future that completes when the connection has successfully been established
     */
   override def connect(): Future[Unit] = {
-    log info s"Connecting as user '$username' to $uri..."
+    log info s"Connecting as '$username' to $uri..."
     Observables.timeoutAfter(10.seconds, registrationPromise)
     super.connect()
   }
@@ -293,10 +293,12 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   def onRegistered(id: CloudID) = {
     registrationPromise trySuccess id
     registrations onNext id
+    log info s"Connected as '$username' to $uri."
   }
 
   override def onClose(): Unit = {
     failSocket(CloudSocket.connectionClosed)
+    log info s"Disconnected as '$username' from $uri."
   }
 
   override def onError(e: Exception): Unit = {

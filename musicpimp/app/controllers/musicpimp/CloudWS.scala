@@ -1,41 +1,47 @@
 package controllers.musicpimp
 
-import com.malliina.maps.StmItemMap
+import akka.actor.Props
 import com.malliina.musicpimp.audio.JsonCmd
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.play.controllers.Streaming
+import com.malliina.play.ActorContext
+import com.malliina.play.auth.{Authenticator, InvalidCredentials}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username
+import com.malliina.play.ws.Mediator.Broadcast
+import com.malliina.play.ws.{Mediator, ReplayMediator, SimpleSockets}
 import controllers.musicpimp.CloudCommand.{Connect, Disconnect, Noop}
-import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id, log}
+import controllers.musicpimp.CloudEvent.Disconnecting
+import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{RequestHeader, Security}
 import rx.lang.scala.Subscription
 
-import scala.concurrent.Future
-
 sealed abstract class CloudEvent(event: String)
 
 object CloudEvent {
   val IdKey = "id"
-  val ConnectingStr = "connecting"
-  val ConnectedStr = "connected"
-  val DisconnectedStr = "disconnected"
+  val ConnectedKey = "connected"
+  val ConnectingKey = "connecting"
+  val DisconnectedKey = "disconnected"
+  val DisconnectingKey = "disconnecting"
 
   implicit val writer = Writes[CloudEvent] {
-    case Connected(id) => JsonMessages.event(ConnectedStr, IdKey -> id)
-    case Disconnected(reason) => JsonMessages.event(DisconnectedStr, JsonStrings.Reason -> reason)
-    case Connecting => JsonMessages.event(ConnectingStr)
+    case Connected(id) => JsonMessages.event(ConnectedKey, IdKey -> id)
+    case Disconnected(reason) => JsonMessages.event(DisconnectedKey, JsonStrings.Reason -> reason)
+    case Connecting => JsonMessages.event(ConnectingKey)
+    case Disconnecting => JsonMessages.event(DisconnectingKey)
   }
 
-  case class Connected(id: CloudID) extends CloudEvent(ConnectedStr)
+  case class Connected(id: CloudID) extends CloudEvent(ConnectedKey)
 
-  case class Disconnected(reason: String) extends CloudEvent(DisconnectedStr)
+  case class Disconnected(reason: String) extends CloudEvent(DisconnectedKey)
 
-  case object Connecting extends CloudEvent(ConnectingStr)
+  case object Connecting extends CloudEvent(ConnectingKey)
+
+  case object Disconnecting extends CloudEvent(DisconnectingKey)
 
 }
 
@@ -57,41 +63,59 @@ object CloudWS {
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
   val Id = "id"
-  val tmp: Option[String] = None
+  val Subscribe = "subscribe"
 }
 
-class CloudWS(clouds: Clouds, security: SecureBase) extends Streaming(security.mat) {
+class CloudWS(clouds: Clouds, ctx: ActorContext) {
+  val auth = Authenticator[AuthedRequest] { rh =>
+    val result = rh.session.get(Security.username).map(Username.apply)
+      .map(user => Right(new AuthedRequest(user, rh)))
+      .getOrElse(Left(InvalidCredentials(rh)))
+    fut(result)
+  }
+
+  val sockets = new SimpleSockets[AuthedRequest](Props(new CloudMediator(clouds)), auth, ctx)
+
+  def newSocket = sockets.newSocket
+}
+
+class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   val jsonEvents = clouds.connection.map(event => Json.toJson(event))
+  var subscription: Option[Subscription] = None
 
-  override def openSocketCall = routes.CloudWS.openSocket()
+  override def preStart(): Unit = {
+    val sub = jsonEvents.subscribe(
+      e => self ! Broadcast(e),
+      (err: Throwable) => log.error(s"WebSocket error.", err),
+      () => ())
+    subscription = Option(sub)
+  }
 
-  override lazy val subscriptions = StmItemMap.empty[Client, Subscription]
-
-  override def authenticateAsync(req: RequestHeader): Future[AuthedRequest] =
-    req.session.get(Security.username).map(Username.apply)
-      .map(user => fut(new AuthedRequest(user, req)))
-      .getOrElse(Future.failed(new NoSuchElementException))
-
-  override def onMessage(msg: JsValue, client: Client): Boolean = {
-    super.onMessage(msg, client)
-    val cmd = new JsonCmd(msg)
+  override def onClientMessage(message: JsValue, rh: RequestHeader): Unit = {
+    val cmd = new JsonCmd(message)
     val parsed: JsResult[CloudCommand] = cmd.command flatMap {
       case DisconnectCmd => JsSuccess(Disconnect)
       case ConnectCmd => cmd.key[CloudID](Id).map(id => Connect(id))
-      case SUBSCRIBE => JsSuccess(Noop)
-      case other => JsError(s"Unknown command: $other")
+      case CloudWS.Subscribe => JsSuccess(Noop)
+      case other => JsError(s"Unknown command: '$other'.")
     }
     parsed
       .map(handleCommand)
-      .recoverTotal(err => log.error(s"Invalid JSON: '$msg', $err"))
-    parsed.isSuccess
+      .recoverTotal(err => log.error(s"Invalid JSON: '$message'., $err"))
   }
 
   def handleCommand(cmd: CloudCommand): Any = {
     cmd match {
-      case Connect(id) => clouds.connect(Option(id))
-      case Disconnect => clouds.disconnectAndForget()
-      case Noop => ()
+      case Connect(id) =>
+        clouds.connect(Option(id))
+      case Disconnect =>
+        clouds.disconnectAndForgetAsync()
+      case Noop =>
+        ()
     }
+  }
+
+  override def postStop(): Unit = {
+    subscription foreach { sub => sub.unsubscribe() }
   }
 }

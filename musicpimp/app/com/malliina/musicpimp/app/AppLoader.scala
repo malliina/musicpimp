@@ -9,7 +9,7 @@ import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.models.FullUrl
 import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.PimpAuthenticator
+import com.malliina.play.{ActorContext, PimpAuthenticator}
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
 import controllers._
@@ -62,6 +62,7 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   lazy val messages = Messages(language, messagesApi)
 
   // Services
+  lazy val ctx = ActorContext(actorSystem, materializer)
   lazy val indexer = new Indexer(db)
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db)
@@ -94,7 +95,7 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   lazy val cloud = new Cloud(tags, clouds, auth, materializer)
   lazy val connect = new ConnectController(auth, materializer)
   lazy val assetsCtrl = new Assets(httpErrorHandler)
-  lazy val cloudWS = new CloudWS(clouds, security)
+  lazy val cloudWS = new CloudWS(clouds, ctx)
 
   Starter.startServices(options, clouds, db, indexer)
   val dummyForInit = statsPlayer

@@ -14,9 +14,10 @@ import scalatags.Text.all._
 case class UserFeedback(message: String, isError: Boolean)
 
 object Cloud {
-  val Connecting = "connecting"
   val Connected = "connected"
+  val Connecting = "connecting"
   val Disconnected = "disconnected"
+  val Disconnecting = "disconnecting"
   val ConnectId = "button-connect"
   val DisconnectId = "button-disconnect"
   val CloudId = "cloud-id"
@@ -29,6 +30,8 @@ object Cloud {
   val IdKey ="id"
 
   def connectingContent: Frag = leadPara("Connecting...")
+
+  def disconnectingContent: Frag = leadPara("Disconnecting...")
 
   def connectedContent(id: String): Frag = {
     val msg = s"Connected. You can now access this server using your credentials and this cloud ID: $id"
@@ -92,6 +95,8 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
           readField[String](payload, Reason).map { reason =>
             Cloud.disconnectedContent(reason)
           }
+        case Disconnecting =>
+          Right(Cloud.disconnectingContent)
         case other =>
           Left(Invalid.Data(payload, s"Unknown event: '$other'."))
       }
