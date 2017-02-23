@@ -5,14 +5,13 @@ import com.malliina.musicpimp.audio.JsonCmd
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.play.ActorContext
+import com.malliina.play.ActorExecution
 import com.malliina.play.auth.{Authenticator, InvalidCredentials}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username
 import com.malliina.play.ws.Mediator.Broadcast
-import com.malliina.play.ws.{Mediator, ReplayMediator, SimpleSockets}
+import com.malliina.play.ws.{MediatorSockets, ReplayMediator}
 import controllers.musicpimp.CloudCommand.{Connect, Disconnect, Noop}
-import controllers.musicpimp.CloudEvent.Disconnecting
 import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id}
 import play.api.Logger
 import play.api.libs.json._
@@ -64,19 +63,19 @@ object CloudWS {
   val DisconnectCmd = "disconnect"
   val Id = "id"
   val Subscribe = "subscribe"
-}
 
-class CloudWS(clouds: Clouds, ctx: ActorContext) {
   val auth = Authenticator[AuthedRequest] { rh =>
     val result = rh.session.get(Security.username).map(Username.apply)
       .map(user => Right(new AuthedRequest(user, rh)))
       .getOrElse(Left(InvalidCredentials(rh)))
     fut(result)
   }
+}
 
-  val sockets = new SimpleSockets[AuthedRequest](Props(new CloudMediator(clouds)), auth, ctx)
+class CloudWS(clouds: Clouds, ctx: ActorExecution) {
+  val sockets = new MediatorSockets[AuthedRequest](Props(new CloudMediator(clouds)), CloudWS.auth, ctx)
 
-  def newSocket = sockets.newSocket
+  def openSocket = sockets.newSocket
 }
 
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {

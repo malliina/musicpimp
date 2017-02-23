@@ -58,7 +58,7 @@ GET         /ws/playback                       controllers.musicpimp.ServerWS.op
 GET         /ws/playback2                      controllers.musicpimp.ServerWS.openSocket
 GET         /ws/webplay                        controllers.musicpimp.WebPlayer.openSocket
 GET         /ws/logs                           controllers.musicpimp.PimpLogs.openSocket
-GET         /ws/cloud                          controllers.musicpimp.CloudWS.newSocket
+GET         /ws/cloud                          controllers.musicpimp.CloudWS.openSocket
 # Alarms
 GET         /alarms                            controllers.musicpimp.Alarms.alarms
 POST        /alarms                            controllers.musicpimp.Alarms.handleJson
