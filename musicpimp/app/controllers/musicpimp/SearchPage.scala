@@ -3,7 +3,7 @@ package controllers.musicpimp
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
 
@@ -14,7 +14,7 @@ class SearchPage(tags: PimpTags,
                  s: Search,
                  indexer: Indexer,
                  db: PimpDb,
-                 auth: Authenticator,
+                 auth: CookieAuthenticator,
                  mat: Materializer)
   extends HtmlController(auth, mat) {
 

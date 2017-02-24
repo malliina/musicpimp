@@ -1,12 +1,12 @@
 package controllers.musicpimp
 
 import akka.stream.Materializer
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.Secured.log
 import play.api.Logger
 import play.api.mvc._
 
-class Secured(auth: Authenticator, mat: Materializer)
+class Secured(auth: CookieAuthenticator, mat: Materializer)
   extends SecureBase(auth, mat) {
 
   protected def logUnauthorized(request: RequestHeader): Unit = {

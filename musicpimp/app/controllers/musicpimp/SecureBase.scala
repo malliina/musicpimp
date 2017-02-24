@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.http.PimpUploads
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.play.auth.BasicCredentials
 import com.malliina.play.concurrent.FutureOps2
 import com.malliina.play.controllers._
@@ -19,7 +19,7 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-class SecureBase(auth: Authenticator, mat: Materializer)
+class SecureBase(auth: CookieAuthenticator, mat: Materializer)
   extends BaseSecurity(mat)
     with PimpContentController
     with Controller {

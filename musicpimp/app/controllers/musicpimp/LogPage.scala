@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import ch.qos.logback.classic.Level
 import com.malliina.logbackrx.LogEvent
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.util.Logging
 import controllers.musicpimp.LogPage.log
 import play.api.Logger
@@ -26,7 +26,7 @@ object FrontLogEvent {
   implicit val json = Json.format[FrontLogEvent]
 }
 
-class LogPage(tags: PimpTags, sockets: PimpLogs, auth: Authenticator, mat: Materializer)
+class LogPage(tags: PimpTags, sockets: PimpLogs, auth: CookieAuthenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
   val LevelKey = "level"
 

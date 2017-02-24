@@ -7,7 +7,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
 import play.api.Logger
@@ -21,7 +21,7 @@ import scala.util.Try
 class SettingsController(tags: PimpTags,
                          messages: Messages,
                          indexer: Indexer,
-                         auth: Authenticator,
+                         auth: CookieAuthenticator,
                          mat: Materializer)
   extends HtmlController(auth, mat) {
   val Success = "success"

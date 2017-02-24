@@ -6,7 +6,7 @@ import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -15,7 +15,7 @@ import play.api.http.Writeable
 import play.api.i18n.Messages
 import play.api.mvc.Result
 
-class AlarmEditor(tags: PimpTags, auth: Authenticator, messages: Messages, mat: Materializer)
+class AlarmEditor(tags: PimpTags, auth: CookieAuthenticator, messages: Messages, mat: Materializer)
   extends Secured(auth, mat)
     with SchedulerStrings {
 

@@ -7,7 +7,7 @@ import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta, TrackID}
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
 import controllers.musicpimp.Playlists.log
@@ -28,7 +28,7 @@ object Playlists {
 
 class Playlists(tags: PimpTags,
                 service: PlaylistService,
-                auth: Authenticator,
+                auth: CookieAuthenticator,
                 mat: Materializer) extends Secured(auth, mat) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)

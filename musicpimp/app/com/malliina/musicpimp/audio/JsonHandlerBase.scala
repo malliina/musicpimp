@@ -22,14 +22,14 @@ trait JsonHandlerBase {
     */
   def onJson(msg: JsValue, req: RequestInfo[Username]): Unit = {
     val user = req.user
-    log info s"User: $user from: ${req.request.remoteAddress} said: $msg"
+    log info s"User '$user' from '${req.request.remoteAddress}' said: '$msg'."
     handleMessage(msg, RemoteInfo(req))
   }
 
   def handleMessage(msg: JsValue, request: RemoteInfo): Unit = {
     parse(msg)
       .map(fulfillMessage(_, request))
-      .recoverTotal(err => log error s"Invalid JSON: $msg, error: $err")
+      .recoverTotal(err => log error s"Invalid JSON: '$msg', error: $err.")
   }
 
   def parse(msg: JsValue): JsResult[PlayerMessage] = {
@@ -86,7 +86,7 @@ trait JsonHandlerBase {
       case ResetPlaylist =>
         JsSuccess(ResetPlaylistMessage(cmd.index getOrElse BasePlaylist.NoPosition, cmd.tracksOrNil))
       case anythingElse =>
-        JsError(s"Unknown message: $msg")
+        JsError(s"Unknown message: '$msg'.")
     })
   }
 

@@ -5,7 +5,7 @@ import java.net.NetworkInterface
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import com.malliina.json.JsonFormats
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
 import controllers.musicpimp.ConnectController.{Protocols, log}
@@ -20,7 +20,7 @@ import scala.collection.JavaConversions._
 /**
   * This code is totally best effort so make sure the user has the final say.
   */
-class ConnectController(auth: Authenticator, mat: Materializer)
+class ConnectController(auth: CookieAuthenticator, mat: Materializer)
   extends HtmlController(auth, mat) {
 
   def connect = navigate(_ => "todo")

@@ -6,7 +6,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.play.models.Username
 import com.malliina.play.ws.WebSocketController
 import play.api.mvc.Security.AuthenticatedRequest
@@ -17,7 +17,7 @@ import scala.concurrent.Future
 class Website(tags: PimpTags,
               sockets: WebSocketController,
               serverWS: ServerWS,
-              auth: Authenticator,
+              auth: CookieAuthenticator,
               stats: PlaybackStats,
               mat: Materializer)
   extends HtmlController(auth, mat) {

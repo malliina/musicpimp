@@ -15,7 +15,7 @@ import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models._
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
 import com.malliina.play.models.Username
@@ -32,7 +32,7 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 class Rest(webPlayer: WebPlayer,
-           auth: Authenticator,
+           auth: CookieAuthenticator,
            handler: PlaybackMessageHandler,
            statsPlayer: StatsPlayer,
            mat: Materializer)

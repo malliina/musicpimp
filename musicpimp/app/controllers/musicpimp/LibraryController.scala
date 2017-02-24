@@ -7,11 +7,11 @@ import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
 import com.malliina.musicpimp.tags.{PimpTags, TagPage}
 import com.malliina.play.models.Username
-import com.malliina.play.{Authenticator, FileResults}
+import com.malliina.play.{CookieAuthenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
 
-class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: Authenticator, mat: Materializer)
+class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: CookieAuthenticator, mat: Materializer)
   extends Secured(auth, mat) {
 
   def siteRoot = rootLibrary

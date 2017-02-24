@@ -20,7 +20,7 @@ class PimpLogs(ctx: ActorExecution) {
   lazy val jsonEvents: Observable[JsValue] =
     appender.logEvents.tumblingBuffer(100.millis).filter(_.nonEmpty).map(Json.toJson(_))
 
-  val sockets = new Sockets(CloudWS.auth, ctx) {
+  val sockets = new Sockets(CloudWS.sessionAuth, ctx) {
     override def props(out: ActorRef, user: AuthedRequest, rh: RequestHeader) =
       Props(new ObserverActor(jsonEvents, ActorInfo(out, rh)))
   }

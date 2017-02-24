@@ -7,7 +7,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.Cloud.log
 import play.api.Logger
 import play.api.data.Form
@@ -20,7 +20,7 @@ object Cloud {
   val idFormKey = "id"
 }
 
-class Cloud(tags: PimpTags, clouds: Clouds, auth: Authenticator, mat: Materializer)
+class Cloud(tags: PimpTags, clouds: Clouds, auth: CookieAuthenticator, mat: Materializer)
   extends Secured(auth, mat) {
 
   val FEEDBACK = "feedback"

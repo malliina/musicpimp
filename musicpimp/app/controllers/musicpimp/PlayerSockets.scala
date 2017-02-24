@@ -29,7 +29,7 @@ abstract class PlayerSockets(security: SecureBase)
   }
 
   def handleMessage(message: Message, client: Client): Unit =
-    messageHandler.onJson(message, RequestInfo[Username](client.user, client.request))
+    messageHandler.onJson(message, RequestInfo(client.user, client.request))
 }
 
 object PlayerSockets {

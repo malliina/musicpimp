@@ -8,7 +8,7 @@ import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.Authenticator
+import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
 import play.api.i18n.Messages
@@ -16,7 +16,7 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms(tags: PimpTags, auth: Authenticator, messages: Messages, mat: Materializer)
+class Alarms(tags: PimpTags, auth: CookieAuthenticator, messages: Messages, mat: Materializer)
   extends AlarmEditor(tags, auth, messages, mat)
     with SchedulerStrings {
 

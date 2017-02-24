@@ -14,7 +14,11 @@ import scala.util.{Failure, Try}
 
 /** This is a mutable mess. It should be rewritten, maybe using Rx.
   */
-object MusicPlayer extends IPlayer with PlaylistSupport[PlayableTrack] with Log {
+object MusicPlayer
+  extends IPlayer
+    with PlaylistSupport[PlayableTrack]
+    with ServerPlayer
+    with Log {
   private val defaultVolume = 40
   val playlist: PimpPlaylist = new PimpPlaylist
 

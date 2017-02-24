@@ -6,7 +6,7 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-trait Authenticator {
+trait CookieAuthenticator {
   /**
     * @param user username
     * @param pass password

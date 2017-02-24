@@ -3,6 +3,7 @@ package com.malliina.musicpimp.app
 import _root_.musicpimp.Routes
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
+import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
@@ -75,13 +76,14 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
   lazy val clouds = new Clouds(deps, options.cloudUri)
   lazy val tags = PimpTags.forApp(environment.mode == Mode.Prod)
+  lazy val auths = new Auths(userManager)(ctx.executionContext)
 
   // Controllers
   lazy val security = new SecureBase(auth, materializer)
   lazy val ls = new PimpLogs(ctx)
   lazy val lp = new LogPage(tags, ls, auth, materializer)
   lazy val wp = new WebPlayer(security)
-  lazy val sws = new ServerWS(clouds, security, handler)
+  lazy val sws = new ServerWS(clouds, auths.playback, handler, ctx)
   lazy val webCtrl = new Website(tags, wp, sws, auth, stats, materializer)
   lazy val s = new Search(indexer, security)
   lazy val sp = new SearchPage(tags, s, indexer, db, auth, materializer)

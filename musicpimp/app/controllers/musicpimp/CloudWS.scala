@@ -2,6 +2,7 @@ package controllers.musicpimp
 
 import akka.actor.Props
 import com.malliina.musicpimp.audio.JsonCmd
+import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.models.CloudID
@@ -64,16 +65,11 @@ object CloudWS {
   val Id = "id"
   val Subscribe = "subscribe"
 
-  val auth = Authenticator[AuthedRequest] { rh =>
-    val result = rh.session.get(Security.username).map(Username.apply)
-      .map(user => Right(new AuthedRequest(user, rh)))
-      .getOrElse(Left(InvalidCredentials(rh)))
-    fut(result)
-  }
+  val sessionAuth = Auths.session
 }
 
 class CloudWS(clouds: Clouds, ctx: ActorExecution) {
-  val sockets = new MediatorSockets[AuthedRequest](Props(new CloudMediator(clouds)), CloudWS.auth, ctx)
+  val sockets = new MediatorSockets[AuthedRequest](Props(new CloudMediator(clouds)), CloudWS.sessionAuth, ctx)
 
   def openSocket = sockets.newSocket
 }
