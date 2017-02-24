@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.play.auth.{Authenticator, InvalidCredentials, MissingCredentials}
+import com.malliina.play.auth.{Authenticator, InvalidCredentials, MissingCredentials, RememberMe}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.{Password, Username}
 import controllers.musicpimp.fut
@@ -44,7 +44,7 @@ object Auths {
     }
 }
 
-class Auths(userManager: UserManager[Username, Password])(implicit ec: ExecutionContext) {
+class Auths(userManager: UserManager[Username, Password], rememberMe: RememberMe)(implicit ec: ExecutionContext) {
   private val database = Authenticator[AuthedRequest] { rh =>
     com.malliina.play.auth.Auth.basicCredentials(rh) map { creds =>
       userManager.authenticate(creds.username, creds.password) map { isValid =>
@@ -56,5 +56,9 @@ class Auths(userManager: UserManager[Username, Password])(implicit ec: Execution
     }
   }
 
-  val playback = Auths.anyOne(Auths.session, database)
+  val cookie = Authenticator[AuthedRequest] { rh =>
+    rememberMe.authenticateFromCookie(rh).map(_.toRight(MissingCredentials(rh)))
+  }
+
+  val client = Auths.anyOne(Auths.session, cookie, database)
 }

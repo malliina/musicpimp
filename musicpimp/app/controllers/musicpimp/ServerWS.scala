@@ -35,8 +35,8 @@ class ServerWS(val clouds: Clouds,
   }
 
   val sockets = new Sockets(auth, ctx) {
-    override def props(out: ActorRef, user: AuthedRequest, rh: RequestHeader): Props =
-      Props(new PlayerActor(MusicPlayer, handler, user.user, ActorInfo(out, rh)))
+    override def props(conf: ActorConfig[AuthedRequest]) =
+      Props(new PlayerActor(MusicPlayer, handler, conf))
   }
 
   def openSocket = sockets.newSocket
@@ -44,13 +44,13 @@ class ServerWS(val clouds: Clouds,
 
 class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
-                  user: Username,
-                  meta: ActorMeta) extends JsonActor(meta.rh) {
+                  conf: ActorConfig[AuthedRequest]) extends JsonActor(conf.rh) {
   val ticks = Observable.interval(900.millis)
   val messageWriter = ServerMessage.writer(FullUrl.hostOnly(rh))
   val apiVersion = PimpRequest.apiVersion(rh)
   implicit val w = TrackJson.writer(rh)
-  val out = meta.out
+  val out = conf.out
+  val user = conf.user.user
   var eventSub: Option[Subscription] = None
   var previousPos = -1L
 
