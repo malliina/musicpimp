@@ -4,7 +4,6 @@ import com.malliina.musicpimp.audio.JsonHandlerBase
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.play.http.RequestInfo
-import com.malliina.play.models.Username
 import controllers.musicpimp.PlayerSockets.log
 import play.api.Logger
 import play.api.libs.json.JsValue

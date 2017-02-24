@@ -11,6 +11,7 @@ import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.auth.Auth
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.{Password, Username}
+import com.malliina.play.ws.{ActorMeta, JsonActor}
 import com.malliina.ws.{RxStmStorage, ServerSocket}
 import controllers.pimpcloud.Servers.log
 import play.api.Logger
@@ -90,7 +91,6 @@ abstract class Servers(mat: Materializer)
     }
   }
 
-
   override def welcomeMessage(client: PimpServerSocket): Option[JsValue] = {
     Some(Json.obj(Cmd -> RegisteredKey, Body -> Json.obj(Id -> client.id)))
   }
@@ -117,6 +117,12 @@ abstract class Servers(mat: Materializer)
 
   def sendToPhone(msg: JsValue, client: PimpServerSocket): Unit
 }
+
+//class ServerActor(ctx: ActorMeta) extends JsonActor(ctx.rh) {
+//  override def preStart() = {
+//
+//  }
+//}
 
 object Servers {
   private val log = Logger(getClass)

@@ -1,17 +1,11 @@
 package controllers.musicpimp
 
-import akka.actor.{ActorRef, Props}
 import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
-import com.malliina.play.ActorExecution
-import com.malliina.play.http.AuthedRequest
-import com.malliina.play.ws._
+import com.malliina.play.{ActorExecution, PimpSockets}
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.RequestHeader
 import rx.lang.scala.Observable
 
 import scala.concurrent.duration.DurationInt
-
-case class ActorInfo(out: ActorRef, rh: RequestHeader) extends ActorMeta
 
 class PimpLogs(ctx: ActorExecution) {
   val appenderName = "RX"
@@ -20,10 +14,7 @@ class PimpLogs(ctx: ActorExecution) {
   lazy val jsonEvents: Observable[JsValue] =
     appender.logEvents.tumblingBuffer(100.millis).filter(_.nonEmpty).map(Json.toJson(_))
 
-  val sockets = new Sockets(CloudWS.sessionAuth, ctx) {
-    override def props(conf: ActorConfig[AuthedRequest]) =
-      Props(new ObserverActor(jsonEvents, conf))
-  }
+  val sockets = PimpSockets.observingSockets(jsonEvents, CloudWS.sessionAuth, ctx)
 
   def openSocket = sockets.newSocket
 }

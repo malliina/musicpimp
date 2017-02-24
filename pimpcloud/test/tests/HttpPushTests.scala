@@ -4,6 +4,7 @@ import com.malliina.musicpimp.messaging.Pusher
 import com.malliina.musicpimp.messaging.cloud.{APNSRequest, PushResult, PushTask}
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.CloudComponents
+import com.malliina.play.auth.AuthFailure
 import com.malliina.play.http.{AuthedRequest, FullRequest}
 import com.malliina.play.models.Username
 import com.malliina.push.apns.{APNSMessage, APNSToken}
@@ -28,8 +29,8 @@ object TestAuth extends PimpAuth {
 
   override def logged(action: EssentialAction) = action
 
-  override def authenticate(request: RequestHeader): Future[Option[AuthedRequest]] =
-    Future.successful(Option(AuthedRequest(testUser, request)))
+  override def authenticate(request: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
+    Future.successful(Right(AuthedRequest(testUser, request)))
 
   override def authAction(f: FullRequest => Result) = Action { req =>
     val fakeRequest = new FullRequest(testUser, req, None)

@@ -15,13 +15,15 @@ import scala.concurrent.Future
   *
   * Check subclasses [[Logs]] and [[UsageStreaming]] for more info.
   */
-abstract class AdminStreaming(oauth: PimpAuth, mat: Materializer) extends Streaming(mat) {
+abstract class AdminStreaming(oauth: PimpAuth, mat: Materializer)
+  extends Streaming(mat) {
+
   override val subscriptions: ItemMap[JsonSocketClient[Username], Subscription] =
     StmItemMap.empty[JsonSocketClient[Username], Subscription]
 
   override def authenticateAsync(req: RequestHeader): Future[AuthedRequest] =
     getOrFail(oauth.authenticate(req))
 
-  private def getOrFail[T](f: Future[Option[T]]): Future[T] =
-    f.flatMap(_.map(Future.successful).getOrElse(Future.failed(new NoSuchElementException)))
+  private def getOrFail[T](f: Future[Either[_, T]]): Future[T] =
+    f.flatMap(_.fold(_ => Future.failed(new NoSuchElementException), t => Future.successful(t)))
 }
