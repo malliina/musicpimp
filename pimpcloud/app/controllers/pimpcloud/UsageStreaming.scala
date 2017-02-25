@@ -1,16 +1,12 @@
 package controllers.pimpcloud
 
-import com.malliina.pimpcloud.ws.PhoneSockets
-import com.malliina.play.{ActorExecution, PimpSockets}
-import play.api.libs.json.JsValue
-import rx.lang.scala.Observable
+import com.malliina.play.ActorExecution
+import com.malliina.play.ws.{Mediator, MediatorSockets}
 
-class UsageStreaming(servers: Servers,
-                     phoneSockets: PhoneSockets,
-                     auth: PimpAuth,
-                     ctx: ActorExecution) {
-  val jsonEvents: Observable[JsValue] = servers.usersJson merge phoneSockets.usersJson merge servers.uuidsJson
-  val sockets = PimpSockets.observingSockets(jsonEvents, auth, ctx)
+class UsageStreaming(auth: PimpAuth, ctx: ActorExecution) {
+  //  val jsonEvents: Observable[JsValue] = servers.usersJson merge phoneSockets.usersJson merge servers.uuidsJson
+  val sockets = new MediatorSockets(Mediator.props(), auth, ctx)
+  val mediator = sockets.mediator
 
   def openSocket = sockets.newSocket
 }

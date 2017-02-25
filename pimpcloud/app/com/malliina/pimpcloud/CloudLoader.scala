@@ -17,35 +17,37 @@ import play.filters.gzip.GzipFilter
 class CloudLoader extends DefaultApp(new ProdComponents(_))
 
 class ProdComponents(context: Context) extends CloudComponents(context, ProdPusher.fromConf, GoogleOAuthReader.load) {
-  override lazy val prodAuth: PimpAuth = new ProdAuth(new OAuthCtrl(adminAuth))
+  override lazy val pimpAuth: PimpAuth = new ProdAuth(new OAuthCtrl(adminAuth))
 }
 
 abstract class CloudComponents(context: Context,
                                pusher: Pusher,
                                oauthCreds: GoogleOAuthCredentials) extends BuiltInComponentsFromContext(context) {
-  def prodAuth: PimpAuth
+  def pimpAuth: PimpAuth
 
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   val adminAuth = new AdminOAuth(oauthCreds, materializer)
   lazy val auth = new CloudAuth(materializer)
   val forms = new AccountForms
-  lazy val joined = new JoinedSockets(materializer)
+
+  lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
+  lazy val ctx = ActorExecution(actorSystem, materializer)
+
+  // Controllers
+  lazy val us = new UsageStreaming(pimpAuth, ctx)
+  lazy val joined = new JoinedSockets(us.mediator, ctx)
   lazy val s = joined.servers
   lazy val cloudAuths = joined.auths
   lazy val ps = joined.phones
-  lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
-  lazy val ctx = ActorExecution(actorSystem, materializer)
-  // Controllers
   lazy val push = new Push(pusher)
-  lazy val p = new Phones(tags, cloudAuths, ps, auth)
+  lazy val p = new Phones(tags, cloudAuths, auth)
   lazy val sc = new ServersController(cloudAuths, auth)
-  lazy val aa = new AdminAuth(prodAuth, adminAuth, tags, materializer)
-  lazy val l = new Logs(tags, prodAuth, ctx)
+  lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags, materializer)
+  lazy val l = new Logs(tags, pimpAuth, ctx)
   lazy val w = new Web(tags, cloudAuths, materializer.executionContext, forms)
-  lazy val us = new UsageStreaming(s, ps, prodAuth, ctx)
   lazy val as = new Assets(httpErrorHandler)
-  lazy val router = new Routes(httpErrorHandler, p, w, push, ps, sc, s, l, adminAuth, aa, us, as)
+  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, us, as)
   CloudComponents.log.info(s"Started pimpcloud ${BuildInfo.version}")
 }
 

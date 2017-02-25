@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.JsonStrings._
@@ -9,11 +9,9 @@ import com.malliina.musicpimp.models.FullUrl
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.{AuthedRequest, RequestInfo}
-import com.malliina.play.models.Username
 import com.malliina.play.ws._
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.toJson
-import play.api.mvc.RequestHeader
 import rx.lang.scala.subscriptions.CompositeSubscription
 import rx.lang.scala.{Observable, Subscription}
 
@@ -44,12 +42,11 @@ class ServerWS(val clouds: Clouds,
 
 class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
-                  conf: ActorConfig[AuthedRequest]) extends JsonActor(conf.rh) {
+                  conf: ActorConfig[AuthedRequest]) extends JsonActor(conf) {
   val ticks = Observable.interval(900.millis)
   val messageWriter = ServerMessage.writer(FullUrl.hostOnly(rh))
   val apiVersion = PimpRequest.apiVersion(rh)
   implicit val w = TrackJson.writer(rh)
-  val out = conf.out
   val user = conf.user.user
   var eventSub: Option[Subscription] = None
   var previousPos = -1L

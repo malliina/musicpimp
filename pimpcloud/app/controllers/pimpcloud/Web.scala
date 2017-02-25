@@ -14,6 +14,8 @@ import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
+case class CloudCreds(cloudID: CloudID, username: Username, pass: Password)
+
 class Web(tags: CloudTags,
           authActions: CloudAuthentication,
           exec: ExecutionContext,
@@ -21,11 +23,11 @@ class Web(tags: CloudTags,
   extends Controller {
 
   val serverFormKey = "server"
-  val cloudForm = Form[CloudCredentials](mapping(
+  val cloudForm = Form[CloudCreds](mapping(
     serverFormKey -> CloudID.mapping,
     forms.userFormKey -> Username.mapping,
     forms.passFormKey -> Password.mapping
-  )(CloudCredentials.apply)(CloudCredentials.unapply))
+  )(CloudCreds.apply)(CloudCreds.unapply))
 
   def ping = Action {
     Caching.NoCache(Ok)
@@ -44,8 +46,9 @@ class Web(tags: CloudTags,
         log warn s"Authentication failed for user: $user from: $remoteAddress"
         fut(BadRequest(loginPage(formWithErrors, flash)))
       },
-      creds => {
+      cloudCreds => {
         implicit val ec = exec
+        val creds = CloudCredentials(cloudCreds.cloudID, cloudCreds.username, cloudCreds.pass, request)
         authActions.validate(creds).map(_ => {
           val server = creds.cloudID
           val user = creds.username
@@ -58,7 +61,7 @@ class Web(tags: CloudTags,
     )
   }
 
-  def loginPage(form: Form[CloudCredentials], flash: Flash) =
+  def loginPage(form: Form[CloudCreds], flash: Flash) =
     tags.login(form.globalError.map(_.message), flash.get(forms.feedback), this, None)
 
   def defaultLoginSuccessPage: Call = routes.Phones.rootFolder()

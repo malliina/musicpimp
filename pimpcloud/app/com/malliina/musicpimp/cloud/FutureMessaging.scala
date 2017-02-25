@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.cloud
 
-import akka.stream.QueueOfferResult
 import com.malliina.play.models.Username
 
 import scala.concurrent.Future
@@ -17,7 +16,6 @@ import scala.concurrent.duration.Duration
   */
 trait FutureMessaging[T] {
   /**
-    *
     * @param body body
     * @param user the user the phone is logged in as
     * @param timeout request timeout
@@ -30,10 +28,9 @@ trait FutureMessaging[T] {
     * @param payload
     * @return
     */
-  def send(payload: T): Future[QueueOfferResult]
+  def send(payload: T): Unit
 
-  /**
-    * Completes a request with `response`. It's assumed that we can find the matching `request` by parsing `response`.
+  /** Completes a request with `response`. It's assumed that we can find the matching `request` by parsing `response`.
     *
     * @param response response payload
     * @return true if a request was completed, false otherwise

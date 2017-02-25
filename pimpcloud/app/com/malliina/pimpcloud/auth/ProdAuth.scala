@@ -2,21 +2,21 @@ package com.malliina.pimpcloud.auth
 
 import java.util.UUID
 
-import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.{CloudCredentials, PimpAuth}
-import com.malliina.play.auth.Auth
+import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
 import com.malliina.play.models.Username
+import com.malliina.util.EitherOps
 import com.malliina.ws.JsonFutureSocket
-import controllers.pimpcloud.{PhoneConnection, Phones, ServerRequest, Servers}
+import controllers.pimpcloud.{PhoneConnection, ServerRequest, Servers}
 import play.api.mvc.{RequestHeader, Security}
 
 import scala.concurrent.Future
 
 class ProdAuth(servers: Servers) extends CloudAuthentication {
-  implicit val ec = servers.mat.executionContext
+  implicit val ec = servers.ctx.executionContext
 
   override def authServer(req: RequestHeader): Future[ServerRequest] = {
     val uuidOpt = for {
@@ -30,10 +30,10 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
     } yield server
   }
 
-  override def authPhone(req: RequestHeader): Future[PhoneConnection] =
+  override def authPhone(req: RequestHeader): PhoneAuthResult =
     connectedServers.flatMap(servers => authPhone(req, servers))
 
-  override def validate(creds: CloudCredentials): Future[PhoneConnection] =
+  override def validate(creds: CloudCredentials): PhoneAuthResult =
     connectedServers.flatMap(servers => validate(creds, servers))
 
   private def findServer(ss: Set[PimpServerSocket], uuid: UUID): Option[ServerRequest] =
@@ -42,54 +42,57 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
   private def toFuture[T](opt: Option[T]): Future[T] =
     opt.map(Future.successful).getOrElse(Future.failed(new NoSuchElementException))
 
-  /** Fails with a [[NoSuchElementException]] if authentication fails.
-    *
+  /**
     * @param req request
-    * @return the socket, if auth succeeds
+    * @return the socket or a failure
     */
-  private def authPhone(req: RequestHeader, servers: Set[PimpServerSocket]): Future[PhoneConnection] = {
+  private def authPhone(req: RequestHeader, servers: Set[PimpServerSocket]): PhoneAuthResult = {
     // header -> query -> session
-    headerAuth(req, servers)
-      .recoverWithAll(_ => queryAuth(req, servers))
-      .recoverAll(_ => sessionAuth(req, servers).get)
+    headerAuth(req, servers).orEither(queryAuth(req, servers)).or(sessionAuth(req, servers))
   }
 
-  private def headerAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Future[PhoneConnection] =
-    flattenInvalid {
-      PimpAuth.cloudCredentials(req).map(creds => validate(creds, servers))
-    }
+  private def headerAuth(req: RequestHeader, servers: Set[PimpServerSocket]): PhoneAuthResult =
+    PimpAuth.cloudCredentials(req)
+      .map(creds => validate(creds, servers))
+      .getOrElse(missing(req))
 
-  private def queryAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Future[PhoneConnection] =
-    flattenInvalid {
-      for {
-        s <- req.queryString get JsonStrings.ServerKey
-        server <- s.headOption.map(CloudID.apply)
-        creds <- Auth.credentialsFromQuery(req)
-      } yield validate(CloudCredentials(server, creds.username, creds.password), servers)
-    }
+  private def queryAuth(rh: RequestHeader, servers: Set[PimpServerSocket]): PhoneAuthResult = {
+    val maybeResult = for {
+      s <- rh.queryString get JsonStrings.ServerKey
+      server <- s.headOption.map(CloudID.apply)
+      creds <- Auth.credentialsFromQuery(rh)
+    } yield validate(CloudCredentials(server, creds.username, creds.password, rh), servers)
+    maybeResult getOrElse missing(rh)
+  }
 
-  private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Option[PhoneConnection] = {
+  private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Either[AuthFailure, PhoneConnection] = {
     req.session.get(Security.username)
       .map(Username.apply)
       .flatMap(user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, server)))
+      .toRight(InvalidCredentials(req))
   }
-
 
   /**
     * @param creds
     * @return a socket or a [[Future]] failed with [[NoSuchElementException]] if validation fails
     */
-  private def validate(creds: CloudCredentials, servers: Set[PimpServerSocket]): Future[PhoneConnection] = flattenInvalid {
-    servers.find(_.id == creds.cloudID) map { server =>
+  private def validate(creds: CloudCredentials, servers: Set[PimpServerSocket]): PhoneAuthResult = {
+    servers.find(_.id == creds.cloudID).map { server =>
       val user = creds.username
-      server.authenticate(user, creds.password)
-        .filter(_ == true)
-        .map(_ => PhoneConnection(user, server))
+      server.authenticate(user, creds.password).map { isValid =>
+        if (isValid) Right(PhoneConnection(user, server))
+        else Left(InvalidCredentials(creds.rh))
+      }
+    }.getOrElse {
+      fail(creds.rh)
     }
   }
 
-  private def flattenInvalid[T](optFut: Option[Future[T]]) =
-    optFut getOrElse Future.failed[T](Phones.invalidCredentials)
+  def fail(rh: RequestHeader) = fut(Left(InvalidCredentials(rh)))
+
+  def missing(rh: RequestHeader) = fut(Left(MissingCredentials(rh)))
+
+  def fut[T](t: T) = Future.successful(t)
 
   private def connectedServers = servers.connectedServers
 }

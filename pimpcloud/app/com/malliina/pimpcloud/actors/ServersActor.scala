@@ -18,9 +18,9 @@ class ServersActor extends ItemsActor[PimpServerSocket] with ActorLogging {
       logEvent(client.id, "disconnected")
       sender() ! ServersActor.Clients(clients)
     case ServersActor.Message(json, recipient) =>
-      clients.find(_ == recipient).foreach(_.channel offer json)
+      clients.find(_ == recipient).foreach(_.jsonOut ! json)
     case ServersActor.Broadcast(json) =>
-      clients.foreach(_.channel offer json)
+      clients.foreach(_.jsonOut ! json)
     case ServersActor.GetClients =>
       sender() ! ServersActor.Clients(clients)
   }

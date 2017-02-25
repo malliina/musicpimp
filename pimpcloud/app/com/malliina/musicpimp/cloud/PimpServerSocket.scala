@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.cloud
 
+import akka.actor.ActorRef
 import akka.stream.Materializer
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.ExecutionContexts.cached
@@ -34,16 +35,19 @@ object PimpServerSocket {
 /**
   * @param id the cloud ID of the server
   */
-class PimpServerSocket(channel: SourceQueue[JsValue],
+class PimpServerSocket(val jsonOut: ActorRef,
                        id: CloudID,
                        val headers: RequestHeader,
                        mat: Materializer,
                        onUpdate: () => Unit)
-  extends JsonFutureSocket(channel, id) {
+  extends JsonFutureSocket(id) {
 
-  val fileTransfers: Streamer = new NoCacheByteStreams(id, channel, mat, onUpdate)
 
-  def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Future[Option[Result]] =
+  val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, onUpdate)
+
+  override def send(payload: JsValue) = jsonOut ! payload
+
+  def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Result =
     fileTransfers.requestTrack(track, contentRange, req)
 
   def ping = simpleProxy(Ping)

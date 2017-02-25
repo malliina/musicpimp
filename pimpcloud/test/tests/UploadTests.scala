@@ -60,7 +60,7 @@ class UploadTests extends FunSuite with BaseSuite {
       override def exists(uuid: UUID) = false
 
       override def requestTrack(track: Track, range: ContentRange, req: RequestHeader) =
-        Future.successful(None)
+        Results.NotFound
 
       override def parser(uuid: UUID): Option[BodyParser[MultipartFormData[Long]]] = {
         println("Not here")

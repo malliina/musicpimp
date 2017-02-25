@@ -67,7 +67,7 @@ object PimpBuild {
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
-  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.3-SNAPSHOT"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.4-SNAPSHOT"
 
   def scalajsProject(name: String, path: File) =
     Project(name, path)

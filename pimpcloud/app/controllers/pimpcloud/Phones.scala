@@ -35,7 +35,7 @@ object Phones {
   val Bytes = "bytes"
   val EncodingUTF8 = "UTF-8"
 
-  val invalidCredentials = new NoSuchElementException("Invalid credentials")
+  def invalidCredentials = new NoSuchElementException("Invalid credentials.")
 
   def path(id: TrackID) = Try(Paths get decode(id.id))
 
@@ -46,7 +46,6 @@ object Phones {
 
 class Phones(tags: CloudTags,
              val cloudAuths: CloudAuthentication,
-             val phoneSockets: PhoneSockets,
              val auth: CloudAuth)
   extends PimpContentController
     with Controller {
@@ -107,36 +106,27 @@ class Phones(tags: CloudTags,
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
-          sourceServer.meta(id).flatMap { track =>
+          sourceServer.meta(id).map { track =>
             // proxies request
             val trackSize = track.size
             val rangeTry = ContentRange.fromHeader(req, trackSize)
             val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
-            val resultFuture = sourceServer.requestTrack(track, rangeOrAll, req)
-            resultFuture map { resultOpt =>
-              resultOpt map { result =>
-                // ranged request support
-                rangeTry map { range =>
-                  result.withHeaders(
-                    CONTENT_RANGE -> range.contentRange,
-                    CONTENT_LENGTH -> s"${range.contentLength}",
-                    CONTENT_TYPE -> MimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
-                  )
-                } getOrElse {
-                  result.withHeaders(
-                    ACCEPT_RANGES -> Phones.Bytes,
-                    CONTENT_LENGTH -> trackSize.toBytes.toString,
-                    CACHE_CONTROL -> HttpConstants.NoCache,
-                    CONTENT_TYPE -> HttpConstants.AudioMpeg,
-                    CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
-                  )
-                }
-              } getOrElse {
-                BadRequest
-              }
-            } recoverAll { err =>
-              log.error(s"Cannot compute result", err)
-              serverError(s"The server failed")
+            val result = sourceServer.requestTrack(track, rangeOrAll, req)
+            // ranged request support
+            rangeTry map { range =>
+              result.withHeaders(
+                CONTENT_RANGE -> range.contentRange,
+                CONTENT_LENGTH -> s"${range.contentLength}",
+                CONTENT_TYPE -> MimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
+              )
+            } getOrElse {
+              result.withHeaders(
+                ACCEPT_RANGES -> Phones.Bytes,
+                CONTENT_LENGTH -> trackSize.toBytes.toString,
+                CACHE_CONTROL -> HttpConstants.NoCache,
+                CONTENT_TYPE -> HttpConstants.AudioMpeg,
+                CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
+              )
             }
           }.recoverAll(_ => notFound(s"ID not found $id"))
         }.getOrElse(fut(badRequest(s"Illegal track ID $id")))
@@ -221,7 +211,7 @@ class Phones(tags: CloudTags,
     conn.server.defaultProxy(req, conn.user) map (js => Ok(js))
 
   def phoneAction(f: PhoneConnection => EssentialAction) =
-    auth.loggedSecureActionAsync(cloudAuths.authPhone)(f)
+    auth.loggedSecureActionAsync(rh => cloudAuths.authPhone(rh).flatMap(res => res.fold(_ => Future.failed(Phones.invalidCredentials), conn => fut(conn))))(f)
 
   def fut[T](body: => T) = Future successful body
 

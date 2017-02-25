@@ -55,7 +55,7 @@ class Search(indexer: Indexer, auth: Authenticator[AuthedRequest], ctx: ActorExe
   def openSocket = sockets.newSocket
 }
 
-class SearchActor(indexer: Indexer, ctx: ActorMeta, ec: ExecutionContext) extends JsonActor(ctx.rh) {
+class SearchActor(indexer: Indexer, ctx: ActorMeta, ec: ExecutionContext) extends JsonActor(ctx) {
   var subscription: Option[Subscription] = None
   val socketBroadcaster = indexingObserver(
     msg => send(msg),
@@ -78,7 +78,7 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta, ec: ExecutionContext) extend
     })
   }
 
-  def send(message: String): Unit = ctx.out ! JsonMessages.searchStatus(message)
+  def send(message: String): Unit = out ! JsonMessages.searchStatus(message)
 
   override def postStop() = {
     subscription foreach { sub => sub.unsubscribe() }

@@ -21,7 +21,7 @@ trait Streamer {
 
   def exists(uuid: UUID): Boolean
 
-  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Future[Option[Result]]
+  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result
 
   def parser(uuid: UUID): Option[BodyParser[MultipartFormData[Long]]]
 

@@ -21,7 +21,7 @@ class TestComponents(context: Context) extends CloudComponents(
   context,
   TestPusher,
   GoogleOAuthCredentials("id", "secret", "scope")) {
-  override lazy val prodAuth = TestAuth
+  override lazy val pimpAuth = TestAuth
 }
 
 object TestAuth extends PimpAuth {

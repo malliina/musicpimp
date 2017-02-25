@@ -2,11 +2,11 @@ package com.malliina.pimpcloud.ws
 
 import java.util.UUID
 
+import akka.actor.ActorRef
 import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
-import akka.stream.scaladsl.{Source, SourceQueue}
+import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, QueueOfferResult}
 import akka.util.ByteString
-import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
 import com.malliina.musicpimp.models.CloudID
@@ -18,7 +18,7 @@ import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
 import play.api.Logger
 import play.api.http.HttpEntity
-import play.api.libs.json.{JsValue, Json, Writes}
+import play.api.libs.json.{Json, Writes}
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
 
@@ -43,7 +43,8 @@ object NoCacheByteStreams {
   * 6) EOF and close the channel; this completes the request-response cycle
   */
 class NoCacheByteStreams(id: CloudID,
-                         val channel: SourceQueue[JsValue],
+                         val jsonOut: ActorRef,
+                         //                         val channel: SourceQueue[JsValue],
                          val mat: Materializer,
                          val onUpdate: () => Unit)
   extends Streamer {
@@ -71,7 +72,7 @@ class NoCacheByteStreams(id: CloudID,
     * @return a Result if the server received the upload request, None otherwise
     * @see https://groups.google.com/forum/#!searchin/akka-user/source.queue/akka-user/zzGSuRG4YVA/NEjwAT76CAAJ
     */
-  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Future[Option[Result]] = {
+  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result = {
     val uuid = UUID.randomUUID()
     val userAgent = req.headers.get(HeaderNames.USER_AGENT).map(ua => s"user agent $ua") getOrElse "unknown user agent"
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, NoCacheByteStreams.ByteStringBufferSize)
@@ -101,28 +102,21 @@ class NoCacheByteStreams(id: CloudID,
     } getOrElse {
       Future.successful(false)
     }
-    val cancellation =
-      if (shouldAbort) {
-        sendMessage(cancelMessage(uuid))
-          .recoverAll(t => log.error(s"Cancellation of $description failed", t))
-      } else {
-        Future.successful(())
-      }
-    for {
-      didDispose <- disposal
-      _ <- cancellation
-    } yield {
-      didDispose
+    if (shouldAbort) {
+      sendMessage(cancelMessage(uuid))
     }
+    disposal
   }
 
   protected def connectSource(uuid: UUID,
                               source: Source[ByteString, _],
                               track: Track,
-                              range: ContentRange): Future[Option[Result]] = {
+                              range: ContentRange): Result = {
     val result = resultify(source, range)
-    val connectSuccess = connect(uuid, track, range)
-    connectSuccess.map(isSuccess => if (isSuccess) Option(result) else None)
+    connect(uuid, track, range)
+    result
+    //    val connectSuccess = connect(uuid, track, range)
+    //    connectSuccess.map(isSuccess => if (isSuccess) Option(result) else None)
   }
 
   protected def resultify(source: Source[ByteString, _], range: ContentRange): Result = {
@@ -133,26 +127,27 @@ class NoCacheByteStreams(id: CloudID,
   /**
     * @return true if the server received the upload request, false otherwise
     */
-  private def connect(uuid: UUID, track: Track, range: ContentRange): Future[Boolean] = {
-    def fail(): Boolean = {
-      remove(uuid, shouldAbort = true, wasSuccess = false)
-      false
-    }
-
-    val suffix = s"$uuid for ${track.title} with range $range"
+  private def connect(uuid: UUID, track: Track, range: ContentRange): Unit = {
     val request = buildTrackRequest(uuid, track, range)
-    sendMessage(request) map {
-      case Enqueued =>
-        log debug s"Connected $suffix"
-        true
-      case other =>
-        log error s"Encountered $other for $suffix"
-        fail()
-    } recover {
-      case t =>
-        log.error(s"Failed to connect $suffix", t)
-        fail()
-    }
+    sendMessage(request)
+    //    def fail(): Boolean = {
+    //      remove(uuid, shouldAbort = true, wasSuccess = false)
+    //      false
+    //    }
+    //
+    //    val suffix = s"$uuid for ${track.title} with range $range"
+    //    sendMessage(request) map {
+    //      case Enqueued =>
+    //        log debug s"Connected $suffix"
+    //        true
+    //      case other =>
+    //        log error s"Encountered $other for $suffix"
+    //        fail()
+    //    } recover {
+    //      case t =>
+    //        log.error(s"Failed to connect $suffix", t)
+    //        fail()
+    //    }
   }
 
   /** Transfer complete.
@@ -178,7 +173,8 @@ class NoCacheByteStreams(id: CloudID,
     UserRequest(TrackKey, body, uuid, PimpServerSocket.nobody)
   }
 
-  protected def sendMessage[M: Writes](msg: M) = channel offer Json.toJson(msg)
+  // Sends `msg` to the MusicPimp server
+  protected def sendMessage[M: Writes](msg: M) = jsonOut ! Json.toJson(msg)
 
   protected def cancelMessage(uuid: UUID) = UserRequest(Cancel, Json.obj(), uuid, PimpServerSocket.nobody)
 

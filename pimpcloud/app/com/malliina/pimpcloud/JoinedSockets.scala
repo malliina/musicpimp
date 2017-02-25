@@ -1,32 +1,24 @@
 package com.malliina.pimpcloud
 
-import akka.stream.Materializer
-import com.malliina.musicpimp.cloud.PimpServerSocket
+import akka.actor.{ActorRef, Props}
 import com.malliina.pimpcloud.auth.ProdAuth
-import com.malliina.pimpcloud.ws.{PhoneClient, PhoneSockets}
-import com.malliina.ws.RxStmStorage
+import com.malliina.pimpcloud.ws.{PhoneActor, PhoneMediator}
+import com.malliina.play.ActorExecution
+import com.malliina.play.auth.Authenticator
+import com.malliina.play.ws.{ActorConfig, Sockets}
 import controllers.pimpcloud.{PhoneConnection, Servers}
-import play.api.libs.json.JsValue
-import play.api.mvc.RequestHeader
 
-import scala.concurrent.Future
-
-class JoinedSockets(mat: Materializer) {
-  val servers = new Servers(mat) {
-    override def sendToPhone(msg: JsValue, client: PimpServerSocket): Unit =
-      onServerMessage(msg, client)
-  }
-
+class JoinedSockets(updates: ActorRef, ctx: ActorExecution) {
+  val phoneMediator = ctx.actorSystem.actorOf(Props(new PhoneMediator(updates)))
+  val servers = new Servers(updates, phoneMediator, ctx)
   val auths = new ProdAuth(servers)
-
-  val phones = new PhoneSockets(RxStmStorage[PhoneClient](), mat) {
-    override def authenticatePhone(req: RequestHeader): Future[PhoneConnection] =
-      authPhone(req)
+  val phoneAuth = Authenticator(auths.authPhone)
+  val phones = new Sockets(phoneAuth, ctx) {
+    override def props(conf: ActorConfig[PhoneConnection]) =
+      Props(new PhoneActor(phoneMediator, conf))
   }
 
-  def onServerMessage(msg: JsValue, server: PimpServerSocket) =
-    phones.send(msg, server)
+  def serverSocket = servers.serverSockets.newSocket
 
-  def authPhone(req: RequestHeader): Future[PhoneConnection] =
-    auths.authPhone(req)
+  def phoneSocket = phones.newSocket
 }

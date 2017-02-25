@@ -31,12 +31,13 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
     ongoing += (uuid -> responsePromise)
     // sends the payload, including a request ID
     val payload = Json.toJson(UserRequest(req, uuid, user))
+    send(payload)
     //    log info s"Sending: $payload"
-    send(payload).recover {
-      case t: Throwable =>
-        log.warn(s"Unable to send payload: $payload", t)
-        failExceptionally(uuid, t)
-    }
+//    send(payload).recover {
+//      case t: Throwable =>
+//        log.warn(s"Unable to send payload: $payload", t)
+//        failExceptionally(uuid, t)
+//    }
     val task = responsePromise.future
     // fails promise after timeout
     if (!responsePromise.isCompleted) {

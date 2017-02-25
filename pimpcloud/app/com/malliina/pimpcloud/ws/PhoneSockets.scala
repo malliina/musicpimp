@@ -1,67 +1,84 @@
 package com.malliina.pimpcloud.ws
 
-import akka.stream.{Materializer, QueueOfferResult}
+import akka.actor.{Actor, ActorRef, Terminated}
 import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings
-import com.malliina.pimpcloud.ws.PhoneSockets.log
-import com.malliina.play.ws.SocketClient
-import com.malliina.ws.{PhoneActorSockets, RxStmStorage}
+import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
+import com.malliina.play.ws.{ActorConfig, JsonActor, SocketClient}
 import controllers.pimpcloud.PhoneConnection
+import controllers.pimpcloud.ServerMediator.ServerEvent
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsValue, Json, Writes}
-import play.api.mvc.{Call, RequestHeader}
-import rx.lang.scala.Observable
+import play.api.libs.json.{JsValue, Json, Writes}
+import play.api.mvc.RequestHeader
+import akka.pattern.pipe
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
-abstract class PhoneSockets(val storage: RxStmStorage[PhoneClient], val mat: Materializer)
-  extends PhoneActorSockets(mat) {
-  override type Client = PhoneClient
-  override type AuthSuccess = PhoneConnection
+class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implicit ec: ExecutionContext) extends JsonActor(conf) {
+  val conn = conf.user
+  val user = conn.user
+  val server = conn.server
+  val endpoint = PhoneEndpoint(conf.user.server.id, conf.rh, out)
 
-  implicit val writer = Writes[PhoneClient](o => Json.obj(
-    ServerKey -> o.connectedServer.id,
-    Address -> o.req.remoteAddress
-  ))
+  override def preStart() = {
+    self ! com.malliina.play.json.JsonMessages.welcome
+    mediator ! PhoneJoined(endpoint)
+  }
 
-  val usersJson: Observable[JsObject] =
-    storage.users.map(phoneClients => Json.obj(Event -> PhonesKey, Body -> phoneClients))
-
-  def authenticatePhone(req: RequestHeader): Future[AuthSuccess]
-
-  // TODO this is shit; cannot concurrently offer
-  def send(message: Message, from: PimpServerSocket): Future[Seq[QueueOfferResult]] =
-    clients.flatMap(cs => Future.traverse(cs.filter(_.connectedServer == from))(_.channel.offer(message)))
-
-  override def openSocketCall: Call = routes.PhoneSockets.openSocket()
-
-  override def authenticateAsync(req: RequestHeader): Future[AuthSuccess] = authenticatePhone(req)
-
-  override def newClient(authResult: PhoneConnection, channel: SourceQueue[JsValue], request: RequestHeader): PhoneClient =
-    PhoneClient(authResult, channel, request)
-
-  override def onMessage(msg: Message, client: PhoneClient): Boolean = {
+  override def onMessage(msg: JsValue) = {
     val isStatus = (msg \ Cmd).validate[String].filter(_ == StatusKey).isSuccess
     if (isStatus) {
-      client.connectedServer.status
-        .flatMap(resp => client.channel offer resp)
-        .recoverAll(t => log.warn(s"Status request failed.", t))
+      server.status
+        .pipeTo(out)
+        .recoverAll(t => log.warning(s"Status request failed.", t))
     } else {
       val payload = Json.obj(
         Cmd -> JsonStrings.Player,
         Body -> msg,
-        UsernameKey -> client.phoneUser.name)
-      client.connectedServer send payload
+        UsernameKey -> conn.user)
+      server.jsonOut ! payload
     }
-    true
   }
-
-  override def welcomeMessage(client: Client): Option[JsValue] =
-    Some(com.malliina.play.json.JsonMessages.welcome)
 }
+
+class PhoneMediator(updates: ActorRef) extends Actor {
+  var phones: Set[PhoneEndpoint] = Set.empty
+
+  implicit val writer = Writes[PhoneEndpoint](o => Json.obj(
+    ServerKey -> o.server,
+    Address -> o.rh.remoteAddress
+  ))
+
+  def phonesJson = Json.obj(Event -> PhonesKey, Body -> phones)
+
+  override def receive: Receive = {
+    // TODO phones should register with their server directly instead
+    case ServerEvent(message, server) =>
+      phones.filter(_.server == server) foreach { phone =>
+        phone.out ! message
+      }
+    case PhoneJoined(endpoint) =>
+      context watch endpoint.out
+      phones += endpoint
+      updates ! phonesJson
+    case Terminated(out) =>
+      phones.find(_.out == out) foreach { phone =>
+        phones -= phone
+      }
+      updates ! phonesJson
+  }
+}
+
+object PhoneMediator {
+
+  case class PhoneJoined(endpoint: PhoneEndpoint)
+
+}
+
+case class PhoneEndpoint(server: CloudID, rh: RequestHeader, out: ActorRef)
 
 object PhoneSockets {
   private val log = Logger(getClass)
