@@ -2,14 +2,14 @@ package com.malliina.ws
 
 import java.util.UUID
 
-import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.UuidFutureMessaging
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings.{Body, RequestId, SuccessKey}
+import com.malliina.pimpcloud.json.JsonStrings.Body
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.play.models.Username
 import com.malliina.util.Utils
+import com.malliina.ws.JsonFutureSocket.{RequestId, SuccessKey}
 import play.api.libs.json._
 
 import scala.concurrent.Future
@@ -79,6 +79,9 @@ abstract class JsonFutureSocket(val id: CloudID)
 }
 
 object JsonFutureSocket {
+  val SuccessKey = "success"
+  val RequestId = "request"
+
   def tryParseUUID(id: String): Option[UUID] = {
     Utils.opt[UUID, IllegalArgumentException](UUID.fromString(id))
   }

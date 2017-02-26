@@ -14,12 +14,15 @@ import play.api.mvc.{RequestHeader, Security}
 
 import scala.concurrent.Future
 
+object ProdAuth {
+  val ServerKey = "s"
+}
 class ProdAuth(servers: Servers) extends CloudAuthentication {
   implicit val ec = servers.ctx.executionContext
 
   override def authServer(req: RequestHeader): Future[ServerRequest] = {
     val uuidOpt = for {
-      requestID <- req.headers get JsonStrings.RequestId
+      requestID <- req.headers get JsonFutureSocket.RequestId
       uuid <- JsonFutureSocket.tryParseUUID(requestID)
     } yield uuid
     for {
@@ -57,7 +60,7 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
 
   private def queryAuth(rh: RequestHeader, servers: Set[PimpServerSocket]): PhoneAuthResult = {
     val maybeResult = for {
-      s <- rh.queryString get JsonStrings.ServerKey
+      s <- rh.queryString get ProdAuth.ServerKey
       server <- s.headOption.map(CloudID.apply)
       creds <- Auth.credentialsFromQuery(rh)
     } yield validate(CloudCredentials(server, creds.username, creds.password, rh), servers)

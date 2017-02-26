@@ -10,9 +10,9 @@ import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings.{Cancel, Id, Range, TrackKey}
+import com.malliina.pimpcloud.json.JsonStrings.{Id, Range, TrackKey}
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
-import com.malliina.pimpcloud.ws.NoCacheByteStreams.log
+import com.malliina.pimpcloud.ws.NoCacheByteStreams.{Cancel, log}
 import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
@@ -31,6 +31,7 @@ object NoCacheByteStreams {
 
   // backpressures automatically, seems to work fine, and does not consume RAM
   val ByteStringBufferSize = 0
+  val Cancel = "cancel"
 }
 
 /** For each incoming request:

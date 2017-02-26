@@ -92,7 +92,7 @@ class ServerActor(serverMediator: ActorRef,
   val server = new PimpServerSocket(out, cloudId, conf.rh, mat, () => serverMediator ! StreamsUpdated)
 
   override def preStart() = {
-    out ! Json.obj(Cmd -> RegisteredKey, Body -> Json.obj(Id -> server.id))
+    out ! Json.obj(Cmd -> ServerActor.RegisteredKey, Body -> Json.obj(Id -> server.id))
     serverMediator ! ServerJoined(server, out)
   }
 
@@ -103,6 +103,10 @@ class ServerActor(serverMediator: ActorRef,
       phoneMediator ! ServerEvent(message, server.id)
     }
   }
+}
+
+object ServerActor {
+  val RegisteredKey = "registered"
 }
 
 class ServerMediator extends Actor with ActorLogging {

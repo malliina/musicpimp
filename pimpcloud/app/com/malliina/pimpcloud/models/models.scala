@@ -10,6 +10,7 @@ case class PhoneRequest(cmd: String, body: JsValue)
 case class PimpStreams(streams: Seq[StreamData])
 
 object PimpStreams {
+  val RequestsKey = "requests"
   implicit val json = ListEvent.format(RequestsKey, PimpStreams.apply)(_.streams)
 }
 
@@ -22,6 +23,7 @@ object PimpPhone {
 case class PimpPhones(phones: Seq[PimpPhone])
 
 object PimpPhones {
+  val PhonesKey = "phones"
   implicit val json = ListEvent.format(PhonesKey, PimpPhones.apply)(_.phones)
 }
 
@@ -34,6 +36,7 @@ object PimpServer {
 case class PimpServers(servers: Seq[PimpServer])
 
 object PimpServers {
+  val ServersKey = "servers"
   implicit val json = ListEvent.format(ServersKey, PimpServers.apply)(_.servers)
 }
 
