@@ -24,14 +24,14 @@ POST        /playlists                         controllers.pimpcloud.Phones.save
 GET         /playlists/*playlist               controllers.pimpcloud.Phones.playlist(playlist: com.malliina.musicpimp.models.PlaylistID)
 POST        /playlists/delete/*playlist        controllers.pimpcloud.Phones.deletePlaylist(playlist: com.malliina.musicpimp.models.PlaylistID)
 POST        /proxied/*cmd                      controllers.pimpcloud.Phones.bodyProxied(cmd: String)
-GET         /mobile/ws                         com.malliina.pimpcloud.JoinedSockets.phoneSocket
-GET         /mobile/ws2                        com.malliina.pimpcloud.JoinedSockets.phoneSocket
-GET         /ws/playback                       com.malliina.pimpcloud.JoinedSockets.phoneSocket
-GET         /ws/playback2                      com.malliina.pimpcloud.JoinedSockets.phoneSocket
+GET         /mobile/ws                         com.malliina.pimpcloud.ws.JoinedSockets.phoneSocket
+GET         /mobile/ws2                        com.malliina.pimpcloud.ws.JoinedSockets.phoneSocket
+GET         /ws/playback                       com.malliina.pimpcloud.ws.JoinedSockets.phoneSocket
+GET         /ws/playback2                      com.malliina.pimpcloud.ws.JoinedSockets.phoneSocket
 # Servers
 POST        /track                             controllers.pimpcloud.ServersController.receiveUpload
-GET         /servers/ws                        com.malliina.pimpcloud.JoinedSockets.serverSocket
-GET         /servers/ws2                       com.malliina.pimpcloud.JoinedSockets.serverSocket
+GET         /servers/ws                        com.malliina.pimpcloud.ws.JoinedSockets.serverSocket
+GET         /servers/ws2                       com.malliina.pimpcloud.ws.JoinedSockets.serverSocket
 # Admin
 GET         /admin                             controllers.pimpcloud.Logs.index
 GET         /admin/logs                        controllers.pimpcloud.Logs.logs

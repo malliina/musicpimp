@@ -4,6 +4,7 @@ import _root_.pimpcloud.Routes
 import buildinfo.BuildInfo
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.{GoogleOAuthCredentials, GoogleOAuthReader}
+import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
 import com.malliina.play.controllers.AccountForms

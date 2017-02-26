@@ -7,7 +7,6 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.CloudCredentials
 import com.malliina.pimpcloud.streams.ByteActor
 import com.malliina.play.auth.InvalidCredentials
 import com.malliina.play.models.Username

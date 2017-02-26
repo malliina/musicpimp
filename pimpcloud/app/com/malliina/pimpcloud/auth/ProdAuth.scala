@@ -5,7 +5,7 @@ import java.util.UUID
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings
-import com.malliina.pimpcloud.{CloudCredentials, FutureFunctions, PimpAuth}
+import com.malliina.pimpcloud.FutureFunctions
 import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
 import com.malliina.play.models.Username
 import com.malliina.ws.JsonFutureSocket

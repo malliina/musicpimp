@@ -2,8 +2,7 @@ package controllers.pimpcloud
 
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.CloudCredentials
-import com.malliina.pimpcloud.auth.CloudAuthentication
+import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
 import com.malliina.play.controllers.{AccountForms, Caching}
 import com.malliina.play.models.{Password, Username}
 import controllers.pimpcloud.Web.log

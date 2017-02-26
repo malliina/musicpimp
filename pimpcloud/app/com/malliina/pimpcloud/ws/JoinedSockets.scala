@@ -1,8 +1,7 @@
-package com.malliina.pimpcloud
+package com.malliina.pimpcloud.ws
 
 import akka.actor.Props
 import com.malliina.pimpcloud.auth.ProdAuth
-import com.malliina.pimpcloud.ws.{PhoneActor, PhoneMediator}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.ws.{ActorConfig, Sockets}

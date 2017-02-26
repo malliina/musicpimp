@@ -1,4 +1,4 @@
-package com.malliina.pimpcloud
+package com.malliina.pimpcloud.auth
 
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.auth.Auth

@@ -7,6 +7,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.models.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
 import com.malliina.play.ws.{ActorConfig, JsonActor, SocketClient}
 import controllers.pimpcloud.PhoneConnection
@@ -48,12 +49,13 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
 class PhoneMediator extends Actor {
   var phones: Set[PhoneEndpoint] = Set.empty
   var listeners: Set[ActorRef] = Set.empty
-  implicit val writer = Writes[PhoneEndpoint](o => Json.obj(
-    ServerKey -> o.server,
-    Address -> o.rh.remoteAddress
-  ))
 
-  def phonesJson = Json.obj(Event -> PhonesKey, Body -> phones)
+  def phonesJson = {
+    val ps = phones map { phone =>
+      PimpPhone(phone.server, phone.rh.remoteAddress)
+    }
+    PimpPhones(ps.toSeq)
+  }
 
   override def receive: Receive = {
     // TODO phones should register with their server directly instead
@@ -79,7 +81,9 @@ class PhoneMediator extends Actor {
       sendUpdate(phonesJson)
   }
 
-  def sendUpdate(message: JsValue) = listeners foreach { listener => listener ! message }
+  def sendUpdate[C: Writes](message: C) = listeners foreach { listener =>
+    listener ! message
+  }
 }
 
 object PhoneMediator {

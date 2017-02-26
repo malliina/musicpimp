@@ -7,8 +7,8 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.models.{PimpServer, PimpServers, PimpStreams}
 import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
@@ -106,21 +106,20 @@ class ServerActor(serverMediator: ActorRef,
 }
 
 class ServerMediator extends Actor with ActorLogging {
-  implicit val writer = Writes[PimpServerSocket](o => Json.obj(
-    Id -> o.id,
-    Address -> o.headers.remoteAddress
-  ))
   var servers: Set[PimpServerSocket] = Set.empty
   var listeners: Set[ActorRef] = Set.empty
 
-  def serversJson = Json.obj(Event -> ServersKey, Body -> servers.toList)
+  def serversJson: PimpServers = {
+    val ss = servers map { server =>
+      PimpServer(server.id, server.headers.remoteAddress)
+    }
+    PimpServers(ss.toSeq)
+  }
 
   def ongoing = servers.flatMap(_.fileTransfers.snapshot)
 
-  def ongoingJson(streams: Set[StreamData]): JsValue = Json.obj(
-    Event -> JsonStrings.RequestsKey,
-    Body -> streams.toSeq
-  )
+  def ongoingJson(streams: Set[StreamData]): PimpStreams =
+    PimpStreams(streams.toSeq)
 
   def receive: Receive = {
     case Listen(listener) =>
@@ -148,11 +147,10 @@ class ServerMediator extends Actor with ActorLogging {
       listeners.find(_ == out) foreach { listener =>
         listeners -= listener
       }
-
   }
 
-  def sendUpdate(message: JsValue) = listeners foreach { listener =>
-    listener ! message
+  def sendUpdate[C: Writes](message: C) = listeners foreach { listener =>
+    listener ! Json.toJson(message)
   }
 }
 

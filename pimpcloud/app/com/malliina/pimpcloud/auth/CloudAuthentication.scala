@@ -1,6 +1,5 @@
 package com.malliina.pimpcloud.auth
 
-import com.malliina.pimpcloud.CloudCredentials
 import com.malliina.play.auth.AuthFailure
 import controllers.pimpcloud.{PhoneConnection, ServerRequest}
 import play.api.mvc.RequestHeader

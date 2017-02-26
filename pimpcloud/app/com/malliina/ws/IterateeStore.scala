@@ -13,7 +13,7 @@ import rx.lang.scala.subjects.BehaviorSubject
 import scala.collection.concurrent.TrieMap
 import scala.util.{Failure, Success, Try}
 
-class IterateeStore[T]  {
+class IterateeStore[T] {
   private val ongoingRequests = TrieMap.empty[UUID, IterateeInfo]
   val uuids = BehaviorSubject(Map.empty[UUID, IterateeInfo])
 

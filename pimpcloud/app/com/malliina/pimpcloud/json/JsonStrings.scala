@@ -11,9 +11,9 @@ object JsonStrings extends PimpStrings {
   val PhonesKey = "phones"
   val ServersKey = "servers"
   val RequestsKey = "requests"
-  val Address = "address"
-  val Start = "start"
-  val EndExclusive = "end_exclusive"
+//  val Address = "address"
+//  val Start = "start"
+//  val EndExclusive = "end_exclusive"
 
   val Cancel = "cancel"
 }
