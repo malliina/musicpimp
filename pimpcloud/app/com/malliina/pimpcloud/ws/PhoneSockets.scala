@@ -14,6 +14,7 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.RequestHeader
 import akka.pattern.pipe
+import com.malliina.play.ws.Mediator.Broadcast
 
 import scala.concurrent.ExecutionContext
 
@@ -63,13 +64,15 @@ class PhoneMediator(updates: ActorRef) extends Actor {
     case PhoneJoined(endpoint) =>
       context watch endpoint.out
       phones += endpoint
-      updates ! phonesJson
+      sendUpdate(phonesJson)
     case Terminated(out) =>
       phones.find(_.out == out) foreach { phone =>
         phones -= phone
       }
-      updates ! phonesJson
+      sendUpdate(phonesJson)
   }
+
+  def sendUpdate(message: JsValue) = updates ! Broadcast(message)
 }
 
 object PhoneMediator {

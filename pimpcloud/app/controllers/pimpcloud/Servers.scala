@@ -14,12 +14,14 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.{Password, Username}
+import com.malliina.play.ws.Mediator.Broadcast
 import com.malliina.play.ws._
 import controllers.pimpcloud.ServerMediator._
 import controllers.pimpcloud.Servers.log
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
+
 import concurrent.duration.DurationInt
 import scala.concurrent.Future
 
@@ -123,21 +125,23 @@ class ServerMediator(updates: ActorRef) extends Actor {
     case ServerJoined(server, out) =>
       context watch out
       servers += server
-      updates ! serversJson
+      sendUpdate(serversJson)
     case Exists(id) =>
       val exists = servers.exists(_.id == id)
       sender() ! exists
     case GetServers =>
       sender() ! servers
     case StreamsUpdated =>
-      updates ! ongoingJson(ongoing)
+      sendUpdate(ongoingJson(ongoing))
     case Terminated(out) =>
       servers.find(_.jsonOut == out) foreach { server =>
         servers -= server
         // TODO kill all phones connected to this server
       }
-      updates ! serversJson
+      sendUpdate(serversJson)
   }
+
+  def sendUpdate(message: JsValue) = updates ! Broadcast(message)
 }
 
 object ServerMediator {
