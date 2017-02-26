@@ -29,7 +29,7 @@ case class InitOptions(alarms: Boolean = true,
                        users: Boolean = true,
                        indexer: Boolean = true,
                        cloud: Boolean = true,
-                       cloudUri: FullUrl = CloudSocket.devUri)
+                       cloudUri: FullUrl = CloudSocket.prodUri)
 
 object InitOptions {
   val prod = InitOptions()
