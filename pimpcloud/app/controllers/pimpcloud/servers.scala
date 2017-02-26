@@ -129,8 +129,8 @@ class ServerMediator extends Actor with ActorLogging {
     case Listen(listener) =>
       context watch listener
       listeners += listener
-      listener ! ongoingJson(ongoing)
-      listener ! serversJson
+      listener ! Json.toJson(ongoingJson(ongoing))
+      listener ! Json.toJson(serversJson)
     case ServerJoined(server, out) =>
       context watch out
       servers += server
@@ -153,8 +153,11 @@ class ServerMediator extends Actor with ActorLogging {
       }
   }
 
-  def sendUpdate[C: Writes](message: C) = listeners foreach { listener =>
-    listener ! Json.toJson(message)
+  def sendUpdate[C: Writes](message: C) = {
+    val json = Json.toJson(message)
+    listeners foreach { listener =>
+      listener ! json
+    }
   }
 }
 

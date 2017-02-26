@@ -8,6 +8,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{CloudID, FullUrl, TrackID}
+import com.malliina.pimpcloud.models._
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Utils
@@ -22,7 +23,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import tests._
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Promise
 
 abstract class PimpcloudServerSuite extends ServerSuite(new TestComponents(_))
 
@@ -38,6 +39,8 @@ class IntegrationTest extends PimpcloudServerSuite {
   val pimp = musicpimp.app
   val httpClient = AhcWSClient()
   val adminPath = "/admin/usage"
+  val phonePath = "/ws/playback"
+  val testTrackTitle = "Test of MP3 File"
 
   test("can do it") {
     assert(statusCode("/ping", pimp) === 200)
@@ -55,19 +58,24 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   test("server notifications") {
+    val joinId = CloudID("join-test")
     val handler = new TestHandler
+    val joinedPromise = Promise[PimpServer]()
+
+    def onJson(json: JsValue) = {
+      val joinedServer = json.asOpt[PimpServers].flatMap(_.servers.find(_.id == joinId))
+      joinedServer.map(joinedPromise.success).getOrElse(handler.handle(json))
+    }
+
     try {
-      withPimpSocket(adminPath, handler.handle) { client =>
+      withPimpSocket(adminPath, onJson) { client =>
         assert(client.isConnected)
         val result = await(handler.all())
         assert(result === 42)
-        val next = handler.next(msg => (msg \ "body" \\ "id").nonEmpty)
-        val joinId = CloudID("join-test")
         val id = await(cloudClient.connect(Option(joinId)))
         assert(id === joinId)
-        val msg = await(next)
-        val cloudId = (msg \ "body" \\ "id").headOption.flatMap(_.asOpt[CloudID])
-        assert(cloudId contains id)
+        val server = await(joinedPromise.future)
+        assert(server.id === id)
       }
     } finally {
       cloudClient.disconnectAndForget()
@@ -79,16 +87,17 @@ class IntegrationTest extends PimpcloudServerSuite {
       val expectedId = CloudID("phone-test")
       val id = await(cloudClient.connect(Option(expectedId)))
       assert(id === expectedId)
-      val p = Promise[JsValue]()
+      val p = Promise[PimpPhone]()
+
       def onJson(json: JsValue) = {
-        for {
-          _ <- (json \ "event").asOpt[String].filter(_ == "phones")
-          cloudId <- (json \ "body" \\ "s").headOption.flatMap(_.asOpt[CloudID])
-        } yield p trySuccess json
+        json.validate[PimpPhones].map(_.phones).filter(_.nonEmpty)
+          .foreach { ps => p.trySuccess(ps.head) }
       }
+
       withPimpSocket(adminPath, onJson) { adminSocket =>
-        withPhoneSocket("/ws/playback", id, _ => ()) { phoneSocket =>
-          val json = await(p.future)
+        withPhoneSocket(phonePath, id, _ => ()) { phoneSocket =>
+          val joinedPhone = await(p.future)
+          assert(joinedPhone.s === expectedId)
         }
       }
     } finally {
@@ -98,18 +107,17 @@ class IntegrationTest extends PimpcloudServerSuite {
 
   test("stream notifications") {
     val p = Promise[String]()
+
     def onJson(json: JsValue) = {
-      for {
-        _ <- (json \ "event").asOpt[String].filter(_ == "requests")
-        firstTrack <- (json \ "body" \\ "track").headOption
-        title <- (firstTrack \ "title").asOpt[String]
-      } yield p success title
+      json.validate[PimpStreams].map(_.streams.map(_.track.title)).filter(_.nonEmpty)
+        .foreach { titles => p success titles.head }
     }
+
     withCloudTrack("notification-test") { (trackId, _, cloudId) =>
       withPimpSocket(adminPath, onJson) { _ =>
         val f = req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get()
         val title = await(p.future)
-        assert(title === "Test of MP3 File")
+        assert(title === testTrackTitle)
         await(f)
       }
     }
@@ -139,35 +147,16 @@ class IntegrationTest extends PimpcloudServerSuite {
     val phones = Promise[JsValue]()
     val servers = Promise[JsValue]()
 
-    var expected: Option[Promise[JsValue]] = None
-    var predicate: JsValue => Boolean = json => true
-
-    def next(pred: JsValue => Boolean = _ => true): Future[JsValue] = {
-      predicate = pred
-      val p = Promise[JsValue]()
-      expected = Option(p)
-      p.future
-    }
-
     def handle(json: JsValue) = {
-      expected.filter(_ => predicate(json)).map { e =>
-        e success json
-        expected = None
-        true
-      }.getOrElse {
-        (json \ "event").validate[String].map {
-          case "requests" => requests.success(json)
-          case "phones" => phones.success(json)
-          case "servers" => servers.success(json)
-          case _ => ()
-        }
-      }
+      json.validate[PimpStreams].foreach(_ => requests.success(json))
+      json.validate[PimpPhones].foreach(_ => phones.success(json))
+      json.validate[PimpServers].foreach(_ => servers.success(json))
     }
 
     def all() = for {
-      req <- requests.future
-      pho <- phones.future
-      ser <- servers.future
+      _ <- requests.future
+      _ <- phones.future
+      _ <- servers.future
     } yield 42
   }
 
@@ -225,7 +214,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
-  class TestSocket(wsUri: URI, authValue: String,onJson: JsValue => Any) extends SocketClient(
+  class TestSocket(wsUri: URI, authValue: String, onJson: JsValue => Any) extends SocketClient(
     wsUri,
     SSLUtils.trustAllSslContext().getSocketFactory,
     Seq(HttpUtil.Authorization -> authValue)
@@ -234,4 +223,5 @@ class IntegrationTest extends PimpcloudServerSuite {
 
     def sendJson[C: Writes](message: C) = send(Json.stringify(Json.toJson(message)))
   }
+
 }

@@ -55,5 +55,5 @@ object ListEvent {
     }
 
   def writer[T: Writes, U](eventValue: String, strip: U => Seq[T]): Writes[U] =
-    Writes[U](u => Json.obj(Event -> eventValue, Body -> strip(u)))
+    Writes[U](u => Json.obj(Event -> eventValue, Body -> Json.toJson(strip(u))))
 }

@@ -66,7 +66,7 @@ class PhoneMediator extends Actor {
     case Listen(listener) =>
       context watch listener
       listeners += listener
-      listener ! phonesJson
+      listener ! Json.toJson(phonesJson)
     case PhoneJoined(endpoint) =>
       context watch endpoint.out
       phones += endpoint
@@ -81,8 +81,11 @@ class PhoneMediator extends Actor {
       sendUpdate(phonesJson)
   }
 
-  def sendUpdate[C: Writes](message: C) = listeners foreach { listener =>
-    listener ! message
+  def sendUpdate[C: Writes](message: C) = {
+    val json = Json.toJson(message)
+    listeners foreach { listener =>
+      listener ! json
+    }
   }
 }
 
