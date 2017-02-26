@@ -35,8 +35,7 @@ abstract class CloudComponents(context: Context,
   lazy val ctx = ActorExecution(actorSystem, materializer)
 
   // Controllers
-  lazy val us = new UsageStreaming(pimpAuth, ctx)
-  lazy val joined = new JoinedSockets(us.mediator, ctx)
+  lazy val joined = new JoinedSockets(pimpAuth, ctx)
   lazy val s = joined.servers
   lazy val cloudAuths = joined.auths
   lazy val ps = joined.phones
@@ -47,7 +46,7 @@ abstract class CloudComponents(context: Context,
   lazy val l = new Logs(tags, pimpAuth, ctx)
   lazy val w = new Web(tags, cloudAuths, materializer.executionContext, forms)
   lazy val as = new Assets(httpErrorHandler)
-  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, us, as)
+  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, joined.us, as)
   CloudComponents.log.info(s"Started pimpcloud ${BuildInfo.version}")
 }
 

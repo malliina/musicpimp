@@ -2,7 +2,7 @@ package controllers.pimpcloud
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorRef, Props, Terminated}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
@@ -14,7 +14,6 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.{Password, Username}
-import com.malliina.play.ws.Mediator.Broadcast
 import com.malliina.play.ws._
 import controllers.pimpcloud.ServerMediator._
 import controllers.pimpcloud.Servers.log
@@ -22,14 +21,14 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 
-import concurrent.duration.DurationInt
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 /** WebSocket for connected MusicPimp servers.
   *
   * Pushes player events sent by servers to any connected phones, and responds to requests.
   */
-class Servers(updates: ActorRef, phoneMediator: ActorRef, val ctx: ActorExecution) {
+class Servers(phoneMediator: ActorRef, val ctx: ActorExecution) {
   implicit val ec = ctx.executionContext
   // not a secret but avoids unintentional connections
   val serverPassword = Password("pimp")
@@ -65,13 +64,14 @@ class Servers(updates: ActorRef, phoneMediator: ActorRef, val ctx: ActorExecutio
   def fut[T](t: T): Future[T] = Future.successful(t)
 
   val serverAuth = Authenticator(authAsync)
-  val serverMediator = ctx.actorSystem.actorOf(Props(new ServerMediator(updates)))
+  val serverMediator = ctx.actorSystem.actorOf(Props(new ServerMediator))
   val serverSockets = new Sockets(serverAuth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
       Props(new ServerActor(serverMediator, phoneMediator, conf, ctx.materializer))
   }
 
   import akka.pattern.ask
+
   implicit val timeout = Timeout(5.seconds)
 
   def isConnected(serverID: CloudID): Future[Boolean] =
@@ -105,12 +105,13 @@ class ServerActor(serverMediator: ActorRef,
   }
 }
 
-class ServerMediator(updates: ActorRef) extends Actor {
+class ServerMediator extends Actor with ActorLogging {
   implicit val writer = Writes[PimpServerSocket](o => Json.obj(
     Id -> o.id,
     Address -> o.headers.remoteAddress
   ))
   var servers: Set[PimpServerSocket] = Set.empty
+  var listeners: Set[ActorRef] = Set.empty
 
   def serversJson = Json.obj(Event -> ServersKey, Body -> servers.toList)
 
@@ -122,6 +123,11 @@ class ServerMediator(updates: ActorRef) extends Actor {
   )
 
   def receive: Receive = {
+    case Listen(listener) =>
+      context watch listener
+      listeners += listener
+      listener ! ongoingJson(ongoing)
+      listener ! serversJson
     case ServerJoined(server, out) =>
       context watch out
       servers += server
@@ -136,12 +142,18 @@ class ServerMediator(updates: ActorRef) extends Actor {
     case Terminated(out) =>
       servers.find(_.jsonOut == out) foreach { server =>
         servers -= server
+        sendUpdate(serversJson)
         // TODO kill all phones connected to this server
       }
-      sendUpdate(serversJson)
+      listeners.find(_ == out) foreach { listener =>
+        listeners -= listener
+      }
+
   }
 
-  def sendUpdate(message: JsValue) = updates ! Broadcast(message)
+  def sendUpdate(message: JsValue) = listeners foreach { listener =>
+    listener ! message
+  }
 }
 
 object ServerMediator {
@@ -155,6 +167,8 @@ object ServerMediator {
   case object GetServers
 
   case object StreamsUpdated
+
+  case class Listen(listener: ActorRef)
 
 }
 

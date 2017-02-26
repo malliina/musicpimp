@@ -1,22 +1,23 @@
 package com.malliina.pimpcloud
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.Props
 import com.malliina.pimpcloud.auth.ProdAuth
 import com.malliina.pimpcloud.ws.{PhoneActor, PhoneMediator}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.ws.{ActorConfig, Sockets}
-import controllers.pimpcloud.{PhoneConnection, Servers}
+import controllers.pimpcloud.{PhoneConnection, PimpAuth, Servers, UsageStreaming}
 
-class JoinedSockets(updates: ActorRef, ctx: ActorExecution) {
-  val phoneMediator = ctx.actorSystem.actorOf(Props(new PhoneMediator(updates)))
-  val servers = new Servers(updates, phoneMediator, ctx)
+class JoinedSockets(pimpAuth: PimpAuth, ctx: ActorExecution) {
+  val phoneMediator = ctx.actorSystem.actorOf(Props(new PhoneMediator))
+  val servers = new Servers(phoneMediator, ctx)
   val auths = new ProdAuth(servers)
   val phoneAuth = Authenticator(auths.authPhone)
   val phones = new Sockets(phoneAuth, ctx) {
     override def props(conf: ActorConfig[PhoneConnection]) =
       Props(new PhoneActor(phoneMediator, conf))
   }
+  val us = new UsageStreaming(phoneMediator, servers.serverMediator, pimpAuth, ctx)
 
   def serverSocket = servers.serverSockets.newSocket
 
