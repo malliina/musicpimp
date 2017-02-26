@@ -8,7 +8,9 @@ import play.api.http.Writeable
 import play.api.mvc.{AnyContent, EssentialAction}
 import play.twirl.api.Html
 
-class HtmlController(auth: CookieAuthenticator, mat: Materializer) extends Secured(auth, mat) {
+class HtmlController(auth: CookieAuthenticator, mat: Materializer)
+  extends Secured(auth, mat) {
+
   protected def navigate(page: => Html): EssentialAction =
     navigate(_ => page)
 

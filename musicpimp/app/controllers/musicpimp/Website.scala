@@ -8,14 +8,12 @@ import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, Re
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.CookieAuthenticator
 import com.malliina.play.models.Username
-import com.malliina.play.ws.WebSocketController
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 
 import scala.concurrent.Future
 
 class Website(tags: PimpTags,
-              sockets: WebSocketController,
               serverWS: ServerWS,
               auth: CookieAuthenticator,
               stats: PlaybackStats,

@@ -1,63 +1,61 @@
 package controllers.musicpimp
 
-import akka.stream.QueueOfferResult
+import akka.actor.Props
 import com.malliina.musicpimp.audio._
-import com.malliina.musicpimp.json.JsonFormatVersions
-import com.malliina.musicpimp.models.{ClientInfo, FullUrl, RemoteInfo}
-import com.malliina.play.models.Username
-import controllers.musicpimp.WebPlayer.log
+import com.malliina.musicpimp.auth.Auths
+import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings}
+import com.malliina.musicpimp.models.{FullUrl, RemoteInfo}
+import com.malliina.play.ActorExecution
+import com.malliina.play.http.{AuthedRequest, RequestInfo}
+import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
 import play.api.Logger
 import play.api.libs.json.JsValue
-import play.api.mvc.Call
 
-import scala.collection.mutable
-import scala.concurrent.Future
-
-class WebPlayer(security: SecureBase) extends PlayerSockets(security) {
-
-  override val messageHandler: JsonHandlerBase = new WebPlayerMessageHandler {
-    override def player(request: RemoteInfo): PimpWebPlayer = WebPlayer.this.player(request)
-  }
-
-  val players = mutable.Map.empty[Username, PimpWebPlayer]
-
-  def player(request: RemoteInfo): PimpWebPlayer =
-    players.getOrElseUpdate(request.user, new PimpWebPlayer(request, this))
-
-  def add(request: RemoteInfo, track: TrackMeta) {
-    val p = player(request)
-    p.playlist add track
-  }
-
-  override def onConnectSync(client: ClientInfo[JsValue]): Unit = {
-    super.onConnectSync(client)
-    log info s"Connected ${client.describe}"
-  }
-
-  override def onDisconnectSync(client: ClientInfo[JsValue]): Unit = {
-    super.onDisconnectSync(client)
-    log info s"Disconnected ${client.describe}"
-  }
-
-  def remove(user: Username, trackIndex: Int): Unit =
-    players.get(user).foreach(_.playlist delete trackIndex)
-
-  def status(client: Client): JsValue = {
-    val req = client.request
-    val p = player(RemoteInfo(client.user, FullUrl.hostOnly(req)))
-    PimpRequest.apiVersion(req) match {
-      case JsonFormatVersions.JSONv17 => p.statusEvent17
-      case _ => p.statusEvent
+class WebPlayer(ctx: ActorExecution) {
+  val sockets = new Sockets(Auths.session, ctx) {
+    override def props(conf: ActorConfig[AuthedRequest]): Props = {
+      val remote = RemoteInfo(conf.user.user, FullUrl.hostOnly(conf.rh))
+      Props(new WebPlayActor(remote, conf))
     }
   }
 
-  def openSocketCall: Call = routes.WebPlayer.openSocket()
+  def openSocket = sockets.newSocket
+}
 
-  def unicast(user: Username, json: JsValue): Future[Seq[QueueOfferResult]] =
-    Future.traverse(clientsSync.filter(_.user == user)) { c =>
-      log.info(s"Offering $json to ${c.user}")
-      c.channel offer json
+trait Target {
+  def send(json: JsValue): Unit
+}
+
+class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
+  val user = remote.user
+  val target = new Target {
+    override def send(json: JsValue): Unit = out ! json
+  }
+  val player = new PimpWebPlayer(remote, target)
+  val handler = new WebPlayerMessageHandler(remote, player)
+  val requestInfo = RequestInfo(user, rh)
+
+  override def preStart() = {
+    out ! com.malliina.play.json.JsonMessages.welcome
+  }
+
+  override def onMessage(msg: JsValue) = {
+    (msg \ JsonStrings.Cmd).asOpt[String].fold(log warning s"Unknown message: $msg")({
+      case JsonStrings.StatusKey =>
+        log info s"User '$user' from '$address' said '$msg'."
+        val event = JsonMessages.withStatus(statusEvent())
+        out ! event
+      case _ =>
+        handler.onJson(msg, requestInfo)
+    })
+  }
+
+  def statusEvent() = {
+    PimpRequest.apiVersion(rh) match {
+      case JsonFormatVersions.JSONv17 => player.statusEvent17
+      case _ => player.statusEvent
     }
+  }
 }
 
 object WebPlayer {

@@ -8,7 +8,7 @@ import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.{CloudCredentials, PimpAuth}
 import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
 import com.malliina.play.models.Username
-import com.malliina.util.EitherOps
+import com.malliina.util.FutureFunctions
 import com.malliina.ws.JsonFutureSocket
 import controllers.pimpcloud.{PhoneConnection, ServerRequest, Servers}
 import play.api.mvc.{RequestHeader, Security}

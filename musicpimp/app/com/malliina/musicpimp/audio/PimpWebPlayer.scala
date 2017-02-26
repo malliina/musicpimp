@@ -6,14 +6,14 @@ import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.LocalTrack
 import com.malliina.musicpimp.models.RemoteInfo
-import controllers.musicpimp.WebPlayer
+import controllers.musicpimp.Target
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
-class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
+class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   extends IPlayer
     with PlaylistSupport[TrackMeta]
     with StateAwarePlayer
@@ -21,7 +21,7 @@ class PimpWebPlayer(val request: RemoteInfo, val webPlayer: WebPlayer)
 
   val user = request.user
   implicit val trackWriter = TrackJson.writer(request.host)
-  val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, webPlayer)
+  val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, target)
   private val DEFAULT_BROWSER_VOLUME = 100
 
   // todo update with event listener

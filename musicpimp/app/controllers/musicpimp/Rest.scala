@@ -38,8 +38,6 @@ class Rest(webPlayer: WebPlayer,
            mat: Materializer)
   extends Secured(auth, mat) {
 
-  val webPlayerHandler = webPlayer.messageHandler
-
   def ping = Action(NoCache(Ok))
 
   def pingAuth = pimpAction(_ => NoCacheOk(JsonMessages.version))
@@ -48,21 +46,12 @@ class Rest(webPlayer: WebPlayer,
     */
   def playback = jsonAckAction(handler.onJson)
 
-  /** Handles web browser player playback commands POSTed as JSON.
-    */
-  def webPlayback = jsonAckAction(webPlayerHandler.onJson)
-
   /** Alias for `playback`. Should be deprecated.
     */
   def playlist = playback
 
   def playUploadedFile = UploadedSongAction { track =>
     MusicPlayer.setPlaylistAndPlay(track)
-  }
-
-  def webPlaylist = pimpAction { req =>
-    implicit val w = TrackJson.writer(req)
-    Ok(Json.toJson(playlistFor(req.user)))
   }
 
   /** Adds the uploaded track to the server playlist.
@@ -143,13 +132,6 @@ class Rest(webPlayer: WebPlayer,
     )
   }
 
-  /** The status of the web player of the user making the request.
-    */
-  def webStatus = pimpAction { req =>
-    val user = req.user
-    Ok(webStatusJson(user, RemoteInfo(user, FullUrl.hostOnly(req))))
-  }
-
   private def localPlaybackAction(id: TrackID): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id) map { track =>
       /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
@@ -219,14 +201,6 @@ class Rest(webPlayer: WebPlayer,
     val iteratee = Streams.closingStreamWriter(fileOut, streamOut)
     (pipeIn, iteratee)
   }
-
-  private def webStatusJson(user: Username, request: RemoteInfo) = {
-    val player = webPlayer.players.getOrElse(user, new PimpWebPlayer(request, webPlayer))
-    Json.toJson(player.status)
-  }
-
-  private def playlistFor(user: Username): Seq[TrackMeta] =
-    webPlayer.players.get(user).fold(Seq.empty[TrackMeta])(_.playlist.songList)
 
   private def ackPimpAction[T](parser: BodyParser[T])(bodyHandler: CookiedRequest[T, Username] => Unit): EssentialAction =
     pimpParsedAction(parser) { request =>

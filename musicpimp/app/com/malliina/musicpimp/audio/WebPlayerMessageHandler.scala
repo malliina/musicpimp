@@ -9,53 +9,45 @@ import play.api.libs.json._
 
 import scala.util.Try
 
-trait WebPlayerMessageHandler extends JsonHandlerBase {
-
-  def player(request: RemoteInfo): PimpWebPlayer
-
+class WebPlayerMessageHandler(request: RemoteInfo, player: PimpWebPlayer)
+  extends JsonHandlerBase {
   def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit = {
-
-    def userPlayer(op: PimpWebPlayer => Unit): Unit =
-      op(player(request))
-
     message match {
       case TimeUpdatedMsg(position) =>
-        userPlayer(_.position = position)
+        player.position = position
       case TrackChangedMsg(track) =>
-        userPlayer(_.notifyTrackChanged(newTrackInfo(track)))
+        player.notifyTrackChanged(newTrackInfo(track))
       case VolumeChangedMsg(volume) =>
-        userPlayer(_.notifyVolumeChanged(volume))
+        player.notifyVolumeChanged(volume)
       case PlaylistIndexChangedMsg(index) =>
-        userPlayer(player => {
-          player.playlist.index = index
-          player.trackChanged()
-        })
+        player.playlist.index = index
+        player.trackChanged()
       case PlayStateChangedMsg(state) =>
-        userPlayer(_.notifyPlayStateChanged(state))
+        player.notifyPlayStateChanged(state)
       case MuteToggledMsg(isMute) =>
-        userPlayer(_.notifyMuteToggled(isMute))
+        player.notifyMuteToggled(isMute)
       case PlayMsg(track) =>
-        userPlayer(_.setPlaylistAndPlay(newTrackInfo(track)))
+        player.setPlaylistAndPlay(newTrackInfo(track))
       case AddMsg(track) =>
-        userPlayer(_.playlist.add(newTrackInfo(track)))
+        player.playlist.add(newTrackInfo(track))
       case RemoveMsg(track) =>
-        userPlayer(_.playlist.delete(track))
+        player.playlist.delete(track)
       case ResumeMsg =>
-        userPlayer(_.play())
+        player.play()
       case StopMsg =>
-        userPlayer(_.stop())
+        player.stop()
       case NextMsg =>
-        userPlayer(_.nextTrack())
+        player.nextTrack()
       case PrevMsg =>
-        userPlayer(_.previousTrack())
+        player.previousTrack()
       case SkipMsg(index) =>
-        userPlayer(_.skip(index))
+        player.skip(index)
       case SeekMsg(position) =>
-        userPlayer(_.seek(position))
+        player.seek(position)
       case MuteMsg(isMute) =>
-        userPlayer(_.mute(isMute))
+        player.mute(isMute)
       case VolumeMsg(volume) =>
-        userPlayer(_.gain(1.0f * volume / 100))
+        player.gain(1.0f * volume / 100)
       case _ =>
         log warn s"Unsupported message: $message from ${request.user}"
     }

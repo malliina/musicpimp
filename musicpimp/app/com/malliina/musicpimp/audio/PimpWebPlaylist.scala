@@ -3,13 +3,13 @@ package com.malliina.musicpimp.audio
 import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.play.models.Username
-import controllers.musicpimp.WebPlayer
+import controllers.musicpimp.{Target, WebPlayer}
 import play.api.libs.json.Json._
 import play.api.libs.json.Writes
 
 import scala.concurrent.stm.Ref
 
-class PimpWebPlaylist(val user: Username, val webPlayer: WebPlayer)(implicit w: Writes[TrackMeta])
+class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes[TrackMeta])
   extends BasePlaylist[TrackMeta]
     with JsonSender {
 
