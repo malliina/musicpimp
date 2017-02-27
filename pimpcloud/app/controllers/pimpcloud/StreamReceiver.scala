@@ -22,6 +22,7 @@ class StreamReceiver(mat: Materializer) extends Controller {
     log debug s"Streaming at most $maxSize for request $requestId"
     val composedParser = recoveringParser(parse.maxLength(maxSize.toBytes, parser)(mat), transfers, requestId)
     Action(composedParser) { parsedRequest =>
+      // Signals to the phone that the transfer is complete
       transfers.remove(requestId, shouldAbort = false, wasSuccess = true)
       parsedRequest.body.fold(
         tooMuch => {
@@ -43,21 +44,22 @@ class StreamReceiver(mat: Materializer) extends Controller {
     */
   def recoveringParser[T](p: BodyParser[T], transfers: Streamer, requestId: UUID): BodyParser[T] =
     new BodyParser[T] {
-
       val clientClosedMessage = "An existing connection was forcibly closed by the remote host"
       val ioMessage = "Connection reset by peer"
+      val cancelMessages = Seq(clientClosedMessage, ioMessage)
 
-      // this is redundant since the request is cleaned up elsewhere as well
+      // Signals to the phone that the transfer is complete
       def cleanup() = transfers.remove(requestId, shouldAbort = false, wasSuccess = false)
 
-      // if the client disconnects while an upload is in progress, a BodyParser throws
+      // If the client disconnects while an upload is in progress, a BodyParser throws
       // java.io.IOException: An existing connection was forcibly closed by the remote host
       override def apply(req: RequestHeader) = p(req) recoverWith {
-        case t: IOException if Option(t.getMessage) exists (msg => Seq(clientClosedMessage, ioMessage).contains(msg)) =>
-          log info s"Server cancelled upload for request $requestId"
+        case t: IOException if Option(t.getMessage) exists (msg => cancelMessages.contains(msg)) =>
+          log debug s"Server cancelled upload for request $requestId"
           cleanup()
           Future.successful(Left(PartialContent))
         case t: Throwable =>
+          log.error(s"Body parser failed for $requestId", t)
           cleanup()
           Future.failed(t)
       }

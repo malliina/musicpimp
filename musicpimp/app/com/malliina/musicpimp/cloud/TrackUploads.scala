@@ -12,6 +12,7 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FullUrl, RequestID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.{Util, Utils}
+import org.apache.http.util.EntityUtils
 import play.api.Logger
 
 import scala.collection.concurrent.TrieMap
@@ -37,7 +38,10 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
     * @return a Future that completes when the upload completes
     */
   def upload(track: GetTrack, request: RequestID): Future[Unit] = {
-    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => req.addFile(file))
+    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => {
+      log info s"Uploading entire $file, request $request"
+      req.addFile(file)
+    })
   }
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
@@ -74,7 +78,6 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
       Future {
         uploadMedia(uploadUri, trackID, path, request, sizeCalc, content)
       } recover {
-        //
         case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
           // thrown when the upload is cancelled, see method cancel
           // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
@@ -107,7 +110,10 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
       val code = response.getStatusLine.getStatusCode
       val isSuccess = code >= 200 && code < 300
       if (!isSuccess) {
-        log error appendMeta(s"Non-success response code $code for track $trackID")
+        val entity = response.getEntity
+        val len = entity.getContentLength
+        val contentType = entity.getContentType.getValue
+        log error appendMeta(s"Non-success response code $code len $len type $contentType for track $trackID")
       } else {
         val prefix = s"Uploaded ${sizeCalc(path)} of $trackID"
         log info appendMeta(s"$prefix with response $code")

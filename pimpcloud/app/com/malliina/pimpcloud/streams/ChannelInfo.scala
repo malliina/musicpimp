@@ -31,6 +31,7 @@ class ChannelInfo(val channel: SourceQueue[Option[ByteString]],
   // Is failure of this method call a memory leak?
   def close(): Future[QueueOfferResult] = {
     isClosed.set(true)
+    // I think this is unnecessary
     channel.offer(None)
   }
 }

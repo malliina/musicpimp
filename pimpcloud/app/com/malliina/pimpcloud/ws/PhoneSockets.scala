@@ -26,7 +26,6 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
   val endpoint = PhoneEndpoint(conf.user.server.id, conf.rh, out)
 
   override def preStart() = {
-    self ! com.malliina.play.json.JsonMessages.welcome
     mediator ! PhoneJoined(endpoint)
   }
 
