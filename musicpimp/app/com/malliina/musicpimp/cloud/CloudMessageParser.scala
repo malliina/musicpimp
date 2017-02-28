@@ -76,7 +76,7 @@ trait CloudMessageParser {
       case Ping =>
         JsSuccess(PingMessage)
       case other =>
-        JsError(s"Unknown JSON event: $other in $json")
+        JsError(s"Unknown JSON event: '$other' in '$json'.")
     }
   }
 

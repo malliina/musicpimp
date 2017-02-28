@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.play.models.{Password, Username}
 import play.api.libs.json.Json
 
 trait PimpMessage
@@ -30,3 +31,15 @@ object Search {
 }
 
 case object GetAlarms extends PimpMessage
+
+case class Authenticate(username: Username, password: Password) extends PimpMessage
+
+object Authenticate {
+  implicit val json = Json.format[Authenticate]
+}
+
+case class GetMeta(id: TrackID) extends PimpMessage
+
+object GetMeta {
+  implicit val json = Json.format[GetMeta]
+}

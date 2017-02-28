@@ -34,12 +34,13 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
     if (isStatus) {
       server.status
         .pipeTo(out)
-        .recoverAll(t => log.warning(s"Status request failed.", t))
+        .recoverAll(t => log.warning("Status request failed.", t))
     } else {
       val payload = Json.obj(
         Cmd -> JsonStrings.Player,
         Body -> msg,
-        UsernameKey -> conn.user)
+        UsernameKey -> conn.user
+      )
       server.jsonOut ! payload
     }
   }

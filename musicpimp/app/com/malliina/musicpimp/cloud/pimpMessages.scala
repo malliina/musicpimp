@@ -4,7 +4,7 @@ import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{CloudID, PlaylistID, RequestID, TrackID}
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
-import com.malliina.play.models.{Password, Username}
+import com.malliina.play.models.Username
 import play.api.libs.json.{JsValue, Json}
 
 trait UserMessage extends PimpMessage {
@@ -19,18 +19,6 @@ case class RegisteredMessage(id: CloudID) extends PimpMessage
 
 object RegisteredMessage {
   implicit val json = Json.format[RegisteredMessage]
-}
-
-case class Authenticate(username: Username, password: Password) extends UserMessage
-
-object Authenticate {
-  implicit val json = Json.format[Authenticate]
-}
-
-case class GetMeta(id: TrackID) extends PimpMessage
-
-object GetMeta {
-  implicit val json = Json.format[GetMeta]
 }
 
 case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
@@ -81,7 +69,13 @@ case class AlarmEdit(payload: JsValue) extends PimpMessage
 
 case class AlarmAdd(payload: JsValue) extends PimpMessage
 
-case class PlaybackMessage(payload: JsValue, username: Username) extends UserMessage
+case class PlaybackMessage(body: JsValue, username: Username) extends UserMessage
+
+object PlaybackMessage {
+  implicit val json = Json.format[PlaybackMessage]
+
+  //  def cmdWriter[T: Writes](cmd: String, t: T) = Json.obj(JsonStrings.Cmd -> cmd) ++ Json.toJson(t)
+}
 
 case object GetVersion extends PimpMessage
 

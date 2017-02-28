@@ -2,11 +2,10 @@ package com.malliina.musicpimp.cloud
 
 import akka.actor.ActorRef
 import akka.stream.Materializer
-import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.{Directory, Track}
-import com.malliina.musicpimp.cloud.PimpServerSocket.{body, idBody, nobody}
+import com.malliina.musicpimp.cloud.PimpServerSocket.nobody
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.models._
@@ -41,8 +40,6 @@ class PimpServerSocket(val jsonOut: ActorRef,
                        mat: Materializer,
                        onUpdate: () => Unit)
   extends JsonFutureSocket(id) {
-
-
   val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, onUpdate)
 
   override def send(payload: JsValue) = jsonOut ! payload
@@ -50,11 +47,11 @@ class PimpServerSocket(val jsonOut: ActorRef,
   def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Result =
     fileTransfers.requestTrack(track, contentRange, req)
 
-  def ping = simpleProxy(Ping)
+  def pingAuth: Future[Version] =
+    proxied[Version](nobody, VersionKey)
 
-  def pingAuth: Future[Version] = proxied[Version](nobody, VersionKey)
-
-  def meta(id: TrackID): Future[Track] = proxyD[Track](PhoneRequest(Meta, idBody(id)), nobody)
+  def meta(id: TrackID): Future[Track] =
+    makeRequest[GetMeta, Track](Meta, GetMeta(id))
 
   /**
     * @param user username
@@ -65,29 +62,23 @@ class PimpServerSocket(val jsonOut: ActorRef,
     authenticate3(user, pass).map(_ => true).recoverAll(_ => false)
 
   def authenticate3(user: Username, pass: Password): Future[Version] =
-    proxied[Version](nobody, AuthenticateKey, UsernameKey -> user, PasswordKey -> pass)
+    makeRequest[Authenticate, Version](AuthenticateKey, Authenticate(user, pass))
 
   def rootFolder = proxied[Directory](nobody, RootFolderKey)
 
-  def folder(id: FolderID) = proxyD[Directory](PhoneRequest(FolderKey, idBody(id)), nobody)
+  def folder(id: FolderID) =
+    makeRequest[GetFolder, Directory](FolderKey, GetFolder(id))
 
   def search(term: String, limit: Int = PimpServerSocket.DefaultSearchLimit) =
-    proxied[Seq[Track]](nobody, SearchKey, Term -> term, Limit -> limit)
-
-//  def playlists(user: Username) = proxied[PlaylistsMeta](nobody, PlaylistsGet, UsernameKey -> user.name)
-
-//  def playlist(id: PlaylistID, user: Username) =
-//    proxied[PlaylistMeta](user, PlaylistGet, Id -> id.id, UsernameKey -> user.name)
-
-  def deletePlaylist(id: PlaylistID, user: Username) =
-    defaultProxy(PhoneRequest(PlaylistDelete, body(Id -> id.id, UsernameKey -> user.name)), user)
-
-  def alarms = simpleProxy(AlarmsKey)
+    makeRequest[Search, Seq[Track]](SearchKey, Search(term, limit))
 
   def status = simpleProxy(StatusKey)
 
-  protected def proxied[T: Reads](user: Username, cmd: String, more: (String, Json.JsValueWrapper)*) =
-    proxyD[T](PhoneRequest(cmd, body(more: _*)), user)
+  def makeRequest[W: Writes, R: Reads](cmd: String, t: W): Future[R] =
+    proxyT[W, R](cmd, t, nobody)
+
+  protected def proxied[T: Reads](user: Username, cmd: String) =
+    proxyD[T](PhoneRequest(cmd, Json.obj()), user)
 
   private def simpleProxy(cmd: String) = defaultProxy(PhoneRequest(cmd, Json.obj()), nobody)
 }

@@ -40,12 +40,6 @@ abstract class JsonFutureSocket(val id: CloudID)
   override def isSuccess(response: JsValue): Boolean =
     (response \ SuccessKey).validate[Boolean].filter(_ == false).isError
 
-  //  /** TODO Fix signature; what happens when the channel is closed and this method is called?
-  //    *
-  //    * @param json payload
-  //    */
-  //  def send(json: JsValue): Future[QueueOfferResult] = channel offer json
-
   /** Sends `body` as JSON and deserializes the response to `U`.
     *
     * @param body message payload
