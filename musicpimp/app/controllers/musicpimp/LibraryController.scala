@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
-import com.malliina.musicpimp.models.{FolderID, MusicColumn, TrackID}
+import com.malliina.musicpimp.models.{FailReason, FolderID, MusicColumn, TrackID}
 import com.malliina.musicpimp.tags.{PimpTags, TagPage}
 import com.malliina.play.models.Username
 import com.malliina.play.{CookieAuthenticator, FileResults}
@@ -125,5 +125,5 @@ class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: CookieAuthentic
 }
 
 object LibraryController {
-  def noTrackJson(id: TrackID) = JsonMessages.failure(s"Track not found: $id")
+  def noTrackJson(id: TrackID) = FailReason(s"Track not found: $id")
 }

@@ -37,8 +37,8 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
     * @param request request id
     * @return a Future that completes when the upload completes
     */
-  def upload(track: GetTrack, request: RequestID): Future[Unit] = {
-    withUpload(track.id, request, file => Files.size(file).bytes, (file, req) => {
+  def upload(track: TrackID, request: RequestID): Future[Unit] = {
+    withUpload(track, request, file => Files.size(file).bytes, (file, req) => {
       log info s"Uploading entire $file, request $request"
       req.addFile(file)
     })
@@ -103,7 +103,7 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
     def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request"
 
     Util.using(new TrustAllMultipartRequest(uploadUri.url)) { req =>
-      req.addHeaders(CloudStrings.RequestId -> request.id)
+      req.addHeaders(CloudResponse.RequestKey -> request.id)
       Clouds.loadID().foreach(id => req.setAuth(id.id, "pimp"))
       content(path, req)
       val response = stored(request, req, req.execute())

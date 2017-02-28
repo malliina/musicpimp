@@ -8,7 +8,7 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.log
-import com.malliina.musicpimp.cloud.CloudStrings.{Body, RequestId, SuccessKey, Unregister}
+import com.malliina.musicpimp.cloud.CloudStrings.Unregister
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
 import com.malliina.musicpimp.json.JsonMessages
@@ -110,15 +110,16 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log debug s"Got message: $json"
+    log debug s"Got message: '$json'."
     try {
       // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
       processRequest(json) orElse processEvent(json) recoverTotal (err => handleError(err, json))
     } catch {
       case e: Exception =>
-        log.warn(s"Failed while handling JSON: $json.", e)
-        (json \ RequestId).validate[RequestID] map { request =>
-          sendFailureResponse(FailReason(s"The MusicPimp server failed while dealing with the request: $json"), request)
+        log.warn(s"Failed while handling JSON: '$json'.", e)
+        (json \ CloudResponse.RequestKey).validate[RequestID] map { request =>
+          val reason = FailReason(s"The MusicPimp server failed while dealing with the request: '$json'.")
+          sendFailure(request, reason)
         }
     }
   }
@@ -137,42 +138,46 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
 
   def handleRequest(message: PimpMessage, request: RequestID): Unit = {
     def databaseResponse[T: Writes](f: Future[T]): Future[Any] =
-      withDatabaseExcuse(request)(f.map(t => sendResponse(t, request)))
+      withDatabaseExcuse(request)(f.map(t => sendSuccess(request, t)))
 
     message match {
       case GetStatus =>
-        val payload = Json.toJson(MusicPlayer.status)(StatusEvent.status18writer)
-        sendJsonResponse(JsonMessages.withStatus(payload), request)
-      case t: GetTrack =>
-        uploader.upload(t, request).recoverAll(t => log.error(s"Upload failed for $request", t))
+        implicit val writer = StatusEvent.status18writer
+        val body = JsonMessages.withStatus(Json.toJson(MusicPlayer.status))
+        sendSuccess(request, body)
+      case GetTrack(id) =>
+        uploader.upload(id, request)
+          .recoverAll(t => log.error(s"Upload failed for $request", t))
       case rt: RangedTrack =>
-        uploader.rangedUpload(rt, request).recoverAll(t => log.error(s"Ranged upload failed for $request", t))
+        uploader.rangedUpload(rt, request)
+          .recoverAll(t => log.error(s"Ranged upload failed for $request", t))
       case CancelStream(req) =>
         uploader.cancelSoon(req)
       case RootFolder =>
-        lib.rootFolder map (folder => sendResponse(folder, request)) recover {
-          case t =>
-            log.error(s"Root folder failure", t)
-            sendJsonResponse(JsonMessages.failure("Library failure"), request, success = false)
+        lib.rootFolder.map { folder =>
+          sendSuccess(request, folder)
+        }.recoverAll { t =>
+          log.error(s"Root folder failure.", t)
+          sendFailure(request, FailReason("Library failure."))
         }
       case GetFolder(id) =>
-        val folderFuture = lib.folder(id) recover {
-          case t =>
-            log.error(s"Library failure for folder $id", t)
-            None
-        }
-        folderFuture map { maybeFolder =>
-          val json = maybeFolder
-            .map(folder => Json.toJson(folder))
-            .getOrElse(JsonMessages.failure(s"Folder not found: $id"))
-          sendJsonResponse(json, request, success = maybeFolder.isDefined)
+        lib.folder(id).map { maybeFolder =>
+          maybeFolder.map { folder =>
+            sendSuccess(request, folder)
+          }.getOrElse {
+            sendFailure(request, FailReason(s"Folder not found: '$id'."))
+          }
+        } recoverAll { t =>
+          val msg = s"Library failure for folder '$id'."
+          log.error(msg, t)
+          sendFailure(request, FailReason(msg))
         }
       case Search(term, limit) =>
         databaseResponse(deps.db.fullText(term, limit))
       case PingAuth =>
-        sendJsonResponse(Json.toJson(JsonMessages.version), request)
+        sendSuccess(request, JsonMessages.version)
       case PingMessage =>
-        sendJsonResponse(JsonMessages.ping, request)
+        sendSuccess(request, JsonMessages.ping)
       case GetPopular(meta) =>
         databaseResponse(stats.mostPlayed(meta).map(PopularList.apply))
       case GetRecent(meta) =>
@@ -180,46 +185,52 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case GetPlaylists(user) =>
         databaseResponse(playlists.playlistsMeta(user))
       case GetPlaylist(id, user) =>
-        def notFound = FailReason(s"Playlist not found: $id")
-
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
-            maybePlaylist.fold(sendFailureResponse(notFound, request))(pl => sendResponse(pl, request))
+            maybePlaylist.map { playlist =>
+              sendSuccess(request, playlist)
+            }.getOrElse {
+              sendFailure(request, FailReason(s"Playlist not found: '$id'."))
+            }
           }
         }
       case SavePlaylist(playlist, user) =>
         databaseResponse(playlists.saveOrUpdatePlaylistMeta(playlist, user))
       case DeletePlaylist(id, user) =>
         withDatabaseExcuse(request) {
-          playlists.delete(id, user).map(_ => sendAckResponse(request))
+          playlists.delete(id, user).map { _ =>
+            sendLogged(CloudResponse.ack(request))
+          }
         }
       case GetAlarms =>
         implicit val writer = Alarms.alarmWriter
-        sendResponse(ScheduledPlaybackService.status, request)
+        sendLogged(CloudResponse.success(request, ScheduledPlaybackService.status))
       case AlarmEdit(payload) =>
-        AlarmJsonHandler.handle(payload)
-        sendAckResponse(request)
+        AlarmJsonHandler.handle(payload).fold(
+          _ => sendFailure(request, JsonMessages.genericFailure),
+          _ => sendSuccess(request, Json.obj())
+        )
       case AlarmAdd(payload) =>
-        AlarmJsonHandler.handle(payload)
-        sendAckResponse(request)
+        AlarmJsonHandler.handle(payload).fold(
+          _ => sendFailure(request, JsonMessages.genericFailure),
+          _ => sendSuccess(request, Json.obj())
+        )
       case Authenticate(user, pass) =>
         val authentication = deps.userManager.authenticate(user, pass).recover {
           case t =>
-            log.error(s"Database failure when authenticating $user", t)
+            log.error(s"Database failure when authenticating '$user'.", t)
             false
         }
         authentication map { isValid =>
-          val response =
-            if (isValid) Json.toJson(JsonMessages.version)
-            else Json.toJson(JsonMessages.invalidCredentials)
-          sendJsonResponse(response, request, success = isValid)
+          if (isValid) sendSuccess(request, JsonMessages.version)
+          else sendFailure(request, JsonMessages.invalidCredentials)
         }
       case GetVersion =>
-        sendResponse(JsonMessages.version, request)
+        sendSuccess(request, JsonMessages.version)
       case GetMeta(id) =>
-        val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
-        val response = metaResult getOrElse LibraryController.noTrackJson(id)
-        sendJsonResponse(response, request, metaResult.isDefined)
+        Library.findMeta(id)
+          .map(track => sendSuccess(request, track))
+          .getOrElse(sendFailure(request, LibraryController.noTrackJson(id)))
       case RegistrationEvent(event, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
@@ -228,16 +239,16 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         Future(Rest beam beamCommand)
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
-        sendAckResponse(request)
+        sendLogged(CloudResponse.ack(request))
       case other =>
-        log.warn(s"Unknown request: $message")
+        log.warn(s"Unknown request: '$message'.")
     }
   }
 
   def withDatabaseExcuse[T](request: RequestID)(f: Future[T]) =
     f.recoverAll { t =>
-      log.error(s"Request $request error", t)
-      sendFailureResponse(JsonMessages.databaseFailure, request)
+      log.error(s"Request $request error.", t)
+      sendFailure(request, JsonMessages.databaseFailure)
     }
 
   def handleEvent(e: PimpMessage): Unit =
@@ -251,38 +262,24 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case PingMessage =>
         ()
       case other =>
-        log.warn(s"Unknown event: $other")
+        log.warn(s"Unknown event: '$other'.")
     }
 
-  def requestJson(request: RequestID, success: Boolean) =
-    Json.obj(
-      RequestId -> request,
-      SuccessKey -> success,
-      Body -> Json.obj())
+  def sendSuccess[T: Writes](request: RequestID, response: T) =
+    sendLogged(CloudResponse.success(request, response))
 
-  def sendResponse[T: Writes](response: T, request: RequestID): Try[Unit] =
-    sendJsonResponse(Json.toJson(response), request)
+  def sendFailure(request: RequestID, reason: FailReason) =
+    sendLogged(CloudResponse.failed(request, reason))
 
-  def sendDefaultFailure(request: RequestID) =
-    sendFailureResponse(JsonMessages.genericFailure, request)
-
-  def sendFailureResponse(response: FailReason, request: RequestID) =
-    sendJsonResponse(Json.toJson(response), request, success = false)
-
-  def sendAckResponse(request: RequestID) =
-    sendJsonResponse(Json.obj(), request, success = true)
-
-  def sendJsonResponse(response: JsValue, request: RequestID, success: Boolean = true) = {
-    val payload = requestJson(request, success) + (Body -> response)
-    sendLogged(payload, request)
-  }
-
-  def sendLogged(payload: JsValue, request: RequestID): Try[Unit] =
-    send(payload)
-      .map(_ => log debug s"Responded to request: $request with payload: $payload")
+  def sendLogged[T: Writes](response: CloudResponse[T]): Try[Unit] = {
+    val request = response.request
+    //    implicit val w = CloudResponse.json[T]
+    send(Json.toJson(response))
+      .map(_ => log debug s"Responded to request $request with payload '$response'.")
       .recover {
-        case t => log.error(s"Unable to send message to the cloud, payload: $payload", t)
+        case t => log.error(s"Unable to respond to $request with payload '$response'.", t)
       }
+  }
 
   def handleError(errors: JsError, json: JsValue): Unit =
     log warn errorMessage(errors, json)

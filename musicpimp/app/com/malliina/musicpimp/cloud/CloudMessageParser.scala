@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
-import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered, RequestId}
+import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered}
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
@@ -18,7 +18,7 @@ object CloudMessageParser extends CloudMessageParser {
 trait CloudMessageParser {
   def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] = {
     val cmd = (json \ Cmd).validate[String]
-    val request = (json \ RequestId).validate[RequestID]
+    val request = (json \ CloudResponse.RequestKey).validate[RequestID]
     val user = (json \ UsernameKey).validate[Username]
     val body = json \ Body
 

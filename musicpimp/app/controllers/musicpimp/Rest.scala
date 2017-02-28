@@ -134,6 +134,7 @@ class Rest(webPlayer: WebPlayer,
 
   private def localPlaybackAction(id: TrackID): Option[EssentialAction] =
     Library.findMetaWithTempFallback(id) map { track =>
+
       /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
         *
         * The request has already been authenticated at this point because this method is called from within an
@@ -183,7 +184,7 @@ class Rest(webPlayer: WebPlayer,
 
   private def loggedJson(errorMessage: String) = {
     log.warn(errorMessage)
-    JsonMessages.failure(errorMessage)
+    FailReason(errorMessage)
   }
 
   /** Builds a [[Sink]] that writes any consumed bytes to both `file` and a stream. The bytes
@@ -230,7 +231,9 @@ class Rest(webPlayer: WebPlayer,
   private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
+
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)
+
       val pathParameterOpt = firstValue("path").map(TrackID.apply)
       // if a "path" parameter is specified, attempts to move the uploaded file to that library path
       val absolutePathOpt = pathParameterOpt.flatMap(Library.suggestAbsolute).filter(!Files.exists(_))
@@ -239,6 +242,7 @@ class Rest(webPlayer: WebPlayer,
       val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
       val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(p => Library.findMeta(p)))
+
       def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
@@ -246,6 +250,7 @@ class Rest(webPlayer: WebPlayer,
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
         new LocalTrack(TrackID(""), PimpPath.Empty, meta)
       }
+
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
       val user = Username(request.user)
       val mediaInfo = track.meta.media

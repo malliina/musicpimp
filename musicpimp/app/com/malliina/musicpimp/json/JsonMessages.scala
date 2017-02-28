@@ -23,9 +23,6 @@ trait JsonMessages {
   val noFileInMultipart = FailReason(NoFileInMultipart)
   val ping = event(Ping)
 
-  def failure(reason: String) =
-    obj(Reason -> reason)
-
   def exception(e: Throwable) =
     FailReason(e.getMessage)
 

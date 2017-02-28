@@ -10,6 +10,7 @@ import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.models.FullUrl
 import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.{ActorExecution, PimpAuthenticator}
@@ -19,7 +20,7 @@ import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang, Messages}
 import play.api.mvc.EssentialFilter
-import play.api.{ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigurator, Mode}
+import play.api.{BuiltInComponentsFromContext, Mode}
 import play.filters.gzip.GzipFilter
 
 import scala.concurrent.Future
@@ -36,17 +37,14 @@ object InitOptions {
   val dev = InitOptions(alarms = false, database = false, users = false, indexer = false, cloud = false)
 }
 
-class PimpLoader(options: InitOptions) extends ApplicationLoader {
+class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
   // Probably needed due to reference in application.conf to only the class name
   def this() = this(InitOptions.prod)
 
-  def load(context: Context) = {
+  override def createComponents(context: Context) = {
     val env = context.environment
-    LoggerConfigurator(env.classLoader)
-      .foreach(_.configure(env))
-    // faster app restart when in dev
     val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
-    new PimpComponents(context, opts, PimpDb.default()).application
+    new PimpComponents(context, opts, PimpDb.default())
   }
 }
 
