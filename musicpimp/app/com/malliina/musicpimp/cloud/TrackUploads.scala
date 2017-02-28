@@ -9,10 +9,10 @@ import com.malliina.concurrent.ExecutionContexts
 import com.malliina.musicpimp.cloud.TrackUploads.log
 import com.malliina.musicpimp.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{FullUrl, RequestID, TrackID}
+import com.malliina.musicpimp.models.{RequestID, TrackID}
+import com.malliina.play.http.FullUrl
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.{Util, Utils}
-import org.apache.http.util.EntityUtils
 import play.api.Logger
 
 import scala.collection.concurrent.TrieMap

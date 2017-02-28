@@ -5,7 +5,8 @@ import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{FullUrl, SavedPlaylist, TrackID}
+import com.malliina.musicpimp.models.{SavedPlaylist, TrackID}
+import com.malliina.play.http.FullUrl
 import com.malliina.ws.HttpUtil
 import play.api.Application
 import play.api.http.{HeaderNames, MimeTypes, Writeable}

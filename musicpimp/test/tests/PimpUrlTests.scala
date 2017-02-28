@@ -1,6 +1,6 @@
 package tests
 
-import com.malliina.musicpimp.models.FullUrl
+import com.malliina.play.http.FullUrl
 import org.scalatest.FunSuite
 
 class PimpUrlTests extends FunSuite {

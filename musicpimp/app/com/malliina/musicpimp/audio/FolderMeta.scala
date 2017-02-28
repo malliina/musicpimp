@@ -2,7 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{FolderID, MusicItem, PimpPath, FullUrl}
+import com.malliina.musicpimp.models.{FolderID, MusicItem, PimpPath}
+import com.malliina.play.http.FullUrl
 import play.api.libs.json.Json.obj
 import play.api.libs.json.Writes
 import play.api.mvc.Call

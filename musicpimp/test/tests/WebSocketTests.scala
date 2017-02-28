@@ -5,7 +5,7 @@ import javax.net.ssl._
 
 import com.malliina.musicpimp.cloud.JsonSocket8
 import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
-import com.malliina.musicpimp.models.FullUrl
+import com.malliina.play.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.ws.HttpUtil
 import org.scalatest.FunSuite

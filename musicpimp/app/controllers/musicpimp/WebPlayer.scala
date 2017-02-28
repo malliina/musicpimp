@@ -4,9 +4,9 @@ import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings}
-import com.malliina.musicpimp.models.{FullUrl, RemoteInfo}
+import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
-import com.malliina.play.http.{AuthedRequest, RequestInfo}
+import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
 import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
 import play.api.Logger
 import play.api.libs.json.JsValue

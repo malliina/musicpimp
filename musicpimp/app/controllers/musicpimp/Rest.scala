@@ -106,18 +106,17 @@ class Rest(webPlayer: WebPlayer,
               // relays MusicBeamer's response to the client
               val statusCode = httpResponse.getStatusLine.getStatusCode
               log info s"Completed track upload in: $duration, relaying response: $statusCode"
-              if (statusCode == OK) {
-                new Status(statusCode)(JsonMessages.thanks)
-              } else {
-                new Status(statusCode)
-              }
+              val result = new Status(statusCode)
+              if (statusCode == OK) result(JsonMessages.thanks)
+              else result
             })
         } catch {
           case uhe: UnknownHostException =>
             notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
           case e: Exception =>
-            log.error("Stream failure", e)
-            serverError("Stream failure")
+            val msg = "Stream failure."
+            log.error(msg, e)
+            serverError(msg)
         }
       }
     )
@@ -167,10 +166,10 @@ class Rest(webPlayer: WebPlayer,
       val track = StreamedTrack.fromTrack(meta, inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
-    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat))(req => {
+    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat)) { req =>
       log.info(s"Received stream of track: ${meta.id}")
       Ok
-    })
+    }
   }
 
   private def canWriteNewFile(file: Path) =
@@ -179,7 +178,7 @@ class Rest(webPlayer: WebPlayer,
       Files.delete(createdFile)
       true
     } catch {
-      case e: Exception => false
+      case _: Exception => false
     }
 
   private def loggedJson(errorMessage: String) = {

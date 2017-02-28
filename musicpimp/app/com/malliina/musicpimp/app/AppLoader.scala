@@ -7,12 +7,12 @@ import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
-import com.malliina.musicpimp.models.FullUrl
 import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
+import com.malliina.play.http.FullUrl
 import com.malliina.play.{ActorExecution, PimpAuthenticator}
 import controllers._
 import controllers.musicpimp._

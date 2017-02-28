@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.models.FullUrl
+import com.malliina.play.http.FullUrl
 import play.api.libs.json.Writes
 
 import scala.concurrent.duration.Duration

@@ -2,7 +2,7 @@ package com.malliina.musicpimp.library
 
 import com.malliina.musicpimp.audio.{FolderMeta, TrackJson, TrackMeta}
 import com.malliina.musicpimp.db.DataFolder
-import com.malliina.musicpimp.models.FullUrl
+import com.malliina.play.http.FullUrl
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.RequestHeader
 

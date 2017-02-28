@@ -2,7 +2,6 @@ package controllers.musicpimp
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackJson
-import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FailReason, FolderID, MusicColumn, TrackID}
 import com.malliina.musicpimp.tags.{PimpTags, TagPage}
@@ -11,7 +10,10 @@ import com.malliina.play.{CookieAuthenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
 
-class LibraryController(tags: PimpTags, lib: MusicLibrary, auth: CookieAuthenticator, mat: Materializer)
+class LibraryController(tags: PimpTags,
+                        lib: MusicLibrary,
+                        auth: CookieAuthenticator,
+                        mat: Materializer)
   extends Secured(auth, mat) {
 
   def siteRoot = rootLibrary

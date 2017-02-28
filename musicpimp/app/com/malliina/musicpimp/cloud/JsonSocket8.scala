@@ -2,7 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import javax.net.ssl.SSLSocketFactory
 
-import com.malliina.musicpimp.models.FullUrl
+import com.malliina.play.http.FullUrl
 import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.util.Try

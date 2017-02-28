@@ -5,10 +5,9 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
-import com.malliina.musicpimp.models.FullUrl
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
-import com.malliina.play.http.{AuthedRequest, RequestInfo}
+import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
 import com.malliina.play.ws._
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.toJson

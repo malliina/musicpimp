@@ -2,7 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.json.PimpStrings._
-import com.malliina.musicpimp.models.{MusicItem, PimpPath, FullUrl, TrackID}
+import com.malliina.musicpimp.models.{MusicItem, PimpPath, TrackID}
+import com.malliina.play.http.FullUrl
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
 import play.api.libs.json.{Reads, Writes}
@@ -48,18 +49,4 @@ object TrackMeta {
         Url -> host.absolute(url(t.id))
       )
     }
-
-  //  val reader: Reads[TrackMeta] = BaseTrackMeta.jsonFormat.map { base =>
-  //    val meta: TrackMeta = base
-  //    meta
-  //  }
-
-  //  def writer(request: RequestHeader): Writes[TrackMeta] =
-  //    writer(PimpUrl.hostOnly(request))
-
-  //  def format(request: RequestHeader): Format[TrackMeta] =
-  //    format(PimpUrl.hostOnly(request))
-
-  //    def format(host: PimpUrl): Format[TrackMeta] =
-  //      Format(reader, writer(host))
 }
