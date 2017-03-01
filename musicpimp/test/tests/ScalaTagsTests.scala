@@ -1,6 +1,6 @@
 package tests
 
-import com.malliina.musicpimp.tags.Tags
+import com.malliina.play.tags.Tags
 import org.scalatest.FunSuite
 
 import scalatags.Text.all._

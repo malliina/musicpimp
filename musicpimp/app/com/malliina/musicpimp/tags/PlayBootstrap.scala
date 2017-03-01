@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.tags
 
-import com.malliina.musicpimp.tags.Bootstrap.HelpBlock
-import com.malliina.musicpimp.tags.Tags._
+import com.malliina.play.tags.All._
 import play.api.data.Field
 import play.api.i18n.Messages
 

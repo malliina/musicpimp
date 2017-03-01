@@ -9,19 +9,16 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
-import com.malliina.musicpimp.tags.Bootstrap._
-import com.malliina.musicpimp.tags.PlayBootstrap._
-import com.malliina.musicpimp.tags.PlayTags._
-import com.malliina.musicpimp.tags.Tags._
+import com.malliina.musicpimp.tags.PlayBootstrap.helpSpan
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
-import controllers.musicpimp.{Accounts, Cloud, SettingsController, UserFeedback}
+import com.malliina.play.tags.All._
+import com.malliina.play.tags.TagPage
+import controllers.musicpimp.{Accounts, Cloud, SettingsController, UserFeedback, routes, Search => _}
 import controllers.routes.Assets.at
-import controllers.musicpimp.{Search => _, _}
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.{Call, Flash}
-import controllers.musicpimp.routes
 
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
