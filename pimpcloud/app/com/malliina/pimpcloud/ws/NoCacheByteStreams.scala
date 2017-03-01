@@ -72,13 +72,12 @@ class NoCacheByteStreams(id: CloudID,
     * @see https://groups.google.com/forum/#!searchin/akka-user/source.queue/akka-user/zzGSuRG4YVA/NEjwAT76CAAJ
     */
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result = {
-    val uuid = UUID.randomUUID()
-    val request = RequestID(uuid.toString)
+    val request = RequestID.random()
     val userAgent = req.headers.get(HeaderNames.USER_AGENT).map(ua => s"user agent $ua") getOrElse "unknown user agent"
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, NoCacheByteStreams.ByteStringBufferSize)
     iteratees += (request -> new ChannelInfo(queue, id, track, range))
     streamChanged()
-    log info s"Created stream $uuid of track ${track.title} with range ${range.description} for $userAgent from ${req.remoteAddress}"
+    log info s"Created stream $request of track ${track.title} with range ${range.description} for $userAgent from ${req.remoteAddress}"
     // Watches completion and disposes of resources
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails

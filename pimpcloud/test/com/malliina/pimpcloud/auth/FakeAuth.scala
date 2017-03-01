@@ -1,7 +1,5 @@
 package com.malliina.pimpcloud.auth
 
-import java.util.UUID
-
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
@@ -41,5 +39,5 @@ class FakeAuth(mat: Materializer) extends CloudAuthentication {
 }
 
 object FakeAuth {
-  val FakeUuid = RequestID("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7")
+  val FakeUuid = RequestID.build("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7").get
 }

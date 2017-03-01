@@ -41,13 +41,17 @@ object RangedRequest {
   implicit val json = Json.format[RangedRequest]
 }
 
-case class RequestID private(id: String) extends Identifiable
+sealed trait RequestID extends Identifiable
 
 object RequestID extends ValidatingCompanion[String, RequestID] {
+  private def apply(validated: String) = Impl(validated)
+
   override def build(input: String): Option[RequestID] =
     if (input.nonEmpty) Option(RequestID(input)) else None
 
   override def write(t: RequestID) = t.id
 
   def random(): RequestID = RequestID(UUID.randomUUID().toString)
+
+  private case class Impl(id: String) extends RequestID
 }
