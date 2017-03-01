@@ -12,7 +12,7 @@ case class Server(id: String, address: String)
 case class Phone(s: String, address: String)
 
 case class Request(serverID: String,
-                   uuid: String,
+                   request: String,
                    track: Track,
                    range: Range)
 
@@ -54,7 +54,7 @@ class AdminJS extends SocketJS("/admin/usage") {
   def updateRequests(requests: Seq[Request]) = {
     def row(request: Request) = tr(
       td(request.serverID),
-      td(request.uuid),
+      td(request.request),
       td(request.track.title),
       td(request.track.artist),
       td(request.range.description)

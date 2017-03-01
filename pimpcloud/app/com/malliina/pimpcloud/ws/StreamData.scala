@@ -5,7 +5,7 @@ import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.play.ContentRange
 import play.api.libs.json.Json
 
-case class StreamData(uuid: RequestID,
+case class StreamData(request: RequestID,
                       serverID: CloudID,
                       track: Track,
                       range: ContentRange)
