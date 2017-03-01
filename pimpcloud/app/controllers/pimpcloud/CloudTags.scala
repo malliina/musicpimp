@@ -2,9 +2,9 @@ package controllers.pimpcloud
 
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
 import com.malliina.musicpimp.models.TrackID
-import com.malliina.pimpcloud.tags.Bootstrap._
-import com.malliina.pimpcloud.tags.Tags._
-import com.malliina.pimpcloud.tags.{ScalaScripts, TagPage}
+import com.malliina.pimpcloud.tags.ScalaScripts
+import com.malliina.play.tags.All._
+import com.malliina.play.tags.TagPage
 import controllers.pimpcloud.CloudTags.callAttr
 import controllers.routes.Assets.at
 import play.api.mvc.Call
@@ -26,7 +26,7 @@ object CloudTags {
   }
 
   def withLauncher(jsFiles: String*) =
-    new CloudTags(jsFiles.map(file => js(at(file))): _*)
+    new CloudTags(jsFiles.map(file => jsScript(at(file))): _*)
 }
 
 class CloudTags(scripts: Modifier*) {
@@ -40,7 +40,7 @@ class CloudTags(scripts: Modifier*) {
           }
         ),
         rowColumn(ColMd6)(
-          leadPara("Try to ", aHref(routes.Logs.index(), "sign in"), " again.")
+          leadPara("Try to ", aHref(routes.Logs.index())("sign in"), " again.")
         )
       )
     )
@@ -93,7 +93,7 @@ class CloudTags(scripts: Modifier*) {
     val feedbackHtml = feedback.fold(empty)(f => fullRow(leadPara(f)))
 
     def folderHtml(folder: Folder) =
-      li(aHref(routes.Phones.folder(folder.id), folder.title))
+      li(aHref(routes.Phones.folder(folder.id))(folder.title))
 
     def trackHtml(track: Track) =
       li(trackActions(track.id), " ", a(href := routes.Phones.track(track.id), download)(track.title))
@@ -184,7 +184,7 @@ class CloudTags(scripts: Modifier*) {
               navItem("Logs", "logs", routes.Logs.logs(), "list")
             ),
             ulClass(s"$Nav $NavbarNav $NavbarRight")(
-              li(aHref(routes.AdminAuth.logout(), "Logout"))
+              li(aHref(routes.AdminAuth.logout())("Logout"))
             )
           )
         )
@@ -203,9 +203,9 @@ class CloudTags(scripts: Modifier*) {
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
         cssLink(at("css/custom.css")),
         extraHeader,
-        js("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
-        js("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
-        js("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+        jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
+        jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
+        jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
       ),
       body(
         section(
