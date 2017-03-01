@@ -1,10 +1,10 @@
 package controllers.pimpcloud
 
 import java.io.IOException
-import java.util.UUID
 
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.models.RequestID
 import com.malliina.storage.StorageLong
 import com.malliina.ws.Streamer
 import controllers.pimpcloud.StreamReceiver.log
@@ -17,7 +17,7 @@ class StreamReceiver(mat: Materializer) extends Controller {
 
   def receiveStream(parser: BodyParser[MultipartFormData[Long]],
                     transfers: Streamer,
-                    requestId: UUID) = {
+                    requestId: RequestID) = {
     val maxSize = transfers.maxUploadSize
     log debug s"Streaming at most $maxSize for request $requestId"
     val composedParser = recoveringParser(parse.maxLength(maxSize.toBytes, parser)(mat), transfers, requestId)
@@ -42,7 +42,7 @@ class StreamReceiver(mat: Materializer) extends Controller {
   /** This is not strictly necessary, but cleans up ugly and confusing stacktraces if
     * the client disconnects while an upload is in progress.
     */
-  def recoveringParser[T](p: BodyParser[T], transfers: Streamer, requestId: UUID): BodyParser[T] =
+  def recoveringParser[T](p: BodyParser[T], transfers: Streamer, requestId: RequestID): BodyParser[T] =
     new BodyParser[T] {
       val clientClosedMessage = "An existing connection was forcibly closed by the remote host"
       val ioMessage = "Connection reset by peer"

@@ -3,8 +3,8 @@ package com.malliina.ws
 import java.util.UUID
 
 import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.musicpimp.cloud.UuidFutureMessaging
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.cloud.{BodyAndId, UuidFutureMessaging}
+import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.json.JsonStrings.Body
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.play.models.Username
@@ -25,17 +25,14 @@ abstract class JsonFutureSocket(val id: CloudID)
 
   val timeout = 20.seconds
 
-  /** We expect responses to contain `REQUEST_ID` and `BODY` keys, which we parse. The request is completed with the
+  /** We expect responses to contain `RequestId` and `Body` keys, which we parse. The request is completed with the
     * JSON object in `BODY`.
     *
     * @param response a JSON response from server
     * @return a response, parsed
     */
   override def extract(response: JsValue): Option[BodyAndId] =
-    for {
-      uuid <- (response \ RequestId).asOpt[UUID]
-      body <- (response \ Body).toOption
-    } yield BodyAndId(body, uuid)
+    response.asOpt[BodyAndId]
 
   override def isSuccess(response: JsValue): Boolean =
     (response \ SuccessKey).validate[Boolean].filter(_ == false).isError
@@ -73,8 +70,8 @@ abstract class JsonFutureSocket(val id: CloudID)
 }
 
 object JsonFutureSocket {
-  val SuccessKey = "success"
   val RequestId = "request"
+  val SuccessKey = "success"
 
   def tryParseUUID(id: String): Option[UUID] = {
     Utils.opt[UUID, IllegalArgumentException](UUID.fromString(id))

@@ -6,7 +6,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.streams.ByteActor
 import com.malliina.play.auth.InvalidCredentials
 import com.malliina.play.models.Username
@@ -41,5 +41,5 @@ class FakeAuth(mat: Materializer) extends CloudAuthentication {
 }
 
 object FakeAuth {
-  val FakeUuid = UUID.fromString("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7")
+  val FakeUuid = RequestID("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7")
 }

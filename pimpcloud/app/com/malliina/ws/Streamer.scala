@@ -1,8 +1,7 @@
 package com.malliina.ws
 
-import java.util.UUID
-
 import com.malliina.musicpimp.audio.Track
+import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.ContentRange
 import com.malliina.storage.StorageInt
@@ -19,16 +18,16 @@ trait Streamer {
 
   def snapshot: Seq[StreamData]
 
-  def exists(uuid: UUID): Boolean
+  def exists(uuid: RequestID): Boolean
 
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result
 
-  def parser(uuid: UUID): Option[BodyParser[MultipartFormData[Long]]]
+  def parser(uuid: RequestID): Option[BodyParser[MultipartFormData[Long]]]
 
   /**
     * @param uuid        request ID
     * @param shouldAbort if true, the server is informed that it should cancel the request
     * @return true if `uuid` was found, false otherwise
     */
-  def remove(uuid: UUID, shouldAbort: Boolean, wasSuccess: Boolean): Future[Boolean]
+  def remove(uuid: RequestID, shouldAbort: Boolean, wasSuccess: Boolean): Future[Boolean]
 }

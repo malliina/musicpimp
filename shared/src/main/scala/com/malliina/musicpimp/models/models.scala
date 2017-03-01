@@ -1,6 +1,9 @@
 package com.malliina.musicpimp.models
 
+import java.util.UUID
+
 import com.malliina.musicpimp.cloud.PimpMessage
+import com.malliina.play.json.ValidatingCompanion
 import com.malliina.play.{ContentRange, Writeables}
 import play.api.libs.json.Json
 
@@ -36,4 +39,15 @@ case class RangedRequest(id: TrackID, range: ContentRange)
 
 object RangedRequest {
   implicit val json = Json.format[RangedRequest]
+}
+
+case class RequestID private(id: String) extends Identifiable
+
+object RequestID extends ValidatingCompanion[String, RequestID] {
+  override def build(input: String): Option[RequestID] =
+    if (input.nonEmpty) Option(RequestID(input)) else None
+
+  override def write(t: RequestID) = t.id
+
+  def random(): RequestID = RequestID(UUID.randomUUID().toString)
 }

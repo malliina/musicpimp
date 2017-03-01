@@ -1,7 +1,6 @@
 package tests
 
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
-import java.util.UUID
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -9,6 +8,7 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Track
+import com.malliina.musicpimp.models.RequestID
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.storage.StorageLong
 import com.malliina.ws.Streamer
@@ -57,23 +57,23 @@ class UploadTests extends FunSuite with BaseSuite {
     val streamer = new Streamer {
       override def snapshot = Nil
 
-      override def exists(uuid: UUID) = false
+      override def exists(uuid: RequestID) = false
 
       override def requestTrack(track: Track, range: ContentRange, req: RequestHeader) =
         Results.NotFound
 
-      override def parser(uuid: UUID): Option[BodyParser[MultipartFormData[Long]]] = {
+      override def parser(uuid: RequestID): Option[BodyParser[MultipartFormData[Long]]] = {
         println("Not here")
         None
       }
 
-      override def remove(uuid: UUID, isCanceled: Boolean, wasSuccess: Boolean): Future[Boolean] =
+      override def remove(uuid: RequestID, isCanceled: Boolean, wasSuccess: Boolean): Future[Boolean] =
         Future.successful(false)
     }
     val tempFile = Files.copy(testFile, Files.createTempFile("temp", null), StandardCopyOption.REPLACE_EXISTING)
     val size = Files.size(tempFile).bytes
     println(s"Sending $size in $tempFile")
-    val action = receiver.receiveStream(parser, streamer, UUID.randomUUID())
+    val action = receiver.receiveStream(parser, streamer, RequestID.random())
     val request: Request[Either[MaxSizeExceeded, MultipartFormData[Long]]] =
       multipartRequest(tempFile).map[Either[MaxSizeExceeded, MultipartFormData[Long]]] { data =>
         analyze(data)

@@ -8,10 +8,6 @@ import play.api.libs.json._
 
 case class PhoneRequest[W: Writes](cmd: String, user: Username, body: W)
 
-object PhoneRequest {
-//  implicit def json[W: Writes] = Json.writes[PhoneRequest[W]]
-}
-
 case class PimpStreams(streams: Seq[StreamData])
 
 object PimpStreams {

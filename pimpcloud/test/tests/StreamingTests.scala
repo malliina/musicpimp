@@ -9,7 +9,7 @@ import akka.util.ByteString
 import com.malliina.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.{CloudID, TrackID}
+import com.malliina.musicpimp.models.{CloudID, RequestID, TrackID}
 import com.malliina.pimpcloud.auth.FakeAuth
 import com.malliina.pimpcloud.streams.ByteActor
 import com.malliina.play.{ContentRange, Streaming}
@@ -125,15 +125,5 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     } else {
       tempFile
     }
-  }
-
-  def testServer() = {
-//    val source = Source.queue[JsValue](100, OverflowStrategy.backpressure)
-//    val (queue, _) = source.toMat(Sink.asPublisher(fanout = true))(Keep.both).run()(mat)
-    val source = Source.actorPublisher[ByteString](ByteActor.props())
-    val (actor, _) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
-    val socket = new PimpServerSocket(actor, CloudID("test"), FakeRequest(), mat, () => ())
-    socket.requestTrack(Track(TrackID(""), "", "", "", 1.second, 1.megs), ContentRange.all(1.megs), FakeRequest())
-    socket.fileTransfers.parser(UUID.fromString("123"))
   }
 }

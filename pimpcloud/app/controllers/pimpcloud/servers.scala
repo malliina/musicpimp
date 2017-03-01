@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.models.{PimpServer, PimpServers, PimpStreams}
 import com.malliina.pimpcloud.ws.StreamData
@@ -181,6 +181,6 @@ object Servers {
   private val log = Logger(getClass)
 }
 
-case class ServerRequest(request: UUID, socket: PimpServerSocket)
+case class ServerRequest(request: RequestID, socket: PimpServerSocket)
 
 case class PhoneConnection(user: Username, server: PimpServerSocket)

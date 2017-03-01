@@ -21,14 +21,6 @@ import scala.concurrent.Future
 object PimpServerSocket {
   val DefaultSearchLimit = 100
   val nobody = Username("nobody")
-
-  def idBody(id: Identifiable): JsObject = body(Id -> id.id)
-
-  /**
-    * @return a JSON object with parameter `cmd` in key `cmd` and dictionary `more` in key `body`
-    */
-  def body(more: (String, Json.JsValueWrapper)*): JsObject =
-    Json.obj(more: _*)
 }
 
 /**

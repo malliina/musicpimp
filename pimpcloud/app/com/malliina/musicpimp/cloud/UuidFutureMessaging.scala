@@ -1,10 +1,8 @@
 package com.malliina.musicpimp.cloud
 
-import java.util.UUID
-
-import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.Observables
 import com.malliina.musicpimp.cloud.UuidFutureMessaging.log
+import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.play.models.Username
 import play.api.Logger
@@ -15,7 +13,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}
 
 trait UuidFutureMessaging extends FutureMessaging[JsValue] {
-  val ongoing = TrieMap.empty[UUID, Promise[JsValue]]
+  val ongoing = TrieMap.empty[RequestID, Promise[JsValue]]
 
   def extract(response: JsValue): Option[BodyAndId]
 
@@ -26,19 +24,19 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
 
   def request[W: Writes](req: PhoneRequest[W], timeout: Duration): Future[JsValue] = {
     // generates UUID for this request-response pair
-    val uuid = UUID.randomUUID()
+    val request = RequestID.random()
     val responsePromise = Promise[JsValue]()
-    ongoing += (uuid -> responsePromise)
+    ongoing += (request -> responsePromise)
     // sends the payload, including a request ID
-    val payload = Json.toJson(UserRequest(req, uuid))
+    val payload = Json.toJson(UserRequest(req, request))
     send(payload)
     val task = responsePromise.future
     // fails promise after timeout
     if (!responsePromise.isCompleted) {
       Observables.after(timeout) {
-        ongoing -= uuid
+        ongoing -= request
         if (!responsePromise.isCompleted) {
-          val message = s"Request: $uuid timed out after: $timeout."
+          val message = s"Request: $request timed out after: $timeout."
           val failed = responsePromise tryFailure new concurrent.TimeoutException(message)
           if (failed) {
             log warn message
@@ -51,7 +49,7 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
 
   def complete(response: JsValue): Boolean =
     extract(response) exists { pair =>
-      val uuid = pair.uuid
+      val uuid = pair.request
       val body = pair.body
       if (isSuccess(response)) succeed(uuid, body)
       else fail(uuid, body)
@@ -63,7 +61,7 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
     * @param responseBody the payload of the response, that is, the 'body' JSON value
     * @return true if an ongoing request with ID `requestID` existed, false otherwise
     */
-  def succeed(requestID: UUID, responseBody: JsValue): Boolean =
+  def succeed(requestID: RequestID, responseBody: JsValue): Boolean =
     baseComplete(requestID)(_.trySuccess(responseBody))
 
   /** Fails the ongoing [[Promise]] identified by `requestID` with a [[RequestFailure]] containing `responseBody`.
@@ -72,13 +70,13 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
     * @param responseBody body of failed response
     * @return true if an ongoing request with ID `requestID` existed, false otherwise
     */
-  def fail(requestID: UUID, responseBody: JsValue) =
+  def fail(requestID: RequestID, responseBody: JsValue) =
     failExceptionally(requestID, new RequestFailure(responseBody))
 
-  def failExceptionally(requestID: UUID, t: Throwable) =
+  def failExceptionally(requestID: RequestID, t: Throwable) =
     baseComplete(requestID)(_.tryFailure(t))
 
-  private def baseComplete(request: UUID)(f: Promise[JsValue] => Unit) = {
+  private def baseComplete(request: RequestID)(f: Promise[JsValue] => Unit) = {
     (ongoing get request).exists { promise =>
       f(promise)
       ongoing -= request
@@ -88,10 +86,15 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
 
   class RequestFailure(val response: JsValue) extends Exception
 
-  case class BodyAndId(body: JsValue, uuid: UUID)
 
 }
 
 object UuidFutureMessaging {
   private val log = Logger(getClass)
+}
+
+case class BodyAndId(body: JsValue, request: RequestID)
+
+object BodyAndId {
+  implicit val json = Json.format[BodyAndId]
 }

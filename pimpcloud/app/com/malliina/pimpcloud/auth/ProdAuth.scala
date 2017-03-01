@@ -1,10 +1,7 @@
 package com.malliina.pimpcloud.auth
 
-import java.util.UUID
-
 import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings
+import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.FutureFunctions
 import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
 import com.malliina.play.models.Username
@@ -17,18 +14,19 @@ import scala.concurrent.Future
 object ProdAuth {
   val ServerKey = "s"
 }
+
 class ProdAuth(servers: Servers) extends CloudAuthentication {
   implicit val ec = servers.ctx.executionContext
 
   override def authServer(req: RequestHeader): Future[ServerRequest] = {
-    val uuidOpt = for {
+    val requestOpt = for {
       requestID <- req.headers get JsonFutureSocket.RequestId
-      uuid <- JsonFutureSocket.tryParseUUID(requestID)
-    } yield uuid
+      request <- RequestID.build(requestID)
+    } yield request
     for {
-      uuid <- toFuture(uuidOpt)
+      request <- toFuture(requestOpt)
       ss <- servers.connectedServers
-      server <- toFuture(findServer(ss, uuid))
+      server <- toFuture(findServer(ss, request))
     } yield server
   }
 
@@ -38,8 +36,8 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
   override def validate(creds: CloudCredentials): PhoneAuthResult =
     connectedServers.flatMap(servers => validate(creds, servers))
 
-  private def findServer(ss: Set[PimpServerSocket], uuid: UUID): Option[ServerRequest] =
-    ss.find(_.fileTransfers.exists(uuid)).map(s => ServerRequest(uuid, s))
+  private def findServer(ss: Set[PimpServerSocket], request: RequestID): Option[ServerRequest] =
+    ss.find(_.fileTransfers.exists(request)).map(s => ServerRequest(request, s))
 
   private def toFuture[T](opt: Option[T]): Future[T] =
     opt.map(Future.successful).getOrElse(Future.failed(new NoSuchElementException))
@@ -75,7 +73,6 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
   }
 
   /**
-    * @param creds
     * @return a socket or a [[Future]] failed with [[NoSuchElementException]] if validation fails
     */
   private def validate(creds: CloudCredentials, servers: Set[PimpServerSocket]): PhoneAuthResult = {
