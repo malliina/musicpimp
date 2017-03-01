@@ -8,7 +8,7 @@ import com.malliina.musicpimp.cloud.UuidFutureMessaging.log
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.play.models.Username
 import play.api.Logger
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.Duration
@@ -21,23 +21,17 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
 
   def isSuccess(response: JsValue): Boolean = true
 
-  override def request(cmd: String, body: JsValue, user: Username, timeout: Duration): Future[JsValue] =
-    request(PhoneRequest(cmd, body), user, timeout)
+  def request(cmd: String, body: JsValue, user: Username, timeout: Duration): Future[JsValue] =
+    request(PhoneRequest(cmd, user, body), timeout)
 
-  def request(req: PhoneRequest, user: Username, timeout: Duration): Future[JsValue] = {
+  def request[W: Writes](req: PhoneRequest[W], timeout: Duration): Future[JsValue] = {
     // generates UUID for this request-response pair
     val uuid = UUID.randomUUID()
     val responsePromise = Promise[JsValue]()
     ongoing += (uuid -> responsePromise)
     // sends the payload, including a request ID
-    val payload = Json.toJson(UserRequest(req, uuid, user))
+    val payload = Json.toJson(UserRequest(req, uuid))
     send(payload)
-    //    log info s"Sending: $payload"
-//    send(payload).recover {
-//      case t: Throwable =>
-//        log.warn(s"Unable to send payload: $payload", t)
-//        failExceptionally(uuid, t)
-//    }
     val task = responsePromise.future
     // fails promise after timeout
     if (!responsePromise.isCompleted) {

@@ -1,12 +1,11 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.audio.{IPlayer, PlayerStates, StateAwarePlayer}
-import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.{JsonMessages, Target}
 import com.malliina.musicpimp.library.LocalTrack
 import com.malliina.musicpimp.models.RemoteInfo
-import controllers.musicpimp.Target
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 

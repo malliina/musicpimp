@@ -3,7 +3,7 @@ package controllers.musicpimp
 import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.Auths
-import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings}
+import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings, Target}
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
 import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
@@ -22,15 +22,9 @@ class WebPlayer(ctx: ActorExecution) {
   def openSocket = sockets.newSocket
 }
 
-trait Target {
-  def send(json: JsValue): Unit
-}
-
 class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
   val user = remote.user
-  val target = new Target {
-    override def send(json: JsValue): Unit = out ! json
-  }
+  val target = Target(json => out ! json)
   val player = new PimpWebPlayer(remote, target)
   val handler = new WebPlayerMessageHandler(remote, player)
   val requestInfo = RequestInfo(user, rh)

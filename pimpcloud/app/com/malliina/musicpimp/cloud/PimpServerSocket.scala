@@ -5,7 +5,7 @@ import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.{Directory, Track}
-import com.malliina.musicpimp.cloud.PimpServerSocket.nobody
+import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.models._
@@ -47,11 +47,11 @@ class PimpServerSocket(val jsonOut: ActorRef,
   def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Result =
     fileTransfers.requestTrack(track, contentRange, req)
 
-  def pingAuth: Future[Version] =
-    proxied[Version](nobody, VersionKey)
+  def pingAuth(user: Username): Future[Version] =
+    proxied[Version](VersionKey, user)
 
-  def meta(id: TrackID): Future[Track] =
-    makeRequest[GetMeta, Track](Meta, GetMeta(id))
+  def meta(id: TrackID, user: Username): Future[Track] =
+    makeRequest[GetMeta, Track](Meta, user, GetMeta(id))
 
   /**
     * @param user username
@@ -62,23 +62,21 @@ class PimpServerSocket(val jsonOut: ActorRef,
     authenticate3(user, pass).map(_ => true).recoverAll(_ => false)
 
   def authenticate3(user: Username, pass: Password): Future[Version] =
-    makeRequest[Authenticate, Version](AuthenticateKey, Authenticate(user, pass))
+    makeRequest[Authenticate, Version](AuthenticateKey, PimpServerSocket.nobody, Authenticate(user, pass))
 
-  def rootFolder = proxied[Directory](nobody, RootFolderKey)
+  def rootFolder(user: Username) = proxied[Directory](RootFolderKey, user)
 
-  def folder(id: FolderID) =
-    makeRequest[GetFolder, Directory](FolderKey, GetFolder(id))
+  def folder(id: FolderID, user: Username) =
+    makeRequest[GetFolder, Directory](FolderKey, user, GetFolder(id))
 
-  def search(term: String, limit: Int = PimpServerSocket.DefaultSearchLimit) =
-    makeRequest[Search, Seq[Track]](SearchKey, Search(term, limit))
+  def search(term: String, user: Username, limit: Int = PimpServerSocket.DefaultSearchLimit) =
+    makeRequest[Search, Seq[Track]](SearchKey, user, Search(term, limit))
 
-  def status = simpleProxy(StatusKey)
+  def status(user: Username) = proxied[JsValue](StatusKey, user)
 
-  def makeRequest[W: Writes, R: Reads](cmd: String, t: W): Future[R] =
-    proxyT[W, R](cmd, t, nobody)
+  def makeRequest[W: Writes, R: Reads](cmd: String, user: Username, t: W): Future[R] =
+    proxyT[W, R](cmd, user, t)
 
-  protected def proxied[T: Reads](user: Username, cmd: String) =
-    proxyD[T](PhoneRequest(cmd, Json.obj()), user)
-
-  private def simpleProxy(cmd: String) = defaultProxy(PhoneRequest(cmd, Json.obj()), nobody)
+  protected def proxied[T: Reads](cmd: String, user: Username) =
+    proxyD[JsValue, T](PhoneRequest(cmd, user, Json.obj()))
 }

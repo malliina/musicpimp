@@ -32,7 +32,7 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
   override def onMessage(msg: JsValue) = {
     val isStatus = (msg \ Cmd).validate[String].filter(_ == StatusKey).isSuccess
     if (isStatus) {
-      server.status
+      server.status(user)
         .pipeTo(out)
         .recoverAll(t => log.warning("Status request failed.", t))
     } else {

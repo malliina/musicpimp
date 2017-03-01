@@ -47,8 +47,8 @@ abstract class JsonFutureSocket(val id: CloudID)
     * @tparam U type of response
     * @return the response
     */
-  def proxyT[T: Writes, U: Reads](cmd: String, body: T, user: Username): Future[U] =
-    proxyD(PhoneRequest(cmd, Json.toJson(body)), user)
+  def proxyT[T: Writes, U: Reads](cmd: String, user: Username, body: T): Future[U] =
+    proxyD(PhoneRequest[T](cmd, user, body))
 
   /** Sends `body` and deserializes the response to type `T`.
     *
@@ -58,18 +58,18 @@ abstract class JsonFutureSocket(val id: CloudID)
     * @tparam T type of response
     * @return a deserialized body, or a failed [[Future]] on failure
     */
-  def proxyD[T: Reads](data: PhoneRequest, user: Username): Future[T] =
-    proxyD2[T](data, user).map(_.get)
+  def proxyD[W: Writes, T: Reads](data: PhoneRequest[W]): Future[T] =
+    proxyD2[W, T](data).map(_.get)
 
-  def proxyD2[T: Reads](data: PhoneRequest, user: Username): Future[JsResult[T]] =
-    defaultProxy(data, user).map(_.validate[T])
+  def proxyD2[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
+    defaultProxy(data).map(_.validate[T])
 
   /**
     * @param data payload
     * @return response
     */
-  def defaultProxy(data: PhoneRequest, user: Username): Future[JsValue] =
-    request(data, user, timeout)
+  def defaultProxy[W: Writes](data: PhoneRequest[W]): Future[JsValue] =
+    request(data, timeout)
 }
 
 object JsonFutureSocket {

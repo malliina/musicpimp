@@ -3,9 +3,14 @@ package com.malliina.pimpcloud.models
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.StreamData
+import com.malliina.play.models.Username
 import play.api.libs.json._
 
-case class PhoneRequest(cmd: String, body: JsValue)
+case class PhoneRequest[W: Writes](cmd: String, user: Username, body: W)
+
+object PhoneRequest {
+//  implicit def json[W: Writes] = Json.writes[PhoneRequest[W]]
+}
 
 case class PimpStreams(streams: Seq[StreamData])
 

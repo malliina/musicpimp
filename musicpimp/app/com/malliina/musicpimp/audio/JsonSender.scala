@@ -2,8 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.JsonSender.log
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.Target
 import com.malliina.play.models.Username
-import controllers.musicpimp.Target
 import play.api.Logger
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsValue, Json, Writes}
@@ -23,7 +23,7 @@ trait JsonSender {
     send(obj(fields: _*))
 
   protected def send(json: JsValue) = {
-    log info s"Sending to web player user: $user: $json"
+    log debug s"Sending to web player user: '$user': '$json'."
     target send json
   }
 }

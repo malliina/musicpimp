@@ -9,7 +9,7 @@ import akka.stream.{Materializer, QueueOfferResult}
 import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.{CloudID, RangedRequest, WrappedID}
 import com.malliina.pimpcloud.json.JsonStrings.{Id, Range, TrackKey}
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.{Cancel, DetachedMessage, log}
@@ -24,7 +24,6 @@ import play.mvc.Http.HeaderNames
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
-import scala.util.Try
 
 object NoCacheByteStreams {
   private val log = Logger(getClass)
@@ -47,7 +46,7 @@ object NoCacheByteStreams {
 class NoCacheByteStreams(id: CloudID,
                          val jsonOut: ActorRef,
                          val mat: Materializer,
-                         val onUpdate: () => Unit)
+                         onUpdate: () => Unit)
   extends Streamer {
 
   implicit val ec = mat.executionContext
@@ -139,17 +138,16 @@ class NoCacheByteStreams(id: CloudID,
     */
   private def disposeUUID(uuid: UUID): Option[Future[QueueOfferResult]] = {
     (iteratees remove uuid).map { e =>
-      // AFAIK this never throws, so Try is unnecessary
-      Try(streamChanged())
+      streamChanged()
       e.close()
     }
   }
 
   private def buildTrackRequest(uuid: UUID, track: Track, range: ContentRange) = {
-    val body =
-      if (range.isAll) PimpServerSocket.idBody(track.id)
-      else PimpServerSocket.body(Id -> track.id, Range -> range)
-    UserRequest(TrackKey, body, uuid, PimpServerSocket.nobody)
+    val requestJson =
+      if(range.isAll) Json.toJson(WrappedID(track.id))
+      else Json.toJson(RangedRequest(track.id, range))
+    UserRequest(TrackKey, requestJson, uuid, PimpServerSocket.nobody)
   }
 
   // Sends `msg` to the MusicPimp server

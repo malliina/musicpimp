@@ -2,8 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.Target
 import com.malliina.play.models.Username
-import controllers.musicpimp.{Target, WebPlayer}
 import play.api.libs.json.Json._
 import play.api.libs.json.Writes
 
