@@ -6,9 +6,10 @@ import akka.util.ByteString
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.streams.ByteActor
+import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.InvalidCredentials
 import com.malliina.play.models.Username
-import controllers.pimpcloud.{PhoneConnection, ServerRequest}
+import controllers.pimpcloud.ServerRequest
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future

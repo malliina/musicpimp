@@ -4,7 +4,6 @@ import com.malliina.concurrent.Observables
 import com.malliina.musicpimp.cloud.UuidFutureMessaging.log
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.Username
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 
@@ -18,9 +17,6 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
   def extract(response: JsValue): Option[BodyAndId]
 
   def isSuccess(response: JsValue): Boolean = true
-
-  def request(cmd: String, body: JsValue, user: Username, timeout: Duration): Future[JsValue] =
-    request(PhoneRequest(cmd, user, body), timeout)
 
   def request[W: Writes](req: PhoneRequest[W], timeout: Duration): Future[JsValue] = {
     // generates UUID for this request-response pair

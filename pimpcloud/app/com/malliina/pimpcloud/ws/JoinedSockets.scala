@@ -5,7 +5,7 @@ import com.malliina.pimpcloud.auth.ProdAuth
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.ws.{ActorConfig, Sockets}
-import controllers.pimpcloud.{PhoneConnection, PimpAuth, Servers, UsageStreaming}
+import controllers.pimpcloud.{PimpAuth, Servers, UsageStreaming}
 
 class JoinedSockets(pimpAuth: PimpAuth, ctx: ActorExecution) {
   val phoneMediator = ctx.actorSystem.actorOf(Props(new PhoneMediator))

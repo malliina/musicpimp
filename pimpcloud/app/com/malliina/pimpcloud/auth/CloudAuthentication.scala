@@ -1,7 +1,8 @@
 package com.malliina.pimpcloud.auth
 
+import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.AuthFailure
-import controllers.pimpcloud.{PhoneConnection, ServerRequest}
+import controllers.pimpcloud.ServerRequest
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future

@@ -6,21 +6,21 @@ import java.nio.file.Paths
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
-import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
+import com.malliina.musicpimp.cloud.Search
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.auth.CloudAuthentication
 import com.malliina.pimpcloud.json.JsonStrings._
-import com.malliina.pimpcloud.models.PhoneRequest
+import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.pimpcloud.{ErrorMessage, ErrorResponse}
 import com.malliina.play.ContentRange
 import com.malliina.play.controllers.Caching
 import com.malliina.play.http.HttpConstants
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
-import play.api.http.ContentTypes
+import play.api.http.{ContentTypes, Writeable}
 import play.api.libs.MimeTypes
-import play.api.libs.json.{JsObject, JsValue, Json, Writes}
+import play.api.libs.json._
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
 
@@ -52,33 +52,47 @@ class Phones(tags: CloudTags,
   def ping = proxiedGetAction(Ping)
 
   def pingAuth = proxiedAction { (_, socket) =>
-    socket.server.pingAuth(socket.user).map(v => Caching.NoCacheOk(Json toJson v))
+    socket.pingAuth().map { v =>
+      Caching.NoCacheOk(Json toJson v)
+    }
   }
-
-  def rootFolder = folderAction(
-    conn => conn.server.rootFolder(conn.user),
-    conn => PhoneRequest(RootFolderKey, conn.user, Json.obj())
-  )
-
-  def folder(id: FolderID) = folderAction(
-    conn => conn.server.folder(id, conn.user),
-    conn => PhoneRequest(FolderKey, conn.user, WrappedID(id))
-  )
 
   def status = proxiedGetAction(StatusKey)
 
-  def search = proxiedAction { (req, socket) =>
+  def rootFolder = executeFolderBasic(RootFolderKey, Json.obj())
+
+  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID(id))
+
+  def search = executeFolder(SearchKey, parseSearch)
+
+  def parseSearch(req: RequestHeader): Option[Search] = {
     def query(key: String) = (req getQueryString key) map (_.trim) filter (_.nonEmpty)
 
-    val termFromQuery = query(Term)
-    val limit = query(Limit).filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Phones.DefaultSearchLimit
-    termFromQuery.fold[Future[Result]](fut(BadRequest)) { term =>
-      folderResult(req, socket)(
-        socket.server.search(term, socket.user, limit).map(tracks => Directory(Nil, tracks)),
-        PhoneRequest(SearchKey, socket.user, Search(term, limit))
-      )
-    }
+    val limit = query(Limit)
+      .flatMap(i => Try(i.toInt).toOption)
+      .getOrElse(Phones.DefaultSearchLimit)
+    query(Term).map { term => Search(term, limit) }
   }
+
+  def executeFolderBasic[W: Writes](cmd: String, body: W) =
+    executeFolder(cmd, _ => Option(body))
+
+  private def executeFolder[W: Writes](cmd: String, build: RequestHeader => Option[W]) =
+    execute(cmd, build)(json => json.validate[Directory].map(dir => tags.index(dir, None)))
+
+  private def execute[W: Writes, C: Writeable](cmd: String, build: RequestHeader => Option[W])(toHtml: JsValue => JsResult[C]) =
+    proxiedAction((req, phone) => {
+      build(req).map { body =>
+        phone.makeRequest(cmd, body).map { response =>
+          pimpResult(req)(
+            html = toHtml(response).fold(_ => BadGateway, c => Ok(c)),
+            json = Ok(response)
+          )
+        }.recoverAll(_ => BadGateway)
+      }.getOrElse {
+        fut(BadRequest)
+      }
+    })
 
   def alarms = proxiedGetAction(AlarmsKey)
 
@@ -173,18 +187,6 @@ class Phones(tags: CloudTags,
   protected def customProxied(cmd: String)(body: Request[JsValue] => Either[String, JsObject]) =
     proxiedParsedJsonAction(parse.json)(cmd, body)
 
-  private def folderAction[W: Writes](html: PhoneConnection => Future[Directory],
-                                      json: PhoneConnection => PhoneRequest[W]) =
-    proxiedAction((req, socket) => folderResult(req, socket)(html(socket), json(socket)))
-
-  private def folderResult[W: Writes](req: RequestHeader,
-                                      socket: PhoneConnection)(html: => Future[Directory],
-                                                               json: => PhoneRequest[W]) =
-    pimpResultAsync(req)(
-      html.map(dir => Ok(tags.index(dir, None))),
-      proxiedJson(json, socket)
-    ).recoverAll(_ => BadGateway)
-
   private def proxiedAction(f: (Request[AnyContent], PhoneConnection) => Future[Result]): EssentialAction =
     proxiedParsedAction(parse.anyContent)(f)
 
@@ -204,16 +206,16 @@ class Phones(tags: CloudTags,
       Action.async(parser) { req =>
         f(req).fold(
           err => fut(badRequest(err)),
-          json => proxiedJson(PhoneRequest(cmd, socket.user, json), socket).recoverAll(_ => BadGateway))
+          json => socket.makeRequest(cmd, json).map(js => Ok(js)).recoverAll(_ => BadGateway))
       }
     }
   }
 
-  def proxiedJson[W: Writes](req: PhoneRequest[W], conn: PhoneConnection): Future[Result] =
-    conn.server.defaultProxy(req) map (js => Ok(js))
-
   def phoneAction(f: PhoneConnection => EssentialAction) =
-    auth.loggedSecureActionAsync(rh => cloudAuths.authPhone(rh).flatMap(res => res.fold(_ => Future.failed(Phones.invalidCredentials), conn => fut(conn))))(f)
+    auth.loggedSecureActionAsync(rh =>
+      cloudAuths.authPhone(rh).flatMap(res =>
+        res.fold(_ => Future.failed(Phones.invalidCredentials),
+          conn => fut(conn))))(f)
 
   def fut[T](body: => T) = Future successful body
 

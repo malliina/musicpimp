@@ -3,10 +3,11 @@ package com.malliina.pimpcloud.auth
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.FutureFunctions
+import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
 import com.malliina.play.models.Username
 import com.malliina.ws.JsonFutureSocket
-import controllers.pimpcloud.{PhoneConnection, ServerRequest, Servers}
+import controllers.pimpcloud.{ServerRequest, Servers}
 import play.api.mvc.{RequestHeader, Security}
 
 import scala.concurrent.Future

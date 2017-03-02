@@ -13,7 +13,7 @@ import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.{Password, Username}
+import com.malliina.play.models.Password
 import com.malliina.play.ws._
 import controllers.pimpcloud.ServerMediator._
 import controllers.pimpcloud.Servers.log
@@ -182,5 +182,3 @@ object Servers {
 }
 
 case class ServerRequest(request: RequestID, socket: PimpServerSocket)
-
-case class PhoneConnection(user: Username, server: PimpServerSocket)

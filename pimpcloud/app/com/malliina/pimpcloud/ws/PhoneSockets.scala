@@ -10,7 +10,6 @@ import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.models.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
 import com.malliina.play.ws.{ActorConfig, JsonActor, SocketClient}
-import controllers.pimpcloud.PhoneConnection
 import controllers.pimpcloud.ServerMediator.{Listen, ServerEvent}
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
@@ -32,7 +31,7 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
   override def onMessage(msg: JsValue) = {
     val isStatus = (msg \ Cmd).validate[String].filter(_ == StatusKey).isSuccess
     if (isStatus) {
-      server.status(user)
+      conn.status()
         .pipeTo(out)
         .recoverAll(t => log.warning("Status request failed.", t))
     } else {

@@ -44,8 +44,8 @@ abstract class JsonFutureSocket(val id: CloudID)
     * @tparam U type of response
     * @return the response
     */
-  def proxyT[T: Writes, U: Reads](cmd: String, user: Username, body: T): Future[U] =
-    proxyD(PhoneRequest[T](cmd, user, body))
+  def proxyValidated[T: Writes, U: Reads](cmd: String, user: Username, body: T): Future[U] =
+    proxyOptimistic(PhoneRequest[T](cmd, user, body))
 
   /** Sends `body` and deserializes the response to type `T`.
     *
@@ -55,10 +55,10 @@ abstract class JsonFutureSocket(val id: CloudID)
     * @tparam T type of response
     * @return a deserialized body, or a failed [[Future]] on failure
     */
-  def proxyD[W: Writes, T: Reads](data: PhoneRequest[W]): Future[T] =
-    proxyD2[W, T](data).map(_.get)
+  def proxyOptimistic[W: Writes, T: Reads](data: PhoneRequest[W]): Future[T] =
+    proxyCareful[W, T](data).map(_.get)
 
-  def proxyD2[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
+  def proxyCareful[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
     defaultProxy(data).map(_.validate[T])
 
   /**
