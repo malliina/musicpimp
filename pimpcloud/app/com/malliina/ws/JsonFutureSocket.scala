@@ -4,12 +4,10 @@ import java.util.UUID
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.{BodyAndId, UuidFutureMessaging}
-import com.malliina.musicpimp.models.{CloudID, RequestID}
-import com.malliina.pimpcloud.json.JsonStrings.Body
+import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.Username
 import com.malliina.util.Utils
-import com.malliina.ws.JsonFutureSocket.{RequestId, SuccessKey}
+import com.malliina.ws.JsonFutureSocket.SuccessKey
 import play.api.libs.json._
 
 import scala.concurrent.Future
@@ -39,25 +37,11 @@ abstract class JsonFutureSocket(val id: CloudID)
 
   /** Sends `body` as JSON and deserializes the response to `U`.
     *
-    * @param body message payload
-    * @tparam T type of request payload
-    * @tparam U type of response
+    * @param data request
+    * @tparam W type of request payload
+    * @tparam T type of response
     * @return the response
     */
-  def proxyValidated[T: Writes, U: Reads](cmd: String, user: Username, body: T): Future[U] =
-    proxyOptimistic(PhoneRequest[T](cmd, user, body))
-
-  /** Sends `body` and deserializes the response to type `T`.
-    *
-    * TODO check success status first, and any potential error
-    *
-    * @param data payload
-    * @tparam T type of response
-    * @return a deserialized body, or a failed [[Future]] on failure
-    */
-  def proxyOptimistic[W: Writes, T: Reads](data: PhoneRequest[W]): Future[T] =
-    proxyCareful[W, T](data).map(_.get)
-
   def proxyCareful[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
     defaultProxy(data).map(_.validate[T])
 

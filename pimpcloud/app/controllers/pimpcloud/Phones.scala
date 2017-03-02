@@ -18,6 +18,7 @@ import com.malliina.play.controllers.Caching
 import com.malliina.play.http.HttpConstants
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
+import play.api.data.validation.ValidationError
 import play.api.http.{ContentTypes, Writeable}
 import play.api.libs.MimeTypes
 import play.api.libs.json._
@@ -51,10 +52,11 @@ class Phones(tags: CloudTags,
 
   def ping = proxiedGetAction(Ping)
 
-  def pingAuth = proxiedAction { (_, socket) =>
-    socket.pingAuth().map { v =>
-      Caching.NoCacheOk(Json toJson v)
-    }
+  def pingAuth = executeProxied(parse.anyContent)(VersionKey, _ => Right(Json.obj())) { (_, json) =>
+    json.validate[Version].fold(
+      err => onGatewayParseErrorResult(err),
+      v => Caching.NoCacheOk(v)
+    )
   }
 
   def status = proxiedGetAction(StatusKey)
@@ -65,34 +67,17 @@ class Phones(tags: CloudTags,
 
   def search = executeFolder(SearchKey, parseSearch)
 
-  def parseSearch(req: RequestHeader): Option[Search] = {
-    def query(key: String) = (req getQueryString key) map (_.trim) filter (_.nonEmpty)
+  def parseSearch(req: RequestHeader): Either[String, Search] = {
+    def query(key: String) = (req getQueryString key)
+      .map(_.trim).filter(_.nonEmpty)
 
     val limit = query(Limit)
       .flatMap(i => Try(i.toInt).toOption)
       .getOrElse(Phones.DefaultSearchLimit)
-    query(Term).map { term => Search(term, limit) }
+    query(Term)
+      .map(term => Search(term, limit))
+      .toRight("Search term missing.")
   }
-
-  def executeFolderBasic[W: Writes](cmd: String, body: W) =
-    executeFolder(cmd, _ => Option(body))
-
-  private def executeFolder[W: Writes](cmd: String, build: RequestHeader => Option[W]) =
-    execute(cmd, build)(json => json.validate[Directory].map(dir => tags.index(dir, None)))
-
-  private def execute[W: Writes, C: Writeable](cmd: String, build: RequestHeader => Option[W])(toHtml: JsValue => JsResult[C]) =
-    proxiedAction((req, phone) => {
-      build(req).map { body =>
-        phone.makeRequest(cmd, body).map { response =>
-          pimpResult(req)(
-            html = toHtml(response).fold(_ => BadGateway, c => Ok(c)),
-            json = Ok(response)
-          )
-        }.recoverAll(_ => BadGateway)
-      }.getOrElse {
-        fut(BadRequest)
-      }
-    })
 
   def alarms = proxiedGetAction(AlarmsKey)
 
@@ -119,30 +104,34 @@ class Phones(tags: CloudTags,
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
-          sourceServer.meta(id, conn.user).map { track =>
-            // proxies request
-            val trackSize = track.size
-            val rangeTry = ContentRange.fromHeader(req, trackSize)
-            val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
-            val result = sourceServer.requestTrack(track, rangeOrAll, req)
-            // ranged request support
-            rangeTry map { range =>
-              result.withHeaders(
-                CONTENT_RANGE -> range.contentRange,
-                CONTENT_LENGTH -> s"${range.contentLength}",
-                CONTENT_TYPE -> MimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
-              )
-            } getOrElse {
-              result.withHeaders(
-                ACCEPT_RANGES -> Phones.Bytes,
-                CONTENT_LENGTH -> trackSize.toBytes.toString,
-                CACHE_CONTROL -> HttpConstants.NoCache,
-                CONTENT_TYPE -> HttpConstants.AudioMpeg,
-                CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
-              )
+          conn.meta(id).map { res =>
+            res.map { track =>
+              // proxies request
+              val trackSize = track.size
+              val rangeTry = ContentRange.fromHeader(req, trackSize)
+              val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
+              val result = sourceServer.requestTrack(track, rangeOrAll, req)
+              // ranged request support
+              rangeTry map { range =>
+                result.withHeaders(
+                  CONTENT_RANGE -> range.contentRange,
+                  CONTENT_LENGTH -> s"${range.contentLength}",
+                  CONTENT_TYPE -> MimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
+                )
+              } getOrElse {
+                result.withHeaders(
+                  ACCEPT_RANGES -> Phones.Bytes,
+                  CONTENT_LENGTH -> trackSize.toBytes.toString,
+                  CACHE_CONTROL -> HttpConstants.NoCache,
+                  CONTENT_TYPE -> HttpConstants.AudioMpeg,
+                  CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
+                )
+              }
+            }.getOrElse {
+              badGatewayDefault
             }
-          }.recoverAll(_ => notFound(s"ID not found $id"))
-        }.getOrElse(fut(badRequest(s"Illegal track ID $id")))
+          }.recoverAll(_ => notFound(s"ID not found '$id'."))
+        }.getOrElse(fut(badRequest(s"Illegal track ID '$id'.")))
       }
     }
   }
@@ -162,7 +151,7 @@ class Phones(tags: CloudTags,
   def metaAction(cmd: String) =
     proxiedJsonAction(cmd) { req =>
       ItemLimits.fromRequest(req).right.flatMap { limits =>
-        Json.toJson(limits).asOpt[JsObject].toRight("Not a JSON object")
+        Json.toJson(limits).asOpt[JsObject].toRight("Not a JSON object.")
       }
     }
 
@@ -185,13 +174,7 @@ class Phones(tags: CloudTags,
   }
 
   protected def customProxied(cmd: String)(body: Request[JsValue] => Either[String, JsObject]) =
-    proxiedParsedJsonAction(parse.json)(cmd, body)
-
-  private def proxiedAction(f: (Request[AnyContent], PhoneConnection) => Future[Result]): EssentialAction =
-    proxiedParsedAction(parse.anyContent)(f)
-
-  private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
-    phoneAction(socket => Action.async(parser)(req => f(req, socket)))
+    executeOkProxied(parse.json)(cmd, body)
 
   private def proxiedGetAction(cmd: String) = proxiedJsonMessageAction(cmd)
 
@@ -199,23 +182,59 @@ class Phones(tags: CloudTags,
     proxiedJsonAction(cmd)(_ => Right(Json.obj()))
 
   private def proxiedJsonAction[C: Writes](cmd: String)(f: RequestHeader => Either[String, C]): EssentialAction =
-    proxiedParsedJsonAction(parse.anyContent)(cmd, f)
+    executeOkProxied(parse.anyContent)(cmd, f)
 
-  private def proxiedParsedJsonAction[A, C: Writes](parser: BodyParser[A])(cmd: String, f: Request[A] => Either[String, C]): EssentialAction = {
-    phoneAction { socket =>
-      Action.async(parser) { req =>
-        f(req).fold(
-          err => fut(badRequest(err)),
-          json => socket.makeRequest(cmd, json).map(js => Ok(js)).recoverAll(_ => BadGateway))
+  private def executeFolderBasic[W: Writes](cmd: String, body: W) =
+    executeFolder(cmd, _ => Right(body))
+
+  private def executeFolder[W: Writes](cmd: String, build: RequestHeader => Either[String, W]) =
+    execute(cmd, build) { json =>
+      json.validate[Directory].map { dir =>
+        tags.index(dir, None)
       }
     }
-  }
 
-  def phoneAction(f: PhoneConnection => EssentialAction) =
+  private def execute[W: Writes, C: Writeable](cmd: String, build: RequestHeader => Either[String, W])(toHtml: JsValue => JsResult[C]) =
+    executeProxied(parse.anyContent)(cmd, build) { (req, json) =>
+      pimpResult(req)(
+        html = toHtml(json).fold(
+          err => onGatewayParseErrorResult(err),
+          c => Ok(c)
+        ),
+        json = Ok(json)
+      )
+    }
+
+  private def executeOkProxied[A, W: Writes](parser: BodyParser[A])(cmd: String, build: Request[A] => Either[String, W]) =
+    executeProxied(parser)(cmd, build)((_, json) => Ok(json))
+
+  private def executeProxied[A, W: Writes](parser: BodyParser[A])(cmd: String,
+                                                                  build: Request[A] => Either[String, W])(toResult: (RequestHeader, JsValue) => Result) =
+    proxiedParsedAction(parser) { (req, phone) =>
+      build(req).fold(
+        errorMessage => fut(badRequest(errorMessage)),
+        parsedBody => phone.makeRequest(cmd, parsedBody)
+          .map { response => toResult(req, response) }
+          .recoverAll { t =>
+            log.error("Phone request failed.", t)
+            badGatewayDefault
+          }
+      )
+    }
+
+  private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
+    phoneAction(socket => Action.async(parser)(req => f(req, socket)))
+
+  private def phoneAction(f: PhoneConnection => EssentialAction) =
     auth.loggedSecureActionAsync(rh =>
       cloudAuths.authPhone(rh).flatMap(res =>
         res.fold(_ => Future.failed(Phones.invalidCredentials),
           conn => fut(conn))))(f)
+
+  private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[ValidationError])]) = {
+    log.error(s"Parse error. $err")
+    badGateway("A dependent server returned unexpected data.")
+  }
 
   def fut[T](body: => T) = Future successful body
 
@@ -223,7 +242,9 @@ class Phones(tags: CloudTags,
 
   def badRequest(message: String) = BadRequest(simpleError(message))
 
-  def serverError(message: String) = InternalServerError(simpleError(message))
+  def badGatewayDefault = badGateway("A dependent server failed.")
+
+  def badGateway(message: String) = BadGateway(simpleError(message))
 
   def simpleError(message: String) = ErrorResponse(Seq(ErrorMessage(message)))
 }

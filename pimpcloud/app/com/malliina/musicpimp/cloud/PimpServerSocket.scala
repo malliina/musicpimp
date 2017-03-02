@@ -7,7 +7,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.json.JsonStrings._
-import com.malliina.pimpcloud.models._
+import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.pimpcloud.ws.NoCacheByteStreams
 import com.malliina.play.ContentRange
 import com.malliina.play.models.{Password, Username}
@@ -38,9 +38,6 @@ class PimpServerSocket(val jsonOut: ActorRef,
   def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Result =
     fileTransfers.requestTrack(track, contentRange, req)
 
-  def meta(id: TrackID, user: Username): Future[Track] =
-    proxyValidated[GetMeta, Track](Meta, user, GetMeta(id))
-
   /**
     * @param user username
     * @param pass password
@@ -49,13 +46,8 @@ class PimpServerSocket(val jsonOut: ActorRef,
   def authenticate(user: Username, pass: Password): Future[Boolean] =
     authenticateWithVersion(user, pass).map(_ => true).recoverAll(_ => false)
 
-  def authenticateWithVersion(user: Username, pass: Password): Future[Version] =
-    proxyValidated[Authenticate, Version](
-      AuthenticateKey,
-      PimpServerSocket.nobody,
-      Authenticate(user, pass)
-    )
-
-  def proxied[T: Reads](cmd: String, user: Username) =
-    proxyOptimistic[JsValue, T](PhoneRequest(cmd, user, Json.obj()))
+  def authenticateWithVersion(user: Username, pass: Password): Future[JsResult[Version]] = {
+    val req = PhoneRequest(AuthenticateKey, PimpServerSocket.nobody, Authenticate(user, pass))
+    proxyCareful[Authenticate, Version](req)
+  }
 }
