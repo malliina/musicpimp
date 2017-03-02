@@ -1,6 +1,7 @@
 package controllers.musicpimp
 
 import com.malliina.musicpimp.json.JsonFormatVersions
+import com.malliina.musicpimp.models.Errors
 import controllers.musicpimp.PimpContentController.log
 import play.api.Logger
 import play.api.http.{MimeTypes, Writeable}

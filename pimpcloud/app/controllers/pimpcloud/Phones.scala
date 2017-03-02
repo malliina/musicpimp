@@ -7,12 +7,12 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
 import com.malliina.musicpimp.cloud.Search
+import com.malliina.musicpimp.models.Errors._
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.auth.CloudAuthentication
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
-import com.malliina.pimpcloud.{ErrorMessage, ErrorResponse}
 import com.malliina.play.ContentRange
 import com.malliina.play.controllers.Caching
 import com.malliina.play.http.HttpConstants
@@ -237,14 +237,4 @@ class Phones(tags: CloudTags,
   }
 
   def fut[T](body: => T) = Future successful body
-
-  def notFound(message: String) = NotFound(simpleError(message))
-
-  def badRequest(message: String) = BadRequest(simpleError(message))
-
-  def badGatewayDefault = badGateway("A dependent server failed.")
-
-  def badGateway(message: String) = BadGateway(simpleError(message))
-
-  def simpleError(message: String) = ErrorResponse(Seq(ErrorMessage(message)))
 }

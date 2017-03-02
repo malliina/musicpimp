@@ -3,7 +3,7 @@ package controllers.pimpcloud
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.messaging.Pusher
 import com.malliina.musicpimp.messaging.cloud.PushTask
-import com.malliina.pimpcloud.ErrorResponse
+import com.malliina.musicpimp.models.Errors
 import controllers.pimpcloud.Push.{Body, Cmd, PushValue, ResultKey}
 import play.api.libs.json.{JsError, JsResult, JsValue, Json}
 import play.api.mvc.{Action, Controller}
@@ -15,7 +15,7 @@ class Push(pusher: Pusher) extends Controller {
     val payload = request.body
     parseJson(payload)
       .map(task => pusher.push(task).map(result => Ok(Json.obj(ResultKey -> result))))
-      .getOrElse(Future.successful(BadRequest(ErrorResponse.simple(s"Invalid payload: $payload"))))
+      .getOrElse(Future.successful(Errors.badRequest(s"Invalid payload: '$payload'.")))
   }
 
   def parseJson(json: JsValue): JsResult[PushTask] = {

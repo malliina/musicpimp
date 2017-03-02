@@ -48,6 +48,6 @@ class PimpServerSocket(val jsonOut: ActorRef,
 
   def authenticateWithVersion(user: Username, pass: Password): Future[JsResult[Version]] = {
     val req = PhoneRequest(AuthenticateKey, PimpServerSocket.nobody, Authenticate(user, pass))
-    proxyCareful[Authenticate, Version](req)
+    proxyValidated[Authenticate, Version](req)
   }
 }

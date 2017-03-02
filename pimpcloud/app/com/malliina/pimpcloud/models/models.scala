@@ -1,7 +1,7 @@
 package com.malliina.pimpcloud.models
 
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.json.JsonStrings.{Body, Event}
 import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.models.Username
 import play.api.libs.json._

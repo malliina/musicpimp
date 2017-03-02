@@ -13,7 +13,7 @@ import scala.concurrent.Future
 class PhoneConnection(val user: Username, val server: PimpServerSocket) {
   def meta(id: TrackID): Future[JsResult[Track]] = {
     val req = PhoneRequest(Meta, user, GetMeta(id))
-    server.proxyCareful[GetMeta, Track](req)
+    server.proxyValidated[GetMeta, Track](req)
   }
 
   def status() = makeRequest(StatusKey, Json.obj())

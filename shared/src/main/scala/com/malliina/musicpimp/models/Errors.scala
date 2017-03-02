@@ -1,14 +1,18 @@
-package controllers.musicpimp
+package com.malliina.musicpimp.models
 
-import com.malliina.musicpimp.models.FailReason
 import play.api.mvc.Results
-import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Unauthorized}
+import play.api.mvc.Results.{BadGateway, BadRequest, InternalServerError, NotFound, Unauthorized}
 
 object Errors extends Errors
 
 trait Errors {
   val genericMessage = "Something went wrong."
   val accessDeniedMessage = "Access denied."
+  val badGatewayMessage = "A dependent server failed."
+
+  def badGatewayDefault = badGateway(badGatewayMessage)
+
+  def badGateway(message: String) = withStatus(BadGateway, message)
 
   def accessDenied = withStatus(Unauthorized, accessDeniedMessage)
 

@@ -42,7 +42,7 @@ abstract class JsonFutureSocket(val id: CloudID)
     * @tparam T type of response
     * @return the response
     */
-  def proxyCareful[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
+  def proxyValidated[W: Writes, T: Reads](data: PhoneRequest[W]): Future[JsResult[T]] =
     defaultProxy(data).map(_.validate[T])
 
   /**

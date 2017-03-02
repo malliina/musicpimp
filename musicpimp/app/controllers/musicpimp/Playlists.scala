@@ -5,7 +5,7 @@ import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, PlaylistsMeta, TrackID}
+import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
 import com.malliina.musicpimp.tags.PimpTags
 import com.malliina.play.CookieAuthenticator
 import com.malliina.play.http.CookiedRequest
