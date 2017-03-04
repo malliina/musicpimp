@@ -30,11 +30,3 @@
     cursor: pointer;
     position: relative;
 }
-
-.cell-timestamp {
-    white-space: nowrap;
-}
-
-.log-row {
-    /*overflow: hidden;*/
-}

@@ -14,7 +14,6 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   val Ping = "ping"
   val Hidden = "hide"
 
-  val statusElem = elem("status")
   val okStatus = elem("okstatus")
   val failStatus = elem("failstatus")
 

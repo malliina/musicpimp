@@ -20,7 +20,8 @@ object Command {
 }
 
 class LogsJS extends SocketJS("/admin/ws?f=json") {
-  val Hidden = "hidden"
+  val CellContent = "cell-content"
+  val CellWide = "cell-wide"
   val tableContent = elem("logTableBody")
 
   def handlePayload(payload: String) = {
@@ -40,6 +41,8 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
     val entryId = UUID.randomUUID().toString take 5
     val rowId = s"row-$entryId"
     val linkId = s"link-$entryId"
+    val msgCellId = s"msg-$entryId"
+
     val levelCell: Modifier = entry.stackTrace
       .map(_ => a(href := "#", id := linkId)(level))
       .getOrElse(level)
@@ -48,17 +51,30 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
       val errorRow = tr(`class` := Hidden, id := s"$rowId")(
         td(colspan := "5")(pre(stackTrace))
       )
-      tableContent prepend errorRow.toString()
+      tableContent prepend errorRow.render
     }
     val row = tr(`class` := rowClass)(
-      td(`class` := "col-md-1")(entry.timeFormatted),
-      td(entry.message),
-      td(entry.loggerName),
-      td(entry.threadName),
-      td(levelCell)
+      cell(entry.timeFormatted),
+      td(`class` := s"$CellContent $CellWide", id := msgCellId)(entry.message),
+      cell(lastName(entry.loggerName)),
+      cell(entry.threadName),
+      cell(levelCell)
     )
-    tableContent prepend row.toString()
+    tableContent prepend row.render
     elem(linkId).click((_: JQueryEventObject) => toggle(rowId))
+    // toggles text wrapping for long texts when clicked
+    elem(msgCellId) click { (_: JQueryEventObject) =>
+      elem(msgCellId) toggleClass CellContent
+      false
+    }
+  }
+
+  def cell = td(`class` := CellContent)
+
+  def lastName(path: String) = {
+    val lastDot = path lastIndexOf '.'
+    if (lastDot == -1) path
+    else path drop (lastDot + 1)
   }
 
   def toggle(row: String) = {

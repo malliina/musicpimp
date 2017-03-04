@@ -15,8 +15,7 @@ class PlayerJS extends SocketJS("/mobile/ws") {
   installHandlers("play-link", "play-", play)
   installHandlers("playlist-link", "add-", add)
 
-  override def handlePayload(payload: String) =
-    setFeedback(payload)
+  override def handlePayload(payload: String) = ()
 
   def play(id: String) = send(PlayerCommand.play(id))
 

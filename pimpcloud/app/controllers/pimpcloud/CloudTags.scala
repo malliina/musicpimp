@@ -30,6 +30,7 @@ object CloudTags {
 }
 
 class CloudTags(scripts: Modifier*) {
+  val Hidden = "hidden"
 
   def eject(message: Option[String]) =
     basePage("Goodbye!", cssLink(at("css/custom.css")))(
@@ -83,7 +84,7 @@ class CloudTags(scripts: Modifier*) {
     input(`type` := inType, `class` := clazz, name := idAndName, id := idAndName, placeholder := placeHolder, more)
 
   val logs = baseIndex("logs")(
-    headerRow()("Logs ", small(`class` := PullRight, id := "status")("Initializing...")),
+    headerRow()("Logs"),
     fullRow(
       defaultTable("logTableBody", "Time", "Message", "Logger", "Thread", "Level")
     )
@@ -140,9 +141,7 @@ class CloudTags(scripts: Modifier*) {
   }
 
   val admin = baseIndex("home")(
-    headerRow()(
-      "Admin", small(`class` := PullRight, id := "status")("Initializing...")
-    ),
+    headerRow()("Admin"),
     tableContainer("Streams", "requestsTable", "Cloud ID", "Request ID", "Track", "Artist", "Bytes"),
     tableContainer("Phones", "phonesTable", "Cloud ID", "Phone Address"),
     tableContainer("Servers", "serversTable", "Cloud ID", "Server Address")
@@ -185,6 +184,10 @@ class CloudTags(scripts: Modifier*) {
             ),
             ulClass(s"$Nav $NavbarNav $NavbarRight")(
               li(aHref(routes.AdminAuth.logout())("Logout"))
+            ),
+            divClass(s"$ColMd2 $PullRight")(
+              eye("okstatus", "eye-open green"),
+              eye("failstatus", "eye-close red")
             )
           )
         )
@@ -215,4 +218,7 @@ class CloudTags(scripts: Modifier*) {
       )
     )
   )
+
+  def eye(elemId: String, glyphSuffix: String) =
+    pClass(s"$NavbarText $PullRight $HiddenXs $Hidden", id := elemId)(glyphIcon(glyphSuffix))
 }
