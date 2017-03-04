@@ -1,6 +1,7 @@
 .navbar {
     margin-bottom: 0;
 }
+
 .top-padding {
     padding-top: 60px;
 }
@@ -28,4 +29,11 @@
     width: 100%;
     cursor: pointer;
     position: relative;
+}
+
+.wide-content {
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: auto;
+    margin-right: auto;
 }

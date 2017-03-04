@@ -38,6 +38,8 @@ class PimpTags(scripts: Modifier*) {
   val False = "false"
   val True = "true"
   val Hide = "hide"
+  val WideContent = "wide-content"
+
   val dataIdAttr = attr("data-id")
 
   def playlist(playlist: SavedPlaylist, username: Username) =
@@ -181,7 +183,7 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def logs(levelField: Field, levels: Seq[Level], currentLevel: Level, username: Username, errorMsg: Option[String]) =
-    manage("logs", username)(
+    manage("logs", WideContent, username)(
       headerRow()("Logs"),
       errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
       rowColumn(ColMd4)(
@@ -566,16 +568,21 @@ class PimpTags(scripts: Modifier*) {
     namedInput(idAndName, `type` := inType, placeholderAttr, more)
   }
 
-  def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
-    indexMain("manage", username, extraHeader)(
-      ulClass(NavTabs)(
-        glyphNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), "folder-open"),
-        glyphNavItem("Users", "users", tab, routes.Accounts.users(), "user"),
-        glyphNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), "time"),
-        glyphNavItem("Cloud", "cloud", tab, routes.Cloud.cloud(), "cloud"),
-        glyphNavItem("Logs", "logs", tab, routes.LogPage.logs(), "list")
+  def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
+    manage(tab, "container", username, extraHeader: _*)(inner: _*)
+
+  def manage(tab: String, contentClass: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
+    indexMain("manage", username, None, extraHeader)(
+      divContainer(
+        ulClass(NavTabs)(
+          glyphNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), "folder-open"),
+          glyphNavItem("Users", "users", tab, routes.Accounts.users(), "user"),
+          glyphNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), "time"),
+          glyphNavItem("Cloud", "cloud", tab, routes.Cloud.cloud(), "cloud"),
+          glyphNavItem("Logs", "logs", tab, routes.LogPage.logs(), "list")
+        )
       ),
-      section(inner)
+      section(divClass(contentClass)(inner))
     )
 
   def addUser(addFeedback: Option[UserFeedback]) =
@@ -671,10 +678,17 @@ class PimpTags(scripts: Modifier*) {
   def panelSummary(prefix: String, elemId: String, linkText: String) =
     aHref(s"#$elemId", dataToggle := Collapse, dataParent := "#accordion")(linkText)
 
-  def indexMain(tabName: String, user: Username, extraHeader: Modifier*)(inner: Modifier*) = {
-    def navItem(thisTabName: String, url: Call, glyphiconName: String): TypedTag[String] = {
+  def indexMain(tabName: String,
+                user: Username,
+                extraHeader: Modifier*)(inner: Modifier*): TagPage =
+    indexMain(tabName, user, Option(divContainer), extraHeader: _*)(inner: _*)
+
+  def indexMain(tabName: String,
+                user: Username,
+                contentWrapper: Option[TypedTag[String]],
+                extraHeader: Modifier*)(inner: Modifier*): TagPage = {
+    def navItem(thisTabName: String, url: Call, glyphiconName: String): TypedTag[String] =
       glyphNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, glyphiconName)
-    }
 
     basePage("MusicPimp", extraHeader)(
       divClass(s"$Navbar $NavbarDefault $NavbarStaticTop")(
@@ -712,7 +726,7 @@ class PimpTags(scripts: Modifier*) {
           )
         )
       ),
-      section(divContainer(inner))
+      section(contentWrapper.map(wrapper => wrapper(inner)).getOrElse(inner))
     )
   }
 
