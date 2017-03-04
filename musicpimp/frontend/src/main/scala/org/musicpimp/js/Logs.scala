@@ -16,7 +16,10 @@ case class JVMLogEntry(level: String,
                        stackTrace: Option[String] = None)
 
 class Logs extends SocketJS("/ws/logs?f=json") {
+  val CellContent = "cell-content"
+  val CellWide = "cell-wide"
   val LogTableId = "logTableBody"
+  val TimestampCell = "cell-timestamp"
   val tableContent = elem(LogTableId)
 
   override def onConnected(e: Event) = {
@@ -41,28 +44,42 @@ class Logs extends SocketJS("/ws/logs?f=json") {
     val entryId = UUID.randomUUID().toString take 5
     val rowId = s"row-$entryId"
     val linkId = s"link-$entryId"
+    val msgCellId = s"msg-$entryId"
     val levelCell: Modifier = entry.stackTrace
       .map(_ => a(href := "#", id := linkId)(level))
       .getOrElse(level)
 
     // prepends a by default hidden stacktrace row
     entry.stackTrace foreach { stackTrace =>
-      val errorRow = tr(`class` := Hidden, id := s"$rowId")(
+      val errorRow = tr(`class` := Hidden, id := rowId)(
         td(colspan := "5")(pre(stackTrace))
       )
-      tableContent prepend errorRow.toString()
+      tableContent prepend errorRow.render
     }
     // prepends the main row
-    val row = tr(`class` := rowClass)(
-      td(`class` := "col-md-1")(entry.timeFormatted),
-      td(entry.message),
-      td(entry.loggerName),
-      td(entry.threadName),
-      td(levelCell)
+    val row = tr(`class` := s"$rowClass log-row")(
+      cell(entry.timeFormatted),
+      td(`class` := s"$CellContent $CellWide", id := msgCellId)(entry.message),
+      cell(lastName(entry.loggerName)),
+      cell(entry.threadName),
+      cell(levelCell)
     )
-    tableContent prepend row.toString()
+    tableContent prepend row.render
     // adds a toggle for stacktrace visibility
     elem(linkId).click((_: JQueryEventObject) => toggle(rowId))
+    // toggles text wrapping for long texts when clicked
+    elem(msgCellId) click { (_: JQueryEventObject) =>
+      elem(msgCellId) toggleClass CellContent
+      false
+    }
+  }
+
+  def cell = td(`class` := CellContent)
+
+  def lastName(path: String) = {
+    val lastDot = path lastIndexOf '.'
+    if (lastDot == -1) path
+    else path drop (lastDot + 1)
   }
 
   def toggle(row: String) = {

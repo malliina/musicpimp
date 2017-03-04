@@ -17,3 +17,24 @@
 .red {
     color: red;
 }
+
+.cell-content {
+    white-space: nowrap;
+}
+
+.cell-wide {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+    width: 100%;
+    cursor: pointer;
+    position: relative;
+}
+
+.cell-timestamp {
+    white-space: nowrap;
+}
+
+.log-row {
+    /*overflow: hidden;*/
+}
