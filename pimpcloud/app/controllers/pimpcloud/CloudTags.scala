@@ -31,6 +31,7 @@ object CloudTags {
 
 class CloudTags(scripts: Modifier*) {
   val Hidden = "hidden"
+  val WideContent = "wide-content"
 
   def eject(message: Option[String]) =
     basePage("Goodbye!", cssLink(at("css/custom.css")))(
@@ -83,7 +84,7 @@ class CloudTags(scripts: Modifier*) {
   def textInput(inType: String, clazz: String, idAndName: String, placeHolder: String, more: Modifier*) =
     input(`type` := inType, `class` := clazz, name := idAndName, id := idAndName, placeholder := placeHolder, more)
 
-  val logs = baseIndex("logs")(
+  val logs = baseIndex("logs", WideContent)(
     headerRow()("Logs"),
     fullRow(
       defaultTable("logTableBody", "Time", "Message", "Logger", "Thread", "Level")
@@ -164,7 +165,7 @@ class CloudTags(scripts: Modifier*) {
       tbody(id := bodyId)
     )
 
-  def baseIndex(tabName: String)(inner: Modifier*) = {
+  def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) = {
     def navItem(thisTabName: String, tabId: String, url: Call, glyphiconName: String) = {
       val maybeActive = if (tabId == tabName) Option(`class` := "active") else None
       li(maybeActive)(a(href := url)(glyphIcon(glyphiconName), s" $thisTabName"))
@@ -192,7 +193,7 @@ class CloudTags(scripts: Modifier*) {
           )
         )
       ),
-      divClass(Container)(inner)
+      divClass(contentClass)(inner)
     )
   }
 
