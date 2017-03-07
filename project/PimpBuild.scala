@@ -14,8 +14,9 @@ import com.malliina.sbt.unix.LinuxPlugin
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.malliina.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager
-import com.typesafe.sbt.SbtNativePackager._
-import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
+import com.typesafe.sbt.SbtNativePackager.{Debian, Linux, Universal, _}
+import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor, serverLoading}
+import com.typesafe.sbt.packager.archetypes.{JavaServerAppPackaging, ServerLoader}
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 import com.typesafe.sbt.web.Import.{Assets, pipelineStages}
 import org.scalajs.sbtplugin.ScalaJSPlugin
@@ -53,7 +54,7 @@ object PimpBuild {
   lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
 
   lazy val pimpcloud = PlayProject.default("pimpcloud", file("pimpcloud"))
-    .enablePlugins(BuildInfoPlugin)
+    .enablePlugins(JavaServerAppPackaging, BuildInfoPlugin)
     .dependsOn(shared)
     .settings(pimpcloudSettings: _*)
 
@@ -253,7 +254,7 @@ object PimpBuild {
 
   lazy val pimpcloudLinuxSettings = LinuxPlugin.playSettings ++ Seq(
     httpPort in Linux := Option("disabled"),
-    httpsPort in Linux := Option("8457"),
+    httpsPort in Linux := Option("8458"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
     manufacturer := "Skogberg Labs",
     mainClass := Some("com.malliina.pimpcloud.Starter"),
@@ -269,7 +270,8 @@ object PimpBuild {
       )
     },
     packageSummary in Linux := "This is the pimpcloud summary.",
-    rpmVendor := "Skogberg Labs"
+    rpmVendor := "Skogberg Labs",
+    serverLoading in Debian := ServerLoader.Systemd
   )
 
   lazy val sharedSettings = baseSettings ++ Seq(
