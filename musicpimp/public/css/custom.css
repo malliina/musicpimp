@@ -37,3 +37,56 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.music-items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.music-item {
+    width: 340px;
+    margin-bottom: 20px;
+    margin-right: 12px;
+}
+
+.folder-item {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.folder-item .lead {
+    margin-bottom: 0;
+}
+
+.folder-buttons {
+    display: flex;
+}
+
+.folder-link {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: 6px;
+}
+
+.track-item {
+
+}
+
+.track-buttons {
+    display: flex;
+}
+
+.track-title {
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.track-button {
+    flex: 1;
+    overflow: hidden;
+}

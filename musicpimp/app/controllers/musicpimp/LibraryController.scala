@@ -96,7 +96,8 @@ class LibraryController(tags: PimpTags,
       case f :: s :: Nil => (f, s, MusicColumn.empty)
       case f :: s :: t :: tail => (f, s, t)
     }
-    tags.library(folder.folder.path, col1, col2, col3, username)
+    tags.flexLibrary(folder, username)
+//    tags.library(folder.folder.path, col1, col2, col3, username)
   }
 
   /** Arranges a music collection into columns.

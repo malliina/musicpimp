@@ -2,9 +2,9 @@ package com.malliina.musicpimp.tags
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
-import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
 import com.malliina.musicpimp.db.DataTrack
-import com.malliina.musicpimp.library.PlaylistSubmission
+import com.malliina.musicpimp.library.{MusicFolder, PlaylistSubmission}
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
@@ -241,7 +241,11 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def library(relativePath: PimpPath, col1: MusicColumn, col2: MusicColumn, col3: MusicColumn, username: Username) =
+  def library(relativePath: PimpPath,
+              col1: MusicColumn,
+              col2: MusicColumn,
+              col3: MusicColumn,
+              username: Username) =
     libraryBase("folders", username)(
       headerDiv(
         h1("Library ", small(relativePath.path))
@@ -258,6 +262,41 @@ class PimpTags(scripts: Modifier*) {
         empty
       }
     )
+
+  def flexLibrary(items: MusicFolder, username: Username) = {
+    val relativePath = items.folder.path
+    libraryBase("folders", username)(
+      headerDiv(
+        h1("Library ", small(relativePath.path))
+      ),
+      div(
+        divClass("music-items")(
+          items.folders map { folder =>
+            divClass("music-item folder-item")(
+              renderLibraryFolder(folder)
+            )
+          },
+          items.tracks map { track =>
+            divClass("music-item track-item")(
+              titledTrackActions(track)
+            )
+          }
+        )
+      ),
+      if (items.isEmpty && relativePath.path.isEmpty) {
+        leadPara("The library is empty. To get started, add music folders under ",
+          aHref(routes.SettingsController.settings())("Music Folders"), ".")
+      } else {
+        empty
+      }
+    )
+  }
+
+  def renderLibraryFolder(folder: FolderMeta): Modifier = Seq[Modifier](
+    folderActions(folder.id),
+    " ",
+    aHref(routes.LibraryController.library(folder.id), `class` := s"$Lead folder-link")(folder.title)
+  )
 
   def renderColumn(col: MusicColumn, onlyColumn: Boolean = false) =
     divClass(if (onlyColumn) ColMd10 else ColMd4)(
@@ -279,14 +318,16 @@ class PimpTags(scripts: Modifier*) {
     )
 
   def folderActions(folder: FolderID) =
-    musicItemActions("folder", folder.id, None, ariaLabel := "folder action")()
+    musicItemActions("folder", folder.id, Option("folder-buttons"), ariaLabel := "folder action")()
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      dataButton(s"$BtnDefault track play", track.id.id)(track.title)
+      divClass("track-button")(
+        dataButton(s"$BtnDefault $BtnBlock track play", track.id.id)(divClass("track-title")(track.title))
+      )
     )
 
-  def trackActions(track: TrackID, extraClass: Option[String] = None)(inner: Modifier*) =
+  def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
     musicItemActions("track", track.id, extraClass)(inner)
 
   def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
