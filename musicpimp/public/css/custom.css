@@ -38,25 +38,13 @@
     margin-right: auto;
 }
 
-.music-items {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-}
-
 .music-item {
-    width: 340px;
-    margin-bottom: 20px;
-    margin-right: 12px;
-}
-
-.folder-item {
     display: flex;
     flex-wrap: nowrap;
-    white-space: nowrap;
+    margin-bottom: 6px;
 }
 
-.folder-item .lead {
+.folder-link.lead {
     margin-bottom: 0;
 }
 
@@ -65,18 +53,16 @@
 }
 
 .folder-link {
-    overflow: hidden;
+    display: inline-block;
     text-overflow: ellipsis;
+    overflow: hidden;
     white-space: nowrap;
     margin-left: 6px;
 }
 
-.track-item {
-
-}
-
 .track-buttons {
     display: flex;
+    width: 100%;
 }
 
 .track-title {
@@ -84,9 +70,4 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.track-button {
-    flex: 1;
-    overflow: hidden;
 }

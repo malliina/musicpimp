@@ -269,19 +269,17 @@ class PimpTags(scripts: Modifier*) {
       headerDiv(
         h1("Library ", small(relativePath.path))
       ),
-      div(
-        divClass("music-items")(
-          items.folders map { folder =>
-            divClass("music-item folder-item")(
-              renderLibraryFolder(folder)
-            )
-          },
-          items.tracks map { track =>
-            divClass("music-item track-item")(
-              titledTrackActions(track)
-            )
-          }
-        )
+      row(
+        items.folders map { folder =>
+          musicItemDiv(
+            renderLibraryFolder(folder)
+          )
+        },
+        items.tracks map { track =>
+          musicItemDiv(
+            titledTrackActions(track)
+          )
+        }
       ),
       if (items.isEmpty && relativePath.path.isEmpty) {
         leadPara("The library is empty. To get started, add music folders under ",
@@ -292,6 +290,8 @@ class PimpTags(scripts: Modifier*) {
     )
   }
 
+  def musicItemDiv = divClass("music-item col-xs-12 col-sm-6 col-md-4 col-lg-3")
+
   def renderLibraryFolder(folder: FolderMeta): Modifier = Seq[Modifier](
     folderActions(folder.id),
     " ",
@@ -301,7 +301,7 @@ class PimpTags(scripts: Modifier*) {
   def renderColumn(col: MusicColumn, onlyColumn: Boolean = false) =
     divClass(if (onlyColumn) ColMd10 else ColMd4)(
       ulClass(ListUnstyled)(
-        col.folders.map(f => liClass(Lead)(Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title)))),
+        col.folders.map(f => li(Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title)))),
         col.tracks.map(t => liClass(Lead)(titledTrackActions(t)))
       )
     )
@@ -322,9 +322,7 @@ class PimpTags(scripts: Modifier*) {
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      divClass("track-button")(
-        dataButton(s"$BtnDefault $BtnBlock track play", track.id.id)(divClass("track-title")(track.title))
-      )
+      dataButton(s"$BtnDefault $BtnBlock track play track-title", track.id.id)(track.title)
     )
 
   def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
