@@ -46,15 +46,13 @@ object PimpBuild {
 
   lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
 
-  lazy val musicpimp = PlayProject.default("musicpimp", file("musicpimp"))
-    .enablePlugins(BuildInfoPlugin, SbtNativePackager)
+  lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
     .dependsOn(shared)
     .settings(pimpPlaySettings: _*)
 
   lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
 
-  lazy val pimpcloud = PlayProject.default("pimpcloud", file("pimpcloud"))
-    .enablePlugins(JavaServerAppPackaging, BuildInfoPlugin)
+  lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
     .dependsOn(shared)
     .settings(pimpcloudSettings: _*)
 
@@ -270,8 +268,7 @@ object PimpBuild {
       )
     },
     packageSummary in Linux := "This is the pimpcloud summary.",
-    rpmVendor := "Skogberg Labs",
-    serverLoading in Debian := ServerLoader.Systemd
+    rpmVendor := "Skogberg Labs"
   )
 
   lazy val sharedSettings = baseSettings ++ Seq(
