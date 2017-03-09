@@ -13,10 +13,8 @@ import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
 import com.malliina.sbt.unix.LinuxPlugin
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.malliina.sbtplay.PlayProject
-import com.typesafe.sbt.SbtNativePackager
-import com.typesafe.sbt.SbtNativePackager.{Debian, Linux, Universal, _}
-import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor, serverLoading}
-import com.typesafe.sbt.packager.archetypes.{JavaServerAppPackaging, ServerLoader}
+import com.typesafe.sbt.SbtNativePackager.{Linux, Universal, _}
+import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 import com.typesafe.sbt.web.Import.{Assets, pipelineStages}
 import org.scalajs.sbtplugin.ScalaJSPlugin
@@ -27,8 +25,8 @@ import play.sbt.PlayImport.PlayKeys
 import play.sbt.routes.RoutesKeys
 import sbt.Keys._
 import sbt._
+import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtbuildinfo.{BuildInfoKey, BuildInfoPlugin}
 import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
