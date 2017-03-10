@@ -5,7 +5,9 @@ import controllers.pimpcloud.ServersController.log
 import play.api.Logger
 import play.api.mvc._
 
-class ServersController(cloudAuth: CloudAuthentication, auth: CloudAuth) extends StreamReceiver(auth.mat) {
+class ServersController(cloudAuth: CloudAuthentication, auth: CloudAuth)
+  extends StreamReceiver(auth.mat) {
+
   val mat = auth.mat
   implicit val ec = mat.executionContext
 
