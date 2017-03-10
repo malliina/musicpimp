@@ -9,6 +9,7 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
 import com.malliina.play.ws._
+import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.toJson
 import rx.lang.scala.subscriptions.CompositeSubscription
@@ -70,7 +71,7 @@ class PlayerActor(player: ServerPlayer,
   }
 
   override def onMessage(msg: JsValue) = {
-    (msg \ Cmd).asOpt[String].fold(log warning s"Unknown message: '$msg'.") {
+    (msg \ Cmd).asOpt[String].fold(PlayerActor.log warn s"Unknown message: '$msg'.") {
       case StatusKey =>
         out ! status()
       case _ =>
@@ -90,4 +91,8 @@ class PlayerActor(player: ServerPlayer,
   override def postStop() = {
     eventSub foreach { sub => sub.unsubscribe() }
   }
+}
+
+object PlayerActor {
+  private val log = Logger(getClass)
 }

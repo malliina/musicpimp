@@ -15,17 +15,17 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.RequestHeader
 
-import scala.concurrent.ExecutionContext
-
-class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implicit ec: ExecutionContext)
+class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
   extends JsonActor(conf) {
   val conn = conf.user
   val user = conn.user
   val server = conn.server
-  val endpoint = PhoneEndpoint(conf.user.server.id, conf.rh, out)
+  val endpoint = PhoneEndpoint(server.id, conf.rh, out)
 
   override def preStart() = {
+    super.preStart()
     mediator ! PhoneJoined(endpoint)
+    out ! com.malliina.play.json.JsonMessages.welcome
   }
 
   override def onMessage(msg: JsValue) = {
@@ -33,7 +33,7 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
     if (isStatus) {
       conn.status()
         .pipeTo(out)
-        .recoverAll(t => log.warning("Status request failed.", t))
+        .recoverAll(t => PhoneActor.log.warn("Status request failed.", t))
     } else {
       val payload = Json.obj(
         Cmd -> JsonStrings.Player,
@@ -43,6 +43,10 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])(implici
       server.jsonOut ! payload
     }
   }
+}
+
+object PhoneActor {
+  private val log = Logger(getClass)
 }
 
 class PhoneMediator extends Actor {

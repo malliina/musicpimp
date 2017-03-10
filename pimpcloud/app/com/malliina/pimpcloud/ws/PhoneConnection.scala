@@ -16,7 +16,7 @@ class PhoneConnection(val user: Username, val server: PimpServerSocket) {
     server.proxyValidated[GetMeta, Track](req)
   }
 
-  def status() = makeRequest(StatusKey, Json.obj())
+  def status(): Future[JsValue] = makeRequest(StatusKey, Json.obj())
 
   def makeRequest[C: Writes](cmd: String, body: C): Future[JsValue] =
     server.defaultProxy(PhoneRequest(cmd, user, body))
