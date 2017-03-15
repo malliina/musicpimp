@@ -106,3 +106,7 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.track-meta {
+    text-align: center;
+}

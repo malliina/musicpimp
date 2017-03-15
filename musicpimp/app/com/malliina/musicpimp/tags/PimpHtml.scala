@@ -418,34 +418,42 @@ class PimpHtml(scripts: Modifier*) {
 
   def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
     indexMain("player", username, scripts ++ Seq(cssLink(at("css/player.css"))))(
-      headerRow(ColMd9)("Player"),
-      div(id := "playerDiv", style := "display: none")(
-        feedback.fold(empty) { fb =>
-          rowColumn(ColMd9)(
-            pClass(s"$Lead $Alert", id := "feedback")(fb)
-          )
-        },
-        halfRow(
-          pClass(Lead, id := "notracktext")(
-            "No track. Play one from the ",
-            aHref(routes.LibraryController.rootLibrary())("library"),
-            " or stream from a mobile device."
+      row(
+        divClass(ColMd6)(
+          headerDiv(h1("Player")),
+          div(id := "playerDiv", style := "display: none")(
+            feedback.fold(empty) { fb =>
+              fullRow(
+                pClass(s"$Lead $Alert", id := "feedback")(fb)
+              )
+            },
+            fullRow(
+              pClass(Lead, id := "notracktext")(
+                "No track. Play one from the ",
+                aHref(routes.LibraryController.rootLibrary())("library"),
+                " or stream from a mobile device."
+              )
+            ),
+            playerCtrl
           )
         ),
-        row(
-          playerControls,
-          divClass(ColMd3)(
-            h2("Playlist"),
-            pClass(Lead, id := "empty_playlist_text")("The playlist is empty."),
-            ol(id := "playlist")
-          )
+        divClass(ColMd6)(
+          headerDiv(h1("Playlist")),
+          pClass(Lead, id := "empty_playlist_text")("The playlist is empty."),
+          ol(id := "playlist")
         )
       )
     )
 
   def playerControls = {
-    val centerAttr = style := "text-align: center"
     divClass(ColMd6)(
+      playerCtrl
+    )
+  }
+
+  def playerCtrl: Modifier = {
+    val centerAttr = `class` := "track-meta"
+    Seq(
       fullRow(
         h2(id := "title", centerAttr)("No track"),
         h4(id := "album", centerAttr),
