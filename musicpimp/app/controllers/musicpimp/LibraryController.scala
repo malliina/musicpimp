@@ -89,16 +89,8 @@ class LibraryController(tags: PimpHtml,
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))
 
-  def toHtml(folder: MusicFolder, username: Username): TagPage = {
-    val (col1, col2, col3) = columnify(folder) match {
-      case Nil => (MusicColumn.empty, MusicColumn.empty, MusicColumn.empty)
-      case h :: Nil => (h, MusicColumn.empty, MusicColumn.empty)
-      case f :: s :: Nil => (f, s, MusicColumn.empty)
-      case f :: s :: t :: tail => (f, s, t)
-    }
+  def toHtml(folder: MusicFolder, username: Username): TagPage =
     tags.flexLibrary(folder, username)
-//    tags.library(folder.folder.path, col1, col2, col3, username)
-  }
 
   /** Arranges a music collection into columns.
     *

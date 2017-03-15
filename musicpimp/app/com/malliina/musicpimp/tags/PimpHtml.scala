@@ -4,12 +4,11 @@ import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
 import com.malliina.musicpimp.db.DataTrack
-import com.malliina.musicpimp.library.{MusicFolder, PlaylistSubmission}
+import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
-import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
-import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
+import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
-import com.malliina.musicpimp.tags.PlayBootstrap.helpSpan
+import com.malliina.musicpimp.tags.PimpHtml.{feedbackDiv, postableForm}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
@@ -31,6 +30,15 @@ object PimpHtml {
 
   def withJs(jsFiles: String*): PimpHtml =
     new PimpHtml(jsFiles.map(file => jsScript(at(file))): _*)
+
+  def postableForm(onAction: Call, more: Modifier*) =
+    form(role := FormRole, action := onAction, method := Post, more)
+
+  def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
+    val message = feedback.message
+    if (feedback.isError) alertDanger(message)
+    else alertSuccess(message)
+  }
 }
 
 class PimpHtml(scripts: Modifier*) {
@@ -128,24 +136,6 @@ class PimpHtml(scripts: Modifier*) {
       )
     )
 
-  def playlist(playlist: SavedPlaylist, form: Form[PlaylistSubmission], username: Username) =
-    indexMain("playlist", username)(
-      headerRow()("Playlist"),
-      leadPara(playlist.name),
-      fullRow(
-        if (playlist.tracks.isEmpty) {
-          leadPara("This playlist is empty.")
-        } else {
-          responsiveTable(playlist.tracks)("Title", "Album", "Artist") { track =>
-            Seq(td(track.title), td(track.album), td(track.artist))
-          }
-        }
-      )
-    )
-
-  def player(feedback: Option[String], username: Username) =
-    basePlayer(feedback, username)
-
   def musicFolders(folders: Seq[String],
                    folderPlaceholder: String,
                    username: Username,
@@ -239,28 +229,6 @@ class PimpHtml(scripts: Modifier*) {
           motd.fold(empty)(message => p(message))
         )
       )
-    )
-
-  def library(relativePath: PimpPath,
-              col1: MusicColumn,
-              col2: MusicColumn,
-              col3: MusicColumn,
-              username: Username) =
-    libraryBase("folders", username)(
-      headerDiv(
-        h1("Library ", small(relativePath.path))
-      ),
-      row(
-        renderColumn(col1, onlyColumn = col2.isEmpty && col3.isEmpty),
-        renderColumn(col2),
-        renderColumn(col3)
-      ),
-      if (col1.isEmpty && col2.isEmpty && col3.isEmpty && relativePath.path.isEmpty) {
-        leadPara("The library is empty. To get started, add music folders under ",
-          aHref(routes.SettingsController.settings())("Music Folders"), ".")
-      } else {
-        empty
-      }
     )
 
   def flexLibrary(items: MusicFolder, username: Username) = {
@@ -389,8 +357,6 @@ class PimpHtml(scripts: Modifier*) {
       headerRow()("Cloud"),
       div(id := "cloud-form")(
         leadPara("Connecting...")
-        //        halfRow(cloudForm(cloudId)),
-        //        fb.fold(empty)(f => halfRow(feedbackDiv(f)))
       ),
       halfRow(
         p("How does this work?"),
@@ -416,16 +382,14 @@ class PimpHtml(scripts: Modifier*) {
     )
   }
 
-  def basePlayer(feedback: Option[String], username: Username, scripts: Modifier*) =
-    indexMain("player", username, scripts ++ Seq(cssLink(at("css/player.css"))))(
+  def basePlayer(feedback: Option[UserFeedback], username: Username) =
+    indexMain("player", username, Seq(cssLink(at("css/player.css"))))(
       row(
         divClass(ColMd6)(
           headerDiv(h1("Player")),
           div(id := "playerDiv", style := "display: none")(
             feedback.fold(empty) { fb =>
-              fullRow(
-                pClass(s"$Lead $Alert", id := "feedback")(fb)
-              )
+              div(id := "feedback")(feedbackDiv(fb))
             },
             fullRow(
               pClass(Lead, id := "notracktext")(
@@ -444,12 +408,6 @@ class PimpHtml(scripts: Modifier*) {
         )
       )
     )
-
-  def playerControls = {
-    divClass(ColMd6)(
-      playerCtrl
-    )
-  }
 
   def playerCtrl: Modifier = {
     val centerAttr = `class` := "track-meta"
@@ -521,96 +479,8 @@ class PimpHtml(scripts: Modifier*) {
 
   def alarmEditor(form: Form[ClockPlayback], feedback: Option[UserFeedback], username: Username, m: Messages) =
     manage("alarms", username)(
-      headerRow()("Edit alarm"),
-      halfRow(
-        postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
-          divClass("hidden")(
-            formTextIn(form(ID), "ID", m)
-          ),
-          numberTextIn(form(HOURS), "Hours", "hh", m),
-          numberTextIn(form(MINUTES), "Minute", "mm", m),
-          weekdayCheckboxes(form(DAYS), m),
-          formTextIn(form(TRACK_ID), "Track ID", m, formGroupClasses = Seq("hidden")),
-          formTextIn(form(TRACK), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
-          checkField(form(ENABLED), "Enabled"),
-          saveButton(),
-          feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(feedbackDiv(fb)))
-        )
-      )
+      AlarmsHtml.alarmEditorContent(form, feedback, m)
     )
-
-  def checkField(field: Field, labelText: String) = {
-    val checkedAttr = if (field.value.contains("on")) checked else empty
-    formGroup(
-      divClass(s"$ColSmOffset2 $ColSm10")(
-        divClass(Checkbox)(
-          label(
-            input(`type` := Checkbox, name := field.name, checkedAttr)(labelText)
-          )
-        )
-      )
-    )
-  }
-
-  def weekdayCheckboxes(field: Field, messages: Messages) = {
-    val errorClass = if (field.hasErrors) s" $HasError" else ""
-    divClass(s"$FormGroup$errorClass")(
-      labelFor(field.id, `class` := s"$ColSm2 $ControlLabel")("Days"),
-      divClass(ColSm4, id := field.id)(
-        divClass(Checkbox)(
-          label(
-            input(`type` := Checkbox, value := "every", id := "every")("Every day")
-          )
-        ),
-        WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },
-        helpSpan(field, messages)
-      )
-    )
-  }
-
-  def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) = {
-    val isChecked = field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName)
-    val checkedAttr = if (isChecked) checked else empty
-    divClass(Checkbox)(
-      label(
-        input(`type` := Checkbox,
-          value := field.value.getOrElse(weekDay.shortName),
-          id := weekDay.shortName,
-          name := s"${field.name}[$index]",
-          checkedAttr
-        )
-      )(s" ${weekDay.longName}")
-    )
-  }
-
-  def numberTextIn(field: Field, label: String, placeholderValue: String, m: Messages) =
-    formTextIn(field, label, m, Option(placeholderValue), typeName = Number, inputWidth = ColSm2)
-
-  def formTextIn(field: Field,
-                 labelText: String,
-                 m: Messages,
-                 placeholder: Option[String] = None,
-                 typeName: String = Text,
-                 inputWidth: String = ColSm10,
-                 inClasses: Seq[String] = Nil,
-                 formGroupClasses: Seq[String] = Nil,
-                 defaultValue: String = "") = {
-    val errorClass = if (field.hasErrors) Option(HasError) else None
-    val moreClasses = (errorClass.toSeq ++ formGroupClasses).mkString(" ", " ", "")
-    val inputClasses = inClasses.mkString(" ", " ", "")
-    divClass(s"$FormGroup$moreClasses")(
-      labelFor(field.name, `class` := s"$ControlLabel $ColSm2")(labelText),
-      divClass(inputWidth)(
-        inputField(field, typeName, defaultValue, placeholder, `class` := s"$FormControl$inputClasses"),
-        helpSpan(field, m)
-      )
-    )
-  }
-
-  def inputField(field: Field, typeName: String, defaultValue: String, placeHolder: Option[String], more: Modifier*) = {
-    val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
-    input(`type` := typeName, id := field.id, name := field.name, value := field.value.getOrElse(defaultValue), placeholderAttr, more)
-  }
 
   def textInput(inType: String, clazz: String, idAndName: String, placeHolder: Option[String], more: Modifier*) =
     textInputBase(inType, idAndName, placeHolder, `class` := clazz, more)
@@ -670,9 +540,6 @@ class PimpHtml(scripts: Modifier*) {
       blockSubmitButton("Change Password"),
       feedback.fold(empty)(feedbackDiv)
     )
-
-  def postableForm(onAction: Call, more: Modifier*) =
-    form(role := FormRole, action := onAction, method := Post, more)
 
   def passwordInputs(firstLabel: String = "Password", repeatLabel: String = "Repeat password"): Modifier = Seq(
     passwordGroup("newPassword", firstLabel),
@@ -782,13 +649,6 @@ class PimpHtml(scripts: Modifier*) {
     )
   }
 
-  def saveButton(buttonText: String = "Save") =
-    formGroup(
-      divClass(s"$ColSmOffset2 $ColSm10")(
-        defaultSubmitButton(buttonText)
-      )
-    )
-
   def glyphNavItem(thisTabName: String, thisTabId: String, activeTab: String, url: Call, glyphiconName: String): TypedTag[String] =
     iconNavItem(thisTabName, thisTabId, activeTab, url, glyphClass(glyphiconName))
 
@@ -809,12 +669,6 @@ class PimpHtml(scripts: Modifier*) {
         )
       )
     )
-
-  def feedbackDiv(feedback: UserFeedback): TypedTag[String] = {
-    val message = feedback.message
-    if (feedback.isError) alertDanger(message)
-    else alertSuccess(message)
-  }
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(

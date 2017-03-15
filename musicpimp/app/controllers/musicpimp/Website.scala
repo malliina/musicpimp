@@ -28,7 +28,8 @@ class Website(tags: PimpHtml,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    tags.player(feedback, req.user)
+    val userFeedback = feedback map UserFeedback.error
+    tags.basePlayer(userFeedback, req.user)
   }
 
   def recent = metaAction { (meta, req) =>
