@@ -6,7 +6,7 @@ import java.nio.file.{Files, Paths}
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.CookieAuthenticator
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
@@ -18,7 +18,7 @@ import play.api.i18n.Messages
 
 import scala.util.Try
 
-class SettingsController(tags: PimpTags,
+class SettingsController(tags: PimpHtml,
                          messages: Messages,
                          indexer: Indexer,
                          auth: CookieAuthenticator,

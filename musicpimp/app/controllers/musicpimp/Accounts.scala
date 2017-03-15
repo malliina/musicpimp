@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.models.NewUser
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
@@ -22,7 +22,7 @@ object Accounts {
   val IntendedUri = "intended_uri"
 }
 
-class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
+class Accounts(tags: PimpHtml, auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
   extends HtmlController(auth, mat) {
 
   val userFormKey = accs.userFormKey

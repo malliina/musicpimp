@@ -4,14 +4,14 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FailReason, FolderID, MusicColumn, TrackID}
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.models.Username
 import com.malliina.play.tags.TagPage
 import com.malliina.play.{CookieAuthenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
 
-class LibraryController(tags: PimpTags,
+class LibraryController(tags: PimpHtml,
                         lib: MusicLibrary,
                         auth: CookieAuthenticator,
                         mat: Materializer)

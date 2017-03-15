@@ -6,7 +6,7 @@ import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.CookieAuthenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
@@ -26,7 +26,7 @@ object Playlists {
   val Tracks = "tracks"
 }
 
-class Playlists(tags: PimpTags,
+class Playlists(tags: PimpHtml,
                 service: PlaylistService,
                 auth: CookieAuthenticator,
                 mat: Materializer) extends Secured(auth, mat) {

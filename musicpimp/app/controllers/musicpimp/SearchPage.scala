@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
 import scala.concurrent.Future
 import scala.util.Try
 
-class SearchPage(tags: PimpTags,
+class SearchPage(tags: PimpHtml,
                  s: Search,
                  indexer: Indexer,
                  db: PimpDb,

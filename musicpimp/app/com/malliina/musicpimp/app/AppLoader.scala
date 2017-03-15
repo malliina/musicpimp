@@ -8,7 +8,7 @@ import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.stats.DatabaseStats
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.RememberMe
 import com.malliina.play.controllers.AccountForms
@@ -34,7 +34,7 @@ case class InitOptions(alarms: Boolean = true,
 
 object InitOptions {
   val prod = InitOptions()
-  val dev = InitOptions(alarms = false, database = false, users = false, indexer = false, cloud = false)
+  val dev = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
 }
 
 class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
@@ -73,7 +73,7 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
   lazy val clouds = new Clouds(deps, options.cloudUri)
-  lazy val tags = PimpTags.forApp(environment.mode == Mode.Prod)
+  lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
   lazy val auths = new Auths(userManager, rememberMe)(ctx.executionContext)
 
   // Controllers

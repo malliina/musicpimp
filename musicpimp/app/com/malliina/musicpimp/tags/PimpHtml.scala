@@ -23,17 +23,17 @@ import play.api.mvc.{Call, Flash}
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
 
-object PimpTags {
-  def forApp(isProd: Boolean): PimpTags = {
+object PimpHtml {
+  def forApp(isProd: Boolean): PimpHtml = {
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
     withJs(scripts.optimized, scripts.launcher)
   }
 
-  def withJs(jsFiles: String*): PimpTags =
-    new PimpTags(jsFiles.map(file => jsScript(at(file))): _*)
+  def withJs(jsFiles: String*): PimpHtml =
+    new PimpHtml(jsFiles.map(file => jsScript(at(file))): _*)
 }
 
-class PimpTags(scripts: Modifier*) {
+class PimpHtml(scripts: Modifier*) {
   val FormSignin = "form-signin"
   val False = "false"
   val True = "true"
@@ -265,7 +265,7 @@ class PimpTags(scripts: Modifier*) {
 
   def flexLibrary(items: MusicFolder, username: Username) = {
     val relativePath = items.folder.path
-    libraryBase("folders", username)(
+    libraryBase("folders", WideContent, username)(
       headerDiv(
         h1("Library ", small(relativePath.path))
       ),
@@ -306,15 +306,20 @@ class PimpTags(scripts: Modifier*) {
       )
     )
 
-  def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*) =
-    indexMain("library", username, extraHeader)(
-      ulClass(NavTabs)(
-        iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), "fa fa-folder-open"),
-        iconNavItem("Most Played", "popular", tab, routes.Website.popular(), "fa fa-list"),
-        iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), "fa fa-clock-o"),
-        iconNavItem("Search", "search", tab, routes.SearchPage.search(), "fa fa-search")
+  def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
+    libraryBase(tab, Container, username, extraHeader)(inner)
+
+  def libraryBase(tab: String, contentClass: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
+    indexMain("library", username, None, extraHeader)(
+      divContainer(
+        ulClass(NavTabs)(
+          iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), "fa fa-folder-open"),
+          iconNavItem("Most Played", "popular", tab, routes.Website.popular(), "fa fa-list"),
+          iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), "fa fa-clock-o"),
+          iconNavItem("Search", "search", tab, routes.SearchPage.search(), "fa fa-search")
+        )
       ),
-      section(inner)
+      section(divClass(contentClass)(inner))
     )
 
   def folderActions(folder: FolderID) =
@@ -608,7 +613,7 @@ class PimpTags(scripts: Modifier*) {
   }
 
   def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    manage(tab, "container", username, extraHeader: _*)(inner: _*)
+    manage(tab, Container, username, extraHeader: _*)(inner: _*)
 
   def manage(tab: String, contentClass: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
     indexMain("manage", username, None, extraHeader)(

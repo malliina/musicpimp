@@ -5,7 +5,7 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.CookieAuthenticator
 import com.malliina.play.models.Username
 import play.api.mvc.Security.AuthenticatedRequest
@@ -13,7 +13,7 @@ import play.api.mvc.{AnyContent, RequestHeader, Result}
 
 import scala.concurrent.Future
 
-class Website(tags: PimpTags,
+class Website(tags: PimpHtml,
               serverWS: ServerWS,
               auth: CookieAuthenticator,
               stats: PlaybackStats,
