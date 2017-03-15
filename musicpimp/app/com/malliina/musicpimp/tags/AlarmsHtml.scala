@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.tags
 
-import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
+import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.tags.PlayBootstrap.helpSpan
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{UserFeedback, routes}
@@ -11,6 +11,36 @@ import play.api.i18n.Messages
 import scalatags.Text.all._
 
 object AlarmsHtml {
+  def alarmsContent(clocks: Seq[ClockPlayback]) = Seq(
+    headerRow()("Alarms"),
+    fullRow(
+      PimpHtml.stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
+        tbody(clocks.map(alarmRow))
+      )
+    ),
+    fullRow(
+      aHref(routes.Alarms.newAlarm())("Add alarm")
+    )
+  )
+
+  def alarmRow(ap: ClockPlayback) = {
+    val (enabledText, enabledAttr) = if (ap.enabled) ("Yes", empty) else ("No", `class` := "danger")
+    tr(td(ap.describe), td(enabledAttr)(enabledText), td(alarmActions(ap.id.getOrElse("nonexistent"))))
+  }
+
+  def alarmActions(id: String) =
+    divClass(BtnGroup)(
+      aHref(routes.Alarms.editAlarm(id), `class` := s"$BtnDefault $BtnSm")(glyphIcon("edit"), " Edit"),
+      aHref("#", dataToggle := Dropdown, `class` := s"$BtnDefault $BtnSm $DropdownToggle")(spanClass(Caret)),
+      ulClass(DropdownMenu)(
+        jsListElem("delete", id, "remove", "Delete"),
+        jsListElem("play", id, "play", "Play"),
+        jsListElem("stop", id, "stop", "Stop")
+      )
+    )
+
+  def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
+    liHref("#", `class` := clazz, PimpHtml.dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
   def alarmEditorContent(form: Form[ClockPlayback], feedback: Option[UserFeedback], m: Messages) = Seq(
     headerRow()("Edit alarm"),

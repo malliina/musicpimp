@@ -2,18 +2,17 @@ package com.malliina.musicpimp.tags
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
-import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
-import com.malliina.musicpimp.tags.PimpHtml.{feedbackDiv, postableForm}
+import com.malliina.musicpimp.tags.PimpHtml._
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
-import controllers.musicpimp.{Accounts, Cloud, SettingsController, UserFeedback, routes, Search => _}
+import controllers.musicpimp.{Accounts, SettingsController, UserFeedback, routes, Search => _}
 import controllers.routes.Assets.at
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
@@ -23,6 +22,14 @@ import scalatags.Text.TypedTag
 import scalatags.Text.all._
 
 object PimpHtml {
+  val FormSignin = "form-signin"
+  val False = "false"
+  val True = "true"
+  val Hide = "hide"
+  val WideContent = "wide-content"
+
+  val dataIdAttr = attr("data-id")
+
   def forApp(isProd: Boolean): PimpHtml = {
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
     withJs(scripts.optimized, scripts.launcher)
@@ -39,45 +46,28 @@ object PimpHtml {
     if (feedback.isError) alertDanger(message)
     else alertSuccess(message)
   }
+
+  def stripedHoverTable(headers: Seq[Modifier])(tableBody: Modifier*) =
+    headeredTable(TableStripedHover, headers)(tableBody)
+
+  def textInputBase(inType: String,
+                    idAndName: String,
+                    placeHolder: Option[String],
+                    more: Modifier*) = {
+    val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
+    namedInput(idAndName, `type` := inType, placeholderAttr, more)
+  }
 }
 
 class PimpHtml(scripts: Modifier*) {
-  val FormSignin = "form-signin"
-  val False = "false"
-  val True = "true"
-  val Hide = "hide"
-  val WideContent = "wide-content"
-
-  val dataIdAttr = attr("data-id")
-
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
-      headerRow()("Playlist"),
-      leadPara(playlist.name),
-      tableView("This playlist is empty.", playlist.tracks, "Title", "Album", "Artist") { track =>
-        Seq(td(track.title), td(track.album), td(track.artist))
-      }
+      PlaylistsHtml.playlistContent(playlist)
     )
 
   def playlists(lists: Seq[SavedPlaylist], username: Username) =
     manage("playlists", username)(
-      headerRow()("Playlists"),
-      tableView("No saved playlists.", lists, "Name", "Tracks", "Actions") { list =>
-        Seq(
-          td(aHref(routes.Playlists.playlist(list.id))(list.name)),
-          td(list.tracks.size),
-          td("Add/Edit/Delete")
-        )
-      }
-    )
-
-  def tableView[T](emptyText: String, items: Seq[T], headers: String*)(cells: T => Seq[Modifier]) =
-    fullRow(
-      if (items.isEmpty) {
-        leadPara(emptyText)
-      } else {
-        responsiveTable(items)(headers: _*)(cells)
-      }
+      PlaylistsHtml.playlistsContent(lists)
     )
 
   def users(us: Seq[Username],
@@ -85,30 +75,7 @@ class PimpHtml(scripts: Modifier*) {
             listFeedback: Option[UserFeedback],
             addFeedback: Option[UserFeedback]) =
     manage("users", username)(
-      row(
-        div6(
-          headerDiv(
-            h1("Users")
-          ),
-          stripedHoverTable(Seq("Username", "Actions"))(
-            tbody(
-              us map { u =>
-                tr(
-                  td(u.name),
-                  td(postableForm(routes.Accounts.delete(u))(button(`class` := s"$BtnDanger $BtnXs")(" Delete")))
-                )
-              }
-            )
-          ),
-          listFeedback.fold(empty)(feedbackDiv)
-        ),
-        div4(
-          headerDiv(
-            h1("Add user")
-          ),
-          addUser(addFeedback)
-        )
-      )
+      UsersHtml.usersContent(us, listFeedback, addFeedback)
     )
 
   def search(query: Option[String], results: Seq[DataTrack], username: Username) =
@@ -126,7 +93,12 @@ class PimpHtml(scripts: Modifier*) {
       fullRow(
         if (results.nonEmpty) {
           responsiveTable(results)("Track", "Artist", "Album", "Actions") { track =>
-            Seq(td(track.title), td(track.artist), td(track.album), td(trackActions(track.id, Option("flex"))()))
+            Seq(
+              td(track.title),
+              td(track.artist),
+              td(track.album),
+              td(LibraryHtml.trackActions(track.id, Option("flex"))())
+            )
           }
         } else {
           query.fold(empty) { term =>
@@ -166,13 +138,17 @@ class PimpHtml(scripts: Modifier*) {
             td(entry.track.artist),
             td(entry.track.album),
             td(fourthValue(entry)),
-            td(trackActions(entry.track.id, Option("flex"))())
+            td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
           )
         }
       )
     )
 
-  def logs(levelField: Field, levels: Seq[Level], currentLevel: Level, username: Username, errorMsg: Option[String]) =
+  def logs(levelField: Field,
+           levels: Seq[Level],
+           currentLevel: Level,
+           username: Username,
+           errorMsg: Option[String]) =
     manage("logs", WideContent, username)(
       headerRow()("Logs"),
       errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
@@ -198,81 +174,14 @@ class PimpHtml(scripts: Modifier*) {
             formFeedback: Option[UserFeedback],
             topFeedback: Option[UserFeedback]) =
     basePage("Welcome", cssLink(at("css/login.css")))(
-      divContainer(
-        rowColumn(s"$ColMd4 $FormSignin")(
-          topFeedback.fold(empty)(feedbackDiv)
-        ),
-        rowColumn(ColMd4)(
-          postableForm(routes.Accounts.formAuthenticate(), `class` := FormSignin, name := "loginForm")(
-            h2("Please sign in"),
-            formGroup(
-              textInputBase(Text, accounts.userFormKey, Option("Username"), `class` := FormControl, autofocus)
-            ),
-            formGroup(
-              textInputBase(Password, accounts.passFormKey, Option("Password"), `class` := FormControl)
-            ),
-            divClass(Checkbox)(
-              label(
-                input(`type` := Checkbox, value := True, name := accounts.rememberMeKey, id := accounts.rememberMeKey),
-                " Remember me"
-              )
-            ),
-            blockSubmitButton()("Sign in")
-          )
-        ),
-        rowColumn(ColMd4)(
-          formFeedback.fold(empty) { fb =>
-            alertDiv(s"$AlertDanger $FormSignin", fb.message)
-          }
-        ),
-        rowColumn(s"$ColMd4 $FormSignin")(
-          motd.fold(empty)(message => p(message))
-        )
-      )
+      LoginHtml.loginContent(accounts, motd, formFeedback, topFeedback)
     )
 
   def flexLibrary(items: MusicFolder, username: Username) = {
-    val relativePath = items.folder.path
     libraryBase("folders", WideContent, username)(
-      headerDiv(
-        h1("Library ", small(relativePath.path))
-      ),
-      row(
-        items.folders map { folder =>
-          musicItemDiv(
-            renderLibraryFolder(folder)
-          )
-        },
-        items.tracks map { track =>
-          musicItemDiv(
-            titledTrackActions(track)
-          )
-        }
-      ),
-      if (items.isEmpty && relativePath.path.isEmpty) {
-        leadPara("The library is empty. To get started, add music folders under ",
-          aHref(routes.SettingsController.settings())("Music Folders"), ".")
-      } else {
-        empty
-      }
+      LibraryHtml.libraryContent(items)
     )
   }
-
-  def musicItemDiv = divClass("music-item col-xs-12 col-sm-6 col-md-4 col-lg-3")
-
-  def renderLibraryFolder(folder: FolderMeta): Modifier = Seq[Modifier](
-    folderActions(folder.id),
-    " ",
-    aHref(routes.LibraryController.library(folder.id), `class` := s"$Lead folder-link")(folder.title)
-  )
-
-  def renderColumn(col: MusicColumn, onlyColumn: Boolean = false) =
-    divClass(if (onlyColumn) ColMd10 else ColMd4)(
-      ulClass(ListUnstyled)(
-        col.folders.map(f => li(Seq[Modifier](folderActions(f.id), " ", aHref(routes.LibraryController.library(f.id))(f.title)))),
-        col.tracks.map(t => liClass(Lead)(titledTrackActions(t)))
-      )
-    )
 
   def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username, extraHeader)(inner)
@@ -289,32 +198,6 @@ class PimpHtml(scripts: Modifier*) {
       ),
       section(divClass(contentClass)(inner))
     )
-
-  def folderActions(folder: FolderID) =
-    musicItemActions("folder", folder.id, Option("folder-buttons"), ariaLabel := "folder action")()
-
-  def titledTrackActions(track: TrackMeta) =
-    trackActions(track.id)(
-      dataButton(s"$BtnDefault $BtnBlock track play track-title", track.id.id)(track.title)
-    )
-
-  def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
-    musicItemActions("track", track.id, extraClass)(inner)
-
-  def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
-    val extra = extraClass.map(c => s" $c").getOrElse("")
-    divClass(s"$BtnGroup$extra", role := Group, groupAttrs)(
-      glyphButton(s"$BtnPrimary $itemClazz play", "play", itemId),
-      glyphButton(s"$BtnDefault $itemClazz add", "plus", itemId),
-      inner
-    )
-  }
-
-  def glyphButton(clazz: String, glyph: String, buttonId: String) =
-    dataButton(clazz, buttonId)(glyphIcon(glyph))
-
-  def dataButton(clazz: String, buttonId: String) =
-    button(`type` := Button, `class` := clazz, dataIdAttr := buttonId)
 
   def editFolders(folders: Seq[String],
                   folderPlaceholder: String,
@@ -349,146 +232,28 @@ class PimpHtml(scripts: Modifier*) {
   def cloud(cloudId: Option[CloudID],
             feedback: Option[UserFeedback],
             username: Username) = {
-    val successFeedback = cloudId
-      .map(id => s"Connected. You can now access this server using your credentials and this cloud ID: $id")
-      .map(UserFeedback.success)
-    val fb = feedback orElse successFeedback
     manage("cloud", username)(
-      headerRow()("Cloud"),
-      div(id := "cloud-form")(
-        leadPara("Connecting...")
-      ),
-      halfRow(
-        p("How does this work?"),
-        p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
-          "same machine on the internet and communicates with this server through the machine both parties have " +
-          "connected to. All traffic is encrypted. All music is streamed.")
-      )
-    )
-  }
-
-  def cloudForm(cloudId: Option[CloudID]) = {
-    val title = cloudId.fold("Connect")(_ => "Disconnect")
-    postableForm(routes.Cloud.toggle(), name := "toggleForm")(
-      if (cloudId.isEmpty) {
-        formGroup(
-          labelFor(Cloud.idFormKey)("Desired cloud ID (optional)"),
-          textInput(Text, FormControl, Cloud.idFormKey, Option("Your desired ID or leave empty"))
-        )
-      } else {
-        empty
-      },
-      blockSubmitButton(id := "toggleButton")(title)
+      CloudHtml.cloudContent
     )
   }
 
   def basePlayer(feedback: Option[UserFeedback], username: Username) =
     indexMain("player", username, Seq(cssLink(at("css/player.css"))))(
-      row(
-        divClass(ColMd6)(
-          headerDiv(h1("Player")),
-          div(id := "playerDiv", style := "display: none")(
-            feedback.fold(empty) { fb =>
-              div(id := "feedback")(feedbackDiv(fb))
-            },
-            fullRow(
-              pClass(Lead, id := "notracktext")(
-                "No track. Play one from the ",
-                aHref(routes.LibraryController.rootLibrary())("library"),
-                " or stream from a mobile device."
-              )
-            ),
-            playerCtrl
-          )
-        ),
-        divClass(ColMd6)(
-          headerDiv(h1("Playlist")),
-          pClass(Lead, id := "empty_playlist_text")("The playlist is empty."),
-          ol(id := "playlist")
-        )
-      )
+      PlayerHtml.playerContent(feedback)
     )
-
-  def playerCtrl: Modifier = {
-    val centerAttr = `class` := "track-meta"
-    Seq(
-      fullRow(
-        h2(id := "title", centerAttr)("No track"),
-        h4(id := "album", centerAttr),
-        h3(id := "artist", centerAttr)
-      ),
-      fullRow(
-        divClass(ColMd11)(
-          div(id := "slider")
-        ),
-        divClass(s"$Row $ColMd11", id := "progress")(
-          span(id := "pos")("00:00"), " / ", span(id := "duration")("00:00")
-        ),
-        divClass(s"$Row $ColMd11 text-center")(
-          imageInput(at("img/transport.rew.png"), id := "prevButton"),
-          imageInput(at("img/light/transport.play.png"), id := "playButton"),
-          imageInput(at("img/light/transport.pause.png"), id := "pauseButton", style := "display: none"),
-          imageInput(at("img/light/transport.ff.png"), id := "nextButton")
-        ),
-        divClass(s"$Row $ColMd11 $VisibleLg")(
-          divClass(ColMd3)(
-            imageInput(at("img/light/appbar.sound.3.png"), id := "volumeButton", `class` := PullRight)
-          ),
-          divClass(ColMd8)(
-            divClass(s"$ColMd12 $PullLeft", id := "volume")
-          )
-        )
-      )
-    )
-  }
 
   def alarms(clocks: Seq[ClockPlayback], username: Username) =
     manage("alarms", username)(
-      headerRow()("Alarms"),
-      fullRow(
-        stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
-          tbody(clocks.map(alarmRow))
-        )
-      ),
-      fullRow(
-        aHref(routes.Alarms.newAlarm())("Add alarm")
-      )
+      AlarmsHtml.alarmsContent(clocks)
     )
 
-  def alarmRow(ap: ClockPlayback) = {
-    val (enabledText, enabledAttr) = if (ap.enabled) ("Yes", empty) else ("No", `class` := "danger")
-    tr(td(ap.describe), td(enabledAttr)(enabledText), td(alarmActions(ap.id.getOrElse("nonexistent"))))
-  }
-
-  def stripedHoverTable(headers: Seq[Modifier])(tableBody: Modifier*) =
-    headeredTable(TableStripedHover, headers)(tableBody)
-
-  def alarmActions(id: String) =
-    divClass(BtnGroup)(
-      aHref(routes.Alarms.editAlarm(id), `class` := s"$BtnDefault $BtnSm")(glyphIcon("edit"), " Edit"),
-      aHref("#", dataToggle := Dropdown, `class` := s"$BtnDefault $BtnSm $DropdownToggle")(spanClass(Caret)),
-      ulClass(DropdownMenu)(
-        jsListElem("delete", id, "remove", "Delete"),
-        jsListElem("play", id, "play", "Play"),
-        jsListElem("stop", id, "stop", "Stop")
-      )
-    )
-
-  def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
-    liHref("#", `class` := clazz, dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
-
-  def alarmEditor(form: Form[ClockPlayback], feedback: Option[UserFeedback], username: Username, m: Messages) =
+  def alarmEditor(form: Form[ClockPlayback],
+                  feedback: Option[UserFeedback],
+                  username: Username,
+                  m: Messages) =
     manage("alarms", username)(
       AlarmsHtml.alarmEditorContent(form, feedback, m)
     )
-
-  def textInput(inType: String, clazz: String, idAndName: String, placeHolder: Option[String], more: Modifier*) =
-    textInputBase(inType, idAndName, placeHolder, `class` := clazz, more)
-
-  def textInputBase(inType: String, idAndName: String, placeHolder: Option[String], more: Modifier*) = {
-    val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
-    namedInput(idAndName, `type` := inType, placeholderAttr, more)
-  }
 
   def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
     manage(tab, Container, username, extraHeader: _*)(inner: _*)
@@ -507,95 +272,18 @@ class PimpHtml(scripts: Modifier*) {
       section(divClass(contentClass)(inner))
     )
 
-  def addUser(addFeedback: Option[UserFeedback]) =
-    postableForm(routes.Accounts.formAddUser())(
-      inGroup("username", Text, "Username"),
-      passwordInputs(),
-      blockSubmitButton()("Add User"),
-      addFeedback.fold(empty)(feedbackDiv)
-    )
-
   def alertClass(flash: Flash) =
     if (flash.get(Accounts.Success) contains "yes") AlertSuccess
     else AlertDanger
 
   def account(username: Username, feedback: Option[UserFeedback]) =
     indexMain("account", username)(
-      headerRow(ColMd4)("Account"),
-      rowColumn(ColMd4)(
-        changePassword(username, feedback)
-      )
-    )
-
-  def changePassword(username: Username, feedback: Option[UserFeedback]) =
-    postableForm(routes.Accounts.formChangePassword())(
-      formGroup(
-        labelFor("user")("Username"),
-        divClass("controls")(
-          spanClass(s"$UneditableInput $InputMd", id := "user")(username.name)
-        )
-      ),
-      passwordGroup("oldPassword", "Old password"),
-      passwordInputs("New password", "Repeat new password"),
-      blockSubmitButton("Change Password"),
-      feedback.fold(empty)(feedbackDiv)
-    )
-
-  def passwordInputs(firstLabel: String = "Password", repeatLabel: String = "Repeat password"): Modifier = Seq(
-    passwordGroup("newPassword", firstLabel),
-    passwordGroup("newPasswordAgain", repeatLabel)
-  )
-
-  def passwordGroup(elemId: String, labelText: String) =
-    inGroup(elemId, Password, labelText)
-
-  def inGroup(elemId: String, inType: String, labelText: String) =
-    formGroup(
-      labelFor(elemId)(labelText),
-      divClass("controls")(
-        namedInput(elemId, `type` := inType, `class` := s"$FormControl $InputMd", required)
-      )
+      UsersHtml.accountContent(username, feedback)
     )
 
   def aboutBase(user: Username) = indexMain("about", user)(
-    headerRow(ColMd6)("About"),
-    rowColumn(ColMd8)(
-      leadPara(s"MusicPimp ${BuildInfo.version}"),
-      p("Developed by Michael Skogberg."),
-      p("Check out ", aHref("https://www.musicpimp.org")("www.musicpimp.org"), " for the latest documentation.")
-    ),
-    rowColumn(ColMd8)(
-      h3("Third Party Software"),
-      p("This app uses the following third party software:"),
-      divClass("panel-group", id := "accordion")(
-        licensePanel("collapseOne", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
-        licensePanel("collapseTwo", Licenses.MIT, "software licensed under the ", "MIT License"),
-        licensePanel("collapseThree", Licenses.APACHE, "software licensed under ", "Apache License 2.0"),
-        licensePanel("collapseFour", Licenses.LGPL, "Tritonus plugins, licensed under the ", "GNU Lesser General Public License (LGPL)")
-      ),
-      p("... and icons by ", aHref("https://glyphicons.com")("Glyphicons"), ".")
-    )
+    AboutHtml.aboutBaseContent
   )
-
-  def licensePanel(elemId: String, licenseText: String, prefix: String, linkText: String) =
-    thirdPartyPanel(elemId, licenseText)(
-      prefix, panelSummary(prefix, elemId, linkText)
-    )
-
-  def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) =
-    divClass("panel panel-default")(
-      divClass("panel-heading")(
-        spanClass("accordion-toggle")(toggleHtml)
-      ),
-      divClass(s"accordion-body $Collapse", id := elemId)(
-        divClass("accordion-inner")(
-          pre(`class` := "pre-scrollable")(innerContent)
-        )
-      )
-    )
-
-  def panelSummary(prefix: String, elemId: String, linkText: String) =
-    aHref(s"#$elemId", dataToggle := Collapse, dataParent := "#accordion")(linkText)
 
   def indexMain(tabName: String,
                 user: Username,
