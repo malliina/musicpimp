@@ -6,17 +6,17 @@ import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
-import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
+import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry}
 import com.malliina.musicpimp.tags.PimpHtml._
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
-import controllers.musicpimp.{Accounts, SettingsController, UserFeedback, routes, Search => _}
+import controllers.musicpimp.{UserFeedback, routes, Search => _}
 import controllers.routes.Assets.at
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
-import play.api.mvc.{Call, Flash}
+import play.api.mvc.Call
 
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
@@ -80,32 +80,7 @@ class PimpHtml(scripts: Modifier*) {
 
   def search(query: Option[String], results: Seq[DataTrack], username: Username) =
     libraryBase("search", username)(
-      headerRow()("Search"),
-      row(
-        div4(
-          searchForm(None, "")
-        ),
-        divClass(s"$ColMd4 $ColMdOffset4")(
-          button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := "refresh-button")(glyphIcon("refresh"), " "),
-          span(id := "index-info")
-        )
-      ),
-      fullRow(
-        if (results.nonEmpty) {
-          responsiveTable(results)("Track", "Artist", "Album", "Actions") { track =>
-            Seq(
-              td(track.title),
-              td(track.artist),
-              td(track.album),
-              td(LibraryHtml.trackActions(track.id, Option("flex"))())
-            )
-          }
-        } else {
-          query.fold(empty) { term =>
-            h3(s"No results for '$term'.")
-          }
-        }
-      )
+      SearchHtml.searchContent(query, results)
     )
 
   def musicFolders(folders: Seq[String],
@@ -114,59 +89,25 @@ class PimpHtml(scripts: Modifier*) {
                    feedback: Option[UserFeedback]) =
     manage("folders", username)(
       headerRow(ColMd8)("Music Folders"),
-      editFolders(folders, folderPlaceholder, feedback)
+      SettingsHtml.editFolders(folders, folderPlaceholder, feedback)
     )
 
   def mostRecent(entries: Seq[RecentEntry], username: Username) =
-    topList[RecentEntry]("recent", username, "Most recent", entries, "When", _.whenFormatted)
+    topList("recent", username, TopHtml.mostRecentContent(entries, username))
 
   def mostPopular(entries: Seq[PopularEntry], username: Username) =
-    topList[PopularEntry]("popular", username, "Most popular", entries, "Plays", _.playbackCount)
+    topList("popular", username, TopHtml.mostPopular(entries, username))
 
-  def topList[T <: TopEntry](tab: String,
-                             username: Username,
-                             headerText: String,
-                             entries: Seq[T],
-                             fourthHeader: String,
-                             fourthValue: T => Modifier) =
-    libraryBase(tab, username)(
-      headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${username.name}")),
-      fullRow(
-        responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
-          Seq(
-            td(entry.track.title),
-            td(entry.track.artist),
-            td(entry.track.album),
-            td(fourthValue(entry)),
-            td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
-          )
-        }
-      )
-    )
+  def topList(tab: String, username: Username, inner: Modifier) =
+    libraryBase(tab, username)(inner)
 
   def logs(levelField: Field,
            levels: Seq[Level],
            currentLevel: Level,
            username: Username,
-           errorMsg: Option[String]) =
+           feedback: Option[UserFeedback]) =
     manage("logs", WideContent, username)(
-      headerRow()("Logs"),
-      errorMsg.fold(empty)(msg => fullRow(leadPara(msg))),
-      rowColumn(ColMd4)(
-        postableForm(routes.LogPage.changeLogLevel())(
-          formGroup(
-            select(`class` := FormControl, id := levelField.id, name := levelField.name, onchange := "this.form.submit()")(
-              levels.map(level => option(if (level == currentLevel) selected else empty)(level.toString))
-            )
-          )
-        )
-      ),
-      fullRow(
-        headeredTable(s"$TableStripedHover $TableResponsive $TableCondensed",
-          Seq("Time", "Message", "Logger", "Thread", "Level"))(
-          tbody(id := "logTableBody")
-        )
-      )
+      LogsHtml.logsContent(levelField, levels, currentLevel, feedback)
     )
 
   def login(accounts: AccountForms,
@@ -197,36 +138,6 @@ class PimpHtml(scripts: Modifier*) {
         )
       ),
       section(divClass(contentClass)(inner))
-    )
-
-  def editFolders(folders: Seq[String],
-                  folderPlaceholder: String,
-                  errorMessage: Option[UserFeedback]) =
-    halfRow(
-      ulClass(ListUnstyled)(
-        folders.map(renderFolder)
-      ),
-      postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
-        divClass(InputGroup)(
-          spanClass(InputGroupAddon)(glyphIcon("folder-open")),
-          textInputBase(Text, SettingsController.Path, Option(folderPlaceholder), `class` := FormControl, required),
-          spanClass(InputGroupBtn)(
-            submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
-          )
-        ),
-        errorMessage.fold(empty)(feedbackDiv)
-      )
-    )
-
-  def renderFolder(folder: String) =
-    postableForm(routes.SettingsController.deleteFolder(folder), `class` := FormHorizontal)(
-      divClass(InputGroup)(
-        spanClass(InputGroupAddon)(glyphIcon("folder-open")),
-        spanClass(s"$UneditableInput $FormControl")(folder),
-        spanClass(InputGroupBtn)(
-          submitButton(`class` := BtnDanger)(glyphIcon("remove"), " Delete")
-        )
-      )
     )
 
   def cloud(cloudId: Option[CloudID],
@@ -271,10 +182,6 @@ class PimpHtml(scripts: Modifier*) {
       ),
       section(divClass(contentClass)(inner))
     )
-
-  def alertClass(flash: Flash) =
-    if (flash.get(Accounts.Success) contains "yes") AlertSuccess
-    else AlertDanger
 
   def account(username: Username, feedback: Option[UserFeedback]) =
     indexMain("account", username)(
@@ -328,7 +235,7 @@ class PimpHtml(scripts: Modifier*) {
               eye("failstatus", "eye-close red")
             ),
             divClass(s"$ColMd4 $PullRight")(
-              searchForm(None, formClass = NavbarForm, "")
+              SearchHtml.searchForm(None, formClass = NavbarForm, "")
             )
           )
         )
@@ -347,16 +254,6 @@ class PimpHtml(scripts: Modifier*) {
 
   def eye(elemId: String, glyphSuffix: String) =
     pClass(s"$NavbarText $PullRight $HiddenXs $Hide", id := elemId)(glyphIcon(glyphSuffix))
-
-  def searchForm(query: Option[String] = None, formClass: String, size: String = InputGroupLg) =
-    form(action := routes.SearchPage.search(), role := Search, `class` := formClass)(
-      divClass(s"$InputGroup $size")(
-        input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("artist, album or track..."), name := "term", id := "term"),
-        divClass(InputGroupBtn)(
-          defaultSubmitButton(glyphIcon("search"))
-        )
-      )
-    )
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
@@ -411,5 +308,4 @@ class PimpHtml(scripts: Modifier*) {
 
   def awesomeLi(elemId: String, faIcon: String) =
     li(id := elemId, `class` := Hide)(aHref("#")(iClass(s"fa fa-$faIcon")))
-
 }
