@@ -1,14 +1,13 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
+import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.musicpimp.tags.PimpHtml
-import com.malliina.play.CookieAuthenticator
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
 import play.api.i18n.Messages
@@ -16,14 +15,16 @@ import play.api.libs.json.Json._
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.Result
 
-class Alarms(tags: PimpHtml, auth: CookieAuthenticator, messages: Messages, mat: Materializer)
-  extends AlarmEditor(tags, auth, messages, mat)
+class Alarms(tags: PimpHtml,
+             auth: AuthDeps,
+             messages: Messages)
+  extends AlarmEditor(tags, auth, messages)
     with SchedulerStrings {
 
   def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
 
-    respond(request)(
+    default.respond(request)(
       html = tags.alarms(content, request.user),
       json = Json.toJson(content)
     )

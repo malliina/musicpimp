@@ -3,6 +3,7 @@ package controllers.musicpimp
 import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
+import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.play.ActorExecution

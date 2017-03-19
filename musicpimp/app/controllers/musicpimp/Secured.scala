@@ -1,28 +1,22 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
-import com.malliina.play.CookieAuthenticator
-import controllers.musicpimp.Secured.log
+import com.malliina.musicpimp.auth.PimpAuths
+import com.malliina.play.auth.Authenticator
+import com.malliina.play.controllers.AuthBundle
+import com.malliina.play.http.{AuthedRequest, Proxies}
 import play.api.Logger
 import play.api.mvc._
 
-class Secured(auth: CookieAuthenticator, mat: Materializer)
-  extends SecureBase(auth, mat) {
-
-  protected def logUnauthorized(request: RequestHeader): Unit = {
-    log warn "Unauthorized request: " + request.path + " from: " + request.remoteAddress
-  }
-
-  protected override def onUnauthorized(request: RequestHeader): Result = {
-    logUnauthorized(request)
-    log debug s"Intended: ${request.uri}"
-    pimpResult(request)(
-      html = Redirect(routes.Accounts.login()).withSession(Accounts.IntendedUri -> request.uri),
-      json = accessDenied
-    )
-  }
-}
+class Secured(auth: AuthDeps) extends SecureBase(auth)
 
 object Secured {
   private val log = Logger(getClass)
+
+  def logUnauthorized(request: RequestHeader): Unit = {
+    val remoteAddress = Proxies.realAddress(request)
+    log warn s"Unauthorized request '${request.path}' from '$remoteAddress'."
+  }
+
+  def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
+    PimpAuths.redirecting(routes.Accounts.login(), auth)
 }

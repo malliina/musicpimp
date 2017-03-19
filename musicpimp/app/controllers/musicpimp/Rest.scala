@@ -4,7 +4,6 @@ import java.io._
 import java.net.UnknownHostException
 import java.nio.file._
 
-import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
@@ -12,10 +11,11 @@ import com.malliina.file.FileUtilities
 import com.malliina.http.TrustAllMultipartRequest
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
+import com.malliina.musicpimp.http.PimpContentController
+import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models._
-import com.malliina.play.CookieAuthenticator
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
 import com.malliina.play.models.Username
@@ -32,11 +32,10 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 class Rest(webPlayer: WebPlayer,
-           auth: CookieAuthenticator,
+           auth: AuthDeps,
            handler: PlaybackMessageHandler,
-           statsPlayer: StatsPlayer,
-           mat: Materializer)
-  extends Secured(auth, mat) {
+           statsPlayer: StatsPlayer)
+  extends Secured(auth) {
 
   def ping = Action(NoCache(Ok))
 
@@ -124,7 +123,7 @@ class Rest(webPlayer: WebPlayer,
 
   def status = pimpAction { req =>
     implicit val w = TrackJson.writer(req)
-    pimpResponse(req)(
+    PimpContentController.default.pimpResponse(req)(
       html = NoContent,
       json17 = Json.toJson(MusicPlayer.status17),
       latest = Json.toJson(MusicPlayer.status)
@@ -206,7 +205,7 @@ class Rest(webPlayer: WebPlayer,
     pimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
-        AckResponse(request)
+        default.AckResponse(request)
       } catch {
         case iae: IllegalArgumentException =>
           log error("Illegal argument", iae)
@@ -224,7 +223,7 @@ class Rest(webPlayer: WebPlayer,
     metaUploadAction { req =>
       songAction(req.track)
       statsPlayer.updateUser(req.username)
-      AckResponse(req)
+      default.AckResponse(req)
     }
 
   private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =

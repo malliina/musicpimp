@@ -74,14 +74,19 @@ class CloudWS(clouds: Clouds, ctx: ActorExecution) {
   def openSocket = sockets.newSocket
 }
 
+object CloudMediator {
+  private val log = Logger(getClass)
+}
+
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
+  import CloudMediator.log
   val jsonEvents = clouds.connection.map(event => Json.toJson(event))
   var subscription: Option[Subscription] = None
 
   override def preStart(): Unit = {
     val sub = jsonEvents.subscribe(
       e => self ! Broadcast(e),
-      (err: Throwable) => log.error(s"WebSocket error.", err),
+      (err: Throwable) => log.error("WebSocket error.", err),
       () => ())
     subscription = Option(sub)
   }
@@ -92,11 +97,11 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
       case DisconnectCmd => JsSuccess(Disconnect)
       case ConnectCmd => cmd.key[CloudID](Id).map(id => Connect(id))
       case CloudWS.Subscribe => JsSuccess(Noop)
-      case other => JsError(s"Unknown command: '$other'.")
+      case other => JsError(s"Unknown command '$other'.")
     }
     parsed
       .map(handleCommand)
-      .recoverTotal(err => log.error(s"Invalid JSON: '$message'., $err"))
+      .recoverTotal(err => log.error(s"Invalid JSON '$message'. $err"))
   }
 
   def handleCommand(cmd: CloudCommand): Any = {

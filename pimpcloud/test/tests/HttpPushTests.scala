@@ -32,8 +32,8 @@ object TestAuth extends PimpAuth {
   override def authenticate(request: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
     Future.successful(Right(AuthedRequest(testUser, request)))
 
-  override def authAction(f: FullRequest => Result) = Action { req =>
-    val fakeRequest = new FullRequest(testUser, req, None)
+  override def authAction(f: AuthedRequest => Result) = Action { req =>
+    val fakeRequest = AuthedRequest(testUser, req, None)
     f(fakeRequest)
   }
 }

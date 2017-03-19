@@ -1,13 +1,12 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
+import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
 import com.malliina.musicpimp.tags.PimpHtml
-import com.malliina.play.CookieAuthenticator
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
 import controllers.musicpimp.Playlists.log
@@ -28,8 +27,7 @@ object Playlists {
 
 class Playlists(tags: PimpHtml,
                 service: PlaylistService,
-                auth: CookieAuthenticator,
-                mat: Materializer) extends Secured(auth, mat) {
+                auth: AuthDeps) extends Secured(auth) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val tracksMapping: Mapping[Seq[TrackID]] = seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
@@ -43,7 +41,7 @@ class Playlists(tags: PimpHtml,
     implicit val f = PlaylistsMeta.format(TrackJson.format(req))
     val user = req.user
     service.playlistsMeta(user).map(playlists => {
-      respond(req)(
+      default.respond(req)(
         html = tags.playlists(playlists.playlists, user),
         json = Json.toJson(playlists)
       )
@@ -55,7 +53,7 @@ class Playlists(tags: PimpHtml,
     val user = req.user
     service.playlistMeta(id, user).map { result =>
       result.map { playlist =>
-        respond(req)(
+        default.respond(req)(
           html = tags.playlist(playlist.playlist, user),
           json = Json.toJson(playlist)
         )

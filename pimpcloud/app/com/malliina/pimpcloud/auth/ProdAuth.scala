@@ -4,7 +4,7 @@ import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.FutureFunctions
 import com.malliina.pimpcloud.ws.PhoneConnection
-import com.malliina.play.auth.{Auth, AuthFailure, InvalidCredentials, MissingCredentials}
+import com.malliina.play.auth._
 import com.malliina.play.models.Username
 import com.malliina.ws.JsonFutureSocket
 import controllers.pimpcloud.{ServerRequest, Servers}
@@ -19,29 +19,32 @@ object ProdAuth {
 class ProdAuth(servers: Servers) extends CloudAuthentication {
   implicit val ec = servers.ctx.executionContext
 
-  override def authServer(req: RequestHeader): Future[ServerRequest] = {
+  override def authServer(req: RequestHeader): Future[Either[AuthFailure, ServerRequest]] = {
     val requestOpt = for {
       requestID <- req.headers get JsonFutureSocket.RequestId
       request <- RequestID.build(requestID)
     } yield request
-    for {
-      request <- toFuture(requestOpt)
-      ss <- servers.connectedServers
-      server <- toFuture(findServer(ss, request))
-    } yield server
+    requestOpt.map { reqID =>
+      servers.connectedServers.map { ss =>
+        findServer(ss, reqID).toRight(InvalidCredentials(req))
+      }
+    }.getOrElse {
+      fut(Left(InvalidCredentials(req)))
+    }
   }
+
+  override val phone: Authenticator[PhoneConnection] = Authenticator(authPhone)
+  override val server: Authenticator[ServerRequest] = Authenticator(authServer)
+  //override def webClient: Authenticator[PhoneConnection] = Authenticator(authWebClient)
 
   override def authPhone(req: RequestHeader): PhoneAuthResult =
     connectedServers.flatMap(servers => authPhone(req, servers))
 
-  override def validate(creds: CloudCredentials): PhoneAuthResult =
+  override def authWebClient(creds: CloudCredentials): PhoneAuthResult =
     connectedServers.flatMap(servers => validate(creds, servers))
 
   private def findServer(ss: Set[PimpServerSocket], request: RequestID): Option[ServerRequest] =
     ss.find(_.fileTransfers.exists(request)).map(s => ServerRequest(request, s))
-
-  private def toFuture[T](opt: Option[T]): Future[T] =
-    opt.map(Future.successful).getOrElse(Future.failed(new NoSuchElementException))
 
   /**
     * @param req request

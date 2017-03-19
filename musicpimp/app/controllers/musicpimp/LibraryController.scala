@@ -1,21 +1,21 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.audio.TrackJson
+import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FailReason, FolderID, MusicColumn, TrackID}
 import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.play.FileResults
+import com.malliina.play.auth.AuthFailure
 import com.malliina.play.models.Username
 import com.malliina.play.tags.TagPage
-import com.malliina.play.{CookieAuthenticator, FileResults}
 import play.api.libs.json.Json
 import play.api.mvc._
 
 class LibraryController(tags: PimpHtml,
                         lib: MusicLibrary,
-                        auth: CookieAuthenticator,
-                        mat: Materializer)
-  extends Secured(auth, mat) {
+                        auth: AuthDeps)
+  extends Secured(auth) {
 
   def siteRoot = rootLibrary
 
@@ -38,14 +38,14 @@ class LibraryController(tags: PimpHtml,
   def allTracks = tracksIn(Library.RootId)
 
   private def folderNotFound(id: FolderID, request: RequestHeader): Result = {
-    pimpResult(request)(
+    default.pimpResult(request)(
       html = NotFound,
       json = notFound(s"Folder not found: $id")
     )
   }
 
   private def folderResult(collection: => MusicFolder, request: PimpRequest): Result = {
-    respond(request)(
+    default.respond(request)(
       html = toHtml(collection, request.user),
       json = Json.toJson(collection)(MusicFolder.writer(request))
     )
@@ -76,8 +76,8 @@ class LibraryController(tags: PimpHtml,
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
     }
 
-  def onDownloadAuthFail(req: RequestHeader): Result = {
-    logUnauthorized(req)
+  def onDownloadAuthFail(failure: AuthFailure): Result = {
+    Secured.logUnauthorized(failure.rh)
     Unauthorized
   }
 

@@ -49,13 +49,18 @@ class Search(indexer: Indexer, auth: Authenticator[AuthedRequest], ctx: ActorExe
   val subscription = indexer.ongoing.subscribe(op => subscribeUntilComplete(op, loggingObserver))
   val sockets = new Sockets(auth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
-      Props(new SearchActor(indexer, conf, ec))
+      Props(new SearchActor(indexer, conf))
   }
 
   def openSocket = sockets.newSocket
 }
 
-class SearchActor(indexer: Indexer, ctx: ActorMeta, ec: ExecutionContext) extends JsonActor(ctx) {
+object SearchActor {
+  private val log = Logger(getClass)
+}
+
+class SearchActor(indexer: Indexer, ctx: ActorMeta)
+  extends JsonActor(ctx) {
   var subscription: Option[Subscription] = None
   val socketBroadcaster = indexingObserver(
     msg => send(msg),
@@ -69,7 +74,7 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta, ec: ExecutionContext) extend
   }
 
   override def onMessage(msg: JsValue): Unit = {
-    (msg \ Cmd).asOpt[String].fold(log warning s"Unknown message: $msg")({
+    (msg \ Cmd).asOpt[String].fold(SearchActor.log warn s"Unknown message: $msg")({
       case Refresh =>
         send("Indexing...")
         indexer.indexAndSave()

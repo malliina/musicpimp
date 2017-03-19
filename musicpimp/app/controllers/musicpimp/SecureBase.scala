@@ -2,14 +2,11 @@ package controllers.musicpimp
 
 import java.nio.file.Path
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.http.PimpUploads
-import com.malliina.play.CookieAuthenticator
-import com.malliina.play.auth.BasicCredentials
-import com.malliina.play.concurrent.FutureOps2
+import com.malliina.play.auth.AuthFailure
 import com.malliina.play.controllers._
 import com.malliina.play.http._
-import com.malliina.play.models.{Password, Username}
+import com.malliina.play.models.Username
 import controllers.musicpimp.SecureBase.log
 import play.api.Logger
 import play.api.http.Writeable
@@ -19,47 +16,18 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-class SecureBase(auth: CookieAuthenticator, mat: Materializer)
-  extends BaseSecurity(mat)
-    with PimpContentController
+class SecureBase(auth: AuthDeps)
+  extends BaseSecurity(auth.auth, auth.mat)
     with Controller {
 
   val uploads = PimpUploads
-
-  override def authenticate(request: RequestHeader): Future[Option[AuthedRequest]] =
-    super.authenticate(request).checkOrElse(_.nonEmpty, auth.authenticateFromCookie(request))
-
-  /** Validates the supplied credentials.
-    *
-    * Hashes the supplied credentials and compares the hash with the first line of
-    * the password file. If they equal, validation succeeds, otherwise it fails.
-    *
-    * If the password file doesn't exist, it means no password has ever been set thus
-    * the credentials are compared against the default credentials.
-    *
-    * @param username the supplied username
-    * @param password the supplied password
-    * @return true if the credentials are valid, false otherwise
-    */
-  def validateCredentials(username: Username, password: Password): Future[Boolean] =
-    auth.authenticate(username, password)
-
-  override def validateCredentials(creds: BasicCredentials): Future[Boolean] =
-    validateCredentials(creds.username, creds.password)
-
-  /** Authenticates, logs authenticated request, executes action, in that order.
-    *
-    * If authentication fails, logs auth fail message.
-    */
-  def authenticatedAndLogged(f: AuthedRequest => EssentialAction): EssentialAction =
-    authenticated(user => logged(user, f))
 
   /** Returns an action with the result specified in <code>onFail</code> if authentication fails.
     *
     * @param onFail result to return if authentication fails
     * @param f      the action we want to do
     */
-  def customFailingPimpAction(onFail: RequestHeader => Result)(f: AuthedRequest => Result) =
+  def customFailingPimpAction(onFail: AuthFailure => Result)(f: AuthedRequest => Result) =
     authenticatedAsync(req => authenticate(req), onFail) { user =>
       logged(user, user => Action(req => maybeWithCookie(user, f(user))))
     }
@@ -77,9 +45,10 @@ class SecureBase(auth: CookieAuthenticator, mat: Materializer)
     pimpParsedAction(parse.default)(req => f(req))
 
   def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
-    pimpUploadAction { req => req.files.headOption
-      .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user.name, req)))
-      .getOrElse(badRequest(s"File missing"))
+    pimpUploadAction { req =>
+      req.files.headOption
+        .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user.name, req)))
+        .getOrElse(badRequest(s"File missing"))
     }
 
   def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Result) =
@@ -104,7 +73,7 @@ class SecureBase(auth: CookieAuthenticator, mat: Materializer)
     pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
   def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
-    authenticatedAndLogged { auth =>
+    authenticatedLogged { auth =>
       Action.async(parser) { req =>
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))

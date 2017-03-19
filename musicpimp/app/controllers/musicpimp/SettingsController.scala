@@ -3,11 +3,9 @@ package controllers.musicpimp
 import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.musicpimp.tags.PimpHtml
-import com.malliina.play.CookieAuthenticator
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
 import play.api.Logger
@@ -21,13 +19,12 @@ import scala.util.Try
 class SettingsController(tags: PimpHtml,
                          messages: Messages,
                          indexer: Indexer,
-                         auth: CookieAuthenticator,
-                         mat: Materializer)
-  extends HtmlController(auth, mat) {
+                         auth: AuthDeps)
+  extends HtmlController(auth) {
   val Success = "success"
   val dirConstraint = Constraint((dir: String) =>
     if (validateDirectory(dir)) Valid
-    else Invalid(Seq(ValidationError(s"Invalid directory: '$dir'."))))
+    else Invalid(Seq(ValidationError(s"Invalid directory '$dir'."))))
 
   protected val newFolderForm = Form(
     SettingsController.Path -> nonEmptyText.verifying(dirConstraint)
@@ -55,7 +52,7 @@ class SettingsController(tags: PimpHtml,
 
   def deleteFolder(folder: String) = pimpAction {
     val decoded = URLDecoder.decode(folder, "UTF-8")
-    log info s"Attempting to remove folder: $decoded"
+    log info s"Attempting to remove folder '$decoded'..."
     val path = Paths get decoded
     Settings delete path
     onFoldersChanged(s"Removed folder '$decoded'.")

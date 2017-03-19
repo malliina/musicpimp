@@ -1,14 +1,15 @@
 package com.malliina.musicpimp.models
 
 import akka.stream.scaladsl.SourceQueue
+import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.JsonFormatVersions
 import com.malliina.musicpimp.models.ClientInfo.log
 import com.malliina.play.models.Username
 import com.malliina.play.ws.SocketClient
-import controllers.musicpimp.PimpRequest
 import play.api.Logger
 import play.api.http.MimeTypes
 import play.api.mvc.RequestHeader
+
 /**
   * @param channel channel used to push messages to the client
   * @param request the request headers from the HTTP request that initiated the WebSocket connection
@@ -39,7 +40,7 @@ case class ClientInfo[T](channel: SourceQueue[T], request: RequestHeader, user: 
   val apiVersion = PimpRequest.requestedResponseFormat(request)
     .filter(_ != MimeTypes.HTML)
     .getOrElse(JsonFormatVersions.JSONv17)
-  log debug s"Client connected with API version: $apiVersion"
+  log debug s"Client connected with API version '$apiVersion'."
   override val toString = describe
 }
 
