@@ -14,6 +14,9 @@ import play.api.ApplicationLoader.Context
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.gzip.GzipFilter
+import CloudComponents.log
+import com.malliina.play.auth.UserAuthenticator
+import com.malliina.play.http.AuthedRequest
 
 class CloudLoader extends DefaultApp(new ProdComponents(_))
 
@@ -23,14 +26,17 @@ class ProdComponents(context: Context) extends CloudComponents(context, ProdPush
 
 abstract class CloudComponents(context: Context,
                                pusher: Pusher,
-                               oauthCreds: GoogleOAuthCredentials) extends BuiltInComponentsFromContext(context) {
+                               oauthCreds: GoogleOAuthCredentials)
+  extends BuiltInComponentsFromContext(context) {
+
   def pimpAuth: PimpAuth
+  implicit val ec = materializer.executionContext
 
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   val adminAuth = new AdminOAuth(oauthCreds, materializer)
-  lazy val auth = new CloudAuth(materializer)
-  val forms = new AccountForms
+  val authenticator = UserAuthenticator.session().transform((req, user) => Right(AuthedRequest(user, req)))
+  lazy val auth = new CloudAuth(authenticator, materializer)
 
   lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
   lazy val ctx = ActorExecution(actorSystem, materializer)
@@ -45,10 +51,10 @@ abstract class CloudComponents(context: Context,
   lazy val sc = new ServersController(cloudAuths, auth)
   lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags, materializer)
   lazy val l = new Logs(tags, pimpAuth, ctx)
-  lazy val w = new Web(tags, cloudAuths, materializer.executionContext, forms)
+  lazy val w = new Web(tags, cloudAuths, ec)
   lazy val as = new Assets(httpErrorHandler)
   lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, joined.us, as)
-  CloudComponents.log.info(s"Started pimpcloud ${BuildInfo.version}")
+  log info s"Started pimpcloud ${BuildInfo.version}"
 }
 
 object CloudComponents {

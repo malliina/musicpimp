@@ -5,8 +5,11 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.CookieAuthenticator
+import com.malliina.play.auth.Authenticator
+import com.malliina.play.controllers.AuthBundle
+import com.malliina.play.http.AuthedRequest
 import controllers.musicpimp.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -15,8 +18,10 @@ import play.api.http.Writeable
 import play.api.i18n.Messages
 import play.api.mvc.Result
 
-class AlarmEditor(tags: PimpTags, auth: CookieAuthenticator, messages: Messages, mat: Materializer)
-  extends Secured(auth, mat)
+class AlarmEditor(tags: PimpHtml,
+                  auth: AuthDeps,
+                  messages: Messages)
+  extends Secured(auth)
     with SchedulerStrings {
 
   private val clockForm: Form[ClockPlayback] = Form(mapping(

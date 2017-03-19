@@ -7,6 +7,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
 import com.malliina.musicpimp.cloud.Search
+import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors._
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
@@ -14,7 +15,7 @@ import com.malliina.pimpcloud.auth.CloudAuthentication
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.ContentRange
-import com.malliina.play.controllers.Caching
+import com.malliina.play.controllers.{AuthBundle, BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
@@ -49,6 +50,9 @@ class Phones(tags: CloudTags,
              val auth: CloudAuth)
   extends PimpContentController
     with Controller {
+
+  val phoneBundle = AuthBundle.default(cloudAuths.phone)
+  val phoneAuth = new BaseSecurity(phoneBundle, auth.mat)
 
   def ping = proxiedGetAction(Ping)
 
@@ -95,7 +99,7 @@ class Phones(tags: CloudTags,
     * @param id id of the requested track
     */
   def track(id: TrackID): EssentialAction = {
-    phoneAction { conn =>
+    phoneAuth.authenticatedLogged { conn =>
       val sourceServer = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
@@ -223,13 +227,7 @@ class Phones(tags: CloudTags,
     }
 
   private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
-    phoneAction(socket => Action.async(parser)(req => f(req, socket)))
-
-  private def phoneAction(f: PhoneConnection => EssentialAction) =
-    auth.loggedSecureActionAsync(rh =>
-      cloudAuths.authPhone(rh).flatMap(res =>
-        res.fold(_ => Future.failed(Phones.invalidCredentials),
-          conn => fut(conn))))(f)
+    phoneAuth.authenticatedLogged(socket => Action.async(parser)(req => f(req, socket)))
 
   private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[ValidationError])]) = {
     log.error(s"Parse error. $err")

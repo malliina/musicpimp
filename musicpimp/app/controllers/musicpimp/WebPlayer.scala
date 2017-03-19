@@ -3,11 +3,13 @@ package controllers.musicpimp
 import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.Auths
+import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings, Target}
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
 import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
 import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
+import controllers.musicpimp.WebPlayActor.log
 import play.api.Logger
 import play.api.libs.json.JsValue
 
@@ -22,6 +24,10 @@ class WebPlayer(ctx: ActorExecution) {
   def openSocket = sockets.newSocket
 }
 
+object WebPlayer {
+  private val log = Logger(getClass)
+}
+
 class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
   val user = remote.user
   val target = Target(json => out ! json)
@@ -34,7 +40,7 @@ class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
   }
 
   override def onMessage(msg: JsValue) = {
-    (msg \ JsonStrings.Cmd).asOpt[String].fold(log warning s"Unknown message: $msg")({
+    (msg \ JsonStrings.Cmd).asOpt[String].fold(log warn s"Unknown message '$msg'.")({
       case JsonStrings.StatusKey =>
         log info s"User '$user' from '$address' said '$msg'."
         val event = JsonMessages.withStatus(statusEvent())
@@ -52,6 +58,6 @@ class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
   }
 }
 
-object WebPlayer {
+object WebPlayActor {
   private val log = Logger(getClass)
 }

@@ -2,23 +2,21 @@ package controllers.musicpimp
 
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 
-import akka.stream.Materializer
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
+import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
-import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.CookieAuthenticator
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.models.Username
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 
 import scala.concurrent.Future
 
-class Website(tags: PimpTags,
+class Website(tags: PimpHtml,
               serverWS: ServerWS,
-              auth: CookieAuthenticator,
-              stats: PlaybackStats,
-              mat: Materializer)
-  extends HtmlController(auth, mat) {
+              auth: AuthDeps,
+              stats: PlaybackStats)
+  extends HtmlController(auth) {
 
   def player = navigate { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
@@ -28,13 +26,14 @@ class Website(tags: PimpTags,
       } else {
         MusicPlayer.errorOpt.map(errorMsg)
       }
-    tags.player(feedback, req.user)
+    val userFeedback = feedback map UserFeedback.error
+    tags.basePlayer(userFeedback, req.user)
   }
 
   def recent = metaAction { (meta, req) =>
     implicit val f = TrackJson.format(req)
     stats.mostRecent(meta) map { entries =>
-      respond(req)(
+      default.respond(req)(
         html = tags.mostRecent(entries, meta.username),
         json = RecentList(entries)
       )
@@ -44,7 +43,7 @@ class Website(tags: PimpTags,
   def popular = metaAction { (meta, req) =>
     implicit val f = TrackJson.format(req)
     stats.mostPlayed(meta) map { entries =>
-      respond(req)(
+      default.respond(req)(
         html = tags.mostPopular(entries, meta.username),
         json = PopularList(entries)
       )

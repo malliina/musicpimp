@@ -49,7 +49,6 @@ class CloudTags(scripts: Modifier*) {
 
   def login(error: Option[String],
             feedback: Option[String],
-            web: Web,
             motd: Option[String]) = {
     basePage("Welcome", cssLink(at("css/login.css")))(
       divContainer(
@@ -60,9 +59,9 @@ class CloudTags(scripts: Modifier*) {
           row(
             form(`class` := FormSignin, name := "loginForm", action := routes.Web.formAuthenticate(), method := "POST")(
               h2(`class` := FormSigninHeading)("Please sign in"),
-              textInput(Text, FormControl, web.serverFormKey, "Server", autofocus),
-              textInput(Text, FormControl, web.forms.userFormKey, "Username"),
-              textInput(Password, s"$FormControl last-field", web.forms.passFormKey, "Password"),
+              textInput(Text, FormControl, Web.serverFormKey, "Server", autofocus),
+              textInput(Text, FormControl, Web.forms.userFormKey, "Username"),
+              textInput(Password, s"$FormControl last-field", Web.forms.passFormKey, "Password"),
               button(`type` := Submit, id := "loginbutton", `class` := s"$BtnPrimary $BtnLg $BtnBlock")("Sign in")
             )
           ),

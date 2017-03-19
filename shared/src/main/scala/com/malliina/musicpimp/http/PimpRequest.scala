@@ -1,4 +1,4 @@
-package controllers.pimpcloud
+package com.malliina.musicpimp.http
 
 import com.malliina.musicpimp.json.JsonFormatVersions._
 import play.api.http.MimeTypes
@@ -36,7 +36,7 @@ object PimpRequest {
     * is complete, we should default to the latest API version.
     */
   def apiVersion(header: RequestHeader) =
-    PimpRequest.requestedResponseFormat(header)
+    requestedResponseFormat(header)
       .filter(_ != MimeTypes.HTML)
       .getOrElse(JSONv17)
 }

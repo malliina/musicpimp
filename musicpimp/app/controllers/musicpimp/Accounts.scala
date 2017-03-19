@@ -2,10 +2,11 @@ package controllers.musicpimp
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.models.NewUser
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.PimpAuthenticator
-import com.malliina.play.auth.RememberMe
+import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
+import com.malliina.play.http.{AuthedRequest, Proxies}
 import com.malliina.play.models.{Password, Username}
 import controllers.musicpimp.Accounts.{Success, UsersFeedback, log}
 import play.api.Logger
@@ -19,11 +20,13 @@ object Accounts {
   val Feedback = "feedback"
   val UsersFeedback = "usersFeedback"
   val Success = "success"
-  val IntendedUri = "intended_uri"
 }
 
-class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs: AccountForms)
-  extends HtmlController(auth, mat) {
+class Accounts(tags: PimpHtml,
+               auth: PimpAuthenticator,
+               pimpAuth: AuthDeps,
+               accs: AccountForms)
+  extends HtmlController(pimpAuth) {
 
   val userFormKey = accs.userFormKey
   val rememberMeKey = accs.rememberMeKey
@@ -87,11 +90,11 @@ class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs:
   }
 
   def formAddUser = pimpActionAsync { request =>
-    val remoteAddress = request.remoteAddress
+    val remoteAddress = Proxies.realAddress(request)
     addUserForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Unable to add user '$user' from: $remoteAddress, form: $formWithErrors"
+        log warn s"Unable to add user '$user' from '$remoteAddress', form: $formWithErrors"
         userManager.users.map(users => BadRequest(usersPage(users, formWithErrors, request)))
       },
       newUser => {
@@ -116,20 +119,20 @@ class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs:
   }
 
   def formAuthenticate = Action.async { request =>
-    val remoteAddress = request.remoteAddress
+    val remoteAddress = Proxies.realAddress(request)
     val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
     rememberMeLoginForm.bindFromRequest()(request).fold(
       formWithErrors => {
         val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Authentication failed for user: '$user' from $remoteAddress"
+        log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
         val formFeedback = UserFeedback.formed(formWithErrors)
         fut(BadRequest(tags.login(accs, None, formFeedback, flashFeedback)))
       },
       credentials => {
         val username = credentials.username
-        validateCredentials(username, credentials.password) flatMap { isValid =>
+        auth.authenticate(username, credentials.password) flatMap { isValid =>
           if (isValid) {
-            log info s"Authentication succeeded for user '$username' from $remoteAddress"
+            log info s"Authentication succeeded for user '$username' from '$remoteAddress'."
             val intendedUrl = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
             val result = Redirect(intendedUrl).withSession(Security.username -> username.name)
             if (credentials.rememberMe) {
@@ -141,7 +144,7 @@ class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs:
               fut(result)
             }
           } else {
-            log.warn(s"Invalid form authentication for user '$username'")
+            log.warn(s"Invalid form authentication for user '$username'.")
             val formFeedback = UserFeedback.error("Incorrect username or password.")
             fut(BadRequest(tags.login(accs, None, Option(formFeedback), flashFeedback)))
           }
@@ -153,19 +156,20 @@ class Accounts(tags: PimpTags, auth: PimpAuthenticator, mat: Materializer, accs:
   def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
 
   def formChangePassword = pimpActionAsync { request =>
+    val remoteAddress = Proxies.realAddress(request)
     val user = request.user
     accs.changePasswordForm.bindFromRequest()(request).fold(
       errors => {
         val feedback = UserFeedback.formed(errors)
         val msg = feedback.fold("")(m => s" ${m.message}")
-        log warn s"Unable to change password for user '$user' from ${request.remoteAddress}.$msg"
+        log warn s"Unable to change password for user '$user' from '$remoteAddress'.$msg"
         fut(BadRequest(tags.account(user, feedback)))
       },
       pc => {
-        validateCredentials(user, pc.oldPass) flatMap { isValid =>
+        auth.authenticate(user, pc.oldPass) flatMap { isValid =>
           if (isValid) {
             userManager.updatePassword(user, pc.newPass) map { _ =>
-              log info s"Password changed for user '$user' from ${request.remoteAddress}"
+              log info s"Password changed for user '$user' from '$remoteAddress'."
               Redirect(routes.Accounts.account())
                 .flashing(msg(passwordChangedMessage))
             }

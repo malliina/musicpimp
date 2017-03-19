@@ -1,8 +1,8 @@
-package controllers.musicpimp
+package com.malliina.musicpimp.http
 
+import com.malliina.musicpimp.http.PimpContentController.log
 import com.malliina.musicpimp.json.JsonFormatVersions
 import com.malliina.musicpimp.models.Errors
-import controllers.musicpimp.PimpContentController.log
 import play.api.Logger
 import play.api.http.{MimeTypes, Writeable}
 import play.api.libs.json.{JsValue, Json, Writes}
@@ -43,6 +43,9 @@ trait PimpContentController {
   def respond[C: Writeable, T: Writes](request: RequestHeader)(html: => C, json: => T, status: Status = Ok): Result =
     pimpResult(request)(status(html), status(Json.toJson(json)))
 
+  def pimpResponseOkJson(request: RequestHeader)(html: => Result, json: => JsValue): Result =
+    pimpResult(request)(html, Ok(json))
+
   /**
     * @return the equivalent of "Unit" in JSON and HTML
     */
@@ -59,6 +62,8 @@ trait PimpContentController {
 object PimpContentController {
   private val log = Logger(getClass)
   val JsonKey = "json"
+
+  object default extends PimpContentController
 
   def notAcceptableGeneric = notAcceptable("Please use the 'Accept' header.")
 
@@ -79,44 +84,13 @@ object PimpContentController {
       case Some(format) if format contains JsonKey => fut(json)
       case _ => fut(notAcceptableGeneric)
     }
-}
 
-object PimpRequest {
+  def pimpResultAsync(request: RequestHeader)(html: => Future[Result], json: => Future[Result]): Future[Result] =
+    PimpRequest.requestedResponseFormat(request) match {
+      case Some(MimeTypes.HTML) => html
+      case Some(format) if format contains JsonKey => json
+      case _ => fut(notAcceptableGeneric)
+    }
 
-  import JsonFormatVersions._
-
-  /**
-    * @param request the request
-    * @return the desired format of the response to `request`.
-    */
-  def requestedResponseFormat(request: RequestHeader): Option[String] = {
-    //    log.info(s"Headers: ${PlayUtils.headersString(request)}")
-    if (request.getQueryString("f").map(_ == "json").isDefined) Some(latest)
-    else if (request accepts MimeTypes.HTML) Some(MimeTypes.HTML)
-    else if (request accepts anyJson) Some(latest)
-    else if (request accepts JSONv17) Some(JSONv17)
-    else if ((request accepts JSONv18) || (request accepts MimeTypes.JSON)) Some(JSONv18)
-    //    else if ((request accepts JSONv24) || (request accepts MimeTypes.JSON)) Some(JSONv24)
-    else None
-  }
-
-  /** The desired format for clients compatible with API version 17 is
-    * incorrectly determined to be HTML, because those clients do not
-    * specify an Accept header in their WebSocket requests thus the server
-    * thinks they are browsers by default. However, the WebSocket API does
-    * not support HTML, only JSON, so we can safely assume they are JSON
-    * clients and since clients newer than version 17 must use the Accept
-    * header, we can conclude that they are API version 17 JSON clients.
-    *
-    * Therefore we can filter out HTML formats as below and default to API
-    * version 17 unless the client explicitly requests otherwise.
-    *
-    * This is a workaround to ensure API compatibility during a transition
-    * period from a non-versioned API to a versioned one. Once the transition
-    * is complete, we should default to the latest API version.
-    */
-  def apiVersion(header: RequestHeader) =
-    PimpRequest.requestedResponseFormat(header)
-      .filter(_ != MimeTypes.HTML)
-      .getOrElse(JsonFormatVersions.JSONv17)
+  def fut[T](t: T) = Future.successful(t)
 }

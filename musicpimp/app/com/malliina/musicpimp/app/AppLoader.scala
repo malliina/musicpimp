@@ -8,12 +8,12 @@ import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.DatabaseLibrary
 import com.malliina.musicpimp.stats.DatabaseStats
-import com.malliina.musicpimp.tags.PimpTags
+import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.app.LoggingAppLoader
-import com.malliina.play.auth.RememberMe
-import com.malliina.play.controllers.AccountForms
+import com.malliina.play.auth.{Authenticator, RememberMe}
+import com.malliina.play.controllers.{AccountForms, AuthBundle}
 import com.malliina.play.http.FullUrl
-import com.malliina.play.{ActorExecution, PimpAuthenticator}
+import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import controllers._
 import controllers.musicpimp._
 import play.api.ApplicationLoader.Context
@@ -34,7 +34,7 @@ case class InitOptions(alarms: Boolean = true,
 
 object InitOptions {
   val prod = InitOptions()
-  val dev = InitOptions(alarms = false, database = false, users = false, indexer = false, cloud = false)
+  val dev = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
 }
 
 class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
@@ -59,7 +59,7 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = Messages(language, messagesApi)
-
+  implicit val ec = materializer.executionContext
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
   lazy val indexer = new Indexer(db)
@@ -69,32 +69,39 @@ class PimpComponents(context: Context, options: InitOptions, db: PimpDb)
   lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db), cookieSigner)
   lazy val stats = new DatabaseStats(db)
   lazy val statsPlayer = new StatsPlayer(stats)
-  lazy val auth = new PimpAuthenticator(userManager, rememberMe)
+  lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats)
   lazy val clouds = new Clouds(deps, options.cloudUri)
-  lazy val tags = PimpTags.forApp(environment.mode == Mode.Prod)
-  lazy val auths = new Auths(userManager, rememberMe)(ctx.executionContext)
+  lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
+  lazy val auths = new Auths(userManager, rememberMe)(ec)
+
+  lazy val compositeAuth = Authenticator.anyOne(
+    CookieAuthenticator.default(auth)(ec),
+    PimpAuthenticator.cookie(rememberMe)
+  )
+  lazy val webAuth = Secured.redirecting(compositeAuth)
+  lazy val authDeps = AuthDeps(webAuth, materializer)
 
   // Controllers
-  lazy val security = new SecureBase(auth, materializer)
+  lazy val security = new SecureBase(AuthDeps(AuthBundle.default(compositeAuth), materializer))
   lazy val ls = new PimpLogs(ctx)
-  lazy val lp = new LogPage(tags, ls, auth, materializer)
+  lazy val lp = new LogPage(tags, ls, authDeps)
   lazy val wp = new WebPlayer(ctx)
   lazy val sws = new ServerWS(clouds, auths.client, handler, ctx)
-  lazy val webCtrl = new Website(tags, sws, auth, stats, materializer)
+  lazy val webCtrl = new Website(tags, sws, authDeps, stats)
   lazy val s = new Search(indexer, auths.client, ctx)
-  lazy val sp = new SearchPage(tags, s, indexer, db, auth, materializer)
-  lazy val r = new Rest(wp, auth, handler, statsPlayer, materializer)
-  lazy val pl = new Playlists(tags, ps, auth, materializer)
-  lazy val settingsCtrl = new SettingsController(tags, messages, indexer, auth, materializer)
+  lazy val sp = new SearchPage(tags, s, indexer, db, authDeps)
+  lazy val r = new Rest(wp, authDeps, handler, statsPlayer)
+  lazy val pl = new Playlists(tags, ps, authDeps)
+  lazy val settingsCtrl = new SettingsController(tags, messages, indexer, authDeps)
   lazy val as = new Assets(httpErrorHandler)
-  lazy val libCtrl = new LibraryController(tags, lib, auth, materializer)
-  lazy val alarms = new Alarms(tags, auth, messages, materializer)
+  lazy val libCtrl = new LibraryController(tags, lib, authDeps)
+  lazy val alarms = new Alarms(tags, authDeps, messages)
   lazy val accs = new AccountForms
-  lazy val accounts = new Accounts(tags, auth, materializer, accs)
-  lazy val cloud = new Cloud(tags, clouds, auth, materializer)
-  lazy val connect = new ConnectController(auth, materializer)
+  lazy val accounts = new Accounts(tags, auth, authDeps, accs)
+  lazy val cloud = new Cloud(tags, clouds, authDeps)
+  lazy val connect = new ConnectController(authDeps)
   lazy val assetsCtrl = new Assets(httpErrorHandler)
   lazy val cloudWS = new CloudWS(clouds, ctx)
 

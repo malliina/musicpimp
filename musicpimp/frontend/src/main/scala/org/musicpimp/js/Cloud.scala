@@ -26,8 +26,8 @@ object Cloud {
   val ToggleButton = "toggleButton"
   val inputId = "id"
   val EventKey = "event"
-  val Reason ="reason"
-  val IdKey ="id"
+  val Reason = "reason"
+  val IdKey = "id"
 
   def connectingContent: Frag = leadPara("Connecting...")
 
@@ -106,10 +106,20 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
 
   def installHandlers() = {
     elem(ConnectId).click((_: JQueryEventObject) => {
-      send(IdCommand(ConnectCmd, elem(CloudId).value().toString))
+      connect()
     })
     elem(DisconnectId).click((_: JQueryEventObject) => {
       send(Command(DisconnectCmd))
     })
+    elem(CloudId).keypress((e: JQueryEventObject) => {
+      val isEnter = e.which == 10 || e.which == 13
+      if (isEnter) {
+        connect()
+      }
+    })
+  }
+
+  def connect() = {
+    send(IdCommand(ConnectCmd, elem(CloudId).value().toString))
   }
 }

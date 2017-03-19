@@ -1,3 +1,38 @@
+/* Fonts */
+@font-face {
+    font-family: 'Roboto';
+    src: url('/assets/fonts/Roboto-regular.woff') format('woff');
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('/assets/fonts/Roboto-italic.woff') format('woff');
+    font-style: italic;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('/assets/fonts/Roboto-700.woff') format('woff');
+    font-style: normal;
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('/assets/fonts/Roboto-700italic.woff') format('woff');
+    font-style: italic;
+    font-weight: 700;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+}
+
+/* Layout */
 .navbar {
     margin-bottom: 0;
 }
@@ -70,4 +105,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.track-meta {
+    text-align: center;
 }

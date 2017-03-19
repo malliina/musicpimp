@@ -6,8 +6,9 @@ import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.musicpimp.tags.PimpTags
-import com.malliina.play.CookieAuthenticator
+import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.play.controllers.AuthBundle
+import com.malliina.play.http.AuthedRequest
 import controllers.musicpimp.Cloud.log
 import play.api.Logger
 import play.api.data.Form
@@ -20,8 +21,10 @@ object Cloud {
   val idFormKey = "id"
 }
 
-class Cloud(tags: PimpTags, clouds: Clouds, auth: CookieAuthenticator, mat: Materializer)
-  extends Secured(auth, mat) {
+class Cloud(tags: PimpHtml,
+            clouds: Clouds,
+            auth: AuthDeps)
+  extends Secured(auth) {
 
   val FEEDBACK = "feedback"
   val cloudForm = Form(Cloud.idFormKey -> optional(text))
