@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.json.PlaybackStrings
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
 
@@ -19,20 +20,20 @@ case class Status(track: Track,
                   playlist: Seq[Track],
                   state: PlayerState)
 
-object Playback {
+object Playback extends PlaybackStrings {
   val SocketUrl = "/ws/playback?f=json"
 
-  val status = Command("status")
-  val next = Command("next")
-  val prev = Command("prev")
-  val stop = Command("stop")
-  val resume = Command("resume")
+  val status = Command(Status)
+  val next = Command(Next)
+  val prev = Command(Prev)
+  val stop = Command(Stop)
+  val resume = Command(Resume)
 
-  def volume(vol: Int) = ValuedCommand("volume", vol)
+  def volume(vol: Int) = ValuedCommand(Volume, vol)
 
-  def seek(pos: Int) = ValuedCommand("seek", pos)
+  def seek(pos: Int) = ValuedCommand(Seek, pos)
 
-  def skip(idx: Int) = ValuedCommand("skip", idx)
+  def skip(idx: Int) = ValuedCommand(Skip, idx)
 
   /**
     *
@@ -48,6 +49,10 @@ object Playback {
 }
 
 class Playback extends PlaybackSocket {
+  val OptionKey = "option"
+  val Max = "max"
+  val Min = "min"
+  val Value = "value"
   val playerDiv = elem("playerDiv")
   val durationElem = elem("duration")
   val sliderElem = elem("slider")
@@ -81,7 +86,7 @@ class Playback extends PlaybackSocket {
     volumeButton.click((_: JQueryEventObject) => toggleMute())
     val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
     sliderDyn.slider(seekOptions)
-    val volumeOptions = SliderOptions.horizontal("min", 0, 100) { ui =>
+    val volumeOptions = SliderOptions.horizontal(Min, 0, 100) { ui =>
       send(Playback.volume(ui.value))
     }
     volumeElemDyn.slider(volumeOptions)
@@ -114,7 +119,7 @@ class Playback extends PlaybackSocket {
   }
 
   def updateVolume(vol: Int) =
-    volumeElemDyn.slider("option", "value", vol)
+    volumeElemDyn.slider(OptionKey, Value, vol)
 
   def updateTimeAndDuration(position: Duration, duration: Duration) = {
     updateDuration(duration)
@@ -123,12 +128,12 @@ class Playback extends PlaybackSocket {
 
   def updateTime(position: Duration) = {
     posElem.html(format(position))
-    sliderDyn.slider("option", "value", position.toSeconds)
+    sliderDyn.slider(OptionKey, Value, position.toSeconds)
   }
 
   def updateDuration(duration: Duration) = {
     durationElem.html(format(duration))
-    sliderDyn.slider("option", "max", duration.toSeconds)
+    sliderDyn.slider(OptionKey, Value, duration.toSeconds)
   }
 
   def updatePlayPauseButtons(state: PlayerState) = {

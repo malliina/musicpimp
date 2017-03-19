@@ -3,6 +3,7 @@ package com.malliina.musicpimp.tags
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.js.FooterStrings
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
@@ -59,7 +60,7 @@ object PimpHtml {
   }
 }
 
-class PimpHtml(scripts: Modifier*) {
+class PimpHtml(scripts: Modifier*) extends FooterStrings {
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -278,19 +279,19 @@ class PimpHtml(scripts: Modifier*) {
           div(id := "push")()
         ),
         div(id := "footer")(
-          nav(`class` := s"$Navbar $NavbarDefault", id := "bottom-navbar")(
+          nav(`class` := s"$Navbar $NavbarDefault", id := BottomNavbar)(
             divContainer(
               divClass(s"$Collapse $NavbarCollapse")(
                 ulClass(s"$Nav $NavbarNav $HiddenXs")(
-                  awesomeLi("footer-backward", "step-backward"),
-                  awesomeLi("footer-play", "play"),
-                  awesomeLi("footer-pause", "pause"),
-                  awesomeLi("footer-forward", "step-forward")
+                  awesomeLi(FooterBackward, "step-backward"),
+                  awesomeLi(FooterPlay, "play"),
+                  awesomeLi(FooterPause, "pause"),
+                  awesomeLi(FooterForward, "step-forward")
                 ),
-                navbarPara("footer-progress"),
-                navbarPara("footer-title"),
-                navbarPara("footer-artist"),
-                div(`class` := s"$Nav $NavbarNav $NavbarRight", id := "footer-credit")(
+                navbarPara(FooterProgress),
+                navbarPara(FooterTitle),
+                navbarPara(FooterArtist),
+                div(`class` := s"$Nav $NavbarNav $NavbarRight", id := FooterCredit)(
                   p(
                     spanClass(s"$TextMuted $NavbarText $PullRight")("Developed by ", aHref("https://github.com/malliina")("Michael Skogberg"), ".")
                   )

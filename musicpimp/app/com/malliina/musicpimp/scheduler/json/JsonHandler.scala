@@ -25,11 +25,11 @@ trait JsonHandler extends SchedulerStrings {
 
   sealed trait Command
 
-  case class Save(ap: ClockPlayback) extends Command
+  case class SaveCmd(ap: ClockPlayback) extends Command
 
-  case class Delete(id: String) extends Command
+  case class DeleteCmd(id: String) extends Command
 
-  case class Start(id: String) extends Command
+  case class StartCmd(id: String) extends Command
 
   case class AddWindowsDevice(pushUrl: PushUrl) extends Command
 
@@ -57,16 +57,16 @@ trait JsonHandler extends SchedulerStrings {
     def parse[T](key: String, f: String => T): JsResult[T] =
       (json \ key).validate[String].map(f)
 
-    def parseTag[T](f: ServerTag => T): JsResult[T] = (json \ ID).validate[ServerTag].map(f)
+    def parseTag[T](f: ServerTag => T): JsResult[T] = (json \ Id).validate[ServerTag].map(f)
 
-    val result = (json \ CMD).validate[String].flatMap {
-      case DELETE =>
-        parse(ID, Delete)
-      case SAVE =>
-        (json \ AP).validate[ClockPlayback].map(Save)
-      case START =>
-        parse(ID, Start)
-      case STOP =>
+    val result = (json \ Cmd).validate[String].flatMap {
+      case Delete =>
+        parse(Id, DeleteCmd)
+      case Save =>
+        (json \ Ap).validate[ClockPlayback].map(SaveCmd)
+      case Start =>
+        parse(Id, StartCmd)
+      case Stop =>
         JsSuccess(StopPlayback)
       case PUSH_ADD =>
         json.validate[PushUrl].map(AddWindowsDevice)
@@ -94,9 +94,9 @@ trait JsonHandler extends SchedulerStrings {
   }
 
   private def handleCommand(cmd: Command): Unit = cmd match {
-    case Save(ap) => ScheduledPlaybackService.save(ap)
-    case Delete(id) => ScheduledPlaybackService.remove(id)
-    case Start(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
+    case SaveCmd(ap) => ScheduledPlaybackService.save(ap)
+    case DeleteCmd(id) => ScheduledPlaybackService.remove(id)
+    case StartCmd(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
     case StopPlayback => musicPlayer.stop()
     case AddWindowsDevice(device) => PushUrls add device
     case RemovePushTag(tag) => PushUrls removeID tag.tag

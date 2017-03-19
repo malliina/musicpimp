@@ -9,7 +9,9 @@ import play.api.libs.json.Json
   * @param timeUnit time unit
   * @param days     the weekdays during which this schedule is valid
   */
-case class IntervalSchedule(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay]) extends DaySchedule {
+case class IntervalSchedule(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay])
+  extends DaySchedule {
+
   def cronPattern = {
     def minutesHoursDays =
       timeUnit match {
@@ -24,5 +26,6 @@ case class IntervalSchedule(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay
 }
 
 object IntervalSchedule {
+  implicit val days = WeekDays.jsonFormat
   implicit val format = Json.format[IntervalSchedule]
 }

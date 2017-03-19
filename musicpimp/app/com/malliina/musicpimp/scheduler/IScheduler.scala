@@ -13,7 +13,9 @@ trait IScheduler {
     */
   def schedule(cron: String)(job: => Any): TaskId
 
-  def scheduleWithInterval(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId
+  def scheduleWithInterval(interval: Int,
+                           timeUnit: TimeUnit,
+                           days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId
 
   def scheduleAt(hour: Int, minute: Int, days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId
 

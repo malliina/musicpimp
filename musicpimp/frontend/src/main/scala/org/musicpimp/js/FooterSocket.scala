@@ -3,22 +3,22 @@ package org.musicpimp.js
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQuery
-
+import com.malliina.musicpimp.js.FooterStrings
 import scala.concurrent.duration.Duration
 
-class FooterSocket extends PlaybackSocket {
+class FooterSocket extends PlaybackSocket with FooterStrings {
   // Why do these need to be lazy?
-  lazy val playButton: JQuery = elem("footer-play")
-  lazy val pauseButton = elem("footer-pause")
-  lazy val backwardButton = elem("footer-backward")
-  lazy val forwardButton = elem("footer-forward")
+  lazy val playButton: JQuery = elem(FooterPlay)
+  lazy val pauseButton = elem(FooterPause)
+  lazy val backwardButton = elem(FooterBackward)
+  lazy val forwardButton = elem(FooterForward)
   lazy val playbackButtons = Seq(playButton, pauseButton, backwardButton, forwardButton)
 
-  lazy val progress = elem("footer-progress")
-  lazy val title = elem("footer-title")
-  lazy val artist = elem("footer-artist")
-  lazy val footerCredit = elem("footer-credit")
-  lazy val bottomNavbar = elem("bottom-navbar")
+  lazy val progress = elem(FooterProgress)
+  lazy val title = elem(FooterTitle)
+  lazy val artist = elem(FooterArtist)
+  lazy val footerCredit = elem(FooterCredit)
+  lazy val bottomNavbar = elem(BottomNavbar)
 
   val NavbarFixedBottom = "navbar-fixed-bottom"
 

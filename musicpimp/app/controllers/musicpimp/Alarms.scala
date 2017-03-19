@@ -8,6 +8,7 @@ import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.play.http.Proxies
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
 import play.api.i18n.Messages
@@ -32,7 +33,8 @@ class Alarms(tags: PimpHtml,
 
   def handleJson = pimpParsedAction(parse.json) { jsonRequest =>
     val json = jsonRequest.body
-    log debug s"User: ${jsonRequest.user} from: ${jsonRequest.remoteAddress} said: $json"
+    val remoteAddress = Proxies.realAddress(jsonRequest)
+    log debug s"User '${jsonRequest.user}' from '$remoteAddress' said '$json'."
     onRequest(json)
   }
 
@@ -55,7 +57,7 @@ class Alarms(tags: PimpHtml,
 
   private def simpleResult[T](json: JsValue, result: JsResult[T]): Result = {
     result.fold(
-      errors => badRequest(s"Invalid JSON: $json. Errors: $errors."),
+      errors => badRequest(s"Invalid JSON '$json'. Errors '$errors'."),
       _ => Ok
     )
   }
@@ -64,12 +66,14 @@ class Alarms(tags: PimpHtml,
 object Alarms {
   private val log = Logger(getClass)
 
-  def jobWriter(implicit w: Writes[TrackMeta]) = Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
+  def jobWriter(implicit w: Writes[TrackMeta]) =
+    Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
 
-  implicit def alarmWriter(implicit w: Writes[TrackMeta]) = Writes[ClockPlayback](o => obj(
-    Id -> toJson(o.id),
-    Job -> toJson(o.job)(jobWriter),
-    When -> toJson(o.when),
-    Enabled -> toJson(o.enabled)
-  ))
+  implicit def alarmWriter(implicit w: Writes[TrackMeta]) =
+    Writes[ClockPlayback](o => obj(
+      Id -> toJson(o.id),
+      Job -> toJson(o.job)(jobWriter),
+      When -> toJson(o.when),
+      Enabled -> toJson(o.enabled)
+    ))
 }

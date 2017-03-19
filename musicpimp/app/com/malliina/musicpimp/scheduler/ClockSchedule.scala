@@ -13,7 +13,9 @@ import play.api.libs.json.Json
 case class ClockSchedule(hour: Int, minute: Int, days: Seq[WeekDay]) extends DaySchedule {
   def cronPattern = new SchedulingPattern(s"$minute $hour * * $daysStringified")
 
-  private val daysDescribed = if (days.toSet == WeekDay.EveryDaySet) "every day" else s"on $daysReadable"
+  private val daysDescribed =
+    if (days.toSet == WeekDay.EveryDaySet) "every day"
+    else s"on $daysReadable"
 
   /**
     * @return "at 08:00 every day" or "at 07:20 on Monday, Tuesday"
@@ -26,5 +28,6 @@ case class ClockSchedule(hour: Int, minute: Int, days: Seq[WeekDay]) extends Day
 }
 
 object ClockSchedule {
+  implicit val days = WeekDays.jsonFormat
   implicit val format = Json.format[ClockSchedule]
 }

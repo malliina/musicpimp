@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.tags
 
+import com.malliina.musicpimp.scheduler.web.{AlarmStrings, SchedulerStrings}
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
 import com.malliina.musicpimp.tags.PlayBootstrap.helpSpan
@@ -24,8 +25,14 @@ object AlarmsHtml {
   )
 
   def alarmRow(ap: ClockPlayback) = {
-    val (enabledText, enabledAttr) = if (ap.enabled) ("Yes", empty) else ("No", `class` := "danger")
-    tr(td(ap.describe), td(enabledAttr)(enabledText), td(alarmActions(ap.id.getOrElse("nonexistent"))))
+    val (enabledText, enabledAttr) =
+      if (ap.enabled) ("Yes", empty)
+      else ("No", `class` := "danger")
+    tr(
+      td(ap.describe),
+      td(enabledAttr)(enabledText),
+      td(alarmActions(ap.id.getOrElse("nonexistent")))
+    )
   }
 
   def alarmActions(id: String) =
@@ -42,19 +49,21 @@ object AlarmsHtml {
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
     liHref("#", `class` := clazz, PimpHtml.dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
-  def alarmEditorContent(form: Form[ClockPlayback], feedback: Option[UserFeedback], m: Messages) = Seq(
+  def alarmEditorContent(form: Form[ClockPlayback],
+                         feedback: Option[UserFeedback],
+                         m: Messages) = Seq(
     headerRow()("Edit alarm"),
     halfRow(
       PimpHtml.postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
         divClass("hidden")(
-          formTextIn(form(ID), "ID", m)
+          formTextIn(form(Id), "ID", m)
         ),
-        numberTextIn(form(HOURS), "Hours", "hh", m),
-        numberTextIn(form(MINUTES), "Minute", "mm", m),
-        weekdayCheckboxes(form(DAYS), m),
-        formTextIn(form(TRACK_ID), "Track ID", m, formGroupClasses = Seq("hidden")),
-        formTextIn(form(TRACK), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
-        checkField(form(ENABLED), "Enabled"),
+        numberTextIn(form(Hours), "Hours", "hh", m),
+        numberTextIn(form(Minutes), "Minute", "mm", m),
+        weekdayCheckboxes(form(Days), m),
+        formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hidden")),
+        formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
+        checkField(form(Enabled), "Enabled"),
         saveButton(),
         feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(PimpHtml.feedbackDiv(fb)))
       )
@@ -75,7 +84,7 @@ object AlarmsHtml {
       divClass(ColSm4, id := field.id)(
         divClass(Checkbox)(
           label(
-            input(`type` := Checkbox, value := "every", id := "every")("Every day")
+            input(`type` := Checkbox, value := "every", id := AlarmStrings.Every)("Every day")
           )
         ),
         WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },
@@ -89,7 +98,8 @@ object AlarmsHtml {
     val checkedAttr = if (isChecked) checked else empty
     divClass(Checkbox)(
       label(
-        input(`type` := Checkbox,
+        input(
+          `type` := Checkbox,
           value := field.value.getOrElse(weekDay.shortName),
           id := weekDay.shortName,
           name := s"${field.name}[$index]",
@@ -100,7 +110,7 @@ object AlarmsHtml {
   }
 
   def checkField(field: Field, labelText: String) = {
-    val checkedAttr = if (field.value.contains("on")) checked else empty
+    val checkedAttr = if (field.value.contains(SchedulerStrings.On)) checked else empty
     formGroup(
       divClass(s"$ColSmOffset2 $ColSm10")(
         divClass(Checkbox)(

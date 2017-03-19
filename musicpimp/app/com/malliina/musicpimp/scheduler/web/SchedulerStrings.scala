@@ -1,30 +1,16 @@
 package com.malliina.musicpimp.scheduler.web
 
-/**
-  *
-  * @author mle
-  */
-trait SchedulerStrings {
+trait SchedulerStrings extends AlarmStrings {
   val DESCRIPTION = "description"
-  val MINUTES = "minutes"
-  val HOURS = "hours"
-  val DAYS = "days"
-  val ENABLED = "enabled"
+  val Minutes = "minutes"
+  val Hours = "hours"
+  val Days = "days"
+  val Enabled = "enabled"
   val AMOUNT = "amount"
   val UNIT = "unit"
-  val ON = "on"
+  val On = "on"
   val OFF = "off"
-  val TRACK = "track"
-  val TRACK_ID = "track_id"
-
-  val CMD = "cmd"
-  val DELETE = "delete"
-  val SAVE = "save"
-  val START = "start"
-  val STOP = "stop"
-  val ID = "id"
-  val TASK_ID = "task_id"
-  val AP = "ap"
+  val TrackKey = "track"
 
   val PATH = "path"
   val PUSH_ADD = "push_add"

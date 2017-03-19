@@ -34,6 +34,10 @@ object PimpBuild {
   val musicpimpVersion = "3.5.4"
   val pimpcloudVersion = "1.6.9"
   val sharedVersion = "1.0.0"
+  val malliinaGroup = "com.malliina"
+  val httpGroup = "org.apache.httpcomponents"
+  val httpVersion = "4.4.1"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.7"
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
@@ -43,9 +47,10 @@ object PimpBuild {
   lazy val root = Project("root", file(".")).aggregate(musicpimp, pimpcloud)
 
   lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
+    .dependsOn(crossJs)
 
   lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
-    .dependsOn(shared)
+    .dependsOn(shared, crossJvm)
     .settings(pimpPlaySettings: _*)
 
   lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
@@ -61,10 +66,17 @@ object PimpBuild {
     .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
     .settings(baseSettings: _*)
 
-  val malliinaGroup = "com.malliina"
-  val httpGroup = "org.apache.httpcomponents"
-  val httpVersion = "4.4.1"
-  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.7"
+  lazy val cross = crossProject.in(file("cross"))
+    .settings(crossSettings: _*)
+    .jvmSettings(scalaVersion := "2.11.8")
+
+  lazy val crossJvm = cross.jvm
+  lazy val crossJs = cross.js
+
+  lazy val crossSettings = Seq(
+    organization := "org.musicpimp",
+    version := "1.0.0"
+  )
 
   def scalajsProject(name: String, path: File) =
     Project(name, path)

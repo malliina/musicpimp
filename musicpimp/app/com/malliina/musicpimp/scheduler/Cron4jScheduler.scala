@@ -22,10 +22,14 @@ trait Cron4jScheduler extends IScheduler {
   def schedule(when: Schedule)(job: => Any): TaskId =
     schedule(when.cronPattern)(job)
 
-  override def scheduleWithInterval(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId =
+  override def scheduleWithInterval(interval: Int,
+                                    timeUnit: TimeUnit,
+                                    days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId =
     schedule(IntervalSchedule(interval, timeUnit, days))(f)
 
-  override def scheduleAt(hour: Int, minute: Int, days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId =
+  override def scheduleAt(hour: Int,
+                          minute: Int,
+                          days: Seq[WeekDay] = WeekDay.EveryDay)(f: => Any): TaskId =
     schedule(ClockSchedule(hour, minute, days))(f)
 
   override def cancel(id: TaskId): Unit =

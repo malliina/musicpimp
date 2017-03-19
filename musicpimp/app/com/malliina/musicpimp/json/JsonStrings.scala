@@ -2,7 +2,7 @@ package com.malliina.musicpimp.json
 
 object JsonStrings extends JsonStrings
 
-trait JsonStrings extends PimpStrings {
+trait JsonStrings extends PimpStrings with PlaybackStrings {
   val Ok = "ok"
 
   val Failure = "failure"
@@ -21,7 +21,6 @@ trait JsonStrings extends PimpStrings {
   val Contents = "contents"
 
   val Gain = "gain"
-  val Mute = "mute"
   val IsDir = "is_dir"
   val Items = "items"
   val Playlist = "playlist"
@@ -38,17 +37,6 @@ trait JsonStrings extends PimpStrings {
   val ThankYou = "thank you"
 
   val Value = "value"
-  val Resume = "resume"
-  val Stop = "stop"
-  val Next = "next"
-  val Prev = "prev"
-  val Volume = "volume"
-  val Seek = "seek"
-  val Skip = "skip"
-  val Add = "add"
-  val AddItems = "add_items"
-  val Play = "play"
-  val PlayItems = "play_items"
   val TrackChanged = "track_changed"
   val TimeUpdated = "time_updated"
   val VolumeChanged = "volume_changed"
@@ -85,5 +73,4 @@ trait JsonStrings extends PimpStrings {
   // push notifications
   val Push = "push"
   val Result = "result"
-
 }

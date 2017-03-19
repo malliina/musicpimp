@@ -1,23 +1,23 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.scheduler.web.AlarmStrings
 import org.scalajs.dom
 
 import scala.scalajs.js.Any
 
-
-class Alarms extends BaseScript {
+class Alarms extends BaseScript with AlarmStrings {
   withDataId(".play")(runAP)
   withDataId(".delete")(deleteAP)
   withDataId(".stop")(_ => stopPlayback())
 
   def deleteAP(id: String) =
-    postThenReload(IdCommand("delete", id))
+    postThenReload(IdCommand(Delete, id))
 
   def runAP(id: String) =
-    postAlarms(IdCommand("start", id))
+    postAlarms(IdCommand(Start, id))
 
   def stopPlayback(): Boolean = {
-    postAlarms(Command("stop"))
+    postAlarms(Command(Stop))
     false
   }
 
