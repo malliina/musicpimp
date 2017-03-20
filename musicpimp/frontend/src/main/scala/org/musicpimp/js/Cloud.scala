@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
@@ -23,7 +24,6 @@ object Cloud {
   val CloudId = "cloud-id"
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
-  val ToggleButton = "toggleButton"
   val inputId = "id"
   val EventKey = "event"
   val Reason = "reason"
@@ -52,7 +52,8 @@ object Cloud {
     div(
       formGroup(
         labelFor(inputId)("Desired cloud ID (optional)"),
-        input(`type` := Text,
+        input(
+          `type` := Text,
           id := CloudId,
           name := inputId,
           placeholder := "Your desired ID or leave empty",
@@ -70,8 +71,8 @@ object Cloud {
     blockSubmitButton(id := buttonId)(title)
 }
 
-class Cloud extends SocketJS("/ws/cloud?f=json") {
-  val formDiv = elem("cloud-form")
+class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
+  val formDiv = elem(CloudForm)
 
   override def onConnected(e: Event) = {
     send(Command.subscribe)
@@ -98,7 +99,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") {
         case Disconnecting =>
           Right(Cloud.disconnectingContent)
         case other =>
-          Left(Invalid.Data(payload, s"Unknown event: '$other'."))
+          Left(Invalid.Data(payload, s"Unknown event '$other'."))
       }
     fragment.fold(onJsonFailure, frag => formDiv.html(frag.render))
     installHandlers()

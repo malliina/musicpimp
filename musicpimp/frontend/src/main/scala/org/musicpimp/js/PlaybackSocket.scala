@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.json.PlaybackStrings
 import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.Duration
@@ -37,7 +38,7 @@ object PlayerState {
   }
 }
 
-abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) {
+abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) with PlaybackStrings {
   def updateTime(duration: Duration): Unit
 
   def updatePlayPauseButtons(state: PlayerState)
@@ -57,29 +58,29 @@ abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) {
 
     def read[T: PimpJSON.Reader](key: String) = obj.get(key)
       .map(json => PimpJSON.readJs[T](json))
-      .getOrElse(throw Invalid.Data(payload, s"Missing key: '$key'."))
+      .getOrElse(throw Invalid.Data(payload, s"Missing key '$key'."))
 
     read[String]("event") match {
       case "welcome" =>
         send(Playback.status)
-      case "time_updated" =>
+      case TimeUpdated =>
         updateTime(read[Duration]("position"))
-      case "playstate_changed" =>
+      case PlaystateChanged =>
         updatePlayPauseButtons(read[PlayerState]("state"))
-      case "track_changed" =>
+      case TrackChanged =>
         updateTrack(read[Track]("track"))
-      case "playlist_modified" =>
+      case PlaylistModified =>
         updatePlaylist(read[Seq[Track]]("playlist"))
-      case "volume_changed" =>
+      case VolumeChanged =>
         updateVolume(read[Int]("volume"))
-      case "mute_toggled" =>
+      case MuteToggled =>
         muteToggled(read[Boolean]("mute"))
       case "status" =>
         onStatus(PimpJSON.readJs[Status](payload))
-      case "playlist_index_changed" =>
+      case PlaylistIndexChanged =>
 
       case other =>
-        log.info(s"Unknown event: $other")
+        log.info(s"Unknown event '$other'.")
     }
   }
 

@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.tags
 
 import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
+import com.malliina.musicpimp.js.FrontStrings
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.tags.PimpHtml.dataIdAttr
@@ -9,7 +10,7 @@ import controllers.musicpimp.routes
 
 import scalatags.Text.all._
 
-object LibraryHtml {
+object LibraryHtml extends FrontStrings {
   def libraryContent(items: MusicFolder) = {
     val relativePath = items.folder.path
     Seq(
@@ -46,21 +47,21 @@ object LibraryHtml {
   )
 
   def folderActions(folder: FolderID) =
-    musicItemActions("folder", folder.id, Option("folder-buttons"), ariaLabel := "folder action")()
+    musicItemActions(FolderClass, folder.id, Option("folder-buttons"), ariaLabel := "folder action")()
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      dataButton(s"$BtnDefault $BtnBlock track play track-title", track.id.id)(track.title)
+      dataButton(s"$BtnDefault $BtnBlock $TrackClass $PlayClass track-title", track.id.id)(track.title)
     )
 
   def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
-    musicItemActions("track", track.id, extraClass)(inner)
+    musicItemActions(TrackClass, track.id, extraClass)(inner)
 
   def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")
     divClass(s"$BtnGroup$extra", role := Group, groupAttrs)(
-      glyphButton(s"$BtnPrimary $itemClazz play", "play", itemId),
-      glyphButton(s"$BtnDefault $itemClazz add", "plus", itemId),
+      glyphButton(s"$BtnPrimary $itemClazz $PlayClass", "play", itemId),
+      glyphButton(s"$BtnDefault $itemClazz $AddClass", "plus", itemId),
       inner
     )
   }

@@ -2,6 +2,7 @@ package org.musicpimp.js
 
 import java.util.UUID
 
+import com.malliina.musicpimp.js.FrontStrings
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 import upickle.Js
@@ -15,12 +16,12 @@ case class JVMLogEntry(level: String,
                        timeFormatted: String,
                        stackTrace: Option[String] = None)
 
-class Logs extends SocketJS("/ws/logs?f=json") {
+class Logs extends SocketJS("/ws/logs?f=json") with FrontStrings {
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
-  val LogTableId = "logTableBody"
+  val LogRow = "log-row"
   val TimestampCell = "cell-timestamp"
-  val tableContent = elem(LogTableId)
+  val tableContent = elem(LogTableBodyId)
 
   override def onConnected(e: Event) = {
     send(Command.subscribe)
@@ -51,13 +52,13 @@ class Logs extends SocketJS("/ws/logs?f=json") {
 
     // prepends a by default hidden stacktrace row
     entry.stackTrace foreach { stackTrace =>
-      val errorRow = tr(`class` := Hidden, id := rowId)(
+      val errorRow = tr(`class` := HiddenClass, id := rowId)(
         td(colspan := "5")(pre(stackTrace))
       )
       tableContent prepend errorRow.render
     }
     // prepends the main row
-    val row = tr(`class` := s"$rowClass log-row")(
+    val row = tr(`class` := s"$rowClass $LogRow")(
       cell(entry.timeFormatted),
       td(`class` := s"$CellContent $CellWide", id := msgCellId)(entry.message),
       cell(lastName(entry.loggerName)),
@@ -84,7 +85,7 @@ class Logs extends SocketJS("/ws/logs?f=json") {
 
   def toggle(row: String) = {
     val rowElem = global.jQuery(s"#$row")
-    rowElem.toggleClass(Hidden)
+    rowElem.toggleClass(HiddenClass)
     false
   }
 }

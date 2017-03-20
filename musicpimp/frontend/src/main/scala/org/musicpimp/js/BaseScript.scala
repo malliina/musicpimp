@@ -35,9 +35,11 @@ trait BaseScript {
 }
 
 object BaseScript {
+  val ApplicationJson = "application/json"
+
   def postAjax[C: PimpJSON.Writer](resource: String, payload: C) =
     jQuery.ajax(PimpQuery.postSettings(
       resource,
-      "application/json",
+      ApplicationJson,
       PimpJSON.write(payload)))
 }

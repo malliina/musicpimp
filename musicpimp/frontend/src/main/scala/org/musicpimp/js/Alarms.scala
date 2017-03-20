@@ -6,9 +6,9 @@ import org.scalajs.dom
 import scala.scalajs.js.Any
 
 class Alarms extends BaseScript with AlarmStrings {
-  withDataId(".play")(runAP)
-  withDataId(".delete")(deleteAP)
-  withDataId(".stop")(_ => stopPlayback())
+  withDataId(s".$PlayClass")(runAP)
+  withDataId(s".$DeleteClass")(deleteAP)
+  withDataId(s".$StopClass")(_ => stopPlayback())
 
   def deleteAP(id: String) =
     postThenReload(IdCommand(Delete, id))

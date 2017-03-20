@@ -1,16 +1,18 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.js.SearchStrings
 import org.scalajs.jquery.JQueryEventObject
 import upickle.Js
 
 case class StatusEvent(event: String, status: String)
 
-class Search(music: MusicItems) extends SocketJS("/search/ws?f=json") {
-  val RefreshButtonId = "refresh-button"
-  val IndexInfoId = "index-info"
+class Search(music: MusicItems)
+  extends SocketJS("/search/ws?f=json")
+    with SearchStrings {
+
   val RefreshCommandValue = "refresh"
 
-  elem(RefreshButtonId).click { (_: JQueryEventObject) =>
+  elem(RefreshButton).click { (_: JQueryEventObject) =>
     send(Command(RefreshCommandValue))
   }
 
@@ -22,5 +24,5 @@ class Search(music: MusicItems) extends SocketJS("/search/ws?f=json") {
   }
 
   def onStatus(status: String) =
-    elem(IndexInfoId).html(s" $status")
+    elem(IndexInfo).html(s" $status")
 }

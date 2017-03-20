@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.tags
 
+import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.musicpimp.tags.PimpHtml.postableForm
 import com.malliina.play.tags.All._
@@ -7,10 +8,10 @@ import controllers.musicpimp.{Cloud, routes}
 
 import scalatags.Text.all._
 
-object CloudHtml {
+object CloudHtml extends CloudStrings {
   def cloudContent = Seq(
     headerRow()("Cloud"),
-    div(id := "cloud-form")(
+    div(id := CloudForm)(
       leadPara("Connecting...")
     ),
     halfRow(
@@ -32,7 +33,7 @@ object CloudHtml {
       } else {
         empty
       },
-      blockSubmitButton(id := "toggleButton")(title)
+      blockSubmitButton(id := ToggleButton)(title)
     )
   }
 

@@ -40,9 +40,9 @@ object AlarmsHtml {
       aHref(routes.Alarms.editAlarm(id), `class` := s"$BtnDefault $BtnSm")(glyphIcon("edit"), " Edit"),
       aHref("#", dataToggle := Dropdown, `class` := s"$BtnDefault $BtnSm $DropdownToggle")(spanClass(Caret)),
       ulClass(DropdownMenu)(
-        jsListElem("delete", id, "remove", "Delete"),
-        jsListElem("play", id, "play", "Play"),
-        jsListElem("stop", id, "stop", "Stop")
+        jsListElem(DeleteClass, id, "remove", "Delete"),
+        jsListElem(PlayClass, id, "play", "Play"),
+        jsListElem(StopClass, id, "stop", "Stop")
       )
     )
 
@@ -62,7 +62,7 @@ object AlarmsHtml {
         numberTextIn(form(Minutes), "Minute", "mm", m),
         weekdayCheckboxes(form(Days), m),
         formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hidden")),
-        formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq("selector")),
+        formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq(Selector)),
         checkField(form(Enabled), "Enabled"),
         saveButton(),
         feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(PimpHtml.feedbackDiv(fb)))
@@ -84,7 +84,7 @@ object AlarmsHtml {
       divClass(ColSm4, id := field.id)(
         divClass(Checkbox)(
           label(
-            input(`type` := Checkbox, value := "every", id := AlarmStrings.Every)("Every day")
+            input(`type` := Checkbox, value := "every", id := Every)("Every day")
           )
         ),
         WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },

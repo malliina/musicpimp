@@ -1,12 +1,12 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.json.PlaybackStrings._
-import com.malliina.musicpimp.json.SocketStrings
+import com.malliina.musicpimp.json.SocketStrings.Subscribe
 
 case class Command(cmd: String)
 
 object Command {
-  val subscribe = Command(SocketStrings.Subscribe)
+  val subscribe = Command(Subscribe)
 }
 
 case class IdCommand(cmd: String, id: String)

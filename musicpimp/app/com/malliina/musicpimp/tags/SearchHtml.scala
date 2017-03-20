@@ -1,12 +1,13 @@
 package com.malliina.musicpimp.tags
 
 import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.play.tags.All._
 import controllers.musicpimp.routes
 
 import scalatags.Text.all._
 
-object SearchHtml {
+object SearchHtml extends SearchStrings {
   def searchContent(query: Option[String], results: Seq[DataTrack]) = Seq(
     headerRow()("Search"),
     row(
@@ -14,8 +15,8 @@ object SearchHtml {
         searchForm(None, "")
       ),
       divClass(s"$ColMd4 $ColMdOffset4")(
-        button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := "refresh-button")(glyphIcon("refresh"), " "),
-        span(id := "index-info")
+        button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := RefreshButton)(glyphIcon("refresh"), " "),
+        span(id := IndexInfo)
       )
     ),
     fullRow(
@@ -39,7 +40,7 @@ object SearchHtml {
   def searchForm(query: Option[String] = None, formClass: String, size: String = InputGroupLg) =
     form(action := routes.SearchPage.search(), role := Search, `class` := formClass)(
       divClass(s"$InputGroup $size")(
-        input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("artist, album or track..."), name := "term", id := "term"),
+        input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("artist, album or track..."), name := "term", id := TermId),
         divClass(InputGroupBtn)(
           defaultSubmitButton(glyphIcon("search"))
         )

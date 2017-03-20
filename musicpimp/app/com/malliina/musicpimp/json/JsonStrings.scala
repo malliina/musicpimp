@@ -37,13 +37,6 @@ trait JsonStrings extends PimpStrings with PlaybackStrings {
   val ThankYou = "thank you"
 
   val Value = "value"
-  val TrackChanged = "track_changed"
-  val TimeUpdated = "time_updated"
-  val VolumeChanged = "volume_changed"
-  val MuteToggled = "mute_toggled"
-  val PlaylistModified = "playlist_modified"
-  val PlaylistIndexChanged = "playlist_index_changed"
-  val PlaystateChanged = "playstate_changed"
 
   // commands for browser clients
   val WebPlay = "webplay"

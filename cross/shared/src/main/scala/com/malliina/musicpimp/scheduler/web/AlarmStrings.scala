@@ -7,6 +7,7 @@ trait AlarmStrings {
   val Cmd = "cmd"
   val Delete = "delete"
   val Id = "id"
+  val Play = "play"
   val Save = "save"
   val Start = "start"
   val Stop = "stop"
@@ -14,5 +15,10 @@ trait AlarmStrings {
 
   // Used in HTML
   val Every = "every"
+  val Selector = "selector"
   val TrackId = "track_id"
+
+  val DeleteClass = "delete"
+  val PlayClass = "play"
+  val StopClass = "stop"
 }

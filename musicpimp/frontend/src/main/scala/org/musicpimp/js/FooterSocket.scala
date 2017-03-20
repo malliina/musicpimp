@@ -1,9 +1,11 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.js.FooterStrings
+import com.malliina.musicpimp.js.FrontStrings.HiddenClass
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQuery
-import com.malliina.musicpimp.js.FooterStrings
+
 import scala.concurrent.duration.Duration
 
 class FooterSocket extends PlaybackSocket with FooterStrings {
@@ -82,11 +84,11 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
   }
 
   def hide(elems: JQuery*) =
-    elems foreach { elem => ensureClass(elem, Hidden) }
+    elems foreach { elem => ensureClass(elem, HiddenClass) }
 
   def ensureClass(elem: JQuery, clazz: String) =
     if (!(elem hasClass clazz)) elem addClass clazz
 
   def show(elems: JQuery*) =
-    elems foreach (_ removeClass Hidden)
+    elems foreach (_ removeClass HiddenClass)
 }

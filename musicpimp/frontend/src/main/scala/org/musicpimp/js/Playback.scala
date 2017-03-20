@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.PlaybackStrings
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
@@ -48,28 +49,29 @@ object Playback extends PlaybackStrings {
   }
 }
 
-class Playback extends PlaybackSocket {
+class Playback extends PlaybackSocket with PlayerStrings {
   val OptionKey = "option"
   val Max = "max"
   val Min = "min"
+  val SongClass = "song"
   val Value = "value"
-  val playerDiv = elem("playerDiv")
-  val durationElem = elem("duration")
-  val sliderElem = elem("slider")
-  val sliderDyn = global.jQuery("#slider")
-  val posElem = elem("pos")
-  val playButton = elem("playButton")
-  val pauseButton = elem("pauseButton")
-  val prevButton = elem("prevButton")
-  val nextButton = elem("nextButton")
-  val volumeButton = elem("volumeButton")
-  val titleElem = elem("title")
-  val noTrackElem = elem("notracktext")
-  val albumElem = elem("album")
-  val artistElem = elem("artist")
-  val playlistElem = elem("playlist")
-  val playlistEmptyElem = elem("empty_playlist_text")
-  val volumeElemDyn = global.jQuery("#volume")
+  val playerDiv = elem(PlayerDivId)
+  val durationElem = elem(DurationId)
+  val sliderElem = elem(SliderId)
+  val sliderDyn = global.jQuery(s"#$SliderId")
+  val posElem = elem(PositionId)
+  val playButton = elem(PlayButton)
+  val pauseButton = elem(PauseButton)
+  val prevButton = elem(PrevButton)
+  val nextButton = elem(NextButton)
+  val volumeButton = elem(VolumeButton)
+  val titleElem = elem(TitleId)
+  val noTrackElem = elem(NoTrackTextId)
+  val albumElem = elem(AlbumId)
+  val artistElem = elem(ArtistId)
+  val playlistElem = elem(PlaylistId)
+  val playlistEmptyElem = elem(EmptyPlaylistText)
+  val volumeElemDyn = global.jQuery(s"#$VolumeId")
 
   val zero = 0.seconds
 
@@ -155,7 +157,7 @@ class Playback extends PlaybackSocket {
   }
 
   def updatePlaylist(tracks: Seq[Track]) = {
-    global.jQuery("li").remove(".song")
+    global.jQuery("li").remove(s".$SongClass")
     val isEmpty = tracks.isEmpty
     if (isEmpty) playlistEmptyElem.show()
     else playlistEmptyElem.hide()
@@ -167,7 +169,7 @@ class Playback extends PlaybackSocket {
   }
 
   def toRow(track: Track, rowId: String) = {
-    li(`class` := "song")(
+    li(`class` := SongClass)(
       a(href := "#", id := rowId)(track.title),
       " ",
       a(href := "#")(i(`class` := "icon-remove")))

@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.js.FrontStrings.{FailStatus, HiddenClass, OkStatus}
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
@@ -10,12 +11,12 @@ import scala.util.Either.RightProjection
 
 abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def this(wsPath: String) = this(wsPath, Logger.default)
+
   val EventField = "event"
   val Ping = "ping"
-  val Hidden = "hide"
 
-  val okStatus = elem("okstatus")
-  val failStatus = elem("failstatus")
+  val okStatus = elem(OkStatus)
+  val failStatus = elem(FailStatus)
 
   val socket: dom.WebSocket = openSocket(wsPath)
 
@@ -40,13 +41,13 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def onError(e: ErrorEvent): Unit = showDisconnected()
 
   def showConnected() = {
-    okStatus removeClass Hidden
-    failStatus addClass Hidden
+    okStatus removeClass HiddenClass
+    failStatus addClass HiddenClass
   }
 
   def showDisconnected() = {
-    okStatus addClass Hidden
-    failStatus removeClass Hidden
+    okStatus addClass HiddenClass
+    failStatus removeClass HiddenClass
   }
 
   def openSocket(pathAndQuery: String) = {

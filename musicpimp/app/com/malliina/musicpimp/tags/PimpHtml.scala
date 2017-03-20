@@ -3,7 +3,7 @@ package com.malliina.musicpimp.tags
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
-import com.malliina.musicpimp.js.FooterStrings
+import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
@@ -26,7 +26,6 @@ object PimpHtml {
   val FormSignin = "form-signin"
   val False = "false"
   val True = "true"
-  val Hide = "hide"
   val WideContent = "wide-content"
 
   val dataIdAttr = attr("data-id")
@@ -60,7 +59,7 @@ object PimpHtml {
   }
 }
 
-class PimpHtml(scripts: Modifier*) extends FooterStrings {
+class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -232,8 +231,8 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings {
               )
             ),
             divClass(s"$ColMd2 $PullRight")(
-              eye("okstatus", "eye-open green"),
-              eye("failstatus", "eye-close red")
+              eye(OkStatus, "eye-open green"),
+              eye(FailStatus, "eye-close red")
             ),
             divClass(s"$ColMd4 $PullRight")(
               SearchHtml.searchForm(None, formClass = NavbarForm, "")
@@ -245,16 +244,26 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings {
     )
   }
 
-  def glyphNavItem(thisTabName: String, thisTabId: String, activeTab: String, url: Call, glyphiconName: String): TypedTag[String] =
+  def glyphNavItem(thisTabName: String,
+                   thisTabId: String,
+                   activeTab: String,
+                   url: Call,
+                   glyphiconName: String): TypedTag[String] =
     iconNavItem(thisTabName, thisTabId, activeTab, url, glyphClass(glyphiconName))
 
-  def iconNavItem(thisTabName: String, thisTabId: String, activeTab: String, url: Call, iconClass: String): TypedTag[String] = {
-    val maybeActive = if (thisTabId == activeTab) Option(`class` := "active") else None
+  def iconNavItem(thisTabName: String,
+                  thisTabId: String,
+                  activeTab: String,
+                  url: Call,
+                  iconClass: String): TypedTag[String] = {
+    val maybeActive =
+      if (thisTabId == activeTab) Option(`class` := "active")
+      else None
     li(maybeActive)(aHref(url)(iClass(iconClass), s" $thisTabName"))
   }
 
   def eye(elemId: String, glyphSuffix: String) =
-    pClass(s"$NavbarText $PullRight $HiddenXs $Hide", id := elemId)(glyphIcon(glyphSuffix))
+    pClass(s"$NavbarText $PullRight $HiddenXs $HiddenClass", id := elemId)(glyphIcon(glyphSuffix))
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
@@ -308,5 +317,5 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings {
     pClass(NavbarText, id := elemId)("")
 
   def awesomeLi(elemId: String, faIcon: String) =
-    li(id := elemId, `class` := Hide)(aHref("#")(iClass(s"fa fa-$faIcon")))
+    li(id := elemId, `class` := HiddenClass)(aHref("#")(iClass(s"fa fa-$faIcon")))
 }

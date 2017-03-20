@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.tags
 
 import ch.qos.logback.classic.Level
+import com.malliina.musicpimp.js.FrontStrings
 import com.malliina.musicpimp.tags.PimpHtml.{feedbackDiv, postableForm}
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{UserFeedback, routes}
@@ -8,7 +9,7 @@ import play.api.data.Field
 
 import scalatags.Text.all._
 
-object LogsHtml {
+object LogsHtml extends FrontStrings {
   def logsContent(levelField: Field,
                   levels: Seq[Level],
                   currentLevel: Level,
@@ -27,7 +28,7 @@ object LogsHtml {
     fullRow(
       headeredTable(s"$TableStripedHover $TableResponsive $TableCondensed",
         Seq("Time", "Message", "Logger", "Thread", "Level"))(
-        tbody(id := "logTableBody")
+        tbody(id := LogTableBodyId)
       )
     )
   )
