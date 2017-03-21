@@ -54,9 +54,10 @@ object PimpBuild {
     .settings(pimpPlaySettings: _*)
 
   lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
+    .dependsOn(crossJs)
 
   lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
-    .dependsOn(shared)
+    .dependsOn(shared, crossJvm)
     .settings(pimpcloudSettings: _*)
 
   lazy val shared = Project("pimp-shared", file("shared"))
@@ -69,6 +70,9 @@ object PimpBuild {
   lazy val cross = crossProject.in(file("cross"))
     .settings(crossSettings: _*)
     .jvmSettings(scalaVersion := "2.11.8")
+    .jsSettings(libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalatags" % "0.6.2",
+      "com.lihaoyi" %%% "upickle" % "0.4.3"))
 
   lazy val crossJvm = cross.jvm
   lazy val crossJs = cross.js
@@ -84,8 +88,6 @@ object PimpBuild {
       .settings(
         persistLauncher := true,
         libraryDependencies ++= Seq(
-          "com.lihaoyi" %%% "scalatags" % "0.6.2",
-          "com.lihaoyi" %%% "upickle" % "0.4.3",
           "be.doeraene" %%% "scalajs-jquery" % "0.9.1",
           "com.lihaoyi" %%% "utest" % "0.4.4" % Test
         ),

@@ -10,10 +10,8 @@ class Search(music: MusicItems)
   extends SocketJS("/search/ws?f=json")
     with SearchStrings {
 
-  val RefreshCommandValue = "refresh"
-
   elem(RefreshButton).click { (_: JQueryEventObject) =>
-    send(Command(RefreshCommandValue))
+    send(Command(Refresh))
   }
 
   override def handlePayload(payload: Js.Value) = {

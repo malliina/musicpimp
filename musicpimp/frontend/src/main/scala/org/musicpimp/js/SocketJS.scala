@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.js.FrontStrings.{FailStatus, HiddenClass, OkStatus}
+import com.malliina.musicpimp.js.FrontStrings._
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
@@ -11,9 +11,6 @@ import scala.util.Either.RightProjection
 
 abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def this(wsPath: String) = this(wsPath, Logger.default)
-
-  val EventField = "event"
-  val Ping = "ping"
 
   val okStatus = elem(OkStatus)
   val failStatus = elem(FailStatus)
@@ -69,7 +66,7 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def onMessage(msg: MessageEvent): Unit = {
     val asString = msg.data.toString
     PimpJSON.parse(asString).fold(onJsonFailure, json => {
-      if (readField[String](json, EventField).exists(_ == Ping)) {
+      if (readField[String](json, EventKey).exists(_ == Ping)) {
       } else {
         handlePayload(json)
       }
@@ -79,7 +76,7 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
   def readField[T: PimpJSON.Reader](json: Js.Value, field: String): RightProjection[Invalid, T] = {
     val either = for {
       map <- PimpJSON.toEither(json.obj).right
-      fieldJson <- map.get(field).toRight(Invalid.Data(json, s"Missing field: '$field'.")).right
+      fieldJson <- map.get(field).toRight(Invalid.Data(json, s"Missing field '$field'.")).right
       parsed <- validate[T](fieldJson).right
     } yield parsed
     either.right
@@ -89,7 +86,7 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
 
   private def onInvalidData: PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
-      log.info(s"JSON failed to parse: '$errorMessage' in value '$jsValue'.")
+      log.info(s"JSON failed to parse '$errorMessage' in value '$jsValue'.")
     case Invalid.Json(errorMessage, in) =>
       log.info(s"Not JSON, '$errorMessage' in value '$in'.")
   }

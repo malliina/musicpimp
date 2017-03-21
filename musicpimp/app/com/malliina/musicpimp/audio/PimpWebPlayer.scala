@@ -8,7 +8,7 @@ import com.malliina.musicpimp.library.LocalTrack
 import com.malliina.musicpimp.models.RemoteInfo
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
-
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
@@ -144,10 +144,10 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   }
 
   def statusEvent =
-    obj(Event -> toJson(StatusKey)) ++ status.as[JsObject]
+    obj(EventKey -> toJson(StatusKey)) ++ status.as[JsObject]
 
   def statusEvent17 =
-    obj(Event -> toJson(StatusKey)) ++ toJson(status17)(StatusEvent17.status17writer).as[JsObject]
+    obj(EventKey -> toJson(StatusKey)) ++ toJson(status17)(StatusEvent17.status17writer).as[JsObject]
 
   def status17 = {
     val track = playlist.current getOrElse LocalTrack.empty

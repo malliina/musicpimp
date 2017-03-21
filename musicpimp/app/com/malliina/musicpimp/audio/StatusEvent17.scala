@@ -2,10 +2,11 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.audio.AudioImplicits._
 import com.malliina.audio.PlayerStates
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.TrackID
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsValue, Writes}
+import play.api.libs.json.Writes
 
 import scala.concurrent.duration.Duration
 
@@ -24,7 +25,7 @@ case class StatusEvent17(id: TrackID,
 object StatusEvent17 {
   implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] = Writes[StatusEvent17] { o =>
     obj(
-      Event -> StatusKey,
+      EventKey -> StatusKey,
       Id -> toJson(o.id),
       Title -> o.title,
       Artist -> o.artist,
@@ -40,6 +41,7 @@ object StatusEvent17 {
       PlaylistIndexv17v18 -> toJson(o.index)
     )
   }
+
   val empty = StatusEvent17(
     TrackID(""),
     "",

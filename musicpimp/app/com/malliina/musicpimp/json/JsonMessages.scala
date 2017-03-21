@@ -2,6 +2,7 @@ package com.malliina.musicpimp.json
 
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.{FailReason, Version}
 import play.api.libs.json.Json._
@@ -55,7 +56,7 @@ trait JsonMessages {
     event(StatusKey) ++ json.as[JsObject]
 
   def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject =
-    obj(Event -> eventType) ++ obj(valuePairs: _*)
+    obj(EventKey -> eventType) ++ obj(valuePairs: _*)
 
   def thanks =
     Json.obj(Msg -> Json.toJson(ThankYou))

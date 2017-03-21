@@ -1,5 +1,7 @@
 package com.malliina.pimpcloud.js
 
+import com.malliina.pimpcloud.CloudStrings._
+import org.musicpimp.js.PimpJSON
 import org.scalajs.jquery.JQuery
 import upickle.{Invalid, Js}
 
@@ -21,9 +23,9 @@ case class Track(title: String, artist: String)
 case class Range(description: String)
 
 class AdminJS extends SocketJS("/admin/usage") {
-  val phonesTable: JQuery = elem("phonesTable")
-  val serversTable = elem("serversTable")
-  val requestsTable = elem("requestsTable")
+  val phonesTable: JQuery = elem(PhonesTableId)
+  val serversTable = elem(ServersTableId)
+  val requestsTable = elem(RequestsTableId)
 
   override def handlePayload(payload: String) = {
     val event = validate[AdminEvent](payload)
@@ -39,14 +41,14 @@ class AdminJS extends SocketJS("/admin/usage") {
 
     val body = event.body
     val result = event.event match {
-      case "requests" =>
+      case RequestsKey =>
         validateRight[Seq[Request]](body).map(updateRequests)
-      case "phones" =>
+      case PhonesKey =>
         validateRight[Seq[Phone]](body).map(updatePhones)
-      case "servers" =>
+      case ServersKey =>
         validateRight[Seq[Server]](body).map(updateServers)
       case other =>
-        Left(Invalid.Data(PimpJSON.writeJs(other), s"Unknown event: '$other'."))
+        Left(Invalid.Data(PimpJSON.writeJs(other), s"Unknown event '$other'."))
     }
     result.left foreach onJsonFailure
   }

@@ -1,44 +1,15 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.json.PlaybackStrings
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import upickle.{Invalid, Js}
 
 import scala.concurrent.duration.Duration
 
-case class Volume private(volume: Int)
+abstract class PlaybackSocket
+  extends SocketJS(Playback.SocketUrl)
+    with PlaybackStrings {
 
-object Volume {
-  def forInt(v: Int): Option[Volume] =
-    if(v >= 0 && v <= 100) Option(Volume(v))
-    else None
-
-  def unapply(json: Js.Value): Option[Volume] = json match {
-    case Js.Num(n) => forInt(n.toInt)
-    case _ =>  None
-  }
-}
-
-sealed trait PlayerState
-
-object PlayerState {
-
-  case object Started extends PlayerState
-
-  case object Stopped extends PlayerState
-
-  case object NoMedia extends PlayerState
-
-  case class Unknown(name: String) extends PlayerState
-
-  def forString(s: String) = s match {
-    case "Started" => Started
-    case "Stopped" => Stopped
-    case "NoMedia" => NoMedia
-    case other => Unknown(other)
-  }
-}
-
-abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) with PlaybackStrings {
   def updateTime(duration: Duration): Unit
 
   def updatePlayPauseButtons(state: PlayerState)
@@ -60,7 +31,7 @@ abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) with Playback
       .map(json => PimpJSON.readJs[T](json))
       .getOrElse(throw Invalid.Data(payload, s"Missing key '$key'."))
 
-    read[String]("event") match {
+    read[String](EventKey) match {
       case "welcome" =>
         send(Playback.status)
       case TimeUpdated =>

@@ -60,7 +60,6 @@ trait JsonStrings extends PimpStrings with PlaybackStrings {
   val Enabled = "enabled"
 
   // Search
-  val Refresh = "refresh"
   val SearchStatus = "search_status"
 
   // push notifications

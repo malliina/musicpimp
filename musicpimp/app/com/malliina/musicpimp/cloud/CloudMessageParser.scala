@@ -2,6 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered}
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
@@ -63,7 +64,7 @@ trait CloudMessageParser {
   }
 
   def parseEvent(json: JsValue): JsResult[PimpMessage] = {
-    val event = (json \ Cmd).validate[String].orElse((json \ Event).validate[String])
+    val event = (json \ Cmd).validate[String].orElse((json \ EventKey).validate[String])
     val body = json \ Body
     event flatMap {
       case Registered =>

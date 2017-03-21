@@ -1,5 +1,8 @@
 package com.malliina.pimpcloud.js
 
+import com.malliina.musicpimp.js.FrontStrings.{FailStatus, OkStatus}
+import com.malliina.pimpcloud.CloudStrings
+import org.musicpimp.js.PimpJSON
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
@@ -10,9 +13,9 @@ import scala.scalajs.js
 import scala.scalajs.js.JSON
 
 abstract class SocketJS(wsPath: String) {
-  val okStatus = elem("okstatus")
-  val failStatus = elem("failstatus")
-  val Hidden = "hidden"
+  val okStatus = elem(OkStatus)
+  val failStatus = elem(FailStatus)
+  val Hidden = CloudStrings.Hidden
 
   val socket: dom.WebSocket = openSocket(wsPath)
 
@@ -31,10 +34,10 @@ abstract class SocketJS(wsPath: String) {
   def openSocket(pathAndQuery: String) = {
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
     val socket = new dom.WebSocket(wsUrl)
-//    socket.onopen = (_: Event) => {
-//      socket.send(PimpJSON.write(Command.Subscribe))
-//      setFeedback("Connected.")
-//    }
+    //    socket.onopen = (_: Event) => {
+    //      socket.send(PimpJSON.write(Command.Subscribe))
+    //      setFeedback("Connected.")
+    //    }
     socket.onopen = (e: Event) => onConnected(e)
     socket.onmessage = (event: MessageEvent) => onMessage(event)
     socket.onclose = (e: CloseEvent) => onClosed(e)
@@ -66,9 +69,9 @@ abstract class SocketJS(wsPath: String) {
 
   private def onInvalidData: PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
-      println(s"JSON failed to parse: '$errorMessage' in value '$jsValue'")
+      println(s"JSON failed to parse '$errorMessage' in value '$jsValue'.")
     case Invalid.Json(errorMessage, in) =>
-      println(s"Not JSON, '$errorMessage' in value '$in'")
+      println(s"Not JSON '$errorMessage' in value '$in'.")
   }
 
   def elem(id: String) = jQuery(s"#$id")

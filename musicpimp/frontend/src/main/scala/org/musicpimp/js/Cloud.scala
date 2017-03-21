@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.js.CloudStrings
+import com.malliina.musicpimp.js.{CloudStrings, FrontStrings}
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
@@ -25,7 +25,6 @@ object Cloud {
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
   val inputId = "id"
-  val EventKey = "event"
   val Reason = "reason"
   val IdKey = "id"
 
@@ -85,7 +84,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
 
   def onSocketEvent(payload: Value) = {
     val fragment: Either[Invalid, Frag] =
-      readField[String](payload, EventKey).flatMap {
+      readField[String](payload, FrontStrings.EventKey).flatMap {
         case Connecting =>
           Right(Cloud.connectingContent)
         case Connected =>

@@ -2,13 +2,14 @@ package controllers.pimpcloud
 
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
 import com.malliina.musicpimp.models.TrackID
+import com.malliina.pimpcloud.CloudStrings
 import com.malliina.pimpcloud.tags.ScalaScripts
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
 import controllers.pimpcloud.CloudTags.callAttr
 import controllers.routes.Assets.at
 import play.api.mvc.Call
-
+import com.malliina.musicpimp.js.FrontStrings.{OkStatus, FailStatus}
 import scalatags.Text.GenericAttr
 import scalatags.Text.all._
 
@@ -29,8 +30,7 @@ object CloudTags {
     new CloudTags(jsFiles.map(file => jsScript(at(file))): _*)
 }
 
-class CloudTags(scripts: Modifier*) {
-  val Hidden = "hidden"
+class CloudTags(scripts: Modifier*) extends CloudStrings {
   val WideContent = "wide-content"
 
   def eject(message: Option[String]) =
@@ -121,10 +121,10 @@ class CloudTags(scripts: Modifier*) {
 
   def trackActions(track: TrackID) =
     divClass(BtnGroup)(
-      a(`class` := s"$BtnDefault $BtnXs play-link", href := "#", id := s"play-$track")(glyphIcon("play"), " Play"),
+      a(`class` := s"$BtnDefault $BtnXs $PlayLink", href := "#", id := s"play-$track")(glyphIcon("play"), " Play"),
       a(`class` := s"$BtnDefault $BtnXs $DropdownToggle", dataToggle := Dropdown, href := "#")(spanClass(Caret)),
       ulClass(DropdownMenu)(
-        li(a(href := "#", `class` := "playlist-link", id := s"add-$track")(glyphIcon("plus"), " Add to playlist")),
+        li(a(href := "#", `class` := PlaylistLink, id := s"add-$track")(glyphIcon("plus"), " Add to playlist")),
         li(a(href := routes.Phones.track(track), download)(glyphIcon("download"), " Download"))
       )
     )
@@ -142,9 +142,9 @@ class CloudTags(scripts: Modifier*) {
 
   val admin = baseIndex("home")(
     headerRow()("Admin"),
-    tableContainer("Streams", "requestsTable", "Cloud ID", "Request ID", "Track", "Artist", "Bytes"),
-    tableContainer("Phones", "phonesTable", "Cloud ID", "Phone Address"),
-    tableContainer("Servers", "serversTable", "Cloud ID", "Server Address")
+    tableContainer("Streams", RequestsTableId, "Cloud ID", "Request ID", "Track", "Artist", "Bytes"),
+    tableContainer("Phones", PhonesTableId, "Cloud ID", "Phone Address"),
+    tableContainer("Servers", ServersTableId, "Cloud ID", "Server Address")
   )
 
   def tableContainer(header: String, bodyId: String, headers: String*): Modifier = Seq(
@@ -186,8 +186,8 @@ class CloudTags(scripts: Modifier*) {
               li(aHref(routes.AdminAuth.logout())("Logout"))
             ),
             divClass(s"$ColMd2 $PullRight")(
-              eye("okstatus", "eye-open green"),
-              eye("failstatus", "eye-close red")
+              eye(OkStatus, "eye-open green"),
+              eye(FailStatus, "eye-close red")
             )
           )
         )
@@ -200,7 +200,7 @@ class CloudTags(scripts: Modifier*) {
     html(lang := En)(
       head(
         titleTag(title),
-        meta(name := "viewport", content := "width=device-width, initial-scale=1.0"),
+        deviceWidthViewport,
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"),
         cssLink("//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),

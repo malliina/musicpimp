@@ -2,8 +2,9 @@ package controllers.musicpimp
 
 import akka.actor.Props
 import com.malliina.musicpimp.db.Indexer
+import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.json.JsonStrings.{Cmd, Refresh, Subscribe}
+import com.malliina.musicpimp.json.JsonStrings.{Cmd, Subscribe}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.AuthedRequest
@@ -24,7 +25,7 @@ object Search {
                        onCompleted: String => Unit) = Observer[Long](
     (next: Long) => onNext(s"Indexing... $next files indexed..."),
     (t: Throwable) => onErr("Indexing failed.", t),
-    () => onCompleted(s"Indexing complete."))
+    () => onCompleted("Indexing complete."))
 
   def subscribeUntilComplete[T](observable: Observable[T], observers: Observer[T]*)(implicit ec: ExecutionContext) = {
     val subs = observers map observable.subscribe
@@ -40,7 +41,9 @@ object Search {
   }
 }
 
-class Search(indexer: Indexer, auth: Authenticator[AuthedRequest], ctx: ActorExecution) {
+class Search(indexer: Indexer,
+             auth: Authenticator[AuthedRequest],
+             ctx: ActorExecution) {
   implicit val ec = ctx.executionContext
   val loggingObserver = indexingObserver(
     msg => log.debug(msg),
@@ -74,8 +77,8 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)
   }
 
   override def onMessage(msg: JsValue): Unit = {
-    (msg \ Cmd).asOpt[String].fold(SearchActor.log warn s"Unknown message: $msg")({
-      case Refresh =>
+    (msg \ Cmd).asOpt[String].fold(SearchActor.log warn s"Unknown message '$msg'.")({
+      case SearchStrings.Refresh =>
         send("Indexing...")
         indexer.indexAndSave()
       case Subscribe =>

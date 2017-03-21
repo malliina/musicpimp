@@ -2,6 +2,8 @@ package com.malliina.pimpcloud.js
 
 import java.util.UUID
 
+import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
+import org.musicpimp.js.PimpJSON
 import org.scalajs.jquery.JQueryEventObject
 
 import scalatags.Text.all._
@@ -13,16 +15,10 @@ case class JVMLogEntry(level: String,
                        timeFormatted: String,
                        stackTrace: Option[String] = None)
 
-case class Command(cmd: String)
-
-object Command {
-  val Subscribe = apply("subscribe")
-}
-
 class LogsJS extends SocketJS("/admin/ws?f=json") {
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
-  val tableContent = elem("logTableBody")
+  val tableContent = elem(LogTableBodyId)
 
   def handlePayload(payload: String) = {
     PimpJSON.validate[Seq[JVMLogEntry]](payload).fold(
