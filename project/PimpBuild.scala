@@ -31,8 +31,8 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
-  val musicpimpVersion = "3.6.0"
-  val pimpcloudVersion = "1.7.0"
+  val musicpimpVersion = "3.6.2"
+  val pimpcloudVersion = "1.7.2"
   val sharedVersion = "1.0.1"
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
@@ -215,9 +215,11 @@ object PimpBuild {
           "com.malliina.musicpimp.models._",
           "com.malliina.play.models.Username"
         ),
+        // TODO get rid of this
         libs ++= Seq(
           (packageBin in Assets).value.toPath,
-          (packageBin in shared in Compile).value.toPath
+          (packageBin in shared in Compile).value.toPath,
+          (packageBin in crossJvm in Compile).value.toPath
         )
       )
 
@@ -233,6 +235,7 @@ object PimpBuild {
       "com.malliina.play.models.Username"
     )
   )
+
   // pimpcloud settings
 
   lazy val pimpcloudSettings =
@@ -249,7 +252,8 @@ object PimpBuild {
         PlayKeys.externalizeResources := false,
         libs ++= Seq(
           (packageBin in Assets).value.toPath,
-          (packageBin in shared in Compile).value.toPath
+          (packageBin in shared in Compile).value.toPath,
+          (packageBin in crossJvm in Compile).value.toPath
         )
       )
 
