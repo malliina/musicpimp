@@ -84,6 +84,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   var subscription: Option[Subscription] = None
 
   override def preStart(): Unit = {
+    super.preStart()
     val sub = jsonEvents.subscribe(
       e => self ! Broadcast(e),
       (err: Throwable) => log.error("WebSocket error.", err),
@@ -116,6 +117,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   }
 
   override def postStop(): Unit = {
+    super.postStop()
     subscription foreach { sub => sub.unsubscribe() }
   }
 }

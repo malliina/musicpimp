@@ -28,7 +28,8 @@ object WebPlayer {
   private val log = Logger(getClass)
 }
 
-class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
+class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta)
+  extends JsonActor(ctx) {
   val user = remote.user
   val target = Target(json => out ! json)
   val player = new PimpWebPlayer(remote, target)
@@ -36,6 +37,7 @@ class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta) extends JsonActor(ctx) {
   val requestInfo = RequestInfo(user, rh)
 
   override def preStart() = {
+    super.preStart()
     out ! com.malliina.play.json.JsonMessages.welcome
   }
 

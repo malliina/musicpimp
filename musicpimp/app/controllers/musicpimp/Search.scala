@@ -71,6 +71,8 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)
     compl => send(compl))
 
   override def preStart() = {
+    super.preStart()
+    // WTF?
     send("")
     val sub = indexer.ongoing.subscribe(op => subscribeUntilComplete(op, socketBroadcaster)(ec))
     subscription = Option(sub)
@@ -89,6 +91,7 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)
   def send(message: String): Unit = out ! JsonMessages.searchStatus(message)
 
   override def postStop() = {
+    super.postStop()
     subscription foreach { sub => sub.unsubscribe() }
   }
 }

@@ -61,6 +61,7 @@ class PlayerActor(player: ServerPlayer,
   }
 
   override def preStart() = {
+    super.preStart()
     out ! com.malliina.play.json.JsonMessages.welcome
     val playbackEvents = player.allEvents.subscribe(
       event => out ! messageWriter.writes(event),
@@ -90,6 +91,7 @@ class PlayerActor(player: ServerPlayer,
   }
 
   override def postStop() = {
+    super.postStop()
     eventSub foreach { sub => sub.unsubscribe() }
   }
 }

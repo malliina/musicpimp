@@ -31,8 +31,8 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
-  val musicpimpVersion = "3.6.2"
-  val pimpcloudVersion = "1.7.2"
+  val musicpimpVersion = "3.6.3"
+  val pimpcloudVersion = "1.7.3"
   val sharedVersion = "1.0.1"
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
