@@ -4,19 +4,16 @@ import _root_.pimpcloud.Routes
 import buildinfo.BuildInfo
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.{GoogleOAuthCredentials, GoogleOAuthReader}
+import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
-import com.malliina.play.controllers.AccountForms
 import controllers._
 import controllers.pimpcloud._
 import play.api.ApplicationLoader.Context
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.gzip.GzipFilter
-import CloudComponents.log
-import com.malliina.play.auth.UserAuthenticator
-import com.malliina.play.http.AuthedRequest
 
 class CloudLoader extends DefaultApp(new ProdComponents(_))
 
@@ -30,22 +27,19 @@ abstract class CloudComponents(context: Context,
   extends BuiltInComponentsFromContext(context) {
 
   def pimpAuth: PimpAuth
+
   implicit val ec = materializer.executionContext
 
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   val adminAuth = new AdminOAuth(oauthCreds, materializer)
-  val authenticator = UserAuthenticator.session().transform((req, user) => Right(AuthedRequest(user, req)))
-  lazy val auth = new CloudAuth(authenticator, materializer)
 
   lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
   lazy val ctx = ActorExecution(actorSystem, materializer)
 
   // Controllers
   lazy val joined = new JoinedSockets(pimpAuth, ctx)
-  lazy val s = joined.servers
   lazy val cloudAuths = joined.auths
-  lazy val ps = joined.phones
   lazy val push = new Push(pusher)
   lazy val p = Phones.forAuth(tags, cloudAuths.phone, materializer)
   lazy val sc = ServersController.forAuth(cloudAuths.server, materializer)
