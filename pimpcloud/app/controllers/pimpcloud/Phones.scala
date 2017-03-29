@@ -3,6 +3,7 @@ package controllers.pimpcloud
 import java.net.{URLDecoder, URLEncoder}
 import java.nio.file.Paths
 
+import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
@@ -11,10 +12,10 @@ import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors._
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
-import com.malliina.pimpcloud.auth.CloudAuthentication
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.ContentRange
+import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import controllers.pimpcloud.Phones.log
@@ -32,9 +33,17 @@ import scala.util.Try
 object Phones {
   val log = Logger(getClass)
 
-  val DefaultSearchLimit = 100
   val Bytes = "bytes"
+  val DefaultSearchLimit = 100
   val EncodingUTF8 = "UTF-8"
+
+  def forAuth(tags: CloudTags,
+              phonesAuth: Authenticator[PhoneConnection],
+              mat: Materializer): Phones = {
+    val phoneBundle = AuthBundle.default(phonesAuth)
+    val phoneAuth = new BaseSecurity(phoneBundle, mat)
+    new Phones(tags, phoneAuth)
+  }
 
   def invalidCredentials = new NoSuchElementException("Invalid credentials.")
 
@@ -46,13 +55,9 @@ object Phones {
 }
 
 class Phones(tags: CloudTags,
-             val cloudAuths: CloudAuthentication,
-             val auth: CloudAuth)
+             phoneAuth: BaseSecurity[PhoneConnection])
   extends PimpContentController
     with Controller {
-
-  val phoneBundle = AuthBundle.default(cloudAuths.phone)
-  val phoneAuth = new BaseSecurity(phoneBundle, auth.mat)
 
   def ping = proxiedGetAction(Ping)
 

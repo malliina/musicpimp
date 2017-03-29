@@ -1,27 +1,24 @@
 package controllers.pimpcloud
 
-import com.malliina.pimpcloud.auth.CloudAuthentication
+import akka.stream.Materializer
+import com.malliina.musicpimp.models.Errors
+import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import controllers.pimpcloud.ServersController.log
 import play.api.Logger
 import play.api.mvc._
 
-class ServersController(cloudAuth: CloudAuthentication, auth: CloudAuth)
-  extends StreamReceiver(auth.mat) {
+class ServersController(auth: BaseSecurity[ServerRequest], mat: Materializer)
+  extends StreamReceiver(mat) {
 
-  val mat = auth.mat
-  implicit val ec = mat.executionContext
-  val serverBundle = AuthBundle.default(cloudAuth.server)
-  val serverAuth = new BaseSecurity(serverBundle, mat)
-
-  def receiveUpload = serverAuth.authenticatedLogged(r => receive(r))
+  def receiveUpload = auth.authenticatedLogged(r => receive(r))
 
   def receive(server: ServerRequest): EssentialAction = {
     val requestID = server.request
-    log debug s"Processing $requestID..."
+    log debug s"Processing '$requestID'..."
     val transfers = server.socket.fileTransfers
     val parser = transfers parser requestID
-    parser.fold[EssentialAction](Action(NotFound)) { parser =>
+    parser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))) { parser =>
       receiveStream(parser, transfers, requestID)
     }
   }
@@ -29,4 +26,10 @@ class ServersController(cloudAuth: CloudAuthentication, auth: CloudAuth)
 
 object ServersController {
   private val log = Logger(getClass)
+
+  def forAuth(auth: Authenticator[ServerRequest], mat: Materializer): ServersController = {
+    val serverBundle = AuthBundle.default(auth)
+    val serverAuth = new BaseSecurity(serverBundle, mat)
+    new ServersController(serverAuth, mat)
+  }
 }

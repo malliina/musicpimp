@@ -27,8 +27,6 @@ object Web {
     forms.userFormKey -> Username.mapping,
     forms.passFormKey -> Password.mapping
   )(CloudCreds.apply)(CloudCreds.unapply))
-
-//  def readCreds(req: Request[AnyContent]) = cloudForm.bindFromRequest()(req).fold()
 }
 
 class Web(tags: CloudTags,

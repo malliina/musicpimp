@@ -6,5 +6,4 @@ object CloudStrings {
   val Registered = "registered"
   val Unregister = "unregister"
   val SuccessKey = "success"
-  val Cancel = "cancel"
 }

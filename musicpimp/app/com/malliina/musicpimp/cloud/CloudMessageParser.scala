@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.beam.BeamCommand
-import com.malliina.musicpimp.cloud.CloudStrings.{Cancel, Registered}
+import com.malliina.musicpimp.cloud.CloudStrings.Registered
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.SocketStrings.Cancel
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.stats.DataRequest

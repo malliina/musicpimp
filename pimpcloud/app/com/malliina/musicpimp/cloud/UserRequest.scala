@@ -13,6 +13,8 @@ case class UserRequest(cmd: String,
 object UserRequest {
   implicit val json = Json.format[UserRequest]
 
+  def simple(cmd: String, request: RequestID) = UserRequest(cmd, Json.obj(), request, PimpServerSocket.nobody)
+
   def apply[W: Writes](data: PhoneRequest[W], request: RequestID): UserRequest =
     UserRequest(data.cmd, Json.toJson(data.body), request, data.user)
 }

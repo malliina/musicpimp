@@ -47,9 +47,9 @@ abstract class CloudComponents(context: Context,
   lazy val cloudAuths = joined.auths
   lazy val ps = joined.phones
   lazy val push = new Push(pusher)
-  lazy val p = new Phones(tags, cloudAuths, auth)
-  lazy val sc = new ServersController(cloudAuths, auth)
-  lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags, materializer)
+  lazy val p = Phones.forAuth(tags, cloudAuths.phone, materializer)
+  lazy val sc = ServersController.forAuth(cloudAuths.server, materializer)
+  lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags)
   lazy val l = new Logs(tags, pimpAuth, ctx)
   lazy val w = new Web(tags, cloudAuths, ec)
   lazy val as = new Assets(httpErrorHandler)

@@ -31,9 +31,10 @@ import webscalajs.ScalaJSWeb
 import webscalajs.WebScalaJS.autoImport.{scalaJSPipeline, scalaJSProjects}
 
 object PimpBuild {
-  val musicpimpVersion = "3.6.3"
-  val pimpcloudVersion = "1.7.3"
-  val sharedVersion = "1.0.1"
+  val musicpimpVersion = "3.6.4"
+  val pimpcloudVersion = "1.7.4"
+  val sharedVersion = "1.0.2"
+  val crossVersion = "1.0.1"
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
@@ -71,7 +72,7 @@ object PimpBuild {
     .settings(crossSettings: _*)
     .jvmSettings(scalaVersion := "2.11.8")
     .jsSettings(libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % "0.6.2",
+      "com.lihaoyi" %%% "scalatags" % "0.6.3",
       "com.lihaoyi" %%% "upickle" % "0.4.3"))
 
   lazy val crossJvm = cross.jvm
@@ -79,7 +80,7 @@ object PimpBuild {
 
   lazy val crossSettings = Seq(
     organization := "org.musicpimp",
-    version := "1.0.0"
+    version := "1.0.1"
   )
 
   def scalajsProject(name: String, path: File) =
@@ -100,9 +101,7 @@ object PimpBuild {
     version := musicpimpVersion,
     resolvers ++= Seq(
       Resolver.jcenterRepo,
-      Resolver.bintrayRepo("malliina", "maven"),
-      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-      "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
+      Resolver.bintrayRepo("malliina", "maven")
     ),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
     scalacOptions ++= Seq(
@@ -207,7 +206,6 @@ object PimpBuild {
           "net.glxn" % "qrgen" % "1.4",
           "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
           "com.h2database" % "h2" % "1.4.193",
-          "com.typesafe.slick" %% "slick" % "3.1.1",
           "com.neovisionaries" % "nv-websocket-client" % "1.31"
         ).map(dep => dep withSources()),
         buildInfoPackage := "com.malliina.musicpimp",
