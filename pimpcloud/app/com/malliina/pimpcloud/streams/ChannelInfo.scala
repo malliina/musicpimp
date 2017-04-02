@@ -21,9 +21,10 @@ class ChannelInfo(val channel: SourceQueue[Option[ByteString]],
 
   def send(t: ByteString): Future[QueueOfferResult] = {
     if (!isClosed.get()) {
+      log info s"Offering ${t.length} bytes of $describe"
       channel.offer(Option(t))
     } else {
-      log.warn(s"Tried to send from server '$serverID' to a closed channel of track '${track.title}'.")
+      //log.warn(s"Tried to send from server '$serverID' to a closed channel of track '${track.title}'.")
       Future.successful(QueueOfferResult.QueueClosed)
     }
   }

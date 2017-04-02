@@ -165,7 +165,7 @@ class NoCacheByteStreams(id: CloudID,
       case Enqueued => ()
       case Dropped => log.warn(s"Offer dropped$suffix")
       case Failure(t) => log.error(s"Offer failed$suffix", t)
-      case QueueClosed => log.error(s"Queue closed$suffix")
+      case QueueClosed => () //log.error(s"Queue closed$suffix")
     }
   }
 
