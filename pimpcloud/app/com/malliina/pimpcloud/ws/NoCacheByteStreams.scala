@@ -169,10 +169,10 @@ class NoCacheByteStreams(id: CloudID,
 
   protected def onOfferError(request: RequestID, dest: StreamEndpoint, bytes: ByteString): PartialFunction[Throwable, Unit] = {
     case iae: IllegalStateException if Option(iae.getMessage).contains(DetachedMessage) =>
-      log debug s"Client disconnected $request"
+      log info s"Client disconnected '$request'."
       remove(request, shouldAbort = true, wasSuccess = false)
     case other: Throwable =>
-      log.error(s"Offer of ${bytes.length} bytes failed for request $request", other)
+      log.error(s"Offer of ${bytes.length} bytes failed for '$request'.", other)
       remove(request, shouldAbort = true, wasSuccess = false)
   }
 
