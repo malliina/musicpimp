@@ -7,6 +7,7 @@ import akka.stream.scaladsl.SourceQueue
 import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.models.CloudID
+import com.malliina.pimpcloud.streams.ChannelInfo.log
 import com.malliina.play.ContentRange
 import play.api.Logger
 
@@ -22,7 +23,7 @@ class ChannelInfo(val channel: SourceQueue[Option[ByteString]],
     if (!isClosed.get()) {
       channel.offer(Option(t))
     } else {
-      //      ChannelInfo.log.warn(s"Tried to send from server $serverID to a closed channel of track ${track.title}")
+      log.warn(s"Tried to send from server '$serverID' to a closed channel of track '${track.title}'.")
       Future.successful(QueueOfferResult.QueueClosed)
     }
   }

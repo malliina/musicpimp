@@ -74,11 +74,12 @@ class UploadTests extends FunSuite with BaseSuite {
     val size = Files.size(tempFile).bytes
     println(s"Sending $size in $tempFile")
     val action = receiver.receiveStream(parser, streamer, RequestID.random())
-    val request: Request[Either[MaxSizeExceeded, MultipartFormData[Long]]] =
-      multipartRequest(tempFile).map[Either[MaxSizeExceeded, MultipartFormData[Long]]] { data =>
-        analyze(data)
-        Right(data)
-      }
+//    val request: Request[Either[MaxSizeExceeded, MultipartFormData[Long]]] =
+//      multipartRequest(tempFile).map[Either[MaxSizeExceeded, MultipartFormData[Long]]] { data =>
+//        analyze(data)
+//        Right(data)
+//      }
+    val request = multipartRequest(tempFile)
     val result = await(action.apply(request))
     println(await(result.body.consumeData.map(_.utf8String)))
     assert(result.header.status === 200)

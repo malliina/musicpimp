@@ -20,22 +20,25 @@ class StreamReceiver(mat: Materializer) extends Controller {
                     requestId: RequestID) = {
     val maxSize = transfers.maxUploadSize
     log info s"Streaming at most $maxSize for '$requestId'."
-    val composedParser = recoveringParser(parse.maxLength(maxSize.toBytes, parser)(mat), transfers, requestId)
+    //    val composedParser = recoveringParser(parse.maxLength(maxSize.toBytes, parser)(mat), transfers, requestId)
+    val composedParser = recoveringParser(parser, transfers, requestId)
     Action(composedParser) { parsedRequest =>
       // Signals to the phone that the transfer is complete
       transfers.remove(requestId, shouldAbort = false, wasSuccess = true)
-      parsedRequest.body.fold(
-        tooMuch => {
-          log error s"Max size of ${tooMuch.length} exceeded for '$requestId'."
-          EntityTooLarge
-        },
-        data => {
-          val streamedSize = data.files.foldLeft(0L)((acc, part) => acc + part.ref).bytes
-          val fileCount = data.files.size
-          val fileDesc = if (fileCount > 1) "files" else "file"
-          log info s"Streamed $streamedSize in $fileCount $fileDesc for '$requestId'."
-          Ok
-        })
+      val data = parsedRequest.body
+      //      parsedRequest.body.fold(
+      //        tooMuch => {
+      //          log error s"Max size of ${tooMuch.length} exceeded for '$requestId'."
+      //          EntityTooLarge
+      //        },
+      //        data => {
+      //
+      //        })
+      val streamedSize = data.files.foldLeft(0L)((acc, part) => acc + part.ref).bytes
+      val fileCount = data.files.size
+      val fileDesc = if (fileCount > 1) "files" else "file"
+      log info s"Streamed $streamedSize in $fileCount $fileDesc for '$requestId'."
+      Ok
     }
   }
 

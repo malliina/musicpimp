@@ -71,7 +71,9 @@ class NoCacheByteStreams(id: CloudID,
     */
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result = {
     val request = RequestID.random()
-    val userAgent = req.headers.get(HeaderNames.USER_AGENT).map(ua => s"user agent $ua") getOrElse "unknown user agent"
+    val userAgent = req.headers.get(HeaderNames.USER_AGENT)
+      .map(ua => s"user agent $ua")
+      .getOrElse("unknown user agent")
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, NoCacheByteStreams.ByteStringBufferSize)
     iteratees += (request -> new ChannelInfo(queue, id, track, range))
     streamChanged()
@@ -163,7 +165,7 @@ class NoCacheByteStreams(id: CloudID,
       case Enqueued => ()
       case Dropped => log.warn(s"Offer dropped$suffix")
       case Failure(t) => log.error(s"Offer failed$suffix", t)
-      case QueueClosed => () //log.error(s"Queue closed$suffix")
+      case QueueClosed => log.error(s"Queue closed$suffix")
     }
   }
 
