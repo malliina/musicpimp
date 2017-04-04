@@ -117,14 +117,11 @@ class NoCacheByteStreams(id: CloudID,
                               source: Source[ByteString, _],
                               track: Track,
                               range: ContentRange): Result = {
-    val result = resultify(source, range)
+    val status = if (range.isAll) Results.Ok else Results.PartialContent
+    val entity = HttpEntity.Streamed(source, Option(range.contentLength.toLong), None)
+    val result = status.sendEntity(entity)
     connect(request, track, range)
     result
-  }
-
-  protected def resultify(source: Source[ByteString, _], range: ContentRange): Result = {
-    val status = if (range.isAll) Results.Ok else Results.PartialContent
-    status.sendEntity(HttpEntity.Streamed(source, Option(range.contentLength.toLong), None))
   }
 
   private def connect(request: RequestID, track: Track, range: ContentRange): Unit = {
