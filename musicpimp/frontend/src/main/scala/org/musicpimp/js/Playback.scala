@@ -135,7 +135,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
 
   def updateDuration(duration: Duration) = {
     durationElem.html(format(duration))
-    sliderDyn.slider(OptionKey, Value, duration.toSeconds)
+    sliderDyn.slider(OptionKey, Max, duration.toSeconds)
   }
 
   def updatePlayPauseButtons(state: PlayerState) = {
