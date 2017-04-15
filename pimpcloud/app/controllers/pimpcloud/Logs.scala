@@ -10,10 +10,11 @@ import scala.concurrent.duration.DurationInt
 
 class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution) {
   val appenderName = "RX"
-  lazy val appender = LogbackUtils.getAppender[BasicBoundedReplayRxAppender](appenderName)
-  lazy val logEvents: Observable[LogEvent] = appender.logEvents
-  lazy val jsonEvents: Observable[JsValue] =
-    logEvents.tumblingBuffer(100.millis).filter(_.nonEmpty).map(Json.toJson(_))
+  lazy val jsonEvents = LogbackUtils.getAppender[BasicBoundedReplayRxAppender](appenderName)
+    .logEvents
+    .tumblingBuffer(100.millis)
+    .filter(_.nonEmpty)
+    .map(Json.toJson(_))
   lazy val sockets = PimpSockets.observingSockets(jsonEvents, auth, ctx)
 
   def index = auth.navigate(_ => tags.admin)

@@ -17,7 +17,8 @@ import play.filters.gzip.GzipFilter
 
 class CloudLoader extends DefaultApp(new ProdComponents(_))
 
-class ProdComponents(context: Context) extends CloudComponents(context, ProdPusher.fromConf, GoogleOAuthReader.load) {
+class ProdComponents(context: Context)
+  extends CloudComponents(context, ProdPusher.fromConf, GoogleOAuthReader.load) {
   override lazy val pimpAuth: PimpAuth = new ProdAuth(new OAuthCtrl(adminAuth))
 }
 

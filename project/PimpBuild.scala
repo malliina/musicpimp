@@ -38,7 +38,7 @@ object PimpBuild {
   val malliinaGroup = "com.malliina"
   val httpGroup = "org.apache.httpcomponents"
   val httpVersion = "4.4.1"
-  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.7"
+  val utilPlayDep = malliinaGroup %% "util-play" % "3.6.8"
 
   val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
   val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
@@ -225,6 +225,7 @@ object PimpBuild {
     libraryDependencies ++= Seq(
       utilPlayDep,
       utilPlayDep % Test classifier "tests",
+      malliinaGroup %% "logstreams-client" % "0.0.6",
       "org.java-websocket" % "Java-WebSocket" % "1.3.0",
       PlayImport.filters
     ).map(dep => dep.withSources()),

@@ -1,30 +1,21 @@
 package tests
 
-import java.net.URL
 import javax.net.ssl._
 
+import com.malliina.logstreams.client.CustomSSLSocketFactory
 import com.malliina.musicpimp.cloud.JsonSocket8
-import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
+import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.play.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.ws.HttpUtil
 import org.scalatest.FunSuite
 
-import scala.collection.JavaConversions._
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 class WebSocketTests extends FunSuite {
   ignore("can open socket") {
-    val ctx = SSLUtils.trustAllSslContext()
-    val matcher = SNIHostName.createSNIMatcher("cloud\\.musicpimp\\.org")
-    val matchers = Seq(matcher)
-    val inner = ctx.getSocketFactory
-    val sslParameters = new SSLParameters()
-    sslParameters.setSNIMatchers(matchers)
-    val url = new URL("https://cloud.musicpimp.org")
-    sslParameters.setServerNames(Seq(new SNIHostName(url.getHost)))
-    val factory = new CustomSSLSocketFactory(inner, sslParameters)
+    val factory = CustomSSLSocketFactory.forHost("cloud.musicpimp.org")
     openSocket(factory)
   }
 
@@ -40,4 +31,3 @@ class WebSocketTests extends FunSuite {
     val _ = Await.result(s.connect(), 5.seconds)
   }
 }
-

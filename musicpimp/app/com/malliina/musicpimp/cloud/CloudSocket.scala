@@ -1,16 +1,15 @@
 package com.malliina.musicpimp.cloud
 
-import javax.net.ssl.SNIHostName
-
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
+import com.malliina.logstreams.client.CustomSSLSocketFactory
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.log
 import com.malliina.musicpimp.cloud.CloudStrings.Unregister
 import com.malliina.musicpimp.db.PimpDb
-import com.malliina.musicpimp.http.{CustomSSLSocketFactory, HttpConstants}
+import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library._
 import com.malliina.musicpimp.models._
@@ -75,7 +74,7 @@ object CloudSocket {
 class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Deps)
   extends JsonSocket8(
     uri,
-    CustomSSLSocketFactory.withSNI(SNIHostName.createSNIMatcher("cloud\\.musicpimp\\.org"), new SNIHostName(uri.host)),
+    CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
     HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
 
   val messageParser = CloudMessageParser
