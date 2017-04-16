@@ -19,7 +19,7 @@ object BuildBuild {
     Resolver.url(name, url(urlString))(Resolver.ivyStylePatterns)
 
   def sbtPlugins = Seq(
-    "com.malliina" %% "sbt-play" % "0.9.5",
+    "com.malliina" %% "sbt-play" % "0.9.7",
     "com.malliina" %% "sbt-jenkins-control" % "0.3.1",
     "com.eed3si9n" % "sbt-assembly" % "0.11.2",
     "org.scala-js" % "sbt-scalajs" % "0.6.13",
