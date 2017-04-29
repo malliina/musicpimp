@@ -7,6 +7,7 @@ import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.Directory
+import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.Search
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors._
@@ -40,8 +41,8 @@ object Phones {
   def forAuth(tags: CloudTags,
               phonesAuth: Authenticator[PhoneConnection],
               mat: Materializer): Phones = {
-    val phoneBundle = AuthBundle.default(phonesAuth)
-    val phoneAuth = new BaseSecurity(phoneBundle, mat)
+    val bundle = PimpAuths.redirecting(routes.Web.login(), phonesAuth)
+    val phoneAuth = new BaseSecurity(bundle, mat)
     new Phones(tags, phoneAuth)
   }
 

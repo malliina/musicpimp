@@ -4,7 +4,7 @@ import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors
 import com.malliina.play.auth.{AuthFailure, Authenticator}
 import com.malliina.play.controllers.AuthBundle
-import com.malliina.play.http.{AuthedRequest, Proxies}
+import com.malliina.play.http.Proxies
 import play.api.Logger
 import play.api.mvc.{Call, Result, Results}
 
@@ -13,9 +13,9 @@ object PimpAuths {
 
   val IntendedUri = "intended_uri"
 
-  def redirecting(redir: Call, auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
-    new AuthBundle[AuthedRequest] {
-      override def authenticator: Authenticator[AuthedRequest] =
+  def redirecting[T](redir: Call, auth: Authenticator[T]): AuthBundle[T] =
+    new AuthBundle[T] {
+      override def authenticator: Authenticator[T] =
         auth
 
       override def onUnauthorized(failure: AuthFailure): Result = {

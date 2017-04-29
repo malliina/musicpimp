@@ -1,11 +1,10 @@
 package tests
 
-import com.malliina.musicpimp.messaging.Pusher
 import com.malliina.musicpimp.messaging.cloud.{APNSRequest, PushResult, PushTask}
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.pimpcloud.CloudComponents
+import com.malliina.pimpcloud.{AppConf, CloudComponents, NoPusher}
 import com.malliina.play.auth.AuthFailure
-import com.malliina.play.http.{AuthedRequest, FullRequest}
+import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import controllers.pimpcloud.{PimpAuth, Push}
@@ -19,10 +18,8 @@ import scala.concurrent.Future
 
 class TestComponents(context: Context) extends CloudComponents(
   context,
-  TestPusher,
-  GoogleOAuthCredentials("id", "secret", "scope")) {
-  override lazy val pimpAuth = TestAuth
-}
+  AppConf(NoPusher, GoogleOAuthCredentials("id", "secret", "scope"), _ => TestAuth)
+)
 
 object TestAuth extends PimpAuth {
   val testUser = Username("test")
@@ -36,11 +33,6 @@ object TestAuth extends PimpAuth {
     val fakeRequest = AuthedRequest(testUser, req, None)
     f(fakeRequest)
   }
-}
-
-object TestPusher extends Pusher {
-  override def push(pushTask: PushTask): Future[PushResult] =
-    Future.successful(PushResult.empty)
 }
 
 class PimpcloudSuite extends AppSuite(new TestComponents(_))
