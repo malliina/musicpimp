@@ -12,6 +12,7 @@ import scala.concurrent.Future
 
 object DatabaseUserManager {
   val DefaultUser = Username("admin")
+  val DefaultPass = Password("test")
 }
 
 class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
@@ -27,7 +28,7 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
 
   override def defaultUser: Username = DatabaseUserManager.DefaultUser
 
-  override def defaultPass: Password = Password("test")
+  override def defaultPass: Password = DatabaseUserManager.DefaultPass
 
   protected def usersQuery = usersTable.map(_.user)
 

@@ -86,13 +86,17 @@ class PimpDb(conn: String) extends DatabaseLike with AutoCloseable {
 
   def trackCount = run(tracks.length.result)
 
+  def insertFolders(fs: Seq[DataFolder]) = run(folders ++= fs)
+
+  def insertTracks(ts: Seq[DataTrack]) = run(tracks ++= ts)
+
+  def insertIfNotExists(tracks: Seq[DataTrack]) = merge(tracks)
+
   def merge(items: Seq[DataTrack]) = {
     val inserts = items map sqlify mkString ","
     val sql = sqlu"MERGE INTO $tracksName KEY(ID) VALUES $inserts"
     executePlain(sql)
   }
-
-  def insertIfNotExists(tracks: Seq[DataTrack]) = merge(tracks)
 
   def sqlify(track: DataTrack) = s"('${track.id}','${track.artist}','${track.album}','${track.title}')"
 

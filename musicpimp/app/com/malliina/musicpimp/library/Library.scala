@@ -8,6 +8,7 @@ import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.PimpEnc._
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
+import com.malliina.musicpimp.library.Library._
 import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
 import com.malliina.util.Utils
 import play.api.Logger
@@ -22,18 +23,15 @@ object Library extends Library {
 }
 
 class Library {
-
-  import Library._
-
   private val rootFolders: Ref[Seq[Path]] = Ref(Settings.read)
 
   private def roots = rootFolders.single.get
 
+  private def rootStream = roots.toStream
+
   def reloadFolders(): Unit = setFolders(Settings.read)
 
   def setFolders(folders: Seq[Path]) = atomic(txn => rootFolders.set(folders)(txn))
-
-  private def rootStream = roots.toStream
 
   def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.id))
 
@@ -100,8 +98,6 @@ class Library {
   def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
 
   private def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
-
-//  def parseMeta(relative: Path, root: Path): Option[LocalTrack] = parseMeta(PathInfo(relative, root))
 
   private def parseMeta(pi: PathInfo): Option[LocalTrack] =
     try {
