@@ -1,21 +1,23 @@
 package tests
 
+import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.app.{InitOptions, PimpComponents}
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db.{DataFolder, DataTrack, DatabaseUserManager, PimpDb}
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models.{FolderID, PimpPath, SavedPlaylist, TrackID}
+import com.malliina.musicpimp.models._
 import com.malliina.play.http.FullUrl
 import com.malliina.storage.StorageInt
 import com.malliina.ws.HttpUtil
-import play.api.Application
-import play.api.http.{HeaderNames, MimeTypes, Writeable}
+import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
+import play.api.http.MimeTypes.JSON
+import play.api.http.Writeable
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
+
 import scala.concurrent.duration.DurationInt
-import com.malliina.concurrent.ExecutionContexts.cached
 
 object TestOptions {
   val default = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
@@ -49,40 +51,42 @@ class PlaylistsTests extends MusicPimpSuite {
   }
 
   test("GET /playlists") {
-    val response = fetch(app, FakeRequest(GET, "/playlists"))
-    assert(status(response) === 200)
-    assert(contentType(response) contains MimeTypes.JSON)
-    val maybeList = (contentAsJson(response) \ "playlists").asOpt[Seq[SavedPlaylist]]
-    assert(maybeList.isDefined)
+    fetchLists()
+    assert(1 === 1)
   }
 
   test("POST /playlists") {
+    def postPlaylist(in: PlaylistSubmission) = {
+      val response = fetch(FakeRequest("POST", "/playlists").withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in))))
+      assert(status(response) === 202)
+      (contentAsJson(response) \ "id").as[PlaylistID]
+    }
+
     val submission = PlaylistSubmission(None, "test playlist", testTracks)
-    val request = FakeRequest(POST, "/playlists")
-      .withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(submission)))
-    val response = fetch(app, request)
-    assert(status(response) === 202)
+    val newId = postPlaylist(submission)
+    assert(fetchLists().find(_.id == newId).get.tracks.map(_.id) === testTracks)
+    val updatedTracks = testTracks ++ testTracks
+    val updatedPlaylist = submission.copy(id = Option(newId), tracks = updatedTracks)
+    val updatedId = postPlaylist(updatedPlaylist)
+    assert(newId === updatedId)
+    assert(fetchLists().find(_.id == updatedId).get.tracks.map(_.id) === updatedTracks)
 
-    val response2 = fetch(app, FakeRequest(GET, "/playlists"))
-    assert(status(response2) === 200)
-    assert(contentType(response2) contains MimeTypes.JSON)
-    val maybeList = (contentAsJson(response2) \ "playlists").as[Seq[SavedPlaylist]]
-    assert(maybeList.nonEmpty)
-    val first = maybeList.head
-    assert(first.tracks.size === testTracks.size)
-
-    val response3 = fetch(app, FakeRequest(POST, s"/playlists/delete/${first.id}"))
+    val response3 = fetch(FakeRequest(POST, s"/playlists/delete/$updatedId"))
     assert(status(response3) === 202)
 
-    val response4 = fetch(app, FakeRequest(GET, "/playlists"))
-    assert(status(response4) === 200)
-    val maybeList2 = (contentAsJson(response4) \ "playlists").as[Seq[SavedPlaylist]]
-    assert(maybeList2.isEmpty)
+    assert(fetchLists().isEmpty)
   }
 
-  def fetch[T: Writeable](app: Application, request: FakeRequest[T]) = {
+  def fetchLists() = {
+    val response = fetch(FakeRequest(GET, "/playlists"))
+    assert(contentType(response) contains JSON)
+    assert(status(response) === 200)
+    (contentAsJson(response) \ "playlists").as[Seq[SavedPlaylist]]
+  }
+
+  def fetch[T: Writeable](request: FakeRequest[T]) = {
     route(app, request.withHeaders(
-      HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(DatabaseUserManager.DefaultUser.name, DatabaseUserManager.DefaultPass.pass),
-      HeaderNames.ACCEPT -> MimeTypes.JSON)).get
+      AUTHORIZATION -> HttpUtil.authorizationValue(DatabaseUserManager.DefaultUser.name, DatabaseUserManager.DefaultPass.pass),
+      ACCEPT -> JSON)).get
   }
 }

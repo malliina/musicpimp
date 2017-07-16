@@ -34,13 +34,13 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   }
 
   override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] = {
-    val owns = playlist.playlistId.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
+    val owns = playlist.id.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
     owns flatMap { isOwner =>
       if (isOwner) {
         def insertionQuery = (playlistsTable returning playlistsTable.map(_.id))
           .into((item, id) => item.copy(id = Option(id))) += PlaylistRow(None, playlist.name, user)
         def newPlaylistId: Future[Long] = db.database.run(insertionQuery).map(_.id.getOrElse(0L))
-        val playlistId: Future[Long] = playlist.playlistId.map(plid => Future.successful(plid.id)).getOrElse(newPlaylistId)
+        val playlistId: Future[Long] = playlist.id.map(plid => Future.successful(plid.id)).getOrElse(newPlaylistId)
         playlistId.flatMap { id =>
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)

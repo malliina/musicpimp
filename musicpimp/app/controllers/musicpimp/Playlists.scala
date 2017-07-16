@@ -40,12 +40,12 @@ class Playlists(tags: PimpHtml,
   def playlists = recoveredAsync { req =>
     implicit val f = PlaylistsMeta.format(TrackJson.format(req))
     val user = req.user
-    service.playlistsMeta(user).map(playlists => {
+    service.playlistsMeta(user).map { playlists =>
       default.respond(req)(
         html = tags.playlists(playlists.playlists, user),
         json = Json.toJson(playlists)
       )
-    })
+    }
   }
 
   def playlist(id: PlaylistID) = recoveredAsync { req =>

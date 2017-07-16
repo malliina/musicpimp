@@ -3,10 +3,10 @@ package com.malliina.musicpimp.library
 import com.malliina.musicpimp.models.{PlaylistID, TrackID}
 import play.api.libs.json.Json
 
-case class PlaylistSubmission(playlistId: Option[PlaylistID],
+case class PlaylistSubmission(id: Option[PlaylistID],
                               name: String,
                               tracks: Seq[TrackID]) {
-  val isUpdate = playlistId.nonEmpty
+  val isUpdate = id.nonEmpty
 }
 
 object PlaylistSubmission {
