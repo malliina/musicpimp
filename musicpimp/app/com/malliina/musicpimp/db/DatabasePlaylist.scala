@@ -45,7 +45,8 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)
           }
-          val action = DBIO.sequence(entries.map(entry => playlistTracksTable.insertOrUpdate(entry)))
+          val deletion = playlistTracksTable.filter(link => link.playlist === id && !link.idx.inSet(entries.map(_.index))).delete
+          val action = DBIO.sequence(entries.map(entry => playlistTracksTable.insertOrUpdate(entry)) ++ Seq(deletion))
           run(action).map(_ => PlaylistID(id))
         }
       } else {

@@ -33,7 +33,7 @@ trait ScheduledPlaybackService extends Log {
     clockAPs.clear()
   }
 
-  def status = readConf()
+  def status: Seq[ClockPlayback] = readConf()
 
   def find(id: String) = readConf().find(_.id.contains(id))
 
@@ -73,18 +73,22 @@ trait ScheduledPlaybackService extends Log {
       Seq.empty
     }
 
-  def parseConf(json: String): Seq[ClockPlayback] =
+  def parseConf(json: String): Seq[ClockPlayback] = {
+    implicit val reader = ClockPlayback.shortJson
     Json.parse(json).validate[Seq[ClockPlayback]].fold(
       invalid => {
         log.warn(s"Ignoring configuration because the JSON is invalid: $invalid")
         Seq.empty
       },
       valid => valid)
+  }
 
   private def save(aps: Seq[ClockPlayback]): Unit = save(aps, persistFile)
 
-  private def save(aps: Seq[ClockPlayback], file: Path): Unit =
+  private def save(aps: Seq[ClockPlayback], file: Path): Unit = {
+    implicit val writer = ClockPlayback.shortJson
     FileUtilities.stringToFile(stringify(toJson(aps)), file)
+  }
 
   private def randomID = UUID.randomUUID().toString
 }

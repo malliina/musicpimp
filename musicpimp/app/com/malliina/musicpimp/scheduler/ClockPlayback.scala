@@ -9,5 +9,5 @@ case class ClockPlayback(id: Option[String],
   extends PlaybackAP[ClockSchedule]
 
 object ClockPlayback {
-  implicit val json = Json.format[ClockPlayback]
+  val shortJson = Json.format[ClockPlayback]
 }

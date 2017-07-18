@@ -25,6 +25,8 @@ class Alarms(tags: PimpHtml,
   def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
 
+    implicit val w = TrackJson.writer(request)
+    implicit val writer = Alarms.alarmWriter
     default.respond(request)(
       html = tags.alarms(content, request.user),
       json = Json.toJson(content)

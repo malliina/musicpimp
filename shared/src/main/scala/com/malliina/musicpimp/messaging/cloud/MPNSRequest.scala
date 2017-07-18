@@ -5,11 +5,11 @@ import com.malliina.push.mpns._
 import play.api.libs.json.Json
 
 case class MPNSRequest(tokens: Seq[MPNSToken],
-                       toast: Option[ToastMessage],
-                       tile: Option[TileData],
-                       flip: Option[FlipData],
-                       iconic: Option[IconicData],
-                       cycle: Option[CycleTile]) {
+                       toast: Option[ToastMessage] = None,
+                       tile: Option[TileData] = None,
+                       flip: Option[FlipData] = None,
+                       iconic: Option[IconicData] = None,
+                       cycle: Option[CycleTile] = None) {
   val message: Option[WindowsMessage] =
     toast orElse tile orElse flip orElse iconic orElse cycle
 }

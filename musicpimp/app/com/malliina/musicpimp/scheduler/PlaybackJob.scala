@@ -7,10 +7,10 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.audio.{MusicPlayer, PlayableTrack}
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.messaging.adm.{AdmClient, AmazonDevices}
-import com.malliina.musicpimp.messaging.apns.{APNSDevices, PimpAPNSClient}
-import com.malliina.musicpimp.messaging.gcm.{GCMDevice, GcmClient, GoogleDevices}
-import com.malliina.musicpimp.messaging.mpns.{MicrosoftClient, PushUrls}
+import com.malliina.musicpimp.messaging.adm.{AmazonDevices, CloudAdmClient}
+import com.malliina.musicpimp.messaging.apns.{APNSDevices, CloudAPNSClient}
+import com.malliina.musicpimp.messaging.gcm.{CloudGcmClient, GCMDevice, GcmClient, GoogleDevices}
+import com.malliina.musicpimp.messaging.mpns.{CloudMicrosoftClient, MicrosoftClient, PushUrls}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler.PlaybackJob.log
 import com.malliina.push.mpns.PushUrl
@@ -34,11 +34,10 @@ case class PlaybackJob(track: TrackID) extends Job {
   override def run(): Unit = {
     trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback.")) { t =>
       MusicPlayer.setPlaylistAndPlay(t).map { _ =>
-        // APNS delegates to pimpcloud, TODO others should as well
-        val apns = APNSDevices.get().map(PimpAPNSClient.sendLogged)
-        val toasts = PushUrls.get().map(MicrosoftClient.sendLogged)
-        val gcms = GoogleDevices.get().map(GcmClient.sendLogged)
-        val adms = AmazonDevices.get().map(AdmClient.sendLogged)
+        val apns = APNSDevices.get().map(CloudAPNSClient.sendLogged)
+        val toasts = PushUrls.get().map(CloudMicrosoftClient.sendLogged)
+        val gcms = GoogleDevices.get().map(CloudGcmClient.sendLogged)
+        val adms = AmazonDevices.get().map(CloudAdmClient.sendLogged)
         val messages = apns ++ toasts ++ gcms ++ adms
         if (messages.isEmpty) {
           log.info(s"No push notification URLs are active, so no push notifications were sent.")

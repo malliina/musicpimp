@@ -63,6 +63,7 @@ trait JsonHandler extends SchedulerStrings {
       case Delete =>
         parse(Id, DeleteCmd)
       case Save =>
+        implicit val reader = ClockPlayback.shortJson
         (json \ Ap).validate[ClockPlayback].map(SaveCmd)
       case Start =>
         parse(Id, StartCmd)

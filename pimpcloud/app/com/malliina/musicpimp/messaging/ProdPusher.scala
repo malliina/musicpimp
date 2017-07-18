@@ -1,12 +1,14 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.messaging.ProdPusher.log
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.push.adm.ADMClient
 import com.malliina.push.apns.APNSClient
 import com.malliina.push.gcm.GCMClient
 import com.malliina.push.mpns.MPNSClient
 import com.malliina.push.wns.{WNSClient, WNSCredentials}
+import play.api.Logger
 
 import scala.concurrent.Future
 
@@ -47,10 +49,19 @@ class ProdPusher(apnsCredentials: APNSCredentials,
       adm <- admFuture
       mpns <- mpnsFuture
       wns <- wnsFuture
-    } yield PushResult(apnsProd ++ apnsSandbox, gcm, adm, mpns, wns)
+    } yield {
+      val labels = pushTask.labels
+      val msg =
+        if (labels.isEmpty) s"Did not push, no push payloads."
+        else s"Pushed to ${labels.mkString(", ")}"
+      log info msg
+      PushResult(apnsProd ++ apnsSandbox, gcm, adm, mpns, wns)
+    }
   }
 }
 
 object ProdPusher {
+  private val log = Logger(getClass)
+
   def fromConf: ProdPusher = new ProdPusher(PushConfReader.load)
 }

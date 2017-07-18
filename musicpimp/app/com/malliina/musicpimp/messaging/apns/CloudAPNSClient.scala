@@ -11,7 +11,7 @@ import scala.concurrent.Future
 
 /** Sends a push notification using pimpcloud.
   */
-object PimpAPNSClient extends MessagingClient[APNSDevice] {
+object CloudAPNSClient extends MessagingClient[APNSDevice] {
   val Message = "Open to stop"
 
   override def send(dest: APNSDevice): Future[Response] = {
