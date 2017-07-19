@@ -50,7 +50,7 @@ class MessagingTests extends FunSuite {
     assert(response.getStatusCode === 200)
   }
 
-  ignore("send using gcm - this does not work") {
+  ignore("send using gcm") {
     val token = GCMToken("APA91bHR4yng5EXmeQZvl8MQB-t9_R33-0ScxK4U10Jtc9QPBg34s1biuA_sBJdOz6VsYcWDldPq8yUePbJV9k0TesQZCf1lgnQmgi7OohpBmlokw5TQ6OxBOKvtMBA5GSzr_QDQm7DCloQ5AnsW8gcPR_GUr_tcDg")
     val tag = ServerTag("9d0dc896-7883-44ff-830c-f02bae39535d")
 //    val legacy = GCMDevice(token, tag)
