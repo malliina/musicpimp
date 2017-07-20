@@ -73,8 +73,6 @@ case class PlaybackMessage(body: JsValue, username: Username) extends UserMessag
 
 object PlaybackMessage {
   implicit val json = Json.format[PlaybackMessage]
-
-  //  def cmdWriter[T: Writes](cmd: String, t: T) = Json.obj(JsonStrings.Cmd -> cmd) ++ Json.toJson(t)
 }
 
 case object GetVersion extends PimpMessage
