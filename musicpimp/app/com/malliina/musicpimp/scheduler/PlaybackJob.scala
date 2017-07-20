@@ -9,11 +9,10 @@ import com.malliina.musicpimp.audio.{MusicPlayer, PlayableTrack}
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.messaging.adm.{AmazonDevices, CloudAdmClient}
 import com.malliina.musicpimp.messaging.apns.{APNSDevices, CloudAPNSClient}
-import com.malliina.musicpimp.messaging.gcm.{CloudGcmClient, GCMDevice, GcmClient, GoogleDevices}
-import com.malliina.musicpimp.messaging.mpns.{CloudMicrosoftClient, MicrosoftClient, PushUrls}
+import com.malliina.musicpimp.messaging.gcm.{CloudGcmClient, GoogleDevices}
+import com.malliina.musicpimp.messaging.mpns.{CloudMicrosoftClient, PushUrls}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler.PlaybackJob.log
-import com.malliina.push.mpns.PushUrl
 import play.api.Logger
 import play.api.libs.json.Json
 
@@ -26,10 +25,6 @@ case class PlaybackJob(track: TrackID) extends Job {
   def trackInfo: Option[PlayableTrack] = Library.findMeta(track)
 
   def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
-
-  def sendMPNS(url: PushUrl): Future[Unit] = MicrosoftClient.sendLogged(url)
-
-  def sendGcm(url: GCMDevice): Future[Unit] = GcmClient.sendLogged(url)
 
   override def run(): Unit = {
     trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback.")) { t =>

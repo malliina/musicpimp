@@ -13,7 +13,7 @@ object CloudMicrosoftClient extends MessagingClient[PushUrl] {
       "MusicPimp",
       "Tap to stop",
       s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=${dest.tag}",
-      silent = true)
+      silent = dest.silent)
     val task = PushTask(mpns = Option(MPNSRequest(tokens = Seq(dest.url), toast = Option(message))))
     CloudPushClient.default.push(task)
   }
