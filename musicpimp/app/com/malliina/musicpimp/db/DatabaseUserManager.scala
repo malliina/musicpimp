@@ -5,10 +5,9 @@ import java.sql.SQLException
 import com.malliina.musicpimp.auth.{Auth, DataUser, UserManager}
 import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.models.{Password, Username}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object DatabaseUserManager {
   val DefaultUser = Username("admin")
@@ -16,7 +15,7 @@ object DatabaseUserManager {
 }
 
 class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
-
+  implicit val ec = db.ec
   import PimpSchema.{tokens, usersTable}
 
   def ensureAtLeastOneUserExists(): Future[Unit] = {

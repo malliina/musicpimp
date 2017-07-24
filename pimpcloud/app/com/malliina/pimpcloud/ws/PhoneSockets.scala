@@ -2,14 +2,13 @@ package com.malliina.pimpcloud.ws
 
 import akka.actor.{Actor, ActorRef, Terminated}
 import akka.pattern.pipe
-import akka.stream.scaladsl.SourceQueue
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.models.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
-import com.malliina.play.ws.{ActorConfig, JsonActor, SocketClient}
+import com.malliina.play.ws.{ActorConfig, JsonActor}
 import controllers.pimpcloud.ServerMediator.{Listen, ServerEvent}
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
@@ -102,10 +101,4 @@ case class PhoneEndpoint(server: CloudID, rh: RequestHeader, out: ActorRef)
 
 object PhoneSockets {
   private val log = Logger(getClass)
-}
-
-case class PhoneClient(connection: PhoneConnection, channel: SourceQueue[JsValue], req: RequestHeader)
-  extends SocketClient[JsValue] {
-  val phoneUser = connection.user
-  val connectedServer = connection.server
 }

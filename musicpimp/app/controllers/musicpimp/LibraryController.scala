@@ -72,7 +72,7 @@ class LibraryController(tags: PimpHtml,
   def download(trackId: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
       Library.findAbsolute(trackId)
-        .map(path => FileResults.fileResult(path, authReq.request))
+        .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
     }
 

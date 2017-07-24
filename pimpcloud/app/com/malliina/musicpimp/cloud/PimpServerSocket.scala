@@ -12,6 +12,7 @@ import com.malliina.pimpcloud.ws.NoCacheByteStreams
 import com.malliina.play.ContentRange
 import com.malliina.play.models.{Password, Username}
 import com.malliina.ws.{JsonFutureSocket, Streamer}
+import play.api.http.HttpErrorHandler
 import play.api.libs.json._
 import play.api.mvc.{RequestHeader, Result}
 
@@ -29,9 +30,10 @@ class PimpServerSocket(val jsonOut: ActorRef,
                        id: CloudID,
                        val headers: RequestHeader,
                        mat: Materializer,
+                       errorHandler: HttpErrorHandler,
                        onUpdate: () => Unit)
   extends JsonFutureSocket(id) {
-  val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, onUpdate)
+  val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, errorHandler, onUpdate)
 
   override def send(payload: JsValue) = jsonOut ! payload
 

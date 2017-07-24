@@ -5,6 +5,7 @@ import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.tags.PimpHtml
 import controllers.musicpimp.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
+import play.api.mvc.Results
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -38,7 +39,7 @@ class SearchPage(tags: PimpHtml,
 
   def refresh = pimpAction {
     indexer.indexAndSave()
-    Ok
+    Results.Ok
   }
 
   private def databaseSearch(query: String, limit: Int): Future[Seq[DataTrack]] =

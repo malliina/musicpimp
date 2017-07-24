@@ -26,7 +26,7 @@ case class WrappedID(id: String)
 object WrappedID {
   implicit val json = Json.format[WrappedID]
 
-  def apply(id: Identifiable): WrappedID = WrappedID(id.id)
+  def forId(id: Identifiable): WrappedID = WrappedID(id.id)
 }
 
 case class WrappedLong(id: Long)

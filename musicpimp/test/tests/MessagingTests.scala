@@ -1,12 +1,14 @@
 package tests
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.messaging.ServerTag
 import com.malliina.musicpimp.messaging.adm.CloudAdmClient
 import com.malliina.musicpimp.messaging.cloud._
 import com.malliina.musicpimp.messaging.gcm.CloudGcmClient
 import com.malliina.push.adm.ADMToken
 import com.malliina.push.apns.{APNSMessage, APNSToken}
-import com.malliina.push.gcm.GCMToken
+import com.malliina.push.gcm.{GCMMessage, GCMToken}
 import com.malliina.push.mpns.{MPNSToken, ToastMessage}
 import org.scalatest.FunSuite
 
@@ -26,11 +28,14 @@ class MessagingTests extends FunSuite {
     None,
     None
   )
+  implicit val ec = ActorMaterializer()(ActorSystem("test")).executionContext
+  val admClient = new CloudAdmClient()
+  val gcmClient = new CloudGcmClient()
 
   ignore("send using adm") {
     val server = ServerTag("523f7e6d-003f-49e8-a2e2-f7bc712b1dfc")
     val id = ADMToken("amzn1.adm-registration.v3.Y29tLmFtYXpvbi5EZXZpY2VNZXNzYWdpbmcuUmVnaXN0cmF0aW9uSWRFbmNyeXB0aW9uS2V5ITEhaXJTVmVVQXhJSnhnRGs3MGl0S0E1TExldGwxcWFPRzFHK3cwL1N1OS9zMnN1RFFBZHd1VkNWMXhaYlp3dTExWGdTNytOYk5jaVZ1OEtKWnoyNmhubnBoYTdiRVhlTzJTYkd3TlFaWXBNMHRCSDRnZi9KQUl1VGtoUzBwdjVkU2gwdGs1R2RWaVRRYzRHWFF3ZUU5MTU2MHI2ODRxN0pCYnJSMVFyaHhPUjI4NmVPT0lUcG5SWjJxUnRrOWZMdFdJdlpWMWxCVk1MSmtkRmIxY3llMkZZRWo0WFpiVWxMUEsrbnduZFB0Rm80TUdubFYxK1ZNdDA2bGJ5NFozNTZnbCtJVXBPRG9maTZ1NktnZXR0akZEeXhSV1pRV0lDRWh6b2ROenNxRTRsa0poS3EvSjJzaXFPQWpuVzd2Z0tINjZvRTFUV0MvOVJDaU81bE9pQmtGY3RnPT0hZGQ5WjZ2Z1c1MVJxY2kva2NmbmhyZz09")
-    val message = CloudAdmClient.message(server)
+    val message = admClient.message(server)
     val request = CloudPushClient.default.push(PushTask(adm = Option(ADMRequest(Seq(id), message))))
     val response = await(request)
     assert(response.getStatusCode === 200)
@@ -48,7 +53,7 @@ class MessagingTests extends FunSuite {
   ignore("send using gcm") {
     val token = GCMToken("APA91bHR4yng5EXmeQZvl8MQB-t9_R33-0ScxK4U10Jtc9QPBg34s1biuA_sBJdOz6VsYcWDldPq8yUePbJV9k0TesQZCf1lgnQmgi7OohpBmlokw5TQ6OxBOKvtMBA5GSzr_QDQm7DCloQ5AnsW8gcPR_GUr_tcDg")
     val tag = ServerTag("9d0dc896-7883-44ff-830c-f02bae39535d")
-    val task = PushTask(gcm = Option(GCMRequest(Seq(token), CloudGcmClient.message(tag))))
+    val task = PushTask(gcm = Option(GCMRequest(Seq(token), gcmClient.message(tag))))
     val request = CloudPushClient.default.push(task)
     val response = await(request)
     assert(response.getStatusCode === 200)

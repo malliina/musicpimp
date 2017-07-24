@@ -15,9 +15,10 @@ case class MPNSRequest(tokens: Seq[MPNSToken],
 }
 
 object MPNSRequest {
-  implicit val tileJson = Json.format[TileData]
-  implicit val (toastJson, flipJson, iconicJson, cycleJson) =
-    (Json.format[ToastMessage], Json.format[FlipData],
-      Json.format[IconicData], Json.format[CycleTile])
+  implicit val tile = Json.format[TileData]
+  implicit val toast = Json.format[ToastMessage]
+  implicit val flip = Json.format[FlipData]
+  implicit val iconic = Json.format[IconicData]
+  implicit val cycle = Json.format[CycleTile]
   implicit val json = Json.format[MPNSRequest]
 }

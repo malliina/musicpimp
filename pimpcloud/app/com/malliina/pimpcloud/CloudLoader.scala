@@ -9,13 +9,13 @@ import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
-import controllers._
+import controllers.{Assets, AssetsComponents}
 import controllers.pimpcloud._
 import play.api.ApplicationLoader.Context
-import play.api.Mode.Mode
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.gzip.GzipFilter
+import play.filters.HttpFiltersComponents
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -53,29 +53,30 @@ object CloudComponents {
 
 class CloudComponents(context: Context,
                       conf: AppConf)
-  extends BuiltInComponentsFromContext(context) {
-
+  extends BuiltInComponentsFromContext(context)
+    with HttpFiltersComponents
+    with AssetsComponents {
 
   implicit val ec = materializer.executionContext
 
   // Components
-  override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
-  val adminAuth = new AdminOAuth(conf.googleCreds, materializer)
+  override lazy val httpFilters: Seq[EssentialFilter] = super.httpFilters ++ Seq(new GzipFilter())
+  val adminAuth = new AdminOAuth(controllerComponents.actionBuilder, conf.googleCreds, materializer)
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth)
 
   lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
   lazy val ctx = ActorExecution(actorSystem, materializer)
 
   // Controllers
-  lazy val joined = new JoinedSockets(pimpAuth, ctx)
+  lazy val joined = new JoinedSockets(pimpAuth, ctx, httpErrorHandler)
   lazy val cloudAuths = joined.auths
   lazy val push = new Push(conf.pusher)
-  lazy val p = Phones.forAuth(tags, cloudAuths.phone, materializer)
-  lazy val sc = ServersController.forAuth(cloudAuths.server, materializer)
+  lazy val p = Phones.forAuth(controllerComponents, tags, cloudAuths.phone, materializer)
+  lazy val sc = ServersController.forAuth(controllerComponents.actionBuilder, cloudAuths.server, materializer)
   lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags)
   lazy val l = new Logs(tags, pimpAuth, ctx)
   lazy val w = new Web(tags, cloudAuths, ec)
-  lazy val as = new Assets(httpErrorHandler)
+  lazy val as = new Assets(httpErrorHandler, assetsMetadata)
   lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
 }

@@ -2,11 +2,12 @@ package com.malliina.musicpimp.library
 
 import com.malliina.musicpimp.models._
 import com.malliina.play.models.Username
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 trait PlaylistService {
+  implicit def ec: ExecutionContext
+
   /**
     * @return the saved playlists of user
     */

@@ -17,10 +17,22 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 class SecureBase(auth: AuthDeps)
-  extends BaseSecurity(auth.auth, auth.mat)
-    with Controller {
+  extends BaseSecurity(auth.comps.actionBuilder, auth.auth, auth.mat) {
+  val comps = auth.comps
+  val Action = comps.actionBuilder
+  val parsers = comps.parsers
+  val defaultParser = parsers.default
 
   val uploads = PimpUploads
+
+  // temp hack
+  val Accepted = Results.Accepted
+  val BadRequest = Results.BadRequest
+  val NotFound = Results.NotFound
+  val Ok = Results.Ok
+  val Unauthorized = Results.Unauthorized
+
+  def Redirect(call: Call) = Results.Redirect(call)
 
   /** Returns an action with the result specified in <code>onFail</code> if authentication fails.
     *
@@ -29,7 +41,7 @@ class SecureBase(auth: AuthDeps)
     */
   def customFailingPimpAction(onFail: AuthFailure => Result)(f: AuthedRequest => Result) =
     authenticatedAsync(req => authenticate(req), onFail) { user =>
-      logged(user, user => Action(req => maybeWithCookie(user, f(user))))
+      logged(user, user => Action(_ => maybeWithCookie(user, f(user))))
     }
 
   def okPimpAction(f: CookiedRequest[AnyContent, Username] => Unit) =
@@ -42,7 +54,7 @@ class SecureBase(auth: AuthDeps)
     pimpAction(_ => result)
 
   def pimpAction(f: CookiedRequest[AnyContent, Username] => Result): EssentialAction =
-    pimpParsedAction(parse.default)(req => f(req))
+    pimpParsedAction(defaultParser)(req => f(req))
 
   def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
     pimpUploadAction { req =>
@@ -52,7 +64,7 @@ class SecureBase(auth: AuthDeps)
     }
 
   def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Result) =
-    pimpParsedAction(parse.multipartFormData) { req =>
+    pimpParsedAction(parsers.multipartFormData) { req =>
       val files: Seq[Path] = uploads.save(req)
       f(new FileUploadRequest(files, req.user, req))
     }
@@ -61,10 +73,10 @@ class SecureBase(auth: AuthDeps)
     pimpParsedActionAsync(parser)(req => fut(f(req)))
 
   def pimpActionAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
-    pimpParsedActionAsync(parse.default)(f)
+    pimpParsedActionAsync(defaultParser)(f)
 
   def pimpActionAsync2[R: Writeable](f: CookiedRequest[AnyContent, Username] => Future[R]) =
-    okAsyncAction(parse.default)(f)
+    okAsyncAction(defaultParser)(f)
 
   def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[R]) =
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
@@ -74,14 +86,14 @@ class SecureBase(auth: AuthDeps)
 
   def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
     authenticatedLogged { auth =>
-      Action.async(parser) { req =>
+      comps.actionBuilder.async(parser) { req =>
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))
       }
     }
 
   def errorHandler: PartialFunction[Throwable, Result] = {
-    case t => serverErrorGeneric
+    case _ => serverErrorGeneric
   }
 
   /** Due to the "remember me" functionality, browser cookies are updated after a successful cookie-based authentication.
@@ -95,7 +107,7 @@ class SecureBase(auth: AuthDeps)
   private def maybeWithCookie(auth: AuthedRequest, result: Result): Result = {
     auth.cookie.fold(result) { c =>
       log debug s"Sending updated cookie in response to user ${auth.user}..."
-      result withCookies c withSession (Security.username -> auth.user.name)
+      result withCookies c withSession ("username" -> auth.user.name)
     }
   }
 }

@@ -25,6 +25,7 @@ import com.malliina.util.{Util, Utils}
 import controllers.musicpimp.Rest.log
 import org.apache.http.HttpResponse
 import play.api.Logger
+import play.api.http.HttpErrorHandler
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
@@ -34,7 +35,8 @@ import scala.concurrent.Future
 class Rest(webPlayer: WebPlayer,
            auth: AuthDeps,
            handler: PlaybackMessageHandler,
-           statsPlayer: StatsPlayer)
+           statsPlayer: StatsPlayer,
+           errorHandler: HttpErrorHandler)
   extends Secured(auth) {
 
   def ping = Action(NoCache(Ok))
@@ -93,7 +95,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
-  def stream = pimpParsedAction(parse.json) { req =>
+  def stream = pimpParsedAction(parsers.json) { req =>
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = _ => BadRequest(JsonMessages.invalidJson),
       valid = cmd => {
@@ -105,8 +107,8 @@ class Rest(webPlayer: WebPlayer,
               // relays MusicBeamer's response to the client
               val statusCode = httpResponse.getStatusLine.getStatusCode
               log info s"Completed track upload in: $duration, relaying response: $statusCode"
-              val result = new Status(statusCode)
-              if (statusCode == OK) result(JsonMessages.thanks)
+              val result = new Results.Status(statusCode)
+              if (statusCode >= 200 && statusCode < 300) result(JsonMessages.thanks)
               else result
             })
         } catch {
@@ -124,7 +126,7 @@ class Rest(webPlayer: WebPlayer,
   def status = pimpAction { req =>
     implicit val w = TrackJson.writer(req)
     PimpContentController.default.pimpResponse(req)(
-      html = NoContent,
+      html = Results.NoContent,
       json17 = Json.toJson(MusicPlayer.status17),
       latest = Json.toJson(MusicPlayer.status)
     )
@@ -165,7 +167,7 @@ class Rest(webPlayer: WebPlayer,
       val track = StreamedTrack.fromTrack(meta, inStream)
       MusicPlayer.setPlaylistAndPlay(track)
     }
-    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs)(mat)) { req =>
+    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(mat)) { _ =>
       log.info(s"Received stream of track: ${meta.id}")
       Ok
     }
@@ -217,7 +219,7 @@ class Rest(webPlayer: WebPlayer,
     }
 
   private def jsonAckAction(jsonHandler: CookiedRequest[JsValue, Username] => Unit): EssentialAction =
-    ackPimpAction(parse.json)(jsonHandler)
+    ackPimpAction(parsers.json)(jsonHandler)
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
     metaUploadAction { req =>

@@ -37,7 +37,7 @@ class LogPage(tags: PimpHtml,
     logPage(levelForm, req)
   }
 
-  def frontendLog = pimpParsedAction(parse.json) { req =>
+  def frontendLog = pimpParsedAction(parsers.json) { req =>
     implicit val json = FrontLogEvents.json
 
     req.body.validate[FrontLogEvents].fold[Result](

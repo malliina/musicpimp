@@ -81,7 +81,7 @@ class Accounts(tags: PimpHtml,
     }
   }
 
-  def logout = authAction { request =>
+  def logout = authAction { _ =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
     Redirect(routes.Accounts.login())
       .withNewSession
@@ -133,8 +133,8 @@ class Accounts(tags: PimpHtml,
         auth.authenticate(username, credentials.password) flatMap { isValid =>
           if (isValid) {
             log info s"Authentication succeeded for user '$username' from '$remoteAddress'."
-            val intendedUrl = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
-            val result = Redirect(intendedUrl).withSession(Security.username -> username.name)
+            val intendedUrl: String = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
+            val result = Results.Redirect(intendedUrl).withSession("username" -> username.name)
             if (credentials.rememberMe) {
               log debug s"Remembering auth..."
               // create token, retrieve cookie

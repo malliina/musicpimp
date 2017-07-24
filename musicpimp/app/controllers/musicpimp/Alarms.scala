@@ -33,7 +33,7 @@ class Alarms(tags: PimpHtml,
     )
   }
 
-  def handleJson = pimpParsedAction(parse.json) { jsonRequest =>
+  def handleJson = pimpParsedAction(parsers.json) { jsonRequest =>
     val json = jsonRequest.body
     val remoteAddress = Proxies.realAddress(jsonRequest)
     log debug s"User '${jsonRequest.user}' from '$remoteAddress' said '$json'."
@@ -46,7 +46,7 @@ class Alarms(tags: PimpHtml,
     Ok(Json.toJson(tracks))
   }
 
-  def paths = pimpAction { request =>
+  def paths = pimpAction { _ =>
     val tracks = Library.songPathsRecursive
     implicit val pathFormat = PlaybackJob.pathFormat
     Ok(Json.toJson(tracks))

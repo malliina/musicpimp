@@ -5,9 +5,9 @@ import com.malliina.push.MessagingClient
 import com.malliina.push.mpns.{PushUrl, ToastMessage}
 import org.asynchttpclient.Response
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-object CloudMicrosoftClient extends MessagingClient[PushUrl] {
+class CloudMicrosoftClient()(implicit ec: ExecutionContext) extends MessagingClient[PushUrl] {
   override def send(dest: PushUrl): Future[Response] = {
     val message = ToastMessage(
       "MusicPimp",

@@ -4,13 +4,12 @@ import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, RemoteInfo, TrackID}
 import play.api.Logger
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.libs.json.JsValue
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)
+class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implicit ec: ExecutionContext)
   extends JsonHandlerBase {
 
   val player = MusicPlayer

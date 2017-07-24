@@ -1,18 +1,19 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.musicpimp.db.Mappings.{jodaDate, username}
+import java.time.Instant
+
+import com.malliina.musicpimp.db.Mappings.{instant, username}
 import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
 import com.malliina.play.models.Username
-import org.joda.time.DateTime
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import slick.lifted.ProvenShape
 
-case class PlaybackRecord(track: TrackID, when: DateTime, user: Username)
+case class PlaybackRecord(track: TrackID, when: Instant, user: Username)
 
 class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
   def track = column[TrackID]("TRACK")
 
-  def when = column[DateTime]("WHEN")
+  def when = column[Instant]("WHEN")
 
   def who = column[Username]("WHO")
 

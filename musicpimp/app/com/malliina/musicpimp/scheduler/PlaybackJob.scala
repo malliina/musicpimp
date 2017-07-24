@@ -26,13 +26,18 @@ case class PlaybackJob(track: TrackID) extends Job {
 
   def describe: String = trackInfo.fold(s"Track not found: $track, so cannot play")(t => s"Plays ${t.title}")
 
+  val apnsClient = new CloudAPNSClient()(cached)
+  val mpns = new CloudMicrosoftClient()(cached)
+  val gcm = new CloudGcmClient()(cached)
+  val adm = new CloudAdmClient()(cached)
+
   override def run(): Unit = {
     trackInfo.fold(log.warn(s"Unable to find: $track. Cannot start playback.")) { t =>
       MusicPlayer.setPlaylistAndPlay(t).map { _ =>
-        val apns = APNSDevices.get().map(CloudAPNSClient.sendLogged)
-        val toasts = PushUrls.get().map(CloudMicrosoftClient.sendLogged)
-        val gcms = GoogleDevices.get().map(CloudGcmClient.sendLogged)
-        val adms = AmazonDevices.get().map(CloudAdmClient.sendLogged)
+        val apns = APNSDevices.get().map(apnsClient.sendLogged)
+        val toasts = PushUrls.get().map(mpns.sendLogged)
+        val gcms = GoogleDevices.get().map(gcm.sendLogged)
+        val adms = AmazonDevices.get().map(adm.sendLogged)
         val messages = apns ++ toasts ++ gcms ++ adms
         if (messages.isEmpty) {
           log.info(s"No push notification URLs are active, so no push notifications were sent.")

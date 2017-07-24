@@ -6,12 +6,13 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.ws.{ActorConfig, Sockets}
 import controllers.pimpcloud.{PimpAuth, Servers, UsageStreaming}
+import play.api.http.HttpErrorHandler
 
-class JoinedSockets(pimpAuth: PimpAuth, ctx: ActorExecution) {
+class JoinedSockets(pimpAuth: PimpAuth, ctx: ActorExecution, errorHandler: HttpErrorHandler) {
   val phoneMediator = ctx.actorSystem.actorOf(Props(new PhoneMediator))
-  val servers = new Servers(phoneMediator, ctx)
-  val auths = new ProdAuth(servers)
-  val phoneAuth = Authenticator(auths.authPhone)
+  val servers = new Servers(phoneMediator, ctx, errorHandler)
+  val auths = new ProdAuth(servers, errorHandler)
+  val phoneAuth = Authenticator(rh => auths.authPhone(rh, errorHandler))
   val phones = new Sockets(phoneAuth, ctx) {
     override def props(conf: ActorConfig[PhoneConnection]) =
       Props(new PhoneActor(phoneMediator, conf))

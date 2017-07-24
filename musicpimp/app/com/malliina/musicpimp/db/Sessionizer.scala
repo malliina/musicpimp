@@ -4,6 +4,7 @@ import slick.dbio.{DBIOAction, NoStream}
 import slick.lifted.Query
 
 import scala.concurrent.Future
+import scala.language.higherKinds
 
 class Sessionizer(db: PimpDb) {
   def runQuery[A, B, C[_]](query: Query[A, B, C]): Future[C[B]] = db.runQuery(query)

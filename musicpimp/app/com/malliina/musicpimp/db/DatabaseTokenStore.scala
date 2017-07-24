@@ -3,16 +3,18 @@ package com.malliina.musicpimp.db
 import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.auth.{Token, TokenStore}
 import com.malliina.play.models.Username
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DatabaseTokenStore(db: PimpDb) extends Sessionizer(db) with TokenStore {
+class DatabaseTokenStore(db: PimpDb, val ec: ExecutionContext)
+  extends Sessionizer(db)
+    with TokenStore {
+
   val tokens = PimpSchema.tokens
 
   override def persist(token: Token): Future[Unit] =
-    run(tokens += token).map(_ => ())
+    run(tokens += token).map(_ => ())(ec)
 
   override def removeAll(user: Username): Future[Unit] =
     removeWhere(_.user === user)
@@ -27,5 +29,5 @@ class DatabaseTokenStore(db: PimpDb) extends Sessionizer(db) with TokenStore {
     run(tokens.filter(t => t.user === user && t.series === series).result.headOption)
 
   private def removeWhere(p: TokensTable => Rep[Boolean]): Future[Unit] =
-    run(tokens.filter(p).delete).map(_ => ())
+    run(tokens.filter(p).delete).map(_ => ())(ec)
 }

@@ -3,11 +3,11 @@ package com.malliina.musicpimp.library
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db.PimpDb
 import com.malliina.musicpimp.models.FolderID
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
 class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
+  implicit val ec = db.ec
 
   def rootFolder: Future[MusicFolder] =
     folder(Library.RootId).map(_.getOrElse(MusicFolder.empty))

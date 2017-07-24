@@ -24,7 +24,7 @@ object TestOptions {
 }
 
 class MusicPimpSuite(options: InitOptions = TestOptions.default)
-  extends AppSuite(ctx => new PimpComponents(ctx, options, PimpDb.test()))
+  extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
 
 class PlaylistsTests extends MusicPimpSuite {
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").get)

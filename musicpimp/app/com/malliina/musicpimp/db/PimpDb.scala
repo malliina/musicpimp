@@ -2,7 +2,6 @@ package com.malliina.musicpimp.db
 
 import java.nio.file.{Files, Path, Paths}
 
-import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.StorageFile
 import com.malliina.musicpimp.db.PimpDb.log
 import com.malliina.musicpimp.db.PimpSchema.{folders, tempFoldersTable, tempTracksTable, tracks}
@@ -13,12 +12,12 @@ import com.malliina.util.Utils
 import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import slick.jdbc.GetResult.GetInt
 import slick.jdbc.{GetResult, PositionedResult}
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.higherKinds
 import scala.util.{Failure, Success}
 
@@ -27,7 +26,7 @@ object PimpDb {
   val H2UrlSettings = "h2.url.settings"
   val H2Home = "h2.home"
 
-  def default() = {
+  def default()(implicit ec: ExecutionContext) = {
     val dirByConf: Option[Path] = sys.props.get(H2Home).map(p => Paths.get(p))
     val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
     file(dataHome / "pimp291")
@@ -37,17 +36,17 @@ object PimpDb {
     * @param path path to database file
     * @return a file-based database stored at `path`
     */
-  def file(path: Path) = {
+  def file(path: Path)(implicit ec: ExecutionContext) = {
     Option(path.getParent).foreach(p => Files.createDirectories(p))
     new PimpDb(path.toString)
   }
 
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
-  def test() = new PimpDb("mem:test")
+  def test()(implicit ec: ExecutionContext) = new PimpDb("mem:test")
 }
 
-class PimpDb(conn: String) extends DatabaseLike with AutoCloseable {
+class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLike with AutoCloseable {
   val databaseUrlSettings = sys.props.get(PimpDb.H2UrlSettings)
     .map(_.trim)
     .filter(_.nonEmpty)
@@ -56,7 +55,7 @@ class PimpDb(conn: String) extends DatabaseLike with AutoCloseable {
   val url = s"jdbc:h2:$conn;DB_CLOSE_DELAY=-1$databaseUrlSettings"
   log info s"Connecting to: $url"
   val pool = JdbcConnectionPool.create(url, "", "")
-  override val database = Database.forDataSource(pool)
+  override val database = Database.forDataSource(pool, None)
   val tracksName = PimpSchema.tracks.baseTableRow.tableName
   override val tableQueries = PimpSchema.tableQueries
 

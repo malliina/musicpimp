@@ -27,9 +27,11 @@ class ServersController(auth: BaseSecurity[ServerRequest], mat: Materializer)
 object ServersController {
   private val log = Logger(getClass)
 
-  def forAuth(auth: Authenticator[ServerRequest], mat: Materializer): ServersController = {
+  def forAuth(actions: ActionBuilder[Request, AnyContent],
+              auth: Authenticator[ServerRequest],
+              mat: Materializer): ServersController = {
     val serverBundle = AuthBundle.default(auth)
-    val serverAuth = new BaseSecurity(serverBundle, mat)
+    val serverAuth: BaseSecurity[ServerRequest] = new BaseSecurity(actions, serverBundle, mat)
     new ServersController(serverAuth, mat)
   }
 }

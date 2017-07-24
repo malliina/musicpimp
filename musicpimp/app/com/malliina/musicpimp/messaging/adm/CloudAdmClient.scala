@@ -7,10 +7,10 @@ import com.malliina.push.MessagingClient
 import com.malliina.push.android.AndroidMessage
 import org.asynchttpclient.Response
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 
-object CloudAdmClient extends MessagingClient[ADMDevice] {
+class CloudAdmClient()(implicit ec: ExecutionContext) extends MessagingClient[ADMDevice] {
   def message(tag: ServerTag) = AndroidMessage(Map(Cmd -> Stop, Tag -> tag.tag), 60.seconds)
 
   override def send(dest: ADMDevice): Future[Response] = {

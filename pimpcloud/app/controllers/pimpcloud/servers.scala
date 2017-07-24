@@ -2,7 +2,7 @@ package controllers.pimpcloud
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
+import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
@@ -13,11 +13,12 @@ import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.Password
+import com.malliina.play.models.{AuthInfo, Password, Username}
 import com.malliina.play.ws._
 import controllers.pimpcloud.ServerMediator._
 import controllers.pimpcloud.Servers.log
 import play.api.Logger
+import play.api.http.HttpErrorHandler
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc._
 
@@ -28,7 +29,7 @@ import scala.concurrent.duration.DurationInt
   *
   * Pushes player events sent by servers to any connected phones, and responds to requests.
   */
-class Servers(phoneMediator: ActorRef, val ctx: ActorExecution) {
+class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: HttpErrorHandler) {
   implicit val ec = ctx.executionContext
   // not a secret but avoids unintentional connections
   val serverPassword = Password("pimp")
@@ -67,7 +68,7 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution) {
   val serverMediator = ctx.actorSystem.actorOf(Props(new ServerMediator))
   val serverSockets = new Sockets(serverAuth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
-      Props(new ServerActor(serverMediator, phoneMediator, conf, ctx.materializer))
+      Props(new ServerActor(serverMediator, phoneMediator, conf, errorHandler, ctx.materializer))
   }
 
   import akka.pattern.ask
@@ -86,10 +87,11 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution) {
 class ServerActor(serverMediator: ActorRef,
                   phoneMediator: ActorRef,
                   conf: ActorConfig[AuthedRequest],
+                  errorHandler: HttpErrorHandler,
                   mat: Materializer)
   extends JsonActor(conf) {
   val cloudId = CloudID(conf.user.user.name)
-  val server = new PimpServerSocket(out, cloudId, conf.rh, mat, () => serverMediator ! StreamsUpdated)
+  val server = new PimpServerSocket(out, cloudId, conf.rh, mat, errorHandler, () => serverMediator ! StreamsUpdated)
 
   override def preStart() = {
     super.preStart()
@@ -182,4 +184,8 @@ object Servers {
   private val log = Logger(getClass)
 }
 
-case class ServerRequest(request: RequestID, socket: PimpServerSocket)
+case class ServerRequest(request: RequestID, socket: PimpServerSocket) extends AuthInfo {
+  override def user: Username = Username(socket.id.id)
+
+  override def rh: RequestHeader = socket.headers
+}

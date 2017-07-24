@@ -1,10 +1,11 @@
 package com.malliina.musicpimp.db
 
+import java.time.Instant
+
 import com.malliina.play.models.Username
-import org.joda.time.DateTime
-import slick.driver.H2Driver.api.{MappedColumnType, longColumnType, stringColumnType}
+import slick.jdbc.H2Profile.api.{MappedColumnType, longColumnType, stringColumnType}
 
 object Mappings {
-  implicit val jodaDate = MappedColumnType.base[DateTime, Long](_.getMillis, l => new DateTime(l))
+  implicit val instant = MappedColumnType.base[Instant, Long](_.toEpochMilli, Instant.ofEpochMilli)
   implicit val username = MappedColumnType.base[Username, String](Username.raw, Username.apply)
 }

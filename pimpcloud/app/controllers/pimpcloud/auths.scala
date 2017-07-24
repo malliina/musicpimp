@@ -32,7 +32,7 @@ trait PimpAuth extends Authenticator[AuthedRequest] {
 }
 
 class OAuthCtrl(val oauth: AdminOAuth)
-  extends BaseSecurity(OAuthCtrl.bundle(oauth, oauth.mat.executionContext), oauth.mat)
+  extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth, oauth.mat.executionContext), oauth.mat)
 
 object OAuthCtrl {
   def bundle(oauth: OAuthControl, ec: ExecutionContext) = new AuthBundle[AuthedRequest] {
@@ -45,8 +45,8 @@ object OAuthCtrl {
   }
 }
 
-class AdminOAuth(creds: GoogleOAuthCredentials, mat: Materializer)
-  extends OAuthControl(creds, mat) {
+class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, mat: Materializer)
+  extends OAuthControl(actions, creds, mat) {
   override val sessionUserKey: String = "email"
 
   override def isAuthorized(email: String): Boolean = email == "malliina123@gmail.com"

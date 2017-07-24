@@ -2,13 +2,10 @@ package controllers.musicpimp
 
 import java.net.ConnectException
 
-import akka.stream.Materializer
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.musicpimp.tags.PimpHtml
-import com.malliina.play.controllers.AuthBundle
-import com.malliina.play.http.AuthedRequest
 import controllers.musicpimp.Cloud.log
 import play.api.Logger
 import play.api.data.Form
@@ -39,7 +36,7 @@ class Cloud(tags: PimpHtml,
     }
   }
 
-  def toggle = pimpParsedActionAsync(parse.default) { request =>
+  def toggle = pimpParsedActionAsync(parsers.default) { request =>
     cloudForm.bindFromRequest()(request).fold(
       formErrors => {
         log debug s"Form errors: $formErrors"

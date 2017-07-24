@@ -8,7 +8,7 @@ import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
-import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
+import com.malliina.play.http.{AuthedRequest, FullUrl}
 import com.malliina.play.ws._
 import play.api.Logger
 import play.api.libs.json.JsValue
@@ -77,7 +77,7 @@ class PlayerActor(player: ServerPlayer,
       case StatusKey =>
         out ! status()
       case _ =>
-        messageHandler.onJson(msg, RequestInfo(user, rh))
+        messageHandler.onJson(msg, user, rh)
     }
   }
 

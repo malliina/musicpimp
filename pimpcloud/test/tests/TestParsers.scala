@@ -7,15 +7,24 @@ import akka.stream.scaladsl._
 import akka.util.ByteString
 import com.malliina.play.streams.Streams
 import com.malliina.storage.StorageSize
+import play.api.http.HttpErrorHandler
 import play.api.libs.streams.Accumulator
 import play.api.mvc.MultipartFormData._
-import play.api.mvc.{BodyParser, MultipartFormData}
+import play.api.mvc._
 import play.core.parsers.Multipart
 import play.core.parsers.Multipart.{FileInfo, FilePartHandler}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 trait TestParsers {
+
+  val errorhandler = new HttpErrorHandler {
+    override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
+      Future.successful(Results.InternalServerError)
+
+    override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
+      Future.successful(Results.BadRequest)
+  }
 
   /** Pushes the bytes to the supplied channel as they are received.
     *
@@ -25,7 +34,7 @@ trait TestParsers {
     multiPartByteStreaming(bytes => (dest offer bytes).map(_ => ())(mat.executionContext), maxLength)
 
   def multiPartByteStreaming(f: ByteString => Future[Unit], maxLength: StorageSize)(implicit mat: Materializer): BodyParser[MultipartFormData[Long]] =
-    Multipart.multipartParser(maxLength.toBytes.toInt, byteArrayPartConsumer(f))
+    Multipart.multipartParser(maxLength.toBytes.toInt, byteArrayPartConsumer(f), errorhandler)
 
   /** Parses a multipart form-data upload in such a way that any parsed bytes are made available to the returned [[InputStream]].
     *
@@ -38,7 +47,7 @@ trait TestParsers {
   }
 
   def multiPartBodyParser[T](sink: Sink[ByteString, Future[T]], maxLength: StorageSize)(implicit mat: Materializer): BodyParser[MultipartFormData[T]] =
-    Multipart.multipartParser(maxLength.toBytes.toInt, byteArrayPartHandler(sink)(mat.executionContext))
+    Multipart.multipartParser(maxLength.toBytes.toInt, byteArrayPartHandler(sink)(mat.executionContext), errorhandler)
 
   /** Builds a part handler that applies the supplied function to the array of bytes as they are received.
     *

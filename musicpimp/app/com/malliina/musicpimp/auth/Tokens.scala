@@ -8,13 +8,13 @@ import com.malliina.play.io.FileBackedList
 import com.malliina.play.models.Username
 import com.malliina.util.Utils
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class Tokens(file: Path) extends FileBackedList[Token](file) {
   protected override def load(): Seq[Token] = Utils.opt[Seq[Token], Exception](super.load()) getOrElse Nil
 }
 
-class TokensStore(tokensFile: Path) extends TokenStore {
+class TokensStore(tokensFile: Path, val ec: ExecutionContext) extends TokenStore {
   FileUtil.trySetOwnerOnlyPermissions(tokensFile)
   val tokens = new Tokens(tokensFile)
 

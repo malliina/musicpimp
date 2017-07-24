@@ -1,19 +1,21 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.play.models.Username
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import slick.lifted.Query
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService {
 
+
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
+
+  override implicit def ec: ExecutionContext = db.ec
 
   override protected def playlists(user: Username): Future[Seq[SavedPlaylist]] = {
     runQuery(playlistQuery(playlistsTable.filter(_.user === user))) map { data =>

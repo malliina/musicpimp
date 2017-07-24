@@ -59,7 +59,7 @@ class Website(tags: PimpHtml,
     }
 
   protected def userAction(f: AuthenticatedRequest[AnyContent, Username] => Future[Result]) =
-    actionAsync(parse.default) { r =>
+    actionAsync(comps.parsers.default) { r =>
       f(new AuthenticatedRequest(r.user, r))
     }
 

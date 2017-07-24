@@ -3,7 +3,6 @@ package com.malliina.musicpimp.auth
 import com.malliina.musicpimp.db.{DatabaseUserManager, PimpDb}
 import com.malliina.play.models.{Password, Username}
 import org.apache.commons.codec.digest.DigestUtils
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
 
@@ -28,11 +27,11 @@ class Auth(db: PimpDb) {
         dataUsers.users.flatMap(users => {
           if (users.isEmpty) {
             val addition = dataUsers addUser DataUser(fileUsers.defaultUser, fileHash)
-            addition.map(_ => fileUsers.resetCredentials())
+            addition.map(_ => fileUsers.resetCredentials())(db.ec)
           } else {
             bailOut
           }
-        })
+        })(db.ec)
       }).getOrElse {
         bailOut
       }

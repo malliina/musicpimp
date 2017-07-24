@@ -4,7 +4,6 @@ import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
 import com.malliina.jenkinsctrl.models.{BuildOrder, JobName}
 import com.malliina.sbt.GenericPlugin
-import com.malliina.sbt.azure.{AzureKeys, AzurePlugin}
 import com.malliina.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
@@ -21,14 +20,14 @@ val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
-val musicpimpVersion = "3.7.1"
-val pimpcloudVersion = "1.7.9"
-val sharedVersion = "1.0.2"
-val crossVersion = "1.0.1"
+val musicpimpVersion = "3.8.0"
+val pimpcloudVersion = "1.8.0"
+val sharedVersion = "1.1.0"
+val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "3.6.8"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.1.1"
 
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -39,7 +38,7 @@ lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
-  .dependsOn(shared, crossJvm)
+  .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
   .settings(sharedSettings: _*)
@@ -62,7 +61,7 @@ addCommandAlias("it", ";project it")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
-  version := "1.0.1"
+  version := "1.1.0"
 )
 
 lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
@@ -85,13 +84,13 @@ lazy val scalajsSettings = Seq(
 )
 
 lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
-  release := {
-    (AzureKeys.azureUpload in Windows).value
-    val order = BuildOrder.simple(JobName("musicpimp-azure"))
-    val creds = JenkinsKeys.jenkinsReadCreds.value
-    val log = JenkinsKeys.logger.value
-    JenkinsPlugin.runLogged(order, creds, log)
-  },
+//  release := {
+//    (AzureKeys.azureUpload in Windows).value
+//    val order = BuildOrder.simple(JobName("musicpimp-azure"))
+//    val creds = JenkinsKeys.jenkinsReadCreds.value
+//    val log = JenkinsKeys.logger.value
+//    JenkinsPlugin.runLogged(order, creds, log)
+//  },
   JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("musicpimp-deb-rpm"))),
   jenkinsPackage := {
     val order = BuildOrder.simple(JobName("musicpimp-deb-rpm"))
@@ -103,7 +102,6 @@ lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
 )
 
 lazy val nativePackagingSettings =
-  azureSettings ++
     pimpWindowsSettings ++
     pimpMacSettings ++
     pimpLinuxSettings ++
@@ -127,9 +125,9 @@ lazy val pimpLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings ++ S
   rpmLicense := Option("BSD License")
 )
 
-lazy val azureSettings = AzurePlugin.azureSettings ++ Seq(
-  AzureKeys.azureContainerName := "files"
-)
+//lazy val azureSettings = AzurePlugin.azureSettings ++ Seq(
+//  AzureKeys.azureContainerName := "files"
+//)
 
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
   // never change
@@ -167,8 +165,8 @@ lazy val pimpPlaySettings =
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.5.6",
-        malliinaGroup %% "util-rmi" % "2.5.6",
+        malliinaGroup %% "util-actor" % "2.6.0",
+        malliinaGroup %% "util-rmi" % "2.6.0",
         malliinaGroup %% "util-audio" % "2.0.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
@@ -176,7 +174,7 @@ lazy val pimpPlaySettings =
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.193",
-        "com.neovisionaries" % "nv-websocket-client" % "1.31"
+        "com.neovisionaries" % "nv-websocket-client" % "2.3"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
@@ -195,7 +193,7 @@ lazy val commonServerSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
-    malliinaGroup %% "logstreams-client" % "0.0.6",
+    malliinaGroup %% "logstreams-client" % "0.0.9",
     "org.java-websocket" % "Java-WebSocket" % "1.3.0",
     PlayImport.filters
   ).map(dep => dep.withSources()),
@@ -216,7 +214,7 @@ lazy val pimpcloudSettings =
       buildInfoKeys += BuildInfoKey("frontName" -> (name in pimpcloudFrontend).value),
       version := pimpcloudVersion,
       libraryDependencies ++= Seq(
-        PlayImport.cache
+        PlayImport.ehcache
       ),
       PlayKeys.externalizeResources := false,
       libs ++= Seq(
@@ -259,9 +257,9 @@ lazy val pimpcloudLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings
 lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick" % "3.1.1",
+    "com.typesafe.slick" %% "slick" % "3.2.1",
     malliinaGroup %% "mobile-push" % "1.7.0",
-    PlayImport.json,
+    "com.typesafe.play" %% "play-json" % "2.6.2",
     utilPlayDep
   )
 )
@@ -275,7 +273,7 @@ def scalajsProject(name: String, path: File) =
   Project(name, path)
     .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
     .settings(
-      persistLauncher := true,
+      scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "be.doeraene" %%% "scalajs-jquery" % "0.9.1",
         "com.lihaoyi" %%% "utest" % "0.4.4" % Test

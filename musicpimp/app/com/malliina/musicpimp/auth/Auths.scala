@@ -13,7 +13,7 @@ object Auths {
   private val log = Logger(getClass)
 
   val session = Authenticator[AuthedRequest] { rh =>
-    val result = rh.session.get(Security.username).map(Username.apply)
+    val result = rh.session.get("username").map(Username.apply)
       .map(user => Right(new AuthedRequest(user, rh)))
       .getOrElse(Left(InvalidCredentials(rh)))
     fut(result)

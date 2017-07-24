@@ -5,12 +5,13 @@ import com.malliina.musicpimp.cloud.{GetMeta, PimpServerSocket}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.json.JsonStrings.{Meta, StatusKey}
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.Username
+import com.malliina.play.models.{AuthInfo, Username}
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
+import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-class PhoneConnection(val user: Username, val server: PimpServerSocket) {
+class PhoneConnection(val user: Username, val rh: RequestHeader, val server: PimpServerSocket) extends AuthInfo {
   def meta(id: TrackID): Future[JsResult[Track]] = {
     val req = PhoneRequest(Meta, user, GetMeta(id))
     server.proxyValidated[GetMeta, Track](req)
@@ -23,6 +24,6 @@ class PhoneConnection(val user: Username, val server: PimpServerSocket) {
 }
 
 object PhoneConnection {
-  def apply(user: Username, server: PimpServerSocket) =
-    new PhoneConnection(user, server)
+  def apply(user: Username, rh: RequestHeader, server: PimpServerSocket): PhoneConnection =
+    new PhoneConnection(user, rh, server)
 }

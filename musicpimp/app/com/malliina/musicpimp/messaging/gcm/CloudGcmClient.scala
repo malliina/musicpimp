@@ -7,9 +7,9 @@ import com.malliina.push.MessagingClient
 import com.malliina.push.gcm.GCMMessage
 import org.asynchttpclient.Response
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-object CloudGcmClient extends MessagingClient[GCMDevice] {
+class CloudGcmClient()(implicit ec: ExecutionContext) extends MessagingClient[GCMDevice] {
   def message(tag: ServerTag) = GCMMessage(Map(Cmd -> Stop, Tag -> tag.tag))
 
   override def send(dest: GCMDevice): Future[Response] = {

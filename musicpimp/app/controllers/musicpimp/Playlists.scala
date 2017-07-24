@@ -61,7 +61,7 @@ class Playlists(tags: PimpHtml,
     }
   }
 
-  def savePlaylist = parsedRecoveredAsync(parse.json) { req =>
+  def savePlaylist = parsedRecoveredAsync(parsers.json) { req =>
     val json = req.body
     (json \ PlaylistKey).validate[PlaylistSubmission]
       .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, req.user).map(meta => Accepted(Json.toJson(meta))))
@@ -72,7 +72,7 @@ class Playlists(tags: PimpHtml,
     service.delete(id, req.user).map(_ => Accepted)
   }
 
-  def edit = parsedRecoveredAsync(parse.json) { req =>
+  def edit = parsedRecoveredAsync(parsers.json) { req =>
     fut(Ok)
   }
 
@@ -89,9 +89,9 @@ class Playlists(tags: PimpHtml,
   }
 
   protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
-    parsedRecoveredAsync(parse.anyContent)(f)
+    parsedRecoveredAsync(parsers.anyContent)(f)
 
-  protected def parsedRecoveredAsync[T](parser: BodyParser[T] = parse.anyContent)(f: CookiedRequest[T, Username] => Future[Result]) =
+  protected def parsedRecoveredAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(auth => f(auth).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {

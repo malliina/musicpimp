@@ -7,7 +7,8 @@ import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings, Target}
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
-import com.malliina.play.http.{AuthedRequest, FullUrl, RequestInfo}
+import com.malliina.play.http.{AuthedRequest, FullUrl}
+import com.malliina.play.models.Username
 import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
 import controllers.musicpimp.WebPlayActor.log
 import play.api.Logger
@@ -30,11 +31,10 @@ object WebPlayer {
 
 class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta)
   extends JsonActor(ctx) {
-  val user = remote.user
+  val user: Username = remote.user
   val target = Target(json => out ! json)
   val player = new PimpWebPlayer(remote, target)
   val handler = new WebPlayerMessageHandler(remote, player)
-  val requestInfo = RequestInfo(user, rh)
 
   override def preStart() = {
     super.preStart()
@@ -48,7 +48,7 @@ class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta)
         val event = JsonMessages.withStatus(statusEvent())
         out ! event
       case _ =>
-        handler.onJson(msg, requestInfo)
+        handler.onJson(msg, user, rh)
     })
   }
 

@@ -7,11 +7,11 @@ import com.malliina.push.apns.{APNSMessage, APSPayload}
 import org.asynchttpclient.Response
 import play.api.libs.json.Json.toJson
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /** Sends a push notification using pimpcloud.
   */
-object CloudAPNSClient extends MessagingClient[APNSDevice] {
+class CloudAPNSClient()(implicit ec: ExecutionContext) extends MessagingClient[APNSDevice] {
   val Message = "Open to stop"
 
   override def send(dest: APNSDevice): Future[Response] = {

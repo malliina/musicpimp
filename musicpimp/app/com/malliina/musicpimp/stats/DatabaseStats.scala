@@ -1,22 +1,26 @@
 package com.malliina.musicpimp.stats
 
+import java.time.Instant
+
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.db.Mappings.{jodaDate, username}
+import com.malliina.musicpimp.db.Mappings.{instant, username}
 import com.malliina.musicpimp.db._
 import com.malliina.play.models.Username
 import org.joda.time.DateTime
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
+class DatabaseStats(db: PimpDb)(implicit ec: ExecutionContext)
+  extends Sessionizer(db)
+    with PlaybackStats {
+
   val plays = PimpSchema.plays
   val tracks = PimpSchema.tracks
   val users = PimpSchema.usersTable
 
   override def played(track: TrackMeta, user: Username): Future[Unit] =
-    run(plays += PlaybackRecord(track.id, DateTime.now, user)).map(_ => ())
+    run(plays += PlaybackRecord(track.id, Instant.now, user)).map(_ => ())
 
   override def mostRecent(request: DataRequest): Future[Seq[RecentEntry]] = {
     val sortedHistory = playbackHistory(request.username)
@@ -31,7 +35,7 @@ class DatabaseStats(db: PimpDb) extends Sessionizer(db) with PlaybackStats {
   override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
     val query = playbackHistory(request.username)
       .groupBy { case (record, track) => track }
-      .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(DateTime.now()))) }
+      .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(Instant.now()))) }
       .sortBy { case (track, (count, date)) => (count.desc, date.desc) }
       .map { case (track, (count, date)) => (track, count) }
       .drop(request.from)

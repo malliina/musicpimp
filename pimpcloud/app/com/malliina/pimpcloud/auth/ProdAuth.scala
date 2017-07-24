@@ -8,7 +8,8 @@ import com.malliina.play.auth._
 import com.malliina.play.models.Username
 import com.malliina.ws.JsonFutureSocket
 import controllers.pimpcloud.{ServerRequest, Servers}
-import play.api.mvc.{RequestHeader, Security}
+import play.api.http.HttpErrorHandler
+import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
@@ -16,10 +17,10 @@ object ProdAuth {
   val ServerKey = "s"
 }
 
-class ProdAuth(servers: Servers) extends CloudAuthentication {
+class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAuthentication {
   implicit val ec = servers.ctx.executionContext
 
-  override def authServer(req: RequestHeader): Future[Either[AuthFailure, ServerRequest]] = {
+  override def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]] = {
     val requestOpt = for {
       requestID <- req.headers get JsonFutureSocket.RequestId
       request <- RequestID.build(requestID)
@@ -33,11 +34,11 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
     }
   }
 
-  override val phone: Authenticator[PhoneConnection] = Authenticator(authPhone)
-  override val server: Authenticator[ServerRequest] = Authenticator(authServer)
+  override val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
+  override val server: Authenticator[ServerRequest] = Authenticator(rh => authServer(rh, errorHandler))
   //override def webClient: Authenticator[PhoneConnection] = Authenticator(authWebClient)
 
-  override def authPhone(req: RequestHeader): PhoneAuthResult =
+  override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
     connectedServers.flatMap(servers => authPhone(req, servers))
 
   override def authWebClient(creds: CloudCredentials): PhoneAuthResult =
@@ -70,9 +71,9 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
   }
 
   private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Either[AuthFailure, PhoneConnection] = {
-    req.session.get(Security.username)
+    req.session.get("username")
       .map(Username.apply)
-      .flatMap(user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, server)))
+      .flatMap(user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, req, server)))
       .toRight(InvalidCredentials(req))
   }
 
@@ -83,7 +84,7 @@ class ProdAuth(servers: Servers) extends CloudAuthentication {
     servers.find(_.id == creds.cloudID).map { server =>
       val user = creds.username
       server.authenticate(user, creds.password).map { isValid =>
-        if (isValid) Right(PhoneConnection(user, server))
+        if (isValid) Right(PhoneConnection(user, creds.rh, server))
         else Left(InvalidCredentials(creds.rh))
       }
     }.getOrElse {

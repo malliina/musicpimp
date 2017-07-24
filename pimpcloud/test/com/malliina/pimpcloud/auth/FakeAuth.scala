@@ -10,36 +10,37 @@ import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.{AuthFailure, Authenticator, InvalidCredentials}
 import com.malliina.play.models.Username
 import controllers.pimpcloud.ServerRequest
+import play.api.http.HttpErrorHandler
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-class FakeAuth(mat: Materializer) extends CloudAuthentication {
+class FakeAuth(mat: Materializer, errorHandler: HttpErrorHandler) extends CloudAuthentication {
   private var currentServer: Option[ServerRequest] = None
 
-  override lazy val phone: Authenticator[PhoneConnection] = Authenticator(authPhone)
+  override lazy val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
 
-  override lazy val server: Authenticator[ServerRequest] = Authenticator(authServer)
+  override lazy val server: Authenticator[ServerRequest] = Authenticator(rh => authServer(rh, errorHandler))
 
-  override def authServer(req: RequestHeader): Future[Either[AuthFailure, ServerRequest]] =
-    Future.successful(getOrInit(req))
+  override def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]] =
+    Future.successful(Right(getOrInit(req, errorHandler)))
 
-  override def authPhone(req: RequestHeader): PhoneAuthResult =
-    Future.successful(Right(PhoneConnection(Username("test"), getOrInit(req).right.get.socket)))
+  override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
+    Future.successful(Right(PhoneConnection(Username("test"), req, getOrInit(req, errorHandler).socket)))
 
   override def authWebClient(creds: CloudCredentials): PhoneAuthResult =
     Future.successful(Left(InvalidCredentials(creds.rh)))
 
-  def getOrInit(req: RequestHeader) = {
-    val s = currentServer.getOrElse(ServerRequest(FakeAuth.FakeUuid, fakeServerSocket(req, mat)))
+  def getOrInit(req: RequestHeader, errorHandler: HttpErrorHandler) = {
+    val s: ServerRequest = currentServer.getOrElse(ServerRequest(FakeAuth.FakeUuid, fakeServerSocket(req, errorHandler, mat)))
     currentServer = Option(s)
-    Right(s)
+    s
   }
 
-  def fakeServerSocket(req: RequestHeader, mat: Materializer) = {
+  def fakeServerSocket(req: RequestHeader, errorHandler: HttpErrorHandler, mat: Materializer): PimpServerSocket = {
     val source = Source.actorPublisher[ByteString](ByteActor.props())
     val (actor, _) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
-    new PimpServerSocket(actor, CloudID("test"), req, mat, () => ())
+    new PimpServerSocket(actor, CloudID("test"), req, mat, errorHandler, () => ())
   }
 }
 

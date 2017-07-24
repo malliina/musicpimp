@@ -3,7 +3,7 @@ package com.malliina.musicpimp.db
 import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.auth.Token
 import com.malliina.play.models.Username
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 
 class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
   def user = column[Username]("USER")

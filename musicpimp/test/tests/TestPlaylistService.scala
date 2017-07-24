@@ -1,13 +1,18 @@
 package tests
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, SavedPlaylist, TrackID}
 import com.malliina.play.models.Username
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class TestPlaylistService extends PlaylistService {
+
+  override implicit def ec: ExecutionContext = ActorMaterializer()(ActorSystem("test")).executionContext
+
   val tracks1 = Seq(
     DataTrack.fromValues(TrackID("1"), "Aces High", "Iron Maiden", "Powerslave", 100, 1000000, FolderID("folder 1")),
     DataTrack.fromValues(TrackID("2"), "So What", "Pink", "Funhouse", 120, 2000000, FolderID("folder 2")),
@@ -28,21 +33,23 @@ class TestPlaylistService extends PlaylistService {
   /**
     * @return the saved playlists of user
     */
-  override def playlists(user: Username): Future[Seq[SavedPlaylist]] = Future.successful(playlists)
+  override def playlists(user: Username): Future[Seq[SavedPlaylist]] =
+    Future.successful(playlists)
 
   /**
     * @param playlist playlist submission
     * @return a Future that completes when saving is done
     */
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] = {
+  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] =
     Future.successful(PlaylistID(0))
-  }
 
   /**
     * @param id playlist id
     * @return the playlist with ID `id`
     */
-  override def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] = Future.successful(playlists.find(_.id == id))
+  override def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] =
+    Future.successful(playlists.find(_.id == id))
 
-  override def delete(id: PlaylistID, user: Username): Future[Unit] = Future.successful(())
+  override def delete(id: PlaylistID, user: Username): Future[Unit] =
+    Future.successful(())
 }

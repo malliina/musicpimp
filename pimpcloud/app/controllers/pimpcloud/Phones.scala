@@ -17,13 +17,11 @@ import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.ContentRange
 import com.malliina.play.auth.Authenticator
-import com.malliina.play.controllers.{AuthBundle, BaseSecurity, Caching}
+import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
-import play.api.data.validation.ValidationError
 import play.api.http.{ContentTypes, Writeable}
-import play.api.libs.MimeTypes
 import play.api.libs.json._
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
@@ -38,15 +36,16 @@ object Phones {
   val DefaultSearchLimit = 100
   val EncodingUTF8 = "UTF-8"
 
-  def forAuth(tags: CloudTags,
+  def forAuth(comps: ControllerComponents,
+              tags: CloudTags,
               phonesAuth: Authenticator[PhoneConnection],
               mat: Materializer): Phones = {
     val bundle = PimpAuths.redirecting(routes.Web.login(), phonesAuth)
-    val phoneAuth = new BaseSecurity(bundle, mat)
-    new Phones(tags, phoneAuth)
+    val phoneAuth = new BaseSecurity(comps.actionBuilder, bundle, mat)
+    new Phones(comps, tags, phoneAuth)
   }
 
-  def invalidCredentials = new NoSuchElementException("Invalid credentials.")
+  def invalidCredentials: NoSuchElementException = new NoSuchElementException("Invalid credentials.")
 
   def path(id: TrackID) = Try(Paths get decode(id.id))
 
@@ -55,10 +54,11 @@ object Phones {
   def encode(id: String) = URLEncoder.encode(id, EncodingUTF8)
 }
 
-class Phones(tags: CloudTags,
+class Phones(comps: ControllerComponents,
+             tags: CloudTags,
              phoneAuth: BaseSecurity[PhoneConnection])
-  extends PimpContentController
-    with Controller {
+  extends AbstractController(comps)
+    with PimpContentController {
 
   def ping = proxiedGetAction(Ping)
 
@@ -73,7 +73,7 @@ class Phones(tags: CloudTags,
 
   def rootFolder = executeFolderBasic(RootFolderKey, Json.obj())
 
-  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID(id))
+  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(id))
 
   def search = executeFolder(SearchKey, parseSearch)
 
@@ -126,7 +126,7 @@ class Phones(tags: CloudTags,
                 result.withHeaders(
                   CONTENT_RANGE -> range.contentRange,
                   CONTENT_LENGTH -> s"${range.contentLength}",
-                  CONTENT_TYPE -> MimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
+                  CONTENT_TYPE -> fileMimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
                 )
               } getOrElse {
                 result.withHeaders(
@@ -235,7 +235,7 @@ class Phones(tags: CloudTags,
   private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
     phoneAuth.authenticatedLogged(socket => Action.async(parser)(req => f(req, socket)))
 
-  private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[ValidationError])]) = {
+  private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[JsonValidationError])]) = {
     log.error(s"Parse error. $err")
     badGateway("A dependent server returned unexpected data.")
   }

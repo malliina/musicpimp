@@ -14,15 +14,24 @@ import com.malliina.storage.StorageLong
 import com.malliina.ws.Streamer
 import controllers.pimpcloud.{StreamReceiver, Uploads}
 import org.scalatest.FunSuite
-import play.api.libs.Files.TemporaryFile
+import play.api.http.HttpErrorHandler
+import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.mvc.MultipartFormData.FilePart
 import play.api.mvc._
-import play.api.test.{FakeHeaders, FakeRequest}
+import play.api.test.{FakeHeaders, FakeRequest, Helpers}
 import play.core.parsers.Multipart
 
 import scala.concurrent.Future
 
 class UploadTests extends FunSuite with BaseSuite {
+  object errorHandler extends HttpErrorHandler {
+    override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
+      Future.successful(Results.InternalServerError)
+
+
+    override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
+      Future.successful(Results.BadRequest)
+  }
 
   val as = ActorSystem("test")
   implicit val mat = ActorMaterializer()(as)
@@ -96,19 +105,21 @@ class UploadTests extends FunSuite with BaseSuite {
   }
 
   def multipartRequest(file: Path): FakeRequest[MultipartFormData[Long]] = {
-    val tempFile = TemporaryFile(file.toFile)
+    val tempFile = SingletonTemporaryFileCreator.create(file)
     val part = FilePart("file", file.getFileName.toString, None, tempFile)
     val files = Seq[FilePart[TemporaryFile]](part)
     val multiData = MultipartFormData(Map.empty, files, Nil)
-    val partLengths = multiData.files.map(fp => fp.copy(ref = fp.ref.file.length()))
+    val partLengths = multiData.files.map(fp => fp.copy(ref = Files.size(fp.ref.path)))
     val multiDataLengths = multiData.copy(files = partLengths)
     FakeRequest("POST", "/test", FakeHeaders(Seq("boundary" -> "123456789", "k" -> "v")), multiDataLengths)
   }
 
+
+
   /** Parse the content as multipart/form-data
     */
   def multipartFormData: BodyParser[MultipartFormData[TemporaryFile]] =
-    multipartFormData(Multipart.handleFilePartAsTemporaryFile)
+    multipartFormData(Multipart.handleFilePartAsTemporaryFile(SingletonTemporaryFileCreator))
 
   val defaultLengths: Int = 512 * 1024 * 1024
 
@@ -118,7 +129,7 @@ class UploadTests extends FunSuite with BaseSuite {
     */
   def multipartFormData[A](filePartHandler: Multipart.FilePartHandler[A], maxLength: Long = defaultLengths): BodyParser[MultipartFormData[A]] = {
     BodyParser("multipartFormData") { request =>
-      Multipart.multipartParser(defaultLengths, filePartHandler).apply(request)
+      Multipart.multipartParser(defaultLengths, filePartHandler, errorHandler).apply(request)
     }
   }
 }

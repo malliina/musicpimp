@@ -17,7 +17,7 @@ import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
 import play.api.Logger
-import play.api.http.HttpEntity
+import play.api.http.{HttpEntity, HttpErrorHandler}
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
@@ -45,6 +45,7 @@ object NoCacheByteStreams {
 class NoCacheByteStreams(id: CloudID,
                          val jsonOut: ActorRef,
                          val mat: Materializer,
+                         errorHandler: HttpErrorHandler,
                          onUpdate: () => Unit)
   extends Streamer {
 
@@ -58,7 +59,7 @@ class NoCacheByteStreams(id: CloudID,
         bytes => info.send(bytes)
           .map(analyzeResult(info, bytes, _))
           .recover(onOfferError(request, info, bytes)),
-        maxUploadSize)(mat)
+        maxUploadSize, errorHandler)(mat)
     }
 
   def snapshot: Seq[StreamData] = iteratees.map {
@@ -142,7 +143,7 @@ class NoCacheByteStreams(id: CloudID,
 
   private def buildTrackRequest(request: RequestID, track: Track, range: ContentRange) = {
     val requestJson =
-      if (range.isAll) Json.toJson(WrappedID(track.id))
+      if (range.isAll) Json.toJson(WrappedID.forId(track.id))
       else Json.toJson(RangedRequest(track.id, range))
     UserRequest(TrackKey, requestJson, request, PimpServerSocket.nobody)
   }

@@ -6,6 +6,7 @@ import java.nio.file.{Files, Paths}
 import java.rmi.ConnectException
 
 import ch.qos.logback.classic.Level
+import com.malliina.concurrent.ExecutionContexts
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.MusicPlayer
@@ -18,17 +19,16 @@ import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
 import com.malliina.rmi.{RmiClient, RmiServer, RmiUtil}
 import com.malliina.util.{Log, Logging, Scheduling}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.core.server.{ProdServerStart, RealServerProcess, ServerWithStop}
+import play.core.server.{ProdServerStart, RealServerProcess, ReloadableServer}
 
 import scala.collection.JavaConversions._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 object Starter extends PlayLifeCycle with Log {
 
   override def appName: String = "musicpimp"
 
-  var server: Option[ServerWithStop] = None
+  var server: Option[ReloadableServer] = None
 
   var rmiServer: Option[RmiServer] = None
 
@@ -41,7 +41,7 @@ object Starter extends PlayLifeCycle with Log {
           // obviously we can't await it from another vm
           Thread sleep 2000
         } catch {
-          case ce: ConnectException =>
+          case _: ConnectException =>
             log warn "Unable to stop; perhaps MusicPimp is already stopped?"
         }
       case anythingElse => start()
@@ -82,11 +82,11 @@ object Starter extends PlayLifeCycle with Log {
         * Likely guilty: play! framework, because if no web requests have
         * been made, the app exits normally without this
         */
-      Future(System.exit(0))
+      Future(System.exit(0))(ExecutionContexts.cached)
     }
   }
 
-  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer): Unit = {
+  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer)(implicit ec: ExecutionContext): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
