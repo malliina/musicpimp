@@ -8,12 +8,12 @@ import controllers.pimpcloud.ServersController.log
 import play.api.Logger
 import play.api.mvc._
 
-class ServersController(auth: BaseSecurity[ServerRequest], mat: Materializer)
-  extends StreamReceiver(mat) {
+class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRequest])
+  extends StreamReceiver(comps) {
 
   def receiveUpload = auth.authenticatedLogged(r => receive(r))
 
-  def receive(server: ServerRequest): EssentialAction = {
+  private def receive(server: ServerRequest): EssentialAction = {
     val requestID = server.request
     log debug s"Processing '$requestID'..."
     val transfers = server.socket.fileTransfers
@@ -27,11 +27,11 @@ class ServersController(auth: BaseSecurity[ServerRequest], mat: Materializer)
 object ServersController {
   private val log = Logger(getClass)
 
-  def forAuth(actions: ActionBuilder[Request, AnyContent],
+  def forAuth(comps: ControllerComponents,
               auth: Authenticator[ServerRequest],
               mat: Materializer): ServersController = {
     val serverBundle = AuthBundle.default(auth)
-    val serverAuth: BaseSecurity[ServerRequest] = new BaseSecurity(actions, serverBundle, mat)
-    new ServersController(serverAuth, mat)
+    val serverAuth: BaseSecurity[ServerRequest] = new BaseSecurity(comps.actionBuilder, serverBundle, mat)
+    new ServersController(comps, serverAuth)
   }
 }

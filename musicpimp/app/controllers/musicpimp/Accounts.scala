@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.models.NewUser
 import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.PimpAuthenticator
-import com.malliina.play.auth.{Authenticator, RememberMe}
+import com.malliina.play.auth.{Auth, Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.http.{AuthedRequest, Proxies}
 import com.malliina.play.models.{Password, Username}
@@ -110,7 +110,7 @@ class Accounts(tags: PimpHtml,
     )
   }
 
-  def usersPage(users: Seq[Username], form: Form[NewUser], req: PimpRequest) = {
+  def usersPage(users: Seq[Username], form: Form[NewUser], req: PimpUserRequest) = {
     val addFeedback =
       form.globalError.map(err => UserFeedback.error(err.message))
         .orElse(UserFeedback.flashed(req))
@@ -134,7 +134,7 @@ class Accounts(tags: PimpHtml,
           if (isValid) {
             log info s"Authentication succeeded for user '$username' from '$remoteAddress'."
             val intendedUrl: String = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
-            val result = Results.Redirect(intendedUrl).withSession("username" -> username.name)
+            val result = Results.Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> username.name)
             if (credentials.rememberMe) {
               log debug s"Remembering auth..."
               // create token, retrieve cookie

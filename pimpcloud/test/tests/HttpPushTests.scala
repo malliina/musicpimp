@@ -29,7 +29,7 @@ object TestAuth extends PimpAuth {
   override def authenticate(request: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
     Future.successful(Right(AuthedRequest(testUser, request)))
 
-  override def authAction(f: AuthedRequest => Result) = Action { req =>
+  override def authAction(f: AuthedRequest => Result) = stubControllerComponents().actionBuilder { req =>
     val fakeRequest = AuthedRequest(testUser, req, None)
     f(fakeRequest)
   }
@@ -63,13 +63,4 @@ class HttpPushTests extends PimpcloudSuite {
     val result = (contentAsJson(response) \ Push.ResultKey).as[PushResult]
     assert(result.apns.size === 2)
   }
-
-  //    "get inactive devices" in {
-  //      val conf = PushConfReader.load.apns
-  //      val client = new APNSClient(conf.keyStore, conf.keyStorePass)
-  //      import concurrent.duration.DurationInt
-  //      val inactives = Await.result(client.inactiveDevices, 10.seconds)
-  //      println(inactives)
-  //      1 mustEqual 1
-  //    }
 }

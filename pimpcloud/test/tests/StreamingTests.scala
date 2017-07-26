@@ -1,26 +1,17 @@
 package tests
 
 import java.nio.file.{Files, Path, Paths}
-import java.util.UUID
 
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source}
+import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink}
 import akka.util.ByteString
 import com.malliina.http.{MultipartRequest, TrustAllMultipartRequest}
-import com.malliina.musicpimp.audio.Track
-import com.malliina.musicpimp.cloud.PimpServerSocket
-import com.malliina.musicpimp.models.{CloudID, RequestID, TrackID}
 import com.malliina.pimpcloud.auth.FakeAuth
-import com.malliina.pimpcloud.streams.ByteActor
-import com.malliina.play.{ContentRange, Streaming}
-import com.malliina.storage.StorageInt
+import com.malliina.play.Streaming
 import com.malliina.util.Util
 import com.malliina.util.Util._
 import org.apache.commons.io.FileUtils
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
-import play.api.libs.json.JsValue
-import play.api.test.FakeRequest
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future, Promise}

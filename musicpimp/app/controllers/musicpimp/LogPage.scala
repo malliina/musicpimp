@@ -78,7 +78,7 @@ class LogPage(tags: PimpHtml,
     )
   }
 
-  private def logPage(form: Form[Level], req: PimpRequest) =
+  private def logPage(form: Form[Level], req: PimpUserRequest) =
     tags.logs(form(LevelKey), Logging.levels, Logging.level, req.user, None)
 }
 

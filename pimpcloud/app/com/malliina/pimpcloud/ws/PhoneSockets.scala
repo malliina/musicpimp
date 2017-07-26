@@ -1,6 +1,6 @@
 package com.malliina.pimpcloud.ws
 
-import akka.actor.{Actor, ActorRef, Terminated}
+import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.pattern.pipe
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
@@ -97,8 +97,14 @@ object PhoneMediator {
 
 }
 
-case class PhoneEndpoint(server: CloudID, rh: RequestHeader, out: ActorRef)
-
-object PhoneSockets {
-  private val log = Logger(getClass)
+class NoopActor extends Actor {
+  override def receive: Receive = {
+    case _ => ()
+  }
 }
+
+object NoopActor {
+  def props() = Props(new NoopActor)
+}
+
+case class PhoneEndpoint(server: CloudID, rh: RequestHeader, out: ActorRef)

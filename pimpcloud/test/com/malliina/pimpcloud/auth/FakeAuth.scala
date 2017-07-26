@@ -1,12 +1,10 @@
 package com.malliina.pimpcloud.auth
 
+import akka.actor.ActorSystem
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.util.ByteString
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
-import com.malliina.pimpcloud.streams.ByteActor
-import com.malliina.pimpcloud.ws.PhoneConnection
+import com.malliina.pimpcloud.ws.{NoopActor, PhoneConnection}
 import com.malliina.play.auth.{AuthFailure, Authenticator, InvalidCredentials}
 import com.malliina.play.models.Username
 import controllers.pimpcloud.ServerRequest
@@ -15,7 +13,7 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-class FakeAuth(mat: Materializer, errorHandler: HttpErrorHandler) extends CloudAuthentication {
+class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandler) extends CloudAuthentication {
   private var currentServer: Option[ServerRequest] = None
 
   override lazy val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
@@ -38,8 +36,7 @@ class FakeAuth(mat: Materializer, errorHandler: HttpErrorHandler) extends CloudA
   }
 
   def fakeServerSocket(req: RequestHeader, errorHandler: HttpErrorHandler, mat: Materializer): PimpServerSocket = {
-    val source = Source.actorPublisher[ByteString](ByteActor.props())
-    val (actor, _) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
+    val actor = as.actorOf(NoopActor.props())
     new PimpServerSocket(actor, CloudID("test"), req, mat, errorHandler, () => ())
   }
 }

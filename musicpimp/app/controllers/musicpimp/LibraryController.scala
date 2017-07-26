@@ -44,7 +44,7 @@ class LibraryController(tags: PimpHtml,
     )
   }
 
-  private def folderResult(collection: => MusicFolder, request: PimpRequest): Result = {
+  private def folderResult(collection: => MusicFolder, request: PimpUserRequest): Result = {
     default.respond(request)(
       html = toHtml(collection, request.user),
       json = Json.toJson(collection)(MusicFolder.writer(request))

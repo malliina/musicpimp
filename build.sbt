@@ -73,10 +73,10 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
     Resolver.bintrayRepo("malliina", "maven")
   ),
   // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
-  scalacOptions ++= Seq(
-    "-encoding", "UTF-8"
-  )
+  scalacOptions ++= Seq("-encoding", "UTF-8")
 )
+
+scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
@@ -84,13 +84,6 @@ lazy val scalajsSettings = Seq(
 )
 
 lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
-//  release := {
-//    (AzureKeys.azureUpload in Windows).value
-//    val order = BuildOrder.simple(JobName("musicpimp-azure"))
-//    val creds = JenkinsKeys.jenkinsReadCreds.value
-//    val log = JenkinsKeys.logger.value
-//    JenkinsPlugin.runLogged(order, creds, log)
-//  },
   JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("musicpimp-deb-rpm"))),
   jenkinsPackage := {
     val order = BuildOrder.simple(JobName("musicpimp-deb-rpm"))

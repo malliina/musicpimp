@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 import com.malliina.play.json.SimpleCompanion
 import play.api.data.format.Formats.stringFormat
-import slick.driver.H2Driver.api.{MappedColumnType, stringColumnType}
+import slick.jdbc.H2Profile.api.{MappedColumnType, stringColumnType}
 
 /**
   * @param path a path - all separators must be slashes ('/') regardless of platform

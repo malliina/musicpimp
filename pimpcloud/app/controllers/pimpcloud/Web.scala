@@ -3,6 +3,7 @@ package controllers.pimpcloud
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
+import com.malliina.play.auth.Auth
 import com.malliina.play.controllers.{AccountForms, Caching}
 import com.malliina.play.http.Proxies
 import com.malliina.play.models.{Password, Username}
@@ -12,7 +13,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 case class CloudCreds(cloudID: CloudID, username: Username, pass: Password)
 
@@ -29,10 +30,11 @@ object Web {
   )(CloudCreds.apply)(CloudCreds.unapply))
 }
 
-class Web(tags: CloudTags,
-          authActions: CloudAuthentication,
-          exec: ExecutionContext)
-  extends Controller {
+class Web(comps: ControllerComponents,
+          tags: CloudTags,
+          authActions: CloudAuthentication)
+  extends AbstractController(comps) {
+  implicit val ec = defaultExecutionContext
 
   def ping = Action {
     Caching.NoCache(Ok)
@@ -52,7 +54,6 @@ class Web(tags: CloudTags,
         fut(BadRequest(loginPage(formWithErrors, flash)))
       },
       cloudCreds => {
-        implicit val ec = exec
         val creds = CloudCredentials(cloudCreds.cloudID, cloudCreds.username, cloudCreds.pass, request)
         authActions.authWebClient(creds).map(_ => {
           val server = creds.cloudID
@@ -60,8 +61,8 @@ class Web(tags: CloudTags,
           val who = s"$user@$server"
           log info s"Authentication succeeded to '$who' from '$remoteAddress'."
           val intendedUrl = request.session.get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
-          Redirect(intendedUrl).withSession(Security.username -> server.id)
-        }).recoverAll(t => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)))
+          Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
+        }).recoverAll(_ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)))
       }
     )
   }

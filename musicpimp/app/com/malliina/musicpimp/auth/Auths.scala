@@ -1,11 +1,10 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.play.auth.{Authenticator, InvalidCredentials, MissingCredentials, RememberMe}
+import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.{Password, Username}
 import controllers.musicpimp.fut
 import play.api.Logger
-import play.api.mvc.Security
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,7 +12,7 @@ object Auths {
   private val log = Logger(getClass)
 
   val session = Authenticator[AuthedRequest] { rh =>
-    val result = rh.session.get("username").map(Username.apply)
+    val result = rh.session.get(com.malliina.play.auth.Auth.DefaultSessionKey).map(Username.apply)
       .map(user => Right(new AuthedRequest(user, rh)))
       .getOrElse(Left(InvalidCredentials(rh)))
     fut(result)

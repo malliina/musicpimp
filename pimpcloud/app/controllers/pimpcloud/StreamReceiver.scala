@@ -2,7 +2,6 @@ package controllers.pimpcloud
 
 import java.io.IOException
 
-import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.storage.StorageLong
@@ -13,7 +12,7 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-class StreamReceiver(mat: Materializer) extends Controller {
+class StreamReceiver(comps: ControllerComponents) extends AbstractController(comps) {
 
   def receiveStream(parser: BodyParser[MultipartFormData[Long]],
                     transfers: Streamer,

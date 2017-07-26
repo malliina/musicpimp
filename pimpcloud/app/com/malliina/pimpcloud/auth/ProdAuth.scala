@@ -70,12 +70,11 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
     maybeResult getOrElse missing(rh)
   }
 
-  private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Either[AuthFailure, PhoneConnection] = {
-    req.session.get("username")
+  private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Either[AuthFailure, PhoneConnection] =
+    req.session.get(Auth.DefaultSessionKey)
       .map(Username.apply)
       .flatMap(user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, req, server)))
       .toRight(InvalidCredentials(req))
-  }
 
   /**
     * @return a socket or a [[Future]] failed with [[NoSuchElementException]] if validation fails

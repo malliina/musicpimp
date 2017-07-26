@@ -70,12 +70,12 @@ class CloudComponents(context: Context,
   // Controllers
   lazy val joined = new JoinedSockets(pimpAuth, ctx, httpErrorHandler)
   lazy val cloudAuths = joined.auths
-  lazy val push = new Push(conf.pusher)
+  lazy val push = new Push(controllerComponents, conf.pusher)
   lazy val p = Phones.forAuth(controllerComponents, tags, cloudAuths.phone, materializer)
-  lazy val sc = ServersController.forAuth(controllerComponents.actionBuilder, cloudAuths.server, materializer)
-  lazy val aa = new AdminAuth(pimpAuth, adminAuth, tags)
+  lazy val sc = ServersController.forAuth(controllerComponents, cloudAuths.server, materializer)
+  lazy val aa = new AdminAuth(controllerComponents, pimpAuth, adminAuth, tags)
   lazy val l = new Logs(tags, pimpAuth, ctx)
-  lazy val w = new Web(tags, cloudAuths, ec)
+  lazy val w = new Web(controllerComponents, tags, cloudAuths)
   lazy val as = new Assets(httpErrorHandler, assetsMetadata)
   lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"

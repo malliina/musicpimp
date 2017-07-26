@@ -3,7 +3,7 @@ package controllers.musicpimp
 import java.nio.file.Path
 
 import com.malliina.musicpimp.http.PimpUploads
-import com.malliina.play.auth.AuthFailure
+import com.malliina.play.auth.{Auth, AuthFailure}
 import com.malliina.play.controllers._
 import com.malliina.play.http._
 import com.malliina.play.models.Username
@@ -107,7 +107,7 @@ class SecureBase(auth: AuthDeps)
   private def maybeWithCookie(auth: AuthedRequest, result: Result): Result = {
     auth.cookie.fold(result) { c =>
       log debug s"Sending updated cookie in response to user ${auth.user}..."
-      result withCookies c withSession ("username" -> auth.user.name)
+      result withCookies c withSession (Auth.DefaultSessionKey -> auth.user.name)
     }
   }
 }

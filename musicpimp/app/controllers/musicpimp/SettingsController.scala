@@ -61,7 +61,7 @@ class SettingsController(tags: PimpHtml,
 
   def validateDirectory(dir: String) = Try(Files.isDirectory(Paths get dir)) getOrElse false
 
-  private def foldersPage(form: Form[String], req: PimpRequest) = {
+  private def foldersPage(form: Form[String], req: PimpUserRequest) = {
     val errorMessage = form.errors.headOption.map { error =>
       UserFeedback.error(Messages(error.message)(messages))
     }

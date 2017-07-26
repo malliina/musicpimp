@@ -1,11 +1,8 @@
 package com.malliina.play
 
 import akka.NotUsed
-import akka.actor.ActorRef
 import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueue}
 import akka.stream.{Materializer, OverflowStrategy}
-import akka.util.ByteString
-import com.malliina.pimpcloud.streams.ByteActor
 
 object Streaming {
   val DefaultBufferSizeInElements = 10000000
@@ -24,13 +21,5 @@ object Streaming {
     val (queue, publisher) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
     val src = Source.fromPublisher(publisher)
     (queue, src)
-  }
-
-  def actorSource(mat: Materializer): (ActorRef, Source[ByteString, _]) = {
-    val source = Source.actorPublisher[ByteString](ByteActor.props())
-    val (actor, publisher) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
-    val src = Source.fromPublisher(publisher)
-//    val actor = source.to(Sink.foreach(println)).run()(mat)
-    (actor, src)
   }
 }

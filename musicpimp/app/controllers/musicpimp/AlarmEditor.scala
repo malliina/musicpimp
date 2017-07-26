@@ -71,10 +71,10 @@ class AlarmEditor(tags: PimpHtml,
       Ok(tags.alarmEditor(form, Option(UserFeedback.success("Saved.")), req.user, messages))
     })
 
-  private def formSubmission[T, C: Writeable](form: Form[T])(err: (PimpRequest, Form[T]) => C, ok: (PimpRequest, Form[T], T) => Result) =
+  private def formSubmission[T, C: Writeable](form: Form[T])(err: (PimpUserRequest, Form[T]) => C, ok: (PimpUserRequest, Form[T], T) => Result) =
     pimpAction(request => handle(form, request)(err, (form, ap) => ok(request, form, ap)))
 
-  private def handle[T, C: Writeable](form: Form[T], request: PimpRequest)(errorContent: (PimpRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) = {
+  private def handle[T, C: Writeable](form: Form[T], request: PimpUserRequest)(errorContent: (PimpUserRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) = {
     val filledForm = form.bindFromRequest()(request)
     filledForm.fold(
       errors => BadRequest(errorContent(request, errors)),
