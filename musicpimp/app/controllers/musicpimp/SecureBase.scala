@@ -17,7 +17,7 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 class SecureBase(auth: AuthDeps)
-  extends BaseSecurity(auth.comps.actionBuilder, auth.auth, auth.mat) {
+  extends BaseSecurity[AuthedRequest](auth.comps.actionBuilder, auth.auth, auth.mat) {
   val comps = auth.comps
   val Action = comps.actionBuilder
   val parsers = comps.parsers
@@ -85,7 +85,7 @@ class SecureBase(auth: AuthDeps)
     pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
   def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
-    authenticatedLogged { auth =>
+    authenticatedLogged { (auth: AuthedRequest) =>
       comps.actionBuilder.async(parser) { req =>
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))

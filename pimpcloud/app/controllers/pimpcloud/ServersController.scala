@@ -11,7 +11,7 @@ import play.api.mvc._
 class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRequest])
   extends StreamReceiver(comps) {
 
-  def receiveUpload = auth.authenticatedLogged(r => receive(r))
+  def receiveUpload = auth.authenticatedLogged((r: ServerRequest) => receive(r))
 
   private def receive(server: ServerRequest): EssentialAction = {
     val requestID = server.request

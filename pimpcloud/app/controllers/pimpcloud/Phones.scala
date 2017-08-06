@@ -6,9 +6,9 @@ import java.nio.file.Paths
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.Directory
+import com.malliina.musicpimp.audio.{Directory, Track}
 import com.malliina.musicpimp.auth.PimpAuths
-import com.malliina.musicpimp.cloud.Search
+import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors._
 import com.malliina.musicpimp.models._
@@ -106,8 +106,8 @@ class Phones(comps: ControllerComponents,
     * @param id id of the requested track
     */
   def track(id: TrackID): EssentialAction = {
-    phoneAuth.authenticatedLogged { conn =>
-      val sourceServer = conn.server
+    phoneAuth.authenticatedLogged { (conn: PhoneConnection) =>
+      val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
         log info s"Serving track $id to user agent $userAgent"
@@ -115,7 +115,7 @@ class Phones(comps: ControllerComponents,
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
-          conn.meta(id).map { res =>
+          conn.meta(id).map[Result] { res =>
             res.map { track =>
               // proxies request
               val trackSize = track.size
@@ -234,7 +234,7 @@ class Phones(comps: ControllerComponents,
     }
 
   private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
-    phoneAuth.authenticatedLogged(socket => Action.async(parser)(req => f(req, socket)))
+    phoneAuth.authenticatedLogged((socket: PhoneConnection) => Action.async(parser)(req => f(req, socket)))
 
   private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[JsonValidationError])]) = {
     log.error(s"Parse error. $err")

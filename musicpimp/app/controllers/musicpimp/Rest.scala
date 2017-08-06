@@ -17,7 +17,7 @@ import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models._
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
-import com.malliina.play.http.{CookiedRequest, OneFileUploadRequest}
+import com.malliina.play.http.{AuthedRequest, CookiedRequest, OneFileUploadRequest}
 import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
@@ -72,7 +72,7 @@ class Rest(webPlayer: WebPlayer,
     *
     * TODO: See and fix https://github.com/playframework/playframework/issues/1842
     */
-  def streamedPlayback = authenticated { req =>
+  def streamedPlayback = authenticated { (req: AuthedRequest) =>
     EssentialAction { requestHeader =>
       val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
         .map(Json.parse(_).validate[Track])

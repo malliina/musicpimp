@@ -49,7 +49,7 @@ lazy val it = project.in(file("it"))
   .settings(baseSettings: _*)
 lazy val cross = crossProject.in(file("cross"))
   .settings(crossSettings: _*)
-  .jvmSettings(scalaVersion := "2.11.8")
+  .jvmSettings(scalaVersion := "2.12.3")
   .jsSettings(libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.6.3",
     "com.lihaoyi" %%% "upickle" % "0.4.3"))
@@ -158,7 +158,7 @@ lazy val pimpPlaySettings =
       libraryDependencies ++= Seq(
         malliinaGroup %% "util-actor" % "2.6.0",
         malliinaGroup %% "util-rmi" % "2.6.0",
-        malliinaGroup %% "util-audio" % "2.0.2",
+        malliinaGroup %% "util-audio" % "2.2.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -256,7 +256,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.3",
   organization := "org.musicpimp"
 )
 
