@@ -1,10 +1,10 @@
 package controllers.pimpcloud
 
-import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogEvent, LogbackUtils}
+import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
+import com.malliina.play.tags.TagPage
 import com.malliina.play.{ActorExecution, PimpSockets}
 import play.api.Logger
-import play.api.libs.json.{JsValue, Json}
-import rx.lang.scala.Observable
+import play.api.libs.json.Json
 
 import scala.concurrent.duration.DurationInt
 
@@ -17,9 +17,9 @@ class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution) {
     .map(Json.toJson(_))
   lazy val sockets = PimpSockets.observingSockets(jsonEvents, auth, ctx)
 
-  def index = auth.navigate(_ => tags.admin)
+  def index = auth.navigate[TagPage](_ => tags.admin)
 
-  def logs = auth.navigate(_ => tags.logs)
+  def logs = auth.navigate[TagPage](_ => tags.logs)
 
   def openSocket = sockets.newSocket
 }

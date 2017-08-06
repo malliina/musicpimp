@@ -7,6 +7,7 @@ import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.models.Username
+import com.malliina.play.tags.TagPage
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 
@@ -18,7 +19,7 @@ class Website(tags: PimpHtml,
               stats: PlaybackStats)
   extends HtmlController(auth) {
 
-  def player = navigate { req =>
+  def player = navigate[TagPage] { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
     val feedback: Option[String] =
       if (!hasAudioDevice) {

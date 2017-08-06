@@ -13,11 +13,13 @@ import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
+import controllers.Assets.Asset
+import controllers.ReverseAssets
 import controllers.musicpimp.{UserFeedback, routes, Search => _}
-import controllers.routes.Assets.at
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.Call
+import PimpHtml.reverseAssets.versioned
 
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
@@ -30,13 +32,17 @@ object PimpHtml {
 
   val dataIdAttr = attr("data-id")
 
+  val reverseAssets = new ReverseAssets("")
+
+  def versioned(file: Asset) = reverseAssets.versioned(file)
+
   def forApp(isProd: Boolean): PimpHtml = {
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
     withJs(scripts.optimized, scripts.launcher)
   }
 
   def withJs(jsFiles: String*): PimpHtml =
-    new PimpHtml(jsFiles.map(file => jsScript(at(file))): _*)
+    new PimpHtml(jsFiles.map(file => jsScript(versioned(file))): _*)
 
   def postableForm(onAction: Call, more: Modifier*) =
     form(role := FormRole, action := onAction, method := Post, more)
@@ -114,7 +120,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
             motd: Option[String],
             formFeedback: Option[UserFeedback],
             topFeedback: Option[UserFeedback]) =
-    basePage("Welcome", cssLink(at("css/login.css")))(
+    basePage("Welcome", cssLink(versioned("css/login.css")))(
       LoginHtml.loginContent(accounts, motd, formFeedback, topFeedback)
     )
 
@@ -149,7 +155,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
   }
 
   def basePlayer(feedback: Option[UserFeedback], username: Username) =
-    indexMain("player", username, Seq(cssLink(at("css/player.css"))))(
+    indexMain("player", username, Seq(cssLink(versioned("css/player.css"))))(
       PlayerHtml.playerContent(feedback)
     )
 
@@ -274,8 +280,8 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
-        cssLink(at("css/custom.css")),
-        cssLink(at("css/footer.css")),
+        cssLink(versioned("css/custom.css")),
+        cssLink(versioned("css/footer.css")),
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
         jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"),

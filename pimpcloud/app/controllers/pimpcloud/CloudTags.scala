@@ -1,20 +1,24 @@
 package controllers.pimpcloud
 
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
+import com.malliina.musicpimp.js.FrontStrings.{FailStatus, OkStatus}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.CloudStrings
 import com.malliina.pimpcloud.tags.ScalaScripts
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
-import controllers.pimpcloud.CloudTags.callAttr
-import controllers.routes.Assets.at
+import controllers.Assets.Asset
+import controllers.ReverseAssets
+import controllers.pimpcloud.CloudTags.versioned
 import play.api.mvc.Call
-import com.malliina.musicpimp.js.FrontStrings.{OkStatus, FailStatus}
+
 import scalatags.Text.GenericAttr
 import scalatags.Text.all._
 
 object CloudTags {
-  implicit val callAttr = new GenericAttr[Call]
+  val reverseAssets = new ReverseAssets("")
+
+  implicit val callAttr: GenericAttr[Call] = new GenericAttr[Call]
 
   /**
     * @param appName typically the name of the Scala.js module
@@ -27,14 +31,16 @@ object CloudTags {
   }
 
   def withLauncher(jsFiles: String*) =
-    new CloudTags(jsFiles.map(file => jsScript(at(file))): _*)
+    new CloudTags(jsFiles.map(file => jsScript(versioned(file))): _*)
+
+  def versioned(file: Asset) = reverseAssets.versioned(file)
 }
 
 class CloudTags(scripts: Modifier*) extends CloudStrings {
   val WideContent = "wide-content"
 
   def eject(message: Option[String]) =
-    basePage("Goodbye!", cssLink(at("css/custom.css")))(
+    basePage("Goodbye!", cssLink(versioned("css/custom.css")))(
       divContainer(
         rowColumn(s"$ColMd6 top-padding")(
           message.fold(empty) { msg =>
@@ -50,7 +56,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
   def login(error: Option[String],
             feedback: Option[String],
             motd: Option[String]) = {
-    basePage("Welcome", cssLink(at("css/login.css")))(
+    basePage("Welcome", cssLink(versioned("css/login.css")))(
       divContainer(
         divClass(s"$ColMd4 wrapper")(
           row(
@@ -204,7 +210,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"),
         cssLink("//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
-        cssLink(at("css/custom.css")),
+        cssLink(versioned("css/custom.css")),
         extraHeader,
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),

@@ -15,13 +15,14 @@ import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
+
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
 val musicpimpVersion = "3.8.0"
-val pimpcloudVersion = "1.8.0"
+val pimpcloudVersion = "1.8.1"
 val sharedVersion = "1.1.0"
 val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
@@ -117,10 +118,6 @@ lazy val pimpLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings ++ S
   rpmVendor := "Skogberg Labs",
   rpmLicense := Option("BSD License")
 )
-
-//lazy val azureSettings = AzurePlugin.azureSettings ++ Seq(
-//  AzureKeys.azureContainerName := "files"
-//)
 
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
   // never change

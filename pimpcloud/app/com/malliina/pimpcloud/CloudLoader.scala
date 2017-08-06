@@ -16,6 +16,7 @@ import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.gzip.GzipFilter
 import play.filters.HttpFiltersComponents
+import play.filters.hosts.AllowedHostsConfig
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -60,7 +61,8 @@ class CloudComponents(context: Context,
   implicit val ec = materializer.executionContext
 
   // Components
-  override lazy val httpFilters: Seq[EssentialFilter] = super.httpFilters ++ Seq(new GzipFilter())
+  override lazy val httpFilters: Seq[EssentialFilter] = Seq(csrfFilter, securityHeadersFilter, new GzipFilter())
+
   val adminAuth = new AdminOAuth(controllerComponents.actionBuilder, conf.googleCreds, materializer)
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth)
 

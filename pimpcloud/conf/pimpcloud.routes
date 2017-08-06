@@ -42,4 +42,4 @@ GET         /admin/eject                       controllers.pimpcloud.AdminAuth.e
 GET         /admin/ws                          controllers.pimpcloud.Logs.openSocket
 GET         /admin/usage                       controllers.pimpcloud.UsageStreaming.openSocket
 GET         /admin/logout                      controllers.pimpcloud.AdminAuth.logout
-GET         /assets/*file                      controllers.Assets.at(path = "/public", file)
+GET         /assets/*file                      controllers.Assets.versioned(path = "/public", file: Asset)

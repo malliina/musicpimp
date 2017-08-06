@@ -19,6 +19,7 @@ import com.malliina.play.ContentRange
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
+import com.malliina.play.tags.TagPage
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
 import play.api.http.{ContentTypes, Writeable}
@@ -198,7 +199,7 @@ class Phones(comps: ControllerComponents,
     executeFolder(cmd, _ => Right(body))
 
   private def executeFolder[W: Writes](cmd: String, build: RequestHeader => Either[String, W]) =
-    execute(cmd, build) { json =>
+    execute[W, TagPage](cmd, build) { json =>
       json.validate[Directory].map { dir =>
         tags.index(dir, None)
       }
