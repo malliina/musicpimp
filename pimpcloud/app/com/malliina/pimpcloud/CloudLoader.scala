@@ -9,14 +9,13 @@ import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
-import controllers.{Assets, AssetsComponents}
 import controllers.pimpcloud._
+import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
-import play.filters.gzip.GzipFilter
 import play.filters.HttpFiltersComponents
-import play.filters.hosts.AllowedHostsConfig
+import play.filters.gzip.GzipFilter
 
 import scala.concurrent.Future
 import scala.util.Try

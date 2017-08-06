@@ -9,17 +9,17 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry}
 import com.malliina.musicpimp.tags.PimpHtml._
+import com.malliina.musicpimp.tags.PimpHtml.reverseAssets.versioned
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
 import controllers.Assets.Asset
 import controllers.ReverseAssets
-import controllers.musicpimp.{UserFeedback, routes, Search => _}
+import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.{Field, Form}
 import play.api.i18n.Messages
 import play.api.mvc.Call
-import PimpHtml.reverseAssets.versioned
 
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
