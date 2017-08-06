@@ -16,6 +16,7 @@ import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
+import play.filters.headers.SecurityHeadersConfig
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -56,6 +57,9 @@ class CloudComponents(context: Context,
   extends BuiltInComponentsFromContext(context)
     with HttpFiltersComponents
     with AssetsComponents {
+
+  val csp = "default-src 'self' 'unsafe-inline' *.bootstrapcdn.com *.googleapis.com; connect-src *"
+  override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
 
   implicit val ec = materializer.executionContext
 
