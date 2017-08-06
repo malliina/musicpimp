@@ -28,7 +28,7 @@ val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.1.1"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.1.2"
 
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -163,7 +163,7 @@ lazy val pimpPlaySettings =
         httpGroup % "httpmime" % httpVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.4.193",
+        "com.h2database" % "h2" % "1.4.196",
         "com.neovisionaries" % "nv-websocket-client" % "2.3"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
@@ -184,7 +184,7 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
     malliinaGroup %% "logstreams-client" % "0.0.9",
-    "org.java-websocket" % "Java-WebSocket" % "1.3.0",
+    "org.java-websocket" % "Java-WebSocket" % "1.3.4",
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
@@ -248,7 +248,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.7.0",
+    malliinaGroup %% "mobile-push" % "1.7.2",
     "com.typesafe.play" %% "play-json" % "2.6.2",
     utilPlayDep
   )
