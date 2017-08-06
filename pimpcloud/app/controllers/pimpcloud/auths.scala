@@ -5,6 +5,7 @@ import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.auth.{AuthFailure, Authenticator, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity, OAuthControl}
 import com.malliina.play.http.AuthedRequest
+import org.asynchttpclient.config.AsyncHttpClientConfigDefaults
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
 import play.api.mvc._
@@ -32,7 +33,7 @@ trait PimpAuth extends Authenticator[AuthedRequest] {
 }
 
 class OAuthCtrl(val oauth: AdminOAuth)
-  extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth, oauth.mat.executionContext), oauth.mat)
+  extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth, oauth.ec), oauth.mat)
 
 object OAuthCtrl {
   def bundle(oauth: OAuthControl, ec: ExecutionContext) = new AuthBundle[AuthedRequest] {
@@ -45,11 +46,11 @@ object OAuthCtrl {
   }
 }
 
-class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, mat: Materializer)
+class AdminOAuth(actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, val mat: Materializer)
   extends OAuthControl(actions, creds, mat) {
-  override val sessionUserKey: String = "email"
+  import com.malliina.play.models.Email
 
-  override def isAuthorized(email: String): Boolean = email == "malliina123@gmail.com"
+  override def isAuthorized(email: Email): Boolean = email == Email("malliina123@gmail.com")
 
   override def startOAuth: Call = routes.AdminOAuth.initiate()
 

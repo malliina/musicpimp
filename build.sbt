@@ -21,6 +21,7 @@ val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 
+
 val musicpimpVersion = "3.8.0"
 val pimpcloudVersion = "1.8.1"
 val sharedVersion = "1.1.0"
@@ -28,7 +29,7 @@ val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.1.2"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.2.0"
 
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")

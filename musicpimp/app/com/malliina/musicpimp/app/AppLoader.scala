@@ -17,7 +17,7 @@ import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator
 import controllers._
 import controllers.musicpimp._
 import play.api.ApplicationLoader.Context
-import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
+import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler, SecretConfiguration}
 import play.api.i18n.{I18nComponents, Lang}
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Mode}
@@ -70,7 +70,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db)
   lazy val userManager = new DatabaseUserManager(db)
-  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db, ec), cookieSigner)
+  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db, ec), cookieSigner, httpConfiguration.secret)
   lazy val stats = new DatabaseStats(db)
   lazy val statsPlayer = new StatsPlayer(stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
