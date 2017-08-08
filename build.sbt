@@ -52,7 +52,7 @@ lazy val cross = crossProject.in(file("cross"))
   .jvmSettings(scalaVersion := "2.12.3")
   .jsSettings(libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.6.3",
-    "com.lihaoyi" %%% "upickle" % "0.4.3"))
+    "com.lihaoyi" %%% "upickle" % "0.4.4"))
 
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
