@@ -185,7 +185,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   def req(url: String, cloudId: CloudID, headers: (String, String)*) = {
     val enc = cloudAuthorization(cloudId)
     val hs = headers :+ (HeaderNames.AUTHORIZATION -> s"Basic $enc")
-    httpClient.url(url).withHeaders(hs: _*)
+    httpClient.url(url).withHttpHeaders(hs: _*)
   }
 
   def cloudAuthorization(cloudId: CloudID) =

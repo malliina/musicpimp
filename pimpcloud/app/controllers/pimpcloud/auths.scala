@@ -5,7 +5,7 @@ import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.auth.{AuthFailure, Authenticator, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity, OAuthControl}
 import com.malliina.play.http.AuthedRequest
-import org.asynchttpclient.config.AsyncHttpClientConfigDefaults
+import com.malliina.play.models.Email
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
 import play.api.mvc._
@@ -48,7 +48,6 @@ object OAuthCtrl {
 
 class AdminOAuth(actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, val mat: Materializer)
   extends OAuthControl(actions, creds, mat) {
-  import com.malliina.play.models.Email
 
   override def isAuthorized(email: Email): Boolean = email == Email("malliina123@gmail.com")
 

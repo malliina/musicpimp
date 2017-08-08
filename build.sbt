@@ -71,6 +71,7 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
   javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
   version := musicpimpVersion,
   resolvers ++= Seq(
+    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
     Resolver.jcenterRepo,
     Resolver.bintrayRepo("malliina", "maven")
   ),
@@ -156,8 +157,8 @@ lazy val pimpPlaySettings =
     nativePackagingSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.6.0",
-        malliinaGroup %% "util-rmi" % "2.6.0",
+        malliinaGroup %% "util-actor" % "2.8.0",
+        malliinaGroup %% "util-rmi" % "2.8.0",
         malliinaGroup %% "util-audio" % "2.2.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
@@ -185,7 +186,6 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
     malliinaGroup %% "logstreams-client" % "0.0.9",
-    "org.java-websocket" % "Java-WebSocket" % "1.3.4",
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
@@ -247,9 +247,10 @@ lazy val pimpcloudLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings
 
 lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.7.2",
+    malliinaGroup %% "mobile-push" % "1.7.3",
     "com.typesafe.play" %% "play-json" % "2.6.2",
     utilPlayDep
   )

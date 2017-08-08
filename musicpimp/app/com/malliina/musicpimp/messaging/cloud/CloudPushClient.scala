@@ -1,9 +1,8 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import com.malliina.http.AsyncHttp
+import com.malliina.http.{AsyncHttp, WebResponse}
 import com.malliina.musicpimp.json.JsonStrings.{Body, Cmd, Push}
 import com.malliina.play.http.FullUrl
-import org.asynchttpclient.Response
 import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -11,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class CloudPushClient(host: FullUrl) {
   val pushUrl = host append "/push"
 
-  def push(pushTask: PushTask)(implicit ec: ExecutionContext): Future[Response] =
+  def push(pushTask: PushTask)(implicit ec: ExecutionContext): Future[WebResponse] =
     AsyncHttp.postJson(pushUrl.url, Json.obj(Cmd -> Push, Body -> pushTask))
 }
 

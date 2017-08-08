@@ -8,7 +8,7 @@ import com.malliina.musicpimp.messaging.cloud._
 import com.malliina.musicpimp.messaging.gcm.CloudGcmClient
 import com.malliina.push.adm.ADMToken
 import com.malliina.push.apns.{APNSMessage, APNSToken}
-import com.malliina.push.gcm.{GCMMessage, GCMToken}
+import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.{MPNSToken, ToastMessage}
 import org.scalatest.FunSuite
 
@@ -38,7 +38,7 @@ class MessagingTests extends FunSuite {
     val message = admClient.message(server)
     val request = CloudPushClient.default.push(PushTask(adm = Option(ADMRequest(Seq(id), message))))
     val response = await(request)
-    assert(response.getStatusCode === 200)
+    assert(response.code === 200)
   }
 
   ignore("send using mpns or wns") {
@@ -47,7 +47,7 @@ class MessagingTests extends FunSuite {
     val message = ToastMessage("MusicPimp", "Tap to stop", s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=$tag", silent = true)
     val request = CloudPushClient.default.push(PushTask(mpns = Option(MPNSRequest(tokens = Seq(token), toast = Option(message)))))
     val response = await(request)
-    assert(response.getStatusCode === 200)
+    assert(response.code === 200)
   }
 
   ignore("send using gcm") {
@@ -56,15 +56,15 @@ class MessagingTests extends FunSuite {
     val task = PushTask(gcm = Option(GCMRequest(Seq(token), gcmClient.message(tag))))
     val request = CloudPushClient.default.push(task)
     val response = await(request)
-    assert(response.getStatusCode === 200)
-    println(response.getResponseBody)
+    assert(response.code === 200)
+    println(response.asString)
   }
 
   ignore("can push notification using pimpcloud") {
     val request = CloudPushClient.default.push(testTask)
     val result = Await.result(request, 5.seconds)
-    assert(result.getStatusCode === 200)
-    println(result.getResponseBody)
+    assert(result.code === 200)
+    println(result.asString)
   }
 
   def await[T](f: Future[T]): T = Await.result(f, 10.seconds)
