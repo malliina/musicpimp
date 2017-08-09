@@ -1,4 +1,4 @@
-import java.nio.file.Paths
+import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 
 import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
@@ -20,6 +20,7 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
+val buildAndMove = taskKey[Path]("builds and moves the package")
 
 
 val musicpimpVersion = "3.8.0"
@@ -135,7 +136,13 @@ lazy val windowsConfSettings = inConfig(Windows)(Seq(
     }.sorted.mkString("\n")
     logger.value.log(Level.Info, out)
   },
-  appIcon := Some(pkgHome.value / "guitar-128x128-np.ico")
+  appIcon := Some(pkgHome.value / "guitar-128x128-np.ico"),
+  buildAndMove := {
+    val src = WinKeys.msi.value
+    val dest = Files.move(src, target.value.toPath.resolve(name.value + ".msi"), StandardCopyOption.REPLACE_EXISTING)
+    streams.value.log.info(s"Moved '$src' to '$dest'.")
+    dest
+  }
 ))
 
 lazy val pimpMacSettings = macSettings ++ Seq(
