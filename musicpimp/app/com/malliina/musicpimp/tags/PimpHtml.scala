@@ -2,6 +2,7 @@ package com.malliina.musicpimp.tags
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
+import com.malliina.musicpimp.assets.AppAssets
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
@@ -33,6 +34,8 @@ object PimpHtml {
   val dataIdAttr = attr("data-id")
 
   val reverseAssets = new ReverseAssets("")
+
+  def at(file: String): Call = versioned(file)
 
   def versioned(file: Asset) = reverseAssets.versioned(file)
 
@@ -120,7 +123,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
             motd: Option[String],
             formFeedback: Option[UserFeedback],
             topFeedback: Option[UserFeedback]) =
-    basePage("Welcome", cssLink(versioned("css/login.css")))(
+    basePage("Welcome", cssLink(AppAssets.css.login))(
       LoginHtml.loginContent(accounts, motd, formFeedback, topFeedback)
     )
 
@@ -155,7 +158,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
   }
 
   def basePlayer(feedback: Option[UserFeedback], username: Username) =
-    indexMain("player", username, Seq(cssLink(versioned("css/player.css"))))(
+    indexMain("player", username, Seq(cssLink(AppAssets.css.player)))(
       PlayerHtml.playerContent(feedback)
     )
 
@@ -280,8 +283,8 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
-        cssLink(versioned("css/custom.css")),
-        cssLink(versioned("css/footer.css")),
+        cssLink(AppAssets.css.custom),
+        cssLink(AppAssets.css.footer),
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
         jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"),

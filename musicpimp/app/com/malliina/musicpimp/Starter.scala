@@ -24,6 +24,7 @@ import play.core.server.{ProdServerStart, RealServerProcess, ReloadableServer}
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 
+// TODO get rid of this object entirely, especially Netty
 object Starter extends PlayLifeCycle with Log {
 
   override def appName: String = "musicpimp"

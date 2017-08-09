@@ -3,6 +3,7 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
 import com.malliina.jenkinsctrl.models.{BuildOrder, JobName}
+import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.GenericPlugin
 import com.malliina.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
 import com.malliina.sbt.mac.MacKeys._
@@ -22,7 +23,6 @@ val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-
 val musicpimpVersion = "3.8.0"
 val pimpcloudVersion = "1.8.1"
 val sharedVersion = "1.1.0"
@@ -36,11 +36,13 @@ lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
     .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
+  .enablePlugins(FileTreePlugin)
   .dependsOn(shared, crossJvm)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
+  .enablePlugins(FileTreePlugin)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
@@ -180,6 +182,10 @@ lazy val pimpPlaySettings =
         "com.malliina.musicpimp.models._",
         "com.malliina.play.models.Username"
       ),
+      fileTreeSources := Seq(
+        DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.tags.PimpHtml.at"),
+        DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
+      ),
       // TODO get rid of this
       libs ++= Seq(
         (packageBin in Assets).value.toPath,
@@ -211,10 +217,9 @@ lazy val pimpcloudSettings =
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (name in pimpcloudFrontend).value),
       version := pimpcloudVersion,
-      libraryDependencies ++= Seq(
-        PlayImport.ehcache
-      ),
+      libraryDependencies += PlayImport.ehcache,
       PlayKeys.externalizeResources := false,
+      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
       libs ++= Seq(
         (packageBin in Assets).value.toPath,
         (packageBin in shared in Compile).value.toPath,

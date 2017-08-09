@@ -4,12 +4,12 @@ import com.malliina.musicpimp.audio.{Directory, Folder, Track}
 import com.malliina.musicpimp.js.FrontStrings.{FailStatus, OkStatus}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.CloudStrings
+import com.malliina.pimpcloud.assets.CloudAssets
 import com.malliina.pimpcloud.tags.ScalaScripts
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
 import controllers.Assets.Asset
 import controllers.ReverseAssets
-import controllers.pimpcloud.CloudTags.versioned
 import play.api.mvc.Call
 
 import scalatags.Text.GenericAttr
@@ -17,6 +17,8 @@ import scalatags.Text.all._
 
 object CloudTags {
   val reverseAssets = new ReverseAssets("")
+
+  def at(file: String): Call = reverseAssets.versioned(file)
 
   implicit val callAttr: GenericAttr[Call] = new GenericAttr[Call]
 
@@ -40,7 +42,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
   val WideContent = "wide-content"
 
   def eject(message: Option[String]) =
-    basePage("Goodbye!", cssLink(versioned("css/custom.css")))(
+    basePage("Goodbye!", cssLink(CloudAssets.css.custom))(
       divContainer(
         rowColumn(s"$ColMd6 top-padding")(
           message.fold(empty) { msg =>
@@ -56,7 +58,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
   def login(error: Option[String],
             feedback: Option[String],
             motd: Option[String]) = {
-    basePage("Welcome", cssLink(versioned("css/login.css")))(
+    basePage("Welcome", cssLink(CloudAssets.css.login))(
       divContainer(
         divClass(s"$ColMd4 wrapper")(
           row(
@@ -210,7 +212,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"),
         cssLink("//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
-        cssLink(versioned("css/custom.css")),
+        cssLink(CloudAssets.css.custom),
         extraHeader,
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
