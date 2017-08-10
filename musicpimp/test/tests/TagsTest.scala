@@ -14,6 +14,6 @@ class TagsTest extends FunSuite {
   }
 
   test("assets") {
-    assert(AppAssets.css.custom.toString === "/assets/css/custom.css")
+    assert(AppAssets.img.light.transport_ff.toString === "/assets/img/light/transport.ff.png")
   }
 }
