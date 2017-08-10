@@ -23,7 +23,7 @@ val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.8.0"
+val musicpimpVersion = "3.8.1"
 val pimpcloudVersion = "1.8.1"
 val sharedVersion = "1.1.0"
 val crossVersion = "1.1.0"
