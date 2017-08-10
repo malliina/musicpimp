@@ -1,6 +1,6 @@
 package com.malliina.pimpcloud.tags
 
-case class ScalaScripts(optimized: String, launcher: String, libs: String)
+case class ScalaScripts(optimized: String, libs: String)
 
 object ScalaScripts {
   /**
@@ -15,8 +15,7 @@ object ScalaScripts {
     def withSuffix(suff: String) = s"$lowerName-$suff.js"
 
     val optimizedName = withSuffix(suffix)
-    val launcherName = withSuffix("launcher")
     val libs = withSuffix("jsdeps")
-    ScalaScripts(optimizedName, launcherName, libs)
+    ScalaScripts(optimizedName, libs)
   }
 }

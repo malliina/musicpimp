@@ -41,7 +41,7 @@ object PimpHtml {
 
   def forApp(isProd: Boolean): PimpHtml = {
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
-    withJs(scripts.optimized, scripts.launcher)
+    withJs(scripts.optimized)
   }
 
   def withJs(jsFiles: String*): PimpHtml =

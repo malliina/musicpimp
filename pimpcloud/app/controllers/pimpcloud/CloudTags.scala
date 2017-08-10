@@ -29,7 +29,7 @@ object CloudTags {
     */
   def forApp(appName: String, isProd: Boolean): CloudTags = {
     val scripts = ScalaScripts.forApp(appName, isProd)
-    withLauncher(scripts.optimized, scripts.launcher)
+    withLauncher(scripts.optimized)
   }
 
   def withLauncher(jsFiles: String*) =
