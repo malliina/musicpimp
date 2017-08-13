@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 
 object JsonMessages extends JsonMessages
 
-trait JsonMessages {
+trait JsonMessages extends CommonMessages {
   val version = Version(com.malliina.musicpimp.BuildInfo.version)
   val noMedia = obj(State -> PlayerStates.NoMedia.toString)
   val unAuthorized = FailReason(AccessDenied)
@@ -54,9 +54,6 @@ trait JsonMessages {
 
   def withStatus(json: JsValue): JsValue =
     event(StatusKey) ++ json.as[JsObject]
-
-  def event(eventType: String, valuePairs: (String, JsValueWrapper)*): JsObject =
-    obj(EventKey -> eventType) ++ obj(valuePairs: _*)
 
   def thanks =
     Json.obj(Msg -> Json.toJson(ThankYou))

@@ -34,7 +34,7 @@ val utilPlayDep = malliinaGroup %% "util-play" % "4.3.0"
 
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
-    .dependsOn(crossJs)
+  .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
   .enablePlugins(FileTreePlugin)
   .dependsOn(shared, crossJvm)
@@ -46,6 +46,7 @@ lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
+  .dependsOn(crossJvm)
   .settings(sharedSettings: _*)
 lazy val it = project.in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
@@ -66,7 +67,8 @@ addCommandAlias("it", ";project it")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
-  version := "1.1.0"
+  version := "1.1.0",
+  libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.2"
 )
 
 lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
@@ -101,7 +103,7 @@ lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
 )
 
 lazy val nativePackagingSettings =
-    pimpWindowsSettings ++
+  pimpWindowsSettings ++
     pimpMacSettings ++
     pimpLinuxSettings ++
     GenericPlugin.confSettings ++ Seq(

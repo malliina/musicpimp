@@ -15,18 +15,10 @@ import scalatags.Text.all._
 case class UserFeedback(message: String, isError: Boolean)
 
 object Cloud {
-  val Connected = "connected"
-  val Connecting = "connecting"
-  val Disconnected = "disconnected"
-  val Disconnecting = "disconnecting"
   val ConnectId = "button-connect"
   val DisconnectId = "button-disconnect"
   val CloudId = "cloud-id"
-  val ConnectCmd = "connect"
-  val DisconnectCmd = "disconnect"
   val inputId = "id"
-  val Reason = "reason"
-  val IdKey = "id"
 
   def connectingContent: Frag = leadPara("Connecting...")
 
@@ -73,29 +65,29 @@ object Cloud {
 class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   val formDiv = elem(CloudForm)
 
-  override def onConnected(e: Event) = {
+  override def onConnected(e: Event): Unit = {
     send(Command.subscribe)
     super.onConnected(e)
   }
 
-  override def handlePayload(payload: Value) = {
+  override def handlePayload(payload: Value): Unit = {
     onSocketEvent(payload)
   }
 
   def onSocketEvent(payload: Value) = {
     val fragment: Either[Invalid, Frag] =
       readField[String](payload, FrontStrings.EventKey).flatMap {
-        case Connecting =>
+        case ConnectingKey =>
           Right(Cloud.connectingContent)
-        case Connected =>
+        case ConnectedKey =>
           readField[String](payload, IdKey).map { id =>
             Cloud.connectedContent(id)
           }
-        case Disconnected =>
+        case DisconnectedKey =>
           readField[String](payload, Reason).map { reason =>
             Cloud.disconnectedContent(reason)
           }
-        case Disconnecting =>
+        case DisconnectingKey =>
           Right(Cloud.disconnectingContent)
         case other =>
           Left(Invalid.Data(payload, s"Unknown event '$other'."))
@@ -119,7 +111,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
     })
   }
 
-  def connect() = {
+  def connect(): Unit = {
     send(IdCommand(ConnectCmd, elem(CloudId).value().toString))
   }
 }

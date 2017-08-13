@@ -6,12 +6,11 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.cloud.Clouds.log
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
+import com.malliina.musicpimp.models.{CloudEvent, CloudID}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.http.FullUrl
 import com.malliina.util.Utils
-import controllers.musicpimp.CloudEvent
-import controllers.musicpimp.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
 import play.api.Logger
 import play.api.libs.json.JsValue
 import rx.lang.scala.subjects.BehaviorSubject
@@ -102,7 +101,7 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
       log debug s"Connecting as $name to ${client.uri}..."
       client = newSocket(id)
       val sub = client.registrations.subscribe(
-        id => registrations.onNext(Connected(id)),
+        id => registrations.onNext(Connected(id.toId)),
         _ => registrations.onNext(Disconnected("The connection failed.")),
         () => ()
       )

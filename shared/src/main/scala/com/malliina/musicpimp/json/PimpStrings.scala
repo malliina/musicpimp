@@ -20,7 +20,6 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val Player = "player"
   val Popular = "popular"
   val Range = "range"
-  val Reason = "reason"
   val Recent = "recent"
   val RootFolderKey = "root_folder"
   val SearchKey = "search"

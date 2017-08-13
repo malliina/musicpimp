@@ -4,46 +4,17 @@ import akka.actor.Props
 import com.malliina.musicpimp.audio.JsonCmd
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.Clouds
-import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.play.ActorExecution
-import com.malliina.play.auth.{Authenticator, InvalidCredentials}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.Username
 import com.malliina.play.ws.Mediator.Broadcast
 import com.malliina.play.ws.{MediatorSockets, ReplayMediator}
 import controllers.musicpimp.CloudCommand.{Connect, Disconnect, Noop}
-import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id}
+import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id, SubscribeCmd}
 import play.api.Logger
 import play.api.libs.json._
-import play.api.mvc.{RequestHeader, Security}
+import play.api.mvc.RequestHeader
 import rx.lang.scala.Subscription
-
-sealed abstract class CloudEvent(event: String)
-
-object CloudEvent {
-  val IdKey = "id"
-  val ConnectedKey = "connected"
-  val ConnectingKey = "connecting"
-  val DisconnectedKey = "disconnected"
-  val DisconnectingKey = "disconnecting"
-
-  implicit val writer = Writes[CloudEvent] {
-    case Connected(id) => JsonMessages.event(ConnectedKey, IdKey -> id)
-    case Disconnected(reason) => JsonMessages.event(DisconnectedKey, JsonStrings.Reason -> reason)
-    case Connecting => JsonMessages.event(ConnectingKey)
-    case Disconnecting => JsonMessages.event(DisconnectingKey)
-  }
-
-  case class Connected(id: CloudID) extends CloudEvent(ConnectedKey)
-
-  case class Disconnected(reason: String) extends CloudEvent(DisconnectedKey)
-
-  case object Connecting extends CloudEvent(ConnectingKey)
-
-  case object Disconnecting extends CloudEvent(DisconnectingKey)
-
-}
 
 sealed trait CloudCommand
 
@@ -58,12 +29,10 @@ object CloudCommand {
 }
 
 object CloudWS {
-  private val log = Logger(getClass)
-
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
   val Id = "id"
-  val Subscribe = "subscribe"
+  val SubscribeCmd = "subscribe"
 
   val sessionAuth = Auths.session
 }
@@ -97,7 +66,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
     val parsed: JsResult[CloudCommand] = cmd.command flatMap {
       case DisconnectCmd => JsSuccess(Disconnect)
       case ConnectCmd => cmd.key[CloudID](Id).map(id => Connect(id))
-      case CloudWS.Subscribe => JsSuccess(Noop)
+      case SubscribeCmd => JsSuccess(Noop)
       case other => JsError(s"Unknown command '$other'.")
     }
     parsed
