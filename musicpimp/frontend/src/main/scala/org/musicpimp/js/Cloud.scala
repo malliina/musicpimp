@@ -2,7 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.{CloudStrings, FrontStrings}
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
-import com.malliina.musicpimp.models.{CloudEvent, CloudId}
+import com.malliina.musicpimp.models.{CloudEvent, CloudName}
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
@@ -27,7 +27,7 @@ object Cloud {
 
   def disconnectingContent: Frag = leadPara("Disconnecting...")
 
-  def connectedContent(id: CloudId): Frag = {
+  def connectedContent(id: CloudName): Frag = {
     val msg = s"Connected. You can now access this server using your credentials and this cloud ID: $id"
     SeqFrag(Seq(
       halfRow(connectedForm()),
@@ -95,7 +95,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
           Right(Cloud.connectingContent)
         case ConnectedKey =>
           readField[String](payload, IdKey).map { id =>
-            Cloud.connectedContent(CloudId(id))
+            Cloud.connectedContent(CloudName(id))
           }
         case DisconnectedKey =>
           readField[String](payload, Reason).map { reason =>

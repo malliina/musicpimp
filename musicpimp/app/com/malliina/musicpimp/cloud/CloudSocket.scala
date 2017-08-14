@@ -146,11 +146,13 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         val body = JsonMessages.withStatus(Json.toJson(MusicPlayer.status))
         sendSuccess(request, body)
       case GetTrack(id) =>
-        uploader.upload(id, request)
-          .recoverAll(t => log.error(s"Upload failed for $request", t))
+        uploader.upload(id, request).recoverAll { t =>
+          log.error(s"Upload failed for $request", t)
+        }
       case rt: RangedTrack =>
-        uploader.rangedUpload(rt, request)
-          .recoverAll(t => log.error(s"Ranged upload failed for $request", t))
+        uploader.rangedUpload(rt, request).recoverAll { t =>
+          log.error(s"Ranged upload failed for $request", t)
+        }
       case CancelStream(req) =>
         uploader.cancelSoon(req)
       case RootFolder =>
@@ -231,7 +233,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         Library.findMeta(id)
           .map(track => sendSuccess(request, track))
           .getOrElse(sendFailure(request, LibraryController.noTrackJson(id)))
-      case RegistrationEvent(event, id) =>
+      case RegistrationEvent(_, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
         handler.handleMessage(payload, RemoteInfo(user, cloudHost))
@@ -240,7 +242,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
-      case other =>
+      case _ =>
         log.warn(s"Unknown request: '$message'.")
     }
   }
@@ -255,7 +257,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
     e match {
       case RegisteredMessage(id) =>
         onRegistered(id)
-      case RegistrationEvent(event, id) =>
+      case RegistrationEvent(_, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
         handler.handleMessage(payload, RemoteInfo(user, cloudHost))
@@ -273,7 +275,6 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
 
   def sendLogged[T: Writes](response: CloudResponse[T]): Try[Unit] = {
     val request = response.request
-    //    implicit val w = CloudResponse.json[T]
     send(Json.toJson(response))
       .map(_ => log debug s"Responded to request $request with payload '$response'.")
       .recover {
@@ -287,7 +288,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   def errorMessage(errors: JsError, json: JsValue): String =
     s"JSON error: $errors. Message: $json"
 
-  def onRegistered(id: CloudID) = {
+  def onRegistered(id: CloudID): Unit = {
     registrationPromise trySuccess id
     registrations onNext id
     log info s"Connected as '$username' to $uri."

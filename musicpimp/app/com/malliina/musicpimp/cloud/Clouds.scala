@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import java.nio.file.{Files, Path}
+import java.util.concurrent.atomic.AtomicReference
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
@@ -42,16 +43,19 @@ object Clouds {
 }
 
 class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
-  private var client: CloudSocket = newSocket(None)
+  log info s"Gen clouds"
+  private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Observable.interval(60.seconds)
   private var poller: Option[Subscription] = None
   val MaxFailures = 720
   var successiveFailures = 0
   val notConnected = Disconnected("Not connected.")
-  val registrations = BehaviorSubject[CloudEvent](notConnected).toSerialized
+  private val registrations = BehaviorSubject[CloudEvent](notConnected).toSerialized
   private var activeSubscription: Option[Subscription] = None
 
   val connection: Observable[CloudEvent] = registrations
+
+  def client = clientRef.get()
 
   def cloudHost = client.cloudHost
 
@@ -96,12 +100,15 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
     activeSubscription.foreach(_.unsubscribe())
     registrations onNext Connecting
     val prep = async {
-      closeAnyConnection()
       val name = id.map(i => s"'$i'") getOrElse "a random client"
       log debug s"Connecting as $name to ${client.uri}..."
-      client = newSocket(id)
+      val old = clientRef.getAndSet(newSocket(id))
+      closeAnyConnection(old)
       val sub = client.registrations.subscribe(
-        id => registrations.onNext(Connected(id.toId)),
+        id => {
+          log info s"Got $id"
+          registrations.onNext(Connected(id.toId))
+        },
         _ => registrations.onNext(Disconnected("The connection failed.")),
         () => ()
       )
@@ -117,13 +124,13 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
   def onConnected(id: CloudID): Future[CloudID] = async {
     successiveFailures = 0
     Clouds.saveID(id)
-    log debug s"Connected to ${client.uri}"
+    log info s"Connected to ${client.uri}"
     maintainConnectivity()
     id
   }
 
 
-  def newSocket(id: Option[CloudID]) =
+  def newSocket(id: Option[CloudID]): CloudSocket =
     CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, deps)
 
   def disconnectAndForgetAsync(): Future[Boolean] =
@@ -139,15 +146,15 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
   def disconnect(reason: String) = {
     registrations onNext Disconnecting
     stopPolling()
-    closeAnyConnection()
+    closeAnyConnection(client)
     registrations onNext Disconnected(reason)
   }
 
-  def closeAnyConnection() = {
-    val wasConnected = client.isConnected
-    client.close()
+  def closeAnyConnection(closeable: CloudSocket) = {
+    val wasConnected = closeable.isConnected
+    closeable.close()
     if (wasConnected) {
-      log debug s"Disconnected from the cloud at ${client.uri}"
+      log debug s"Disconnected from the cloud at ${closeable.uri}"
     }
   }
 

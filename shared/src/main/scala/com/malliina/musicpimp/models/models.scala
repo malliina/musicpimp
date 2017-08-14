@@ -26,7 +26,7 @@ case class WrappedID(id: String)
 object WrappedID {
   implicit val json = Json.format[WrappedID]
 
-  def forId(id: Identifiable): WrappedID = WrappedID(id.id)
+  def forId(id: Ident): WrappedID = WrappedID(id.id)
 }
 
 case class WrappedLong(id: Long)
@@ -41,7 +41,7 @@ object RangedRequest {
   implicit val json = Json.format[RangedRequest]
 }
 
-sealed trait RequestID extends Identifiable
+sealed trait RequestID extends Ident
 
 object RequestID extends ValidatingCompanion[String, RequestID] {
   private def apply(validated: String) = Impl(validated)

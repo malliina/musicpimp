@@ -49,13 +49,17 @@ object CloudMediator {
 
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   import CloudMediator.log
-  val jsonEvents = clouds.connection.map(event => Json.toJson(event))
-  var subscription: Option[Subscription] = None
+  private val jsonEvents = clouds.connection.map(event => Json.toJson(event))
+  private var subscription: Option[Subscription] = None
 
   override def preStart(): Unit = {
     super.preStart()
+    log info "Starting mediator"
     val sub = jsonEvents.subscribe(
-      e => self ! Broadcast(e),
+      e => {
+        log.info(s"Broadcast $e")
+        self ! Broadcast(e)
+      },
       (err: Throwable) => log.error("WebSocket error.", err),
       () => ())
     subscription = Option(sub)
@@ -77,7 +81,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   def handleCommand(cmd: CloudCommand): Any = {
     cmd match {
       case Connect(id) =>
-        clouds.connect(Option(id))
+        clouds.connect(Option(id).filter(_.id.nonEmpty))
       case Disconnect =>
         clouds.disconnectAndForgetAsync()
       case Noop =>

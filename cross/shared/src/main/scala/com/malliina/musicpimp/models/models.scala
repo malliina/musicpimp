@@ -2,17 +2,17 @@ package com.malliina.musicpimp.models
 
 import play.api.libs.json.{Format, Json, Reads, Writes}
 
-case class CloudId(id: String) extends Identifiable
+case class CloudName(id: String) extends Ident
 
-object CloudId extends IdCompanion[CloudId]
+object CloudName extends IdentCompanion[CloudName]
 
-trait Identifiable {
+trait Ident {
   def id: String
 
   override def toString: String = id
 }
 
-abstract class IdCompanion[T <: Identifiable] extends JsonCompanion[String, T] {
+abstract class IdentCompanion[T <: Ident] extends JsonCompanion[String, T] {
   override def raw(t: T): String = t.id
 }
 
