@@ -54,7 +54,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       val id = await(cloudClient.connect(Option(expectedId)))
       assert(id === expectedId)
     } finally {
-      cloudClient.disconnectAndForget()
+      cloudClient.disconnectAndForget("")
     }
   }
 
@@ -79,7 +79,7 @@ class IntegrationTest extends PimpcloudServerSuite {
         assert(server.id === id)
       }
     } finally {
-      cloudClient.disconnectAndForget()
+      cloudClient.disconnectAndForget("")
     }
   }
 
@@ -102,7 +102,7 @@ class IntegrationTest extends PimpcloudServerSuite {
         }
       }
     } finally {
-      cloudClient.disconnectAndForget()
+      cloudClient.disconnectAndForget("")
     }
   }
 
@@ -178,7 +178,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       assert(id === cloudId)
       code(trackId, fileSize, id)
     } finally {
-      cloudClient.disconnectAndForget()
+      cloudClient.disconnectAndForget("")
     }
   }
 

@@ -79,16 +79,16 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
   def ensureConnectedIfEnabled(): Unit = Try {
     if (Clouds.isEnabled && !client.isConnected) {
       log info s"Attempting to reconnect to the cloud..."
-      connect(Clouds.loadID()).recoverAll(t => {
+      connect(Clouds.loadID()).recoverAll { t =>
         log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
         successiveFailures += 1
         if (successiveFailures == MaxFailures) {
           log info s"Connection attempts to the cloud have failed $MaxFailures times in a row, giving up"
           successiveFailures = 0
-          disconnect()
+          disconnect("Disconnected after sustained failures.")
         }
         "Recovered" // -Xlint won't accept returning Any
-      })
+      }
     }
   }
 
@@ -122,24 +122,25 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
     id
   }
 
-  def async[T](code: => T) = Future(code)(cached)
 
   def newSocket(id: Option[CloudID]) =
     CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, deps)
 
-  def disconnectAndForgetAsync(): Future[Boolean] = {
-    Future(disconnectAndForget())(cached)
-  }
+  def disconnectAndForgetAsync(): Future[Boolean] =
+    async(disconnectAndForget("Disconnected by user."))
 
-  def disconnectAndForget() = {
-    disconnect()
+  def async[T](code: => T) = Future(code)(cached)
+
+  def disconnectAndForget(reason: String) = {
+    disconnect(reason)
     Files.deleteIfExists(Clouds.idFile)
   }
 
-  def disconnect() = {
+  def disconnect(reason: String) = {
     registrations onNext Disconnecting
     stopPolling()
     closeAnyConnection()
+    registrations onNext Disconnected(reason)
   }
 
   def closeAnyConnection() = {

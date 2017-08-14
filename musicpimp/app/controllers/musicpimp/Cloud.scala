@@ -46,7 +46,7 @@ class Cloud(tags: PimpHtml,
       desiredID => {
         val redir = Redirect(routes.Cloud.cloud())
         if (clouds.isConnected) {
-          clouds.disconnectAndForget()
+          clouds.disconnectAndForget("Disconnected by request.")
           fut(redir)
         } else {
           val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)

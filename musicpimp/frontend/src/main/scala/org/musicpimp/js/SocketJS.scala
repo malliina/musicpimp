@@ -5,6 +5,7 @@ import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
 import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
 import org.scalajs.jquery.{JQuery, JQueryEventObject}
+import play.api.libs.json.JsError
 import upickle.{Invalid, Js}
 
 import scala.util.Either.RightProjection
@@ -82,7 +83,11 @@ abstract class SocketJS(wsPath: String, val log: Logger) extends BaseScript {
     either.right
   }
 
-  def onJsonFailure = onInvalidData.lift
+  def onJsonFailure: (Invalid) => Option[Unit] = onInvalidData.lift
+
+  protected def onJsonFailure2(result: JsError): Unit = {
+    log info s"JSON error $result"
+  }
 
   private def onInvalidData: PartialFunction[Invalid, Unit] = {
     case Invalid.Data(jsValue, errorMessage) =>
