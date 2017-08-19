@@ -24,7 +24,7 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
 
   val NavbarFixedBottom = "navbar-fixed-bottom"
 
-  override def onConnected(e: Event) = {
+  override def onConnected(e: Event): Unit = {
     installHandlers()
     super.onConnected(e)
   }
@@ -36,13 +36,13 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     onClick(forwardButton, Playback.next)
   }
 
-  override def updateTime(duration: Duration) = ()
+  override def updateTime(duration: Duration): Unit = ()
 
-  override def updatePlayPauseButtons(state: PlayerState) = {
+  override def updatePlayPauseButtons(state: PlayerState): Unit = {
     updatePlayPause(state)
   }
 
-  override def updateTrack(track: Track) = {
+  override def updateTrack(track: Track): Unit = {
     hide(footerCredit)
     show(backwardButton, forwardButton)
     ensureClass(bottomNavbar, NavbarFixedBottom)
@@ -50,13 +50,13 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     artist html track.artist
   }
 
-  override def updatePlaylist(tracks: Seq[Track]) = ()
+  override def updatePlaylist(tracks: Seq[Track]): Unit = ()
 
-  override def updateVolume(vol: Int) = ()
+  override def updateVolume(vol: Int): Unit = ()
 
-  override def muteToggled(isMute: Boolean) = ()
+  override def muteToggled(isMute: Boolean): Unit = ()
 
-  override def onStatus(status: Status) = {
+  override def onStatus(status: Status): Unit = {
     val track = status.track
     if (track.title.nonEmpty) {
       updateTrack(track)
@@ -72,7 +72,7 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     bottomNavbar removeClass NavbarFixedBottom
   }
 
-  def updatePlayPause(state: PlayerState) = {
+  def updatePlayPause(state: PlayerState): Unit = {
     state match {
       case Started =>
         hide(playButton)
@@ -83,12 +83,12 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     }
   }
 
-  def hide(elems: JQuery*) =
+  def hide(elems: JQuery*): Unit =
     elems foreach { elem => ensureClass(elem, HiddenClass) }
 
   def ensureClass(elem: JQuery, clazz: String) =
     if (!(elem hasClass clazz)) elem addClass clazz
 
-  def show(elems: JQuery*) =
+  def show(elems: JQuery*): Unit =
     elems foreach (_ removeClass HiddenClass)
 }

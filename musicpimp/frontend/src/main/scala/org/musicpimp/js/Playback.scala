@@ -1,9 +1,10 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.js.PlayerStrings
-import com.malliina.musicpimp.json.PlaybackStrings
+import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
+import play.api.libs.json.Json
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
@@ -14,12 +15,22 @@ case class Track(id: String,
                  artist: String,
                  duration: Duration)
 
+object Track {
+  implicit val durFormat = CrossFormats.durationFormat
+  implicit val json = Json.format[Track]
+}
+
 case class Status(track: Track,
                   position: Duration,
                   volume: Int,
                   mute: Boolean,
                   playlist: Seq[Track],
                   state: PlayerState)
+
+object Status {
+  implicit val durFormat = CrossFormats.durationFormat
+  implicit val json = Json.format[Status]
+}
 
 object Playback extends PlaybackStrings {
   val SocketUrl = "/ws/playback?f=json"

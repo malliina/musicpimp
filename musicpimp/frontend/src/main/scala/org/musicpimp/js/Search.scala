@@ -2,9 +2,13 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.SearchStrings
 import org.scalajs.jquery.JQueryEventObject
-import upickle.Js
+import play.api.libs.json.{JsValue, Json}
 
 case class StatusEvent(event: String, status: String)
+
+object StatusEvent {
+  implicit val json = Json.format[StatusEvent]
+}
 
 class Search(music: MusicItems)
   extends SocketJS("/search/ws?f=json")
@@ -14,12 +18,10 @@ class Search(music: MusicItems)
     send(Command(Refresh))
   }
 
-  override def handlePayload(payload: Js.Value) = {
-    validate[StatusEvent](payload).fold(
-      onJsonFailure,
-      event => onStatus(event.status)
-    )
-  }
+  override def handlePayload(payload: JsValue): Unit =
+    handleValidated[StatusEvent](payload) { event =>
+      onStatus(event.status)
+    }
 
   def onStatus(status: String) =
     elem(IndexInfo).html(s" $status")

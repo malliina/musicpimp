@@ -10,10 +10,8 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversio
 
 Seq(
   "com.malliina" %% "sbt-play" % "1.1.0",
-  "com.malliina" %% "sbt-jenkins-control" % "0.3.1",
-  "com.eed3si9n" % "sbt-assembly" % "0.11.2",
   "org.scala-js" % "sbt-scalajs" % "0.6.19",
-  "com.vmunier" % "sbt-web-scalajs" % "1.0.3",
+  "com.vmunier" % "sbt-web-scalajs" % "1.0.5",
   "com.malliina" % "sbt-filetree" % "0.1.1"
 ) map addSbtPlugin
 

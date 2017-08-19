@@ -1,32 +1,15 @@
 package controllers.musicpimp
 
 import ch.qos.logback.classic.Level
-import com.malliina.logbackrx.LogEvent
+import com.malliina.musicpimp.models.{FrontLogEvent, FrontLogEvents}
 import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.util.Logging
 import controllers.musicpimp.LogPage.log
 import play.api.Logger
 import play.api.data.{Form, Forms}
-import play.api.libs.json.Json
 import play.api.mvc.Result
 
-case class FrontLogEvents(events: Seq[FrontLogEvent])
-
-object FrontLogEvents {
-  implicit val eventJson = FrontLogEvent.json
-  implicit val json = Json.format[FrontLogEvents]
-}
-
-case class FrontLogEvent(message: String, module: String, level: Level)
-
-object FrontLogEvent {
-  implicit val levelJson = LogEvent.LevelFormat
-  implicit val json = Json.format[FrontLogEvent]
-}
-
-class LogPage(tags: PimpHtml,
-              sockets: PimpLogs,
-              auth: AuthDeps)
+class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps)
   extends HtmlController(auth) {
   val LevelKey = "level"
 
@@ -53,9 +36,8 @@ class LogPage(tags: PimpHtml,
     )
   }
 
-  def handleLog(event: FrontLogEvent): Unit = {
-    logFunc(Logger(event.module), event.level)(event.message)
-  }
+  def handleLog(event: FrontLogEvent): Unit =
+    logFunc(Logger(event.module), Level.toLevel(event.level))(event.message)
 
   def logFunc(logger: Logger, level: Level): String => Unit =
     if (level == Level.DEBUG) logger.debug(_)

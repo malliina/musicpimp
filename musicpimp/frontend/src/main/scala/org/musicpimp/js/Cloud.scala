@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.js.{CloudStrings, FrontStrings}
+import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
 import com.malliina.musicpimp.models.{CloudEvent, CloudName}
 import com.malliina.tags.Bootstrap._
@@ -9,8 +9,6 @@ import org.musicpimp.js.Cloud._
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.{JsError, JsValue}
-import upickle.Invalid
-import upickle.Js.Value
 
 import scalatags.Text.Frag
 import scalatags.Text.all._
@@ -73,40 +71,18 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
     super.onConnected(e)
   }
 
-  override def handlePayload(payload: Value): Unit = {
+  override def handlePayload(payload: JsValue): Unit = {
     onSocketEvent(payload)
   }
 
-  def onSocketEvent2(payload: JsValue) = {
+  def onSocketEvent(payload: JsValue) = {
     val fragment = payload.validate[CloudEvent].map {
       case Connecting => Cloud.connectingContent
       case Connected(id) => Cloud.connectedContent(id)
       case Disconnected(reason) => Cloud.disconnectedContent(reason)
       case Disconnecting => Cloud.disconnectingContent
     }
-    fragment.fold(errors => onJsonFailure2(JsError(errors)), frag => formDiv.html(frag.render))
-    installHandlers()
-  }
-
-  def onSocketEvent(payload: Value) = {
-    val fragment: Either[Invalid, Frag] =
-      readField[String](payload, FrontStrings.EventKey).flatMap {
-        case ConnectingKey =>
-          Right(Cloud.connectingContent)
-        case ConnectedKey =>
-          readField[String](payload, IdKey).map { id =>
-            Cloud.connectedContent(CloudName(id))
-          }
-        case DisconnectedKey =>
-          readField[String](payload, Reason).map { reason =>
-            Cloud.disconnectedContent(reason)
-          }
-        case DisconnectingKey =>
-          Right(Cloud.disconnectingContent)
-        case other =>
-          Left(Invalid.Data(payload, s"Unknown event '$other'."))
-      }
-    fragment.fold(onJsonFailure, frag => formDiv.html(frag.render))
+    fragment.fold(errors => onJsonFailure(JsError(errors)), frag => formDiv.html(frag.render))
     installHandlers()
   }
 

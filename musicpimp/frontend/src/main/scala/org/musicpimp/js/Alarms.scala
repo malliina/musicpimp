@@ -2,6 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.scheduler.web.AlarmStrings
 import org.scalajs.dom
+import play.api.libs.json.Writes
 
 import scala.scalajs.js.Any
 
@@ -21,12 +22,12 @@ class Alarms extends BaseScript with AlarmStrings {
     false
   }
 
-  def postThenReload[C: PimpJSON.Writer](json: C) =
+  def postThenReload[C: Writes](json: C) =
     postAlarms(json).done { (_: Any) =>
       dom.window.location.reload(false)
       false
     }
 
-  def postAlarms[C: PimpJSON.Writer](json: C) =
+  def postAlarms[C: Writes](json: C) =
     postAjax("/alarms", json)
 }

@@ -1,8 +1,9 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.json.PlaybackStrings
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import upickle.{Invalid, Js}
+import com.malliina.musicpimp.json.CrossFormats.durationFormat
+import com.malliina.musicpimp.json.PlaybackStrings
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Reads}
 
 import scala.concurrent.duration.Duration
 
@@ -12,53 +13,43 @@ abstract class PlaybackSocket
 
   def updateTime(duration: Duration): Unit
 
-  def updatePlayPauseButtons(state: PlayerState)
+  def updatePlayPauseButtons(state: PlayerState): Unit
 
-  def updateTrack(track: Track)
+  def updateTrack(track: Track): Unit
 
-  def updatePlaylist(tracks: Seq[Track])
+  def updatePlaylist(tracks: Seq[Track]): Unit
 
-  def updateVolume(vol: Int)
+  def updateVolume(vol: Int): Unit
 
-  def muteToggled(isMute: Boolean)
+  def muteToggled(isMute: Boolean): Unit
 
-  def onStatus(status: Status)
+  def onStatus(status: Status): Unit
 
-  override def handlePayload(payload: Js.Value) = withFailure {
-    val obj = payload.obj
+  override def handlePayload(payload: JsValue): Unit = {
+    def read[T: Reads](key: String) = (payload \ key).validate[T]
 
-    def read[T: PimpJSON.Reader](key: String) = obj.get(key)
-      .map(json => PimpJSON.readJs[T](json))
-      .getOrElse(throw Invalid.Data(payload, s"Missing key '$key'."))
-
-    read[String](EventKey) match {
-      case "welcome" =>
-        send(Playback.status)
+    val result = read[String](EventKey).flatMap {
+      case Welcome =>
+        JsSuccess(send(Playback.status))
       case TimeUpdated =>
-        updateTime(read[Duration]("position"))
+        read[Duration]("position").map { duration => updateTime(duration) }
       case PlaystateChanged =>
-        updatePlayPauseButtons(read[PlayerState]("state"))
+        read[PlayerState]("state").map { state => updatePlayPauseButtons(state) }
       case TrackChanged =>
-        updateTrack(read[Track]("track"))
+        read[Track]("track").map { track => updateTrack(track) }
       case PlaylistModified =>
-        updatePlaylist(read[Seq[Track]]("playlist"))
+        read[Seq[Track]]("playlist").map { tracks => updatePlaylist(tracks) }
       case VolumeChanged =>
-        updateVolume(read[Int]("volume"))
+        read[Int]("volume").map { vol => updateVolume(vol) }
       case MuteToggled =>
-        muteToggled(read[Boolean]("mute"))
-      case "status" =>
-        onStatus(PimpJSON.readJs[Status](payload))
+        read[Boolean]("mute").map { mute => muteToggled(mute) }
+      case Status =>
+        payload.validate[Status].map { status => onStatus(status) }
       case PlaylistIndexChanged =>
-
+        JsSuccess(())
       case other =>
-        log.info(s"Unknown event '$other'.")
+        JsError(s"Unknown event '$other'.")
     }
+    result.recoverTotal { error => onJsonFailure(error) }
   }
-
-  def withFailure(code: => Any) =
-    try {
-      code
-    } catch {
-      case i: Invalid => onJsonFailure(i)
-    }
 }

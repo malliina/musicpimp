@@ -1,26 +1,18 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
-import upickle.{Invalid, Js}
+import org.scalajs.jquery.{JQueryEventObject, jQuery}
+import play.api.libs.json.{Json, Writes}
 
 import scala.scalajs.js
 
 trait BaseScript {
   val DataId = "data-id"
 
-  def elem(id: String): JQuery = jQuery(s"#$id")
-
   def global = js.Dynamic.global
 
   def literal = js.Dynamic.literal
 
-  def validate[T: PimpJSON.Reader](in: Js.Value): Either[Invalid, T] =
-    PimpJSON.validateJs(in)
-
-  def write[T: PimpJSON.Writer](t: T) =
-    PimpJSON.write(t)
-
-  def postAjax[C: PimpJSON.Writer](resource: String, payload: C) =
+  def postAjax[C: Writes](resource: String, payload: C) =
     BaseScript.postAjax(resource, payload)
 
   def withDataId[T](clazzSelector: String)(withId: String => T) =
@@ -37,9 +29,12 @@ trait BaseScript {
 object BaseScript {
   val ApplicationJson = "application/json"
 
-  def postAjax[C: PimpJSON.Writer](resource: String, payload: C) =
-    jQuery.ajax(PimpQuery.postSettings(
+  def postAjax[C: Writes](resource: String, payload: C) = {
+    val settings = PimpQuery.postSettings(
       resource,
       ApplicationJson,
-      PimpJSON.write(payload)))
+      Json.stringify(Json.toJson(payload))
+    )
+    jQuery.ajax(settings)
+  }
 }

@@ -1,6 +1,7 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.js.FrontStrings
+import play.api.libs.json.Writes
 
 class MusicItems extends BaseScript with FrontStrings {
   installHandler(s".$TrackClass.$PlayClass", TrackCommand.play)
@@ -8,9 +9,9 @@ class MusicItems extends BaseScript with FrontStrings {
   installHandler(s".$FolderClass.$PlayClass", ItemsCommand.playFolder)
   installHandler(s".$FolderClass.$AddClass", ItemsCommand.addFolder)
 
-  def installHandler[C: PimpJSON.Writer](clazzSelector: String, toMessage: String => C) =
+  def installHandler[C: Writes](clazzSelector: String, toMessage: String => C) =
     withDataId(clazzSelector)(id => postPlayback(toMessage(id)))
 
-  def postPlayback[C: PimpJSON.Writer](json: C) =
+  def postPlayback[C: Writes](json: C) =
     postAjax("/playback", json)
 }

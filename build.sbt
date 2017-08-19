@@ -2,10 +2,8 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 
 import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
-import com.malliina.jenkinsctrl.models.{BuildOrder, JobName}
 import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.GenericPlugin
-import com.malliina.sbt.jenkinsctrl.{JenkinsKeys, JenkinsPlugin}
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
@@ -18,7 +16,6 @@ import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
-val jenkinsPackage = taskKey[Unit]("Packages the app for msi (locally), deb, and rpm (remotely)")
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
@@ -56,7 +53,9 @@ lazy val cross = crossProject.in(file("cross"))
   .jvmSettings(scalaVersion := "2.12.3")
   .jsSettings(libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "scalatags" % "0.6.3",
-    "com.lihaoyi" %%% "upickle" % "0.4.4"))
+    "be.doeraene" %%% "scalajs-jquery" % "0.9.1"
+//    "com.lihaoyi" %%% "upickle" % "0.4.4"
+  ))
 
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
@@ -89,17 +88,6 @@ scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
   pipelineStages in Assets := Seq(scalaJSPipeline)
-)
-
-lazy val jenkinsSettings = JenkinsPlugin.settings ++ Seq(
-  JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("musicpimp-deb-rpm"))),
-  jenkinsPackage := {
-    val order = BuildOrder.simple(JobName("musicpimp-deb-rpm"))
-    val creds = JenkinsKeys.jenkinsReadCreds.value
-    val log = JenkinsKeys.logger.value
-    WinKeys.msi.value
-    JenkinsPlugin.runLogged(order, creds, log)
-  }
 )
 
 lazy val nativePackagingSettings =
@@ -163,7 +151,6 @@ lazy val pimpMacSettings = macSettings ++ Seq(
 
 lazy val pimpPlaySettings =
   commonServerSettings ++
-    jenkinsSettings ++
     commonSettings ++
     nativePackagingSettings ++
     Seq(
@@ -213,7 +200,6 @@ lazy val commonServerSettings = baseSettings ++ Seq(
 
 lazy val pimpcloudSettings =
   commonServerSettings ++
-    pimpcloudJenkinsSettings ++
     pimpcloudLinuxSettings ++
     pimpcloudScalaJSSettings ++
     Seq(
@@ -234,9 +220,6 @@ lazy val pimpcloudScalaJSSettings = Seq(
   pipelineStages in Assets := Seq(scalaJSPipeline)
 )
 
-lazy val pimpcloudJenkinsSettings = JenkinsPlugin.settings ++ Seq(
-  JenkinsKeys.jenkinsDefaultBuild := Option(BuildOrder.simple(JobName("pimpcloud")))
-)
 
 lazy val pimpcloudLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings ++ Seq(
   httpPort in Linux := Option("disabled"),
@@ -265,7 +248,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
     malliinaGroup %% "mobile-push" % "1.7.3",
-    "com.typesafe.play" %% "play-json" % "2.6.2",
+//    "com.typesafe.play" %% "play-json" % "2.6.2",
     utilPlayDep
   )
 )
@@ -282,7 +265,8 @@ def scalajsProject(name: String, path: File) =
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq(
         "be.doeraene" %%% "scalajs-jquery" % "0.9.1",
-        "com.lihaoyi" %%% "utest" % "0.4.4" % Test
+        "com.lihaoyi" %%% "utest" % "0.4.4" % Test,
+        "com.typesafe.play" %%% "play-json" % "2.6.2"
       ),
       testFrameworks += new TestFramework("utest.runner.Framework")
     )

@@ -3,18 +3,12 @@ package org.musicpimp.js
 import java.util.UUID
 
 import com.malliina.musicpimp.js.FrontStrings
+import com.malliina.musicpimp.models.JVMLogEntry
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
-import upickle.Js
+import play.api.libs.json.{JsError, JsValue}
 
 import scalatags.Text.all._
-
-case class JVMLogEntry(level: String,
-                       message: String,
-                       loggerName: String,
-                       threadName: String,
-                       timeFormatted: String,
-                       stackTrace: Option[String] = None)
 
 class Logs extends SocketJS("/ws/logs?f=json") with FrontStrings {
   val CellContent = "cell-content"
@@ -23,14 +17,14 @@ class Logs extends SocketJS("/ws/logs?f=json") with FrontStrings {
   val TimestampCell = "cell-timestamp"
   val tableContent = elem(LogTableBodyId)
 
-  override def onConnected(e: Event) = {
+  override def onConnected(e: Event): Unit = {
     send(Command.subscribe)
     super.onConnected(e)
   }
 
-  override def handlePayload(payload: Js.Value) =
-    PimpJSON.validateJs[Seq[JVMLogEntry]](payload).fold(
-      invalid => onJsonFailure(invalid),
+  override def handlePayload(payload: JsValue): Unit =
+    payload.validate[Seq[JVMLogEntry]].fold(
+      invalid => onJsonFailure(JsError(invalid)),
       entries => entries foreach prepend
     )
 

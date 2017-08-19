@@ -1,59 +1,78 @@
 package com.malliina.pimpcloud.js
 
 import com.malliina.pimpcloud.CloudStrings._
-import org.musicpimp.js.PimpJSON
 import org.scalajs.jquery.JQuery
-import upickle.{Invalid, Js}
+import play.api.libs.json.{JsError, JsValue, Json, Reads}
 
 import scalatags.Text.all._
 
-case class AdminEvent(event: String, body: Js.Arr)
-
 case class Server(id: String, address: String)
 
+object Server {
+  implicit val json = Json.format[Server]
+}
+
 case class Phone(s: String, address: String)
+
+object Phone {
+  implicit val json = Json.format[Phone]
+}
+
+case class Track(title: String, artist: String)
+
+object Track {
+  implicit val json = Json.format[Track]
+}
+
+case class Range(description: String)
+
+object Range {
+  implicit val json = Json.format[Range]
+}
 
 case class Request(serverID: String,
                    request: String,
                    track: Track,
                    range: Range)
 
-case class Track(title: String, artist: String)
+object Request {
+  implicit val json = Json.format[Request]
+}
 
-case class Range(description: String)
+sealed trait AdminList
+
+object AdminList {
+  implicit val reads: Reads[AdminList] = Reads { json =>
+    val body = json \ Body
+    (json \ Event).validate[String].flatMap {
+      case RequestsKey => body.validate[Seq[Request]].map(Requests.apply)
+      case PhonesKey => body.validate[Seq[Phone]].map(Phones.apply)
+      case ServersKey => body.validate[Seq[Server]].map(Servers.apply)
+      case other => JsError(s"Invalid $Event key: '$other'.")
+    }
+  }
+}
+
+case class Requests(requests: Seq[Request]) extends AdminList
+
+case class Phones(phones: Seq[Phone]) extends AdminList
+
+case class Servers(servers: Seq[Server]) extends AdminList
 
 class AdminJS extends SocketJS("/admin/usage") {
   val phonesTable: JQuery = elem(PhonesTableId)
   val serversTable = elem(ServersTableId)
   val requestsTable = elem(RequestsTableId)
 
-  override def handlePayload(payload: String) = {
-    val event = validate[AdminEvent](payload)
-    event.fold(
-      invalid => onJsonFailure(invalid),
-      e => handleEvent(e)
-    )
-  }
-
-  def handleEvent(event: AdminEvent) = {
-    def validateRight[T: PimpJSON.Reader](json: Js.Value) =
-      PimpJSON.validateJs[T](json).right
-
-    val body = event.body
-    val result = event.event match {
-      case RequestsKey =>
-        validateRight[Seq[Request]](body).map(updateRequests)
-      case PhonesKey =>
-        validateRight[Seq[Phone]](body).map(updatePhones)
-      case ServersKey =>
-        validateRight[Seq[Server]](body).map(updateServers)
-      case other =>
-        Left(Invalid.Data(PimpJSON.writeJs(other), s"Unknown event '$other'."))
+  override def handlePayload(payload: JsValue): Unit = {
+    handleValidated[AdminList](payload) {
+      case Requests(requests) => updateRequests(requests)
+      case Phones(phones) => updatePhones(phones)
+      case Servers(servers) => updateServers(servers)
     }
-    result.left foreach onJsonFailure
   }
 
-  def updateRequests(requests: Seq[Request]) = {
+  def updateRequests(requests: Seq[Request]): Unit = {
     def row(request: Request) = tr(
       td(request.serverID),
       td(request.request),
@@ -65,19 +84,19 @@ class AdminJS extends SocketJS("/admin/usage") {
     clearAndSet(requestsTable, requests, row)
   }
 
-  def updatePhones(phones: Seq[Phone]) = {
+  def updatePhones(phones: Seq[Phone]): Unit = {
     def row(phone: Phone) = tr(td(phone.s), td(phone.address))
 
     clearAndSet(phonesTable, phones, row)
   }
 
-  def updateServers(servers: Seq[Server]) = {
+  def updateServers(servers: Seq[Server]): Unit = {
     def row(server: Server) = tr(td(server.id), td(server.address))
 
     clearAndSet(serversTable, servers, row)
   }
 
-  def clearAndSet[T](table: JQuery, es: Seq[T], toRow: T => Modifier) = {
+  def clearAndSet[T](table: JQuery, es: Seq[T], toRow: T => Modifier): Unit = {
     table.find("tr").remove()
     es foreach { e => table append toRow(e).toString }
   }

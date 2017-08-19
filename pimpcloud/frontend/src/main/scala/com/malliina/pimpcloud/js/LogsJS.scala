@@ -3,8 +3,8 @@ package com.malliina.pimpcloud.js
 import java.util.UUID
 
 import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
-import org.musicpimp.js.PimpJSON
 import org.scalajs.jquery.JQueryEventObject
+import play.api.libs.json.{JsValue, Json}
 
 import scalatags.Text.all._
 
@@ -15,16 +15,19 @@ case class JVMLogEntry(level: String,
                        timeFormatted: String,
                        stackTrace: Option[String] = None)
 
+object JVMLogEntry {
+  implicit val json = Json.format[JVMLogEntry]
+}
+
 class LogsJS extends SocketJS("/admin/ws?f=json") {
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
   val tableContent = elem(LogTableBodyId)
 
-  def handlePayload(payload: String) = {
-    PimpJSON.validate[Seq[JVMLogEntry]](payload).fold(
-      invalid => onJsonFailure(invalid),
-      entries => entries foreach prepend
-    )
+  override def handlePayload(payload: JsValue): Unit = {
+    handleValidated[Seq[JVMLogEntry]](payload) { logs =>
+      logs foreach prepend
+    }
   }
 
   def prepend(entry: JVMLogEntry) = {
@@ -44,7 +47,7 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
       .getOrElse(level)
 
     entry.stackTrace foreach { stackTrace =>
-      val errorRow = tr(`class` := Hidden, id := s"$rowId")(
+      val errorRow = tr(`class` := hideClass, id := s"$rowId")(
         td(colspan := "5")(pre(stackTrace))
       )
       tableContent prepend errorRow.render
@@ -75,7 +78,7 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
 
   def toggle(row: String) = {
     val rowElem = global.jQuery(s"#$row")
-    rowElem.toggleClass(Hidden)
+    rowElem.toggleClass(hideClass)
     false
   }
 }

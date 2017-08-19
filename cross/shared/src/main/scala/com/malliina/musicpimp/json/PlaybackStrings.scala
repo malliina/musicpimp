@@ -18,6 +18,7 @@ trait PlaybackStrings {
   val Volume = "volume"
 
   // Events
+  val Welcome = "welcome"
   val MuteToggled = "mute_toggled"
   val TimeUpdated = "time_updated"
   val TrackChanged = "track_changed"

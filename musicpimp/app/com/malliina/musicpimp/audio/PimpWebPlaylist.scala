@@ -21,7 +21,7 @@ class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes
     send(obj(Cmd -> toJson(Add), TrackKey -> toJson(song)))
   }
 
-  def notifyPlaylistModified() =
+  def notifyPlaylistModified(): Unit =
     send(playlistModified(songList))
 
   override def delete(position: Int) {
@@ -34,9 +34,9 @@ class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes
     send(obj(Cmd -> toJson(Play), TrackKey -> toJson(song), UsernameKey -> user.name))
   }
 
-  override protected def onPlaylistIndexChanged(idx: Int) =
+  override protected def onPlaylistIndexChanged(idx: Int): Unit =
     send(playlistIndexChanged(idx))
 
-  override protected def onPlaylistModified(songs: Seq[TrackMeta]) =
+  override protected def onPlaylistModified(songs: Seq[TrackMeta]): Unit =
     send(playlistModified(songList))
 }
