@@ -30,7 +30,7 @@ object FolderMeta {
     obj(
       Id -> f.id,
       Title -> f.title,
-      PathKey -> f.path,
+      PathKey -> PimpPath.format.writes(f.path),
       Url -> host.absolute(call)
     )
   }

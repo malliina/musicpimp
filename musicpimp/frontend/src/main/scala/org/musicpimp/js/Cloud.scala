@@ -72,10 +72,6 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   }
 
   override def handlePayload(payload: JsValue): Unit = {
-    onSocketEvent(payload)
-  }
-
-  def onSocketEvent(payload: JsValue) = {
     val fragment = payload.validate[CloudEvent].map {
       case Connecting => Cloud.connectingContent
       case Connected(id) => Cloud.connectedContent(id)
@@ -87,18 +83,18 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   }
 
   def installHandlers() = {
-    elem(ConnectId).click((_: JQueryEventObject) => {
+    elem(ConnectId).click { (_: JQueryEventObject) =>
       connect()
-    })
-    elem(DisconnectId).click((_: JQueryEventObject) => {
+    }
+    elem(DisconnectId).click { (_: JQueryEventObject) =>
       send(Command(DisconnectCmd))
-    })
-    elem(CloudIdentifier).keypress((e: JQueryEventObject) => {
+    }
+    elem(CloudIdentifier).keypress { (e: JQueryEventObject) =>
       val isEnter = e.which == 10 || e.which == 13
       if (isEnter) {
         connect()
       }
-    })
+    }
   }
 
   def connect(): Unit = {

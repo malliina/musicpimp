@@ -13,12 +13,12 @@ case class StreamedTrack(id: TrackID,
                          album: String,
                          path: PimpPath,
                          duration: Duration,
-                         size: StorageSize,
+                         storageSize: StorageSize,
                          stream: InputStream) extends PlayableTrack {
   override def buildPlayer(eom: () => Unit): PimpPlayer = new StreamPlayer(this, eom)
 }
 
 object StreamedTrack {
   def fromTrack(t: TrackMeta, inStream: InputStream): StreamedTrack =
-    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)
+    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.storageSize, inStream)
 }

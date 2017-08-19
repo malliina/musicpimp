@@ -14,11 +14,11 @@ case class DataTrack(id: TrackID,
                      artist: String,
                      album: String,
                      duration: Duration,
-                     size: StorageSize,
+                     storageSize: StorageSize,
                      folder: FolderID) extends TrackMeta {
   val path = PimpPath.fromRaw(PimpEnc decode folder)
 
-  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
+  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, storageSize.toBytes, folder))
 }
 
 object DataTrack {

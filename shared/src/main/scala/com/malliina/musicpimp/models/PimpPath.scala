@@ -9,7 +9,7 @@ import slick.jdbc.H2Profile.api.{MappedColumnType, stringColumnType}
 /**
   * @param path a path - all separators must be slashes ('/') regardless of platform
   */
-case class PimpPath(path: String) {
+case class PimpPath(path: String) extends BasePath {
   override def toString: String = path
 }
 

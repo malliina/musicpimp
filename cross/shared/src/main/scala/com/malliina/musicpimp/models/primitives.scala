@@ -2,6 +2,18 @@ package com.malliina.musicpimp.models
 
 import play.api.libs.json.{Format, Json, Reads, Writes}
 
+case class SimplePath(path: String) extends BasePath
+
+trait BasePath {
+  def path: String
+}
+
+object BasePath extends JsonCompanion[String, BasePath] {
+  override def apply(raw: String): BasePath = SimplePath(raw)
+
+  override def raw(t: BasePath) = t.path
+}
+
 case class RequestIdentifier(id: String) extends Ident
 
 object RequestIdentifier extends IdentCompanion[RequestIdentifier]

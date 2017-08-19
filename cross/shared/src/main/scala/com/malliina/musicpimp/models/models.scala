@@ -32,6 +32,8 @@ case class SimpleTrack(id: TrackIdent,
                        title: String,
                        album: String,
                        artist: String,
+                       path: BasePath,
+                       size: Long,
                        duration: Duration) extends BaseTrack
 
 object SimpleTrack {
@@ -48,9 +50,13 @@ trait BaseTrack extends MusicItem {
 
   def artist: String
 
+  def path: BasePath
+
+  def size: Long
+
   def duration: Duration
 
-  def toTrack = SimpleTrack(id, title, album, artist, duration)
+  def toTrack = SimpleTrack(id, title, album, artist, path, size, duration)
 }
 
 object BaseTrack {

@@ -84,9 +84,9 @@ class NoCacheByteStreams(id: CloudID,
     // Watches completion and disposes of resources
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails
-    val src = source.watchTermination()((_, task) => task.onComplete(res => {
+    val src = source.watchTermination()((_, task) => task.onComplete { res =>
       remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
-    }))
+    })
     connectSource(request, src, track, range)
   }
 

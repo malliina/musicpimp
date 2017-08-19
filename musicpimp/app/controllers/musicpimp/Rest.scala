@@ -76,7 +76,7 @@ class Rest(webPlayer: WebPlayer,
     com.malliina.musicpimp.audio.Track
     EssentialAction { requestHeader =>
       val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
-        .map(Json.parse(_).validate[Track])
+        .map(Json.parse(_).validate[Track](Track.jsonFormat))
       val metaOrError = headerValue.map(jsonResult => jsonResult.fold(
         invalid => Left(loggedJson(s"Invalid JSON: $invalid")),
         valid => Right(valid))

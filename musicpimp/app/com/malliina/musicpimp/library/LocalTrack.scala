@@ -14,7 +14,7 @@ class LocalTrack(val id: TrackID,
                  val meta: SongMeta) extends MusicItem with PlayableTrack {
   val media = meta.media
   override val title = meta.tags.title
-  override val size: StorageSize = media.size
+  override val storageSize: StorageSize = media.size
   override val duration: Duration = media.duration
   override val album: String = meta.tags.album
   override val artist: String = meta.tags.artist

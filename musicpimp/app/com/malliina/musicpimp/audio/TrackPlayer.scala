@@ -3,7 +3,6 @@ package com.malliina.musicpimp.audio
 import java.io.IOException
 
 import com.malliina.audio.PlayerStates
-import com.malliina.musicpimp.audio.ServerMessage.{MuteToggledMessage, PlayStateChangedMessage, TimeUpdatedMessage, VolumeChangedMessage}
 import com.malliina.musicpimp.audio.TrackPlayer.log
 import play.api.Logger
 import rx.lang.scala.Observer
