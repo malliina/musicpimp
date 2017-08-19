@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.{Directory, Track}
+import com.malliina.musicpimp.audio.Directory
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
@@ -20,6 +20,7 @@ import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import com.malliina.play.tags.TagPage
+import com.malliina.storage.StorageLong
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
 import play.api.http.{ContentTypes, Writeable}
@@ -119,8 +120,8 @@ class Phones(comps: ControllerComponents,
             res.map { track =>
               // proxies request
               val trackSize = track.size
-              val rangeTry = ContentRange.fromHeader(req, trackSize)
-              val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
+              val rangeTry = ContentRange.fromHeader(req, trackSize.bytes)
+              val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize.bytes)
               val result = sourceServer.requestTrack(track, rangeOrAll, req)
               // ranged request support
               rangeTry map { range =>
@@ -132,7 +133,7 @@ class Phones(comps: ControllerComponents,
               } getOrElse {
                 result.withHeaders(
                   ACCEPT_RANGES -> Phones.Bytes,
-                  CONTENT_LENGTH -> trackSize.toBytes.toString,
+                  CONTENT_LENGTH -> trackSize.toString,
                   CACHE_CONTROL -> HttpConstants.NoCache,
                   CONTENT_TYPE -> HttpConstants.AudioMpeg,
                   CONTENT_DISPOSITION -> s"""attachment; filename="$name""""

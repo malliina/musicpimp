@@ -14,7 +14,7 @@ case class DataTrack(id: TrackID,
                      artist: String,
                      album: String,
                      duration: Duration,
-                     storageSize: StorageSize,
+                     size: Long,
                      folder: FolderID) extends TrackMeta {
   val path = PimpPath.fromRaw(PimpEnc decode folder)
 
@@ -23,11 +23,11 @@ case class DataTrack(id: TrackID,
 
 object DataTrack {
   def fromValues(i: TrackID, ti: String, ar: String, al: String, du: Int, si: Long, fo: FolderID) =
-    DataTrack(i, ti, ar, al, du.seconds, si.bytes, fo)
+    DataTrack(i, ti, ar, al, du.seconds, si, fo)
 
   implicit val durJson = JsonFormats.durationFormat
   implicit val storageJson = JsonFormats.storageSizeFormat
   implicit val format = Json.format[DataTrack]
   implicit val dataResult: GetResult[DataTrack] =
-    GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, FolderID(r.<<)))
+    GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong(), FolderID(r.<<)))
 }

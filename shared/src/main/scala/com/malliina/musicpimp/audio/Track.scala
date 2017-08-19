@@ -12,15 +12,12 @@ case class Track(id: TrackID,
                  artist: String,
                  album: String,
                  duration: Duration,
-                 storageSize: StorageSize) extends TrackMeta {
-
-  override def size = storageSize.toBytes
-
+                 size: Long) extends TrackMeta {
   override def path: PimpPath = PimpPath(PimpEnc relativePath id)
 }
 
 object Track {
   implicit val dur = JsonFormats.durationFormat
   implicit val storage = JsonFormats.storageSizeFormat
-  val jsonFormat = Json.format[Track]
+  implicit val jsonFormat = Json.format[Track]
 }

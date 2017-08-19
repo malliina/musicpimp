@@ -7,18 +7,15 @@ import scala.concurrent.duration.Duration
 
 case class SimpleRange(description: String) extends RangeLike
 
-object SimpleRange {
-  implicit val json = Json.format[SimpleRange]
-}
-
 trait RangeLike {
   def description: String
 }
 
 object RangeLike {
+  implicit val simple = Json.format[SimpleRange]
   implicit val json: Format[RangeLike] = Format[RangeLike](
     Reads[RangeLike](_.validate[SimpleRange]),
-    r => Json.toJson(SimpleRange(r.description))
+    r => simple.writes(SimpleRange(r.description))
   )
 }
 

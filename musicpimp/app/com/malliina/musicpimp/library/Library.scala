@@ -73,7 +73,7 @@ class Library {
   private def toDataTrack(track: LocalTrack) = {
     val id = track.id
     val path = Option(relativePath(id).getParent) getOrElse EmptyPath
-    DataTrack(id, track.title, track.artist, track.album, track.duration, track.storageSize, encodeFolder(path))
+    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
   }
 
   /** This method has a bug.

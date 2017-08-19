@@ -8,7 +8,7 @@ import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
 import play.api.libs.json.{Reads, Writes}
 import play.api.mvc.Call
-
+import com.malliina.storage.StorageLong
 import scala.concurrent.duration.Duration
 
 trait TrackMeta extends BaseTrack {
@@ -24,9 +24,9 @@ trait TrackMeta extends BaseTrack {
 
   def duration: Duration
 
-  def size: Long = storageSize.toBytes
+  def size: Long
 
-  def storageSize: StorageSize
+  def storageSize: StorageSize = size.bytes
 }
 
 object TrackMeta {

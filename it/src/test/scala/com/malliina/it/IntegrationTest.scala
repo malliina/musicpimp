@@ -76,7 +76,7 @@ class IntegrationTest extends PimpcloudServerSuite {
         val id = await(cloudClient.connect(Option(joinId)))
         assert(id === joinId)
         val server = await(joinedPromise.future)
-        assert(server.id === id)
+        assert(server.id === id.toId)
       }
     } finally {
       cloudClient.disconnectAndForget("")
@@ -98,7 +98,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       withPimpSocket(adminPath, onJson) { adminSocket =>
         withPhoneSocket(phonePath, id, _ => ()) { phoneSocket =>
           val joinedPhone = await(p.future)
-          assert(joinedPhone.s === expectedId)
+          assert(joinedPhone.s === expectedId.toId)
         }
       }
     } finally {
