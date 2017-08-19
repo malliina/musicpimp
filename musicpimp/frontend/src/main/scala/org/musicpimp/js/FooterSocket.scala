@@ -2,6 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.FooterStrings
 import com.malliina.musicpimp.js.FrontStrings.HiddenClass
+import com.malliina.musicpimp.models.SimpleTrack
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQuery
@@ -42,7 +43,7 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     updatePlayPause(state)
   }
 
-  override def updateTrack(track: Track): Unit = {
+  override def updateTrack(track: SimpleTrack): Unit = {
     hide(footerCredit)
     show(backwardButton, forwardButton)
     ensureClass(bottomNavbar, NavbarFixedBottom)
@@ -50,7 +51,7 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     artist html track.artist
   }
 
-  override def updatePlaylist(tracks: Seq[Track]): Unit = ()
+  override def updatePlaylist(tracks: Seq[SimpleTrack]): Unit = ()
 
   override def updateVolume(vol: Int): Unit = ()
 

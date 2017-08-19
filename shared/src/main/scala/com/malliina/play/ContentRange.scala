@@ -1,6 +1,7 @@
 package com.malliina.play
 
 import com.malliina.json.JsonFormats
+import com.malliina.musicpimp.models.RangeLike
 import com.malliina.storage.{StorageInt, StorageSize}
 import play.api.http.HeaderNames._
 import play.api.libs.json.{Format, Json, Writes}
@@ -8,7 +9,7 @@ import play.api.mvc.RequestHeader
 
 import scala.util.{Failure, Try}
 
-case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
+case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) extends RangeLike {
   val totalSizeBytes = size.toBytes
 
   def endExclusive = endInclusive + 1

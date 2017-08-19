@@ -9,6 +9,7 @@ import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
 import com.malliina.musicpimp.json.SocketStrings.Cancel
 import com.malliina.musicpimp.models.{CloudID, RangedRequest, RequestID, WrappedID}
+import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.json.JsonStrings.TrackKey
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.{DetachedMessage, log}
@@ -62,8 +63,8 @@ class NoCacheByteStreams(id: CloudID,
         maxUploadSize, errorHandler)(mat)
     }
 
-  def snapshot: Seq[StreamData] = iteratees.map {
-    case (uuid, stream) => StreamData(uuid, id, stream.track, stream.range)
+  def snapshot: Seq[PimpStream] = iteratees.map {
+    case (uuid, stream) => PimpStream(uuid.toId, id.toId, stream.track, stream.range)
   }.toSeq
 
   /**

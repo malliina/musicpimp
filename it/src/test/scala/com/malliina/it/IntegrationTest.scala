@@ -8,7 +8,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{CloudID, TrackID}
-import com.malliina.pimpcloud.models._
+import com.malliina.pimpcloud.{PimpPhone, PimpPhones, PimpServer, PimpServers, PimpStreams}
 import com.malliina.play.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
@@ -64,7 +64,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     val joinedPromise = Promise[PimpServer]()
 
     def onJson(json: JsValue) = {
-      val joinedServer = json.asOpt[PimpServers].flatMap(_.servers.find(_.id == joinId))
+      val joinedServer = json.asOpt[PimpServers].flatMap(_.servers.find(_.id == joinId.toId))
       joinedServer.map(joinedPromise.success).getOrElse(handler.handle(json))
     }
 

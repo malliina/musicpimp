@@ -73,6 +73,7 @@ class Rest(webPlayer: WebPlayer,
     * TODO: See and fix https://github.com/playframework/playframework/issues/1842
     */
   def streamedPlayback = authenticated { (req: AuthedRequest) =>
+    com.malliina.musicpimp.audio.Track
     EssentialAction { requestHeader =>
       val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
         .map(Json.parse(_).validate[Track])

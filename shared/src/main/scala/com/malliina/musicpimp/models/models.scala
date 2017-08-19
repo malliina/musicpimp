@@ -41,7 +41,9 @@ object RangedRequest {
   implicit val json = Json.format[RangedRequest]
 }
 
-sealed trait RequestID extends Ident
+sealed trait RequestID extends Ident {
+  def toId = RequestIdentifier(id)
+}
 
 object RequestID extends ValidatingCompanion[String, RequestID] {
   private def apply(validated: String) = Impl(validated)

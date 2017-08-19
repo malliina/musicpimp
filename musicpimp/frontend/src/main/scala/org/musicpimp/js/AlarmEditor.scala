@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.models.SimpleTrack
 import com.malliina.musicpimp.scheduler.WeekDay
 import com.malliina.musicpimp.scheduler.web.AlarmStrings
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
@@ -22,7 +23,7 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers {
     e.click((_: JQueryEventObject) => updateEveryDayCheckbox())
   }
   val autoOptionsFuture = AutoOptions.fromAsync(
-    req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
+    req => searchFuture[SimpleTrack](req).map(ts => ts.map(AutoItem.from)),
     item => trackIdElem.value(item.id)
   )
   val ui: JQueryUI = jQuery(s".$Selector")

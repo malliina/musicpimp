@@ -1,40 +1,53 @@
-package com.malliina.pimpcloud.models
+package com.malliina.pimpcloud
 
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.CloudStrings.{PhonesKey, RequestsKey, ServersKey}
-import com.malliina.pimpcloud.json.JsonStrings.Body
-import com.malliina.pimpcloud.ws.StreamData
-import com.malliina.play.models.Username
+import com.malliina.musicpimp.models._
+import com.malliina.pimpcloud.CloudStrings.{Body, PhonesKey, RequestsKey, ServersKey}
 import play.api.libs.json._
 
-case class PhoneRequest[W: Writes](cmd: String, user: Username, body: W)
+sealed trait PimpList
 
-case class PimpStreams(streams: Seq[StreamData])
+object PimpList {
+  implicit val reader: Reads[PimpList] =
+    PimpStreams.json.map[PimpList](identity) orElse
+      PimpPhones.json.map(identity) orElse
+      PimpServers.json.map(identity)
+}
+
+case class PimpStream(request: RequestIdentifier,
+                      serverID: CloudName,
+                      track: BaseTrack,
+                      range: RangeLike)
+
+object PimpStream {
+  implicit val format = Json.format[PimpStream]
+}
+
+case class PimpStreams(streams: Seq[PimpStream]) extends PimpList
 
 object PimpStreams {
   implicit val json = ListEvent.format(RequestsKey, PimpStreams.apply)(_.streams)
 }
 
-case class PimpPhone(s: CloudID, address: String)
+case class PimpPhone(s: CloudName, address: String)
 
 object PimpPhone {
   implicit val json = Json.format[PimpPhone]
 }
 
-case class PimpPhones(phones: Seq[PimpPhone])
+case class PimpPhones(phones: Seq[PimpPhone]) extends PimpList
 
 object PimpPhones {
   implicit val json = ListEvent.format(PhonesKey, PimpPhones.apply)(_.phones)
 }
 
-case class PimpServer(id: CloudID, address: String)
+case class PimpServer(id: CloudName, address: String)
 
 object PimpServer {
   implicit val json = Json.format[PimpServer]
 }
 
-case class PimpServers(servers: Seq[PimpServer])
+case class PimpServers(servers: Seq[PimpServer]) extends PimpList
 
 object PimpServers {
   implicit val json = ListEvent.format(ServersKey, PimpServers.apply)(_.servers)

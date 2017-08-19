@@ -2,16 +2,16 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.json.PimpStrings._
-import com.malliina.musicpimp.models.{MusicItem, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{BaseTrack, PimpPath, TrackID}
 import com.malliina.play.http.FullUrl
 import com.malliina.storage.StorageSize
 import play.api.libs.json.Json._
-import play.api.libs.json.{Reads, Writes}
+import play.api.libs.json.{Json, Reads, Writes}
 import play.api.mvc.Call
 
 import scala.concurrent.duration.Duration
 
-trait TrackMeta extends MusicItem {
+trait TrackMeta extends BaseTrack {
   def id: TrackID
 
   def title: String
@@ -39,7 +39,7 @@ object TrackMeta {
   def writer(host: FullUrl, url: TrackID => Call): Writes[TrackMeta] =
     Writes[TrackMeta] { t =>
       obj(
-        Id -> t.id,
+        Id -> TrackID.format.writes(t.id),
         Title -> t.title,
         Artist -> t.artist,
         Album -> t.album,

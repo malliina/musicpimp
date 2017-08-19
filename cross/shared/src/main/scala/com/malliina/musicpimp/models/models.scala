@@ -1,28 +1,61 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json.{Format, Json, Reads, Writes}
+import com.malliina.musicpimp.json.CrossFormats
+import play.api.libs.json.{Format, Json, Reads}
 
-case class CloudName(id: String) extends Ident
+import scala.concurrent.duration.Duration
 
-object CloudName extends IdentCompanion[CloudName]
+case class SimpleRange(description: String) extends RangeLike
 
-trait Ident {
-  def id: String
-
-  override def toString: String = id
+object SimpleRange {
+  implicit val json = Json.format[SimpleRange]
 }
 
-abstract class IdentCompanion[T <: Ident] extends JsonCompanion[String, T] {
-  override def raw(t: T): String = t.id
+trait RangeLike {
+  def description: String
 }
 
-abstract class JsonCompanion[Raw: Format, T] {
-  def apply(raw: Raw): T
+object RangeLike {
+  implicit val json: Format[RangeLike] = Format[RangeLike](
+    Reads[RangeLike](_.validate[SimpleRange]),
+    r => Json.toJson(SimpleRange(r.description))
+  )
+}
 
-  def raw(t: T): Raw
+trait MusicItem {
+  def id: Ident
 
-  implicit val format = Format(
-    Reads[T](in => in.validate[Raw].map(apply)),
-    Writes[T](t => Json.toJson(raw(t)))
+  def title: String
+}
+
+case class SimpleTrack(id: TrackIdent,
+                       title: String,
+                       album: String,
+                       artist: String,
+                       duration: Duration) extends BaseTrack
+
+object SimpleTrack {
+  implicit val durFormat = CrossFormats.durationFormat
+  implicit val json = Json.format[SimpleTrack]
+}
+
+trait BaseTrack extends MusicItem {
+  def id: TrackIdent
+
+  def title: String
+
+  def album: String
+
+  def artist: String
+
+  def duration: Duration
+
+  def toTrack = SimpleTrack(id, title, album, artist, duration)
+}
+
+object BaseTrack {
+  implicit val json = Format[BaseTrack](
+    _.validate[SimpleTrack],
+    json => Json.toJson(json.toTrack)
   )
 }

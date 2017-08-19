@@ -4,9 +4,9 @@ import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.pattern.pipe
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.CloudID
+import com.malliina.pimpcloud.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.json.JsonStrings._
-import com.malliina.pimpcloud.models.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
 import com.malliina.play.ws.{ActorConfig, JsonActor}
 import controllers.pimpcloud.ServerMediator.{Listen, ServerEvent}
@@ -21,13 +21,13 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
   val server = conn.server
   val endpoint = PhoneEndpoint(server.id, conf.rh, out)
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     super.preStart()
     mediator ! PhoneJoined(endpoint)
     out ! com.malliina.play.json.JsonMessages.welcome
   }
 
-  override def onMessage(msg: JsValue) = {
+  override def onMessage(msg: JsValue): Unit = {
     val isStatus = (msg \ Cmd).validate[String].filter(_ == StatusKey).isSuccess
     if (isStatus) {
       conn.status()
@@ -54,7 +54,7 @@ class PhoneMediator extends Actor {
 
   def phonesJson = {
     val ps = phones map { phone =>
-      PimpPhone(phone.server, phone.rh.remoteAddress)
+      PimpPhone(phone.server.toId, phone.rh.remoteAddress)
     }
     PimpPhones(ps.toSeq)
   }
@@ -83,7 +83,7 @@ class PhoneMediator extends Actor {
       sendUpdate(phonesJson)
   }
 
-  def sendUpdate[C: Writes](message: C) = {
+  def sendUpdate[C: Writes](message: C): Unit = {
     val json = Json.toJson(message)
     listeners foreach { listener =>
       listener ! json

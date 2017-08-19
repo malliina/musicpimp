@@ -2,6 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
+import com.malliina.musicpimp.models.{SimpleTrack, TrackIdentifier}
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.Json
@@ -9,22 +10,11 @@ import play.api.libs.json.Json
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
 
-case class Track(id: String,
-                 title: String,
-                 album: String,
-                 artist: String,
-                 duration: Duration)
-
-object Track {
-  implicit val durFormat = CrossFormats.durationFormat
-  implicit val json = Json.format[Track]
-}
-
-case class Status(track: Track,
+case class Status(track: SimpleTrack,
                   position: Duration,
                   volume: Int,
                   mute: Boolean,
-                  playlist: Seq[Track],
+                  playlist: Seq[SimpleTrack],
                   state: PlayerState)
 
 object Status {
@@ -86,7 +76,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
 
   val zero = 0.seconds
 
-  var currentPlaylist: Seq[Track] = Nil
+  var currentPlaylist: Seq[SimpleTrack] = Nil
   var isMute: Boolean = false
 
   installHandlers()
@@ -159,7 +149,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     }
   }
 
-  def updateTrack(track: Track) = {
+  def updateTrack(track: SimpleTrack) = {
     titleElem.html(track.title)
     noTrackElem.hide()
     albumElem.html(track.album)
@@ -167,7 +157,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     updateTimeAndDuration(zero, track.duration)
   }
 
-  def updatePlaylist(tracks: Seq[Track]) = {
+  def updatePlaylist(tracks: Seq[SimpleTrack]) = {
     global.jQuery("li").remove(s".$SongClass")
     val isEmpty = tracks.isEmpty
     if (isEmpty) playlistEmptyElem.show()
@@ -179,7 +169,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     }
   }
 
-  def toRow(track: Track, rowId: String) = {
+  def toRow(track: SimpleTrack, rowId: String) = {
     li(`class` := SongClass)(
       a(href := "#", id := rowId)(track.title),
       " ",

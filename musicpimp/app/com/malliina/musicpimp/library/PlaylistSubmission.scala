@@ -10,5 +10,6 @@ case class PlaylistSubmission(id: Option[PlaylistID],
 }
 
 object PlaylistSubmission {
+  implicit val track = TrackID.format
   implicit val json = Json.format[PlaylistSubmission]
 }

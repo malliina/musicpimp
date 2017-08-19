@@ -7,9 +7,8 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
+import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStreams, PimpStream}
 import com.malliina.pimpcloud.json.JsonStrings._
-import com.malliina.pimpcloud.models.{PimpServer, PimpServers, PimpStreams}
-import com.malliina.pimpcloud.ws.StreamData
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
@@ -118,14 +117,14 @@ class ServerMediator extends Actor {
 
   def serversJson: PimpServers = {
     val ss = servers map { server =>
-      PimpServer(server.id, server.headers.remoteAddress)
+      PimpServer(server.id.toId, server.headers.remoteAddress)
     }
     PimpServers(ss.toSeq)
   }
 
   def ongoing = servers.flatMap(_.fileTransfers.snapshot)
 
-  def ongoingJson(streams: Set[StreamData]): PimpStreams =
+  def ongoingJson(streams: Set[PimpStream]): PimpStreams =
     PimpStreams(streams.toSeq)
 
   def receive: Receive = {

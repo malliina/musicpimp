@@ -2,7 +2,7 @@ package com.malliina.ws
 
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.models.RequestID
-import com.malliina.pimpcloud.ws.StreamData
+import com.malliina.pimpcloud.PimpStream
 import com.malliina.play.ContentRange
 import com.malliina.storage.StorageInt
 import play.api.mvc.{BodyParser, MultipartFormData, RequestHeader, Result}
@@ -16,7 +16,7 @@ object Streamer {
 trait Streamer {
   val maxUploadSize = Streamer.DefaultMaxUploadSize
 
-  def snapshot: Seq[StreamData]
+  def snapshot: Seq[PimpStream]
 
   def exists(uuid: RequestID): Boolean
 

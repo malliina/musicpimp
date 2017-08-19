@@ -29,6 +29,8 @@ val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
 val utilPlayDep = malliinaGroup %% "util-play" % "4.3.0"
 
+scalaVersion in ThisBuild := "2.12.3"
+
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
@@ -50,12 +52,7 @@ lazy val it = project.in(file("it"))
   .settings(baseSettings: _*)
 lazy val cross = crossProject.in(file("cross"))
   .settings(crossSettings: _*)
-  .jvmSettings(scalaVersion := "2.12.3")
-  .jsSettings(libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "scalatags" % "0.6.3",
-    "be.doeraene" %%% "scalajs-jquery" % "0.9.1"
-//    "com.lihaoyi" %%% "upickle" % "0.4.4"
-  ))
+  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.1")
 
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
@@ -66,8 +63,11 @@ addCommandAlias("it", ";project it")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
-  version := "1.1.0",
-  libraryDependencies += "com.typesafe.play" %% "play-json" % "2.6.2"
+  version := "1.1.1",
+  libraryDependencies ++= Seq(
+    "com.typesafe.play" %%% "play-json" % "2.6.2",
+    "com.lihaoyi" %%% "scalatags" % "0.6.3"
+  )
 )
 
 lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
@@ -248,7 +248,6 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
     malliinaGroup %% "mobile-push" % "1.7.3",
-//    "com.typesafe.play" %% "play-json" % "2.6.2",
     utilPlayDep
   )
 )
@@ -263,10 +262,6 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq(
-        "be.doeraene" %%% "scalajs-jquery" % "0.9.1",
-        "com.lihaoyi" %%% "utest" % "0.4.4" % Test,
-        "com.typesafe.play" %%% "play-json" % "2.6.2"
-      ),
+      libraryDependencies += "com.lihaoyi" %%% "utest" % "0.4.4" % Test,
       testFrameworks += new TestFramework("utest.runner.Framework")
     )

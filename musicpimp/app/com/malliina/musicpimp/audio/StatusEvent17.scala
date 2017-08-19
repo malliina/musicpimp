@@ -26,7 +26,7 @@ object StatusEvent17 {
   implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] = Writes[StatusEvent17] { o =>
     obj(
       EventKey -> StatusKey,
-      Id -> toJson(o.id),
+      Id -> TrackID.format.writes(o.id),
       Title -> o.title,
       Artist -> o.artist,
       Album -> o.album,
