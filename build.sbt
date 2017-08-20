@@ -63,6 +63,7 @@ addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
 
 lazy val crossSettings = Seq(
+  updateOptions := updateOptions.value.withCachedResolution(true),
   organization := "org.musicpimp",
   version := "1.1.1",
   libraryDependencies ++= Seq(
@@ -86,6 +87,8 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
 )
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
+
+updateOptions in ThisBuild := (updateOptions in ThisBuild).value.withCachedResolution(true)
 
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
@@ -155,6 +158,7 @@ lazy val pimpPlaySettings =
   commonServerSettings ++
     commonSettings ++
     nativePackagingSettings ++
+    artifactSettings ++
     Seq(
       libraryDependencies ++= Seq(
         malliinaGroup %% "util-actor" % "2.8.0",
@@ -177,12 +181,6 @@ lazy val pimpPlaySettings =
       fileTreeSources := Seq(
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.tags.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
-      ),
-      // TODO get rid of this
-      libs ++= Seq(
-        (packageBin in Assets).value.toPath,
-        (packageBin in shared in Compile).value.toPath,
-        (packageBin in crossJvm in Compile).value.toPath
       )
     )
 
@@ -206,18 +204,22 @@ lazy val pimpcloudSettings =
   commonServerSettings ++
     pimpcloudLinuxSettings ++
     pimpcloudScalaJSSettings ++
+    artifactSettings ++
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (name in pimpcloudFrontend).value),
       version := pimpcloudVersion,
       libraryDependencies += PlayImport.ehcache,
       PlayKeys.externalizeResources := false,
-      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
-      libs ++= Seq(
-        (packageBin in Assets).value.toPath,
-        (packageBin in shared in Compile).value.toPath,
-        (packageBin in crossJvm in Compile).value.toPath
-      )
+      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at"))
     )
+
+lazy val artifactSettings = Seq(
+  libs ++= Seq(
+    (packageBin in Assets).value.toPath,
+    (packageBin in shared in Compile).value.toPath,
+    (packageBin in crossJvm in Compile).value.toPath
+  )
+)
 
 lazy val pimpcloudScalaJSSettings = Seq(
   scalaJSProjects := Seq(pimpcloudFrontend),
@@ -258,7 +260,8 @@ lazy val sharedSettings = baseSettings ++ Seq(
 
 lazy val baseSettings = Seq(
   scalaVersion := "2.12.3",
-  organization := "org.musicpimp"
+  organization := "org.musicpimp",
+  updateOptions := updateOptions.value.withCachedResolution(true)
 )
 
 def scalajsProject(name: String, path: File) =
