@@ -68,7 +68,7 @@ lazy val crossSettings = Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.2",
     "com.lihaoyi" %%% "scalatags" % "0.6.3",
-    "com.malliina" %%% "primitives" % "1.2.0-SNAPSHOT"
+    "com.malliina" %%% "primitives" % "1.3.2"
   )
 )
 
