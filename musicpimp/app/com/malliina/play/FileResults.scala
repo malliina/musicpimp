@@ -19,7 +19,7 @@ object FileResults extends FileResults {
 
 trait FileResults {
   def fileResult(path: Path, request: RequestHeader, fmts: FileMimeTypes)(implicit ec: ExecutionContext): Result = {
-    val range = ContentRange.fromHeader(request, Files.size(path).bytes)
+    val range = ContentRanges.fromHeader(request, Files.size(path).bytes)
     range.toOption
       .map(range => rangedResult(path, range, request, fmts))
       .getOrElse(Results.Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES))

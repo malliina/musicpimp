@@ -4,6 +4,7 @@ import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.CloudStrings.{Body, PhonesKey, RequestsKey, ServersKey}
+import com.malliina.play.ContentRange
 import play.api.libs.json._
 
 sealed trait PimpList
@@ -16,9 +17,9 @@ object PimpList {
 }
 
 case class PimpStream(request: RequestIdentifier,
-                      serverID: CloudName,
+                      serverID: CloudID,
                       track: Track,
-                      range: RangeLike)
+                      range: ContentRange)
 
 object PimpStream {
   implicit val format = Json.format[PimpStream]
@@ -30,7 +31,7 @@ object PimpStreams {
   implicit val json = ListEvent.format(RequestsKey, PimpStreams.apply)(_.streams)
 }
 
-case class PimpPhone(s: CloudName, address: String)
+case class PimpPhone(s: CloudID, address: String)
 
 object PimpPhone {
   implicit val json = Json.format[PimpPhone]
@@ -42,7 +43,7 @@ object PimpPhones {
   implicit val json = ListEvent.format(PhonesKey, PimpPhones.apply)(_.phones)
 }
 
-case class PimpServer(id: CloudName, address: String)
+case class PimpServer(id: CloudID, address: String)
 
 object PimpServer {
   implicit val json = Json.format[PimpServer]

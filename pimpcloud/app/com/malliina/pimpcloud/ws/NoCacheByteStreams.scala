@@ -64,7 +64,7 @@ class NoCacheByteStreams(id: CloudID,
     }
 
   def snapshot: Seq[PimpStream] = iteratees.map {
-    case (uuid, stream) => PimpStream(uuid.toId, id.toId, stream.track, stream.range)
+    case (uuid, stream) => PimpStream(uuid.toId, id, stream.track, stream.range)
   }.toSeq
 
   /**

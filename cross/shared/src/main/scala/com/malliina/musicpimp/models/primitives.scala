@@ -6,10 +6,6 @@ case class RequestIdentifier(id: String) extends Identifier
 
 object RequestIdentifier extends IdentCompanion[RequestIdentifier]
 
-case class CloudName(id: String) extends Identifier
-
-object CloudName extends IdentCompanion[CloudName]
-
 trait Identifier {
   def id: String
 

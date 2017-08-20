@@ -118,7 +118,7 @@ class ServerMediator extends Actor {
 
   def serversJson: PimpServers = {
     val ss = servers map { server =>
-      PimpServer(server.id.toId, Proxies.realAddress(server.headers))
+      PimpServer(server.id, Proxies.realAddress(server.headers))
     }
     PimpServers(ss.toSeq)
   }

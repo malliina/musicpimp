@@ -106,7 +106,7 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
       val sub = client.registrations.subscribe(
         id => {
           log info s"Got $id"
-          registrations.onNext(Connected(id.toId))
+          registrations.onNext(Connected(id))
         },
         _ => registrations.onNext(Disconnected("The connection failed.")),
         () => ()

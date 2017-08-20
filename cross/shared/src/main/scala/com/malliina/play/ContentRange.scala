@@ -1,15 +1,12 @@
 package com.malliina.play
 
-import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.models.RangeLike
+import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.storage.{StorageInt, StorageSize}
-import play.api.http.HeaderNames._
 import play.api.libs.json.{Format, Json, Writes}
-import play.api.mvc.RequestHeader
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 
-case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) extends RangeLike {
+case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
   val totalSizeBytes = size.toBytes
 
   def endExclusive = endInclusive + 1
@@ -34,7 +31,7 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) extend
 object ContentRange {
   val BYTES = "bytes"
 
-  implicit val ssf = JsonFormats.storageSizeFormat
+  implicit val ssf = CrossFormats.storageSize
   val writer = Writes[ContentRange](range => Json.obj(
     "start" -> range.start,
     "endInclusive" -> range.endInclusive,
@@ -45,15 +42,6 @@ object ContentRange {
   implicit val json = Format(Json.reads[ContentRange], writer)
 
   def all(size: StorageSize) = ContentRange(0, size.toBytes.toInt - 1, size)
-
-  def fromHeaderOrAll(request: RequestHeader, size: StorageSize): ContentRange =
-    fromHeader(request, size) getOrElse all(size)
-
-  def fromHeader(request: RequestHeader, size: StorageSize): Try[ContentRange] = {
-    request.headers.get(RANGE)
-      .map(range => fromHeader(range, size))
-      .getOrElse(Failure(new IllegalArgumentException(s"Missing $RANGE header.")))
-  }
 
   def fromHeader(headerValue: String, size: StorageSize): Try[ContentRange] = Try {
     val sizeBytes = size.toBytes.toInt

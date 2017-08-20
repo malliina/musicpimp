@@ -1,19 +1,12 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json.{Format, Json, Reads}
+/**
+  * @param id the cloud ID of a connected MusicPimp server
+  */
+case class CloudID(id: String) extends Identifier
 
-case class SimpleRange(description: String) extends RangeLike
-
-trait RangeLike {
-  def description: String
-}
-
-object RangeLike {
-  implicit val simple = Json.format[SimpleRange]
-  implicit val json: Format[RangeLike] = Format[RangeLike](
-    Reads[RangeLike](_.validate[SimpleRange]),
-    r => simple.writes(SimpleRange(r.description))
-  )
+object CloudID extends IdentCompanion[CloudID] {
+  val empty = CloudID("")
 }
 
 case class TrackID(id: String) extends Identifier

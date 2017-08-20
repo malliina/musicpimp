@@ -27,7 +27,7 @@ val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.2-SNAPSHOT"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.2"
 
 
 scalaVersion in ThisBuild := "2.12.3"
@@ -251,7 +251,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.7.3",
+    malliinaGroup %% "mobile-push" % "1.7.5",
     utilPlayDep
   )
 )

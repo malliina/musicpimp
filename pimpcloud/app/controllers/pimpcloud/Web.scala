@@ -1,7 +1,7 @@
 package controllers.pimpcloud
 
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models.{CloudID, CloudIDs}
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
 import com.malliina.play.auth.Auth
 import com.malliina.play.controllers.{AccountForms, Caching}
@@ -24,7 +24,7 @@ object Web {
   val serverFormKey = "server"
 
   val cloudForm = Form[CloudCreds](mapping(
-    serverFormKey -> CloudID.mapping,
+    serverFormKey -> CloudIDs.mapping,
     forms.userFormKey -> Username.mapping,
     forms.passFormKey -> Password.mapping
   )(CloudCreds.apply)(CloudCreds.unapply))

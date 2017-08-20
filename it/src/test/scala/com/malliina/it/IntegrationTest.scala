@@ -64,7 +64,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     val joinedPromise = Promise[PimpServer]()
 
     def onJson(json: JsValue) = {
-      val joinedServer = json.asOpt[PimpServers].flatMap(_.servers.find(_.id == joinId.toId))
+      val joinedServer = json.asOpt[PimpServers].flatMap(_.servers.find(_.id == joinId))
       joinedServer.map(joinedPromise.success).getOrElse(handler.handle(json))
     }
 
@@ -76,7 +76,7 @@ class IntegrationTest extends PimpcloudServerSuite {
         val id = await(cloudClient.connect(Option(joinId)))
         assert(id === joinId)
         val server = await(joinedPromise.future)
-        assert(server.id === id.toId)
+        assert(server.id === id)
       }
     } finally {
       cloudClient.disconnectAndForget("")
@@ -98,7 +98,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       withPimpSocket(adminPath, onJson) { adminSocket =>
         withPhoneSocket(phonePath, id, _ => ()) { phoneSocket =>
           val joinedPhone = await(p.future)
-          assert(joinedPhone.s === expectedId.toId)
+          assert(joinedPhone.s === expectedId)
         }
       }
     } finally {

@@ -54,7 +54,7 @@ class PhoneMediator extends Actor {
 
   def phonesJson = {
     val ps = phones map { phone =>
-      PimpPhone(phone.server.toId, phone.rh.remoteAddress)
+      PimpPhone(phone.server, phone.rh.remoteAddress)
     }
     PimpPhones(ps.toSeq)
   }

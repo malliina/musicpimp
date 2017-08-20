@@ -15,7 +15,7 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
-import com.malliina.play.ContentRange
+import com.malliina.play.{ContentRange, ContentRanges}
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
@@ -119,7 +119,7 @@ class Phones(comps: ControllerComponents,
             res.map { track =>
               // proxies request
               val trackSize = track.size
-              val rangeTry = ContentRange.fromHeader(req, trackSize)
+              val rangeTry = ContentRanges.fromHeader(req, trackSize)
               val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
               val result = sourceServer.requestTrack(track, rangeOrAll, req)
               // ranged request support

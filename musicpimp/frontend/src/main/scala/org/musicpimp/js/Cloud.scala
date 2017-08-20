@@ -2,7 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
-import com.malliina.musicpimp.models.{CloudEvent, CloudName}
+import com.malliina.musicpimp.models.{CloudEvent, CloudID}
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
@@ -25,7 +25,7 @@ object Cloud {
 
   def disconnectingContent: Frag = leadPara("Disconnecting...")
 
-  def connectedContent(id: CloudName): Frag = {
+  def connectedContent(id: CloudID): Frag = {
     val msg = s"Connected. You can now access this server using your credentials and this cloud ID: $id"
     SeqFrag(Seq(
       halfRow(connectedForm()),

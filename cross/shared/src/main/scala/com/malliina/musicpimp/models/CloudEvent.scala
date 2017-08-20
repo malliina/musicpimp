@@ -9,7 +9,7 @@ sealed abstract class CloudEvent(event: String)
 object CloudEvent extends CloudStrings with CommonMessages {
   val reader = Reads[CloudEvent] { json =>
     (json \ FrontStrings.EventKey).validate[String].flatMap {
-      case ConnectedKey => (json \ IdKey).validate[CloudName].map { id => Connected(id) }
+      case ConnectedKey => (json \ IdKey).validate[CloudID].map { id => Connected(id) }
       case DisconnectingKey => JsSuccess(Disconnecting)
       case ConnectingKey => JsSuccess(Connecting)
       case DisconnectedKey => (json \ Reason).validate[String].map { r => Disconnected(r) }
@@ -24,7 +24,7 @@ object CloudEvent extends CloudStrings with CommonMessages {
   }
   implicit val json: Format[CloudEvent] = Format(reader, writer)
 
-  case class Connected(id: CloudName) extends CloudEvent(ConnectedKey)
+  case class Connected(id: CloudID) extends CloudEvent(ConnectedKey)
 
   case class Disconnected(reason: String) extends CloudEvent(DisconnectedKey)
 
