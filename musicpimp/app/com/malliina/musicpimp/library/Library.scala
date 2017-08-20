@@ -9,8 +9,9 @@ import com.malliina.musicpimp.audio.PimpEnc._
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.Library._
-import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.util.Utils
+import com.malliina.values.UnixPath
 import play.api.Logger
 
 import scala.concurrent.stm.{Ref, atomic}
@@ -92,7 +93,7 @@ class Library {
   private def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new LocalTrack(TrackID(encode(song)), PimpPath(pathData.relative), meta)
+    new LocalTrack(TrackID(encode(song)), UnixPath(pathData.relative), meta)
   }
 
   def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
@@ -103,7 +104,7 @@ class Library {
     try {
       // InvalidAudioFrameException, CannotReadException
       val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      Option(new LocalTrack(encodeTrack(pi.relative), PimpPath(pi.relative), meta))
+      Option(new LocalTrack(encodeTrack(pi.relative), UnixPath(pi.relative), meta))
     } catch {
       case e: Exception =>
         log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)

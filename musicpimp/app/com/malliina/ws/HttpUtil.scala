@@ -1,6 +1,6 @@
 package com.malliina.ws
 
-import org.java_websocket.util.Base64
+import java.util.Base64
 
 object HttpUtil {
   val Authorization = "Authorization"
@@ -8,5 +8,5 @@ object HttpUtil {
   val Utf8 = "UTF-8"
 
   def authorizationValue(username: String, password: String) =
-    s"$Basic " + Base64.encodeBytes((username + ":" + password).getBytes(Utf8))
+    s"$Basic " + Base64.getEncoder.encodeToString((username + ":" + password).getBytes(Utf8))
 }

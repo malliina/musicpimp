@@ -7,7 +7,7 @@ import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages, JsonStrings, Target}
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
-import com.malliina.play.http.{AuthedRequest, FullUrl}
+import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.play.models.Username
 import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
 import controllers.musicpimp.WebPlayActor.log
@@ -17,7 +17,7 @@ import play.api.libs.json.JsValue
 class WebPlayer(ctx: ActorExecution) {
   val sockets = new Sockets(Auths.session, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]): Props = {
-      val remote = RemoteInfo(conf.user.user, FullUrl.hostOnly(conf.rh))
+      val remote = RemoteInfo(conf.user.user, FullUrls.hostOnly(conf.rh))
       Props(new WebPlayActor(remote, conf))
     }
   }

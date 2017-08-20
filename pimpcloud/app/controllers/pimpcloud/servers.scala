@@ -7,11 +7,11 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
-import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStreams, PimpStream}
+import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStream, PimpStreams}
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
-import com.malliina.play.http.AuthedRequest
+import com.malliina.play.http.{AuthedRequest, Proxies}
 import com.malliina.play.models.{AuthInfo, Password, Username}
 import com.malliina.play.ws._
 import controllers.pimpcloud.ServerMediator._
@@ -56,6 +56,7 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
         fut(Left(InvalidCredentials(rh)))
       }
     } getOrElse {
+      log warn s"No credentials for request from '${Proxies.realAddress(rh)}'."
       fut(Left(MissingCredentials(rh)))
     }
 
@@ -92,13 +93,13 @@ class ServerActor(serverMediator: ActorRef,
   val cloudId = CloudID(conf.user.user.name)
   val server = new PimpServerSocket(out, cloudId, conf.rh, mat, errorHandler, () => serverMediator ! StreamsUpdated)
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     super.preStart()
     out ! Json.obj(Cmd -> ServerActor.RegisteredKey, Body -> Json.obj(Id -> server.id))
     serverMediator ! ServerJoined(server, out)
   }
 
-  override def onMessage(message: JsValue) = {
+  override def onMessage(message: JsValue): Unit = {
     val completed = server complete message
     if (!completed) {
       // sendToPhone, i.e. send to phones connected to this server
@@ -117,7 +118,7 @@ class ServerMediator extends Actor {
 
   def serversJson: PimpServers = {
     val ss = servers map { server =>
-      PimpServer(server.id.toId, server.headers.remoteAddress)
+      PimpServer(server.id.toId, Proxies.realAddress(server.headers))
     }
     PimpServers(ss.toSeq)
   }
@@ -155,7 +156,7 @@ class ServerMediator extends Actor {
       }
   }
 
-  def sendUpdate[C: Writes](message: C) = {
+  def sendUpdate[C: Writes](message: C): Unit = {
     val json = Json.toJson(message)
     listeners foreach { listener =>
       listener ! json

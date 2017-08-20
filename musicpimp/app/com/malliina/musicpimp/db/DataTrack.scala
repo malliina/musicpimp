@@ -2,8 +2,9 @@ package com.malliina.musicpimp.db
 
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
-import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
+import com.malliina.values.UnixPath
 import play.api.libs.json.Json
 import slick.jdbc.GetResult
 
@@ -14,20 +15,20 @@ case class DataTrack(id: TrackID,
                      artist: String,
                      album: String,
                      duration: Duration,
-                     size: Long,
+                     size: StorageSize,
                      folder: FolderID) extends TrackMeta {
-  val path = PimpPath.fromRaw(PimpEnc decode folder)
+  val path = UnixPath.fromRaw(PimpEnc decode folder)
 
-  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, storageSize.toBytes, folder))
+  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
 }
 
 object DataTrack {
   def fromValues(i: TrackID, ti: String, ar: String, al: String, du: Int, si: Long, fo: FolderID) =
-    DataTrack(i, ti, ar, al, du.seconds, si, fo)
+    DataTrack(i, ti, ar, al, du.seconds, si.bytes, fo)
 
   implicit val durJson = JsonFormats.durationFormat
   implicit val storageJson = JsonFormats.storageSizeFormat
   implicit val format = Json.format[DataTrack]
   implicit val dataResult: GetResult[DataTrack] =
-    GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong(), FolderID(r.<<)))
+    GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, FolderID(r.<<)))
 }

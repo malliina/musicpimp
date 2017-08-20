@@ -9,7 +9,7 @@ import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{CloudID, TrackID}
 import com.malliina.pimpcloud.{PimpPhone, PimpPhones, PimpServer, PimpServers, PimpStreams}
-import com.malliina.play.http.FullUrl
+import com.malliina.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Utils

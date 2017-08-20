@@ -6,11 +6,11 @@ import java.util.concurrent.atomic.AtomicReference
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
 import com.malliina.musicpimp.models.{CloudEvent, CloudID}
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.http.FullUrl
 import com.malliina.util.Utils
 import play.api.Logger
 import play.api.libs.json.JsValue
@@ -43,7 +43,6 @@ object Clouds {
 }
 
 class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
-  log info s"Gen clouds"
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Observable.interval(60.seconds)
   private var poller: Option[Subscription] = None

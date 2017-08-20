@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.models.SimpleTrack
+import com.malliina.musicpimp.audio.TrackMeta
 import org.scalajs.jquery._
 
 import scala.concurrent.Future
@@ -18,7 +18,7 @@ trait AutoItem extends js.Object {
 }
 
 object AutoItem {
-  def from(t: SimpleTrack) = {
+  def from(t: TrackMeta) = {
     val labelAndValue = s"${t.artist} - ${t.title}"
     apply(t.id.id, labelAndValue, labelAndValue)
   }

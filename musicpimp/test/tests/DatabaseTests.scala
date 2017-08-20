@@ -3,7 +3,8 @@ package tests
 import java.nio.file.Path
 
 import com.malliina.musicpimp.db.{DataFolder, DataTrack}
-import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.values.UnixPath
 import org.scalatest.FunSuite
 import slick.jdbc.meta.MTable
 import slick.lifted.AbstractTable
@@ -12,9 +13,9 @@ class DatabaseTests extends FunSuite {
   val testRootOpt: Option[Path] = None
   val testFolders = Seq(
     DataFolder.root,
-    DataFolder(FolderID("F1"), "Music", PimpPath("F1"), FolderID("")),
-    DataFolder(FolderID("F2"), "Music2", PimpPath("F1/F2"), FolderID("F1")),
-    DataFolder(FolderID("F3"), "Music2", PimpPath("F1/F2/F3"), FolderID("F2"))
+    DataFolder(FolderID("F1"), "Music", UnixPath("F1"), FolderID("")),
+    DataFolder(FolderID("F2"), "Music2", UnixPath("F1/F2"), FolderID("F1")),
+    DataFolder(FolderID("F3"), "Music2", UnixPath("F1/F2/F3"), FolderID("F2"))
   )
   val folder1 = testFolders(1)
   val folder1Id = folder1.id

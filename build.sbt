@@ -27,7 +27,8 @@ val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.0"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.2-SNAPSHOT"
+
 
 scalaVersion in ThisBuild := "2.12.3"
 
@@ -66,7 +67,8 @@ lazy val crossSettings = Seq(
   version := "1.1.1",
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.2",
-    "com.lihaoyi" %%% "scalatags" % "0.6.3"
+    "com.lihaoyi" %%% "scalatags" % "0.6.3",
+    "com.malliina" %%% "primitives" % "1.2.0-SNAPSHOT"
   )
 )
 
@@ -168,6 +170,7 @@ lazy val pimpPlaySettings =
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
+        "com.malliina.musicpimp.http.PimpImports._",
         "com.malliina.musicpimp.models._",
         "com.malliina.play.models.Username"
       ),
@@ -191,6 +194,7 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
+    "com.malliina.musicpimp.http.PimpImports._",
     "com.malliina.musicpimp.models._",
     "com.malliina.play.models.Username"
   )

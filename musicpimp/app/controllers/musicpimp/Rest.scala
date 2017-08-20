@@ -22,6 +22,7 @@ import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.{Util, Utils}
+import com.malliina.values.UnixPath
 import controllers.musicpimp.Rest.log
 import org.apache.http.HttpResponse
 import play.api.Logger
@@ -249,7 +250,7 @@ class Rest(webPlayer: WebPlayer,
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new LocalTrack(TrackID(""), PimpPath.Empty, meta)
+        new LocalTrack(TrackID(""), UnixPath.Empty, meta)
       }
 
       val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload

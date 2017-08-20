@@ -4,6 +4,7 @@ import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.play.models.Username
 import slick.jdbc.H2Profile.api._
+import com.malliina.musicpimp.models.TrackIDs.db
 
 class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
   def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)

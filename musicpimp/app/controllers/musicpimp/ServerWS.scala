@@ -8,7 +8,7 @@ import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
-import com.malliina.play.http.{AuthedRequest, FullUrl}
+import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.play.ws._
 import play.api.Logger
 import play.api.libs.json.JsValue
@@ -45,7 +45,7 @@ class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
                   conf: ActorConfig[AuthedRequest]) extends JsonActor(conf) {
   val ticks = Observable.interval(900.millis)
-  val messageWriter = ServerMessage.writer(FullUrl.hostOnly(rh))
+  val messageWriter = ServerMessage.writer(FullUrls.hostOnly(rh))
   val apiVersion = PimpRequest.apiVersion(rh)
   implicit val w = TrackJson.writer(rh)
   val user = conf.user.user

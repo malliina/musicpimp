@@ -2,10 +2,10 @@ package tests
 
 import javax.net.ssl._
 
+import com.malliina.http.FullUrl
 import com.malliina.logstreams.client.CustomSSLSocketFactory
 import com.malliina.musicpimp.cloud.JsonSocket8
 import com.malliina.musicpimp.http.HttpConstants
-import com.malliina.play.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.ws.HttpUtil
 import org.scalatest.FunSuite
@@ -25,7 +25,7 @@ class WebSocketTests extends FunSuite {
 
   def openSocket(socketFactory: SSLSocketFactory) = {
     val s = new JsonSocket8(
-      FullUrl.build("wss://cloud.musicpimp.org/servers/ws2").get,
+      FullUrl.build("wss://cloud.musicpimp.org/servers/ws2").right.get,
       socketFactory,
       HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("u", "p"))
     val _ = Await.result(s.connect(), 5.seconds)

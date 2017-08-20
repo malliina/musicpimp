@@ -4,17 +4,18 @@ import java.net.URI
 
 import com.malliina.audio.meta.{SongMeta, SongTags, UriSource}
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
-import com.malliina.musicpimp.models.{MusicItem, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
+import com.malliina.values.UnixPath
 
 import scala.concurrent.duration._
 
 class LocalTrack(val id: TrackID,
-                 val path: PimpPath,
+                 val path: UnixPath,
                  val meta: SongMeta) extends MusicItem with PlayableTrack {
   val media = meta.media
   override val title = meta.tags.title
-  override val size: Long = media.size.toBytes
+  override val size: StorageSize = media.size
   override val duration: Duration = media.duration
   override val album: String = meta.tags.album
   override val artist: String = meta.tags.artist
@@ -31,5 +32,5 @@ object LocalTrack {
       UriSource(new URI("http://www.musicpimp.org/"), 0.seconds, StorageSize.empty),
       tags = new SongTags("", "", "")
     ),
-    path = PimpPath.Empty)
+    path = UnixPath.Empty)
 }

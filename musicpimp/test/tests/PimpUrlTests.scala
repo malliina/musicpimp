@@ -1,12 +1,12 @@
 package tests
 
-import com.malliina.play.http.FullUrl
+import com.malliina.http.FullUrl
 import org.scalatest.FunSuite
 
 class PimpUrlTests extends FunSuite {
   test("url") {
     val raw = "http://www.google.com/p?a=b"
-    val url = FullUrl.build(raw).get
+    val url = FullUrl.build(raw).right.get
     assert(url.proto === "http")
     assert(url.hostAndPort === "www.google.com")
     assert(url.uri === "/p?a=b")
@@ -14,10 +14,10 @@ class PimpUrlTests extends FunSuite {
   }
 
   test("no path is ok") {
-    assert(FullUrl.build("http://www.google.com").isDefined)
+    assert(FullUrl.build("http://www.google.com").isRight)
   }
 
   test("no proto is not ok") {
-    assert(FullUrl.build("www.google.com").isEmpty)
+    assert(FullUrl.build("www.google.com").isLeft)
   }
 }

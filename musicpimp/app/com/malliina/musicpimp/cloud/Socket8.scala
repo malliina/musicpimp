@@ -4,8 +4,8 @@ import java.net.URI
 import java.util
 import javax.net.ssl.SSLSocketFactory
 
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.Socket8.log
-import com.malliina.play.http.FullUrl
 import com.malliina.ws.{NotConnectedException, WebSocketBase}
 import com.neovisionaries.ws.client._
 import play.api.Logger

@@ -3,7 +3,7 @@ package com.malliina.musicpimp.json
 import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.{BaseTrack, FailReason, Version}
+import com.malliina.musicpimp.models.{FailReason, Version}
 import play.api.libs.json.Json._
 import play.api.libs.json.{JsObject, JsValue, Json, Writes}
 
@@ -26,7 +26,7 @@ trait JsonMessages extends CommonMessages {
   def exception(e: Throwable) =
     FailReason(e.getMessage)
 
-  def trackChanged(track: BaseTrack)(implicit w: Writes[BaseTrack]) =
+  def trackChanged(track: TrackMeta)(implicit w: Writes[TrackMeta]) =
     event(TrackChanged, TrackKey -> toJson(track))
 
   // POS and POS_SECONDS are deprecated
@@ -39,7 +39,7 @@ trait JsonMessages extends CommonMessages {
   def muteToggled(newMute: Boolean) =
     event(MuteToggled, Mute -> newMute)
 
-  def playlistModified(newPlaylist: Seq[BaseTrack])(implicit w: Writes[BaseTrack]) =
+  def playlistModified(newPlaylist: Seq[TrackMeta])(implicit w: Writes[TrackMeta]) =
     event(PlaylistModified, Playlist -> toJson(newPlaylist))
 
   def playlistIndexChanged(newIndex: Int) =

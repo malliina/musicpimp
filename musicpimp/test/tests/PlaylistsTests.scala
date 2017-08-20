@@ -7,8 +7,9 @@ import com.malliina.musicpimp.db.{DataFolder, DataTrack, DatabaseUserManager, Pi
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models._
-import com.malliina.play.http.FullUrl
+import com.malliina.http.FullUrl
 import com.malliina.storage.StorageInt
+import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
 import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
 import play.api.http.MimeTypes.JSON
@@ -27,7 +28,7 @@ class MusicPimpSuite(options: InitOptions = TestOptions.default)
   extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
 
 class PlaylistsTests extends MusicPimpSuite {
-  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").get)
+  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").right.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
@@ -36,11 +37,11 @@ class PlaylistsTests extends MusicPimpSuite {
     val folderId = FolderID("Testid")
 
     def trackInserts = db.insertTracks(Seq(
-      DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs.toBytes, folderId)
+      DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, folderId)
     ))
 
     val insertions = for {
-      _ <- db.insertFolders(Seq(DataFolder(folderId, "Testfolder", PimpPath.Empty, folderId)))
+      _ <- db.insertFolders(Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId)))
       _ <- trackInserts
     } yield ()
     await(insertions)

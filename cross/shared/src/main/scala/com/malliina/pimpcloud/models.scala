@@ -1,5 +1,6 @@
 package com.malliina.pimpcloud
 
+import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.CloudStrings.{Body, PhonesKey, RequestsKey, ServersKey}
@@ -16,7 +17,7 @@ object PimpList {
 
 case class PimpStream(request: RequestIdentifier,
                       serverID: CloudName,
-                      track: BaseTrack,
+                      track: Track,
                       range: RangeLike)
 
 object PimpStream {

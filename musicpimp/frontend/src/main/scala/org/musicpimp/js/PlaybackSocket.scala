@@ -1,9 +1,9 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.audio.{Track, TrackMeta}
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import com.malliina.musicpimp.json.CrossFormats.durationFormat
+import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings
-import com.malliina.musicpimp.models.SimpleTrack
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Reads}
 
 import scala.concurrent.duration.Duration
@@ -16,11 +16,11 @@ abstract class PlaybackSocket
 
   def updatePlayPauseButtons(state: PlayerState): Unit
 
-  def updateTrack(track: SimpleTrack): Unit
+  def updateTrack(track: TrackMeta): Unit
 
-  def updatePlaylist(tracks: Seq[SimpleTrack]): Unit
+  def updatePlaylist(tracks: Seq[TrackMeta]): Unit
 
-  def updateVolume(vol: Int): Unit
+  def updateVolume(vol: Volume): Unit
 
   def muteToggled(isMute: Boolean): Unit
 
@@ -37,11 +37,11 @@ abstract class PlaybackSocket
       case PlaystateChanged =>
         read[PlayerState]("state").map { state => updatePlayPauseButtons(state) }
       case TrackChanged =>
-        read[SimpleTrack]("track").map { track => updateTrack(track) }
+        read[Track]("track").map { track => updateTrack(track) }
       case PlaylistModified =>
-        read[Seq[SimpleTrack]]("playlist").map { tracks => updatePlaylist(tracks) }
+        read[Seq[Track]]("playlist").map { tracks => updatePlaylist(tracks) }
       case VolumeChanged =>
-        read[Int]("volume").map { vol => updateVolume(vol) }
+        read[Volume]("volume").map { vol => updateVolume(vol) }
       case MuteToggled =>
         read[Boolean]("mute").map { mute => muteToggled(mute) }
       case Status =>

@@ -26,7 +26,7 @@ case class WrappedID(id: String)
 object WrappedID {
   implicit val json = Json.format[WrappedID]
 
-  def forId(id: Ident): WrappedID = WrappedID(id.id)
+  def forId(id: Identifier): WrappedID = WrappedID(id.id)
 }
 
 case class WrappedLong(id: Long)
@@ -41,7 +41,7 @@ object RangedRequest {
   implicit val json = Json.format[RangedRequest]
 }
 
-sealed trait RequestID extends Ident {
+sealed trait RequestID extends Identifier {
   def toId = RequestIdentifier(id)
 }
 

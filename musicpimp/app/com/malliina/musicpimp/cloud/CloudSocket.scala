@@ -2,6 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
+import com.malliina.http.FullUrl
 import com.malliina.logstreams.client.CustomSSLSocketFactory
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.auth.UserManager
@@ -16,7 +17,6 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
-import com.malliina.play.http.FullUrl
 import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables

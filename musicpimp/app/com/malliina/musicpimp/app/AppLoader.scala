@@ -12,7 +12,7 @@ import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
-import com.malliina.play.http.FullUrl
+import com.malliina.http.FullUrl
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import controllers._
 import controllers.musicpimp._

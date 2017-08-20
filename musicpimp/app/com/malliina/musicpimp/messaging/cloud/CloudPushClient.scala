@@ -2,7 +2,7 @@ package com.malliina.musicpimp.messaging.cloud
 
 import com.malliina.http.{AsyncHttp, WebResponse}
 import com.malliina.musicpimp.json.JsonStrings.{Body, Cmd, Push}
-import com.malliina.play.http.FullUrl
+import com.malliina.http.FullUrl
 import play.api.libs.json.Json
 
 import scala.concurrent.{ExecutionContext, Future}

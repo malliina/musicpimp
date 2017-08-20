@@ -6,7 +6,7 @@ import slick.jdbc.H2Profile.api.{MappedColumnType, stringColumnType}
 
 import scala.reflect.ClassTag
 
-abstract class IDCompanion[T <: Ident : ClassTag] extends SimpleCompanion[String, T] {
+abstract class IDCompanion[T <: Identifier : ClassTag] extends SimpleCompanion[String, T] {
   override def raw(t: T): String = t.id
 
   implicit val databaseMapping = MappedColumnType.base[T, String](raw, apply)

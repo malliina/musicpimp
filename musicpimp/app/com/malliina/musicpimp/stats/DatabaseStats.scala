@@ -8,6 +8,7 @@ import com.malliina.musicpimp.db._
 import com.malliina.play.models.Username
 import org.joda.time.DateTime
 import slick.jdbc.H2Profile.api._
+import com.malliina.musicpimp.models.TrackIDs.trackData
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,6 +34,7 @@ class DatabaseStats(db: PimpDb)(implicit ec: ExecutionContext)
   }
 
   override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
+    import com.malliina.musicpimp.models.TrackIDs.db
     val query = playbackHistory(request.username)
       .groupBy { case (record, track) => track }
       .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(Instant.now()))) }

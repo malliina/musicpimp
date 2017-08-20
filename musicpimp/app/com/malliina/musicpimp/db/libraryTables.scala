@@ -3,10 +3,14 @@ package com.malliina.musicpimp.db
 import java.time.Instant
 
 import com.malliina.musicpimp.db.Mappings.{instant, username}
-import com.malliina.musicpimp.models.{FolderID, PimpPath, TrackID}
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.play.models.Username
+import com.malliina.values.UnixPath
 import slick.jdbc.H2Profile.api._
 import slick.lifted.ProvenShape
+import com.malliina.musicpimp.models.TrackIDs.trackData
+import com.malliina.musicpimp.models.FolderIDs.folderData
+import com.malliina.musicpimp.models.UnixPaths.db
 
 case class PlaybackRecord(track: TrackID, when: Instant, user: Username)
 
@@ -61,7 +65,7 @@ class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
 
   def title = column[String]("TITLE")
 
-  def path = column[PimpPath]("PATH")
+  def path = column[UnixPath]("PATH")
 
   def parent = column[FolderID]("PARENT")
 

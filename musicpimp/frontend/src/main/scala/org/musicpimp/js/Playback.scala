@@ -1,8 +1,9 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
-import com.malliina.musicpimp.models.{SimpleTrack, TrackIdentifier}
+import com.malliina.musicpimp.audio.TrackMeta
 import org.musicpimp.js.PlayerState.Started
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.Json
@@ -10,15 +11,15 @@ import play.api.libs.json.Json
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
 
-case class Status(track: SimpleTrack,
+case class Status(track: Track,
                   position: Duration,
-                  volume: Int,
+                  volume: Volume,
                   mute: Boolean,
-                  playlist: Seq[SimpleTrack],
+                  playlist: Seq[Track],
                   state: PlayerState)
 
 object Status {
-  implicit val durFormat = CrossFormats.durationFormat
+  implicit val durFormat = CrossFormats.duration
   implicit val json = Json.format[Status]
 }
 
@@ -76,7 +77,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
 
   val zero = 0.seconds
 
-  var currentPlaylist: Seq[SimpleTrack] = Nil
+  var currentPlaylist: Seq[TrackMeta] = Nil
   var isMute: Boolean = false
 
   installHandlers()
@@ -121,8 +122,8 @@ class Playback extends PlaybackSocket with PlayerStrings {
     playerDiv.show()
   }
 
-  def updateVolume(vol: Int) =
-    volumeElemDyn.slider(OptionKey, Value, vol)
+  def updateVolume(vol: Volume) =
+    volumeElemDyn.slider(OptionKey, Value, vol.volume)
 
   def updateTimeAndDuration(position: Duration, duration: Duration) = {
     updateDuration(duration)
@@ -149,7 +150,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     }
   }
 
-  def updateTrack(track: SimpleTrack) = {
+  def updateTrack(track: TrackMeta) = {
     titleElem.html(track.title)
     noTrackElem.hide()
     albumElem.html(track.album)
@@ -157,7 +158,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     updateTimeAndDuration(zero, track.duration)
   }
 
-  def updatePlaylist(tracks: Seq[SimpleTrack]) = {
+  def updatePlaylist(tracks: Seq[TrackMeta]) = {
     global.jQuery("li").remove(s".$SongClass")
     val isEmpty = tracks.isEmpty
     if (isEmpty) playlistEmptyElem.show()
@@ -169,7 +170,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     }
   }
 
-  def toRow(track: SimpleTrack, rowId: String) = {
+  def toRow(track: TrackMeta, rowId: String) = {
     li(`class` := SongClass)(
       a(href := "#", id := rowId)(track.title),
       " ",

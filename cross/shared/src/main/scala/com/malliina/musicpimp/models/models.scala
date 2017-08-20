@@ -1,9 +1,6 @@
 package com.malliina.musicpimp.models
 
-import com.malliina.musicpimp.json.CrossFormats
 import play.api.libs.json.{Format, Json, Reads}
-
-import scala.concurrent.duration.Duration
 
 case class SimpleRange(description: String) extends RangeLike
 
@@ -19,46 +16,16 @@ object RangeLike {
   )
 }
 
+case class TrackID(id: String) extends Identifier
+
+object TrackID extends IdentCompanion[TrackID]
+
+case class FolderID(id: String) extends Identifier
+
+object FolderID extends IdentCompanion[FolderID]
+
 trait MusicItem {
-  def id: Ident
+  def id: Identifier
 
   def title: String
-}
-
-case class SimpleTrack(id: TrackIdent,
-                       title: String,
-                       album: String,
-                       artist: String,
-                       path: BasePath,
-                       size: Long,
-                       duration: Duration) extends BaseTrack
-
-object SimpleTrack {
-  implicit val durFormat = CrossFormats.durationFormat
-  implicit val json = Json.format[SimpleTrack]
-}
-
-trait BaseTrack extends MusicItem {
-  def id: TrackIdent
-
-  def title: String
-
-  def album: String
-
-  def artist: String
-
-  def path: BasePath
-
-  def size: Long
-
-  def duration: Duration
-
-  def toTrack = SimpleTrack(id, title, album, artist, path, size, duration)
-}
-
-object BaseTrack {
-  implicit val json = Format[BaseTrack](
-    _.validate[SimpleTrack],
-    json => Json.toJson(json.toTrack)
-  )
 }

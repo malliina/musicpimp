@@ -2,8 +2,10 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.{FolderID, MusicItem, PimpPath}
-import com.malliina.play.http.FullUrl
+import com.malliina.musicpimp.models.{FolderID, MusicItem}
+import com.malliina.http.FullUrl
+import com.malliina.play.http.FullUrls
+import com.malliina.values.UnixPath
 import play.api.libs.json.Json.obj
 import play.api.libs.json.Writes
 import play.api.mvc.Call
@@ -13,7 +15,7 @@ trait FolderMeta extends MusicItem {
 
   def title: String
 
-  def path: PimpPath
+  def path: UnixPath
 
   /**
     * @return the parent folder, but the root folder if this folder is the root folder
@@ -30,8 +32,8 @@ object FolderMeta {
     obj(
       Id -> f.id,
       Title -> f.title,
-      PathKey -> PimpPath.format.writes(f.path),
-      Url -> host.absolute(call)
+      PathKey -> UnixPath.json.writes(f.path),
+      Url -> FullUrls.absolute(host, call)
     )
   }
 }

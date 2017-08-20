@@ -66,6 +66,7 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
   }
 
   def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
+    import com.malliina.musicpimp.models.FolderIDs.db
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' in slick-lang is the same as '!='
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
@@ -78,8 +79,11 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
     } yield (ts, fs)
   }
 
-  def folderOnly(id: FolderID): Future[Option[DataFolder]] =
+  def folderOnly(id: FolderID): Future[Option[DataFolder]] = {
+    import com.malliina.musicpimp.models.FolderIDs.db
+
     run(folders.filter(folder => folder.id === id).result.headOption)
+  }
 
   def insertFolders(fs: Seq[DataFolder]) = run(folders ++= fs)
 
@@ -163,6 +167,7 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
   }
 
   private def runIndexer(observer: Observer[Long]): Future[IndexResult] = {
+    import com.malliina.musicpimp.models.FolderIDs.db
     log info "Indexing..."
     // deletes any old rows from previous indexings
     val firstIdsDeletion = tempFoldersTable.delete
@@ -202,7 +207,7 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
         observer onNext fileCount
       }
     }
-
+    implicit val tdb = com.malliina.musicpimp.models.TrackIDs.db
     val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
     val thirdIdsDeletion = tempFoldersTable.delete
 

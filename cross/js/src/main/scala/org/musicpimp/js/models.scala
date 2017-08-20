@@ -2,6 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.json.PlaybackStrings.{Add, Play}
 import com.malliina.musicpimp.json.SocketStrings.Subscribe
+import com.malliina.values.IntValidator
 import play.api.libs.json._
 
 case class TrackCommand(cmd: String, track: String)
@@ -23,13 +24,13 @@ object Command {
 
 case class Volume private(volume: Int)
 
-object Volume {
-  implicit val reader = Reads[Volume] { json =>
-    json.validate[Int].flatMap { v =>
-      if (v >= 0 && v <= 100) JsSuccess(apply(v))
-      else JsError(s"Invalid volume: '$v'.")
-    }
-  }
+object Volume extends IntValidator[Volume] {
+  override val Min = 0
+  override val Max = 100
+
+  override protected def build(t: Int) = apply(t)
+
+  override def strip(elem: Volume) = elem.volume
 }
 
 sealed abstract class PlayerState(val name: String)

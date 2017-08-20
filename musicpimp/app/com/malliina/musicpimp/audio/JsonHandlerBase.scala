@@ -4,7 +4,7 @@ import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.RemoteInfo
-import com.malliina.play.http.{CookiedRequest, FullUrl}
+import com.malliina.play.http.{CookiedRequest, FullUrls}
 import com.malliina.play.models.Username
 import play.api.Logger
 import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
@@ -23,7 +23,7 @@ trait JsonHandlerBase {
     */
   def onJson(msg: JsValue, user: Username, rh: RequestHeader): Unit = {
     log info s"User '$user' from '${rh.remoteAddress}' said: '$msg'."
-    handleMessage(msg, RemoteInfo(user, FullUrl.hostOnly(rh)))
+    handleMessage(msg, RemoteInfo(user, FullUrls.hostOnly(rh)))
   }
 
   def handleMessage(msg: JsValue, request: RemoteInfo): Unit = {

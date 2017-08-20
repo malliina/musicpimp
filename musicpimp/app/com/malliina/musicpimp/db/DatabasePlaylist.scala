@@ -7,6 +7,7 @@ import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.play.models.Username
 import slick.jdbc.H2Profile.api._
 import slick.lifted.Query
+import com.malliina.musicpimp.models.TrackIDs.trackData
 
 import scala.concurrent.{ExecutionContext, Future}
 

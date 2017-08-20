@@ -3,7 +3,7 @@ package com.malliina.musicpimp.models
 /**
   * @param id the cloud ID of a connected MusicPimp server
   */
-case class CloudID(id: String) extends Ident {
+case class CloudID(id: String) extends Identifier {
   def toId: CloudName = CloudName(id)
 }
 
