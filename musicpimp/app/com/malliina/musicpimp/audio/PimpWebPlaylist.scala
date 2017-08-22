@@ -1,18 +1,17 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.musicpimp.json.JsonMessages._
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.Target
 import com.malliina.play.models.Username
 import play.api.libs.json.Json._
-import play.api.libs.json.Writes
+import play.api.libs.json.{Format, Writes}
 
 import scala.concurrent.stm.Ref
 
 class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes[TrackMeta])
   extends BasePlaylist[TrackMeta]
     with JsonSender {
-
+  implicit val f = Format(TrackMetas.reader, w)
   val songs = Ref[Seq[TrackMeta]](Nil)
   val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)
 
@@ -22,7 +21,7 @@ class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes
   }
 
   def notifyPlaylistModified(): Unit =
-    send(playlistModified(songList))
+    sendPayload(PlaylistModifiedMessage(songList))
 
   override def delete(position: Int) {
     super.delete(position)
@@ -35,8 +34,8 @@ class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes
   }
 
   override protected def onPlaylistIndexChanged(idx: Int): Unit =
-    send(playlistIndexChanged(idx))
+    sendPayload(PlaylistIndexChangedMessage(idx))
 
   override protected def onPlaylistModified(songs: Seq[TrackMeta]): Unit =
-    send(playlistModified(songList))
+    sendPayload(PlaylistModifiedMessage(songList))
 }

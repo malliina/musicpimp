@@ -22,6 +22,8 @@ trait JsonSender {
   private def sendJson(fields: (String, Json.JsValueWrapper)*) =
     send(obj(fields: _*))
 
+  def sendPayload[C: Writes](c: C) = send(Json.toJson(c))
+
   protected def send(json: JsValue) = {
     log debug s"Sending to web player user: '$user': '$json'."
     target send json

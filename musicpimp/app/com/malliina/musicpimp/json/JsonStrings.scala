@@ -24,8 +24,6 @@ trait JsonStrings extends PimpStrings with PlaybackStrings {
   val IsDir = "is_dir"
   val Items = "items"
   val Playlist = "playlist"
-  val PlaylistIndexv17v18 = "playlist_index"
-  val PlaylistIndex = "index"
   //  @deprecated("Use POSITION", "1.8.0")
   val Pos = "pos"
   val Position = "position"

@@ -37,7 +37,7 @@ abstract class PlaybackSocket
       case PlaystateChanged =>
         read[PlayerState]("state").map { state => updatePlayPauseButtons(state) }
       case TrackChanged =>
-        read[Track]("track").map { track => updateTrack(track) }
+        read[Track](TrackKey).map { track => updateTrack(track) }
       case PlaylistModified =>
         read[Seq[Track]]("playlist").map { tracks => updatePlaylist(tracks) }
       case VolumeChanged =>

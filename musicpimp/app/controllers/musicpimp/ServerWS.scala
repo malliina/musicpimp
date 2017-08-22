@@ -85,7 +85,7 @@ class PlayerActor(player: ServerPlayer,
     val pos = player.position
     val posSeconds = pos.toSeconds
     if (posSeconds != previousPos) {
-      out ! JsonMessages.timeUpdated(pos)
+      out ! sendOut(TimeUpdatedMessage(pos))//  JsonMessages.timeUpdated(pos)
       previousPos = posSeconds
     }
   }

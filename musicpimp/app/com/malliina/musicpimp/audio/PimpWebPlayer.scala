@@ -19,7 +19,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
     with JsonSender {
 
   val user = request.user
-  implicit val trackWriter = TrackJson.writer(request.host)
+  implicit val trackWriter = TrackJson.format(request.host)
   val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, target)
   private val DEFAULT_BROWSER_VOLUME = 100
 
@@ -38,12 +38,15 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   def trackChanged() {
     val maybeTrack = playlist.current
     duration = maybeTrack.map(_.duration) getOrElse Duration.fromNanos(0)
-    maybeTrack.foreach(t => send(JsonMessages.trackChanged(t)))
+    maybeTrack.foreach(notifyTrackChanged)
   }
 
   def notifyTrackChanged(track: TrackMeta) {
-    send(JsonMessages.trackChanged(track))
+    sendPayload(TrackChangedMessage(track))
   }
+
+  def notifyStateChanged(state: PlayerStates.Value) =
+    sendPayload(PlayStateChangedMessage(state))
 
   def playState: PlayerStates.PlayerState = state
 
@@ -52,29 +55,29 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
     state match {
       case PlayerStates.Started => play()
       case PlayerStates.Stopped => stop()
-      case PlayerStates.Closed => send(playStateChanged(PlayerStates.NoMedia))
+      case PlayerStates.Closed => notifyStateChanged(PlayerStates.NoMedia)
       case _ => ()
     }
   }
 
   def notifyPlayStateChanged(newState: PlayerStates.PlayerState) {
     state = newState
-    send(playStateChanged(newState))
+    notifyStateChanged(newState)
   }
 
   def play() = sendCommand(Resume)
 
-  def notifyPlaying() = send(playStateChanged(PlayerStates.Started))
+  def notifyPlaying() = notifyStateChanged(PlayerStates.Started)
 
   def stop() = sendCommand(Stop)
 
-  def notifyStopped() = send(playStateChanged(PlayerStates.Stopped))
+  def notifyStopped() = notifyStateChanged(PlayerStates.Stopped)
 
   def position = pos
 
   def position_=(newPos: Duration) {
     pos = newPos
-    send(timeUpdated(newPos))
+    sendPayload(TimeUpdatedMessage(newPos))
   }
 
   def seek(pos: Duration): Unit = {
@@ -93,7 +96,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
 
   def notifyVolumeChanged(newVolume: Int) {
     currentVolume = newVolume
-    send(volumeChanged(currentVolume))
+    sendPayload(VolumeChangedMessage(currentVolume))
   }
 
   def volume = currentVolume
@@ -115,7 +118,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
 
   def notifyMuteToggled(newMute: Boolean) {
     isMuted = newMute
-    send(muteToggled(newMute))
+    sendPayload(MuteToggledMessage(newMute))
   }
 
   def toggleMute() {

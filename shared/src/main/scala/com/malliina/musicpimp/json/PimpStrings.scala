@@ -25,7 +25,7 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val SearchKey = "search"
   val StatusKey = "status"
   val Term = "term"
-  val TrackKey = "track"
+//  val TrackKey = "track"
   val UsernameKey = "username"
   val VersionKey = "version"
 }

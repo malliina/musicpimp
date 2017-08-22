@@ -2,37 +2,77 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.audio.PlayerStates
 import com.malliina.http.FullUrl
+import com.malliina.musicpimp.audio.ServerMessage.evented
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import com.malliina.musicpimp.json.{CrossFormats, JsonMessages}
+import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings._
 import play.api.libs.json._
 
 import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
 
 sealed trait ServerMessage
 
 case class TrackChangedMessage(track: TrackMeta) extends ServerMessage
 
+object TrackChangedMessage {
+  implicit def json(implicit w: Format[TrackMeta]): OFormat[TrackChangedMessage] =
+    evented(TrackChanged, Json.format[TrackChangedMessage])
+}
+
 case class PlaylistIndexChangedMessage(index: Int) extends ServerMessage
+
+object PlaylistIndexChangedMessage {
+  // legacy support
+  private val format = OFormat[PlaylistIndexChangedMessage](
+    Reads(json => (json \ PlaylistIndex).validate[Int].map(apply)),
+    OWrites[PlaylistIndexChangedMessage](pic => Json.obj(PlaylistIndex -> pic.index, PlaylistIndexv17v18 -> pic.index))
+  )
+  implicit val json = evented(PlaylistIndexChanged, format)
+}
 
 case class PlaylistModifiedMessage(playlist: Seq[TrackMeta]) extends ServerMessage
 
+object PlaylistModifiedMessage {
+  implicit def json(implicit w: Format[TrackMeta]): OFormat[PlaylistModifiedMessage] =
+    evented(PlaylistModified, Json.format[PlaylistModifiedMessage])
+}
+
 case class TimeUpdatedMessage(position: Duration) extends ServerMessage
+
+object TimeUpdatedMessage {
+  implicit val json = evented(TimeUpdated, Json.format[TimeUpdatedMessage])
+}
 
 case class PlayStateChangedMessage(state: PlayerStates.Value) extends ServerMessage
 
+object PlayStateChangedMessage {
+  implicit val stateFormat = Format[PlayerStates.Value](
+    Reads(_.validate[String].flatMap { s =>
+      PlayerStates.values.find(_.toString.toLowerCase == s)
+        .map(JsSuccess(_))
+        .getOrElse(JsError(s"Unknown player state: '$s'."))
+    }),
+    Writes(s => Json.toJson(s.toString))
+  )
+  implicit val json = evented(PlaystateChanged, Json.format[PlayStateChangedMessage])
+}
+
 case class VolumeChangedMessage(volume: Int) extends ServerMessage
+
+object VolumeChangedMessage {
+  implicit val json = evented(VolumeChanged, Json.format[VolumeChangedMessage])
+}
 
 case class MuteToggledMessage(mute: Boolean) extends ServerMessage
 
+object MuteToggledMessage {
+  implicit val json = evented(MuteToggled, Json.format[MuteToggledMessage])
+}
+
 object ServerMessage {
-  implicit val durFormat = CrossFormats.duration
-  val indexChanged = evented(PlaylistIndexChanged, Json.format[PlaylistIndexChangedMessage])
-  def playlistModified(implicit w: Format[TrackMeta]) =
-    evented(PlaylistModified, Json.format[PlaylistModifiedMessage])
-  val timeUpdated = evented(TimeUpdated, Json.format[TimeUpdatedMessage])
-  val volumeChanged = evented(VolumeChanged, Json.format[VolumeChangedMessage])
-  val muteToggled = evented(MuteToggled, Json.format[MuteToggledMessage])
+  implicit def trackFormat(implicit w: Writes[TrackMeta]): Format[TrackMeta] =
+    Format(TrackMetas.reader, w)
 
   def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] = {
     val reader: Reads[T] = Reads { json =>
@@ -46,29 +86,38 @@ object ServerMessage {
     OFormat(reader, writer)
   }
 
-  def writer(host: FullUrl): Writes[ServerMessage] = {
-    implicit val tw = TrackJson.writer(host)
+  def writer(host: FullUrl) = jsonWriter(TrackJson.format(host))
+
+  import Json.toJson
+
+  implicit def jsonWriter(implicit f: Format[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {
-      case TrackChangedMessage(track) =>
-        JsonMessages.trackChanged(track)
-      case PlaylistModifiedMessage(ts) =>
-        JsonMessages.playlistModified(ts)
-      case PlaylistIndexChangedMessage(idx) =>
-        JsonMessages.playlistIndexChanged(idx)
-      case PlayStateChangedMessage(state) =>
-        JsonMessages.playStateChanged(state)
-      case MuteToggledMessage(mute) =>
-        JsonMessages.muteToggled(mute)
-      case VolumeChangedMessage(volume) =>
-        JsonMessages.volumeChanged(volume)
-      case TimeUpdatedMessage(time) =>
-        JsonMessages.timeUpdated(time)
+      case tc: TrackChangedMessage =>
+        toJson(tc)(TrackChangedMessage.json(f))
+      case pm: PlaylistModifiedMessage =>
+        toJson(pm)(PlaylistModifiedMessage.json(f))
+      case pic: PlaylistIndexChangedMessage =>
+        toJson(pic)
+      case psc: PlayStateChangedMessage =>
+        toJson(psc)
+      case mt: MuteToggledMessage =>
+        toJson(mt)
+      case vc: VolumeChangedMessage =>
+        toJson(vc)
+      case tu: TimeUpdatedMessage =>
+        toJson(tu)
     }
   }
 
-  val reader: Reads[ServerMessage] = Reads { json =>
-    (json \ EventKey).validate[String].flatMap {
-      case PlaylistIndexChanged => indexChanged.reads(json)
-    }
+  implicit val reader: Reads[ServerMessage] = Reads { json =>
+    val dummyHost = FullUrl("https", "example.com", "")
+    implicit val trackFormat = TrackJson.format(dummyHost)
+    json.validate[TrackChangedMessage]
+      .orElse(json.validate[PlaylistModifiedMessage])
+      .orElse(json.validate[PlaylistIndexChangedMessage])
+      .orElse(json.validate[PlayStateChangedMessage])
+      .orElse(json.validate[MuteToggledMessage])
+      .orElse(json.validate[VolumeChangedMessage])
+      .orElse(json.validate[TimeUpdatedMessage])
   }
 }

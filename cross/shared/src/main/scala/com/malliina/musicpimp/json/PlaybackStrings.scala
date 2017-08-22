@@ -15,6 +15,7 @@ trait PlaybackStrings {
   val Skip = "skip"
   val Status = "status"
   val Stop = "stop"
+  val TrackKey = "track"
   val Volume = "volume"
 
   // Events
@@ -26,4 +27,7 @@ trait PlaybackStrings {
   val PlaylistModified = "playlist_modified"
   val PlaystateChanged = "playstate_changed"
   val VolumeChanged = "volume_changed"
+
+  val PlaylistIndexv17v18 = "playlist_index"
+  val PlaylistIndex = "index"
 }
