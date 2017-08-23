@@ -11,7 +11,6 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val Body = "body"
   val Cmd = "cmd"
   val FolderKey = "folder"
-  val Id = "id"
   val Limit = "limit"
   val Meta = "meta"
   val PasswordKey = "password"
@@ -37,16 +36,4 @@ trait PlaylistKeys {
   val PlaylistSave = "playlist_save"
   val PlaylistsGet = "playlists"
   val PlaylistsKey = "playlists"
-}
-
-object TrackKeys extends TrackKeys
-
-trait TrackKeys {
-  val Album = "album"
-  val Artist = "artist"
-  val DurationKey = "duration"
-  val PathKey = "path"
-  val Size = "size"
-  val Title = "title"
-  val Url = "url"
 }

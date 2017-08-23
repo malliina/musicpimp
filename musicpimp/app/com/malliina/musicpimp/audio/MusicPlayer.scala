@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
-import com.malliina.musicpimp.audio.ServerMessage._
 import com.malliina.musicpimp.library.Library
 import play.api.Logger
 import rx.lang.scala.{Observable, Subject}
@@ -132,7 +131,7 @@ object MusicPlayer
     val p = c.player
     StatusEvent(
       p.track,
-      p.state,
+      p.playState,
       p.position,
       p.volume,
       p.mute,
@@ -150,7 +149,7 @@ object MusicPlayer
         title = meta.title,
         artist = meta.artist,
         album = meta.album,
-        state = p.state,
+        state = p.playState,
         position = p.position,
         duration = p.duration,
         gain = 1.0f * p.volume / 100,

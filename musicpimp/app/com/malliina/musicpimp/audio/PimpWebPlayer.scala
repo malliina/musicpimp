@@ -1,21 +1,20 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.{IPlayer, PlayerStates, StateAwarePlayer}
-import com.malliina.musicpimp.json.JsonMessages._
+import com.malliina.audio.IPlayer
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.json.{JsonMessages, Target}
+import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.library.LocalTrack
 import com.malliina.musicpimp.models.RemoteInfo
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
-import com.malliina.musicpimp.js.FrontStrings.EventKey
+
 import scala.concurrent.duration.Duration
 import scala.util.{Success, Try}
 
 class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   extends IPlayer
     with PlaylistSupport[TrackMeta]
-    with StateAwarePlayer
     with JsonSender {
 
   val user = request.user
@@ -24,7 +23,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   private val DEFAULT_BROWSER_VOLUME = 100
 
   // todo update with event listener
-  var state: PlayerStates.Value = PlayerStates.Closed
+  var state: PlayState = Closed
   private var currentVolume: Int = DEFAULT_BROWSER_VOLUME
   private var pos: Duration = Duration.fromNanos(0)
   private var duration: Duration = Duration.fromNanos(0)
@@ -45,33 +44,33 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
     sendPayload(TrackChangedMessage(track))
   }
 
-  def notifyStateChanged(state: PlayerStates.Value) =
+  def notifyStateChanged(state: PlayState) =
     sendPayload(PlayStateChangedMessage(state))
 
-  def playState: PlayerStates.PlayerState = state
+  def playState: PlayState = state
 
-  def playState_=(s: PlayerStates.PlayerState) {
+  def playState_=(s: PlayState) {
     state = s
     state match {
-      case PlayerStates.Started => play()
-      case PlayerStates.Stopped => stop()
-      case PlayerStates.Closed => notifyStateChanged(PlayerStates.NoMedia)
+      case Started => play()
+      case Stopped => stop()
+      case Closed => notifyStateChanged(NoMedia)
       case _ => ()
     }
   }
 
-  def notifyPlayStateChanged(newState: PlayerStates.PlayerState) {
+  def notifyPlayStateChanged(newState: PlayState) {
     state = newState
     notifyStateChanged(newState)
   }
 
   def play() = sendCommand(Resume)
 
-  def notifyPlaying() = notifyStateChanged(PlayerStates.Started)
+  def notifyPlaying() = notifyStateChanged(Started)
 
   def stop() = sendCommand(Stop)
 
-  def notifyStopped() = notifyStateChanged(PlayerStates.Stopped)
+  def notifyStopped() = notifyStateChanged(Stopped)
 
   def position = pos
 
@@ -126,9 +125,8 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
     sendCommand(Mute)
   }
 
-  def close() {
-    //    send(playStateChanged(PlayState.NoMedia))
-    playState = PlayerStates.Closed
+  def close(): Unit = {
+    playState = Closed
   }
 
   def playTrack(song: TrackMeta): Try[Unit] = {
@@ -159,7 +157,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
       title = track.title,
       artist = track.artist,
       album = track.album,
-      state = state,
+      state = playState,
       position = pos,
       duration = duration,
       gain = 1.0f * currentVolume / 100,

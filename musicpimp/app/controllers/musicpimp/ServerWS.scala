@@ -27,7 +27,7 @@ class ServerWS(val clouds: Clouds,
 
   val serverMessages = MusicPlayer.allEvents
   val subscription = serverMessages.subscribe(event => sendToPimpcloud(event))
-  val cloudWriter = ServerMessage.writer(clouds.cloudHost)
+  val cloudWriter = ServerMessage.jsonWriter(TrackJson.format(clouds.cloudHost))
 
   def sendToPimpcloud(message: ServerMessage) = {
     clouds.sendIfConnected(cloudWriter writes message)
@@ -45,7 +45,7 @@ class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
                   conf: ActorConfig[AuthedRequest]) extends JsonActor(conf) {
   val ticks = Observable.interval(900.millis)
-  val messageWriter = ServerMessage.writer(FullUrls.hostOnly(rh))
+  val messageWriter = ServerMessage.jsonWriter(TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
   implicit val w = TrackJson.writer(rh)
   val user = conf.user.user
@@ -85,7 +85,7 @@ class PlayerActor(player: ServerPlayer,
     val pos = player.position
     val posSeconds = pos.toSeconds
     if (posSeconds != previousPos) {
-      out ! sendOut(TimeUpdatedMessage(pos))//  JsonMessages.timeUpdated(pos)
+      out ! sendOut(TimeUpdatedMessage(pos))
       previousPos = posSeconds
     }
   }

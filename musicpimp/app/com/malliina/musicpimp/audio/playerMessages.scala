@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 
 import scala.concurrent.duration.FiniteDuration
@@ -15,7 +14,7 @@ case class VolumeChangedMsg(volume: Int) extends PlayerMessage
 
 case class PlaylistIndexChangedMsg(index: Int) extends PlayerMessage
 
-case class PlayStateChangedMsg(state: PlayerStates.Value) extends PlayerMessage
+case class PlayStateChangedMsg(state: PlayState) extends PlayerMessage
 
 case class MuteToggledMsg(isMute: Boolean) extends PlayerMessage
 

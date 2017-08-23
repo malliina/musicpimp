@@ -11,6 +11,7 @@ import scala.util.Try
 
 class WebPlayerMessageHandler(request: RemoteInfo, player: PimpWebPlayer)
   extends JsonHandlerBase {
+
   def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit = {
     message match {
       case TimeUpdatedMsg(position) =>
@@ -59,9 +60,9 @@ class WebPlayerMessageHandler(request: RemoteInfo, player: PimpWebPlayer)
 object WebPlayerMessageHandler {
   private val log = Logger(getClass)
 
-  val playerStateReader = Reads[PlayerStates.Value](_.validate[String] flatMap { str =>
-    Try(PlayerStates.withName(str))
-      .map[JsResult[PlayerStates.Value]](state => JsSuccess(state))
-      .getOrElse(JsError(s"Unknown player state: $str"))
-  })
+//  val playerStateReader = Reads[PlayerStates.Value](_.validate[String] flatMap { str =>
+//    Try(PlayerStates.withName(str))
+//      .map[JsResult[PlayerStates.Value]](state => JsSuccess(state))
+//      .getOrElse(JsError(s"Unknown player state: $str"))
+//  })
 }

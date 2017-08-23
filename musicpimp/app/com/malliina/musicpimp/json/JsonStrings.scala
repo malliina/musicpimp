@@ -2,7 +2,7 @@ package com.malliina.musicpimp.json
 
 object JsonStrings extends JsonStrings
 
-trait JsonStrings extends PimpStrings with PlaybackStrings {
+trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
   val Ok = "ok"
 
   val Failure = "failure"

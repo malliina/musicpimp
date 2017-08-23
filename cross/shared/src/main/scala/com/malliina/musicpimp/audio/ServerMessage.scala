@@ -1,11 +1,10 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.PlayerStates
-import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.ServerMessage.evented
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings._
+import play.api.libs.json.Json.toJson
 import play.api.libs.json._
 
 import scala.concurrent.duration.Duration
@@ -44,17 +43,9 @@ object TimeUpdatedMessage {
   implicit val json = evented(TimeUpdated, Json.format[TimeUpdatedMessage])
 }
 
-case class PlayStateChangedMessage(state: PlayerStates.Value) extends ServerMessage
+case class PlayStateChangedMessage(state: PlayState) extends ServerMessage
 
 object PlayStateChangedMessage {
-  implicit val stateFormat = Format[PlayerStates.Value](
-    Reads(_.validate[String].flatMap { s =>
-      PlayerStates.values.find(_.toString.toLowerCase == s)
-        .map(JsSuccess(_))
-        .getOrElse(JsError(s"Unknown player state: '$s'."))
-    }),
-    Writes(s => Json.toJson(s.toString))
-  )
   implicit val json = evented(PlaystateChanged, Json.format[PlayStateChangedMessage])
 }
 
@@ -71,9 +62,6 @@ object MuteToggledMessage {
 }
 
 object ServerMessage {
-  implicit def trackFormat(implicit w: Writes[TrackMeta]): Format[TrackMeta] =
-    Format(TrackMetas.reader, w)
-
   def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] = {
     val reader: Reads[T] = Reads { json =>
       (json \ EventKey).validate[String]
@@ -86,9 +74,6 @@ object ServerMessage {
     OFormat(reader, writer)
   }
 
-  def writer(host: FullUrl) = jsonWriter(TrackJson.format(host))
-
-  import Json.toJson
 
   implicit def jsonWriter(implicit f: Format[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {
@@ -110,8 +95,7 @@ object ServerMessage {
   }
 
   implicit val reader: Reads[ServerMessage] = Reads { json =>
-    val dummyHost = FullUrl("https", "example.com", "")
-    implicit val trackFormat = TrackJson.format(dummyHost)
+    implicit val trackFormat = JsonHelpers.dummyTrackFormat
     json.validate[TrackChangedMessage]
       .orElse(json.validate[PlaylistModifiedMessage])
       .orElse(json.validate[PlaylistIndexChangedMessage])

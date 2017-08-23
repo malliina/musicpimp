@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.RemoteInfo
@@ -43,8 +42,7 @@ trait JsonHandlerBase {
       case PlaylistIndexChanged =>
         cmd.intValue.map(PlaylistIndexChangedMsg.apply)
       case PlaystateChanged =>
-        implicit val reader = WebPlayerMessageHandler.playerStateReader
-        (msg \ Value).validate[PlayerStates.Value].map(PlayStateChangedMsg.apply)
+        (msg \ Value).validate[PlayState].map(PlayStateChangedMsg.apply)
       case MuteToggled =>
         cmd.boolValue.map(MuteToggledMsg.apply)
       case Play =>

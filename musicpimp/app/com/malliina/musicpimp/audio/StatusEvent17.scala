@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.audio.AudioImplicits._
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.TrackID
@@ -14,7 +13,7 @@ case class StatusEvent17(id: TrackID,
                          title: String,
                          artist: String,
                          album: String,
-                         state: PlayerStates.PlayerState,
+                         state: PlayState,
                          position: Duration,
                          duration: Duration,
                          gain: Float,
@@ -23,31 +22,32 @@ case class StatusEvent17(id: TrackID,
                          index: Int)
 
 object StatusEvent17 {
-  implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] = Writes[StatusEvent17] { o =>
-    obj(
-      EventKey -> StatusKey,
-      Id -> TrackID.format.writes(o.id),
-      Title -> o.title,
-      Artist -> o.artist,
-      Album -> o.album,
-      State -> o.state.toString,
-      Pos -> toJson(o.position.readable),
-      PosSeconds -> toJson(o.position.toSeconds),
-      DurationKey -> toJson(o.duration.readable),
-      DurationSeconds -> toJson(o.duration.toSeconds),
-      Gain -> toJson((o.gain * 100).toInt),
-      Mute -> toJson(o.mute),
-      Playlist -> toJson(o.playlist),
-      PlaylistIndexv17v18 -> toJson(o.index)
-    )
-  }
+  implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] =
+    Writes[StatusEvent17] { o =>
+      obj(
+        EventKey -> StatusKey,
+        Id -> TrackID.format.writes(o.id),
+        Title -> o.title,
+        Artist -> o.artist,
+        Album -> o.album,
+        State -> o.state.toString,
+        Pos -> toJson(o.position.readable),
+        PosSeconds -> toJson(o.position.toSeconds),
+        DurationKey -> toJson(o.duration.readable),
+        DurationSeconds -> toJson(o.duration.toSeconds),
+        Gain -> toJson((o.gain * 100).toInt),
+        Mute -> toJson(o.mute),
+        Playlist -> toJson(o.playlist),
+        PlaylistIndexv17v18 -> toJson(o.index)
+      )
+    }
 
   val empty = StatusEvent17(
     TrackID(""),
     "",
     "",
     "",
-    PlayerStates.Closed,
+    Closed,
     Duration.fromNanos(0),
     Duration.fromNanos(0),
     0F,

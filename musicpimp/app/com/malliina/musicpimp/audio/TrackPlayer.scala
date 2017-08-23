@@ -2,7 +2,6 @@ package com.malliina.musicpimp.audio
 
 import java.io.IOException
 
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.TrackPlayer.log
 import play.api.Logger
 import rx.lang.scala.Observer
@@ -16,7 +15,7 @@ object TrackPlayer {
 
 class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
   val track = player.track
-  private val stateSubscription = player.events.subscribe { state =>
+  private val stateSubscription = player.events.map(PimpPlayer.playState).subscribe { state =>
     send(PlayStateChangedMessage(state))
   }
   private val timeSubscription = player.timeUpdates.subscribe { time =>
@@ -37,7 +36,7 @@ class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
 
   def stop(): Unit = {
     player.stop()
-    send(PlayStateChangedMessage(PlayerStates.Stopped))
+    send(PlayStateChangedMessage(Stopped))
   }
 
   def seek(pos: Duration): Unit =

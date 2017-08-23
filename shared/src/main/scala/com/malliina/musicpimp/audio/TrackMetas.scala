@@ -2,10 +2,8 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.http.FullUrl
 import com.malliina.json.JsonFormats
-import com.malliina.musicpimp.json.PimpStrings._
 import com.malliina.musicpimp.models._
 import com.malliina.play.http.FullUrls
-import play.api.libs.json.Json._
 import play.api.libs.json.{Reads, Writes}
 import play.api.mvc.Call
 
@@ -16,16 +14,8 @@ object TrackMetas {
   val reader: Reads[TrackMeta] = Track.jsonFormat.map[TrackMeta](identity)
 
   def writer(host: FullUrl, url: TrackID => Call): Writes[TrackMeta] =
-    Writes[TrackMeta] { t =>
-      obj(
-        Id -> t.id,
-        Title -> t.title,
-        Artist -> t.artist,
-        Album -> t.album,
-        PathKey -> t.path,
-        DurationKey -> t.duration,
-        Size -> t.size,
-        Url -> FullUrls.absolute(host, url(t.id))
-      )
-    }
+    urlWriter(id => FullUrls.absolute(host, url(id)))
+
+  def urlWriter(url: TrackID => FullUrl): Writes[TrackMeta] =
+    JsonHelpers.urlWriter(url)
 }
