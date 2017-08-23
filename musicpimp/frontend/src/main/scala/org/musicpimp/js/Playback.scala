@@ -1,10 +1,9 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio.Track
+import com.malliina.musicpimp.audio.{PlayState, Started, Track, TrackMeta}
 import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
-import com.malliina.musicpimp.audio.TrackMeta
-import org.musicpimp.js.PlayerState.Started
+import com.malliina.musicpimp.models.Volume
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.Json
 
@@ -16,7 +15,7 @@ case class Status(track: Track,
                   volume: Volume,
                   mute: Boolean,
                   playlist: Seq[Track],
-                  state: PlayerState)
+                  state: PlayState)
 
 object Status {
   implicit val durFormat = CrossFormats.duration
@@ -140,7 +139,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     sliderDyn.slider(OptionKey, Max, duration.toSeconds)
   }
 
-  def updatePlayPauseButtons(state: PlayerState) = {
+  def updatePlayPauseButtons(state: PlayState) = {
     if (state == Started) {
       playButton.hide()
       pauseButton.show()

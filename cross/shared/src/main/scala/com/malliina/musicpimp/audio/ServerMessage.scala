@@ -10,6 +10,8 @@ import play.api.libs.json._
 import scala.concurrent.duration.Duration
 import scala.language.implicitConversions
 
+/** Server-side playback events sent to clients so that they can update their UI accordingly.
+  */
 sealed trait ServerMessage
 
 case class TrackChangedMessage(track: TrackMeta) extends ServerMessage

@@ -1,5 +1,7 @@
 package com.malliina.musicpimp.models
 
+import com.malliina.values.IntValidator
+
 /**
   * @param id the cloud ID of a connected MusicPimp server
   */
@@ -21,4 +23,15 @@ trait MusicItem {
   def id: Identifier
 
   def title: String
+}
+
+case class Volume private(volume: Int)
+
+object Volume extends IntValidator[Volume] {
+  override val Min = 0
+  override val Max = 100
+
+  override protected def build(t: Int) = apply(t)
+
+  override def strip(elem: Volume) = elem.volume
 }

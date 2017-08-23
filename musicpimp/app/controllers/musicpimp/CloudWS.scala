@@ -1,38 +1,22 @@
 package controllers.musicpimp
 
 import akka.actor.Props
-import com.malliina.musicpimp.audio.JsonCmd
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.Clouds
-import com.malliina.musicpimp.models.CloudID
+import com.malliina.musicpimp.models._
 import com.malliina.play.ActorExecution
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.ws.Mediator.Broadcast
 import com.malliina.play.ws.{MediatorSockets, ReplayMediator}
-import controllers.musicpimp.CloudCommand.{Connect, Disconnect, Noop}
-import controllers.musicpimp.CloudWS.{ConnectCmd, DisconnectCmd, Id, SubscribeCmd}
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.RequestHeader
 import rx.lang.scala.Subscription
 
-sealed trait CloudCommand
-
-object CloudCommand {
-
-  case class Connect(id: CloudID) extends CloudCommand
-
-  case object Disconnect extends CloudCommand
-
-  case object Noop extends CloudCommand
-
-}
-
 object CloudWS {
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
   val Id = "id"
-  val SubscribeCmd = "subscribe"
 
   val sessionAuth = Auths.session
 }
@@ -48,7 +32,9 @@ object CloudMediator {
 }
 
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
+
   import CloudMediator.log
+
   private val jsonEvents = clouds.connection.map(event => Json.toJson(event))
   private var subscription: Option[Subscription] = None
 
@@ -66,14 +52,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   }
 
   override def onClientMessage(message: JsValue, rh: RequestHeader): Unit = {
-    val cmd = new JsonCmd(message)
-    val parsed: JsResult[CloudCommand] = cmd.command flatMap {
-      case DisconnectCmd => JsSuccess(Disconnect)
-      case ConnectCmd => cmd.key[CloudID](Id).map(id => Connect(id))
-      case SubscribeCmd => JsSuccess(Noop)
-      case other => JsError(s"Unknown command '$other'.")
-    }
-    parsed
+    message.validate[CloudCommand]
       .map(handleCommand)
       .recoverTotal(err => log.error(s"Invalid JSON '$message'. $err"))
   }

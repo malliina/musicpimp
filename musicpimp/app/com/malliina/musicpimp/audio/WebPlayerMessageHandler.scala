@@ -1,18 +1,14 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.audio.WebPlayerMessageHandler.log
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{RemoteInfo, TrackID}
 import play.api.Logger
-import play.api.libs.json._
-
-import scala.util.Try
 
 class WebPlayerMessageHandler(request: RemoteInfo, player: PimpWebPlayer)
   extends JsonHandlerBase {
 
-  def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit = {
+  def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit =
     message match {
       case TimeUpdatedMsg(position) =>
         player.position = position
@@ -52,17 +48,10 @@ class WebPlayerMessageHandler(request: RemoteInfo, player: PimpWebPlayer)
       case _ =>
         log warn s"Unsupported message: $message from ${request.user}"
     }
-  }
 
   private def newTrackInfo(trackId: TrackID) = Library meta trackId
 }
 
 object WebPlayerMessageHandler {
   private val log = Logger(getClass)
-
-//  val playerStateReader = Reads[PlayerStates.Value](_.validate[String] flatMap { str =>
-//    Try(PlayerStates.withName(str))
-//      .map[JsResult[PlayerStates.Value]](state => JsSuccess(state))
-//      .getOrElse(JsError(s"Unknown player state: $str"))
-//  })
 }

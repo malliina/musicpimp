@@ -2,7 +2,7 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
-import com.malliina.musicpimp.models.{CloudEvent, CloudID}
+import com.malliina.musicpimp.models.{CloudEvent, CloudID, Connect, Disconnect}
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
@@ -87,7 +87,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
       connect()
     }
     elem(DisconnectId).click { (_: JQueryEventObject) =>
-      send(Command(DisconnectCmd))
+      send(Disconnect)
     }
     elem(CloudIdentifier).keypress { (e: JQueryEventObject) =>
       val isEnter = e.which == 10 || e.which == 13
@@ -97,7 +97,6 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
     }
   }
 
-  def connect(): Unit = {
-    send(IdCommand(ConnectCmd, elem(CloudIdentifier).value().toString))
-  }
+  def connect(): Unit =
+    send(Connect(CloudID(elem(CloudIdentifier).value().toString)))
 }

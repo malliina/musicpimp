@@ -1,9 +1,10 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio.{Track, TrackMeta}
+import com.malliina.musicpimp.audio.{PlayState, Track, TrackMeta}
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings
+import com.malliina.musicpimp.models.Volume
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Reads}
 
 import scala.concurrent.duration.Duration
@@ -14,7 +15,7 @@ abstract class PlaybackSocket
 
   def updateTime(duration: Duration): Unit
 
-  def updatePlayPauseButtons(state: PlayerState): Unit
+  def updatePlayPauseButtons(state: PlayState): Unit
 
   def updateTrack(track: TrackMeta): Unit
 
@@ -35,7 +36,7 @@ abstract class PlaybackSocket
       case TimeUpdated =>
         read[Duration]("position").map { duration => updateTime(duration) }
       case PlaystateChanged =>
-        read[PlayerState]("state").map { state => updatePlayPauseButtons(state) }
+        read[PlayState]("state").map { state => updatePlayPauseButtons(state) }
       case TrackChanged =>
         read[Track](TrackKey).map { track => updateTrack(track) }
       case PlaylistModified =>

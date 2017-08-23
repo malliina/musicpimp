@@ -1,6 +1,7 @@
 package controllers.pimpcloud
 
 import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
+import com.malliina.musicpimp.models.JVMLogEntry
 import com.malliina.play.tags.TagPage
 import com.malliina.play.{ActorExecution, PimpSockets}
 import play.api.Logger
@@ -12,6 +13,7 @@ class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution) {
   val appenderName = "RX"
   lazy val jsonEvents = LogbackUtils.getAppender[BasicBoundedReplayRxAppender](appenderName)
     .logEvents
+    .map(e => JVMLogEntry(e.level.levelStr, e.message, e.loggerName, e.threadName, e.timeFormatted, e.stackTrace))
     .tumblingBuffer(100.millis)
     .filter(_.nonEmpty)
     .map(Json.toJson(_))

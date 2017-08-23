@@ -4,8 +4,21 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 
 import scala.concurrent.duration.FiniteDuration
 
+/** Two uses:
+  *
+  * Messages sent from clients to MusicPimp servers to control server playback.
+  *
+  * Messages sent from web players to MusicPimp to sync web player state with the server. (legacy)
+  *
+  * @see PlaybackMessageHandler
+  * @see WebPlayerMessageHandler
+  */
 trait PlayerMessage
 
+/** Web playback updates only.
+  *
+  * @param position pos
+  */
 case class TimeUpdatedMsg(position: FiniteDuration) extends PlayerMessage
 
 case class TrackChangedMsg(track: TrackID) extends PlayerMessage
