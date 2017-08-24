@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio.{PlayState, Track, TrackMeta}
+import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings
@@ -31,27 +31,27 @@ abstract class PlaybackSocket
     def read[T: Reads](key: String) = (payload \ key).validate[T]
 
     val result = read[String](EventKey).flatMap {
-      case Welcome =>
-        JsSuccess(send(Playback.status))
-      case TimeUpdated =>
-        read[Duration]("position").map { duration => updateTime(duration) }
-      case PlaystateChanged =>
-        read[PlayState]("state").map { state => updatePlayPauseButtons(state) }
-      case TrackChanged =>
-        read[Track](TrackKey).map { track => updateTrack(track) }
-      case PlaylistModified =>
-        read[Seq[Track]]("playlist").map { tracks => updatePlaylist(tracks) }
-      case VolumeChanged =>
-        read[Volume]("volume").map { vol => updateVolume(vol) }
-      case MuteToggled =>
-        read[Boolean]("mute").map { mute => muteToggled(mute) }
       case Status =>
         payload.validate[Status].map { status => onStatus(status) }
-      case PlaylistIndexChanged =>
-        JsSuccess(())
       case other =>
         JsError(s"Unknown event '$other'.")
     }
-    result.recoverTotal { error => onJsonFailure(error) }
+    result.orElse(payload.validate[ServerMessage].map(handleMessage))
+      .recoverTotal { error => onJsonFailure(error) }
+  }
+
+  def handleMessage(message: ServerMessage): Unit = {
+    message match {
+      case WelcomeMessage => send(StatusMsg)
+      //case StatusMessage => onStatus(status)
+      case TimeUpdatedMessage(position) => updateTime(position)
+      case PlayStateChangedMessage(state) => updatePlayPauseButtons(state)
+      case TrackChangedMessage(track) => updateTrack(track)
+      case PlaylistModifiedMessage(playlist) => updatePlaylist(playlist)
+      case VolumeChangedMessage(volume) => updateVolume(volume)
+      case MuteToggledMessage(mute) => muteToggled(mute)
+      case PlaylistIndexChangedMessage(_) => ()
+      case other => log.info(s"Not handling '$other'.")
+    }
   }
 }

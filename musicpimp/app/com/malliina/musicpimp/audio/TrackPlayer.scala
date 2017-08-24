@@ -3,6 +3,7 @@ package com.malliina.musicpimp.audio
 import java.io.IOException
 
 import com.malliina.musicpimp.audio.TrackPlayer.log
+import com.malliina.musicpimp.models.Volume
 import play.api.Logger
 import rx.lang.scala.Observer
 
@@ -24,11 +25,11 @@ class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
 
   def position = player.position
 
-  def volume = player.volume
+  def volume = Volume(player.volume)
 
   def state = player.state
 
-  def volumeCarefully = Try(volume).toOption.orElse(player.cachedVolume)
+  def volumeCarefully = Try(volume).toOption.orElse(player.cachedVolume.map(Volume.apply))
 
   def muteCarefully = Try(player.mute).toOption.orElse(player.cachedMute)
 
@@ -52,9 +53,9 @@ class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
         log.warn(s"Failed to seek to '$pos'. Unable to reset stream.")
     }
 
-  def adjustVolume(level: Int): Boolean = {
-    if (player.volume != level) {
-      player.volume = level
+  def adjustVolume(level: Volume): Boolean = {
+    if (player.volume != level.volume) {
+      player.volume = level.volume
       send(VolumeChangedMessage(level))
       true
     } else {

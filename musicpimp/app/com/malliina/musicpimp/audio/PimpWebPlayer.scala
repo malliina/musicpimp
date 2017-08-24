@@ -5,7 +5,7 @@ import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.library.LocalTrack
-import com.malliina.musicpimp.models.RemoteInfo
+import com.malliina.musicpimp.models.{RemoteInfo, Volume}
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json._
 
@@ -20,11 +20,11 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
   val user = request.user
   implicit val trackWriter = TrackJson.format(request.host)
   val playlist: BasePlaylist[TrackMeta] = new PimpWebPlaylist(user, target)
-  private val DEFAULT_BROWSER_VOLUME = 100
+  private val DEFAULT_BROWSER_VOLUME = Volume(100)
 
   // todo update with event listener
   var state: PlayState = Closed
-  private var currentVolume: Int = DEFAULT_BROWSER_VOLUME
+  private var currentVolume: Volume = DEFAULT_BROWSER_VOLUME
   private var pos: Duration = Duration.fromNanos(0)
   private var duration: Duration = Duration.fromNanos(0)
   private var isMuted = false
@@ -83,26 +83,26 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
     sendCommand(Seek, pos.toSeconds)
   }
 
-  def gain = 1.0f * currentVolume / 100
+  def gain = 1.0f * currentVolume.volume / 100
 
   def gain_=(level: Float) {
-    val volumeValue = (level * 100).toInt
+    val volumeValue = Volume((level * 100).toInt)
     currentVolume = volumeValue
-    sendCommand(Volume, volumeValue)
+    sendCommand(VolumeKey, volumeValue)
   }
 
   def gain(newGain: Float): Unit = gain = newGain
 
-  def notifyVolumeChanged(newVolume: Int) {
+  def notifyVolumeChanged(newVolume: Volume) {
     currentVolume = newVolume
     sendPayload(VolumeChangedMessage(currentVolume))
   }
 
   def volume = currentVolume
 
-  def volume_=(newVolume: Int): Unit = gain = 1.0f * newVolume / 100
+  def volume_=(newVolume: Volume): Unit = gain = 1.0f * newVolume.volume / 100
 
-  def volume(newVolume: Int): Unit = volume = newVolume
+  def volume(newVolume: Int): Unit = volume = Volume(newVolume)
 
   def mute = isMuted
 
@@ -160,7 +160,7 @@ class PimpWebPlayer(val request: RemoteInfo, val target: Target)
       state = playState,
       position = pos,
       duration = duration,
-      gain = 1.0f * currentVolume / 100,
+      gain = 1.0f * currentVolume.volume / 100,
       mute = isMuted,
       playlist = playlist.songList,
       index = playlist.index

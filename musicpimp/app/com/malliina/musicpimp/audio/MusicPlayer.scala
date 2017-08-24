@@ -6,6 +6,7 @@ import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.Volume
 import play.api.Logger
 import rx.lang.scala.{Observable, Subject}
 
@@ -19,7 +20,7 @@ object MusicPlayer
     with PlaylistSupport[PlayableTrack]
     with ServerPlayer {
   private val log = Logger(getClass)
-  private val defaultVolume = 40
+  private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist = new PimpPlaylist
 
   private val subject = Subject[ServerMessage]()
@@ -90,7 +91,7 @@ object MusicPlayer
     }
   }
 
-  def initPlayer(track: PlayableTrack, initialVolume: Int, isMute: Boolean): TrackPlayer = {
+  def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer = {
     val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), subject)
     p.adjustVolume(initialVolume)
     p.mute(isMute)
@@ -104,16 +105,16 @@ object MusicPlayer
 
   def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
 
-  def volume(level: Int): Unit = setVolume(level)
+  def volume(level: Int): Unit = setVolume(Volume(level))
 
-  def volume: Option[Int] = current.map(_.volume)
+  def volume: Option[Volume] = current.map(_.volume)
 
   /**
     *
     * @param level new volume
     * @return true if the volume was changed, false otherwise
     */
-  def setVolume(level: Int): Unit = current.foreach(_.adjustVolume(level))
+  def setVolume(level: Volume): Unit = current.foreach(_.adjustVolume(level))
 
   def mute(mute: Boolean): Unit = current.foreach(_.mute(mute))
 
@@ -133,7 +134,7 @@ object MusicPlayer
       p.track,
       p.playState,
       p.position,
-      p.volume,
+      Volume(p.volume),
       p.mute,
       playlist.songList,
       playlist.index

@@ -16,7 +16,7 @@ trait PlaybackStrings {
   val Status = "status"
   val Stop = "stop"
   val TrackKey = "track"
-  val Volume = "volume"
+  val VolumeKey = "volume"
 
   // Events
   val Welcome = "welcome"

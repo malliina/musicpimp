@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio.{PlayState, Started, Track, TrackMeta}
+import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
 import com.malliina.musicpimp.models.Volume
@@ -25,13 +25,7 @@ object Status {
 object Playback extends PlaybackStrings {
   val SocketUrl = "/ws/playback?f=json"
 
-  val status = Command(Status)
-  val next = Command(Next)
-  val prev = Command(Prev)
-  val stop = Command(Stop)
-  val resume = Command(Resume)
-
-  def volume(vol: Int) = ValuedCommand(Volume, vol)
+  def volume(vol: Int) = ValuedCommand(VolumeKey, vol)
 
   def seek(pos: Int) = ValuedCommand(Seek, pos)
 
@@ -81,10 +75,10 @@ class Playback extends PlaybackSocket with PlayerStrings {
   installHandlers()
 
   private def installHandlers() = {
-    prevButton.click((_: JQueryEventObject) => send(Playback.prev))
-    nextButton.click((_: JQueryEventObject) => send(Playback.next))
-    playButton.click((_: JQueryEventObject) => send(Playback.resume))
-    pauseButton.click((_: JQueryEventObject) => send(Playback.stop))
+    prevButton.click((_: JQueryEventObject) => send(PrevMsg))
+    nextButton.click((_: JQueryEventObject) => send(NextMsg))
+    playButton.click((_: JQueryEventObject) => send(ResumeMsg))
+    pauseButton.click((_: JQueryEventObject) => send(StopMsg))
     volumeButton.click((_: JQueryEventObject) => toggleMute())
     val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
     sliderDyn.slider(seekOptions)

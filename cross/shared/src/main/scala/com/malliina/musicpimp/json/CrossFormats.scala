@@ -31,6 +31,9 @@ object CrossFormats {
 
   def singleCmd[T](value: String, t: T) = cmd(value, pure(t))
 
+  def singleKeyValue[T](key: String, value: String, t: T) =
+    keyValued(key, value, pure(t))
+
   def cmd[T](value: String, payload: OFormat[T]): OFormat[T] =
     keyValued(CommonStrings.Cmd, value, payload)
 

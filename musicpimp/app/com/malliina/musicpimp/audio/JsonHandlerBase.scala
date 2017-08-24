@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
 import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.RemoteInfo
+import com.malliina.musicpimp.models.{RemoteInfo, Volume}
 import com.malliina.play.http.{CookiedRequest, FullUrls}
 import com.malliina.play.models.Username
 import play.api.Logger
@@ -26,19 +26,20 @@ trait JsonHandlerBase {
   }
 
   def handleMessage(msg: JsValue, request: RemoteInfo): Unit = {
-    parse(msg)
+    msg.validate[PlayerMessage]
       .map(fulfillMessage(_, request))
       .recoverTotal(err => log error s"Invalid JSON: '$msg', error: $err.")
   }
 
   def parse(msg: JsValue): JsResult[PlayerMessage] = {
+    msg.validate[PlayerMessage]
     withCmd(msg)(cmd => cmd.command flatMap {
       case TimeUpdated =>
         cmd.doubleValue.map(pos => TimeUpdatedMsg(pos.seconds))
       case TrackChanged =>
         cmd.track.map(TrackChangedMsg.apply)
       case VolumeChanged =>
-        cmd.doubleValue.map(vol => VolumeChangedMsg(vol.toInt))
+        cmd.doubleValue.map(vol => VolumeChangedMsg(Volume(vol.toInt)))
       case PlaylistIndexChanged =>
         cmd.intValue.map(PlaylistIndexChangedMsg.apply)
       case PlaystateChanged =>
@@ -65,7 +66,7 @@ trait JsonHandlerBase {
         cmd.doubleValue.map(d => SeekMsg(d.seconds))
       case Mute =>
         cmd.boolValue.map(MuteMsg.apply)
-      case Volume =>
+      case VolumeKey =>
         cmd.doubleValue.map(d => VolumeMsg(d.toInt))
       case Insert =>
         for {

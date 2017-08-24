@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio.{PlayState, Started, TrackMeta}
+import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.js.FooterStrings
 import com.malliina.musicpimp.js.FrontStrings.HiddenClass
 import com.malliina.musicpimp.models.Volume
@@ -31,10 +31,10 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
   }
 
   def installHandlers() = {
-    onClick(backwardButton, Playback.prev)
-    onClick(playButton, Playback.resume)
-    onClick(pauseButton, Playback.stop)
-    onClick(forwardButton, Playback.next)
+    onClick(backwardButton, PrevMsg)
+    onClick(playButton, ResumeMsg)
+    onClick(pauseButton, StopMsg)
+    onClick(forwardButton, NextMsg)
   }
 
   override def updateTime(duration: Duration): Unit = ()

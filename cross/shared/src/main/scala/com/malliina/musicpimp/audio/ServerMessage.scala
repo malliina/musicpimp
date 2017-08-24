@@ -5,6 +5,7 @@ import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings._
+import com.malliina.musicpimp.models.Volume
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
 
@@ -14,6 +15,17 @@ import scala.language.implicitConversions
 /** Server-side playback events sent to clients so that they can update their UI accordingly.
   */
 sealed trait ServerMessage
+
+case object WelcomeMessage extends ServerMessage {
+  implicit val json = evented(Welcome, CrossFormats.pure(WelcomeMessage))
+}
+
+//case class StatusMessage extends ServerMessage {
+//}
+
+//object StatusMessage {
+//  implicit val json = evented(Status, Json.format[StatusMessage])
+//}
 
 case class TrackChangedMessage(track: TrackMeta) extends ServerMessage
 
@@ -26,9 +38,14 @@ case class PlaylistIndexChangedMessage(index: Int) extends ServerMessage
 
 object PlaylistIndexChangedMessage {
   // legacy support
+  private val writer = OWrites[PlaylistIndexChangedMessage] { pic =>
+    Json.obj(
+      PlaylistIndex -> pic.index,
+      PlaylistIndexv17v18 -> pic.index)
+  }
   private val format = OFormat[PlaylistIndexChangedMessage](
     Reads(json => (json \ PlaylistIndex).validate[Int].map(apply)),
-    OWrites[PlaylistIndexChangedMessage](pic => Json.obj(PlaylistIndex -> pic.index, PlaylistIndexv17v18 -> pic.index))
+    writer
   )
   implicit val json = evented(PlaylistIndexChanged, format)
 }
@@ -52,7 +69,7 @@ object PlayStateChangedMessage {
   implicit val json = evented(PlaystateChanged, Json.format[PlayStateChangedMessage])
 }
 
-case class VolumeChangedMessage(volume: Int) extends ServerMessage
+case class VolumeChangedMessage(volume: Volume) extends ServerMessage
 
 object VolumeChangedMessage {
   implicit val json = evented(VolumeChanged, Json.format[VolumeChangedMessage])
@@ -84,6 +101,10 @@ object ServerMessage {
         toJson(vc)
       case tu: TimeUpdatedMessage =>
         toJson(tu)
+      case WelcomeMessage =>
+        toJson(WelcomeMessage)
+      //case StatusMessage =>
+       // toJson(StatusMessage)
     }
   }
 
@@ -96,5 +117,7 @@ object ServerMessage {
       .orElse(json.validate[MuteToggledMessage])
       .orElse(json.validate[VolumeChangedMessage])
       .orElse(json.validate[TimeUpdatedMessage])
+      .orElse(WelcomeMessage.json.reads(json))
+      //.orElse(StatusMessage.json.reads(json))
   }
 }

@@ -2,21 +2,12 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.CrossFormats.{cmd, finiteDuration, singleCmd}
 import com.malliina.musicpimp.json.PlaybackStrings._
-import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.musicpimp.models.{FolderID, TrackID, Volume}
 import play.api.libs.json._
 
 import scala.concurrent.duration.FiniteDuration
 
-/** Two uses:
-  *
-  * Messages sent from clients to MusicPimp servers to control server playback.
-  *
-  * Messages sent from web players to MusicPimp to sync web player state with the server. (legacy)
-  *
-  * @see PlaybackMessageHandler
-  * @see WebPlayerMessageHandler
-  */
-trait PlayerMessage
+
 
 /** Web playback updates only.
   *
@@ -34,7 +25,7 @@ object TrackChangedMsg {
   implicit val json = cmd(TrackChanged, Json.format[TrackChangedMsg])
 }
 
-case class VolumeChangedMsg(value: Int) extends PlayerMessage
+case class VolumeChangedMsg(value: Volume) extends PlayerMessage
 
 object VolumeChangedMsg {
   implicit val json = cmd(VolumeChanged, Json.format[VolumeChangedMsg])
@@ -105,7 +96,9 @@ object SkipMsg {
   implicit val json = cmd(Skip, Json.format[SkipMsg])
 }
 
-case class SeekMsg(value: FiniteDuration) extends PlayerMessage {
+case class SeekMsg(value: FiniteDuration) extends PlayerMessage
+
+object SeekMsg {
   implicit val json = cmd(Seek, Json.format[SeekMsg])
 }
 
@@ -118,7 +111,7 @@ object MuteMsg {
 case class VolumeMsg(value: Int) extends PlayerMessage
 
 object VolumeMsg {
-  implicit val json = cmd(Volume, Json.format[VolumeMsg])
+  implicit val json = cmd(VolumeKey, Json.format[VolumeMsg])
 }
 
 case class InsertTrackMsg(index: Int, track: TrackID) extends PlayerMessage
@@ -156,10 +149,53 @@ object AddAllMsg {
   implicit val json = cmd(AddItemsKey, OFormat(ItemsLike.reader[AddAllMsg](apply), Json.writes[AddAllMsg]))
 }
 
+/** Two uses:
+  *
+  * Messages sent from clients to MusicPimp servers to control server playback.
+  *
+  * Messages sent from web players to MusicPimp to sync web player state with the server. (legacy)
+  *
+  * @see PlaybackMessageHandler
+  * @see WebPlayerMessageHandler
+  */
+trait PlayerMessage
+
+object PlayerMessage {
+  implicit val reader: Reads[PlayerMessage] = Reads { json =>
+    TimeUpdatedMsg.json.reads(json)
+      .orElse(TrackChangedMsg.json.reads(json))
+      .orElse(json.validate[VolumeChangedMsg])
+      .orElse(json.validate[PlaylistIndexChangedMsg])
+      .orElse(json.validate[PlayStateChangedMsg])
+      .orElse(json.validate[MuteToggledMsg])
+      .orElse(json.validate[PlayMsg])
+      .orElse(json.validate[AddMsg])
+      .orElse(json.validate[RemoveMsg])
+      .orElse(RemoveMsg.json.reads(json))
+      .orElse(ResumeMsg.json.reads(json))
+      .orElse(StopMsg.json.reads(json))
+      .orElse(NextMsg.json.reads(json))
+      .orElse(PrevMsg.json.reads(json))
+      .orElse(json.validate[SkipMsg])
+      .orElse(json.validate[SeekMsg])
+      .orElse(json.validate[MuteMsg])
+      .orElse(json.validate[VolumeMsg])
+      .orElse(json.validate[InsertTrackMsg])
+      .orElse(json.validate[MoveTrackMsg])
+      .orElse(json.validate[ResetPlaylistMessage])
+      .orElse(json.validate[PlayAllMsg])
+      .orElse(json.validate[AddAllMsg])
+  }
+}
+
 object ItemsLike {
   def reader[T](build: (Seq[TrackID], Seq[FolderID]) => T): Reads[T] = Reads[T] { json =>
     val folders = (json \ Folders).validate[Seq[FolderID]].getOrElse(Nil)
     val tracks = (json \ Tracks).validate[Seq[TrackID]].getOrElse(Nil)
     JsSuccess(build(tracks, folders))
   }
+}
+
+case object StatusMsg {
+  implicit val json = singleCmd(Status, StatusMsg)
 }
