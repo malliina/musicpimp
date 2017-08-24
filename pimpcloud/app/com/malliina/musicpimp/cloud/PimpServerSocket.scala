@@ -24,7 +24,13 @@ object PimpServerSocket {
 }
 
 /**
+  *
+  * @param jsonOut send messages to this actor to send messages to the server
   * @param id the cloud ID of the server
+  * @param headers
+  * @param mat
+  * @param errorHandler
+  * @param onUpdate
   */
 class PimpServerSocket(val jsonOut: ActorRef,
                        id: CloudID,

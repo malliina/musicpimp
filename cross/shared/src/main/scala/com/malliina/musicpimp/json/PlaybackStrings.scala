@@ -4,11 +4,11 @@ object PlaybackStrings extends PlaybackStrings
 
 trait PlaybackStrings {
   val Add = "add"
-  val AddItems = "add_items"
+  val AddItemsKey = "add_items"
   val Mute = "mute"
   val Next = "next"
   val Play = "play"
-  val PlayItems = "play_items"
+  val PlayItemsKey = "play_items"
   val Prev = "prev"
   val Resume = "resume"
   val Seek = "seek"
@@ -30,4 +30,17 @@ trait PlaybackStrings {
 
   val PlaylistIndexv17v18 = "playlist_index"
   val PlaylistIndex = "index"
+
+  val Remove = "remove"
+  val Insert = "insert"
+  val ResetPlaylist = "reset_playlist"
+  val Move = "move"
+  val From = "from"
+  val To = "to"
+
+  val Value = "value"
+
+  val Index = "index"
+  val Tracks = "tracks"
+  val Folders = "folders"
 }

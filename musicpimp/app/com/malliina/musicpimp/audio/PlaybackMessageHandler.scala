@@ -51,9 +51,9 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
         playlist.move(from, to)
       case RemoveMsg(index) =>
         playlist.delete(index)
-      case AddAllMsg(folders, tracks) =>
+      case AddAllMsg(tracks, folders) =>
         resolveTracksOrEmpty(folders, tracks).map(_.foreach(playlist.add))
-      case PlayAllMsg(folders, tracks) =>
+      case PlayAllMsg(tracks, folders) =>
         resolveTracksOrEmpty(folders, tracks) map {
           case head :: tail =>
             player.reset(head)

@@ -14,6 +14,8 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.RequestHeader
 
+/** A mobile client connected to pimpcloud.
+  * */
 class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
   extends JsonActor(conf) {
   val conn = conf.user

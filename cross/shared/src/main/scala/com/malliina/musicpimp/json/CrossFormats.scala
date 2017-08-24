@@ -2,9 +2,9 @@ package com.malliina.musicpimp.json
 
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json.toJson
-import play.api.libs.json.{Format, JsResult, JsValue, Reads}
+import play.api.libs.json._
 
-import scala.concurrent.duration.{Duration, DurationLong}
+import scala.concurrent.duration.{Duration, DurationLong, FiniteDuration}
 
 object CrossFormats {
 
@@ -17,8 +17,34 @@ object CrossFormats {
       json.validate[Long].map(_.seconds)
   }
 
+  implicit val finiteDuration = Format[FiniteDuration](
+    Reads(_.validate[Long].map(_.seconds)),
+    Writes(d => toJson(d.toSeconds))
+  )
+
   implicit val storageSize: Format[StorageSize] = Format[StorageSize](
     Reads(_.validate[Long].map(_.bytes)),
     size => toJson(size.toBytes)
   )
+
+  def pure[T](value: T): OFormat[T] = OFormat(_ => JsSuccess(value), (_: T) => Json.obj())
+
+  def singleCmd[T](value: String, t: T) = cmd(value, pure(t))
+
+  def cmd[T](value: String, payload: OFormat[T]): OFormat[T] =
+    keyValued(CommonStrings.Cmd, value, payload)
+
+  /** A JSON format for objects of type T that contains a top-level key-value pair.
+    */
+  def keyValued[T](key: String, value: String, payload: OFormat[T]): OFormat[T] = {
+    val reader: Reads[T] = Reads { json =>
+      (json \ key).validate[String]
+        .filter(_ == value)
+        .flatMap(_ => payload.reads(json))
+    }
+    val writer = OWrites[T] { t =>
+      Json.obj(key -> value) ++ payload.writes(t)
+    }
+    OFormat(reader, writer)
+  }
 }

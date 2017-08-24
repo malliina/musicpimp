@@ -2,6 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.ServerMessage.evented
 import com.malliina.musicpimp.js.FrontStrings.EventKey
+import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.json.CrossFormats.duration
 import com.malliina.musicpimp.json.PlaybackStrings._
 import play.api.libs.json.Json.toJson
@@ -64,18 +65,8 @@ object MuteToggledMessage {
 }
 
 object ServerMessage {
-  def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] = {
-    val reader: Reads[T] = Reads { json =>
-      (json \ EventKey).validate[String]
-        .filter(_ == eventName)
-        .flatMap(_ => payload.reads(json))
-    }
-    val writer = OWrites[T] { t =>
-      Json.obj(EventKey -> eventName) ++ payload.writes(t)
-    }
-    OFormat(reader, writer)
-  }
-
+  def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] =
+    CrossFormats.keyValued(EventKey, eventName, payload)
 
   implicit def jsonWriter(implicit f: Format[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {

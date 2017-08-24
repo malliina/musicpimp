@@ -77,10 +77,10 @@ trait JsonHandlerBase {
           from <- (msg \ From).validate[Int]
           to <- (msg \ To).validate[Int]
         } yield MoveTrackMsg(from, to)
-      case AddItems =>
-        JsSuccess(AddAllMsg(cmd.foldersOrNil, cmd.tracksOrNil))
-      case PlayItems =>
-        JsSuccess(PlayAllMsg(cmd.foldersOrNil, cmd.tracksOrNil))
+      case AddItemsKey =>
+        JsSuccess(AddAllMsg(cmd.tracksOrNil, cmd.foldersOrNil))
+      case PlayItemsKey =>
+        JsSuccess(PlayAllMsg(cmd.tracksOrNil, cmd.foldersOrNil))
       case ResetPlaylist =>
         JsSuccess(ResetPlaylistMessage(cmd.index getOrElse BasePlaylist.NoPosition, cmd.tracksOrNil))
       case _ =>

@@ -15,9 +15,7 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
   val DatabaseError = "A database error occurred"
   val GenericError = "A generic error occurred"
 
-  val Folders = "folders"
   val Parent = "parent"
-  val Tracks = "tracks"
   val Contents = "contents"
 
   val Gain = "gain"
@@ -34,20 +32,11 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
   val Msg = "msg"
   val ThankYou = "thank you"
 
-  val Value = "value"
-
   // commands for browser clients
   val WebPlay = "webplay"
   val WebAdd = "webadd"
   val WebStop = "webstop"
   val WebResume = "webresume"
-
-  val Remove = "remove"
-  val Insert = "insert"
-  val ResetPlaylist = "reset_playlist"
-  val Move = "move"
-  val From = "from"
-  val To = "to"
 
   val Subscribe = "subscribe"
 

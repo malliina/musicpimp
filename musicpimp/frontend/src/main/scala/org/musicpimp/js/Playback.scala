@@ -55,7 +55,6 @@ class Playback extends PlaybackSocket with PlayerStrings {
   val Max = "max"
   val Min = "min"
   val SongClass = "song"
-  val Value = "value"
   val playerDiv = elem(PlayerDivId)
   val durationElem = elem(DurationId)
   val sliderElem = elem(SliderId)

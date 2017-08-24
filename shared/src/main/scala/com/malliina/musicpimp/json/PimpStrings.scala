@@ -9,7 +9,6 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val AuthenticateKey = "authenticate"
   val Beam = "beam"
   val Body = "body"
-  val Cmd = "cmd"
   val FolderKey = "folder"
   val Limit = "limit"
   val Meta = "meta"

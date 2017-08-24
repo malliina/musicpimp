@@ -12,9 +12,11 @@ trait Identifier {
   override def toString: String = id
 }
 
-abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T] {
+abstract class IdentCompanion[T <: Identifier] extends StringCompanion[T] {
   override def raw(t: T): String = t.id
 }
+
+abstract class StringCompanion[T] extends JsonCompanion[String, T]
 
 abstract class JsonCompanion[Raw: Format, T] {
   def apply(raw: Raw): T

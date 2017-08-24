@@ -4,6 +4,7 @@ import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.models._
 import com.malliina.pimpcloud.CloudStrings.{Body, PhonesKey, RequestsKey, ServersKey}
+import com.malliina.pimpcloud.ListEvent.format
 import com.malliina.play.ContentRange
 import play.api.libs.json._
 
@@ -28,7 +29,7 @@ object PimpStream {
 case class PimpStreams(streams: Seq[PimpStream]) extends PimpList
 
 object PimpStreams {
-  implicit val json = ListEvent.format(RequestsKey, PimpStreams.apply)(_.streams)
+  implicit val json = format(RequestsKey, PimpStreams.apply)(_.streams)
 }
 
 case class PimpPhone(s: CloudID, address: String)
@@ -40,7 +41,7 @@ object PimpPhone {
 case class PimpPhones(phones: Seq[PimpPhone]) extends PimpList
 
 object PimpPhones {
-  implicit val json = ListEvent.format(PhonesKey, PimpPhones.apply)(_.phones)
+  implicit val json = format(PhonesKey, PimpPhones.apply)(_.phones)
 }
 
 case class PimpServer(id: CloudID, address: String)
@@ -52,7 +53,7 @@ object PimpServer {
 case class PimpServers(servers: Seq[PimpServer]) extends PimpList
 
 object PimpServers {
-  implicit val json = ListEvent.format(ServersKey, PimpServers.apply)(_.servers)
+  implicit val json = format(ServersKey, PimpServers.apply)(_.servers)
 }
 
 object ListEvent {
