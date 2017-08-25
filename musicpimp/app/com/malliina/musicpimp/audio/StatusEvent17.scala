@@ -5,7 +5,7 @@ import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.TrackID
 import play.api.libs.json.Json._
-import play.api.libs.json.Writes
+import play.api.libs.json.{OWrites, Writes}
 
 import scala.concurrent.duration.Duration
 
@@ -22,8 +22,8 @@ case class StatusEvent17(id: TrackID,
                          index: Int)
 
 object StatusEvent17 {
-  implicit def status17writer(implicit w: Writes[TrackMeta]): Writes[StatusEvent17] =
-    Writes[StatusEvent17] { o =>
+  implicit def status17writer(implicit w: Writes[TrackMeta]): OWrites[StatusEvent17] =
+    OWrites[StatusEvent17] { o =>
       obj(
         EventKey -> StatusKey,
         Id -> TrackID.format.writes(o.id),

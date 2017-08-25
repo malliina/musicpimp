@@ -23,5 +23,5 @@ object TrackJson {
     format(FullUrls.hostOnly(request))
 
   def format(host: FullUrl): Format[TrackMeta] =
-    Format(TrackMetas.reader, writer(host))
+    Format(TrackMeta.reader, writer(host))
 }

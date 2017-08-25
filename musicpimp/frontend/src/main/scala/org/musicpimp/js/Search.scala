@@ -4,10 +4,10 @@ import com.malliina.musicpimp.js.SearchStrings
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.{JsValue, Json}
 
-case class StatusEvent(event: String, status: String)
+case class SearchStatus(event: String, status: String)
 
-object StatusEvent {
-  implicit val json = Json.format[StatusEvent]
+object SearchStatus {
+  implicit val json = Json.format[SearchStatus]
 }
 
 class Search(music: MusicItems)
@@ -19,7 +19,7 @@ class Search(music: MusicItems)
   }
 
   override def handlePayload(payload: JsValue): Unit =
-    handleValidated[StatusEvent](payload) { event =>
+    handleValidated[SearchStatus](payload) { event =>
       onStatus(event.status)
     }
 

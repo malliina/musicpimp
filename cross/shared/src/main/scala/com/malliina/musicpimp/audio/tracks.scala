@@ -8,8 +8,9 @@ import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
-import play.api.libs.json.Json
-
+import play.api.libs.json.{Json, Reads}
+import CrossFormats.storageSize
+import CrossFormats.duration
 import scala.concurrent.duration.Duration
 
 trait TrackMeta extends MusicItem {
@@ -28,6 +29,10 @@ trait TrackMeta extends MusicItem {
   def size: StorageSize
 }
 
+object TrackMeta {
+  implicit val reader: Reads[TrackMeta] = Track.jsonFormat.map[TrackMeta](identity)
+}
+
 case class Track(id: TrackID,
                  title: String,
                  artist: String,
@@ -38,7 +43,7 @@ case class Track(id: TrackID,
 }
 
 object Track {
-  implicit val dur = CrossFormats.duration
-  implicit val storage = CrossFormats.storageSize
+//  implicit val dur = CrossFormats.duration
+//  implicit val storage = CrossFormats.storageSize
   implicit val jsonFormat = Json.format[Track]
 }

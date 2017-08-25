@@ -10,18 +10,6 @@ import play.api.libs.json.Json
 import scala.concurrent.duration.{Duration, DurationInt}
 import scalatags.Text.all._
 
-case class Status(track: Track,
-                  position: Duration,
-                  volume: Volume,
-                  mute: Boolean,
-                  playlist: Seq[Track],
-                  state: PlayState)
-
-object Status {
-  implicit val durFormat = CrossFormats.duration
-  implicit val json = Json.format[Status]
-}
-
 object Playback extends PlaybackStrings {
   val SocketUrl = "/ws/playback?f=json"
 
@@ -97,7 +85,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     isMute = mute
   }
 
-  def onStatus(status: Status) = {
+  def onStatus(status: StatusEvent) = {
     showConnected()
 
     val track = status.track

@@ -128,7 +128,7 @@ object MusicPlayer
       Duration.fromNanos(0)
     }
 
-  def status: StatusEvent = current.fold(StatusEvent.empty) { c =>
+  def status: StatusEvent = current.fold(StatusEvents.empty) { c =>
     val p = c.player
     StatusEvent(
       p.track,

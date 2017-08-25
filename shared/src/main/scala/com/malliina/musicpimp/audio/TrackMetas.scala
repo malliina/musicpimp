@@ -11,8 +11,6 @@ object TrackMetas {
   implicit val sto = JsonFormats.storageSizeFormat
   implicit val dur = JsonFormats.durationFormat
 
-  val reader: Reads[TrackMeta] = Track.jsonFormat.map[TrackMeta](identity)
-
   def writer(host: FullUrl, url: TrackID => Call): Writes[TrackMeta] =
     urlWriter(id => FullUrls.absolute(host, url(id)))
 

@@ -20,17 +20,26 @@ case object WelcomeMessage extends ServerMessage {
   implicit val json = evented(Welcome, CrossFormats.pure(WelcomeMessage))
 }
 
-//case class StatusMessage extends ServerMessage {
-//}
+case class StatusMessage(status: StatusEvent) extends ServerMessage
 
-//object StatusMessage {
-//  implicit val json = evented(Status, Json.format[StatusMessage])
-//}
+object StatusMessage {
+  implicit val reader = Reads[StatusMessage] { json =>
+    (json \ EventKey).validate[String].filter(_ == Status).flatMap { _ =>
+      json.validate[StatusEvent].map(apply)
+    }
+  }
+
+  implicit def writer(implicit w: Writes[TrackMeta]): OWrites[StatusMessage] =
+    OWrites[StatusMessage] { s => Json.obj(EventKey -> Status) ++ StatusEvent.status18writer.writes(s.status) }
+
+  implicit def json(implicit w: Writes[TrackMeta]): OFormat[StatusMessage] =
+    OFormat(reader, writer)
+}
 
 case class TrackChangedMessage(track: TrackMeta) extends ServerMessage
 
 object TrackChangedMessage {
-  implicit def json(implicit w: Format[TrackMeta]): OFormat[TrackChangedMessage] =
+  implicit def json(implicit w: Writes[TrackMeta]): OFormat[TrackChangedMessage] =
     evented(TrackChanged, Json.format[TrackChangedMessage])
 }
 
@@ -53,7 +62,7 @@ object PlaylistIndexChangedMessage {
 case class PlaylistModifiedMessage(playlist: Seq[TrackMeta]) extends ServerMessage
 
 object PlaylistModifiedMessage {
-  implicit def json(implicit w: Format[TrackMeta]): OFormat[PlaylistModifiedMessage] =
+  implicit def json(implicit w: Writes[TrackMeta]): OFormat[PlaylistModifiedMessage] =
     evented(PlaylistModified, Json.format[PlaylistModifiedMessage])
 }
 
@@ -85,7 +94,7 @@ object ServerMessage {
   def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] =
     CrossFormats.keyValued(EventKey, eventName, payload)
 
-  implicit def jsonWriter(implicit f: Format[TrackMeta]): Writes[ServerMessage] = {
+  implicit def jsonWriter(implicit f: Writes[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {
       case tc: TrackChangedMessage =>
         toJson(tc)(TrackChangedMessage.json(f))
@@ -103,8 +112,8 @@ object ServerMessage {
         toJson(tu)
       case WelcomeMessage =>
         toJson(WelcomeMessage)
-      //case StatusMessage =>
-       // toJson(StatusMessage)
+      case s: StatusMessage =>
+        toJson(s)
     }
   }
 
@@ -118,6 +127,6 @@ object ServerMessage {
       .orElse(json.validate[VolumeChangedMessage])
       .orElse(json.validate[TimeUpdatedMessage])
       .orElse(WelcomeMessage.json.reads(json))
-      //.orElse(StatusMessage.json.reads(json))
+      .orElse(StatusMessage.json.reads(json))
   }
 }

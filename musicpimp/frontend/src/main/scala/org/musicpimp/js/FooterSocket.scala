@@ -56,7 +56,7 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
 
   override def muteToggled(isMute: Boolean): Unit = ()
 
-  override def onStatus(status: Status): Unit = {
+  override def onStatus(status: StatusEvent): Unit = {
     val track = status.track
     if (track.title.nonEmpty) {
       updateTrack(track)

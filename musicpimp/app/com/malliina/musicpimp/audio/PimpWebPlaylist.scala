@@ -11,7 +11,7 @@ import scala.concurrent.stm.Ref
 class PimpWebPlaylist(val user: Username, val target: Target)(implicit w: Writes[TrackMeta])
   extends BasePlaylist[TrackMeta]
     with JsonSender {
-  implicit val f = Format(TrackMetas.reader, w)
+  implicit val f = Format(TrackMeta.reader, w)
   val songs = Ref[Seq[TrackMeta]](Nil)
   val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)
 

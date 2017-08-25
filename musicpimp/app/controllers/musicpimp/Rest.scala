@@ -126,7 +126,7 @@ class Rest(webPlayer: WebPlayer,
   }
 
   def status = pimpAction { req =>
-    implicit val w = TrackJson.writer(req)
+    implicit val w = TrackJson.format(req)
     PimpContentController.default.pimpResponse(req)(
       html = Results.NoContent,
       json17 = Json.toJson(MusicPlayer.status17),

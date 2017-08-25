@@ -32,7 +32,6 @@ trait JsonHandlerBase {
   }
 
   def parse(msg: JsValue): JsResult[PlayerMessage] = {
-    msg.validate[PlayerMessage]
     withCmd(msg)(cmd => cmd.command flatMap {
       case TimeUpdated =>
         cmd.doubleValue.map(pos => TimeUpdatedMsg(pos.seconds))
