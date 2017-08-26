@@ -2,13 +2,13 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
-import com.malliina.musicpimp.models.{CloudEvent, CloudID, Connect, Disconnect}
+import com.malliina.musicpimp.models._
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._
 import org.musicpimp.js.Cloud._
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsError, JsValue}
+import play.api.libs.json.JsValue
 
 import scalatags.Text.Frag
 import scalatags.Text.all._
@@ -67,19 +67,21 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   val formDiv = elem(CloudForm)
 
   override def onConnected(e: Event): Unit = {
-    send(Command.subscribe)
+    send(Subscribe)
     super.onConnected(e)
   }
 
   override def handlePayload(payload: JsValue): Unit = {
-    val fragment = payload.validate[CloudEvent].map {
-      case Connecting => Cloud.connectingContent
-      case Connected(id) => Cloud.connectedContent(id)
-      case Disconnected(reason) => Cloud.disconnectedContent(reason)
-      case Disconnecting => Cloud.disconnectingContent
+    handleValidated[CloudEvent](payload) { event =>
+      val frag = event match {
+        case Connecting => Cloud.connectingContent
+        case Connected(id) => Cloud.connectedContent(id)
+        case Disconnected(reason) => Cloud.disconnectedContent(reason)
+        case Disconnecting => Cloud.disconnectingContent
+      }
+      formDiv.html(frag.render)
+      installHandlers()
     }
-    fragment.fold(errors => onJsonFailure(JsError(errors)), frag => formDiv.html(frag.render))
-    installHandlers()
   }
 
   def installHandlers() = {

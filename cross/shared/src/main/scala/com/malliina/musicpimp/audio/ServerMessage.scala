@@ -1,9 +1,8 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.musicpimp.audio.ServerMessage.evented
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.CrossFormats
-import com.malliina.musicpimp.json.CrossFormats.duration
+import com.malliina.musicpimp.json.CrossFormats.{duration, evented}
 import com.malliina.musicpimp.json.PlaybackStrings._
 import com.malliina.musicpimp.models.Volume
 import play.api.libs.json.Json.toJson
@@ -91,9 +90,6 @@ object MuteToggledMessage {
 }
 
 object ServerMessage {
-  def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] =
-    CrossFormats.keyValued(EventKey, eventName, payload)
-
   implicit def jsonWriter(implicit f: Writes[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {
       case tc: TrackChangedMessage =>

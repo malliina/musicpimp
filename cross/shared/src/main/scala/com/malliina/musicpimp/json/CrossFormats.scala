@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.json
 
+import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.storage.{StorageLong, StorageSize}
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
@@ -28,6 +29,9 @@ object CrossFormats {
   )
 
   def pure[T](value: T): OFormat[T] = OFormat(_ => JsSuccess(value), (_: T) => Json.obj())
+
+  def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] =
+    keyValued(EventKey, eventName, payload)
 
   def singleCmd[T](value: String, t: T) = cmd(value, pure(t))
 

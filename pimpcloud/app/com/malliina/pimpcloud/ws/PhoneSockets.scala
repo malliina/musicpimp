@@ -3,6 +3,7 @@ package com.malliina.pimpcloud.ws
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.pattern.pipe
 import com.malliina.concurrent.FutureOps
+import com.malliina.musicpimp.audio.WelcomeMessage
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.json.JsonStrings
@@ -26,7 +27,7 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
   override def preStart(): Unit = {
     super.preStart()
     mediator ! PhoneJoined(endpoint)
-    out ! com.malliina.play.json.JsonMessages.welcome
+    sendOut(WelcomeMessage)
   }
 
   override def onMessage(msg: JsValue): Unit = {

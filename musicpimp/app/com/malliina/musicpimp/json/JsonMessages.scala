@@ -23,9 +23,6 @@ trait JsonMessages extends CommonMessages {
   def exception(e: Throwable) =
     FailReason(e.getMessage)
 
-  def searchStatus(status: String) =
-    event(SearchStatus, StatusKey -> status)
-
   def withStatus(json: JsValue): JsValue =
     event(StatusKey) ++ json.as[JsObject]
 

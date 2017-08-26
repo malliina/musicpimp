@@ -1,5 +1,6 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.models.{Delete, Start, Stop}
 import com.malliina.musicpimp.scheduler.web.AlarmStrings
 import org.scalajs.dom
 import play.api.libs.json.Writes
@@ -12,13 +13,13 @@ class Alarms extends BaseScript with AlarmStrings {
   withDataId(s".$StopClass")(_ => stopPlayback())
 
   def deleteAP(id: String) =
-    postThenReload(IdCommand(Delete, id))
+    postThenReload(Delete(id))
 
   def runAP(id: String) =
-    postAlarms(IdCommand(Start, id))
+    postAlarms(Start(id))
 
   def stopPlayback(): Boolean = {
-    postAlarms(Command(Stop))
+    postAlarms(Stop)
     false
   }
 

@@ -23,10 +23,10 @@ object MusicPlayer
   private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist = new PimpPlaylist
 
-  private val subject = Subject[ServerMessage]()
+  private val subject = Subject[ServerMessage]().toSerialized
   val events: Observable[ServerMessage] = subject
   val allEvents = events.merge(playlist.events)
-  private val trackHistorySubject = Subject[TrackMeta]()
+  private val trackHistorySubject = Subject[TrackMeta]().toSerialized
   val trackHistory: Observable[TrackMeta] = trackHistorySubject
   private val trackPlayer = new AtomicReference[Option[TrackPlayer]](None)
   // TODO: jesus fix this

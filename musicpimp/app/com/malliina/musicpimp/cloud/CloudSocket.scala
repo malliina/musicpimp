@@ -142,9 +142,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
 
     message match {
       case GetStatus =>
-        implicit val writer = StatusEvent.status18writer
-        val body = JsonMessages.withStatus(Json.toJson(MusicPlayer.status))
-        sendSuccess(request, body)
+        sendSuccess(request, StatusMessage(MusicPlayer.status))
       case GetTrack(id) =>
         uploader.upload(id, request).recoverAll { t =>
           log.error(s"Upload failed for $request", t)

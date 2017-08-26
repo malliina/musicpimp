@@ -7,7 +7,7 @@ sealed trait CloudCommand
 case class Connect(id: CloudID) extends CloudCommand
 
 object Connect {
-  implicit val json = Json.format[Connect]
+  val json = Json.format[Connect]
 }
 
 case object Disconnect extends CloudCommand
@@ -22,7 +22,7 @@ object CloudCommand {
 
   val reader = Reads[CloudCommand] { json =>
     (json \ CmdKey).validate[String].flatMap {
-      case ConnectCmd => json.validate[Connect]
+      case ConnectCmd => Connect.json.reads(json)
       case DisconnectCmd => JsSuccess(Disconnect)
       case SubscribeCmd => JsSuccess(Noop)
       case other => JsError(s"Unknown '$CmdKey' value: '$other'.")

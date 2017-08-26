@@ -20,7 +20,6 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
 
   val Gain = "gain"
   val IsDir = "is_dir"
-  val Items = "items"
   val Playlist = "playlist"
   //  @deprecated("Use POSITION", "1.8.0")
   val Pos = "pos"
@@ -32,22 +31,11 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
   val Msg = "msg"
   val ThankYou = "thank you"
 
-  // commands for browser clients
-  val WebPlay = "webplay"
-  val WebAdd = "webadd"
-  val WebStop = "webstop"
-  val WebResume = "webresume"
-
-  val Subscribe = "subscribe"
-
   val TrackHeader = "Track"
 
   val Job = "job"
   val When = "when"
   val Enabled = "enabled"
-
-  // Search
-  val SearchStatus = "search_status"
 
   // push notifications
   val Push = "push"

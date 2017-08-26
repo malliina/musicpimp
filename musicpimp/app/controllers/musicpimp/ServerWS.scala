@@ -62,7 +62,7 @@ class PlayerActor(player: ServerPlayer,
 
   override def preStart() = {
     super.preStart()
-    out ! com.malliina.play.json.JsonMessages.welcome
+    sendOut(WelcomeMessage)
     val playbackEvents = player.allEvents.subscribe(
       event => out ! messageWriter.writes(event),
       _ => (),

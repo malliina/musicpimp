@@ -1,5 +1,7 @@
 package org.musicpimp.js
 
+import com.malliina.musicpimp.models.{CloudCommand, CloudID, Connect, Disconnect}
+import play.api.libs.json.{Json, Writes}
 import utest._
 
 import scala.concurrent.duration.DurationInt
@@ -24,5 +26,13 @@ object FrontTests extends TestSuite {
       val formatted2 = Playback.toHHMMSS(4123.seconds)
       assert(formatted2 == "01:08:43")
     }
+
+    'JSON {
+      val asString = stringify(Connect(CloudID("test")))
+      assert(asString contains CloudCommand.CmdKey)
+      assert(stringify(Disconnect) contains CloudCommand.CmdKey)
+    }
   }
+
+  def stringify[C: Writes](c: C) = Json.stringify(Json.toJson(c))
 }

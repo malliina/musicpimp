@@ -2,9 +2,7 @@ package controllers.musicpimp
 
 import akka.actor.Props
 import com.malliina.musicpimp.db.Indexer
-import com.malliina.musicpimp.js.SearchStrings
-import com.malliina.musicpimp.json.JsonMessages
-import com.malliina.musicpimp.json.JsonStrings.{Cmd, Subscribe}
+import com.malliina.musicpimp.models.{Refresh, SearchMessage, SearchStatus, Subscribe}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.AuthedRequest
@@ -70,7 +68,7 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)
     (msg, _) => send(msg),
     compl => send(compl))
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     super.preStart()
     // WTF?
     send("")
@@ -78,17 +76,18 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)
     subscription = Option(sub)
   }
 
-  override def onMessage(msg: JsValue): Unit = {
-    (msg \ Cmd).asOpt[String].fold(SearchActor.log warn s"Unknown message '$msg'.")({
-      case SearchStrings.Refresh =>
+  override def onMessage(msg: JsValue): Unit =
+    msg.validate[SearchMessage].map {
+      case Refresh =>
         send("Indexing...")
         indexer.indexAndSave()
       case Subscribe =>
         ()
-    })
-  }
+    }.getOrElse {
+      SearchActor.log warn s"Unknown message '$msg'."
+    }
 
-  def send(message: String): Unit = out ! JsonMessages.searchStatus(message)
+  def send(message: String): Unit = sendOut(SearchStatus(message))
 
   override def postStop() = {
     super.postStop()

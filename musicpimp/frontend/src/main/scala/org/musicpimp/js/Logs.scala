@@ -3,10 +3,10 @@ package org.musicpimp.js
 import java.util.UUID
 
 import com.malliina.musicpimp.js.FrontStrings
-import com.malliina.musicpimp.models.JVMLogEntry
+import com.malliina.musicpimp.models.{JVMLogEntry, Subscribe}
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsError, JsValue}
+import play.api.libs.json.JsValue
 
 import scalatags.Text.all._
 
@@ -18,15 +18,14 @@ class Logs extends SocketJS("/ws/logs?f=json") with FrontStrings {
   val tableContent = elem(LogTableBodyId)
 
   override def onConnected(e: Event): Unit = {
-    send(Command.subscribe)
+    send(Subscribe)
     super.onConnected(e)
   }
 
   override def handlePayload(payload: JsValue): Unit =
-    payload.validate[Seq[JVMLogEntry]].fold(
-      invalid => onJsonFailure(JsError(invalid)),
-      entries => entries foreach prepend
-    )
+    handleValidated[Seq[JVMLogEntry]](payload) { entries =>
+      entries foreach prepend
+    }
 
   def prepend(entry: JVMLogEntry) = {
     val rowClass = entry.level match {

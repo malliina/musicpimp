@@ -36,12 +36,12 @@ class WebPlayActor(remote: RemoteInfo, ctx: ActorMeta)
   val player = new PimpWebPlayer(remote, target)
   val handler = new WebPlayerMessageHandler(remote, player)
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     super.preStart()
-    out ! com.malliina.play.json.JsonMessages.welcome
+    sendOut(WelcomeMessage)
   }
 
-  override def onMessage(msg: JsValue) = {
+  override def onMessage(msg: JsValue): Unit = {
     (msg \ JsonStrings.Cmd).asOpt[String].fold(log warn s"Unknown message '$msg'.")({
       case JsonStrings.StatusKey =>
         log info s"User '$user' from '$address' said '$msg'."

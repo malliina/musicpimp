@@ -5,12 +5,10 @@ object AlarmStrings extends AlarmStrings
 trait AlarmStrings {
   val Ap = "ap"
   val Cmd = "cmd"
-  val Delete = "delete"
   val Id = "id"
   val Play = "play"
   val Save = "save"
-  val Start = "start"
-  val Stop = "stop"
+  val StartValue = "start"
   val TaskId = "task_id"
 
   // Used in HTML
