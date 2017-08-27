@@ -9,7 +9,6 @@ trait Target {
 object Target {
   val noop = Target(_ => ())
 
-  def apply(execute: JsValue => Unit): Target = new Target {
-    override def send(json: JsValue) = execute(json)
-  }
+  def apply(execute: JsValue => Unit): Target =
+    (json: JsValue) => execute(json)
 }

@@ -8,7 +8,7 @@ import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.Clouds.log
-import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
+import com.malliina.musicpimp.models.{Connected, Connecting, Disconnected, Disconnecting}
 import com.malliina.musicpimp.models.{CloudEvent, CloudID}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils

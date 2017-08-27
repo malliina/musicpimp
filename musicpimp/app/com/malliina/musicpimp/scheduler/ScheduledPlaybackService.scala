@@ -5,11 +5,15 @@ import java.util.UUID
 
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.util.Log
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.json.Json._
 
-trait ScheduledPlaybackService extends Log {
+object ScheduledPlaybackService extends ScheduledPlaybackService
+
+trait ScheduledPlaybackService {
+  private val log = Logger(getClass)
+
   private val s: IScheduler = Cron4jScheduler
   private val clockAPs = new PlaybackScheduler[ClockSchedule, ClockPlayback](s)
 
@@ -92,5 +96,3 @@ trait ScheduledPlaybackService extends Log {
 
   private def randomID = UUID.randomUUID().toString
 }
-
-object ScheduledPlaybackService extends ScheduledPlaybackService

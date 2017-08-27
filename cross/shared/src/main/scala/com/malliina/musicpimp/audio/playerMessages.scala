@@ -7,7 +7,15 @@ import play.api.libs.json._
 
 import scala.concurrent.duration.FiniteDuration
 
+case object ToggleMuteMessage {
+  val Key = "mute"
+  implicit val json = singleCmd(Key, ToggleMuteMessage)
+}
 
+case object GetStatusMsg extends PlayerMessage {
+  val Key = "status"
+  implicit val json = singleCmd(Key, NextMsg)
+}
 
 /** Web playback updates only.
   *
@@ -31,13 +39,13 @@ object VolumeChangedMsg {
   implicit val json = cmd(VolumeChanged, Json.format[VolumeChangedMsg])
 }
 
-case class PlaylistIndexChangedMsg(index: Int) extends PlayerMessage
+case class PlaylistIndexChangedMsg(value: Int) extends PlayerMessage
 
 object PlaylistIndexChangedMsg {
   implicit val json = cmd(PlaylistIndexChanged, Json.format[PlaylistIndexChangedMsg])
 }
 
-case class PlayStateChangedMsg(state: PlayState) extends PlayerMessage
+case class PlayStateChangedMsg(value: PlayState) extends PlayerMessage
 
 object PlayStateChangedMsg {
   implicit val json = cmd(PlaystateChanged, Json.format[PlayStateChangedMsg])
@@ -108,7 +116,7 @@ object MuteMsg {
   implicit val json = cmd(Mute, Json.format[MuteMsg])
 }
 
-case class VolumeMsg(value: Int) extends PlayerMessage
+case class VolumeMsg(value: Volume) extends PlayerMessage
 
 object VolumeMsg {
   implicit val json = cmd(VolumeKey, Json.format[VolumeMsg])
@@ -162,7 +170,8 @@ trait PlayerMessage
 
 object PlayerMessage {
   implicit val reader: Reads[PlayerMessage] = Reads { json =>
-    TimeUpdatedMsg.json.reads(json)
+    GetStatusMsg.json.reads(json)
+      .orElse(TimeUpdatedMsg.json.reads(json))
       .orElse(TrackChangedMsg.json.reads(json))
       .orElse(json.validate[VolumeChangedMsg])
       .orElse(json.validate[PlaylistIndexChangedMsg])
@@ -171,7 +180,6 @@ object PlayerMessage {
       .orElse(json.validate[PlayMsg])
       .orElse(json.validate[AddMsg])
       .orElse(json.validate[RemoveMsg])
-      .orElse(RemoveMsg.json.reads(json))
       .orElse(ResumeMsg.json.reads(json))
       .orElse(StopMsg.json.reads(json))
       .orElse(NextMsg.json.reads(json))

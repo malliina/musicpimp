@@ -24,7 +24,7 @@ trait JsonHandler {
       .map(handleCommand)
       .recover({ case (err: JsError) => log.warn(s"JSON error: '$err'.") })
 
-  private def handleCommand(cmd: AlarmCommand): Unit = cmd match {
+  def handleCommand(cmd: AlarmCommand): Unit = cmd match {
     case SaveCmd(ap) => ScheduledPlaybackService.save(ap)
     case DeleteCmd(id) => ScheduledPlaybackService.remove(id)
     case StartCmd(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())

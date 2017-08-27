@@ -7,7 +7,6 @@ import com.malliina.musicpimp.messaging.apns.APNSDevice
 import com.malliina.musicpimp.messaging.gcm.GCMDevice
 import com.malliina.musicpimp.models.{Delete, Start, Stop}
 import com.malliina.musicpimp.scheduler.ClockPlayback
-import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.push.adm.ADMToken
 import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.PushUrl
@@ -18,8 +17,9 @@ sealed trait AlarmCommand
 case class SaveCmd(ap: ClockPlayback) extends AlarmCommand
 
 object SaveCmd {
+  val Key = "save"
   implicit val clockReader = ClockPlayback.shortJson
-  implicit val json = cmd(Save, Json.format[SaveCmd])
+  implicit val json = cmd(Key, Json.format[SaveCmd])
 }
 
 case class DeleteCmd(id: String) extends AlarmCommand

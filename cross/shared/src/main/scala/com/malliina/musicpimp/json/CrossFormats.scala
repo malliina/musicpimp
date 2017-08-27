@@ -28,18 +28,17 @@ object CrossFormats {
     size => toJson(size.toBytes)
   )
 
-  def pure[T](value: T): OFormat[T] = OFormat(_ => JsSuccess(value), (_: T) => Json.obj())
+  def singleEvent[T](value: String, t: T): OFormat[T] = evented(value, pure(t))
 
   def evented[T](eventName: String, payload: OFormat[T]): OFormat[T] =
     keyValued(EventKey, eventName, payload)
 
   def singleCmd[T](value: String, t: T) = cmd(value, pure(t))
 
-  def singleKeyValue[T](key: String, value: String, t: T) =
-    keyValued(key, value, pure(t))
-
   def cmd[T](value: String, payload: OFormat[T]): OFormat[T] =
     keyValued(CommonStrings.Cmd, value, payload)
+
+  def pure[T](value: T): OFormat[T] = OFormat(_ => JsSuccess(value), (_: T) => Json.obj())
 
   /** A JSON format for objects of type T that contains a top-level key-value pair.
     */

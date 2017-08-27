@@ -15,6 +15,11 @@ import scala.language.implicitConversions
   */
 sealed trait ServerMessage
 
+case object PingEvent {
+  val Key = "ping"
+  implicit val json = evented(Key, CrossFormats.pure(PingEvent))
+}
+
 case object WelcomeMessage extends ServerMessage {
   implicit val json = evented(Welcome, CrossFormats.pure(WelcomeMessage))
 }

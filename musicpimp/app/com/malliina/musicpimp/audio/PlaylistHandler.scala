@@ -1,35 +1,45 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.CrossFormats.{cmd, singleCmd}
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.PlaylistID
 import play.api.libs.json._
 
-class PlaylistHandler(service: PlaylistService) {
-  val Id = "id"
+trait PlaylistCommand
 
-  trait Command
+case object GetPlaylists extends PlaylistCommand {
+  val Key = "playlists"
+  implicit val json = singleCmd(Key, GetPlaylists)
+}
 
-  case object GetPlaylists extends Command
+case class GetPlaylist(id: PlaylistID) extends PlaylistCommand
 
-  case class GetPlaylist(id: PlaylistID) extends Command
+object GetPlaylist {
+  val Key = "playlist"
+  implicit val json = cmd(Key, Json.format[GetPlaylist])
+}
 
-  case class SavePlaylist(playlist: PlaylistSubmission) extends Command
+case class SavePlaylist(playlist: PlaylistSubmission) extends PlaylistCommand
 
-  case class DeletePlaylist(id: PlaylistID) extends Command
+object SavePlaylist {
+  val Key = "playlist_save"
+  implicit val json = cmd(Key, Json.format[SavePlaylist])
+}
 
-  def parseCommand(json: JsValue): JsResult[Command] = {
-    (json \ Cmd).validate[String].flatMap {
-      case PlaylistsGet =>
-        JsSuccess(GetPlaylists)
-      case PlaylistGet =>
-        (json \ Id).validate[PlaylistID].map(GetPlaylist)
-      case PlaylistSave =>
-        (json \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist)
-      case PlaylistDelete =>
-        (json \ Id).validate[PlaylistID].map(DeletePlaylist)
-      case other =>
-        JsError(s"Unknown command: $other")
-    }
+case class DeletePlaylist(id: PlaylistID) extends PlaylistCommand
+
+object DeletePlaylist {
+  val Key = "playlist_delete"
+  implicit val json = cmd(Key, Json.format[DeletePlaylist])
+}
+
+object PlaylistCommand {
+  implicit val reader: Reads[PlaylistCommand] = Reads { json =>
+    GetPlaylists.json.reads(json)
+      .orElse(GetPlaylist.json.reads(json))
+      .orElse(SavePlaylist.json.reads(json))
+      .orElse(DeletePlaylist.json.reads(json))
   }
 }
+
+class PlaylistHandler(service: PlaylistService)

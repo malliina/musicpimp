@@ -1,7 +1,6 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.js.CloudStrings
-import com.malliina.musicpimp.models.CloudEvent.{Connected, Connecting, Disconnected, Disconnecting}
 import com.malliina.musicpimp.models._
 import com.malliina.tags.Bootstrap._
 import com.malliina.tags.Tags._

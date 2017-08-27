@@ -90,12 +90,12 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   // Controllers
   lazy val ls = new PimpLogs(ctx)
   lazy val lp = new LogPage(tags, ls, authDeps)
-  lazy val wp = new WebPlayer(ctx)
+//  lazy val wp = new WebPlayer(ctx)
   lazy val sws = new ServerWS(clouds, auths.client, handler, ctx)
   lazy val webCtrl = new Website(tags, sws, authDeps, stats)
   lazy val s = new Search(indexer, auths.client, ctx)
   lazy val sp = new SearchPage(tags, s, indexer, db, authDeps)
-  lazy val r = new Rest(wp, authDeps, handler, statsPlayer, httpErrorHandler)
+  lazy val r = new Rest(authDeps, handler, statsPlayer, httpErrorHandler)
   lazy val pl = new Playlists(tags, ps, authDeps)
   lazy val settingsCtrl = new SettingsController(tags, messages, indexer, authDeps)
   lazy val libCtrl = new LibraryController(tags, lib, authDeps)
@@ -114,12 +114,12 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     settingsCtrl, connect, lp,
     cloud, accounts, r, pl,
     alarms, sp, s, sws,
-    wp, ls, cloudWS, assets)
+    ls, cloudWS, assets)
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
     s.subscription.unsubscribe()
-    Starter.stopServices()
+    Starter.stopServices(options)
     statsPlayer.close()
     db.close()
   })

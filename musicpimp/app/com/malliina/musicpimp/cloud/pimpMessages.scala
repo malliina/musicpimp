@@ -1,7 +1,10 @@
 package com.malliina.musicpimp.cloud
 
+import com.malliina.musicpimp.audio.PlayerMessage
+import com.malliina.musicpimp.json.CrossFormats.singleCmd
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{CloudID, PlaylistID, RequestID, TrackID}
+import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
 import com.malliina.play.models.Username
@@ -65,16 +68,22 @@ object GetRecent {
 
 case class CancelStream(request: RequestID) extends RequestMessage
 
-case class AlarmEdit(payload: JsValue) extends PimpMessage
+case class AlarmEdit(body: AlarmCommand) extends PimpMessage
 
-case class AlarmAdd(payload: JsValue) extends PimpMessage
+case class AlarmAdd(body: AlarmCommand) extends PimpMessage
 
-case class PlaybackMessage(body: JsValue, username: Username) extends UserMessage
+case class PlaybackMessage(body: PlayerMessage, username: Username) extends UserMessage
 
 object PlaybackMessage {
-  implicit val json = Json.format[PlaybackMessage]
+  implicit val reader = Json.reads[PlaybackMessage]
 }
 
-case object GetVersion extends PimpMessage
+case object GetVersion extends PimpMessage {
+  val Key = "version"
+  implicit val json = singleCmd(Key, GetVersion)
+}
 
-case object GetStatus extends PimpMessage
+case object GetStatus extends PimpMessage {
+  val Key = "status"
+  implicit val json = singleCmd(Key, GetStatus)
+}

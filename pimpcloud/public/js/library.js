@@ -11,15 +11,6 @@ var postAjax = function (json, resource) {
 var postPlayback = function (json) {
     return postAjax(json, "/playback");
 };
-var postWebPlay = function (json) {
-    return postAjax(json, "/webplay");
-};
-var webAdd = function (id) {
-    return postWebPlay(addJson(id));
-};
-var webPlay = function (id) {
-    return postWebPlay(playJson(id));
-};
 var add = function (id) {
     return postPlayback(addJson(id));
 };

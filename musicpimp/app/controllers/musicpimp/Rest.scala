@@ -33,8 +33,7 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
-class Rest(webPlayer: WebPlayer,
-           auth: AuthDeps,
+class Rest(auth: AuthDeps,
            handler: PlaybackMessageHandler,
            statsPlayer: StatsPlayer,
            errorHandler: HttpErrorHandler)

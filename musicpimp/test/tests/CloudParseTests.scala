@@ -23,7 +23,7 @@ class CloudParseTests extends FunSuite {
   test("can parse a most recent request payload") {
     val result = CloudMessageParser.parseRequest(testJson)
     assert(result.isSuccess)
-    val (message, _) = result.get
+    val message = result.get.message
     assert(message.isInstanceOf[GetRecent])
     val meta = message.asInstanceOf[GetRecent].meta
     assert(meta.from === 13)

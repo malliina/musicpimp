@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.json
 
-import com.malliina.audio.PlayerStates
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.models.{FailReason, Version}
 import play.api.libs.json.Json._
@@ -10,7 +9,6 @@ object JsonMessages extends JsonMessages
 
 trait JsonMessages extends CommonMessages {
   val version = Version(com.malliina.musicpimp.BuildInfo.version)
-  val noMedia = obj(State -> PlayerStates.NoMedia.toString)
   val unAuthorized = FailReason(AccessDenied)
   val databaseFailure = FailReason(DatabaseError)
   val genericFailure = FailReason(GenericError)

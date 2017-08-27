@@ -1,35 +1,46 @@
 package com.malliina.musicpimp.models
 
-import com.malliina.musicpimp.js.{CloudStrings, FrontStrings}
-import com.malliina.musicpimp.json.CommonMessages
+import com.malliina.musicpimp.json.CrossFormats.{evented, singleEvent}
 import play.api.libs.json._
 
-sealed abstract class CloudEvent(event: String)
+sealed abstract class CloudEvent
 
-object CloudEvent extends CloudStrings with CommonMessages {
+case class Connected(id: CloudID) extends CloudEvent
+
+object Connected {
+  val Key = "connected"
+  implicit val json = evented(Key, Json.format[Connected])
+}
+
+case class Disconnected(reason: String) extends CloudEvent
+
+object Disconnected {
+  val Key = "disconnected"
+  implicit val json = evented(Key, Json.format[Disconnected])
+}
+
+case object Connecting extends CloudEvent {
+  val Key = "connecting"
+  implicit val json = singleEvent(Key, Connecting)
+}
+
+case object Disconnecting extends CloudEvent {
+  val Key = "disconnecting"
+  implicit val json = singleEvent(Key, Disconnecting)
+}
+
+object CloudEvent {
   val reader = Reads[CloudEvent] { json =>
-    (json \ FrontStrings.EventKey).validate[String].flatMap {
-      case ConnectedKey => (json \ IdKey).validate[CloudID].map { id => Connected(id) }
-      case DisconnectingKey => JsSuccess(Disconnecting)
-      case ConnectingKey => JsSuccess(Connecting)
-      case DisconnectedKey => (json \ Reason).validate[String].map { r => Disconnected(r) }
-      case other => JsError(s"Unknown ${FrontStrings.EventKey} value: '$other'.")
-    }
+    Connected.json.reads(json)
+      .orElse(Disconnected.json.reads(json))
+      .orElse(Connecting.json.reads(json))
+      .orElse(Disconnecting.json.reads(json))
   }
   val writer: Writes[CloudEvent] = Writes[CloudEvent] {
-    case Connected(id) => event(ConnectedKey, IdKey -> id)
-    case Disconnected(reason) => event(DisconnectedKey, Reason -> reason)
-    case Connecting => event(ConnectingKey)
-    case Disconnecting => event(DisconnectingKey)
+    case e: Connected => Connected.json.writes(e)
+    case e: Disconnected => Disconnected.json.writes(e)
+    case Connecting => Connecting.json.writes(Connecting)
+    case Disconnecting => Disconnecting.json.writes(Disconnecting)
   }
   implicit val json: Format[CloudEvent] = Format(reader, writer)
-
-  case class Connected(id: CloudID) extends CloudEvent(ConnectedKey)
-
-  case class Disconnected(reason: String) extends CloudEvent(DisconnectedKey)
-
-  case object Connecting extends CloudEvent(ConnectingKey)
-
-  case object Disconnecting extends CloudEvent(DisconnectingKey)
-
 }

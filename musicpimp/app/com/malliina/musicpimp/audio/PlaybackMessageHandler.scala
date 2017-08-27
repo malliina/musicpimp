@@ -1,10 +1,13 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
+import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, RemoteInfo, TrackID}
+import com.malliina.play.models.Username
 import play.api.Logger
 import play.api.libs.json.JsValue
+import play.api.libs.json.Json.toJson
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -15,13 +18,22 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
   val player = MusicPlayer
   val playlist = MusicPlayer.playlist
 
+  def updateUser(user: Username): Unit = statsPlayer.updateUser(user)
+
   override def handleMessage(msg: JsValue, src: RemoteInfo): Unit = {
     statsPlayer.updateUser(src.user)
     super.handleMessage(msg, src)
   }
 
-  override protected def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
+  override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
     message match {
+      case GetStatusMsg =>
+        implicit val w = TrackJson.writer(src.host)
+        val json = src.apiVersion match {
+          case JsonFormatVersions.JSONv17 => toJson(player.status17)
+          case _ => toJson(player.status)
+        }
+        src.target send JsonMessages.withStatus(json)
       case ResumeMsg =>
         player.play()
       case StopMsg =>
@@ -33,7 +45,7 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
       case MuteMsg(isMute) =>
         player.mute(isMute)
       case VolumeMsg(vol) =>
-        player.volume(vol)
+        player.volume(vol.volume)
       case SeekMsg(pos) =>
         player.seek(pos)
       case PlayMsg(track) =>
@@ -63,15 +75,15 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
         }
       case ResetPlaylistMessage(index, tracks) =>
         playlist.reset(index, tracks.map(Library.meta))
-      case _ =>
-        log error s"Unsupported message: $message"
+      case other =>
+        log.warn(s"Unsupported message: '$other'.")
     }
   }
 
   def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
     resolveTracks(folders, tracks) recover {
       case t: Throwable =>
-        log error s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references"
+        log.error(s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references", t)
         Nil
     }
 

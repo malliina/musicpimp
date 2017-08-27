@@ -4,15 +4,13 @@ import akka.actor.Props
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.http.PimpRequest
-import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
+import com.malliina.musicpimp.json.Target
+import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.play.ws._
-import play.api.Logger
 import play.api.libs.json.JsValue
-import play.api.libs.json.Json.toJson
 import rx.lang.scala.subscriptions.CompositeSubscription
 import rx.lang.scala.{Observable, Subscription}
 
@@ -28,14 +26,13 @@ class ServerWS(val clouds: Clouds,
   val serverMessages = MusicPlayer.allEvents
   val subscription = serverMessages.subscribe(event => sendToPimpcloud(event))
   val cloudWriter = ServerMessage.jsonWriter(TrackJson.format(clouds.cloudHost))
-
-  def sendToPimpcloud(message: ServerMessage) = {
-    clouds.sendIfConnected(cloudWriter writes message)
-  }
-
   val sockets = new Sockets(auth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
       Props(new PlayerActor(MusicPlayer, handler, conf))
+  }
+
+  def sendToPimpcloud(message: ServerMessage) = {
+    clouds.sendIfConnected(cloudWriter writes message)
   }
 
   def openSocket = sockets.newSocket
@@ -51,16 +48,9 @@ class PlayerActor(player: ServerPlayer,
   val user = conf.user.user
   var eventSub: Option[Subscription] = None
   var previousPos = -1L
+  val remoteInfo = RemoteInfo(user, PimpRequest.apiVersion(rh), FullUrls.hostOnly(rh), Target(json => out ! json))
 
-  def status() = {
-    val json = apiVersion match {
-      case JsonFormatVersions.JSONv17 => toJson(player.status17)
-      case _ => toJson(player.status)
-    }
-    JsonMessages.withStatus(json)
-  }
-
-  override def preStart() = {
+  override def preStart(): Unit = {
     super.preStart()
     sendOut(WelcomeMessage)
     val playbackEvents = player.allEvents.subscribe(
@@ -72,14 +62,8 @@ class PlayerActor(player: ServerPlayer,
     eventSub = Option(CompositeSubscription(playbackEvents, timeUpdates))
   }
 
-  override def onMessage(msg: JsValue) = {
-    (msg \ Cmd).asOpt[String].fold(PlayerActor.log warn s"Unknown message: '$msg'.") {
-      case StatusKey =>
-        out ! status()
-      case _ =>
-        messageHandler.onJson(msg, user, rh)
-    }
-  }
+  override def onMessage(msg: JsValue): Unit =
+    messageHandler.onJson(msg, remoteInfo)
 
   def onTick() {
     val pos = player.position
@@ -90,12 +74,8 @@ class PlayerActor(player: ServerPlayer,
     }
   }
 
-  override def postStop() = {
+  override def postStop(): Unit = {
     super.postStop()
     eventSub foreach { sub => sub.unsubscribe() }
   }
-}
-
-object PlayerActor {
-  private val log = Logger(getClass)
 }

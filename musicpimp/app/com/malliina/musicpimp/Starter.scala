@@ -120,11 +120,13 @@ object Starter extends PlayLifeCycle with Log {
     }
   }
 
-  def stopServices() = {
+  def stopServices(options: InitOptions) = {
     log.info("Stopping services...")
     MusicPlayer.close()
     Scheduling.shutdown()
-    ScheduledPlaybackService.stop()
+//    if(options.alarms) {
+      ScheduledPlaybackService.stop()
+//    }
     //    Search.subscription.unsubscribe()
     nettyServer foreach (_.stop())
   }

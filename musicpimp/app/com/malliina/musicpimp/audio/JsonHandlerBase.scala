@@ -1,28 +1,29 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
-import com.malliina.musicpimp.json.JsonStrings._
-import com.malliina.musicpimp.models.{RemoteInfo, Volume}
+import com.malliina.musicpimp.http.PimpRequest
+import com.malliina.musicpimp.json.Target
+import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.http.{CookiedRequest, FullUrls}
 import com.malliina.play.models.Username
 import play.api.Logger
-import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue}
-import play.api.mvc.RequestHeader
-
-import scala.concurrent.duration.DurationDouble
+import play.api.libs.json.JsValue
 
 trait JsonHandlerBase {
 
-  protected def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit
+  def fulfillMessage(message: PlayerMessage, request: RemoteInfo): Unit
 
-  def onJson(req: CookiedRequest[JsValue, Username]): Unit =
-    onJson(req.body, req.user, req.rh)
+  def onJson(req: CookiedRequest[JsValue, Username]): Unit = {
+    // Safe to use Target.noop because this method is called form POSTing which is write-only (in our case)
+    val remoteInfo = RemoteInfo(req.user, PimpRequest.apiVersion(req.rh), FullUrls.hostOnly(req.rh), Target.noop)
+    onJson(req.body, remoteInfo)
+  }
 
   /** Handles messages sent by web players.
     */
-  def onJson(msg: JsValue, user: Username, rh: RequestHeader): Unit = {
-    log info s"User '$user' from '${rh.remoteAddress}' said: '$msg'."
-    handleMessage(msg, RemoteInfo(user, FullUrls.hostOnly(rh)))
+  def onJson(msg: JsValue, remote: RemoteInfo): Unit = {
+    log info s"User '${remote.user}' said: '$msg'."
+    handleMessage(msg, remote)
   }
 
   def handleMessage(msg: JsValue, request: RemoteInfo): Unit = {
@@ -30,66 +31,6 @@ trait JsonHandlerBase {
       .map(fulfillMessage(_, request))
       .recoverTotal(err => log error s"Invalid JSON: '$msg', error: $err.")
   }
-
-  def parse(msg: JsValue): JsResult[PlayerMessage] = {
-    withCmd(msg)(cmd => cmd.command flatMap {
-      case TimeUpdated =>
-        cmd.doubleValue.map(pos => TimeUpdatedMsg(pos.seconds))
-      case TrackChanged =>
-        cmd.track.map(TrackChangedMsg.apply)
-      case VolumeChanged =>
-        cmd.doubleValue.map(vol => VolumeChangedMsg(Volume(vol.toInt)))
-      case PlaylistIndexChanged =>
-        cmd.intValue.map(PlaylistIndexChangedMsg.apply)
-      case PlaystateChanged =>
-        (msg \ Value).validate[PlayState].map(PlayStateChangedMsg.apply)
-      case MuteToggled =>
-        cmd.boolValue.map(MuteToggledMsg.apply)
-      case Play =>
-        cmd.track.map(PlayMsg.apply)
-      case Add =>
-        cmd.track.map(AddMsg.apply)
-      case Remove =>
-        cmd.indexOrValue.map(RemoveMsg.apply)
-      case Resume =>
-        JsSuccess(ResumeMsg)
-      case Stop =>
-        JsSuccess(StopMsg)
-      case Next =>
-        JsSuccess(NextMsg)
-      case Prev =>
-        JsSuccess(PrevMsg)
-      case Skip =>
-        cmd.intValue.map(SkipMsg.apply)
-      case Seek =>
-        cmd.doubleValue.map(d => SeekMsg(d.seconds))
-      case Mute =>
-        cmd.boolValue.map(MuteMsg.apply)
-      case VolumeKey =>
-        cmd.doubleValue.map(d => VolumeMsg(d.toInt))
-      case Insert =>
-        for {
-          track <- cmd.track
-          index <- cmd.indexOrValue
-        } yield InsertTrackMsg(index, track)
-      case Move =>
-        for {
-          from <- (msg \ From).validate[Int]
-          to <- (msg \ To).validate[Int]
-        } yield MoveTrackMsg(from, to)
-      case AddItemsKey =>
-        JsSuccess(AddAllMsg(cmd.tracksOrNil, cmd.foldersOrNil))
-      case PlayItemsKey =>
-        JsSuccess(PlayAllMsg(cmd.tracksOrNil, cmd.foldersOrNil))
-      case ResetPlaylist =>
-        JsSuccess(ResetPlaylistMessage(cmd.index getOrElse BasePlaylist.NoPosition, cmd.tracksOrNil))
-      case _ =>
-        JsError(s"Unknown message: '$msg'.")
-    })
-  }
-
-  def withCmd[T](json: JsValue)(f: JsonCmd => T): T =
-    f(new JsonCmd(json))
 }
 
 object JsonHandlerBase {

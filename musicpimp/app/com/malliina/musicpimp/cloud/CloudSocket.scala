@@ -125,18 +125,21 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   }
 
   protected def processRequest(json: JsValue): JsResult[Unit] =
-    parseRequest(json) map (pair => handleRequest(pair._1, pair._2))
+    parseRequest(json) map (request => handleRequest(request))
 
   protected def processEvent(json: JsValue): JsResult[Unit] =
     parseEvent(json) map handleEvent
 
-  protected def parseRequest(json: JsValue): JsResult[(PimpMessage, RequestID)] =
+  protected def parseRequest(json: JsValue): JsResult[CloudRequest] =
     messageParser.parseRequest(json)
 
   protected def parseEvent(json: JsValue): JsResult[PimpMessage] =
     messageParser.parseEvent(json)
 
-  def handleRequest(message: PimpMessage, request: RequestID): Unit = {
+  def handleRequest(cloudRequest: CloudRequest): Unit = {
+    val request = cloudRequest.request
+    val message = cloudRequest.message
+
     def databaseResponse[T: Writes](f: Future[T]): Future[Any] =
       withDatabaseExcuse(request)(f.map(t => sendSuccess(request, t)))
 
@@ -177,7 +180,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case PingAuth =>
         sendSuccess(request, JsonMessages.version)
       case PingMessage =>
-        sendSuccess(request, JsonMessages.ping)
+        sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
         databaseResponse(stats.mostPlayed(meta).map(PopularList.apply))
       case GetRecent(meta) =>
@@ -206,15 +209,11 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         implicit val writer = Alarms.alarmWriter
         sendLogged(CloudResponse.success(request, ScheduledPlaybackService.status))
       case AlarmEdit(payload) =>
-        AlarmJsonHandler.handle(payload).fold(
-          _ => sendFailure(request, JsonMessages.genericFailure),
-          _ => sendSuccess(request, Json.obj())
-        )
+        AlarmJsonHandler.handleCommand(payload)
+        sendSuccess(request, Json.obj())
       case AlarmAdd(payload) =>
-        AlarmJsonHandler.handle(payload).fold(
-          _ => sendFailure(request, JsonMessages.genericFailure),
-          _ => sendSuccess(request, Json.obj())
-        )
+        AlarmJsonHandler.handleCommand(payload)
+        sendSuccess(request, Json.obj())
       case Authenticate(user, pass) =>
         val authentication = deps.userManager.authenticate(user, pass).recover {
           case t =>
@@ -234,13 +233,14 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case RegistrationEvent(_, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
-        handler.handleMessage(payload, RemoteInfo(user, cloudHost))
+        handlePlayerMessage(payload, user)
       case beamCommand: BeamCommand =>
         Future(Rest beam beamCommand)
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
       case _ =>
+        sendFailure(request, FailReason(s"Unknown message in request '$request'."))
         log.warn(s"Unknown request: '$message'.")
     }
   }
@@ -258,12 +258,17 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case RegistrationEvent(_, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
-        handler.handleMessage(payload, RemoteInfo(user, cloudHost))
+        handlePlayerMessage(payload, user)
       case PingMessage =>
         ()
       case other =>
         log.warn(s"Unknown event: '$other'.")
     }
+
+  def handlePlayerMessage(message: PlayerMessage, user: Username): Unit = {
+    handler.updateUser(user)
+    handler.fulfillMessage(message, RemoteInfo.cloud(user, cloudHost))
+  }
 
   def sendSuccess[T: Writes](request: RequestID, response: T) =
     sendLogged(CloudResponse.success(request, response))
