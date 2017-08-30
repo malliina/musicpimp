@@ -21,7 +21,7 @@ import com.malliina.rmi.{RmiClient, RmiServer, RmiUtil}
 import com.malliina.util.{Log, Logging, Scheduling}
 import play.core.server.{ProdServerStart, RealServerProcess, ReloadableServer}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO get rid of this object entirely, especially Netty
@@ -76,12 +76,8 @@ object Starter extends PlayLifeCycle with Log {
       // will call Global.onStop, which calls stopServices()
       server.foreach(_.stop())
     } finally {
-      /**
-        * Well the following is lame, but some threads are left hanging
+      /** Well the following is lame, but some threads are left hanging
         * and I don't know how to stop them gracefully.
-        *
-        * Likely guilty: play! framework, because if no web requests have
-        * been made, the app exits normally without this
         */
       Future(System.exit(0))(ExecutionContexts.cached)
     }
@@ -128,15 +124,14 @@ object Starter extends PlayLifeCycle with Log {
       ScheduledPlaybackService.stop()
 //    }
     //    Search.subscription.unsubscribe()
-    nettyServer foreach (_.stop())
   }
 
   def printThreads() {
-    val threads = Thread.getAllStackTraces.keySet()
+    val threads = Thread.getAllStackTraces.keySet().asScala
     threads.foreach { thread =>
       println("T: " + thread.getName + ", state: " + thread.getState)
     }
-    println("Threads in total: " + threads.size())
+    println("Threads in total: " + threads.seq.size)
   }
 
   def openWebInterface() = {

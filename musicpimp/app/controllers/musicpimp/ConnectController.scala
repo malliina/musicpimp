@@ -2,12 +2,9 @@ package controllers.musicpimp
 
 import java.net.NetworkInterface
 
-import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import com.malliina.json.JsonFormats
-import com.malliina.play.CookieAuthenticator
-import com.malliina.play.auth.Authenticator
-import com.malliina.play.http.{AuthedRequest, CookiedRequest}
+import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
 import controllers.musicpimp.ConnectController.{Protocols, log}
 import net.glxn.qrgen.QRCode
@@ -16,10 +13,9 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc.{AnyContent, RequestHeader}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters.enumerationAsScalaIteratorConverter
 
-/**
-  * This code is totally best effort so make sure the user has the final say.
+/** Unused.
   */
 class ConnectController(auth: AuthDeps)
   extends HtmlController(auth) {
@@ -34,12 +30,12 @@ class ConnectController(auth: AuthDeps)
   }
 
   def coordinate(req: CookiedRequest[AnyContent, Username]): Coordinate =
-    Coordinate(protocol(req), systemIPs, RequestHelpers port req, req.user)
+    Coordinate(protocol(req), systemIPs, req.user)
 
   def systemIPs: Seq[String] =
     (for {
-      interface <- NetworkInterface.getNetworkInterfaces
-      address <- interface.getInetAddresses
+      interface <- NetworkInterface.getNetworkInterfaces.asScala
+      address <- interface.getInetAddresses.asScala
       if !address.isAnyLocalAddress && !address.isLinkLocalAddress && !address.isLoopbackAddress
     } yield address.getHostAddress).toList
 
@@ -60,7 +56,6 @@ object ConnectController {
 
 case class Coordinate(protocol: Protocols.Protocol,
                       hosts: Seq[String],
-                      port: Int,
                       username: Username)
 
 object Coordinate {
