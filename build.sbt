@@ -27,7 +27,7 @@ val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.3-SNAPSHOT"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.3"
 
 scalaVersion in ThisBuild := "2.12.3"
 
@@ -162,7 +162,7 @@ lazy val pimpPlaySettings =
       libraryDependencies ++= Seq(
         malliinaGroup %% "util-actor" % "2.8.2",
         malliinaGroup %% "util-rmi" % "2.8.2",
-        malliinaGroup %% "util-audio" % "2.3.1",
+        malliinaGroup %% "util-audio" % "2.3.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
