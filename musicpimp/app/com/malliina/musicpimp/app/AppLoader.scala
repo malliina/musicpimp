@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.app
 
 import _root_.musicpimp.Routes
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.Auths
@@ -12,12 +13,11 @@ import com.malliina.musicpimp.tags.PimpHtml
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
-import com.malliina.http.FullUrl
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import controllers._
 import controllers.musicpimp._
 import play.api.ApplicationLoader.Context
-import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler, SecretConfiguration}
+import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang}
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Mode}

@@ -160,8 +160,8 @@ lazy val pimpPlaySettings =
     artifactSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.8.0",
-        malliinaGroup %% "util-rmi" % "2.8.0",
+        malliinaGroup %% "util-actor" % "2.8.2",
+        malliinaGroup %% "util-rmi" % "2.8.2",
         malliinaGroup %% "util-audio" % "2.3.1",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
@@ -180,7 +180,9 @@ lazy val pimpPlaySettings =
       fileTreeSources := Seq(
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.tags.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
-      )
+      ),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
+      fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
     )
 
 lazy val commonServerSettings = baseSettings ++ Seq(

@@ -10,6 +10,7 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.play.ws._
+import play.api.Logger
 import play.api.libs.json.JsValue
 import rx.lang.scala.subscriptions.CompositeSubscription
 import rx.lang.scala.{Observable, Subscription}
@@ -41,6 +42,7 @@ class ServerWS(val clouds: Clouds,
 class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
                   conf: ActorConfig[AuthedRequest]) extends JsonActor(conf) {
+  private val log = Logger(getClass)
   val ticks = Observable.interval(900.millis)
   val messageWriter = ServerMessage.jsonWriter(TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
@@ -49,6 +51,7 @@ class PlayerActor(player: ServerPlayer,
   var eventSub: Option[Subscription] = None
   var previousPos = -1L
   val remoteInfo = RemoteInfo(user, PimpRequest.apiVersion(rh), FullUrls.hostOnly(rh), Target(json => out ! json))
+  log.info("Starting player")
 
   override def preStart(): Unit = {
     super.preStart()

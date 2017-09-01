@@ -5,7 +5,6 @@ import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.json.CrossFormats.{duration, evented}
 import com.malliina.musicpimp.json.PlaybackStrings._
 import com.malliina.musicpimp.models.Volume
-import play.api.libs.json.Json.toJson
 import play.api.libs.json._
 
 import scala.concurrent.duration.Duration
@@ -98,23 +97,26 @@ object ServerMessage {
   implicit def jsonWriter(implicit f: Writes[TrackMeta]): Writes[ServerMessage] = {
     Writes[ServerMessage] {
       case tc: TrackChangedMessage =>
-        toJson(tc)(TrackChangedMessage.json(f))
+        TrackChangedMessage.json.writes(tc)
       case pm: PlaylistModifiedMessage =>
-        toJson(pm)(PlaylistModifiedMessage.json(f))
+        PlaylistModifiedMessage.json(f).writes(pm)
       case pic: PlaylistIndexChangedMessage =>
-        toJson(pic)
+        PlaylistIndexChangedMessage.json.writes(pic)
       case psc: PlayStateChangedMessage =>
-        toJson(psc)
+        PlayStateChangedMessage.json.writes(psc)
       case mt: MuteToggledMessage =>
-        toJson(mt)
+        MuteToggledMessage.json.writes(mt)
       case vc: VolumeChangedMessage =>
-        toJson(vc)
+        VolumeChangedMessage.json.writes(vc)
       case tu: TimeUpdatedMessage =>
-        toJson(tu)
+        TimeUpdatedMessage.json.writes(tu)
       case WelcomeMessage =>
-        toJson(WelcomeMessage)
+        WelcomeMessage.json.writes(WelcomeMessage)
       case s: StatusMessage =>
-        toJson(s)
+        StatusMessage.json.writes(s)
+      case _ =>
+        // TODO ???
+        Json.obj()
     }
   }
 

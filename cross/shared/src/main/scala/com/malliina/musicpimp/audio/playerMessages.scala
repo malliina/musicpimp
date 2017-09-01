@@ -14,7 +14,7 @@ case object ToggleMuteMessage {
 
 case object GetStatusMsg extends PlayerMessage {
   val Key = "status"
-  implicit val json = singleCmd(Key, NextMsg)
+  implicit val json = singleCmd(Key, GetStatusMsg)
 }
 
 /** Web playback updates only.
