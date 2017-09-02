@@ -268,6 +268,6 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies += "com.lihaoyi" %%% "utest" % "0.4.4" % Test,
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.4" % Test),
       testFrameworks += new TestFramework("utest.runner.Framework")
     )
