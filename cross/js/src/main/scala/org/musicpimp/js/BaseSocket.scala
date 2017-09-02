@@ -29,8 +29,10 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     failStatus removeClass hideClass
   }
 
-  def send[T: Writes](payload: T): Unit =
-    socket.send(Json.stringify(Json.toJson(payload)))
+  def send[T: Writes](payload: T): Unit = {
+    val asString = Json.stringify(Json.toJson(payload))
+    socket.send(asString)
+  }
 
   def onMessage(msg: MessageEvent): Unit = {
     Try(Json.parse(msg.data.toString)).map { json =>
@@ -77,6 +79,7 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
   }
 
   protected def onJsonFailure(result: JsError): Unit = {
+    println(result)
     log info s"JSON error $result"
   }
 }

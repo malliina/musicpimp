@@ -20,14 +20,14 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.8.3"
+val musicpimpVersion = "3.8.4"
 val pimpcloudVersion = "1.8.2"
 val sharedVersion = "1.1.0"
 val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.3-SNAPSHOT"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.3"
 
 scalaVersion in ThisBuild := "2.12.3"
 
@@ -160,9 +160,9 @@ lazy val pimpPlaySettings =
     artifactSettings ++
     Seq(
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.8.0",
-        malliinaGroup %% "util-rmi" % "2.8.0",
-        malliinaGroup %% "util-audio" % "2.3.1",
+        malliinaGroup %% "util-actor" % "2.8.2",
+        malliinaGroup %% "util-rmi" % "2.8.2",
+        malliinaGroup %% "util-audio" % "2.3.2",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -180,7 +180,9 @@ lazy val pimpPlaySettings =
       fileTreeSources := Seq(
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.tags.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
-      )
+      ),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
+      fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
     )
 
 lazy val commonServerSettings = baseSettings ++ Seq(

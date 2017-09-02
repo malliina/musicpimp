@@ -18,14 +18,16 @@ import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
 import com.malliina.rmi.{RmiClient, RmiServer, RmiUtil}
-import com.malliina.util.{Log, Logging, Scheduling}
+import com.malliina.util.{Logging, Scheduling}
+import org.slf4j.LoggerFactory
 import play.core.server.{ProdServerStart, RealServerProcess, ReloadableServer}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 // TODO get rid of this object entirely, especially Netty
-object Starter extends PlayLifeCycle with Log {
+object Starter extends PlayLifeCycle {
+  private val log = LoggerFactory.getLogger(getClass)
 
   override def appName: String = "musicpimp"
 

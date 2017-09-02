@@ -26,9 +26,11 @@ abstract class PlaybackSocket
 
   def onStatus(status: StatusEvent): Unit
 
-  override def handlePayload(payload: JsValue): Unit =
+  override def handlePayload(payload: JsValue): Unit = {
     payload.validate[ServerMessage]
+      .map(handleMessage)
       .recoverTotal { error => onJsonFailure(error) }
+  }
 
   def handleMessage(message: ServerMessage): Unit = {
     message match {
