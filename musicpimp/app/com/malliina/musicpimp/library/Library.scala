@@ -93,7 +93,7 @@ class Library {
   private def meta(song: Path): LocalTrack = {
     val pathData = pathInfo(song)
     val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new LocalTrack(TrackID(encode(song)), UnixPath(pathData.relative), meta)
+    new LocalTrack(TrackID(encodePath(song)), UnixPath(pathData.relative), meta)
   }
 
   def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))

@@ -41,7 +41,7 @@ class PimpServerSocket(val jsonOut: ActorRef,
   extends JsonFutureSocket(id) {
   val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, errorHandler, onUpdate)
 
-  override def send(payload: JsValue) = jsonOut ! payload
+  override def send(payload: JsValue): Unit = jsonOut ! payload
 
   def requestTrack(track: Track, contentRange: ContentRange, req: RequestHeader): Result =
     fileTransfers.requestTrack(track, contentRange, req)

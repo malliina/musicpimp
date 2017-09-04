@@ -66,22 +66,21 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
     * @param responseBody body of failed response
     * @return true if an ongoing request with ID `requestID` existed, false otherwise
     */
-  def fail(requestID: RequestID, responseBody: JsValue) =
+  def fail(requestID: RequestID, responseBody: JsValue) = {
+    log error s"Failing request '$requestID', response '$responseBody'."
     failExceptionally(requestID, new RequestFailure(responseBody))
+  }
 
   def failExceptionally(requestID: RequestID, t: Throwable) =
     baseComplete(requestID)(_.tryFailure(t))
 
-  private def baseComplete(request: RequestID)(f: Promise[JsValue] => Unit) = {
+  private def baseComplete(request: RequestID)(f: Promise[JsValue] => Unit): Boolean = {
     (ongoing get request).exists { promise =>
       f(promise)
       ongoing -= request
       true
     }
   }
-
-  class RequestFailure(val response: JsValue) extends Exception
-
 
 }
 
@@ -94,3 +93,5 @@ case class BodyAndId(body: JsValue, request: RequestID)
 object BodyAndId {
   implicit val json = Json.format[BodyAndId]
 }
+
+class RequestFailure(val response: JsValue) extends Exception

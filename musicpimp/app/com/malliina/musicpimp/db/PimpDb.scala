@@ -3,6 +3,7 @@ package com.malliina.musicpimp.db
 import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.file.StorageFile
+import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.db.PimpDb.log
 import com.malliina.musicpimp.db.PimpSchema.{folders, tempFoldersTable, tempTracksTable, tracks}
 import com.malliina.musicpimp.library.Library
@@ -81,6 +82,8 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
 
   def folderOnly(id: FolderID): Future[Option[DataFolder]] = {
     import com.malliina.musicpimp.models.FolderIDs.db
+
+    log info s"Search '$id', enc '${PimpEnc.encode(id.id)}', dec '${PimpEnc.decode(id)}', decenc '${PimpEnc.encode(PimpEnc.decode(id))}', raw '${PimpEnc.encode("Svår (fålder)")}'."
 
     run(folders.filter(folder => folder.id === id).result.headOption)
   }

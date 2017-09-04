@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.audio.TrackJson
+import com.malliina.musicpimp.audio.{PimpEnc, TrackJson}
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models._
@@ -27,13 +27,31 @@ class LibraryController(tags: PimpHtml,
     * @return an action that provides the contents of the library with the supplied id
     */
   def library(folderId: FolderID) = pimpActionAsync { request =>
-    lib.folder(folderId).map(_.fold(folderNotFound(folderId, request))(items => folderResult(items, request)))
+    val canonical = canonicalFolder(folderId)
+    lib.folder(canonical).map { maybeFolder =>
+      maybeFolder.map { items =>
+        folderResult(items, request)
+      }.getOrElse {
+        folderNotFound(canonical, request)
+      }
+    }
   }
 
-  def tracksIn(folderID: FolderID) = pimpActionAsync { request =>
+  def tracksIn(folderId: FolderID) = pimpActionAsync { request =>
+    val canonical = canonicalFolder(folderId)
     implicit val writer = TrackJson.writer(request)
-    lib.tracksIn(folderID).map(_.fold(folderNotFound(folderID, request))(ts => Ok(Json.toJson(ts))))
+    lib.tracksIn(canonical).map { maybeTracks =>
+      maybeTracks.map { tracks =>
+        Ok(Json.toJson(tracks))
+      }.getOrElse {
+        folderNotFound(canonical, request)
+      }
+    }
   }
+
+  def canonicalTrack(t: TrackID) = PimpEnc.canonicalTrack(t)
+
+  def canonicalFolder(f: FolderID) = PimpEnc.canonicalFolder(f)
 
   def allTracks = tracksIn(Library.RootId)
 
@@ -55,9 +73,7 @@ class LibraryController(tags: PimpHtml,
     *
     * @param trackId track to serve
     */
-  def supplyForPlayback(trackId: TrackID) = {
-    download(trackId)
-  }
+  def supplyForPlayback(trackId: TrackID) = download(canonicalTrack(trackId))
 
   /** Responds with the song with the given ID.
     *
@@ -73,9 +89,10 @@ class LibraryController(tags: PimpHtml,
     */
   def download(trackId: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
-      Library.findAbsolute(trackId)
+      val canonical = canonicalTrack(trackId)
+      Library.findAbsolute(canonical)
         .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
-        .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
+        .getOrElse(NotFound(LibraryController.noTrackJson(canonical)))
     }
 
   def onDownloadAuthFail(failure: AuthFailure): Result = {
@@ -84,9 +101,11 @@ class LibraryController(tags: PimpHtml,
   }
 
   def meta(id: TrackID) = pimpAction { request =>
+    val canonical = canonicalTrack(id)
     implicit val writer = TrackJson.writer(request)
-    val metaResult = Library.findMeta(id).map(t => Json.toJson(t))
-    metaResult.fold(trackNotFound(id))(json => Ok(json))
+    Library.findMeta(canonical)
+      .map(t => Ok(Json.toJson(t)))
+      .getOrElse(trackNotFound(canonical))
   }
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))

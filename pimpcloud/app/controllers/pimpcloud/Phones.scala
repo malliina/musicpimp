@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.Directory
+import com.malliina.musicpimp.audio.{Directory, PimpEnc}
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
@@ -74,7 +74,7 @@ class Phones(comps: ControllerComponents,
 
   def rootFolder = executeFolderBasic(RootFolderKey, Json.obj())
 
-  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(id))
+  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(PimpEnc.canonicalFolder(id)))
 
   def search = executeFolder(SearchKey, parseSearch)
 
@@ -106,16 +106,17 @@ class Phones(comps: ControllerComponents,
     * @param id id of the requested track
     */
   def track(id: TrackID): EssentialAction = {
+    val canonical = PimpEnc.canonicalTrack(id)
     phoneAuth.authenticatedLogged { (conn: PhoneConnection) =>
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
-        log info s"Serving track $id to user agent $userAgent"
-        Phones.path(id).map { path =>
+        log info s"Serving track $canonical to user agent $userAgent"
+        Phones.path(canonical).map { path =>
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
-          conn.meta(id).map[Result] { res =>
+          conn.meta(canonical).map[Result] { res =>
             res.map { track =>
               // proxies request
               val trackSize = track.size
@@ -141,8 +142,8 @@ class Phones(comps: ControllerComponents,
             }.getOrElse {
               badGatewayDefault
             }
-          }.recoverAll(_ => notFound(s"ID not found '$id'."))
-        }.getOrElse(fut(badRequest(s"Illegal track ID '$id'.")))
+          }.recoverAll(_ => notFound(s"ID not found '$canonical'."))
+        }.getOrElse(fut(badRequest(s"Illegal track ID '$canonical'.")))
       }
     }
   }

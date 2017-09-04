@@ -17,11 +17,19 @@ object PimpEnc {
     * @param path path to music file or folder
     * @return the id
     */
-  def encode(path: Path) = URLEncoder.encode(path.toString, UTF8)
+  def encodePath(path: Path) = encode(path.toString)
 
-  def encodeFolder(path: Path) = FolderID(encode(path))
+  def encodeFolder(path: Path) = FolderID(encodePath(path))
 
-  def encodeTrack(path: Path) = TrackID(encode(path))
+  def encodeTrack(path: Path) = TrackID(encodePath(path))
+
+  def encode(id: String) = URLEncoder.encode(id, UTF8)
 
   def decode(trackID: Identifier) = URLDecoder.decode(trackID.id, UTF8)
+
+  def canonicalTrack(t: TrackID) = TrackID(canonical(t))
+
+  def canonicalFolder(f: FolderID) = FolderID(canonical(f))
+
+  def canonical(id: Identifier): String = encode(decode(id))
 }
