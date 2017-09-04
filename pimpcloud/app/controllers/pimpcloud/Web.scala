@@ -55,14 +55,14 @@ class Web(comps: ControllerComponents,
       },
       cloudCreds => {
         val creds = CloudCredentials(cloudCreds.cloudID, cloudCreds.username, cloudCreds.pass, request)
-        authActions.authWebClient(creds).map(_ => {
+        authActions.authWebClient(creds).map { _ =>
           val server = creds.cloudID
           val user = creds.username
           val who = s"$user@$server"
           log info s"Authentication succeeded to '$who' from '$remoteAddress'."
           val intendedUrl = request.session.get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
           Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
-        }).recoverAll(_ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)))
+        }.recoverAll { _ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)) }
       }
     )
   }

@@ -36,7 +36,6 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
 
   override val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
   override val server: Authenticator[ServerRequest] = Authenticator(rh => authServer(rh, errorHandler))
-  //override def webClient: Authenticator[PhoneConnection] = Authenticator(authWebClient)
 
   override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
     connectedServers.flatMap(servers => authPhone(req, servers))

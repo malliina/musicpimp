@@ -4,7 +4,7 @@
         <bufferSize>100</bufferSize>
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.dir}/pimpcloud.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
@@ -20,6 +20,12 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
+    <appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogStreamsLogbackAppender">
+        <endpoint>${LOGSTREAMS_HOST:-logs.malliina.com}</endpoint>
+        <secure>true</secure>
+        <username>${LOGSTREAMS_USER:-pimpcloud}</username>
+        <password>${LOGSTREAMS_PASS}</password>
+    </appender>
     <logger name="play" level="INFO"/>
     <logger name="controllers" level="INFO"/>
     <logger name="application" level="INFO"/>
@@ -29,5 +35,6 @@
     <root level="INFO">
         <appender-ref ref="FILE"/>
         <appender-ref ref="RX"/>
+        <appender-ref ref="LOGSTREAMS"/>
     </root>
 </configuration>
