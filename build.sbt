@@ -6,6 +6,7 @@ import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.GenericPlugin
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
+import com.malliina.sbt.win.WinKeys.winSwExe
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.malliina.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager.Windows
@@ -20,8 +21,8 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.8.4"
-val pimpcloudVersion = "1.8.4"
+val musicpimpVersion = "3.8.7"
+val pimpcloudVersion = "1.8.3"
 val sharedVersion = "1.1.0"
 val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
@@ -122,7 +123,8 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   // never change
   WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
   WinKeys.minJavaVersion := Some(8),
-  WinKeys.postInstallUrl := Some("http://localhost:8456")
+  WinKeys.postInstallUrl := Some("http://localhost:8456"),
+  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe"
 )
 
 lazy val windowsConfSettings = inConfig(Windows)(Seq(
