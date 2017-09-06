@@ -168,7 +168,9 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
           maybeFolder.map { folder =>
             sendSuccess(request, folder)
           }.getOrElse {
-            sendFailure(request, FailReason(s"Folder not found: '$id'."))
+            val msg = s"Folder not found: '$id'."
+            log.warn(msg)
+            sendFailure(request, FailReason(msg))
           }
         } recoverAll { t =>
           val msg = s"Library failure for folder '$id'."
