@@ -26,10 +26,4 @@ object PimpEnc {
   def encode(id: String) = URLEncoder.encode(id, UTF8)
 
   def decode(trackID: Identifier) = URLDecoder.decode(trackID.id, UTF8)
-
-  def canonicalTrack(t: TrackID) = TrackID(canonical(t))
-
-  def canonicalFolder(f: FolderID) = FolderID(canonical(f))
-
-  def canonical(id: Identifier): String = encode(decode(id))
 }

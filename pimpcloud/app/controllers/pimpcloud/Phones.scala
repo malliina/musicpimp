@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.{Directory, PimpEnc}
+import com.malliina.musicpimp.audio.Directory
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
@@ -15,11 +15,11 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
-import com.malliina.play.{ContentRange, ContentRanges}
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import com.malliina.play.tags.TagPage
+import com.malliina.play.{ContentRange, ContentRanges}
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
 import play.api.http.{ContentTypes, Writeable}
@@ -74,7 +74,7 @@ class Phones(comps: ControllerComponents,
 
   def rootFolder = executeFolderBasic(RootFolderKey, Json.obj())
 
-  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(PimpEnc.canonicalFolder(id)))
+  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(id))
 
   def search = executeFolder(SearchKey, parseSearch)
 
@@ -106,17 +106,16 @@ class Phones(comps: ControllerComponents,
     * @param id id of the requested track
     */
   def track(id: TrackID): EssentialAction = {
-    val canonical = PimpEnc.canonicalTrack(id)
     phoneAuth.authenticatedLogged { (conn: PhoneConnection) =>
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
-        log info s"Serving track $canonical to user agent $userAgent"
-        Phones.path(canonical).map { path =>
+        log info s"Serving track $id to user agent $userAgent"
+        Phones.path(id).map { path =>
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
-          conn.meta(canonical).map[Result] { res =>
+          conn.meta(id).map[Result] { res =>
             res.map { track =>
               // proxies request
               val trackSize = track.size
@@ -142,8 +141,8 @@ class Phones(comps: ControllerComponents,
             }.getOrElse {
               badGatewayDefault
             }
-          }.recoverAll(_ => notFound(s"ID not found '$canonical'."))
-        }.getOrElse(fut(badRequest(s"Illegal track ID '$canonical'.")))
+          }.recoverAll(_ => notFound(s"ID not found '$id'."))
+        }.getOrElse(fut(badRequest(s"Illegal track ID '$id'.")))
       }
     }
   }
