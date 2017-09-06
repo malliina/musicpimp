@@ -19,7 +19,6 @@ class DatabaseLibrary(db: PimpDb) extends MusicLibrary {
     } yield {
       parent map { folder =>
         val (tracks, folders) = content
-        println(folders)
         MusicFolder(folder, folders, tracks)
       }
     }
