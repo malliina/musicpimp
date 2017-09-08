@@ -9,8 +9,15 @@ import com.malliina.play.FileResults
 import com.malliina.play.auth.AuthFailure
 import com.malliina.play.models.Username
 import com.malliina.play.tags.TagPage
+import controllers.musicpimp.LibraryController.log
+import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc._
+object LibraryController {
+  private val log = Logger(getClass)
+
+  def noTrackJson(id: TrackID) = FailReason(s"Track not found: $id")
+}
 
 class LibraryController(tags: PimpHtml,
                         lib: MusicLibrary,
@@ -20,7 +27,9 @@ class LibraryController(tags: PimpHtml,
   def siteRoot = rootLibrary
 
   def rootLibrary = pimpActionAsync { request =>
-    lib.rootFolder.map(root => folderResult(root, request))
+    lib.rootFolder.map { root =>
+      folderResult(root, request)
+    }
   }
 
   /**
@@ -31,6 +40,7 @@ class LibraryController(tags: PimpHtml,
       maybeFolder.map { items =>
         folderResult(items, request)
       }.getOrElse {
+        log.warn(s"Folder not found: '$folderId'.")
         folderNotFound(folderId, request)
       }
     }
@@ -131,8 +141,4 @@ class LibraryController(tags: PimpHtml,
       column :: columnify(remains, 0, columns - 1)
     }
   }
-}
-
-object LibraryController {
-  def noTrackJson(id: TrackID) = FailReason(s"Track not found: $id")
 }

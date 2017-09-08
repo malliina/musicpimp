@@ -32,9 +32,9 @@ object Clouds {
   def readFirstLine(file: Path): Option[String] =
     Utils.opt[String, Exception](FileUtilities.firstLine(file))
 
-  def saveID(id: CloudID) = writeOneLine(idFile, id.id)
+  def saveID(id: CloudID): Unit = writeOneLine(idFile, id.id)
 
-  def writeOneLine(file: Path, text: String) = {
+  def writeOneLine(file: Path, text: String): Unit = {
     if (!Files.exists(file)) {
       Try(Files.createFile(file))
     }

@@ -18,8 +18,7 @@ import scala.concurrent.duration.DurationInt
   * Protocol: Responses must be tagged with the same request ID we add to sent messages, so that we can
   * pair requests with responses.
   */
-abstract class JsonFutureSocket(val id: CloudID)
-  extends UuidFutureMessaging {
+abstract class JsonFutureSocket(val id: CloudID) extends UuidFutureMessaging {
 
   val timeout = 20.seconds
 

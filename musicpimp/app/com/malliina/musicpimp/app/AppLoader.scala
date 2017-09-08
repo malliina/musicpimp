@@ -35,7 +35,7 @@ case class InitOptions(alarms: Boolean = true,
 
 object InitOptions {
   val prod = InitOptions()
-  val dev = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
+  val dev = InitOptions(alarms = false, database = true, users = true, indexer = true, cloud = false)
 }
 
 class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
@@ -90,7 +90,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   // Controllers
   lazy val ls = new PimpLogs(ctx)
   lazy val lp = new LogPage(tags, ls, authDeps)
-//  lazy val wp = new WebPlayer(ctx)
+  //  lazy val wp = new WebPlayer(ctx)
   lazy val sws = new ServerWS(clouds, auths.client, handler, ctx)
   lazy val webCtrl = new Website(tags, sws, authDeps, stats)
   lazy val s = new Search(indexer, auths.client, ctx)

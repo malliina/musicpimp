@@ -2,10 +2,22 @@ package tests
 
 import java.nio.file.Paths
 
+import com.malliina.musicpimp.audio.PimpEnc.{normalize, makeIdentifier}
 import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
 class Tests extends FunSuite {
+
+  test("encoding") {
+    val input = "Svår (fålder)"
+    assert(normalize(input) === "Svar (falder)")
+  }
+
+  test("enc") {
+    val input = "artist/Svår (fålder)!"
+    assert(makeIdentifier(input) === "artist%2FSvar%20(falder)!")
+  }
+
   test("paths") {
     val root = Paths get "a/b/c"
     val rel = Paths get ""

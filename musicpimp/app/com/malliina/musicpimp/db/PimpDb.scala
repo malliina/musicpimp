@@ -83,8 +83,6 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
   def folderOnly(id: FolderID): Future[Option[DataFolder]] = {
     import com.malliina.musicpimp.models.FolderIDs.db
 
-    log info s"Search '$id', enc '${PimpEnc.encode(id.id)}', dec '${PimpEnc.decode(id)}', decenc '${PimpEnc.encode(PimpEnc.decode(id))}', raw '${PimpEnc.encode("Svår (fålder)")}'."
-
     run(folders.filter(folder => folder.id === id).result.headOption)
   }
 

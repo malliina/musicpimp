@@ -127,7 +127,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   test("serve entire track") {
     withCloudTrack("track-test") { (trackId, fileSize, cloudId) =>
       // request track
-      val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get())
+      val r = makeGet(s"/tracks/$trackId", cloudId)
       assert(r.status === 200)
       assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
     }
@@ -137,9 +137,23 @@ class IntegrationTest extends PimpcloudServerSuite {
     withCloudTrack("range-test") { (trackId, _, cloudId) =>
       // request track
       // the end of the range is inclusive
-      val r = await(req(s"http://$cloudHostPort/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20").get())
+      val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
       assert(r.bodyAsBytes.size.toLong === 11)
+    }
+  }
+
+  test("get folders") {
+    withCloudTrack("folder-test") { (_, _, cloudId) =>
+      val r = makeGet("/folders?f=json", cloudId)
+      println(r.body)
+      assert(r.status === 200)
+      musicpimp.components.indexer.index().toBlocking.toList
+      val r2 = makeGet("/folders?f=json", cloudId)
+      println(r2.body)
+      val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
+      assert(r3.status === 200)
+      println(r3.body)
     }
   }
 
@@ -168,6 +182,8 @@ class IntegrationTest extends PimpcloudServerSuite {
       val fileSize = Files.size(trackFile).bytes
       assert(fileSize.toBytes === 198658L)
       val trackFolder = trackFile.getParent
+      val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
+      Files.createTempFile(created, "temp", ".mp3")
       Library.setFolders(Seq(trackFolder))
       val trackId = TrackID(trackFile.getFileName.toString)
       val file = Library.findAbsolute(trackId)
@@ -181,6 +197,9 @@ class IntegrationTest extends PimpcloudServerSuite {
       cloudClient.disconnectAndForget("")
     }
   }
+
+  def makeGet(url: String, cloudId: CloudID, headers: (String, String)*) =
+    await(req(s"http://$cloudHostPort$url", cloudId, headers: _*).get())
 
   def req(url: String, cloudId: CloudID, headers: (String, String)*) = {
     val enc = cloudAuthorization(cloudId)
