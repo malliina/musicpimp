@@ -12,6 +12,7 @@ import controllers.pimpcloud.Web.{cloudForm, forms, log}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
+import play.api.libs.json.Json
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -38,7 +39,7 @@ class Web(comps: ControllerComponents,
   implicit val ec = defaultExecutionContext
 
   def ping = Action {
-    Caching.NoCache(Ok(HealthResponse.default))
+    Caching.NoCache(Ok(Json.toJson(HealthResponse.default)))
   }
 
   def login = Action { req =>
