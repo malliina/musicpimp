@@ -3,6 +3,7 @@ package controllers.pimpcloud
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.{CloudID, CloudIDs}
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
+import com.malliina.pimpcloud.models.HealthResponse
 import com.malliina.play.auth.Auth
 import com.malliina.play.controllers.{AccountForms, Caching}
 import com.malliina.play.http.Proxies
@@ -37,7 +38,7 @@ class Web(comps: ControllerComponents,
   implicit val ec = defaultExecutionContext
 
   def ping = Action {
-    Caching.NoCache(Ok)
+    Caching.NoCache(Ok(HealthResponse.default))
   }
 
   def login = Action { req =>

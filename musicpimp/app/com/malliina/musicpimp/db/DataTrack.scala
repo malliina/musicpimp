@@ -17,7 +17,7 @@ case class DataTrack(id: TrackID,
                      duration: Duration,
                      size: StorageSize,
                      folder: FolderID) extends TrackMeta {
-  val path = UnixPath.fromRaw(PimpEnc decode folder)
+  val path = UnixPath.fromRaw(PimpEnc decodeId folder)
 
   def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, folder))
 }

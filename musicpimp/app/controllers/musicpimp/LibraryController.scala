@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.audio.TrackJson
+import com.malliina.musicpimp.audio.{PimpEnc, TrackJson}
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models._
@@ -13,6 +13,7 @@ import controllers.musicpimp.LibraryController.log
 import play.api.Logger
 import play.api.libs.json.Json
 import play.api.mvc._
+
 object LibraryController {
   private val log = Logger(getClass)
 
@@ -35,7 +36,8 @@ class LibraryController(tags: PimpHtml,
   /**
     * @return an action that provides the contents of the library with the supplied id
     */
-  def library(folderId: FolderID) = pimpActionAsync { request =>
+  def library(in: FolderID) = pimpActionAsync { request =>
+    val folderId = PimpEnc.folder(in)
     lib.folder(folderId).map { maybeFolder =>
       maybeFolder.map { items =>
         folderResult(items, request)
@@ -46,7 +48,8 @@ class LibraryController(tags: PimpHtml,
     }
   }
 
-  def tracksIn(folderId: FolderID) = pimpActionAsync { request =>
+  def tracksIn(in: FolderID) = pimpActionAsync { request =>
+    val folderId = PimpEnc.folder(in)
     implicit val writer = TrackJson.writer(request)
     lib.tracksIn(folderId).map { maybeTracks =>
       maybeTracks.map { tracks =>
@@ -89,10 +92,11 @@ class LibraryController(tags: PimpHtml,
     * Unauthorized as opposed to a redirect to make it easier to deal
     * with download errors on the client side.
     *
-    * @param trackId track to download
+    * @param in track to download
     */
-  def download(trackId: TrackID): EssentialAction =
+  def download(in: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
+      val trackId = PimpEnc.track(in)
       Library.findAbsolute(trackId)
         .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
         .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
@@ -104,41 +108,15 @@ class LibraryController(tags: PimpHtml,
   }
 
   def meta(id: TrackID) = pimpAction { request =>
+    val trackId = PimpEnc.track(id)
     implicit val writer = TrackJson.writer(request)
-    Library.findMeta(id)
+    Library.findMeta(PimpEnc.track(trackId))
       .map(t => Ok(Json.toJson(t)))
-      .getOrElse(trackNotFound(id))
+      .getOrElse(trackNotFound(trackId))
   }
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))
 
   def toHtml(folder: MusicFolder, username: Username): TagPage =
     tags.flexLibrary(folder, username)
-
-  /** Arranges a music collection into columns.
-    *
-    * TODO: It could be interesting to explore a type like a non-empty list. Scalaz might have something.
-    *
-    * @param col      music collection
-    * @param minCount minimum amount of items; if there are less items, only one column is used
-    * @param columns  column count
-    * @return at least one column
-    */
-  private def columnify(col: MusicFolder, minCount: Int = 20, columns: Int = 3): List[MusicColumn] = {
-    val tracks = col.tracks
-    val folders = col.folders
-    val tracksCount = tracks.size
-    val foldersCount = folders.size
-    val itemsCount = tracksCount + foldersCount
-    if (itemsCount < minCount || columns == 1) {
-      List(MusicColumn(folders, tracks))
-    } else {
-      val cutoff = itemsCount / columns + 1
-      val takeColumns = math.min(foldersCount, cutoff)
-      val takeTracks = math.max(0, cutoff - foldersCount)
-      val column = MusicColumn(folders take takeColumns, tracks take takeTracks)
-      val remains = col.copy(folders = folders drop takeColumns, tracks = tracks drop takeTracks)
-      column :: columnify(remains, 0, columns - 1)
-    }
-  }
 }

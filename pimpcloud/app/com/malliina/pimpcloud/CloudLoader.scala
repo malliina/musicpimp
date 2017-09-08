@@ -1,7 +1,6 @@
 package com.malliina.pimpcloud
 
 import _root_.pimpcloud.Routes
-import buildinfo.BuildInfo
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.{GoogleOAuthCredentials, GoogleOAuthReader}

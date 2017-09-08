@@ -213,7 +213,8 @@ lazy val pimpcloudSettings =
       version := pimpcloudVersion,
       libraryDependencies += PlayImport.ehcache,
       PlayKeys.externalizeResources := false,
-      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at"))
+      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
+      buildInfoPackage := "com.malliina.pimpcloud"
     )
 
 lazy val artifactSettings = Seq(

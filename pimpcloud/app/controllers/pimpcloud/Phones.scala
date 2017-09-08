@@ -6,7 +6,7 @@ import java.nio.file.Paths
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
-import com.malliina.musicpimp.audio.Directory
+import com.malliina.musicpimp.audio.{Directory, PimpEnc}
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
@@ -74,7 +74,7 @@ class Phones(comps: ControllerComponents,
 
   def rootFolder = executeFolderBasic(RootFolderKey, Json.obj())
 
-  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(id))
+  def folder(id: FolderID) = executeFolderBasic(FolderKey, WrappedID.forId(PimpEnc.folder(id)))
 
   def search = executeFolder(SearchKey, parseSearch)
 
@@ -103,9 +103,10 @@ class Phones(comps: ControllerComponents,
     * Sends a message over WebSocket to the target server that it should send `id` to this server.
     * This server then forwards the response of the target server to the client.
     *
-    * @param id id of the requested track
+    * @param in id of the requested track
     */
-  def track(id: TrackID): EssentialAction = {
+  def track(in: TrackID): EssentialAction = {
+    val id = PimpEnc.track(in)
     phoneAuth.authenticatedLogged { (conn: PhoneConnection) =>
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
