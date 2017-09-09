@@ -18,11 +18,11 @@ case class StatusEvent17(id: TrackID,
                          duration: Duration,
                          gain: Float,
                          mute: Boolean,
-                         playlist: Seq[TrackMeta],
+                         playlist: Seq[FullTrack],
                          index: Int)
 
 object StatusEvent17 {
-  implicit def status17writer(implicit w: Writes[TrackMeta]): OWrites[StatusEvent17] =
+  implicit def status17writer: OWrites[StatusEvent17] =
     OWrites[StatusEvent17] { o =>
       obj(
         EventKey -> StatusKey,
@@ -54,10 +54,5 @@ object StatusEvent17 {
     false,
     Seq.empty,
     0
-  )
-
-  def noServerTrackEvent = StatusEvent17.empty.copy(
-    playlist = MusicPlayer.playlist.songList,
-    index = MusicPlayer.playlist.index
   )
 }

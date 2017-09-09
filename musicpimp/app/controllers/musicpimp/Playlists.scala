@@ -38,24 +38,22 @@ class Playlists(tags: PimpHtml,
   )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
 
   def playlists = recoveredAsync { req =>
-    implicit val f = PlaylistsMeta.format(TrackJson.format(req))
     val user = req.user
     service.playlistsMeta(user).map { playlists =>
       default.respond(req)(
         html = tags.playlists(playlists.playlists, user),
-        json = Json.toJson(playlists)
+        json = Json.toJson(TrackJson.toFullPlaylistsMeta(playlists, TrackJson.host(req)))
       )
     }
   }
 
   def playlist(id: PlaylistID) = recoveredAsync { req =>
-    implicit val f = TrackJson.format(req)
     val user = req.user
     service.playlistMeta(id, user).map { result =>
       result.map { playlist =>
         default.respond(req)(
           html = tags.playlist(playlist.playlist, user),
-          json = Json.toJson(playlist)
+          json = Json.toJson(TrackJson.toFullMeta(playlist, TrackJson.host(req)))
         )
       }.getOrElse(notFound(s"Playlist not found: $id"))
     }

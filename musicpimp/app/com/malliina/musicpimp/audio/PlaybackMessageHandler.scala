@@ -28,10 +28,9 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
   override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
     message match {
       case GetStatusMsg =>
-        implicit val w = TrackJson.writer(src.host)
         val json = src.apiVersion match {
-          case JsonFormatVersions.JSONv17 => toJson(player.status17)
-          case _ => toJson(player.status)
+          case JsonFormatVersions.JSONv17 => toJson(player.status17(src.host))
+          case _ => toJson(player.status(src.host))
         }
         src.target send JsonMessages.withStatus(json)
       case ResumeMsg =>

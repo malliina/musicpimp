@@ -32,8 +32,8 @@ object StatusMessage {
     }
   }
 
-  implicit def writer(implicit w: Writes[TrackMeta]): OWrites[StatusMessage] =
-    OWrites[StatusMessage] { s => Json.obj(EventKey -> Status) ++ StatusEvent.status18writer.writes(s.status) }
+  implicit def writer: OWrites[StatusMessage] =
+    OWrites[StatusMessage] { s => Json.obj(EventKey -> Status) ++ StatusEvent.json.writes(s.status) }
 
   implicit def json(implicit w: Writes[TrackMeta]): OFormat[StatusMessage] =
     OFormat(reader, writer)

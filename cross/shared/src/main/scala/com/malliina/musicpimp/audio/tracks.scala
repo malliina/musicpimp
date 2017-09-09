@@ -9,9 +9,25 @@ import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
 import play.api.libs.json.{Json, Reads}
-import CrossFormats.storageSize
-import CrossFormats.duration
+
 import scala.concurrent.duration.Duration
+
+case class FullTrack(id: TrackID,
+                     title: String,
+                     artist: String,
+                     album: String,
+                     path: UnixPath,
+                     duration: Duration,
+                     size: StorageSize,
+                     url: FullUrl) extends TrackMeta
+
+object FullTrack {
+  val empty = FullTrack(TrackID(""), "", "", "", UnixPath.Empty, Duration.Zero, StorageSize.empty, FullUrl("https", "www.musicpimp.org", ""))
+
+  implicit val dur = CrossFormats.duration
+  implicit val storage = CrossFormats.storageSize
+  implicit val json = Json.format[FullTrack]
+}
 
 trait TrackMeta extends MusicItem {
   def id: TrackID
@@ -43,7 +59,7 @@ case class Track(id: TrackID,
 }
 
 object Track {
-//  implicit val dur = CrossFormats.duration
-//  implicit val storage = CrossFormats.storageSize
+  implicit val dur = CrossFormats.duration
+  implicit val storage = CrossFormats.storageSize
   implicit val jsonFormat = Json.format[Track]
 }

@@ -32,21 +32,20 @@ class Website(tags: PimpHtml,
   }
 
   def recent = metaAction { (meta, req) =>
-    implicit val f = TrackJson.format(req)
     stats.mostRecent(meta) map { entries =>
       default.respond(req)(
         html = tags.mostRecent(entries, meta.username),
-        json = RecentList(entries)
+        json = RecentList.forEntries(entries, TrackJson.host(req))
       )
     }
   }
 
   def popular = metaAction { (meta, req) =>
-    implicit val f = TrackJson.format(req)
+    val host = TrackJson.host(req)
     stats.mostPlayed(meta) map { entries =>
       default.respond(req)(
         html = tags.mostPopular(entries, meta.username),
-        json = PopularList(entries)
+        json = PopularList.forEntries(entries, host)
       )
     }
   }

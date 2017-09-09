@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.Volume
 import play.api.Logger
@@ -19,6 +20,7 @@ object MusicPlayer
   extends IPlayer
     with PlaylistSupport[PlayableTrack]
     with ServerPlayer {
+
   private val log = Logger(getClass)
   private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist = new PimpPlaylist
@@ -100,7 +102,6 @@ object MusicPlayer
 
   def stop(): Unit = current.foreach(_.stop())
 
-  // TODO observables
   def send(json: ServerMessage): Unit = subject.onNext(json)
 
   def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
@@ -128,21 +129,21 @@ object MusicPlayer
       Duration.fromNanos(0)
     }
 
-  def status: StatusEvent = current.fold(StatusEvents.empty) { c =>
+  def status(host: FullUrl): StatusEvent = current.fold(StatusEvents.empty) { c =>
     val p = c.player
     StatusEvent(
-      p.track,
+      TrackJson.toFull(p.track, host),
       p.playState,
       p.position,
       Volume(p.volume),
       p.mute,
-      playlist.songList,
+      playlist.songList.map(t => TrackJson.toFull(t, host)),
       playlist.index
     )
   }
 
-  def status17: StatusEvent17 =
-    current.fold(StatusEvent17.noServerTrackEvent) { c =>
+  def status17(host: FullUrl): StatusEvent17 =
+    current.fold(StatusEvent17.empty) { c =>
       val p = c.player
       val meta = p.track
       StatusEvent17(
@@ -155,7 +156,7 @@ object MusicPlayer
         duration = p.duration,
         gain = 1.0f * p.volume / 100,
         mute = p.mute,
-        playlist = playlist.songList,
+        playlist = playlist.songList.map(t => TrackJson.toFull(t, host)),
         index = playlist.index
       )
     }

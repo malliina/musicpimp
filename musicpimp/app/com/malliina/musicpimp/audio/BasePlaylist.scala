@@ -16,10 +16,9 @@ object BasePlaylist {
   *
   * @tparam T type of playlist item
   */
-trait BasePlaylist[T]
-  extends IPlaylist[T] {
-
+trait BasePlaylist[T] extends IPlaylist[T] {
   type PlaylistIndex = Int
+
   val NO_POSITION = BasePlaylist.NoPosition
 
   protected def pos: Ref[PlaylistIndex]
@@ -177,6 +176,4 @@ trait BasePlaylist[T]
   protected def onPlaylistModified(songs: Seq[T]) {
 
   }
-
-
 }

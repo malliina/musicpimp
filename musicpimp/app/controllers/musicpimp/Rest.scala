@@ -17,7 +17,7 @@ import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
 import com.malliina.musicpimp.library.{Library, LocalTrack}
 import com.malliina.musicpimp.models._
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
-import com.malliina.play.http.{AuthedRequest, CookiedRequest, OneFileUploadRequest}
+import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileUploadRequest}
 import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.storage.{StorageInt, StorageLong}
@@ -125,11 +125,11 @@ class Rest(auth: AuthDeps,
   }
 
   def status = pimpAction { req =>
-    implicit val w = TrackJson.format(req)
+    val host = FullUrls.hostOnly(req)
     PimpContentController.default.pimpResponse(req)(
       html = Results.NoContent,
-      json17 = Json.toJson(MusicPlayer.status17),
-      latest = Json.toJson(MusicPlayer.status)
+      json17 = Json.toJson(MusicPlayer.status17(host)),
+      latest = Json.toJson(MusicPlayer.status(host))
     )
   }
 

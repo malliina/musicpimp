@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.tags
 
-import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry, TopEntry}
+import com.malliina.musicpimp.stats._
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 
@@ -8,10 +8,10 @@ import scalatags.Text.all._
 
 object TopHtml {
   def mostRecentContent(entries: Seq[RecentEntry], username: Username) =
-    topListContent[RecentEntry](username, "Most recent", entries, "When", _.whenFormatted)
+    topListContent[RecentLike](username, "Most recent", entries, "When", _.whenFormatted)
 
-  def mostPopular(entries: Seq[PopularEntry], username: Username) =
-    topListContent[PopularEntry](username, "Most popular", entries, "Plays", _.playbackCount)
+  def mostPopular(entries: Seq[PopularLike], username: Username) =
+    topListContent[PopularLike](username, "Most popular", entries, "Plays", _.playbackCount)
 
   def topListContent[T <: TopEntry](username: Username,
                                     headerText: String,

@@ -1,8 +1,6 @@
 package com.malliina.musicpimp.library
 
-import java.net.URI
-
-import com.malliina.audio.meta.{SongMeta, SongTags, UriSource}
+import com.malliina.audio.meta.SongMeta
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
@@ -23,14 +21,4 @@ class LocalTrack(val id: TrackID,
   override def toString = id.id
 
   override def buildPlayer(eom: () => Unit): PimpPlayer = new StoragePlayer(this, eom)
-}
-
-object LocalTrack {
-  val empty = new LocalTrack(
-    id = TrackID(""),
-    meta = SongMeta(
-      UriSource(new URI("http://www.musicpimp.org/"), 0.seconds, StorageSize.empty),
-      tags = new SongTags("", "", "")
-    ),
-    path = UnixPath.Empty)
 }

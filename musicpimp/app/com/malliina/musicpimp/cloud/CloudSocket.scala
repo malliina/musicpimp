@@ -81,8 +81,8 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
   val uploader = TrackUploads(cloudHost)
-  implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
-  implicit val trackWriter = TrackJson.format(cloudHost)
+//  implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
+//  implicit val trackWriter = TrackJson.format(cloudHost)
 
   val lib = deps.lib
   val handler = deps.handler
@@ -145,7 +145,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
 
     message match {
       case GetStatus =>
-        sendSuccess(request, StatusMessage(MusicPlayer.status))
+        sendSuccess(request, StatusMessage(MusicPlayer.status(cloudHost)))
       case GetTrack(id) =>
         uploader.upload(id, request).recoverAll { t =>
           log.error(s"Upload failed for $request", t)
@@ -158,7 +158,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         uploader.cancelSoon(req)
       case RootFolder =>
         lib.rootFolder.map { folder =>
-          sendSuccess(request, folder)
+          sendSuccess(request, folder.toFull(cloudHost))
         }.recoverAll { t =>
           log.error(s"Root folder failure.", t)
           sendFailure(request, FailReason("Library failure."))
@@ -166,7 +166,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case GetFolder(id) =>
         lib.folder(id).map { maybeFolder =>
           maybeFolder.map { folder =>
-            sendSuccess(request, folder)
+            sendSuccess(request, folder.toFull(cloudHost))
           }.getOrElse {
             val msg = s"Folder not found: '$id'."
             log.warn(msg)
@@ -184,16 +184,16 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case PingMessage =>
         sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
-        databaseResponse(stats.mostPlayed(meta).map(PopularList.apply))
+        databaseResponse(stats.mostPlayed(meta).map(PopularList.forEntries(_, cloudHost)))
       case GetRecent(meta) =>
-        databaseResponse(stats.mostRecent(meta).map(RecentList.apply))
+        databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(_, cloudHost)))
       case GetPlaylists(user) =>
-        databaseResponse(playlists.playlistsMeta(user))
+        databaseResponse(playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost)))
       case GetPlaylist(id, user) =>
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
             maybePlaylist.map { playlist =>
-              sendSuccess(request, playlist)
+              sendSuccess(request, TrackJson.toFullMeta(playlist, cloudHost))
             }.getOrElse {
               sendFailure(request, FailReason(s"Playlist not found: '$id'."))
             }
@@ -208,8 +208,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
           }
         }
       case GetAlarms =>
-        implicit val writer = Alarms.alarmWriter
-        sendLogged(CloudResponse.success(request, ScheduledPlaybackService.status))
+        sendLogged(CloudResponse.success(request, ScheduledPlaybackService.status.map(_.toFull(cloudHost))))
       case AlarmEdit(payload) =>
         AlarmJsonHandler.handleCommand(payload)
         sendSuccess(request, Json.obj())
@@ -230,7 +229,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
         sendSuccess(request, JsonMessages.version)
       case GetMeta(id) =>
         Library.findMeta(id)
-          .map(track => sendSuccess(request, track))
+          .map(track => sendSuccess(request, TrackJson.toFull(track, cloudHost)))
           .getOrElse(sendFailure(request, LibraryController.noTrackJson(id)))
       case RegistrationEvent(_, id) =>
         onRegistered(id)

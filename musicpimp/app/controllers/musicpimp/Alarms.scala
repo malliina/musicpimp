@@ -1,8 +1,7 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
+import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
 import com.malliina.musicpimp.http.PimpContentController.default
-import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
@@ -12,8 +11,7 @@ import com.malliina.play.http.Proxies
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
 import play.api.i18n.Messages
-import play.api.libs.json.Json._
-import play.api.libs.json.{JsResult, JsValue, Json, Writes}
+import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.mvc.Result
 
 class Alarms(tags: PimpHtml,
@@ -26,10 +24,9 @@ class Alarms(tags: PimpHtml,
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
 
     implicit val w = TrackJson.writer(request)
-    implicit val writer = Alarms.alarmWriter
     default.respond(request)(
       html = tags.alarms(content, request.user),
-      json = Json.toJson(content)
+      json = Json.toJson(content.map(_.toFull(TrackJson.host(request))))
     )
   }
 
@@ -41,8 +38,7 @@ class Alarms(tags: PimpHtml,
   }
 
   def tracks = pimpAction { request =>
-    val tracks: Iterable[TrackMeta] = Library.tracksRecursive
-    implicit val w = TrackJson.writer(request)
+    val tracks: Iterable[FullTrack] = Library.tracksRecursive.map(TrackJson.toFull(_, TrackJson.host(request)))
     Ok(Json.toJson(tracks))
   }
 
@@ -67,15 +63,4 @@ class Alarms(tags: PimpHtml,
 
 object Alarms {
   private val log = Logger(getClass)
-
-  def jobWriter(implicit w: Writes[TrackMeta]) =
-    Writes[PlaybackJob](o => obj(TrackKey -> toJson(o.trackInfo)))
-
-  implicit def alarmWriter(implicit w: Writes[TrackMeta]) =
-    Writes[ClockPlayback](o => obj(
-      Id -> toJson(o.id),
-      Job -> toJson(o.job)(jobWriter),
-      When -> toJson(o.when),
-      Enabled -> toJson(o.enabled)
-    ))
 }

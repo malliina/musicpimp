@@ -82,7 +82,7 @@ class PlaylistsTests extends MusicPimpSuite {
     val response = fetch(FakeRequest(GET, "/playlists"))
     assert(contentType(response) contains JSON)
     assert(status(response) === 200)
-    (contentAsJson(response) \ "playlists").as[Seq[SavedPlaylist]]
+    (contentAsJson(response) \ "playlists").as[Seq[FullSavedPlaylist]]
   }
 
   def fetch[T: Writeable](request: FakeRequest[T]) = {

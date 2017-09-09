@@ -8,7 +8,7 @@ import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
-import com.malliina.musicpimp.stats.{PopularEntry, RecentEntry}
+import com.malliina.musicpimp.stats.{FullPopularEntry, PopularEntry, PopularLike, RecentEntry}
 import com.malliina.musicpimp.tags.PimpHtml._
 import com.malliina.musicpimp.tags.PimpHtml.reverseAssets.versioned
 import com.malliina.play.controllers.AccountForms
@@ -104,7 +104,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
   def mostRecent(entries: Seq[RecentEntry], username: Username) =
     topList("recent", username, TopHtml.mostRecentContent(entries, username))
 
-  def mostPopular(entries: Seq[PopularEntry], username: Username) =
+  def mostPopular(entries: Seq[PopularLike], username: Username) =
     topList("popular", username, TopHtml.mostPopular(entries, username))
 
   def topList(tab: String, username: Username, inner: Modifier) =

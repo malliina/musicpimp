@@ -4,7 +4,7 @@ import com.malliina.http.FullUrl
 import com.malliina.json.JsonFormats
 import com.malliina.musicpimp.models._
 import com.malliina.play.http.FullUrls
-import play.api.libs.json.{Reads, Writes}
+import play.api.libs.json.Writes
 import play.api.mvc.Call
 
 object TrackMetas {
