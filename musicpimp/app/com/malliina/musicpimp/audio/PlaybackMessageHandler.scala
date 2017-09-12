@@ -74,6 +74,18 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
         }
       case ResetPlaylistMessage(index, tracks) =>
         playlist.reset(index, tracks.map(Library.meta))
+      case Handover(index, tracks, state, position) =>
+        playlist.reset(index.getOrElse(BasePlaylist.NoPosition), tracks.map(Library.meta))
+        playlist.current.foreach { t =>
+          for {
+            _ <- player.tryInitTrackWithFallback(t)
+            _ <- player.trySeek(position)
+          } yield {
+            if(PlayState.isPlaying(state)) {
+              player.play()
+            }
+          }
+        }
       case other =>
         log.warn(s"Unsupported message: '$other'.")
     }

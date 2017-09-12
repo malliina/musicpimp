@@ -145,6 +145,16 @@ object ResetPlaylistMessage {
   implicit val json = cmd(ResetPlaylist, OFormat(reader, Json.writes[ResetPlaylistMessage]))
 }
 
+case class Handover(index: Option[Int],
+                    tracks: Seq[TrackID],
+                    state: PlayState,
+                    position: FiniteDuration) extends PlayerMessage
+
+object Handover {
+  val Key = "handover"
+  implicit val json = cmd(Key, Json.format[Handover])
+}
+
 case class PlayAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
 object PlayAllMsg {
@@ -193,6 +203,7 @@ object PlayerMessage {
       .orElse(json.validate[ResetPlaylistMessage])
       .orElse(json.validate[PlayAllMsg])
       .orElse(json.validate[AddAllMsg])
+      .orElse(json.validate[Handover])
   }
 }
 

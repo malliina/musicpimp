@@ -12,6 +12,8 @@ object PlayState {
     Stopped, Closed, Unknown, EndOfMedia
   )
 
+  def isPlaying(state: PlayState) = state == Open || state == Started
+
   def withName(name: String): PlayState =
     all.find(_.name.toLowerCase == name.toLowerCase).getOrElse(Unknown)
 

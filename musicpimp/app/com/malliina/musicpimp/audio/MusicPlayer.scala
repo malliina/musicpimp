@@ -34,7 +34,25 @@ object MusicPlayer
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
 
-  private def current = trackPlayer.get()
+  private def current: Option[TrackPlayer] = trackPlayer.get()
+
+  def handover(h: Handover): Unit = {
+    playlist.reset(h.index.getOrElse(BasePlaylist.NoPosition), h.tracks.map(Library.meta))
+    playlist.current.foreach { t =>
+      val attempt = for {
+        _ <- tryInitTrackWithFallback(t)
+        _ <- trySeek(h.position)
+      } yield {
+        if (PlayState.isPlaying(h.state)) {
+          play()
+        }
+      }
+      attempt.recover {
+        case t: Exception =>
+          log.error(s"Unable to perform handover.", t)
+      }
+    }
+  }
 
   def reset(track: PlayableTrack): Try[Unit] = {
     playlist set track
@@ -105,6 +123,9 @@ object MusicPlayer
   def send(json: ServerMessage): Unit = subject.onNext(json)
 
   def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
+
+  def trySeek(pos: Duration): Try[Unit] = current.map(_.trySeek(pos))
+    .getOrElse(Failure(new Exception(s"Cannot seek to '$pos', no player available.")))
 
   def volume(level: Int): Unit = setVolume(Volume(level))
 

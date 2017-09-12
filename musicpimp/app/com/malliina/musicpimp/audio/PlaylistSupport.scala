@@ -7,22 +7,20 @@ import scala.util.{Failure, Try}
 trait PlaylistSupport[T] {
   def playlist: IPlaylist[T]
 
-  /**
-   * Initializes the player with the given track.
-   *
-   * Does not modify the playlist; it is assumed the supplied track is part of the playlist.
-   *
-   * @param song
-   */
+  /** Initializes the player with the given track.
+    *
+    * Does not modify the playlist; it is assumed the supplied track is part of the playlist.
+    *
+    * @param song
+    */
   def playTrack(song: T): Try[Unit]
 
-  /**
-   * Skips to the track with the specified index; playback starts automatically.
-   *
-   * @param index track index
-   * @return the track skipped to
-   * @throws IndexOutOfBoundsException if the index is out of bounds
-   */
+  /** Skips to the track with the specified index; playback starts automatically.
+    *
+    * @param index track index
+    * @return the track skipped to
+    * @throws IndexOutOfBoundsException if the index is out of bounds
+    */
   def skip(index: Int): Try[Unit] = {
     playlist.index = index
     play(_.current)

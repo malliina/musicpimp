@@ -41,17 +41,19 @@ class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
   }
 
   def seek(pos: Duration): Unit =
-    Try {
-      if (player.position.toSeconds != pos.toSeconds) {
-        player.seek(pos)
-        send(TimeUpdatedMessage(pos))
-      } else {
-        log debug s"Seek to '$pos' refused, already at that position."
-      }
-    }.recover {
+    trySeek(pos).recover {
       case ioe: IOException if ioe.getMessage == "Resetting to invalid mark" =>
         log.warn(s"Failed to seek to '$pos'. Unable to reset stream.")
     }
+
+  def trySeek(pos: Duration): Try[Unit] = Try {
+    if (player.position.toSeconds != pos.toSeconds) {
+      player.seek(pos)
+      send(TimeUpdatedMessage(pos))
+    } else {
+      log debug s"Seek to '$pos' refused, already at that position."
+    }
+  }
 
   def adjustVolume(level: Volume): Boolean = {
     if (player.volume != level.volume) {
