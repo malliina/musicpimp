@@ -34,9 +34,9 @@ object TopHtml {
     ),
     fullRow(
       ul(`class` := "pager")(
-        li(a(href := list.prev)("Previous")),
+        if (list.from > 0) li(a(href := list.prev)("Previous")) else (),
         " ",
-        li(a(href := list.next)("Next"))
+        if (entries.length >= list.meta.maxItems) li(a(href := list.next)("Next")) else ()
       )
     )
   )
