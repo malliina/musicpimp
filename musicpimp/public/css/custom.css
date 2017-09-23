@@ -110,3 +110,8 @@ body {
 .track-meta {
     text-align: center;
 }
+
+.sub-header {
+    display: flex;
+    justify-content: flex-end;
+}

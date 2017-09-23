@@ -1,15 +1,31 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.http.FullUrl
+import controllers.musicpimp.routes
 import play.api.libs.json.Json
+import play.api.mvc.Call
 
-trait ListLike {
+abstract class ListLike(baseCall: Call) {
+  val prevOffset = math.max(0, meta.from - meta.maxItems)
+  val nextOffset = meta.from + meta.maxItems
+
   def meta: DataRequest
 
   def username = meta.username
+
+  def from = meta.from
+
+  def until = meta.until
+
+  def prev = withOffset(prevOffset)
+
+  def next = withOffset(nextOffset)
+
+  def withOffset(offset: Int) = baseCall.copy(url = baseCall.url + s"?from=$offset")
 }
 
-case class PopularList(meta: DataRequest, populars: Seq[FullPopularEntry]) extends ListLike
+case class PopularList(meta: DataRequest, populars: Seq[FullPopularEntry])
+  extends ListLike(routes.Website.popular())
 
 object PopularList {
   implicit val json = Json.format[PopularList]
@@ -18,7 +34,8 @@ object PopularList {
     PopularList(meta, populars.map(_.toFull(host)))
 }
 
-case class RecentList(meta: DataRequest, recents: Seq[FullRecentEntry]) extends ListLike
+case class RecentList(meta: DataRequest, recents: Seq[FullRecentEntry])
+  extends ListLike(routes.Website.recent())
 
 object RecentList {
   implicit val json = Json.format[RecentList]

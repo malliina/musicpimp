@@ -21,7 +21,7 @@ import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
 import com.malliina.ws.HttpUtil
-import controllers.musicpimp.{Alarms, LibraryController, Rest}
+import controllers.musicpimp.{LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
 import rx.lang.scala.Subject
@@ -81,9 +81,6 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
   val uploader = TrackUploads(cloudHost)
-//  implicit val musicFolderWriter = MusicFolder.writer(cloudHost)
-//  implicit val trackWriter = TrackJson.format(cloudHost)
-
   val lib = deps.lib
   val handler = deps.handler
   val stats = deps.stats

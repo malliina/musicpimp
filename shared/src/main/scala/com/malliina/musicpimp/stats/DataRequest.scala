@@ -18,7 +18,7 @@ case class DataRequest(username: Username, from: Int, until: Int) {
 object DataRequest {
   implicit val json = Json.format[DataRequest]
 
-  val DefaultItemCount = 100
+  val DefaultItemCount = ItemLimits.DefaultItemCount
   val From = "from"
   val Until = "until"
   val Page = "page"

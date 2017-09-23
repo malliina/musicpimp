@@ -8,7 +8,7 @@ case class ItemLimits(from: Int, until: Int)
 object ItemLimits {
   implicit val json = Json.format[ItemLimits]
 
-  val DefaultItemCount = 100
+  val DefaultItemCount = 300
   val From = "from"
   val Until = "until"
 

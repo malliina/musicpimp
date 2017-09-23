@@ -2,6 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import java.net.URI
 import java.util
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.SSLSocketFactory
 
 import com.malliina.http.FullUrl
@@ -22,6 +23,9 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
   extends WebSocketBase[T] {
 
   protected val connectPromise = Promise[Unit]()
+  // For some reason, onDisconnected() is called even when the socket has never been connected.
+  // This variable is used to get rid of redundant "disconnected" events.
+  private val hasBeenConnected = new AtomicBoolean(false)
   val connectTimeout = 20.seconds
 
   val factory = new WebSocketFactory()
@@ -30,8 +34,9 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
   headers foreach {
     case (key, value) => socket.addHeader(key, value)
   }
-  socket.addListener(new WebSocketAdapter {
+  val adapter = new WebSocketAdapter {
     override def onConnected(websocket: WebSocket, headers: util.Map[String, util.List[String]]): Unit = {
+      hasBeenConnected.set(true)
       connectPromise.trySuccess(())
       Socket8.this.onConnect(websocket.getURI)
     }
@@ -44,10 +49,12 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
                                 serverCloseFrame: WebSocketFrame,
                                 clientCloseFrame: WebSocketFrame,
                                 closedByServer: Boolean): Unit = {
-      val uri = websocket.getURI
-      val suffix = if (closedByServer) " by the server" else ""
-      connectPromise tryFailure new NotConnectedException(s"The websocket to $uri was closed$suffix.")
-      Socket8.this.onClose()
+      if (hasBeenConnected.get()) {
+        val uri = websocket.getURI
+        val suffix = if (closedByServer) " by the server" else ""
+        connectPromise tryFailure new NotConnectedException(s"The websocket to $uri was closed$suffix.")
+        Socket8.this.onClose()
+      }
     }
 
     override def onError(websocket: WebSocket, cause: WebSocketException): Unit = {
@@ -55,9 +62,11 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
       connectPromise tryFailure cause
       Socket8.this.onError(cause)
     }
-  })
+  }
+  socket.addListener(adapter)
 
   override def connect(): Future[Unit] = {
+    log.error(s"Attempting to connect to $uri")
     Try(socket.connectAsynchronously()) match {
       case Success(_) =>
         connectPromise.future

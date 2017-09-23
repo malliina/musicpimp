@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.tags
 
 import com.malliina.musicpimp.stats._
-import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 
 import scalatags.Text.all._
@@ -18,7 +17,10 @@ object TopHtml {
                                     entries: Seq[T],
                                     fourthHeader: String,
                                     fourthValue: T => Modifier) = Seq(
-    headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${list.username}")),
+    headerRow()(s"$headerText "),
+    div(`class` := "sub-header")(
+      div(s"showing ${list.from} - ${list.until - 1}")
+    ),
     fullRow(
       responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
         Seq(
@@ -29,6 +31,13 @@ object TopHtml {
           td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
         )
       }
+    ),
+    fullRow(
+      ul(`class` := "pager")(
+        li(a(href := list.prev)("Previous")),
+        " ",
+        li(a(href := list.next)("Next"))
+      )
     )
   )
 }
