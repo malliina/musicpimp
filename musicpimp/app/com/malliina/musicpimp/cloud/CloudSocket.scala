@@ -184,9 +184,9 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case PingMessage =>
         sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
-        databaseResponse(stats.mostPlayed(meta).map(PopularList.forEntries(_, cloudHost)))
+        databaseResponse(stats.mostPlayed(meta).map(PopularList.forEntries(meta, _, cloudHost)))
       case GetRecent(meta) =>
-        databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(_, cloudHost)))
+        databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost)))
       case GetPlaylists(user) =>
         databaseResponse(playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost)))
       case GetPlaylist(id, user) =>

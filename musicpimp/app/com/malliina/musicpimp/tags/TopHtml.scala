@@ -7,18 +7,18 @@ import com.malliina.play.tags.All._
 import scalatags.Text.all._
 
 object TopHtml {
-  def mostRecentContent(entries: Seq[RecentEntry], username: Username) =
-    topListContent[RecentLike](username, "Most recent", entries, "When", _.whenFormatted)
+  def mostRecentContent(list: RecentList) =
+    topListContent[RecentLike](list, "Most Recent", list.recents, "When", _.whenFormatted)
 
-  def mostPopular(entries: Seq[PopularLike], username: Username) =
-    topListContent[PopularLike](username, "Most popular", entries, "Plays", _.playbackCount)
+  def mostPopular(list: PopularList) =
+    topListContent[PopularLike](list, "Most Played", list.populars, "Plays", _.playbackCount)
 
-  def topListContent[T <: TopEntry](username: Username,
+  def topListContent[T <: TopEntry](list: ListLike,
                                     headerText: String,
                                     entries: Seq[T],
                                     fourthHeader: String,
                                     fourthValue: T => Modifier) = Seq(
-    headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${username.name}")),
+    headerRow()(s"$headerText ", small(`class` := HiddenXs)(s"by ${list.username}")),
     fullRow(
       responsiveTable(entries)("Title", "Artist", "Album", fourthHeader, "Actions") { entry =>
         Seq(
