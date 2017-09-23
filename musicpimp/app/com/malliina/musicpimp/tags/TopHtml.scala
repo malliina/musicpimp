@@ -33,10 +33,10 @@ object TopHtml {
       }
     ),
     fullRow(
-      ul(`class` := "pager")(
-        if (list.from > 0) li(a(href := list.prev)("Previous")) else (),
+      ulClass("pager")(
+        if (list.from > 0) liHref(list.prev)("Previous") else (),
         " ",
-        if (entries.length >= list.meta.maxItems) li(a(href := list.next)("Next")) else ()
+        if (entries.length >= list.meta.maxItems) liHref(list.next)("Next") else ()
       )
     )
   )
