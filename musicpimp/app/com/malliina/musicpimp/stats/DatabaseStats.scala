@@ -34,12 +34,12 @@ class DatabaseStats(db: PimpDb)(implicit ec: ExecutionContext)
   }
 
   override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
-    import com.malliina.musicpimp.models.TrackIDs.db
+    implicit val trackMapping = com.malliina.musicpimp.models.TrackIDs.db
     val query = playbackHistory(request.username)
-      .groupBy { case (record, track) => track }
+      .groupBy { case (_, track) => track }
       .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(Instant.now()))) }
-      .sortBy { case (track, (count, date)) => (count.desc, date.desc) }
-      .map { case (track, (count, date)) => (track, count) }
+      .sortBy { case (_, (count, date)) => (count.desc, date.desc) }
+      .map { case (track, (count, _)) => (track, count) }
       .drop(request.from)
       .take(request.maxItems)
     runQuery(query).map(_.map {
