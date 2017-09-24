@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.musicpimp.db.PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist, TrackIDs}
@@ -13,8 +14,6 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   implicit val trackMapping = TrackIDs.db
   implicit val userMapping = Mappings.username
 
-  import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
-
   override implicit def ec: ExecutionContext = db.ec
 
   override protected def playlists(user: Username): Future[Seq[SavedPlaylist]] = {
@@ -24,18 +23,17 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
 
   override protected def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] = {
     val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
-    val result = runQuery(q.sortBy(_._4))
-    result.map(collectPlaylists).map(_.headOption)
+    runQuery(q).map(collectPlaylists).map(_.headOption)
   }
 
-  private def collectPlaylists(rows: Seq[(Long, String, DataTrack, Int)]) = {
-    rows.foldLeft(Vector.empty[SavedPlaylist]) { case (acc, (id, name, track, _)) =>
+  private def collectPlaylists(rows: Seq[(Long, String, Option[(DataTrack, Int)])]): Seq[SavedPlaylist] = {
+    rows.foldLeft(Vector.empty[SavedPlaylist]) { case (acc, (id, name, link)) =>
       val idx = acc.indexWhere(_.id.id == id)
       if (idx >= 0) {
         val old = acc(idx)
-        acc.updated(idx, old.copy(tracks = old.tracks :+ track))
+        link.fold(acc) { l => acc.updated(idx, old.copy(tracks = old.tracks :+ l._1)) }
       } else {
-        acc :+ SavedPlaylist(PlaylistID(id), name, Seq(track))
+        acc :+ SavedPlaylist(PlaylistID(id), name, link.map(_._1).toSeq)
       }
     }
   }
@@ -70,14 +68,8 @@ class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService 
   protected def ownsPlaylist(id: PlaylistID, user: Username): Future[Boolean] =
     runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id)).map(_.nonEmpty)
 
-  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) = {
-    val joined = for {
-      pls <- lists
-      pts <- playlistTracksTable if pts.playlist === pls.id
-      ts <- tracks if ts.id === pts.track
-    } yield {
-      (pls.id, pls.name, ts, pts.idx)
-    }
-    joined.sortBy { case (id, name, _, index) => (name.asc, id, index.asc) }
-  }
+  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) =
+    lists.joinLeft(playlistTracksTable.join(tracks).on(_.track === _.id)).on(_.id === _._1.playlist)
+      .map { case (pl, maybeLink) => (pl.id, pl.name, maybeLink.map(l => (l._2, l._1.idx))) }
+      .sortBy { case (id, name, maybeLink) => (name.asc, id, maybeLink.map({ case (_, idx) => idx }).asc.nullsLast) }
 }
