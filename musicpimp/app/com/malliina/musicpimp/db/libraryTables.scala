@@ -8,7 +8,7 @@ import com.malliina.play.models.Username
 import com.malliina.values.UnixPath
 import slick.jdbc.H2Profile.api._
 import slick.lifted.ProvenShape
-import com.malliina.musicpimp.models.TrackIDs.trackData
+import com.malliina.musicpimp.models.TrackIDs.{db => trackMapping}
 import com.malliina.musicpimp.models.FolderIDs.folderData
 import com.malliina.musicpimp.models.UnixPaths.db
 

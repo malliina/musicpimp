@@ -6,9 +6,8 @@ import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db.Mappings.{instant, username}
 import com.malliina.musicpimp.db._
 import com.malliina.play.models.Username
-import org.joda.time.DateTime
 import slick.jdbc.H2Profile.api._
-import com.malliina.musicpimp.models.TrackIDs.trackData
+import com.malliina.musicpimp.models.TrackIDs.{db => trackMapping}
 
 import scala.concurrent.{ExecutionContext, Future}
 

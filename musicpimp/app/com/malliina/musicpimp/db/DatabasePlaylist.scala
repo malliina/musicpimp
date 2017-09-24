@@ -2,8 +2,7 @@ package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.TrackIDs.trackData
-import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
+import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist, TrackIDs}
 import com.malliina.play.models.Username
 import slick.jdbc.H2Profile.api._
 import slick.lifted.Query
@@ -11,7 +10,8 @@ import slick.lifted.Query
 import scala.concurrent.{ExecutionContext, Future}
 
 class DatabasePlaylist(db: PimpDb) extends Sessionizer(db) with PlaylistService {
-  implicit val userMapping = com.malliina.musicpimp.db.Mappings.username
+  implicit val trackMapping = TrackIDs.db
+  implicit val userMapping = Mappings.username
 
   import PimpSchema.{playlistTracksTable, playlistsTable, tracks}
 
