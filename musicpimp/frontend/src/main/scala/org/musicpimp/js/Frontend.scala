@@ -11,7 +11,7 @@ object Frontend extends JSApp {
   var footer: Option[FooterSocket] = None
 
   @JSExport
-  override def main() = {
+  override def main(): Unit = {
     val path = dom.window.location.pathname
     val front: PartialFunction[String, BaseScript] = {
       case "/search" => new Search(new MusicItems)

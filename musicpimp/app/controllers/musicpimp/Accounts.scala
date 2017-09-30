@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import akka.stream.Materializer
 import com.malliina.musicpimp.models.NewUser
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.{Auth, Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms

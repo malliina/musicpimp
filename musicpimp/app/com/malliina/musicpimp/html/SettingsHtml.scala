@@ -1,6 +1,6 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
-import com.malliina.musicpimp.tags.PimpHtml.{feedbackDiv, postableForm, textInputBase}
+import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{SettingsController, UserFeedback, routes}
 

@@ -1,4 +1,4 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 case class ScalaScripts(optimized: String, libs: String)
 

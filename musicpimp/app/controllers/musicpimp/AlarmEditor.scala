@@ -4,7 +4,7 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import controllers.musicpimp.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._

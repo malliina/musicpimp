@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
 import com.malliina.musicpimp.http.PimpContentController
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import controllers.musicpimp.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
 import play.api.mvc.Results

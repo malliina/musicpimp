@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.library.{Library, Settings}
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
 import play.api.Logger

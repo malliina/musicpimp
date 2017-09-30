@@ -1,4 +1,4 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.assets.AppAssets
 import com.malliina.musicpimp.js.PlayerStrings

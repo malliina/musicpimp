@@ -4,7 +4,7 @@ import com.malliina.musicpimp.audio.{PimpEnc, TrackJson}
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models._
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.FileResults
 import com.malliina.play.auth.AuthFailure
 import com.malliina.play.models.Username

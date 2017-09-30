@@ -6,7 +6,7 @@ import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.http.CookiedRequest
 import com.malliina.play.models.Username
 import controllers.musicpimp.Playlists.log

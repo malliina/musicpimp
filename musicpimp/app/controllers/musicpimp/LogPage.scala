@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.models.{FrontLogEvent, FrontLogEvents}
-import com.malliina.musicpimp.tags.PimpHtml
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.util.Logging
 import controllers.musicpimp.LogPage.log
 import play.api.Logger

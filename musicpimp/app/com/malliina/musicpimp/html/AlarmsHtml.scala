@@ -1,9 +1,9 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.scheduler.web.{AlarmStrings, SchedulerStrings}
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
-import com.malliina.musicpimp.tags.PlayBootstrap.helpSpan
+import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.{Field, Form}

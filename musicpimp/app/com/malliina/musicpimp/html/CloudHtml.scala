@@ -1,8 +1,8 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.musicpimp.tags.PimpHtml.postableForm
+import com.malliina.musicpimp.html.PimpHtml.postableForm
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{Cloud, routes}
 

@@ -115,3 +115,16 @@ body {
     display: flex;
     justify-content: flex-end;
 }
+
+.header-when {
+    width: 150px;
+}
+
+.top-table > tbody > tr > td {
+    line-height: 34px;
+    white-space: nowrap;
+}
+
+.log-level-select {
+    max-width: 120px;
+}

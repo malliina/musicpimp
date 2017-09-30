@@ -1,4 +1,4 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
@@ -9,8 +9,8 @@ import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats._
-import com.malliina.musicpimp.tags.PimpHtml._
-import com.malliina.musicpimp.tags.PimpHtml.reverseAssets.versioned
+import com.malliina.musicpimp.html.PimpHtml._
+import com.malliina.musicpimp.html.PimpHtml.reverseAssets.versioned
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
@@ -30,6 +30,7 @@ object PimpHtml {
   val False = "false"
   val True = "true"
   val WideContent = "wide-content"
+  val HiddenSmall = "hidden-xs hidden-sm"
 
   val dataIdAttr = attr("data-id")
 
@@ -243,7 +244,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
               eye(OkStatus, "eye-open green"),
               eye(FailStatus, "eye-close red")
             ),
-            divClass(s"$ColMd4 $PullRight")(
+            divClass(s"$ColMd4 $PullRight $HiddenSmall")(
               SearchHtml.searchForm(None, formClass = NavbarForm, "")
             )
           )

@@ -2,7 +2,7 @@ package org.musicpimp.js
 
 import java.util.UUID
 
-import com.malliina.musicpimp.js.FrontStrings
+import com.malliina.musicpimp.js.FrontStrings.{HiddenClass, LogTableBodyId}
 import com.malliina.musicpimp.models.{JVMLogEntry, Subscribe}
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
@@ -10,7 +10,7 @@ import play.api.libs.json.JsValue
 
 import scalatags.Text.all._
 
-class Logs extends SocketJS("/ws/logs?f=json") with FrontStrings {
+class Logs extends SocketJS("/ws/logs?f=json") {
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
   val LogRow = "log-row"

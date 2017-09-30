@@ -5,7 +5,7 @@ import controllers.musicpimp.routes
 import play.api.libs.json.Json
 import play.api.mvc.Call
 
-abstract class ListLike(baseCall: Call) {
+abstract class ListLike[T <: TopEntry](val entries: Seq[T], baseCall: Call) {
   val prevOffset = math.max(0, meta.from - meta.maxItems)
   val nextOffset = meta.from + meta.maxItems
 
@@ -25,7 +25,7 @@ abstract class ListLike(baseCall: Call) {
 }
 
 case class PopularList(meta: DataRequest, populars: Seq[FullPopularEntry])
-  extends ListLike(routes.Website.popular())
+  extends ListLike(populars, routes.Website.popular())
 
 object PopularList {
   implicit val json = Json.format[PopularList]
@@ -35,7 +35,7 @@ object PopularList {
 }
 
 case class RecentList(meta: DataRequest, recents: Seq[FullRecentEntry])
-  extends ListLike(routes.Website.recent())
+  extends ListLike(recents, routes.Website.recent())
 
 object RecentList {
   implicit val json = Json.format[RecentList]

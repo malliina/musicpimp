@@ -1,16 +1,16 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.audio.{FolderMeta, TrackMeta}
-import com.malliina.musicpimp.js.FrontStrings
+import com.malliina.musicpimp.js.FrontStrings._
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models.{FolderID, TrackID}
-import com.malliina.musicpimp.tags.PimpHtml.dataIdAttr
+import com.malliina.musicpimp.html.PimpHtml.dataIdAttr
 import com.malliina.play.tags.All._
 import controllers.musicpimp.routes
 
 import scalatags.Text.all._
 
-object LibraryHtml extends FrontStrings {
+object LibraryHtml {
   def libraryContent(items: MusicFolder) = {
     val relativePath = items.folder.path
     Seq(

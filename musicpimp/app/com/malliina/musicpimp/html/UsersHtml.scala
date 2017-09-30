@@ -1,6 +1,6 @@
-package com.malliina.musicpimp.tags
+package com.malliina.musicpimp.html
 
-import com.malliina.musicpimp.tags.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
+import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import controllers.musicpimp.{UserFeedback, routes}
