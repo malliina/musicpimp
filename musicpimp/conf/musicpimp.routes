@@ -16,7 +16,7 @@ GET         /manage                            controllers.musicpimp.SettingsCon
 GET         /account                           controllers.musicpimp.Accounts.account
 GET         /users                             controllers.musicpimp.Accounts.users
 POST        /users/delete/*id                  controllers.musicpimp.Accounts.delete(id: Username)
-GET         /login                             controllers.musicpimp.Accounts.login
+GET         /login                             controllers.musicpimp.Accounts.loginPage
 GET         /logout                            controllers.musicpimp.Accounts.logout
 POST        /authenticate                      controllers.musicpimp.Accounts.formAuthenticate
 POST        /changePassword                    controllers.musicpimp.Accounts.formChangePassword

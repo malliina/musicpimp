@@ -120,12 +120,9 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       LogsHtml.logsContent(levelField, levels, currentLevel, feedback)
     )
 
-  def login(accounts: AccountForms,
-            motd: Option[String],
-            formFeedback: Option[UserFeedback],
-            topFeedback: Option[UserFeedback]) =
-    basePage("Welcome", cssLink(AppAssets.css.login))(
-      LoginHtml.loginContent(accounts, motd, formFeedback, topFeedback)
+  def login(conf: LoginConf) =
+    basePage("Welcome")(
+      LoginHtml.loginContent(conf)
     )
 
   def flexLibrary(items: MusicFolder, username: Username) = {
@@ -134,11 +131,11 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
     )
   }
 
-  def libraryBase(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    libraryBase(tab, Container, username, extraHeader)(inner)
+  def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
+    libraryBase(tab, Container, username)(inner)
 
-  def libraryBase(tab: String, contentClass: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    indexMain("library", username, None, extraHeader)(
+  def libraryBase(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
+    indexMain("library", username, None)(
       divContainer(
         ulClass(NavTabs)(
           iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), "fa fa-folder-open"),
@@ -159,7 +156,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
   }
 
   def basePlayer(feedback: Option[UserFeedback], username: Username) =
-    indexMain("player", username, Seq(cssLink(AppAssets.css.player)))(
+    indexMain("player", username)(
       PlayerHtml.playerContent(feedback)
     )
 
@@ -168,12 +165,9 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       AlarmsHtml.alarmsContent(clocks)
     )
 
-  def alarmEditor(form: Form[ClockPlayback],
-                  feedback: Option[UserFeedback],
-                  username: Username,
-                  m: Messages) =
-    manage("alarms", username)(
-      AlarmsHtml.alarmEditorContent(form, feedback, m)
+  def alarmEditor(conf: AlarmConf) =
+    manage("alarms", conf.username)(
+      AlarmsHtml.alarmEditorContent(conf)
     )
 
   def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
@@ -284,8 +278,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
         cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
-        cssLink(AppAssets.css.custom),
-        cssLink(AppAssets.css.footer),
+        cssLink(at("css/main.css")),
         jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
         jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
         jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"),

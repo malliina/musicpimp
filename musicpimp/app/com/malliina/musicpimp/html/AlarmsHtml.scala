@@ -49,26 +49,28 @@ object AlarmsHtml {
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
     liHref("#", `class` := clazz, PimpHtml.dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
-  def alarmEditorContent(form: Form[ClockPlayback],
-                         feedback: Option[UserFeedback],
-                         m: Messages) = Seq(
-    headerRow()("Edit alarm"),
-    halfRow(
-      PimpHtml.postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
-        divClass("hidden")(
-          formTextIn(form(Id), "ID", m)
-        ),
-        numberTextIn(form(Hours), "Hours", "hh", m),
-        numberTextIn(form(Minutes), "Minute", "mm", m),
-        weekdayCheckboxes(form(Days), m),
-        formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hidden")),
-        formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq(Selector)),
-        checkField(form(Enabled), "Enabled"),
-        saveButton(),
-        feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(PimpHtml.feedbackDiv(fb)))
+  def alarmEditorContent(conf: AlarmConf) = {
+    val m = conf.m
+    val form = conf.form
+    Seq(
+      headerRow()("Edit alarm"),
+      halfRow(
+        PimpHtml.postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
+          divClass("hidden")(
+            formTextIn(form(Id), "ID", m)
+          ),
+          numberTextIn(form(Hours), "Hours", "hh", m),
+          numberTextIn(form(Minutes), "Minute", "mm", m),
+          weekdayCheckboxes(form(Days), m),
+          formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hidden")),
+          formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq(Selector)),
+          checkField(form(Enabled), "Enabled"),
+          saveButton(),
+          conf.feedback.fold(empty)(fb => divClass(s"$Lead $ColSmOffset2")(PimpHtml.feedbackDiv(fb)))
+        )
       )
     )
-  )
+  }
 
   def saveButton(buttonText: String = "Save") =
     formGroup(

@@ -1,12 +1,11 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
+import com.malliina.musicpimp.html.{LoginConf, PimpHtml}
 import com.malliina.musicpimp.models.NewUser
-import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.PimpAuthenticator
-import com.malliina.play.auth.{Auth, Authenticator, RememberMe}
+import com.malliina.play.auth.{Auth, RememberMe}
 import com.malliina.play.controllers.AccountForms
-import com.malliina.play.http.{AuthedRequest, Proxies}
+import com.malliina.play.http.Proxies
 import com.malliina.play.models.{Password, Username}
 import controllers.musicpimp.Accounts.{Success, UsersFeedback, log}
 import play.api.Logger
@@ -73,17 +72,17 @@ class Accounts(tags: PimpHtml,
     }
   }
 
-  def login = Action.async { request =>
+  def loginPage = Action.async { request =>
     userManager.isDefaultCredentials.map { isDefault =>
       val motd = if (isDefault) Option(defaultCredentialsMessage) else None
       val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
-      Ok(tags.login(accs, motd, None, flashFeedback))
+      Ok(tags.login(LoginConf(accs, motd, None, flashFeedback)))
     }
   }
 
   def logout = authAction { _ =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Accounts.login())
+    Redirect(routes.Accounts.loginPage())
       .withNewSession
       .discardingCookies(RememberMe.discardingCookie)
       .flashing(msg(logoutMessage))
@@ -126,7 +125,7 @@ class Accounts(tags: PimpHtml,
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
         val formFeedback = UserFeedback.formed(formWithErrors)
-        fut(BadRequest(tags.login(accs, None, formFeedback, flashFeedback)))
+        fut(BadRequest(tags.login(LoginConf(accs, None, formFeedback, flashFeedback))))
       },
       credentials => {
         val username = credentials.username
@@ -146,7 +145,7 @@ class Accounts(tags: PimpHtml,
           } else {
             log.warn(s"Invalid form authentication for user '$username'.")
             val formFeedback = UserFeedback.error("Incorrect username or password.")
-            fut(BadRequest(tags.login(accs, None, Option(formFeedback), flashFeedback)))
+            fut(BadRequest(tags.login(LoginConf(accs, None, Option(formFeedback), flashFeedback))))
           }
         }
       }

@@ -4,7 +4,7 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler._
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
-import com.malliina.musicpimp.html.PimpHtml
+import com.malliina.musicpimp.html.{AlarmConf, PimpHtml}
 import controllers.musicpimp.AlarmEditor.log
 import play.api.Logger
 import play.api.data.Forms._
@@ -59,16 +59,16 @@ class AlarmEditor(tags: PimpHtml,
   }
 
   private def clockAction(form: Form[ClockPlayback], feedback: Option[UserFeedback] = None) =
-    pimpAction(req => Ok(tags.alarmEditor(form, feedback, req.user, messages)))
+    pimpAction(req => Ok(tags.alarmEditor(AlarmConf(form, feedback, req.user, messages))))
 
   def newClock() = formSubmission(clockForm)(
     (req, err) => {
-      tags.alarmEditor(err, None, req.user, messages)
+      tags.alarmEditor(AlarmConf(err, None, req.user, messages))
     },
     (req, form, ap) => {
       ScheduledPlaybackService.save(ap)
       log.info(s"User '${req.user}' from '${req.remoteAddress}' saved alarm '$ap'.")
-      Ok(tags.alarmEditor(form, Option(UserFeedback.success("Saved.")), req.user, messages))
+      Ok(tags.alarmEditor(AlarmConf(form, Option(UserFeedback.success("Saved.")), req.user, messages)))
     })
 
   private def formSubmission[T, C: Writeable](form: Form[T])(err: (PimpUserRequest, Form[T]) => C, ok: (PimpUserRequest, Form[T], T) => Result) =
