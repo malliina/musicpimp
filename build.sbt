@@ -199,8 +199,8 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     "com.malliina.musicpimp.models._",
     "com.malliina.play.models.Username"
   ),
-  pipelineStages ++= Seq(digest, gzip),
-  pipelineStages in Assets ++= Seq(digest, gzip)
+  pipelineStages ++= Seq(digest, gzip)
+//  pipelineStages in Assets ++= Seq(digest, gzip)
 )
 
 // pimpcloud settings
