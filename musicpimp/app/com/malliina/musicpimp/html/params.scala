@@ -7,12 +7,26 @@ import controllers.musicpimp.UserFeedback
 import play.api.data.Form
 import play.api.i18n.Messages
 
-case class LoginConf(accounts: AccountForms,
-                     motd: Option[String],
-                     formFeedback: Option[UserFeedback],
-                     topFeedback: Option[UserFeedback])
+case class LoginContent(accounts: AccountForms,
+                        motd: Option[String],
+                        formFeedback: Option[UserFeedback],
+                        topFeedback: Option[UserFeedback])
 
-case class AlarmConf(form: Form[ClockPlayback],
-                     feedback: Option[UserFeedback],
-                     username: Username,
-                     m: Messages)
+case class AlarmContent(form: Form[ClockPlayback],
+                        feedback: Option[UserFeedback],
+                        username: Username,
+                        m: Messages) extends UserLike
+
+case class LibraryContent(folders: Seq[String],
+                          folderPlaceholder: String,
+                          username: Username,
+                          feedback: Option[UserFeedback]) extends UserLike
+
+case class UsersContent(us: Seq[Username],
+                        username: Username,
+                        listFeedback: Option[UserFeedback],
+                        addFeedback: Option[UserFeedback]) extends UserLike
+
+trait UserLike {
+  def username: Username
+}

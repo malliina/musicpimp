@@ -7,7 +7,7 @@ import controllers.musicpimp.routes
 import scalatags.Text.all._
 
 object LoginHtml {
-  def loginContent(conf: LoginConf) = {
+  def loginContent(conf: LoginContent) = {
     val accounts = conf.accounts
     divClass(s"$Container login-container")(
       rowColumn(s"$ColMd4 $FormSignin")(

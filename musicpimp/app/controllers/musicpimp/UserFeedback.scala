@@ -1,9 +1,15 @@
 package controllers.musicpimp
 
+import controllers.musicpimp.UserFeedback.{Feedback, No, Success, Yes}
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 
-case class UserFeedback(message: String, isError: Boolean)
+case class UserFeedback(message: String, isError: Boolean) {
+  def toSeq: Seq[(String, String)] = Seq(
+    Feedback -> message,
+    Success -> (if (isError) No else Yes)
+  )
+}
 
 object UserFeedback {
   val Feedback = "feedback"

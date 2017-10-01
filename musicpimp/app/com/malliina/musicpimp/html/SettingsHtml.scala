@@ -2,27 +2,25 @@ package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
 import com.malliina.play.tags.All._
-import controllers.musicpimp.{SettingsController, UserFeedback, routes}
+import controllers.musicpimp.{SettingsController, routes}
 
 import scalatags.Text.all._
 
 object SettingsHtml {
-  def editFolders(folders: Seq[String],
-                  folderPlaceholder: String,
-                  errorMessage: Option[UserFeedback]) =
+  def editFolders(content: LibraryContent) =
     halfRow(
       ulClass(ListUnstyled)(
-        folders.map(renderFolder)
+        content.folders.map(renderFolder)
       ),
       postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
         divClass(InputGroup)(
           spanClass(InputGroupAddon)(glyphIcon("folder-open")),
-          textInputBase(Text, SettingsController.Path, Option(folderPlaceholder), `class` := FormControl, required),
+          textInputBase(Text, SettingsController.Path, Option(content.folderPlaceholder), `class` := FormControl, required),
           spanClass(InputGroupBtn)(
             submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
           )
         ),
-        errorMessage.fold(empty)(feedbackDiv)
+        content.feedback.fold(empty)(feedbackDiv)
       )
     )
 

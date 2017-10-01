@@ -2,24 +2,20 @@ package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
 import com.malliina.musicpimp.BuildInfo
-import com.malliina.musicpimp.assets.AppAssets
 import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.html.PimpHtml._
 import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats._
-import com.malliina.musicpimp.html.PimpHtml._
-import com.malliina.musicpimp.html.PimpHtml.reverseAssets.versioned
-import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
 import controllers.Assets.Asset
 import controllers.ReverseAssets
 import controllers.musicpimp.{UserFeedback, routes}
-import play.api.data.{Field, Form}
-import play.api.i18n.Messages
+import play.api.data.Field
 import play.api.mvc.Call
 
 import scalatags.Text.TypedTag
@@ -80,12 +76,9 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       PlaylistsHtml.playlistsContent(lists)
     )
 
-  def users(us: Seq[Username],
-            username: Username,
-            listFeedback: Option[UserFeedback],
-            addFeedback: Option[UserFeedback]) =
-    manage("users", username)(
-      UsersHtml.usersContent(us, listFeedback, addFeedback)
+  def users(content: UsersContent) =
+    manage("users", content.username)(
+      UsersHtml.usersContent(content)
     )
 
   def search(query: Option[String], results: Seq[DataTrack], username: Username) =
@@ -93,13 +86,10 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       SearchHtml.searchContent(query, results)
     )
 
-  def musicFolders(folders: Seq[String],
-                   folderPlaceholder: String,
-                   username: Username,
-                   feedback: Option[UserFeedback]) =
-    manage("folders", username)(
+  def musicFolders(content: LibraryContent) =
+    manage("folders", content.username)(
       headerRow(ColMd8)("Music Folders"),
-      SettingsHtml.editFolders(folders, folderPlaceholder, feedback)
+      SettingsHtml.editFolders(content)
     )
 
   def mostRecent(result: RecentList) =
@@ -120,7 +110,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       LogsHtml.logsContent(levelField, levels, currentLevel, feedback)
     )
 
-  def login(conf: LoginConf) =
+  def login(conf: LoginContent) =
     basePage("Welcome")(
       LoginHtml.loginContent(conf)
     )
@@ -165,16 +155,16 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       AlarmsHtml.alarmsContent(clocks)
     )
 
-  def alarmEditor(conf: AlarmConf) =
+  def alarmEditor(conf: AlarmContent) =
     manage("alarms", conf.username)(
       AlarmsHtml.alarmEditorContent(conf)
     )
 
-  def manage(tab: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    manage(tab, Container, username, extraHeader: _*)(inner: _*)
+  def manage(tab: String, username: Username)(inner: Modifier*): TagPage =
+    manage(tab, Container, username)(inner: _*)
 
-  def manage(tab: String, contentClass: String, username: Username, extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    indexMain("manage", username, None, extraHeader)(
+  def manage(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
+    indexMain("manage", username, None)(
       divContainer(
         ulClass(NavTabs)(
           glyphNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), "folder-open"),
@@ -196,19 +186,16 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
     AboutHtml.aboutBaseContent
   )
 
-  def indexMain(tabName: String,
-                user: Username,
-                extraHeader: Modifier*)(inner: Modifier*): TagPage =
-    indexMain(tabName, user, Option(divContainer), extraHeader: _*)(inner: _*)
+  def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
+    indexMain(tabName, user, Option(divContainer))(inner: _*)
 
   def indexMain(tabName: String,
                 user: Username,
-                contentWrapper: Option[TypedTag[String]],
-                extraHeader: Modifier*)(inner: Modifier*): TagPage = {
+                contentWrapper: Option[TypedTag[String]])(inner: Modifier*): TagPage = {
     def navItem(thisTabName: String, url: Call, glyphiconName: String): TypedTag[String] =
       glyphNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, glyphiconName)
 
-    basePage("MusicPimp", extraHeader)(
+    basePage("MusicPimp")(
       divClass(s"$Navbar $NavbarDefault $NavbarStaticTop")(
         divContainer(
           divClass(NavbarHeader)(

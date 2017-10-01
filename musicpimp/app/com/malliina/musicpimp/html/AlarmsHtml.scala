@@ -49,7 +49,7 @@ object AlarmsHtml {
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
     liHref("#", `class` := clazz, PimpHtml.dataIdAttr := dataId)(glyphIcon(glyph), s" $linkText")
 
-  def alarmEditorContent(conf: AlarmConf) = {
+  def alarmEditorContent(conf: AlarmContent) = {
     val m = conf.m
     val form = conf.form
     Seq(

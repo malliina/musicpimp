@@ -1,13 +1,13 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.html.{LoginConf, PimpHtml}
+import com.malliina.musicpimp.html.{LoginContent, PimpHtml, UsersContent}
 import com.malliina.musicpimp.models.NewUser
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.{Auth, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.http.Proxies
 import com.malliina.play.models.{Password, Username}
-import controllers.musicpimp.Accounts.{Success, UsersFeedback, log}
+import controllers.musicpimp.Accounts.{UsersFeedback, log}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
@@ -16,9 +16,7 @@ import play.api.mvc._
 object Accounts {
   private val log = Logger(getClass)
 
-  val Feedback = "feedback"
   val UsersFeedback = "usersFeedback"
-  val Success = "success"
 }
 
 class Accounts(tags: PimpHtml,
@@ -76,7 +74,7 @@ class Accounts(tags: PimpHtml,
     userManager.isDefaultCredentials.map { isDefault =>
       val motd = if (isDefault) Option(defaultCredentialsMessage) else None
       val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
-      Ok(tags.login(LoginConf(accs, motd, None, flashFeedback)))
+      Ok(tags.login(LoginContent(accs, motd, None, flashFeedback)))
     }
   }
 
@@ -85,7 +83,7 @@ class Accounts(tags: PimpHtml,
     Redirect(routes.Accounts.loginPage())
       .withNewSession
       .discardingCookies(RememberMe.discardingCookie)
-      .flashing(msg(logoutMessage))
+      .flashing(UserFeedback.success(logoutMessage).toSeq: _*)
   }
 
   def formAddUser = pimpActionAsync { request =>
@@ -99,11 +97,8 @@ class Accounts(tags: PimpHtml,
       newUser => {
         val addCall = userManager.addUser(newUser.username, newUser.pass)
         addCall.map { addError =>
-          val (isSuccess, feedback) = addError
-            .map(e => (false, s"User '${e.user}' already exists."))
-            .getOrElse((true, s"Created user '${newUser.username}'."))
-          Redirect(routes.Accounts.users())
-            .flashing(msg(feedback), Success -> (if (isSuccess) "yes" else "no"))
+          val userFeedback = addError.map(e => UserFeedback.error(s"User '${e.user}' already exists.")).getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
+          Redirect(routes.Accounts.users()).flashing(userFeedback.toSeq: _*)
         }
       }
     )
@@ -114,7 +109,7 @@ class Accounts(tags: PimpHtml,
       form.globalError.map(err => UserFeedback.error(err.message))
         .orElse(UserFeedback.flashed(req))
     val listFeedback = UserFeedback.flashed(req.flash, textKey = UsersFeedback)
-    tags.users(users, req.user, listFeedback, addFeedback)
+    tags.users(UsersContent(users, req.user, listFeedback, addFeedback))
   }
 
   def formAuthenticate = Action.async { request =>
@@ -125,7 +120,7 @@ class Accounts(tags: PimpHtml,
         val user = formWithErrors.data.getOrElse(userFormKey, "")
         log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
         val formFeedback = UserFeedback.formed(formWithErrors)
-        fut(BadRequest(tags.login(LoginConf(accs, None, formFeedback, flashFeedback))))
+        fut(BadRequest(tags.login(LoginContent(accs, None, formFeedback, flashFeedback))))
       },
       credentials => {
         val username = credentials.username
@@ -145,7 +140,7 @@ class Accounts(tags: PimpHtml,
           } else {
             log.warn(s"Invalid form authentication for user '$username'.")
             val formFeedback = UserFeedback.error("Incorrect username or password.")
-            fut(BadRequest(tags.login(LoginConf(accs, None, Option(formFeedback), flashFeedback))))
+            fut(BadRequest(tags.login(LoginContent(accs, None, Option(formFeedback), flashFeedback))))
           }
         }
       }
@@ -170,7 +165,7 @@ class Accounts(tags: PimpHtml,
             userManager.updatePassword(user, pc.newPass) map { _ =>
               log info s"Password changed for user '$user' from '$remoteAddress'."
               Redirect(routes.Accounts.account())
-                .flashing(msg(passwordChangedMessage))
+                .flashing(UserFeedback.success(passwordChangedMessage).toSeq: _*)
             }
           } else {
             fut(BadRequest(tags.account(user, Option(UserFeedback.error(incorrectPasswordMessage)))))
@@ -179,6 +174,4 @@ class Accounts(tags: PimpHtml,
       }
     )
   }
-
-  def msg(message: String) = UserFeedback.Feedback -> message
 }

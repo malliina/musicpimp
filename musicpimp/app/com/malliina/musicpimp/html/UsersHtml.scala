@@ -8,9 +8,7 @@ import controllers.musicpimp.{UserFeedback, routes}
 import scalatags.Text.all._
 
 object UsersHtml {
-  def usersContent(us: Seq[Username],
-                   listFeedback: Option[UserFeedback],
-                   addFeedback: Option[UserFeedback]) =
+  def usersContent(content: UsersContent) =
     row(
       div6(
         headerDiv(
@@ -18,7 +16,7 @@ object UsersHtml {
         ),
         stripedHoverTable(Seq("Username", "Actions"))(
           tbody(
-            us map { u =>
+            content.us map { u =>
               tr(
                 td(u.name),
                 td(postableForm(routes.Accounts.delete(u))(button(`class` := s"$BtnDanger $BtnXs")(" Delete")))
@@ -26,13 +24,13 @@ object UsersHtml {
             }
           )
         ),
-        listFeedback.fold(empty)(feedbackDiv)
+        content.listFeedback.fold(empty)(feedbackDiv)
       ),
       div4(
         headerDiv(
           h1("Add user")
         ),
-        addUser(addFeedback)
+        addUser(content.addFeedback)
       )
     )
 
