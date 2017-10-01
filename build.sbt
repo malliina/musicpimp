@@ -21,8 +21,8 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.9.2"
-val pimpcloudVersion = "1.8.8"
+val musicpimpVersion = "3.9.3"
+val pimpcloudVersion = "1.8.9"
 val sharedVersion = "1.1.0"
 val crossVersion = "1.1.0"
 val malliinaGroup = "com.malliina"
@@ -199,8 +199,8 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     "com.malliina.musicpimp.models._",
     "com.malliina.play.models.Username"
   ),
-  pipelineStages ++= Seq(digest, gzip),
-  pipelineStages in Assets ++= Seq(digest, gzip)
+  pipelineStages ++= Seq(digest, gzip)
+//  pipelineStages in Assets ++= Seq(digest, gzip)
 )
 
 // pimpcloud settings
