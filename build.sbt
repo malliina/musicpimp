@@ -67,8 +67,8 @@ lazy val crossSettings = Seq(
   organization := "org.musicpimp",
   version := "1.1.1",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.2",
-    "com.lihaoyi" %%% "scalatags" % "0.6.3",
+    "com.typesafe.play" %%% "play-json" % "2.6.5",
+    "com.lihaoyi" %%% "scalatags" % "0.6.7",
     "com.malliina" %%% "primitives" % "1.3.2"
   )
 )
@@ -92,7 +92,7 @@ updateOptions in ThisBuild := (updateOptions in ThisBuild).value.withCachedResol
 
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
-  pipelineStages in Assets := Seq(scalaJSPipeline)
+  pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
 lazy val nativePackagingSettings =
@@ -198,7 +198,9 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     "com.malliina.musicpimp.http.PimpImports._",
     "com.malliina.musicpimp.models._",
     "com.malliina.play.models.Username"
-  )
+  ),
+  pipelineStages ++= Seq(digest, gzip),
+  pipelineStages in Assets ++= Seq(digest, gzip)
 )
 
 // pimpcloud settings
@@ -227,7 +229,7 @@ lazy val artifactSettings = Seq(
 
 lazy val pimpcloudScalaJSSettings = Seq(
   scalaJSProjects := Seq(pimpcloudFrontend),
-  pipelineStages in Assets := Seq(scalaJSPipeline)
+  pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
 
