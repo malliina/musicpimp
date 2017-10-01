@@ -4,8 +4,8 @@ import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
 import com.malliina.musicpimp.db.Indexer
+import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
 import com.malliina.musicpimp.library.{Library, Settings}
-import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
 import play.api.Logger
@@ -13,16 +13,19 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages
-import play.api.mvc.Results.{BadRequest, Redirect}
 
 import scala.util.Try
+
+object SettingsController {
+  private val log = Logger(getClass)
+  val Path = "path"
+}
 
 class SettingsController(tags: PimpHtml,
                          messages: Messages,
                          indexer: Indexer,
                          auth: AuthDeps)
   extends HtmlController(auth) {
-  val Success = "success"
   val dirConstraint = Constraint((dir: String) =>
     if (validateDirectory(dir)) Valid
     else Invalid(Seq(ValidationError(s"Invalid directory '$dir'."))))
@@ -67,7 +70,7 @@ class SettingsController(tags: PimpHtml,
     }
     val flashMessage = UserFeedback.flashed(req.flash)
     val feedback = errorMessage orElse flashMessage
-    tags.musicFolders(Settings.readFolders, folderPlaceHolder, req.user, feedback)
+    tags.musicFolders(LibraryContent(Settings.readFolders, folderPlaceHolder, req.user, feedback))
   }
 
   private def onFoldersChanged(successMessage: String) = {
@@ -77,9 +80,4 @@ class SettingsController(tags: PimpHtml,
     Redirect(routes.SettingsController.settings())
       .flashing(UserFeedback.Feedback -> successMessage)
   }
-}
-
-object SettingsController {
-  private val log = Logger(getClass)
-  val Path = "path"
 }
