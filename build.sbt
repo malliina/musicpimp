@@ -2,9 +2,11 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 
 import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
-import com.malliina.sbt.filetree.DirMap
+import com.malliina.sbt.GenericKeys.{appIcon, displayName, libs, logger, manufacturer, pkgHome}
 import com.malliina.sbt.GenericPlugin
+import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
+import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
 import com.malliina.sbt.win.WinKeys.winSwExe
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
@@ -21,16 +23,16 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.9.3"
-val pimpcloudVersion = "1.8.9"
-val sharedVersion = "1.1.0"
-val crossVersion = "1.1.0"
+val musicpimpVersion = "3.10.0"
+val pimpcloudVersion = "1.9.0"
+val sharedVersion = "1.2.0"
+val crossVersion = "1.2.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.5"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.9"
 
-scalaVersion in ThisBuild := "2.12.3"
+scalaVersion in ThisBuild := "2.12.4"
 
 lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -67,7 +69,7 @@ lazy val crossSettings = Seq(
   organization := "org.musicpimp",
   version := "1.1.1",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.5",
+    "com.typesafe.play" %%% "play-json" % "2.6.6",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
     "com.malliina" %%% "primitives" % "1.3.2"
   )
@@ -265,7 +267,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.3",
+  scalaVersion := "2.12.4",
   organization := "org.musicpimp",
   updateOptions := updateOptions.value.withCachedResolution(true)
 )
