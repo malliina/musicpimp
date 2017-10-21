@@ -33,9 +33,11 @@ class SettingsController(tags: PimpHtml,
   protected val newFolderForm = Form(
     SettingsController.Path -> nonEmptyText.verifying(dirConstraint)
   )
-  private val folderPlaceHolder =
-    if (EnvUtils.operatingSystem == EnvUtils.Windows) "C:\\music\\"
-    else "/opt/music/"
+  private val folderPlaceHolder = EnvUtils.operatingSystem match {
+    case EnvUtils.Windows => "C:\\music\\"
+    case EnvUtils.Mac => "/Users/me/music"
+    case _ => "/opt/music"
+  }
 
   def manage = settings
 
