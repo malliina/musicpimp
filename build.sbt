@@ -30,7 +30,7 @@ val crossVersion = "1.2.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.9"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.3.10"
 
 scalaVersion in ThisBuild := "2.12.4"
 
