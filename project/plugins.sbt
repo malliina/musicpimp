@@ -10,7 +10,6 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversio
 
 Seq(
   "com.malliina" %% "sbt-play" % "1.2.1",
-  "com.malliina" %% "sbt-packager" % "2.4.1",
   "org.scala-js" % "sbt-scalajs" % "0.6.20",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
   "com.malliina" % "sbt-filetree" % "0.2.0",
