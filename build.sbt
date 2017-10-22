@@ -115,7 +115,7 @@ lazy val pimpPlaySettings =
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
       libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
-      fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
+      fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
         !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")
       }
     )
