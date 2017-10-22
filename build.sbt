@@ -23,8 +23,8 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.1"
-val pimpcloudVersion = "1.9.0"
+val musicpimpVersion = "3.10.2"
+val pimpcloudVersion = "1.9.1"
 val sharedVersion = "1.2.0"
 val crossVersion = "1.2.0"
 val malliinaGroup = "com.malliina"
@@ -107,7 +107,7 @@ lazy val nativePackagingSettings =
     PlayKeys.externalizeResources := false // packages files in /conf to the app jar
   )
 
-lazy val pimpLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings ++ Seq(
+lazy val pimpLinuxSettings = Seq(
   javaOptions in Universal ++= Seq(
     "-Dmusicpimp.home=/var/run/musicpimp",
     "-Dlog.dir=/var/run/musicpimp/logs",
@@ -232,7 +232,7 @@ lazy val pimpcloudScalaJSSettings = Seq(
 )
 
 
-lazy val pimpcloudLinuxSettings = com.malliina.sbt.unix.LinuxPlugin.playSettings ++ Seq(
+lazy val pimpcloudLinuxSettings = Seq(
   httpPort in Linux := Option("disabled"),
   httpsPort in Linux := Option("8458"),
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
