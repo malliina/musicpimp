@@ -23,8 +23,8 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.2"
-val pimpcloudVersion = "1.9.1"
+val musicpimpVersion = "3.10.3"
+val pimpcloudVersion = "1.9.4"
 val sharedVersion = "1.2.0"
 val crossVersion = "1.2.0"
 val malliinaGroup = "com.malliina"
@@ -63,6 +63,7 @@ lazy val crossJs = cross.js
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
+scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
@@ -87,17 +88,45 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
   scalacOptions ++= Seq("-encoding", "UTF-8")
 )
 
-scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
-lazy val scalajsSettings = Seq(
-  scalaJSProjects := Seq(musicpimpFrontend),
-  pipelineStages in Assets ++= Seq(scalaJSPipeline)
-)
+// musicpimp settings
+
+lazy val pimpPlaySettings =
+  commonServerSettings ++
+    commonSettings ++
+    nativePackagingSettings ++
+    artifactSettings ++
+    Seq(
+      libraryDependencies ++= Seq(
+        malliinaGroup %% "util-actor" % "2.8.2",
+        malliinaGroup %% "util-rmi" % "2.8.2",
+        malliinaGroup %% "util-audio" % "2.3.2",
+        httpGroup % "httpclient" % httpVersion,
+        httpGroup % "httpcore" % httpVersion,
+        httpGroup % "httpmime" % httpVersion,
+        "net.glxn" % "qrgen" % "1.4",
+        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
+        "com.h2database" % "h2" % "1.4.196",
+        "com.neovisionaries" % "nv-websocket-client" % "2.3"
+      ).map(dep => dep withSources()),
+      buildInfoPackage := "com.malliina.musicpimp",
+      RoutesKeys.routesImport ++= Seq(
+        "com.malliina.musicpimp.http.PimpImports._",
+        "com.malliina.musicpimp.models._",
+        "com.malliina.play.models.Username"
+      ),
+      fileTreeSources := Seq(
+        DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
+        DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
+      ),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
+      fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
+    )
 
 lazy val nativePackagingSettings =
-  pimpWindowsSettings ++
+  pimpLinuxSettings ++
+    pimpWindowsSettings ++
     pimpMacSettings ++
-    pimpLinuxSettings ++
     GenericPlugin.confSettings ++ Seq(
     com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
@@ -154,52 +183,10 @@ lazy val pimpMacSettings = macSettings ++ Seq(
   )
 )
 
-lazy val pimpPlaySettings =
-  commonServerSettings ++
-    commonSettings ++
-    nativePackagingSettings ++
-    artifactSettings ++
-    Seq(
-      libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.8.2",
-        malliinaGroup %% "util-rmi" % "2.8.2",
-        malliinaGroup %% "util-audio" % "2.3.2",
-        httpGroup % "httpclient" % httpVersion,
-        httpGroup % "httpcore" % httpVersion,
-        httpGroup % "httpmime" % httpVersion,
-        "net.glxn" % "qrgen" % "1.4",
-        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.4.196",
-        "com.neovisionaries" % "nv-websocket-client" % "2.3"
-      ).map(dep => dep withSources()),
-      buildInfoPackage := "com.malliina.musicpimp",
-      RoutesKeys.routesImport ++= Seq(
-        "com.malliina.musicpimp.http.PimpImports._",
-        "com.malliina.musicpimp.models._",
-        "com.malliina.play.models.Username"
-      ),
-      fileTreeSources := Seq(
-        DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
-        DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
-      ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
-      fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
-    )
 
-lazy val commonServerSettings = baseSettings ++ Seq(
-  libraryDependencies ++= Seq(
-    utilPlayDep,
-    utilPlayDep % Test classifier "tests",
-    malliinaGroup %% "logstreams-client" % "0.0.9",
-    PlayImport.filters
-  ).map(dep => dep.withSources()),
-  RoutesKeys.routesImport ++= Seq(
-    "com.malliina.musicpimp.http.PimpImports._",
-    "com.malliina.musicpimp.models._",
-    "com.malliina.play.models.Username"
-  ),
-  pipelineStages ++= Seq(digest, gzip)
-//  pipelineStages in Assets ++= Seq(digest, gzip)
+lazy val scalajsSettings = Seq(
+  scalaJSProjects := Seq(musicpimpFrontend),
+  pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
 // pimpcloud settings
@@ -217,20 +204,6 @@ lazy val pimpcloudSettings =
       fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
       buildInfoPackage := "com.malliina.pimpcloud"
     )
-
-lazy val artifactSettings = Seq(
-  libs ++= Seq(
-    (packageBin in Assets).value.toPath,
-    (packageBin in shared in Compile).value.toPath,
-    (packageBin in crossJvm in Compile).value.toPath
-  )
-)
-
-lazy val pimpcloudScalaJSSettings = Seq(
-  scalaJSProjects := Seq(pimpcloudFrontend),
-  pipelineStages in Assets ++= Seq(scalaJSPipeline)
-)
-
 
 lazy val pimpcloudLinuxSettings = Seq(
   httpPort in Linux := Option("disabled"),
@@ -251,6 +224,35 @@ lazy val pimpcloudLinuxSettings = Seq(
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs"
+)
+
+lazy val artifactSettings = Seq(
+  libs ++= Seq(
+    (packageBin in Assets).value.toPath,
+    (packageBin in shared in Compile).value.toPath,
+    (packageBin in crossJvm in Compile).value.toPath
+  )
+)
+
+lazy val pimpcloudScalaJSSettings = Seq(
+  scalaJSProjects := Seq(pimpcloudFrontend),
+  pipelineStages in Assets ++= Seq(scalaJSPipeline)
+)
+
+lazy val commonServerSettings = baseSettings ++ Seq(
+  libraryDependencies ++= Seq(
+    utilPlayDep,
+    utilPlayDep % Test classifier "tests",
+    malliinaGroup %% "logstreams-client" % "0.0.9",
+    PlayImport.filters
+  ).map(dep => dep.withSources()),
+  RoutesKeys.routesImport ++= Seq(
+    "com.malliina.musicpimp.http.PimpImports._",
+    "com.malliina.musicpimp.models._",
+    "com.malliina.play.models.Username"
+  ),
+  pipelineStages ++= Seq(digest, gzip)
+  //  pipelineStages in Assets ++= Seq(digest, gzip)
 )
 
 lazy val sharedSettings = baseSettings ++ Seq(
