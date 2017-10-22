@@ -22,10 +22,10 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.5"
-val pimpcloudVersion = "1.9.4"
-val sharedVersion = "1.2.0"
-val crossVersion = "1.2.0"
+val musicpimpVersion = "3.10.6"
+val pimpcloudVersion = "1.9.6"
+val sharedVersion = "1.2.1"
+val crossVersion = "1.2.1"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
@@ -66,7 +66,7 @@ scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
-  version := "1.1.1",
+  version := "1.1.2",
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.6",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
@@ -78,10 +78,20 @@ lazy val crossSettings = Seq(
 
 lazy val pimpPlaySettings =
   commonServerSettings ++
-    pimpSettingsRandom ++
+    pimpAssetSettings ++
     nativePackagingSettings ++
     artifactSettings ++
     Seq(
+      version := musicpimpVersion,
+      buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
+      javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
+      resolvers ++= Seq(
+        "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+        Resolver.jcenterRepo,
+        Resolver.bintrayRepo("malliina", "maven")
+      ),
+      // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
+      scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
         malliinaGroup %% "util-actor" % "2.8.2",
         malliinaGroup %% "util-rmi" % "2.8.2",
@@ -105,20 +115,14 @@ lazy val pimpPlaySettings =
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
       libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
-      fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
+      fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
+        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")
+      }
     )
 
-lazy val pimpSettingsRandom = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
-  buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
-  javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-  version := musicpimpVersion,
-  resolvers ++= Seq(
-    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-    Resolver.jcenterRepo,
-    Resolver.bintrayRepo("malliina", "maven")
-  ),
-  // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
-  scalacOptions ++= Seq("-encoding", "UTF-8")
+lazy val pimpAssetSettings = PlayProject.assetSettings ++ Seq(
+  scalaJSProjects := Seq(musicpimpFrontend),
+  pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
 lazy val nativePackagingSettings =
@@ -177,11 +181,6 @@ lazy val pimpMacSettings = macSettings ++ Seq(
     FileMapping((pkgHome in Mac).value / "guitar.png", Paths get ".background/.bg.png"),
     FileMapping((pkgHome in Mac).value / "DS_Store", Paths get ".DS_Store")
   )
-)
-
-lazy val scalajsSettings = Seq(
-  scalaJSProjects := Seq(musicpimpFrontend),
-  pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
 // pimpcloud settings
