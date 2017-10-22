@@ -3,7 +3,6 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.file.StorageFile
 import com.malliina.sbt.GenericKeys.{appIcon, displayName, libs, logger, manufacturer, pkgHome}
-import com.malliina.sbt.GenericPlugin
 import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
@@ -23,7 +22,7 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.3"
+val musicpimpVersion = "3.10.4"
 val pimpcloudVersion = "1.9.4"
 val sharedVersion = "1.2.0"
 val crossVersion = "1.2.0"
@@ -75,20 +74,6 @@ lazy val crossSettings = Seq(
   )
 )
 
-lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
-  buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
-  javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-  version := musicpimpVersion,
-  resolvers ++= Seq(
-    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-    Resolver.jcenterRepo,
-    Resolver.bintrayRepo("malliina", "maven")
-  ),
-  // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
-  scalacOptions ++= Seq("-encoding", "UTF-8")
-)
-
-
 // musicpimp settings
 
 lazy val pimpPlaySettings =
@@ -123,12 +108,26 @@ lazy val pimpPlaySettings =
       fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
     )
 
+lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
+  buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
+  javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
+  version := musicpimpVersion,
+  resolvers ++= Seq(
+    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+    Resolver.jcenterRepo,
+    Resolver.bintrayRepo("malliina", "maven")
+  ),
+  // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
+  scalacOptions ++= Seq("-encoding", "UTF-8")
+)
+
 lazy val nativePackagingSettings =
   pimpLinuxSettings ++
     pimpWindowsSettings ++
-    pimpMacSettings ++
-    GenericPlugin.confSettings ++ Seq(
-    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
+    pimpMacSettings ++ Seq(
+//    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
+    httpPort in Linux := Option("disabled"),
+    httpsPort in Linux := Option("8455"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
     manufacturer := "Skogberg Labs",
     displayName := "MusicPimp",
