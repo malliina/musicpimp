@@ -23,7 +23,7 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.0"
+val musicpimpVersion = "3.10.1"
 val pimpcloudVersion = "1.9.0"
 val sharedVersion = "1.2.0"
 val crossVersion = "1.2.0"
@@ -65,7 +65,6 @@ addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
 
 lazy val crossSettings = Seq(
-  updateOptions := updateOptions.value.withCachedResolution(true),
   organization := "org.musicpimp",
   version := "1.1.1",
   libraryDependencies ++= Seq(
@@ -89,8 +88,6 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
 )
 
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
-
-updateOptions in ThisBuild := (updateOptions in ThisBuild).value.withCachedResolution(true)
 
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
@@ -268,8 +265,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
 
 lazy val baseSettings = Seq(
   scalaVersion := "2.12.4",
-  organization := "org.musicpimp",
-  updateOptions := updateOptions.value.withCachedResolution(true)
+  organization := "org.musicpimp"
 )
 
 def scalajsProject(name: String, path: File) =
