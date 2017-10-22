@@ -78,7 +78,7 @@ lazy val crossSettings = Seq(
 
 lazy val pimpPlaySettings =
   commonServerSettings ++
-    commonSettings ++
+    pimpSettingsRandom ++
     nativePackagingSettings ++
     artifactSettings ++
     Seq(
@@ -108,7 +108,7 @@ lazy val pimpPlaySettings =
       fullClasspath in Compile := (fullClasspath in Compile).value.filter(af => !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar"))
     )
 
-lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
+lazy val pimpSettingsRandom = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
   buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
   javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
   version := musicpimpVersion,
@@ -122,9 +122,9 @@ lazy val commonSettings = PlayProject.assetSettings ++ scalajsSettings ++ Seq(
 )
 
 lazy val nativePackagingSettings =
-  pimpLinuxSettings ++
-    pimpWindowsSettings ++
-    pimpMacSettings ++ Seq(
+//    pimpWindowsSettings ++
+//    pimpMacSettings ++
+      Seq(
 //    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
     httpPort in Linux := Option("disabled"),
     httpsPort in Linux := Option("8455"),
@@ -132,19 +132,16 @@ lazy val nativePackagingSettings =
     manufacturer := "Skogberg Labs",
     displayName := "MusicPimp",
     mainClass := Some("com.malliina.musicpimp.Starter"),
+    javaOptions in Universal ++= Seq(
+      "-Dmusicpimp.home=/var/run/musicpimp",
+      "-Dlog.dir=/var/run/musicpimp/logs",
+      "-Dlogger.resource=prod-logger.xml"
+    ),
+    packageSummary in Linux := "MusicPimp summary here.",
+    rpmVendor := "Skogberg Labs",
+    rpmLicense := Option("BSD License"),
     PlayKeys.externalizeResources := false // packages files in /conf to the app jar
   )
-
-lazy val pimpLinuxSettings = Seq(
-  javaOptions in Universal ++= Seq(
-    "-Dmusicpimp.home=/var/run/musicpimp",
-    "-Dlog.dir=/var/run/musicpimp/logs",
-    "-Dlogger.resource=prod-logger.xml"
-  ),
-  packageSummary in Linux := "MusicPimp summary here.",
-  rpmVendor := "Skogberg Labs",
-  rpmLicense := Option("BSD License")
-)
 
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
   // never change
@@ -181,7 +178,6 @@ lazy val pimpMacSettings = macSettings ++ Seq(
     FileMapping((pkgHome in Mac).value / "DS_Store", Paths get ".DS_Store")
   )
 )
-
 
 lazy val scalajsSettings = Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
