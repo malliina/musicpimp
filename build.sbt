@@ -22,14 +22,14 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.7"
-val pimpcloudVersion = "1.9.6"
-val sharedVersion = "1.2.2"
-val crossVersion = "1.2.2"
+val musicpimpVersion = "3.10.8"
+val pimpcloudVersion = "1.9.7"
+val sharedVersion = "1.2.3"
+val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.3.10"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.4.0"
 
 scalaVersion in ThisBuild := "2.12.4"
 

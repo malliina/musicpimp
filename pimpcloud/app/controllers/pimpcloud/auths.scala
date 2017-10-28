@@ -47,7 +47,7 @@ object OAuthCtrl {
 }
 
 class AdminOAuth(actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, val mat: Materializer)
-  extends OAuthControl(actions, creds, mat) {
+  extends OAuthControl(actions, creds) {
 
   override def isAuthorized(email: Email): Boolean = email == Email("malliina123@gmail.com")
 
