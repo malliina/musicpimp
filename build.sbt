@@ -22,10 +22,10 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.6"
+val musicpimpVersion = "3.10.7"
 val pimpcloudVersion = "1.9.6"
-val sharedVersion = "1.2.1"
-val crossVersion = "1.2.1"
+val sharedVersion = "1.2.2"
+val crossVersion = "1.2.2"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
@@ -66,7 +66,7 @@ scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
-  version := "1.1.2",
+  version := crossVersion,
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.6",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
@@ -126,10 +126,10 @@ lazy val pimpAssetSettings = PlayProject.assetSettings ++ Seq(
 )
 
 lazy val nativePackagingSettings =
-//    pimpWindowsSettings ++
-//    pimpMacSettings ++
+    pimpWindowsSettings ++
+    pimpMacSettings ++
       Seq(
-//    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
+    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
     httpPort in Linux := Option("disabled"),
     httpsPort in Linux := Option("8455"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
@@ -137,8 +137,6 @@ lazy val nativePackagingSettings =
     displayName := "MusicPimp",
     mainClass := Some("com.malliina.musicpimp.Starter"),
     javaOptions in Universal ++= Seq(
-      "-Dmusicpimp.home=/var/run/musicpimp",
-      "-Dlog.dir=/var/run/musicpimp/logs",
       "-Dlogger.resource=prod-logger.xml"
     ),
     packageSummary in Linux := "MusicPimp summary here.",
@@ -210,10 +208,7 @@ lazy val pimpcloudLinuxSettings = Seq(
     Seq(
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      s"-Dlog.dir=/var/run/$linuxName/logs",
-      "-Dlogger.resource=prod-logger.xml",
-      "-Dfile.encoding=UTF-8",
-      "-Dsun.jnu.encoding=UTF-8"
+      "-Dlogger.resource=prod-logger.xml"
     )
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
