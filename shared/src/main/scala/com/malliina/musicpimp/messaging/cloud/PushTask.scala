@@ -2,11 +2,11 @@ package com.malliina.musicpimp.messaging.cloud
 
 import play.api.libs.json.Json
 
-case class PushTask(apns: Option[APNSRequest] = None,
-                    gcm: Option[GCMRequest] = None,
-                    adm: Option[ADMRequest] = None,
-                    mpns: Option[MPNSRequest] = None,
-                    wns: Option[WNSRequest] = None) {
+case class PushTask(apns: Seq[APNSPayload] = Nil,
+                    gcm: Seq[GCMPayload] = Nil,
+                    adm: Seq[ADMPayload] = Nil,
+                    mpns: Seq[MPNSPayload] = Nil,
+                    wns: Seq[WNSPayload] = Nil) {
   def labels: Seq[String] = Seq(
     apns.map(_ => "APNS"),
     gcm.map(_ => "GCM"),

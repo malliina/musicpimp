@@ -1,9 +1,9 @@
 package controllers.pimpcloud
 
 import com.malliina.musicpimp.messaging.Pusher
-import com.malliina.musicpimp.messaging.cloud.PushTask
+import com.malliina.musicpimp.messaging.cloud.{PushResponse, PushTask}
 import com.malliina.musicpimp.models.Errors
-import controllers.pimpcloud.Push.{Body, Cmd, PushValue, ResultKey}
+import controllers.pimpcloud.Push.{Body, Cmd, PushValue}
 import play.api.libs.json.{JsError, JsResult, JsValue, Json}
 import play.api.mvc.{AbstractController, ControllerComponents}
 
@@ -15,7 +15,7 @@ class Push(comps: ControllerComponents, pusher: Pusher) extends AbstractControll
   def push = Action.async(parse.json) { request =>
     val payload = request.body
     parseJson(payload)
-      .map(task => pusher.push(task).map(result => Ok(Json.obj(ResultKey -> result))))
+      .map(task => pusher.push(task).map(result => Ok(Json.toJson(PushResponse(result)))))
       .getOrElse(Future.successful(Errors.badRequest(s"Invalid payload: '$payload'.")))
   }
 

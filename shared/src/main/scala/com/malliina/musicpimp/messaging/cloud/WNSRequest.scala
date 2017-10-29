@@ -6,8 +6,7 @@ import play.api.libs.json.Json
 
 import scala.concurrent.duration.Duration
 
-case class WNSRequest(tokens: Seq[WNSToken],
-                      tile: Option[TileElement],
+case class WNSRequest(tile: Option[TileElement],
                       toast: Option[ToastElement],
                       badge: Option[Badge],
                       raw: Option[Raw],

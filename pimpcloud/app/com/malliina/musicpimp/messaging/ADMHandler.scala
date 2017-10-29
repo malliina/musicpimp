@@ -1,13 +1,12 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.musicpimp.messaging.cloud.{ADMRequest, BasicResult}
+import com.malliina.musicpimp.messaging.cloud.{ADMPayload, BasicResult}
 import com.malliina.push.adm.ADMClient
 
 import scala.concurrent.Future
 
-class ADMHandler(client: ADMClient) extends PushRequestHandler[ADMRequest, BasicResult] {
-  override def push(request: ADMRequest): Future[Seq[BasicResult]] =
-    client.pushAll(request.tokens, request.message)
-      .map(rs => rs.map(BasicResult.fromResponse))
+class ADMHandler(client: ADMClient) extends PushRequestHandler[ADMPayload, BasicResult] {
+  override def pushOne(request: ADMPayload): Future[BasicResult] =
+    client.push(request.token, request.message).map(BasicResult.fromResponse)
 }

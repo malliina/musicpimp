@@ -13,16 +13,13 @@ import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.play.http.Proxies
-import com.malliina.push.adm.ADMToken
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
 import play.api.i18n.Messages
 import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.mvc.Result
 
-class Alarms(tags: PimpHtml,
-             auth: AuthDeps,
-             messages: Messages)
+class Alarms(tags: PimpHtml, auth: AuthDeps, messages: Messages)
   extends AlarmEditor(tags, auth, messages)
     with SchedulerStrings {
 

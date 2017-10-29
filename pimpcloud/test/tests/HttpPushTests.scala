@@ -1,6 +1,6 @@
 package tests
 
-import com.malliina.musicpimp.messaging.cloud.{APNSRequest, PushResult, PushTask}
+import com.malliina.musicpimp.messaging.cloud.{APNSPayload, PushResult, PushTask}
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.{AppConf, CloudComponents, NoPusher}
 import com.malliina.play.auth.AuthFailure
@@ -42,14 +42,14 @@ class HttpPushTests extends PimpcloudSuite {
   val tokenString = "81bae54a590a3ae871408bd565d7e441aa952744770783209b2fd54219e3d9fe"
   val testToken = APNSToken.build(tokenString).get
   val testTask = PushTask(
-    Option(
-      APNSRequest(
-        Seq(testToken),
+    Seq(
+      APNSPayload(
+        testToken,
         APNSMessage.badged("this is a test", badge = 4))),
-    None,
-    None,
-    None,
-    None
+    Nil,
+    Nil,
+    Nil,
+    Nil
   )
 
   test("respond to health check") {

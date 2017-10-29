@@ -4,8 +4,7 @@ import com.malliina.push.WindowsMessage
 import com.malliina.push.mpns._
 import play.api.libs.json.Json
 
-case class MPNSRequest(tokens: Seq[MPNSToken],
-                       toast: Option[ToastMessage] = None,
+case class MPNSRequest(toast: Option[ToastMessage] = None,
                        tile: Option[TileData] = None,
                        flip: Option[FlipData] = None,
                        iconic: Option[IconicData] = None,
