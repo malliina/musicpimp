@@ -18,7 +18,8 @@ object AlarmsHtml {
       if (tokens.isEmpty) {
         leadPara("No push tokens.")
       } else {
-        PimpHtml.stripedHoverTable(Seq("Token", "Platform"))(
+        table(`class` := s"$TableStripedHover tokens-table")(
+          thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"))),
           tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform))))
         )
       }
