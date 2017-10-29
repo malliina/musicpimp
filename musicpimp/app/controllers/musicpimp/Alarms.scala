@@ -1,12 +1,17 @@
 package controllers.musicpimp
 
 import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.messaging._
+import com.malliina.musicpimp.messaging.adm.AmazonDevices
+import com.malliina.musicpimp.messaging.apns.APNSDevices
+import com.malliina.musicpimp.messaging.gcm.GoogleDevices
+import com.malliina.musicpimp.messaging.mpns.PushUrls
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
-import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.http.Proxies
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
@@ -27,6 +32,18 @@ class Alarms(tags: PimpHtml,
     default.respond(request)(
       html = tags.alarms(content, request.user),
       json = Json.toJson(content.map(_.toFull(TrackJson.host(request))))
+    )
+  }
+
+  def tokens = pimpAction { request =>
+    def ts = APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
+      PushUrls.get().map(p => TokenInfo(p.url, Mpns)) ++
+      GoogleDevices.get().map(g => TokenInfo(g.id, Gcm)) ++
+      AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
+
+    default.respond(request)(
+      html = tags.tokens(ts, request.user),
+      json = Json.toJson(Tokens(ts))
     )
   }
 

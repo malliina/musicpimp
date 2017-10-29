@@ -13,7 +13,7 @@ GET         /cloud                             controllers.musicpimp.Cloud.cloud
 POST        /cloud                             controllers.musicpimp.Cloud.toggle
 GET         /about                             controllers.musicpimp.Website.about
 GET         /manage                            controllers.musicpimp.SettingsController.manage
-GET         /manage/push/tokens                controllers.musicpimp.SettingsController.tokens
+GET         /manage/push/tokens                controllers.musicpimp.Alarms.tokens
 GET         /account                           controllers.musicpimp.Accounts.account
 GET         /users                             controllers.musicpimp.Accounts.users
 POST        /users/delete/*id                  controllers.musicpimp.Accounts.delete(id: Username)

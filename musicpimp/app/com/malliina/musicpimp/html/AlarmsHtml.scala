@@ -1,28 +1,48 @@
 package com.malliina.musicpimp.html
 
-import com.malliina.musicpimp.scheduler.web.{AlarmStrings, SchedulerStrings}
+import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
+import com.malliina.musicpimp.messaging.TokenInfo
+import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
-import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.play.tags.All._
-import controllers.musicpimp.{UserFeedback, routes}
-import play.api.data.{Field, Form}
+import controllers.musicpimp.routes
+import play.api.data.Field
 import play.api.i18n.Messages
 
 import scalatags.Text.all._
 
 object AlarmsHtml {
-  def alarmsContent(clocks: Seq[ClockPlayback]) = Seq(
-    headerRow()("Alarms"),
-    fullRow(
-      PimpHtml.stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
-        tbody(clocks.map(alarmRow))
-      )
-    ),
-    fullRow(
-      aHref(routes.Alarms.newAlarm())("Add alarm")
+  def tokens(tokens: Seq[TokenInfo]) = {
+    val content =
+      if (tokens.isEmpty) {
+        leadPara("No push tokens.")
+      } else {
+        PimpHtml.stripedHoverTable(Seq("Token", "Platform"))(
+          tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform))))
+        )
+      }
+    Seq(
+      headerRow()("Tokens"),
+      fullRow(content)
     )
-  )
+  }
+
+  def alarmsContent(clocks: Seq[ClockPlayback]) = {
+    val content =
+      if (clocks.isEmpty) {
+        leadPara("No alarms.")
+      } else {
+        PimpHtml.stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
+          tbody(clocks.map(alarmRow))
+        )
+      }
+    Seq(
+      headerRow()("Alarms"),
+      fullRow(content),
+      fullRow(aHref(routes.Alarms.newAlarm())("Add alarm"))
+    )
+  }
 
   def alarmRow(ap: ClockPlayback) = {
     val (enabledText, enabledAttr) =

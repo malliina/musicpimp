@@ -6,6 +6,7 @@ import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpHtml._
 import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
+import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.musicpimp.stats._
@@ -155,6 +156,11 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
       AlarmsHtml.alarmsContent(clocks)
     )
 
+  def tokens(tokens: Seq[TokenInfo], username: Username) =
+    manage("tokens", username)(
+      AlarmsHtml.tokens(tokens)
+    )
+
   def alarmEditor(conf: AlarmContent) =
     manage("alarms", conf.username)(
       AlarmsHtml.alarmEditorContent(conf)
@@ -170,6 +176,7 @@ class PimpHtml(scripts: Modifier*) extends FooterStrings with FrontStrings {
           glyphNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), "folder-open"),
           glyphNavItem("Users", "users", tab, routes.Accounts.users(), "user"),
           glyphNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), "time"),
+          glyphNavItem("Tokens", "tokens", tab, routes.Alarms.tokens(), "time"),
           glyphNavItem("Cloud", "cloud", tab, routes.Cloud.cloud(), "cloud"),
           glyphNavItem("Logs", "logs", tab, routes.LogPage.logs(), "list")
         )

@@ -112,8 +112,8 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val router: Routes = new Routes(
     httpErrorHandler, libCtrl, webCtrl,
     settingsCtrl, connect, lp,
-    cloud, accounts, r, pl,
-    alarms, sp, s, sws,
+    cloud, alarms, accounts, r, pl,
+    sp, s, sws,
     ls, cloudWS, assets)
 
   applicationLifecycle.addStopHook(() => Future.successful {
