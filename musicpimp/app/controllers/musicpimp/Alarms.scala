@@ -37,12 +37,10 @@ class Alarms(tags: PimpHtml,
   }
 
   def tokens = pimpAction { request =>
-    def ts2 = APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
+    def ts = APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
       PushUrls.get().map(p => TokenInfo(p.url, Mpns)) ++
       GoogleDevices.get().map(g => TokenInfo(g.id, Gcm)) ++
       AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
-
-    def ts = Seq(TokenInfo(ADMToken("amzn1.adm-registration.v3.Y29tLmFtYXpvbi5EZXZpY2VNZXNzYWdpbmcuUmVnaXN0cmF0aW9uSWRFbmNyeXB0aW9uS2V5ITEhaXJTVmVVQXhJSnhnRGs3MGl0S0E1TExldGwxcWFPRzFHK3cwL1N1OS9zMnN1RFFBZHd1VkNWMXhaYlp3dTExWGdTNytOYk5jaVZ1OEtKWnoyNmhubnBoYTdiRVhlTzJTYkd3TlFaWXBNMHRCSDRnZi9KQUl1VGtoUzBwdjVkU2gwdGs1R2RWaVRRYzRHWFF3ZUU5MTU2MHI2ODRxN0pCYnJSMVFyaHhPUjI4NmVPT0lUcG5SWjJxUnRrOWZMdFdJdlpWMWxCVk1MSmtkRmIxY3llMkZZRWo0WFpiVWxMUEsrbnduZFB0Rm80TUdubFYxK1ZNdDA2bGJ5NFozNTZnbCtJVXBPRG9maTZ1NktnZXR0akZEeXhSV1pRV0lDRWh6b2ROenNxRTRsa0poS3EvSjJzaXFPQWpuVzd2Z0tINjZvRTFUV0MvOVJDaU81bE9pQmtGY3RnPT0hZGQ5WjZ2Z1c1MVJxY2kva2NmbmhyZz09"), Adm))
 
     default.respond(request)(
       html = tags.tokens(ts, request.user),
