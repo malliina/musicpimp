@@ -6,6 +6,11 @@ import java.nio.file.{Files, Paths}
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
 import com.malliina.musicpimp.library.{Library, Settings}
+import com.malliina.musicpimp.messaging.adm.AmazonDevices
+import com.malliina.musicpimp.messaging._
+import com.malliina.musicpimp.messaging.apns.{APNSDevice, APNSDevices}
+import com.malliina.musicpimp.messaging.gcm.GoogleDevices
+import com.malliina.musicpimp.messaging.mpns.PushUrls
 import com.malliina.util.EnvUtils
 import controllers.musicpimp.SettingsController.log
 import play.api.Logger
@@ -13,6 +18,7 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.{Constraint, Invalid, Valid, ValidationError}
 import play.api.i18n.Messages
+import play.api.libs.json.Json
 
 import scala.util.Try
 
@@ -40,6 +46,14 @@ class SettingsController(tags: PimpHtml,
   }
 
   def manage = settings
+
+  def tokens = pimpAction {
+    val ts = APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
+      PushUrls.get().map(p => TokenInfo(p.url, Mpns)) ++
+      GoogleDevices.get().map(g => TokenInfo(g.id, Gcm)) ++
+      AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
+    Ok(Json.toJson(Tokens(ts)))
+  }
 
   def settings = navigate(req => foldersPage(newFolderForm, req))
 
