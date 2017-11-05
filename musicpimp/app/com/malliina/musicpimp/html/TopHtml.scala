@@ -34,22 +34,23 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
 object TopHtml {
   val TableClass = "top-table"
   val HiddenSmall = PimpHtml.HiddenSmall
+  val HiddenXxs = "hidden-xxs"
 
   def toRow[T <: TopEntry](entry: T, fourth: T => Modifier) = Seq(
     td(entry.track.title),
-    td(entry.track.artist),
+    td(entry.track.artist, `class` := HiddenXxs),
     td(`class` := HiddenSmall)(entry.track.album),
-    td(fourth(entry)),
+    td(fourth(entry), `class` := HiddenXxs),
     td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
   )
 
   object popular extends TableRenderer[FullPopularEntry]("Most Played") {
     override def headers: Seq[Modifier] = Seq(
-      th("Title"),
-      th("Artist"),
-      th(`class` := HiddenSmall)("Album"),
-      th("Plays"),
-      th("Actions")
+      th("Title", `class` := "top-popular"),
+      th("Artist", `class` := s"top-popular $HiddenXxs"),
+      th(`class` := s"$HiddenSmall top-popular")("Album"),
+      th("Plays", `class` := s"plays $HiddenXxs"),
+      th("Actions", `class` := "actions")
     )
 
     override def cells(row: FullPopularEntry): Seq[Modifier] =
@@ -59,10 +60,10 @@ object TopHtml {
   object recent extends TableRenderer[FullRecentEntry]("Most Recent") {
     override def headers = Seq(
       th("Title"),
-      th("Artist"),
+      th("Artist", `class` := HiddenXxs),
       th(`class` := HiddenSmall)("Album"),
-      th(`class` := "cell-content")("When"),
-      th("Actions")
+      th(`class` := s"cell-content when $HiddenXxs")("When"),
+      th("Actions", `class` := "actions")
     )
 
     override def cells(row: FullRecentEntry) =

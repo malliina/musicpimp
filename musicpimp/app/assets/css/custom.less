@@ -120,9 +120,32 @@ body {
   width: 150px;
 }
 
+.top-table {
+  table-layout: fixed;
+}
+
+.top-table > thead > tr > th {
+  display: table-cell;
+  vertical-align: middle;
+  text-overflow: ellipsis;
+
+  &.plays {
+    width: 60px;
+  }
+
+  &.when {
+    width: 150px;
+  }
+
+  &.actions {
+    width: 100px;
+  }
+}
+
 .top-table > tbody > tr > td {
-  line-height: 34px;
-  white-space: nowrap;
+  display: table-cell;
+  vertical-align: middle;
+  text-overflow: ellipsis;
 }
 
 .log-level-select {
@@ -137,4 +160,10 @@ body {
 
 .token-header-platform {
   width: 80px;
+}
+
+.hidden-xxs {
+  @media only screen and (max-width: 500px) {
+    display: none !important;
+  }
 }
