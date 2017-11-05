@@ -1,13 +1,12 @@
 package com.malliina.musicpimp.messaging
 
+import com.malliina.concurrent.ExecutionContexts.cached
+
 import scala.concurrent.Future
 
 trait PushRequestHandler[Req, Res] {
-  def push(request: Req): Future[Seq[Res]]
+  def push(requests: Seq[Req]): Future[Seq[Res]] =
+    Future.traverse(requests)(pushOne)
 
-  def push(request: Option[Req]): Future[Seq[Res]] =
-    orNil(request.map(push))
-
-  protected def orNil[T](f: Option[Future[Seq[T]]]): Future[Seq[T]] =
-    f.getOrElse(Future.successful(Nil))
+  def pushOne(request: Req): Future[Res]
 }

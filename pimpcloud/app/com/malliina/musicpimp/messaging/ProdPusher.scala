@@ -4,7 +4,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.messaging.ProdPusher.log
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.push.adm.ADMClient
-import com.malliina.push.apns.APNSClient
+import com.malliina.push.apns.{APNSClient, APNSHttpClient}
 import com.malliina.push.gcm.GCMClient
 import com.malliina.push.mpns.MPNSClient
 import com.malliina.push.wns.{WNSClient, WNSCredentials}
@@ -28,6 +28,14 @@ class ProdPusher(apnsCredentials: APNSCredentials,
     apnsCredentials.keyStore,
     apnsCredentials.keyStorePass,
     isSandbox = true))
+  val prodApnsHttp = new APNSHttpHandler(APNSHttpClient(
+    apnsCredentials.keyStore,
+    apnsCredentials.keyStorePass,
+    isSandbox = false))
+  val sandboxApnsHttp = new APNSHttpHandler(APNSHttpClient(
+    apnsCredentials.keyStore,
+    apnsCredentials.keyStorePass,
+    isSandbox = true))
   val gcmHandler = new GCMHandler(new GCMClient(gcmApiKey))
   val admHandler = new ADMHandler(new ADMClient(
     admCredentials.clientId,
@@ -36,13 +44,13 @@ class ProdPusher(apnsCredentials: APNSCredentials,
   val wnsHandler = new WNSHandler(new WNSClient(wnsCredentials))
 
   def push(pushTask: PushTask): Future[PushResult] = {
-    val prodApnsFuture = prodApns.push(pushTask.apns)
-    val sandboxApnsFuture = sandboxApns.push(pushTask.apns)
+    val prodApnsFuture = prodApnsHttp.push(pushTask.apns)
+    val sandboxApnsFuture = sandboxApnsHttp.push(pushTask.apns)
     val gcmFuture = gcmHandler.push(pushTask.gcm)
     val admFuture = admHandler.push(pushTask.adm)
     val mpnsFuture = mpnsHandler.push(pushTask.mpns)
     val wnsFuture = wnsHandler.push(pushTask.wns)
-    for {
+    val r = for {
       apnsProd <- prodApnsFuture
       apnsSandbox <- sandboxApnsFuture
       gcm <- gcmFuture
@@ -50,13 +58,17 @@ class ProdPusher(apnsCredentials: APNSCredentials,
       mpns <- mpnsFuture
       wns <- wnsFuture
     } yield {
-      val labels = pushTask.labels
+      val labels = pushTask.labels.distinct
       val msg =
-        if (labels.isEmpty) s"Did not push, no push payloads."
+        if (labels.isEmpty) "Did not push, no push payloads."
         else s"Pushed to ${labels.mkString(", ")}"
       log info msg
       PushResult(apnsProd ++ apnsSandbox, gcm, adm, mpns, wns)
     }
+    r.failed.foreach { t =>
+      log.error(s"Push task failed.", t)
+    }
+    r
   }
 }
 
