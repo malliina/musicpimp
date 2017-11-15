@@ -38,6 +38,5 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings {
   val Enabled = "enabled"
 
   // push notifications
-  val Push = "push"
   val Result = "result"
 }

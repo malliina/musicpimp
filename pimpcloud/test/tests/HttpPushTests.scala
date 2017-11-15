@@ -1,13 +1,14 @@
 package tests
 
-import com.malliina.musicpimp.messaging.cloud.{APNSPayload, PushResult, PushTask}
+import com.malliina.musicpimp.messaging.cloud.{APNSPayload, PushResponse, PushTask}
 import com.malliina.oauth.GoogleOAuthCredentials
+import com.malliina.pimpcloud.json.JsonStrings.{Body, Cmd, PushValue}
 import com.malliina.pimpcloud.{AppConf, CloudComponents, NoPusher}
 import com.malliina.play.auth.AuthFailure
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Username
 import com.malliina.push.apns.{APNSMessage, APNSToken}
-import controllers.pimpcloud.{PimpAuth, Push}
+import controllers.pimpcloud.PimpAuth
 import play.api.ApplicationLoader.Context
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -58,9 +59,9 @@ class HttpPushTests extends PimpcloudSuite {
   }
 
   ignore("push a notification") {
-    val body = Json.obj(Push.Cmd -> Push.PushValue, Push.Body -> testTask)
+    val body = Json.obj(Cmd -> PushValue, Body -> testTask)
     val response = route(app, FakeRequest(POST, "/push").withJsonBody(body)).get
-    val result = (contentAsJson(response) \ Push.ResultKey).as[PushResult]
-    assert(result.apns.size === 2)
+    val result = contentAsJson(response).as[PushResponse]
+    assert(result.result.apns.size === 2)
   }
 }

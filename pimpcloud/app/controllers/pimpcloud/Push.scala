@@ -3,7 +3,7 @@ package controllers.pimpcloud
 import com.malliina.musicpimp.messaging.Pusher
 import com.malliina.musicpimp.messaging.cloud.{PushResponse, PushTask}
 import com.malliina.musicpimp.models.Errors
-import controllers.pimpcloud.Push.{Body, Cmd, PushValue}
+import com.malliina.pimpcloud.json.JsonStrings.{Body, Cmd, PushValue}
 import play.api.libs.json.{JsError, JsResult, JsValue, Json}
 import play.api.mvc.{AbstractController, ControllerComponents}
 
@@ -28,8 +28,5 @@ class Push(comps: ControllerComponents, pusher: Pusher) extends AbstractControll
 }
 
 object Push {
-  val Body = "body"
-  val Cmd = "cmd"
-  val PushValue = "push"
   val ResultKey = "result"
 }

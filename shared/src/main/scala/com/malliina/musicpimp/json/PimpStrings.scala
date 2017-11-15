@@ -26,6 +26,7 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
 //  val TrackKey = "track"
   val UsernameKey = "username"
   val VersionKey = "version"
+  val PushValue = "push"
 }
 
 trait PlaylistKeys {
