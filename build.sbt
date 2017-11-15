@@ -214,11 +214,12 @@ lazy val pimpcloudLinuxSettings = Seq(
     val installLocation = defaultLinuxInstallLocation.value
     s"$installLocation/$name/$alpnFile"
   },
+  // for HTTP/2 support
+  // In principle we could append the -X... entry to javaOptions in Universal, but due to a bug in the bash
+  // script created by sbt-native-packager, the script will fail if that is done
   bashScriptExtraDefines += s"""addJava "-Xbootclasspath/p:${bootClasspath.value}"""",
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
-    // for HTTP/2 support
-    val alpnBootclasspath = s"-Xbootclasspath/p:${bootClasspath.value}"
     Seq(
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
