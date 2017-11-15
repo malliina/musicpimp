@@ -11,7 +11,7 @@ import com.malliina.sbt.win.WinKeys.winSwExe
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.malliina.sbtplay.PlayProject
 import com.typesafe.sbt.SbtNativePackager.Windows
-import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
+import com.typesafe.sbt.packager.Keys.{maintainer, packageName, packageSummary, rpmVendor}
 import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbtbuildinfo.BuildInfoKey
@@ -23,7 +23,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.10.11"
-val pimpcloudVersion = "1.9.8"
+val pimpcloudVersion = "1.9.9"
 val sharedVersion = "1.2.3"
 val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
@@ -126,24 +126,24 @@ lazy val pimpAssetSettings = PlayProject.assetSettings ++ Seq(
 )
 
 lazy val nativePackagingSettings =
-    pimpWindowsSettings ++
+  pimpWindowsSettings ++
     pimpMacSettings ++
-      Seq(
-    com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
-    httpPort in Linux := Option("disabled"),
-    httpsPort in Linux := Option("8455"),
-    maintainer := "Michael Skogberg <malliina123@gmail.com>",
-    manufacturer := "Skogberg Labs",
-    displayName := "MusicPimp",
-    mainClass := Some("com.malliina.musicpimp.Starter"),
-    javaOptions in Universal ++= Seq(
-      "-Dlogger.resource=prod-logger.xml"
-    ),
-    packageSummary in Linux := "MusicPimp summary here.",
-    rpmVendor := "Skogberg Labs",
-    rpmLicense := Option("BSD License"),
-    PlayKeys.externalizeResources := false // packages files in /conf to the app jar
-  )
+    Seq(
+      com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
+      httpPort in Linux := Option("disabled"),
+      httpsPort in Linux := Option("8455"),
+      maintainer := "Michael Skogberg <malliina123@gmail.com>",
+      manufacturer := "Skogberg Labs",
+      displayName := "MusicPimp",
+      mainClass := Some("com.malliina.musicpimp.Starter"),
+      javaOptions in Universal ++= Seq(
+        "-Dlogger.resource=prod-logger.xml"
+      ),
+      packageSummary in Linux := "MusicPimp summary here.",
+      rpmVendor := "Skogberg Labs",
+      rpmLicense := Option("BSD License"),
+      PlayKeys.externalizeResources := false // packages files in /conf to the app jar
+    )
 
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
   // never change
@@ -197,15 +197,29 @@ lazy val pimpcloudSettings =
       buildInfoPackage := "com.malliina.pimpcloud"
     )
 
+val bootClasspath = taskKey[String]("bootClasspath")
+
 lazy val pimpcloudLinuxSettings = Seq(
   httpPort in Linux := Option("disabled"),
   httpsPort in Linux := Option("8458"),
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
   manufacturer := "Skogberg Labs",
   mainClass := Some("com.malliina.pimpcloud.Starter"),
+  bootClasspath := {
+    val alpnFile = scriptClasspathOrdering.value
+      .map { case (_, dest) => dest }
+      .find(_.contains("alpn-boot"))
+      .getOrElse(sys.error("Unable to find alpn-boot"))
+    val name = (packageName in Debian).value
+    val installLocation = defaultLinuxInstallLocation.value
+    s"$installLocation/$name/$alpnFile"
+  },
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
+    // for HTTP/2 support
+    val alpnBootclasspath = s"-Xbootclasspath/p:${bootClasspath.value}"
     Seq(
+      alpnBootclasspath,
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
       "-Dlogger.resource=prod-logger.xml"
