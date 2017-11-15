@@ -23,7 +23,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.10.11"
-val pimpcloudVersion = "1.9.9"
+val pimpcloudVersion = "1.9.10"
 val sharedVersion = "1.2.3"
 val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
@@ -263,7 +263,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.7.5",
+    malliinaGroup %% "mobile-push" % "1.8.0",
     utilPlayDep
   )
 )
