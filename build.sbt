@@ -23,7 +23,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.10.11"
-val pimpcloudVersion = "1.9.10"
+val pimpcloudVersion = "1.9.11"
 val sharedVersion = "1.2.3"
 val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
@@ -214,12 +214,12 @@ lazy val pimpcloudLinuxSettings = Seq(
     val installLocation = defaultLinuxInstallLocation.value
     s"$installLocation/$name/$alpnFile"
   },
+  bashScriptExtraDefines += s"""addJava "-Xbootclasspath/p:${bootClasspath.value}"""",
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
     // for HTTP/2 support
     val alpnBootclasspath = s"-Xbootclasspath/p:${bootClasspath.value}"
     Seq(
-      alpnBootclasspath,
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
       "-Dlogger.resource=prod-logger.xml"
