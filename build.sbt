@@ -23,7 +23,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.10.11"
-val pimpcloudVersion = "1.9.11"
+val pimpcloudVersion = "1.9.12"
 val sharedVersion = "1.2.3"
 val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
@@ -217,10 +217,11 @@ lazy val pimpcloudLinuxSettings = Seq(
   // for HTTP/2 support
   // In principle we could append the -X... entry to javaOptions in Universal, but due to a bug in the bash
   // script created by sbt-native-packager, the script will fail if that is done
-  bashScriptExtraDefines += s"""addJava "-Xbootclasspath/p:${bootClasspath.value}"""",
+//  bashScriptExtraDefines += s"""addJava "-Xbootclasspath/p:${bootClasspath.value}"""",
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
     Seq(
+      s"-J-Xbootclasspath/p:${bootClasspath.value}",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
       "-Dlogger.resource=prod-logger.xml"
