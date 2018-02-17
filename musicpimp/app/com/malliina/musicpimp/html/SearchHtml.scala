@@ -2,20 +2,22 @@ package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.js.SearchStrings
-import com.malliina.play.tags.All._
 import controllers.musicpimp.routes
 
 import scalatags.Text.all._
 
-object SearchHtml extends SearchStrings {
+object SearchHtml extends PimpBootstrap with SearchStrings {
+
+  import tags._
+
   def searchContent(query: Option[String], results: Seq[DataTrack]) = Seq(
-    headerRow()("Search"),
+    headerRow("Search"),
     row(
       div4(
-        searchForm(None, "")
+        searchForm()
       ),
-      divClass(s"$ColMd4 $ColMdOffset4")(
-        button(`type` := Button, `class` := s"$BtnDefault $BtnLg", id := RefreshButton)(glyphIcon("refresh"), " "),
+      divClass(s"${col.md.four} ${col.md.offset.four}")(
+        button(`type` := Button, `class` := s"${btn.default} ${btn.lg}", id := RefreshButton)(iconic("reload"), " "),
         span(id := IndexInfo)
       )
     ),
@@ -31,19 +33,15 @@ object SearchHtml extends SearchStrings {
         }
       } else {
         query.fold(empty) { term =>
-          h3(s"No results for '$term'.")
+          h4(`class` := "small-heading")(s"No results for '$term'.")
         }
       }
     )
   )
 
-  def searchForm(query: Option[String] = None, formClass: String, size: String = InputGroupLg) =
-    form(action := routes.SearchPage.search(), role := Search, `class` := formClass)(
-      divClass(s"$InputGroup $size")(
-        input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("artist, album or track..."), name := "term", id := TermId),
-        divClass(InputGroupBtn)(
-          defaultSubmitButton(glyphIcon("search"))
-        )
-      )
+  def searchForm(query: Option[String] = None) =
+    form(action := routes.SearchPage.search(), role := Search, `class` := "form-inline")(
+      input(`type` := Search, `class` := s"$FormControl mr-sm-2", placeholder := query.getOrElse("artist, album or track..."), name := "term", id := TermId, aria.label := "Search"),
+      button(`type` := Submit, `class` := s"${btnOutline.success} my-2 my-sm-0")("Search")
     )
 }

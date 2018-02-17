@@ -1,9 +1,21 @@
+:root {
+
+}
+
 #volume {
-    margin-top: 32px;
-    max-width: 200px;
+  margin-top: 32px;
+  max-width: 200px;
 }
 
 #progress {
-    margin-top: 5px;
-    margin-left: 5px;
+  margin-top: 5px;
+  margin-left: 5px;
+}
+
+#volume-control {
+  visibility: hidden;
+
+  @media (min-width: 768px) {
+    visibility: visible;
+  }
 }

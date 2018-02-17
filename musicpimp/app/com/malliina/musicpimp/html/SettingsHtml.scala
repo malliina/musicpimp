@@ -1,12 +1,14 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
-import com.malliina.play.tags.All._
 import controllers.musicpimp.{SettingsController, routes}
 
 import scalatags.Text.all._
 
-object SettingsHtml {
+object SettingsHtml extends PimpBootstrap {
+
+  import tags._
+
   def editFolders(content: LibraryContent) =
     halfRow(
       ulClass(ListUnstyled)(
@@ -14,10 +16,12 @@ object SettingsHtml {
       ),
       postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
         divClass(InputGroup)(
-          spanClass(InputGroupAddon)(glyphIcon("folder-open")),
+          spanClass(InputGroupAddon)(iconic("folder")),
           textInputBase(Text, SettingsController.Path, Option(content.folderPlaceholder), `class` := FormControl, required),
           spanClass(InputGroupBtn)(
-            submitButton(`class` := BtnPrimary)(glyphIcon("plus"), " Add")
+            submitButton(`class` := {
+              btn.primary
+            })(iconic("plus"), " Add")
           )
         ),
         content.feedback.fold(empty)(feedbackDiv)
@@ -27,10 +31,12 @@ object SettingsHtml {
   def renderFolder(folder: String) =
     postableForm(routes.SettingsController.deleteFolder(folder), `class` := FormHorizontal)(
       divClass(InputGroup)(
-        spanClass(InputGroupAddon)(glyphIcon("folder-open")),
+        spanClass(InputGroupAddon)(iconic("folder")),
         spanClass(s"$UneditableInput $FormControl")(folder),
         spanClass(InputGroupBtn)(
-          submitButton(`class` := BtnDanger)(glyphIcon("remove"), " Delete")
+          submitButton(`class` := {
+            btn.danger
+          })(iconic("delete"), " Delete")
         )
       )
     )

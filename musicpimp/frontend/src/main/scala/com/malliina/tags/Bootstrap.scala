@@ -4,11 +4,11 @@ import com.malliina.tags.Tags._
 
 import scalatags.Text.all._
 
-object Bootstrap extends Bootstrap
+object Bootstrap2 extends Bootstrap2
 
 /** Scalatags for Twitter Bootstrap.
   */
-trait Bootstrap {
+trait Bootstrap2 {
   val FormSignin = "form-signin"
   val FormSigninHeading = "form-signin-heading"
 

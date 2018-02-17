@@ -1,7 +1,8 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.musicpimp.html.PimpBootstrap._
+import com.malliina.musicpimp.html.PimpBootstrap.tags._
 import com.malliina.musicpimp.stats._
-import com.malliina.play.tags.All._
 
 import scalatags.Text.all._
 
@@ -11,12 +12,12 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
   def cells(row: T): Seq[Modifier]
 
   def render(list: ListLike[T]): Modifier = Seq(
-    headerRow()(title),
+    headerRow(title),
     div(`class` := "sub-header")(
       div(s"showing ${list.from} - ${list.until - 1}")
     ),
     fullRow(
-      table(`class` := s"$TableStripedHoverResponsive ${TopHtml.TableClass}")(
+      table(`class` := s"${tables.defaultClass} ${TopHtml.TableClass}")(
         thead(headers),
         tbody(list.entries.map(entry => tr(cells(entry))))
       )

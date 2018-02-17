@@ -17,7 +17,6 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
-import com.malliina.play.json.SimpleCommand
 import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
 import com.malliina.ws.HttpUtil

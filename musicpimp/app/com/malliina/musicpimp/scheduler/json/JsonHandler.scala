@@ -36,7 +36,7 @@ trait JsonHandler {
     case RemoveGoogleDevice(tag) => GoogleDevices removeID tag.tag
     case amzn: AddAmazonDevice => AmazonDevices add amzn.dest
     case RemoveAmazonDevice(tag) => AmazonDevices removeID tag.tag
-    case AddApnsDevice(device) => APNSDevices add device
+    case apns: AddApnsDevice => APNSDevices add apns.dest
     case RemoveApnsDevice(tag) => APNSDevices removeID tag.tag
     case _ => log.warn(s"Unknown command: $cmd")
   }

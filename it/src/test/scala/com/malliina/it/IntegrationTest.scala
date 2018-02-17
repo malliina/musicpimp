@@ -106,6 +106,10 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
+  test("phone-pimpcloud-musicpimp-phone request cycle works") {
+
+  }
+
   test("stream notifications") {
     val p = Promise[String]()
 
@@ -146,7 +150,6 @@ class IntegrationTest extends PimpcloudServerSuite {
   test("get folders") {
     withCloudTrack("folder-test") { (_, _, cloudId) =>
       val r = makeGet("/folders?f=json", cloudId)
-      println(r.body)
       assert(r.status === 200)
       musicpimp.components.indexer.index().toBlocking.toList
       val r2 = makeGet("/folders?f=json", cloudId)

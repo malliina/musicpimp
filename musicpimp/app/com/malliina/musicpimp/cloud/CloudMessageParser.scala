@@ -56,7 +56,7 @@ trait CloudMessageParser {
         case StatusKey => JsSuccess(GetStatus)
         case Recent => readMeta.map(GetRecent.apply)
         case Popular => readMeta.map(GetPopular.apply)
-        case other => JsError(s"Unknown JSON command: $other in $json")
+        case other => JsError(s"Unknown JSON command: '$other' in '$json'.")
       }
       message.map(msg => CloudRequest(msg, req))
     }

@@ -1,17 +1,17 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.models.SavedPlaylist
-import com.malliina.play.tags.All._
 import controllers.musicpimp.routes
 
 import scalatags.Text.all._
 
-object PlaylistsHtml {
+object PlaylistsHtml extends PimpBootstrap {
+
   def playlistsContent(lists: Seq[SavedPlaylist]) = Seq(
-    headerRow()("Playlists"),
+    headerRow("Playlists"),
     tableView("No saved playlists.", lists, "Name", "Tracks", "Actions") { list =>
       Seq(
-        td(aHref(routes.Playlists.playlist(list.id))(list.name)),
+        td(a(href := routes.Playlists.playlist(list.id))(list.name)),
         td(list.tracks.size),
         td("Add/Edit/Delete")
       )
@@ -19,7 +19,7 @@ object PlaylistsHtml {
   )
 
   def playlistContent(playlist: SavedPlaylist) = Seq(
-    headerRow()("Playlist"),
+    headerRow("Playlist"),
     leadPara(playlist.name),
     tableView("This playlist is empty.", playlist.tracks, "Title", "Album", "Artist") { track =>
       Seq(td(track.title), td(track.album), td(track.artist))

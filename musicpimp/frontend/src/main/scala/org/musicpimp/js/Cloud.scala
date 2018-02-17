@@ -1,20 +1,20 @@
 package org.musicpimp.js
 
+import com.malliina.html.{Bootstrap, Tags}
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models._
-import com.malliina.tags.Bootstrap._
+import com.malliina.tags.Bootstrap2._
 import com.malliina.tags.Tags._
-import org.musicpimp.js.Cloud._
+import org.musicpimp.js.Cloud.{CloudIdentifier, ConnectId, DisconnectId}
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.JsValue
 
-import scalatags.Text.Frag
 import scalatags.Text.all._
 
 case class UserFeedback(message: String, isError: Boolean)
 
-object Cloud {
+object Cloud extends Bootstrap(Tags) {
   val ConnectId = "button-connect"
   val DisconnectId = "button-disconnect"
   val CloudIdentifier = "cloud-id"

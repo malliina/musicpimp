@@ -1,16 +1,18 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.musicpimp.html.PimpHtml.postableForm
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.musicpimp.html.PimpHtml.postableForm
-import com.malliina.play.tags.All._
 import controllers.musicpimp.{Cloud, routes}
 
 import scalatags.Text.all._
 
-object CloudHtml extends CloudStrings {
+object CloudHtml extends PimpBootstrap with CloudStrings {
+
+  import tags._
+
   def cloudContent = Seq(
-    headerRow()("Cloud"),
+    headerRow("Cloud"),
     div(id := CloudForm)(
       leadPara("Connecting...")
     ),
@@ -28,7 +30,7 @@ object CloudHtml extends CloudStrings {
       if (cloudId.isEmpty) {
         formGroup(
           labelFor(Cloud.idFormKey)("Desired cloud ID (optional)"),
-          textInput(Text, FormControl, Cloud.idFormKey, Option("Your desired ID or leave empty"))
+          textInput("text", FormControl, Cloud.idFormKey, Option("Your desired ID or leave empty"))
         )
       } else {
         empty

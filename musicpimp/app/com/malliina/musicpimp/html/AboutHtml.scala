@@ -2,28 +2,32 @@ package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.models.Licenses
-import com.malliina.play.tags.All._
 
 import scalatags.Text.all._
 
-object AboutHtml {
+object AboutHtml extends PimpBootstrap {
+
+  import tags.{False, divClass}
+
+  val accordionId = "accordion"
+
   def aboutBaseContent = Seq(
-    headerRow(ColMd6)("About"),
-    rowColumn(ColMd8)(
+    headerRow("About", col.md.six),
+    rowColumn(col.md.eight)(
       leadPara(s"MusicPimp ${BuildInfo.version}"),
       p("Developed by Michael Skogberg."),
-      p("Check out ", aHref("https://www.musicpimp.org")("www.musicpimp.org"), " for the latest documentation.")
+      p("Check out ", a(href := "https://www.musicpimp.org")("www.musicpimp.org"), " for the latest documentation.")
     ),
-    rowColumn(ColMd8)(
+    rowColumn(col.md.eight)(
       h3("Third Party Software"),
       p("This app uses the following third party software:"),
-      divClass("panel-group", id := "accordion")(
-        licensePanel("collapseOne", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
-        licensePanel("collapseTwo", Licenses.MIT, "software licensed under the ", "MIT License"),
-        licensePanel("collapseThree", Licenses.APACHE, "software licensed under ", "Apache License 2.0"),
-        licensePanel("collapseFour", Licenses.LGPL, "Tritonus plugins, licensed under the ", "GNU Lesser General Public License (LGPL)")
+      divClass("panel-group", id := accordionId)(
+        licensePanel("one", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
+        licensePanel("two", Licenses.MIT, "software licensed under the ", "MIT License"),
+        licensePanel("three", Licenses.APACHE, "software licensed under ", "Apache License 2.0"),
+        licensePanel("four", Licenses.LGPL, "Tritonus plugins, licensed under the ", "GNU Lesser General Public License (LGPL)")
       ),
-      p("... and icons by ", aHref("https://glyphicons.com")("Glyphicons"), ".")
+      p("... and icons by ", a(href := "https://useiconic.com/open")("Iconic"), ".")
     )
   )
 
@@ -32,19 +36,23 @@ object AboutHtml {
       prefix, panelSummary(prefix, elemId, linkText)
     )
 
-  def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) =
-    divClass("panel panel-default")(
-      divClass("panel-heading")(
-        spanClass("accordion-toggle")(toggleHtml)
+  def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) = {
+    val headingId = s"heading-$elemId"
+    divClass("card")(
+      divClass("card-header", id := headingId)(
+        h5(`class` := "mb-0")(
+          toggleHtml
+        )
       ),
-      divClass(s"accordion-body $Collapse", id := elemId)(
+      divClass(s"accordion-body $Collapse", id := s"collapse-$elemId", aria.labelledby := headingId)(
         divClass("accordion-inner")(
-          pre(`class` := "pre-scrollable")(innerContent)
+          pre(`class` := "pre-scrollable card-body")(innerContent)
         )
       )
     )
+  }
+
 
   def panelSummary(prefix: String, elemId: String, linkText: String) =
-    aHref(s"#$elemId", dataToggle := Collapse, dataParent := "#accordion")(linkText)
-
+    button(`class` := "btn btn-link collapsed", dataTarget := s"#collapse-$elemId", dataToggle := Collapse, dataParent := s"#$accordionId", aria.expanded := False)(linkText)
 }

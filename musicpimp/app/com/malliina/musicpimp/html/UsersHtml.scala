@@ -2,12 +2,14 @@ package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
 import com.malliina.play.models.Username
-import com.malliina.play.tags.All._
 import controllers.musicpimp.{UserFeedback, routes}
 
 import scalatags.Text.all._
 
-object UsersHtml {
+object UsersHtml extends PimpBootstrap {
+
+  import tags._
+
   def usersContent(content: UsersContent) =
     row(
       div6(
@@ -19,14 +21,14 @@ object UsersHtml {
             content.us map { u =>
               tr(
                 td(u.name),
-                td(postableForm(routes.Accounts.delete(u))(button(`class` := s"$BtnDanger $BtnXs")(" Delete")))
+                td(`class` := "table-button")(postableForm(routes.Accounts.delete(u))(button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")))
               )
             }
           )
         ),
         content.listFeedback.fold(empty)(feedbackDiv)
       ),
-      div4(
+      div6(
         headerDiv(
           h1("Add user")
         ),
@@ -35,15 +37,15 @@ object UsersHtml {
     )
 
   def accountContent(username: Username, feedback: Option[UserFeedback]) = Seq(
-    headerRow(ColMd4)("Account"),
-    rowColumn(ColMd4)(
+    headerRow("Account", col.md.four),
+    rowColumn(col.md.four)(
       changePassword(username, feedback)
     )
   )
 
   def addUser(addFeedback: Option[UserFeedback]) =
     postableForm(routes.Accounts.formAddUser())(
-      inGroup("username", Text, "Username"),
+      inGroup("username", "text", "Username"),
       passwordInputs(),
       blockSubmitButton()("Add User"),
       addFeedback.fold(empty)(feedbackDiv)

@@ -2,8 +2,8 @@ package com.malliina.musicpimp.models
 
 import java.util.UUID
 
+import com.malliina.json.ValidatingCompanion
 import com.malliina.musicpimp.cloud.PimpMessage
-import com.malliina.play.json.ValidatingCompanion
 import com.malliina.play.{ContentRange, Writeables}
 import play.api.libs.json.Json
 
@@ -56,4 +56,11 @@ object RequestID extends ValidatingCompanion[String, RequestID] {
   def random(): RequestID = RequestID(UUID.randomUUID().toString)
 
   private case class Impl(id: String) extends RequestID
+
+}
+
+case class SimpleCommand(cmd: String)
+
+object SimpleCommand {
+  implicit val json = Json.format[SimpleCommand]
 }

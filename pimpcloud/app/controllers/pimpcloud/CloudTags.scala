@@ -1,11 +1,12 @@
 package controllers.pimpcloud
 
+import com.malliina.html.Tags
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
+import com.malliina.musicpimp.html.PimpBootstrap
 import com.malliina.musicpimp.js.FrontStrings.{FailStatus, OkStatus}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.CloudStrings
 import com.malliina.pimpcloud.tags.ScalaScripts
-import com.malliina.play.tags.All._
 import com.malliina.play.tags.TagPage
 import controllers.Assets.Asset
 import controllers.ReverseAssets
@@ -33,24 +34,26 @@ object CloudTags {
   }
 
   def withLauncher(jsFiles: String*) =
-    new CloudTags(jsFiles.map(file => jsScript(versioned(file))): _*)
+    new CloudTags(jsFiles.map(file => Tags.jsScript(versioned(file))): _*)
 
   def versioned(file: Asset) = reverseAssets.versioned(file)
 }
 
-class CloudTags(scripts: Modifier*) extends CloudStrings {
+class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
   val WideContent = "wide-content"
+
+  import tags._
 
   def eject(message: Option[String]) =
     basePage("Goodbye!")(
       divContainer(
-        rowColumn(s"$ColMd6 top-padding")(
+        rowColumn(s"${col.md.six} top-padding")(
           message.fold(empty) { msg =>
-            div(`class` := s"$Lead $AlertSuccess", role := Alert)(msg)
+            div(`class` := s"$Lead ${alert.success}", role := alert.Alert)(msg)
           }
         ),
-        rowColumn(ColMd6)(
-          leadPara("Try to ", aHref(routes.Logs.index())("sign in"), " again.")
+        rowColumn(col.md.six)(
+          leadPara("Try to ", a(href := routes.Logs.index())("sign in"), " again.")
         )
       )
     )
@@ -60,7 +63,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
             motd: Option[String]) = {
     basePage("Welcome")(
       divContainer(
-        divClass(s"$ColMd4 wrapper login-container")(
+        divClass(s"${col.md.four} wrapper login-container")(
           row(
             feedback.fold(empty)(f => leadPara(f))
           ),
@@ -70,12 +73,12 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
               textInput(Text, FormControl, Web.serverFormKey, "Server", autofocus),
               textInput(Text, FormControl, Web.forms.userFormKey, "Username"),
               textInput(Password, s"$FormControl last-field", Web.forms.passFormKey, "Password"),
-              button(`type` := Submit, id := "loginbutton", `class` := s"$BtnPrimary $BtnLg $BtnBlock")("Sign in")
+              button(`type` := Submit, id := "loginbutton", `class` := s"${btn.primary} ${btn.lg} ${btn.block}")("Sign in")
             )
           ),
           error.fold(empty) { err =>
             row(
-              div(`class` := s"$AlertWarning $FormSignin", role := Alert)(err)
+              div(`class` := s"${alert.warning} $FormSignin", role := alert.Alert)(err)
             )
           },
           motd.fold(empty) { message =>
@@ -92,7 +95,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
     input(`type` := inType, `class` := clazz, name := idAndName, id := idAndName, placeholder := placeHolder, more)
 
   val logs = baseIndex("logs", WideContent)(
-    headerRow()("Logs"),
+    headerRow("Logs"),
     fullRow(
       defaultTable("logTableBody", "Time", "Message", "Logger", "Thread", "Level")
     )
@@ -102,14 +105,14 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
     val feedbackHtml = feedback.fold(empty)(f => fullRow(leadPara(f)))
 
     def folderHtml(folder: Folder) =
-      li(aHref(routes.Phones.folder(folder.id))(folder.title))
+      li(a(href := routes.Phones.folder(folder.id))(folder.title))
 
     def trackHtml(track: Track) =
       li(trackActions(track.id), " ", a(href := routes.Phones.track(track.id), download)(track.title))
 
     basePage("Home")(
       divContainer(
-        headerRow()("Library"),
+        headerRow("Library"),
         fullRow(
           searchForm()
         ),
@@ -128,12 +131,12 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
   }
 
   def trackActions(track: TrackID) =
-    divClass(BtnGroup)(
-      a(`class` := s"$BtnDefault $BtnXs $PlayLink", href := "#", id := s"play-$track")(glyphIcon("play"), " Play"),
-      a(`class` := s"$BtnDefault $BtnXs $DropdownToggle", dataToggle := Dropdown, href := "#")(spanClass(Caret)),
+    divClass(btn.group)(
+      a(`class` := s"${btn.default} ${btn.sm} $PlayLink", href := "#", id := s"play-$track")(iconic("media-play"), " Play"),
+      a(`class` := s"${btn.default} ${btn.sm} $DropdownToggle", dataToggle := Dropdown, href := "#")(spanClass(Caret)),
       ulClass(DropdownMenu)(
-        li(a(href := "#", `class` := PlaylistLink, id := s"add-$track")(glyphIcon("plus"), " Add to playlist")),
-        li(a(href := routes.Phones.track(track), download)(glyphIcon("download"), " Download"))
+        li(a(href := "#", `class` := PlaylistLink, id := s"add-$track")(iconic("plus"), " Add to playlist")),
+        li(a(href := routes.Phones.track(track), download)(iconic("data-transfer-download"), " Download"))
       )
     )
 
@@ -142,14 +145,14 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
       divClass(s"$InputGroup $size")(
         input(`type` := Text, `class` := FormControl, placeholder := query.getOrElse("Artist, album or track..."), name := "term", id := "term"),
         divClass(InputGroupBtn)(
-          button(`class` := BtnDefault, `type` := Submit)(glyphIcon("search"))
+          button(`class` := btn.default, `type` := Submit)(iconic("search"))
         )
       )
     )
   }
 
   val admin = baseIndex("home")(
-    headerRow()("Admin"),
+    headerRow("Admin"),
     tableContainer("Streams", RequestsTableId, "Cloud ID", "Request ID", "Track", "Artist", "Bytes"),
     tableContainer("Phones", PhonesTableId, "Cloud ID", "Phone Address"),
     tableContainer("Servers", ServersTableId, "Cloud ID", "Server Address")
@@ -163,7 +166,7 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
   )
 
   def defaultTable(bodyId: String, headers: String*) =
-    table(`class` := TableStripedHover)(
+    table(`class` := tables.defaultClass)(
       thead(
         tr(
           headers map { header => th(header) }
@@ -173,30 +176,26 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
     )
 
   def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) = {
-    def navItem(thisTabName: String, tabId: String, url: Call, glyphiconName: String) = {
+    def navItem(thisTabName: String, tabId: String, url: Call, iconicName: String) = {
       val maybeActive = if (tabId == tabName) Option(`class` := "active") else None
-      li(maybeActive)(a(href := url)(glyphIcon(glyphiconName), s" $thisTabName"))
+      li(maybeActive)(a(href := url)(iconic(iconicName), s" $thisTabName"))
     }
 
     basePage("pimpcloud")(
-      divClass(s"$Navbar $NavbarDefault")(
-        divContainer(
-          divClass(NavbarHeader)(
-            hamburgerButton,
-            a(`class` := NavbarBrand, href := routes.Logs.index())("MusicPimp")
+      navbar.basic(
+        routes.Logs.index(),
+        "MusicPimp",
+        modifier(
+          ulClass(s"$Nav ${navbar.Nav}")(
+            navItem("Home", "home", routes.Logs.index(), "home"),
+            navItem("Logs", "logs", routes.Logs.logs(), "list")
           ),
-          divClass(s"$NavbarCollapse $Collapse")(
-            ulClass(s"$Nav $NavbarNav")(
-              navItem("Home", "home", routes.Logs.index(), "home"),
-              navItem("Logs", "logs", routes.Logs.logs(), "list")
-            ),
-            ulClass(s"$Nav $NavbarNav $NavbarRight")(
-              li(aHref(routes.AdminAuth.logout())("Logout"))
-            ),
-            divClass(s"$ColMd2 $PullRight")(
-              eye(OkStatus, "eye-open green"),
-              eye(FailStatus, "eye-close red")
-            )
+          ulClass(s"$Nav ${navbar.Nav} ${navbar.Right}")(
+            li(a(href := routes.AdminAuth.logout())("Logout"))
+          ),
+          divClass(s"${col.md.two} $PullRight")(
+            eye(OkStatus, "eye-open green"),
+            eye(FailStatus, "eye-close red")
           )
         )
       ),
@@ -226,6 +225,6 @@ class CloudTags(scripts: Modifier*) extends CloudStrings {
     )
   )
 
-  def eye(elemId: String, glyphSuffix: String) =
-    pClass(s"$NavbarText $PullRight $HiddenXs $Hidden", id := elemId)(glyphIcon(glyphSuffix))
+  def eye(elemId: String, iconicName: String) =
+    pClass(s"${navbar.Text} $PullRight $HiddenXs $Hidden", id := elemId)(iconic(iconicName))
 }

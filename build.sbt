@@ -22,18 +22,18 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.10.11"
+val musicpimpVersion = "3.11.0"
 val pimpcloudVersion = "1.9.14"
 val sharedVersion = "1.2.3"
 val crossVersion = "1.2.3"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.4.0"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.6.0"
 
 scalaVersion in ThisBuild := "2.12.4"
 
-lazy val root = project.in(file(".")).aggregate(musicpimp, pimpcloud)
+lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
@@ -68,9 +68,10 @@ lazy val crossSettings = Seq(
   organization := "org.musicpimp",
   version := crossVersion,
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.6",
+    "com.typesafe.play" %%% "play-json" % "2.6.8",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
-    "com.malliina" %%% "primitives" % "1.3.2"
+    "com.malliina" %%% "primitives" % "1.3.5",
+    "com.malliina" %%% "util-html" % "4.6.0"
   )
 )
 

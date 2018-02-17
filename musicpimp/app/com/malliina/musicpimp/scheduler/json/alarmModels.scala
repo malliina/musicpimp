@@ -8,6 +8,7 @@ import com.malliina.musicpimp.messaging.gcm.GCMDevice
 import com.malliina.musicpimp.models.{Delete, Start, Stop}
 import com.malliina.musicpimp.scheduler.ClockPlayback
 import com.malliina.push.adm.ADMToken
+import com.malliina.push.apns.APNSToken
 import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.PushUrl
 import play.api.libs.json._
@@ -87,9 +88,12 @@ object RemoveAmazonDevice {
   implicit val json = cmd(Key, Json.format[RemoveAmazonDevice])
 }
 
-case class AddApnsDevice(id: APNSDevice) extends AlarmCommand
+case class AddApnsDevice(id: APNSToken, tag: ServerTag) extends AlarmCommand {
+  def dest = APNSDevice(id, tag)
+}
 
 object AddApnsDevice {
+  // I think this JSON format violates the API doc, thus registrations don't work
   val Key = "apns_add"
   implicit val json = cmd(Key, Json.format[AddApnsDevice])
 }
