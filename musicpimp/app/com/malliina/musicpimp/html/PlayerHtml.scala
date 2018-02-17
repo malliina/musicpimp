@@ -32,7 +32,7 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
     divClass(col.md.six)(
       headerDiv(h1("Playlist")),
       pClass(Lead, id := EmptyPlaylistText)("The playlist is empty."),
-      ol(id := PlaylistId)
+      ol(id := PlaylistId, `class` := "playlist-list")
     )
   )
 
@@ -41,17 +41,18 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
     val imgLight = img.light
     val centerAttr = `class` := "track-meta"
     modifier(
-      fullRow(
-        h2(id := TitleId, centerAttr)("No track"),
-        h4(id := AlbumId, centerAttr),
-        h3(id := ArtistId, centerAttr)
-      ),
+      div(`class` := "row")(
+        divClass(s"${col.md.twelve} track-container")(
+          h2(id := TitleId, centerAttr)("No track"),
+          h4(id := AlbumId, centerAttr),
+          h3(id := ArtistId, centerAttr)
+        )),
       fullRow(
         divClass(playerWidth)(
           div(id := SliderId)
         ),
         divClass(s"$Row $playerWidth", id := ProgressId)(
-          span(id := PositionId)("00:00"), " / ", span(id := DurationId)("00:00")
+          span(id := PositionId)("00:00"), span(" / "), span(id := DurationId)("00:00")
         ),
         divClass(s"$Row mx-auto justify-content-center")(
           imageInput(img.transport_rew_png, id := PrevButton),

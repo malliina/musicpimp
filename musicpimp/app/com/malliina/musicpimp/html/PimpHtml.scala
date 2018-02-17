@@ -30,7 +30,7 @@ object PimpHtml {
   val False = "false"
   val True = "true"
   val WideContent = "wide-content"
-  val HiddenSmall = "hidden-xs hidden-sm"
+  val HiddenSmall = "d-none d-sm-block"
 
   val dataIdAttr = data("id")
 
@@ -180,6 +180,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
 
   def manage(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage = {
     def fa(icon: String) = iClass(s"fa fa-$icon")
+
     indexMain("manage", username, None)(
       divContainer(
         ulClass(NavTabs)(
@@ -211,7 +212,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
                 user: Username,
                 contentWrapper: Option[TypedTag[String]])(inner: Modifier*): TagPage = {
     def navItem(thisTabName: String, url: Call, iconicName: String): TypedTag[String] =
-      glyphNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
+      iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
     basePage("MusicPimp")(
       navbar.basic(
@@ -239,8 +240,8 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
               )
             ),
             div(
-              eye(OkStatus, "eye-open green"),
-              eye(FailStatus, "eye-close red")
+              eye(OkStatus, "bolt green"),
+              eye(FailStatus, "bolt red")
             )
           )
         )
@@ -249,11 +250,11 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
     )
   }
 
-  def glyphNavItem(thisTabName: String,
-                   thisTabId: String,
-                   activeTab: String,
-                   url: Call,
-                   iconicName: String): TypedTag[String] =
+  def iconicNavItem(thisTabName: String,
+                    thisTabId: String,
+                    activeTab: String,
+                    url: Call,
+                    iconicName: String): TypedTag[String] =
     iconNavItem(thisTabName, thisTabId, activeTab, url, iconic(iconicName))
 
   def iconNavItem(thisTabName: String,
@@ -267,8 +268,8 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
     li(`class` := "nav-item")(a(href := url, `class` := linkClass)(iconHtml, s" $thisTabName"))
   }
 
-  def eye(elemId: String, glyphSuffix: String) =
-    pClass(s"${navbar.Text} $HiddenXs $HiddenClass", id := elemId)(iconic(glyphSuffix))
+  def eye(elemId: String, iconicName: String) =
+    span(`class` := s"${navbar.Text} $HiddenClass", id := elemId)(iconic(iconicName))
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
@@ -288,29 +289,22 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
         extraHeader
       ),
       body(
-        div(id := "wrap")(
-          inner,
-          scripts,
-          div(id := "push")()
-        ),
-        div(id := "footer")(
-          nav(`class` := s"${navbar.Navbar} ${navbar.Default}", id := BottomNavbar)(
+        inner,
+        scripts,
+        footer(`class` := "footer", id := "footer")(
+          nav(`class` := s"${navbar.Navbar} navbar-expand-sm ${navbar.Light} ${navbar.BgLight} $HiddenSmall", id := BottomNavbar)(
             divContainer(
-              divClass(s"$Collapse ${navbar.Collapse}")(
-                ulClass(s"$Nav ${navbar.Nav} $HiddenXs")(
-                  awesomeLi(FooterBackward, "step-backward"),
-                  awesomeLi(FooterPlay, "play"),
-                  awesomeLi(FooterPause, "pause"),
-                  awesomeLi(FooterForward, "step-forward")
-                ),
+              ulClass(s"${navbar.Nav}")(
+                footerIcon(FooterBackward, "step-backward"),
+                footerIcon(FooterPlay, "play"),
+                footerIcon(FooterPause, "pause"),
+                footerIcon(FooterForward, "step-forward"),
                 navbarPara(FooterProgress),
                 navbarPara(FooterTitle),
                 navbarPara(FooterArtist),
-                div(`class` := s"$Nav ${navbar.Nav} ${navbar.Right}", id := FooterCredit)(
-                  p(
-                    spanClass(s"${text.muted} ${navbar.Text} $PullRight")("Developed by ", a(href := "https://github.com/malliina")("Michael Skogberg"), ".")
-                  )
-                )
+              ),
+              div(`class` := s"${navbar.Nav} ${navbar.Right}", id := FooterCredit)(
+                spanClass(s"${text.muted} ${navbar.Text} float-right")("Developed by ", a(href := "https://github.com/malliina")("Michael Skogberg"), ".")
               )
             )
           )
@@ -320,8 +314,10 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
   )
 
   def navbarPara(elemId: String) =
-    pClass(navbar.Text, id := elemId)("")
+    span(`class` := s"${navbar.Text} footer-text", id := elemId)("")
 
-  def awesomeLi(elemId: String, faIcon: String) =
-    li(id := elemId, `class` := HiddenClass)(a(href := "#")(iClass(s"fa fa-$faIcon")))
+  def footerIcon(elemId: String, faIcon: String) =
+    li(id := elemId, `class` := s"nav-item")(
+      a(href := "#", `class` := "nav-link")(iClass(s"fa fa-$faIcon"))
+    )
 }

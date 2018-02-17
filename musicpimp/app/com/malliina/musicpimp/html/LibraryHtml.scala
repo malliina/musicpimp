@@ -53,7 +53,7 @@ object LibraryHtml extends PimpBootstrap {
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      dataButton(s"${btn.default} ${btn.block} $TrackClass $PlayClass track-title", track.id.id)(track.title)
+      dataButton(s"${btn.light} ${btn.block} $TrackClass $PlayClass track-title", track.id.id)(track.title)
     )
 
   def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
@@ -62,14 +62,14 @@ object LibraryHtml extends PimpBootstrap {
   def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")
     divClass(s"${btn.group}$extra", role := Group, groupAttrs)(
-      glyphButton(s"${btn.primary} $itemClazz $PlayClass", "play", itemId),
-      glyphButton(s"${btn.default} $itemClazz $AddClass", "plus", itemId),
+      iconicButton(s"${btn.primary} $itemClazz $PlayClass", "play-circle", itemId),
+      iconicButton(s"${btn.primary} $itemClazz $AddClass", "plus", itemId),
       inner
     )
   }
 
-  def glyphButton(clazz: String, glyph: String, buttonId: String) =
-    dataButton(clazz, buttonId)(iconic(glyph))
+  def iconicButton(clazz: String, iconName: String, buttonId: String) =
+    dataButton(clazz, buttonId)(iconic(iconName))
 
   def dataButton(clazz: String, buttonId: String) =
     button(`type` := Button, `class` := clazz, dataIdAttr := buttonId)

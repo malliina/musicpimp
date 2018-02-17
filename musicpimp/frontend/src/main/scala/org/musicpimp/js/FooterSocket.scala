@@ -21,7 +21,6 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
   lazy val title = elem(FooterTitle)
   lazy val artist = elem(FooterArtist)
   lazy val footerCredit = elem(FooterCredit)
-  lazy val bottomNavbar = elem(BottomNavbar)
 
   val NavbarFixedBottom = "navbar-fixed-bottom"
 
@@ -45,7 +44,6 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
   override def updateTrack(track: TrackMeta): Unit = {
     hide(footerCredit)
     show(backwardButton, forwardButton)
-    ensureClass(bottomNavbar, NavbarFixedBottom)
     title html track.title
     artist html track.artist
   }
@@ -69,10 +67,9 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
   def hidePlaybackFooterShowCredits() = {
     hide(playbackButtons: _*)
     show(footerCredit)
-    bottomNavbar removeClass NavbarFixedBottom
   }
 
-  def updatePlayPause(state: PlayState): Unit = {
+  def updatePlayPause(state: PlayState): Unit =
     state match {
       case Started =>
         hide(playButton)
@@ -81,7 +78,6 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
         hide(pauseButton)
         show(playButton)
     }
-  }
 
   def hide(elems: JQuery*): Unit =
     elems foreach { elem => ensureClass(elem, HiddenClass) }
