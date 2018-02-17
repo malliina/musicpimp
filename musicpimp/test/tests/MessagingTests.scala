@@ -2,10 +2,11 @@ package tests
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import com.malliina.musicpimp.messaging.{CloudPushClient, ServerTag}
+import com.malliina.http.{FullUrl, OkClient}
 import com.malliina.musicpimp.messaging.adm.ADMBuilder
 import com.malliina.musicpimp.messaging.cloud._
 import com.malliina.musicpimp.messaging.gcm.GCMBuilder
+import com.malliina.musicpimp.messaging.{CloudPushClient, ServerTag}
 import com.malliina.push.adm.ADMToken
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import com.malliina.push.gcm.GCMToken
@@ -16,7 +17,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
 class MessagingTests extends FunSuite {
-//  val testToken = APNSToken.build("6c9969eee832f6ed2a11d04d6daa404db13cc3d97f7298f0c042616fc2a5cc34").get
+  //  val testToken = APNSToken.build("6c9969eee832f6ed2a11d04d6daa404db13cc3d97f7298f0c042616fc2a5cc34").get
   val testTokenStr = "e0d82212038b938c51dde9f49577ff1f70442fcfe93ec1ff26a2948e36821934"
   val testToken = APNSToken.build(testTokenStr).get
   //  val testToken = APNSToken.build("193942675140b3d429311de140bd08ff423712ec9c3ea365b12e61b84609afa9").get
@@ -58,11 +59,18 @@ class MessagingTests extends FunSuite {
     assert(!response.isEmpty)
   }
 
+  ignore("can get") {
+    val url = FullUrl("https", "cloud.musicpimp.org", "")
+    val req = OkClient.default.get(url.append("/ping"))
+    val res = await(req)
+    assert(res.code() === 200)
+  }
+
   ignore("can push notification using pimpcloud") {
     val request = CloudPushClient.default.push(testTask)
-    val response = Await.result(request, 5.seconds)
+    val response = await(request)
     assert(!response.isEmpty)
   }
 
-  def await[T](f: Future[T]): T = Await.result(f, 10.seconds)
+  def await[T](f: Future[T]): T = Await.result(f, 60.seconds)
 }
