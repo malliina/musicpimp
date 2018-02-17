@@ -30,6 +30,7 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
 
   val factory = new WebSocketFactory()
   factory.setSSLSocketFactory(socketFactory)
+  factory.setVerifyHostname(false)
   val socket = factory.createSocket(uri.url, connectTimeout.toMillis.toInt)
   headers foreach {
     case (key, value) => socket.addHeader(key, value)

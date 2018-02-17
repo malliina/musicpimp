@@ -44,7 +44,7 @@ object CloudSocket {
   val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
   def build(id: Option[CloudID], url: FullUrl, deps: Deps) = {
-    new CloudSocket(url, id getOrElse CloudID.empty, Password("pimp"), deps)
+    new CloudSocket(url, id.filter(_.id.nonEmpty) getOrElse CloudID.empty, Constants.pass, deps)
   }
 
   val notConnected = new Exception("Not connected.")

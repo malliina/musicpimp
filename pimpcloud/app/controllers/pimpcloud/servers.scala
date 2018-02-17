@@ -5,7 +5,7 @@ import java.util.UUID
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.malliina.musicpimp.cloud.PimpServerSocket
+import com.malliina.musicpimp.cloud.{Constants, PimpServerSocket}
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStream, PimpStreams}
 import com.malliina.pimpcloud.json.JsonStrings._
@@ -30,8 +30,6 @@ import scala.concurrent.duration.DurationInt
   */
 class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: HttpErrorHandler) {
   implicit val ec = ctx.executionContext
-  // not a secret but avoids unintentional connections
-  val serverPassword = Password("pimp")
 
   /** The server must authenticate with Basic HTTP authentication. The username must either be an empty string for
     * new clients, or a previously used cloud ID for old clients. The password must be `serverPassword`.
@@ -41,15 +39,15 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
     */
   def authAsync(rh: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
     Auth.basicCredentials(rh) map { creds =>
-      if (creds.password == serverPassword) {
+      if (creds.password == Constants.pass) {
         val user = creds.username
-        val cloudId = if (user.name.nonEmpty) CloudID(user.name) else newID()
+        val cloudId = if (user.name.trim.nonEmpty) CloudID(user.name) else newID()
         isConnected(cloudId) map { connected =>
           if (connected) {
-            log warn s"Unable to register client: '$user'. Another client with that ID is already connected."
+            log warn s"Unable to register client: '$cloudId'. Another client with that ID is already connected."
             Left(InvalidCredentials(rh))
           } else {
-            Right(AuthedRequest(user, rh))
+            Right(AuthedRequest(Username(cloudId.id), rh))
           }
         }
       } else {
