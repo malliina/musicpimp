@@ -23,9 +23,9 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.11.3"
-val pimpcloudVersion = "1.10.0"
-val sharedVersion = "1.3.0"
-val crossVersion = "1.3.0"
+val pimpcloudVersion = "1.10.1"
+val sharedVersion = "1.3.1"
+val crossVersion = "1.3.1"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
@@ -195,7 +195,8 @@ lazy val pimpcloudSettings =
       libraryDependencies += PlayImport.ehcache,
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
-      buildInfoPackage := "com.malliina.pimpcloud"
+      buildInfoPackage := "com.malliina.pimpcloud",
+      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
     )
 
 val bootClasspath = taskKey[String]("bootClasspath")
