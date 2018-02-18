@@ -16,12 +16,12 @@ object SettingsHtml extends PimpBootstrap {
       ),
       postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
         divClass(InputGroup)(
-          spanClass(InputGroupAddon)(iconic("folder")),
+          divClass("input-group-prepend")(
+            spanClass("input-group-text")(iconic("folder")),
+          ),
           textInputBase(Text, SettingsController.Path, Option(content.folderPlaceholder), `class` := FormControl, required),
-          spanClass(InputGroupBtn)(
-            submitButton(`class` := {
-              btn.primary
-            })(iconic("plus"), " Add")
+          divClass("input-group-append")(
+            submitButton(`class` := btn.primary)(iconic("plus"), " Add")
           )
         ),
         content.feedback.fold(empty)(feedbackDiv)
@@ -31,12 +31,12 @@ object SettingsHtml extends PimpBootstrap {
   def renderFolder(folder: String) =
     postableForm(routes.SettingsController.deleteFolder(folder), `class` := FormHorizontal)(
       divClass(InputGroup)(
-        spanClass(InputGroupAddon)(iconic("folder")),
+        divClass("input-group-prepend")(
+          spanClass("input-group-text")(iconic("folder")),
+        ),
         spanClass(s"$UneditableInput $FormControl")(folder),
-        spanClass(InputGroupBtn)(
-          submitButton(`class` := {
-            btn.danger
-          })(iconic("delete"), " Delete")
+        divClass("input-group-append")(
+          submitButton(`class` := btn.danger)(iconic("delete"), " Delete")
         )
       )
     )

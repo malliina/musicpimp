@@ -36,7 +36,7 @@ object AlarmsHtml extends PimpBootstrap {
       if (clocks.isEmpty) {
         leadPara("No alarms.")
       } else {
-        PimpHtml.stripedHoverTableSmall(Seq("Description", "Enabled", "Actions"))(
+        PimpHtml.stripedHoverTable(Seq("Description", "Enabled", "Actions"))(
           tbody(clocks.map(alarmRow))
         )
       }
@@ -54,23 +54,23 @@ object AlarmsHtml extends PimpBootstrap {
     tr(
       td(ap.describe),
       td(enabledAttr)(enabledText),
-      td(alarmActions(ap.id.getOrElse("nonexistent")))
+      td(`class` := "table-button")(alarmActions(ap.id.getOrElse("nonexistent")))
     )
   }
 
   def alarmActions(id: String) =
     divClass(btn.group)(
-      a(href := routes.Alarms.editAlarm(id), `class` := s"${btn.default} ${btn.sm}")(iconic("edit"), " Edit"),
-      a(href := "#", dataToggle := Dropdown, `class` := s"${btn.default} ${btn.sm} $DropdownToggle")(spanClass(Caret)),
-      ulClass(DropdownMenu)(
-        jsListElem(DeleteClass, id, "remove", "Delete"),
-        jsListElem(PlayClass, id, "play", "Play"),
-        jsListElem(StopClass, id, "stop", "Stop")
+      a(href := routes.Alarms.editAlarm(id), `class` := s"${btn.secondary} ${btn.sm}")(iconic("edit"), " Edit"),
+      button(`type` := Button, `class` := s"${btn.secondary} ${btn.sm} dropdown-toggle dropdown-toggle-split", dataToggle := Dropdown, aria.haspopup := True, aria.expanded := False),
+      divClass(DropdownMenu)(
+        jsListElem(DeleteClass, id, "delete", "Delete"),
+        jsListElem(PlayClass, id, "play-circle", "Play"),
+        jsListElem(StopClass, id, "media-stop", "Stop")
       )
     )
 
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
-    liHref("#", `class` := clazz, PimpHtml.dataIdAttr := dataId)(iconic(glyph), s" $linkText")
+    a(href := "#", `class` := names(Seq("dropdown-item", clazz)), PimpHtml.dataIdAttr := dataId)(iconic(glyph), s" $linkText")
 
   def alarmEditorContent(conf: AlarmContent) = {
     val m = conf.m
@@ -78,72 +78,59 @@ object AlarmsHtml extends PimpBootstrap {
     Seq(
       headerRow("Edit alarm"),
       halfRow(
-        PimpHtml.postableForm(routes.Alarms.newClock(), `class` := FormHorizontal)(
-          divClass("hidden")(
+        PimpHtml.postableForm(routes.Alarms.newClock())(
+          divClass("hide")(
             formTextIn(form(Id), "ID", m)
           ),
           numberTextIn(form(Hours), "Hours", "hh", m),
           numberTextIn(form(Minutes), "Minute", "mm", m),
           weekdayCheckboxes(form(Days), m),
-          formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hidden")),
+          formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hide")),
           formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq(Selector)),
-          checkField(form(Enabled), "Enabled"),
+          divClass(FormGroup)(enabledCheck(form(Enabled), "Enabled")),
           saveButton(),
-          conf.feedback.fold(empty)(fb => divClass(s"$Lead ${col.sm.offset.two}")(PimpHtml.feedbackDiv(fb)))
+          conf.feedback.fold(empty)(fb => PimpHtml.feedbackDiv(fb))
         )
       )
     )
   }
 
   def saveButton(buttonText: String = "Save") =
-    formGroup(
-      divClass(s"${col.sm.offset.two} ${col.sm.width("10")}")(
-        defaultSubmitButton(buttonText)
-      )
-    )
+    divClass(FormGroup)(submitButton(`class` := btn.primary)(buttonText))
 
   def weekdayCheckboxes(field: Field, messages: Messages) = {
     val errorClass = if (field.hasErrors) s" $HasError" else ""
     divClass(s"$FormGroup$errorClass")(
-      labelFor(field.id, `class` := s"${col.sm.two} $ControlLabel")("Days"),
-      divClass(col.sm.four, id := field.id)(
-        divClass(Checkbox)(
-          label(
-            input(`type` := Checkbox, value := "every", id := Every)("Every day")
-          )
-        ),
+      labelFor(field.id)("Days"),
+      div(id := field.id)(
+        checkField(Every, Option("every"), false, "Every day", Every),
         WeekDay.EveryDay.zipWithIndex.map { case (k, v) => dayCheckbox(field, k, v) },
         helpSpan(field, messages)
       )
     )
   }
 
-  def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) = {
-    val isChecked = field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName)
-    val checkedAttr = if (isChecked) checked else empty
-    divClass(Checkbox)(
-      label(
-        input(
-          `type` := Checkbox,
-          value := field.value.getOrElse(weekDay.shortName),
-          id := weekDay.shortName,
-          name := s"${field.name}[$index]",
-          checkedAttr
-        )
-      )(s" ${weekDay.longName}")
+  def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) =
+    checkField(
+      s"${field.name}[$index]",
+      field.value.orElse(Option(weekDay.shortName)),
+      field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName),
+      weekDay.longName,
+      weekDay.shortName
     )
-  }
 
-  def checkField(field: Field, labelText: String) = {
-    val checkedAttr = if (field.value.contains(SchedulerStrings.On)) checked else empty
-    formGroup(
-      divClass(s"${col.sm.offset.two} ${col.sm.width("10")}")(
-        divClass(Checkbox)(
-          label(
-            input(`type` := Checkbox, name := field.name, checkedAttr)(labelText)
-          )
-        )
-      )
+  def enabledCheck(field: Field, labelText: String) =
+    formCheckField(field, field.value.contains(SchedulerStrings.On), labelText, "enabled-check")
+
+  def formCheckField(field: Field, isChecked: Boolean, labelText: String, checkId: String) =
+    checkField(field.name, field.value, isChecked, labelText, checkId)
+
+  def checkField(checkName: String, checkValue: Option[String], isChecked: Boolean, labelText: String, checkId: String) = {
+    val checkedAttr = if (isChecked) checked else empty
+    val valueAttr = checkValue.map(value := _).getOrElse(empty)
+    divClass("form-check")(
+      input(`type` := Checkbox, `class` := "form-check-input", name := checkName, id := checkId, valueAttr, checkedAttr),
+      label(`class` := "form-check-label", `for` := checkId)(labelText)
     )
   }
 
@@ -159,15 +146,11 @@ object AlarmsHtml extends PimpBootstrap {
                  inClasses: Seq[String] = Nil,
                  formGroupClasses: Seq[String] = Nil,
                  defaultValue: String = "") = {
-    val errorClass = if (field.hasErrors) Option(HasError) else None
-    val moreClasses = (errorClass.toSeq ++ formGroupClasses).mkString(" ", " ", "")
-    val inputClasses = inClasses.mkString(" ", " ", "")
-    divClass(s"$FormGroup$moreClasses")(
-      labelFor(field.name, `class` := s"$ControlLabel ${col.sm.two}")(labelText),
-      divClass(inputWidth)(
-        inputField(field, typeName, defaultValue, placeholder, `class` := s"$FormControl$inputClasses"),
-        helpSpan(field, m)
-      )
+    val errorClass = if (field.hasErrors) Seq(HasError) else Nil
+    divClass(names(Seq(FormGroup) ++ errorClass ++ formGroupClasses))(
+      labelFor(field.id)(labelText),
+      inputField(field, typeName, defaultValue, placeholder, `class` := names(Seq(FormControl) ++ inClasses)),
+      helpSpan(field, m)
     )
   }
 
@@ -175,4 +158,6 @@ object AlarmsHtml extends PimpBootstrap {
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
     input(`type` := typeName, id := field.id, name := field.name, value := field.value.getOrElse(defaultValue), placeholderAttr, more)
   }
+
+  def names(ns: Seq[String]) = ns.mkString(" ")
 }

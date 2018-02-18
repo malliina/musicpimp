@@ -236,7 +236,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
                 navItem("Manage", routes.SettingsController.manage(), "wrench"),
                 navItem("About", routes.Website.about(), "globe"),
                 divClass("dropdown-divider"),
-                li(a(href := routes.Accounts.logout(), `class` := "nav-link")(iconic("off"), " Sign Out"))
+                li(a(href := routes.Accounts.logout(), `class` := "nav-link")(iconic("account-logout"), " Sign Out"))
               )
             ),
             div(

@@ -17,7 +17,7 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
         searchForm()
       ),
       divClass(s"${col.md.four} ${col.md.offset.four}")(
-        button(`type` := Button, `class` := s"${btn.default} ${btn.lg}", id := RefreshButton)(iconic("reload"), " "),
+        button(`type` := Button, `class` := s"${btn.info} ${btn.lg}", id := RefreshButton)(iconic("reload"), " "),
         span(id := IndexInfo)
       )
     ),

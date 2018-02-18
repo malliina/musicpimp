@@ -42,7 +42,9 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers {
 
   def searchFuture[T: Reads](term: Request): Future[Seq[T]] = {
     val p = Promise[Seq[T]]()
-    search[T](term)(ts => p.success(ts))
+    search[T](term) { ts =>
+      p.success(ts)
+    }
     p.future
   }
 
