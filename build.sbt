@@ -24,8 +24,8 @@ val buildAndMove = taskKey[Path]("builds and moves the package")
 
 val musicpimpVersion = "3.11.3"
 val pimpcloudVersion = "1.10.0"
-val sharedVersion = "1.2.3"
-val crossVersion = "1.2.3"
+val sharedVersion = "1.3.0"
+val crossVersion = "1.3.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
