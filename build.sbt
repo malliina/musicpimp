@@ -264,7 +264,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.8.0",
+    malliinaGroup %% "mobile-push" % "1.9.0",
     utilPlayDep
   )
 )
