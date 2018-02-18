@@ -66,7 +66,7 @@ class CloudComponents(context: Context,
   )
   val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *"
+  val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
 
   implicit val ec = materializer.executionContext

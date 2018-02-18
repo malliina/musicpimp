@@ -10,6 +10,12 @@
             <!--<pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>-->
         </encoder>
     </appender>
+    <!--<appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogStreamsLogbackAppender">-->
+        <!--<endpoint>${LOGSTREAMS_HOST:-logs.malliina.com}</endpoint>-->
+        <!--<secure>true</secure>-->
+        <!--<username>${LOGSTREAMS_USER:-cloud}</username>-->
+        <!--<password>${LOGSTREAMS_PASS}</password>-->
+    <!--</appender>-->
     <logger name="play" level="INFO"/>
     <logger name="controllers" level="INFO"/>
     <logger name="application" level="INFO"/>
@@ -17,8 +23,8 @@
     <logger name="com" level="INFO"/>
     <logger name="play.core.server.netty.NettyModelConversion" level="ERROR"/>
     <root level="INFO">
-        <appender-ref ref="STDOUT"/>
         <appender-ref ref="RX"/>
-        <appender-ref ref="LOGSTREAMS"/>
+        <appender-ref ref="STDOUT"/>
+        <!--<appender-ref ref="LOGSTREAMS"/>-->
     </root>
 </configuration>
