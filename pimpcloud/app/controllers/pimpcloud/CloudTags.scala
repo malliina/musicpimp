@@ -3,6 +3,7 @@ package controllers.pimpcloud
 import com.malliina.html.Tags
 import com.malliina.musicpimp.audio.{Directory, Folder, Track}
 import com.malliina.musicpimp.html.PimpBootstrap
+import com.malliina.musicpimp.js.FrontStrings
 import com.malliina.musicpimp.js.FrontStrings.{FailStatus, OkStatus}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.CloudStrings
@@ -177,8 +178,8 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
 
   def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) = {
     def navItem(thisTabName: String, tabId: String, url: Call, iconicName: String) = {
-      val maybeActive = if (tabId == tabName) Option(`class` := "active") else None
-      li(maybeActive)(a(href := url)(iconic(iconicName), s" $thisTabName"))
+      val itemClass = if (tabId == tabName) "nav-item active" else "nav-item"
+      li(`class` := itemClass)(a(href := url, `class` := "nav-link")(iconic(iconicName), s" $thisTabName"))
     }
 
     basePage("pimpcloud")(
@@ -186,16 +187,16 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
         routes.Logs.index(),
         "MusicPimp",
         modifier(
-          ulClass(s"$Nav ${navbar.Nav}")(
+          ulClass(s"${navbar.Nav} $MrAuto")(
             navItem("Home", "home", routes.Logs.index(), "home"),
             navItem("Logs", "logs", routes.Logs.logs(), "list")
           ),
-          ulClass(s"$Nav ${navbar.Nav} ${navbar.Right}")(
-            li(a(href := routes.AdminAuth.logout())("Logout"))
-          ),
-          divClass(s"${col.md.two} $PullRight")(
-            eye(OkStatus, "eye-open green"),
-            eye(FailStatus, "eye-close red")
+          ulClass(s"${navbar.Nav} ${navbar.Right}")(
+            li(`class` := "nav-item")(a(href := routes.AdminAuth.logout(), `class` := "nav-link")("Logout")),
+            div(
+              eye(OkStatus, "bolt green"),
+              eye(FailStatus, "bolt red")
+            )
           )
         )
       ),
@@ -208,13 +209,15 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
       head(
         titleTag(title),
         deviceWidthViewport,
-        cssLink("//netdna.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"),
-        cssLink("//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css"),
-        cssLink("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css"),
+        cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css", "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
+        cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
+        cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
+        cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
         cssLink(versioned("css/main.css")),
-        jsScript("//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"),
-        jsScript("//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js"),
-        jsScript("//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js")
+        jsHashed("https://code.jquery.com/jquery-3.3.1.min.js", "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="),
+        jsHashed("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js", "sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="),
+        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
+        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"),
       ),
       body(
         section(
@@ -226,5 +229,5 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
   )
 
   def eye(elemId: String, iconicName: String) =
-    pClass(s"${navbar.Text} $PullRight $HiddenXs $Hidden", id := elemId)(iconic(iconicName))
+    span(`class` := s"${navbar.Text} ${FrontStrings.HiddenClass}", id := elemId)(iconic(iconicName))
 }

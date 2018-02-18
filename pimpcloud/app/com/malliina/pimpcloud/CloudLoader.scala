@@ -57,7 +57,16 @@ class CloudComponents(context: Context,
     with HttpFiltersComponents
     with AssetsComponents {
 
-  val csp = "default-src 'self' 'unsafe-inline' *.bootstrapcdn.com *.googleapis.com; connect-src *"
+  val allowedCsp = Seq(
+    "*.bootstrapcdn.com",
+    "*.googleapis.com",
+    "code.jquery.com",
+    "use.fontawesome.com",
+    "cdnjs.cloudflare.com"
+  )
+  val allowedEntry = allowedCsp.mkString(" ")
+
+  val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
 
   implicit val ec = materializer.executionContext
