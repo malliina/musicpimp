@@ -22,7 +22,7 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.12.0"
+val musicpimpVersion = "3.12.1"
 val pimpcloudVersion = "1.10.1"
 val sharedVersion = "1.3.1"
 val crossVersion = "1.3.1"
