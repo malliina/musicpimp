@@ -11,7 +11,7 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
 
   def cells(row: T): Seq[Modifier]
 
-  def render(list: ListLike[T]): Modifier = Seq(
+  def render(list: ListLike[T]): Modifier = modifier(
     headerRow(title),
     div(`class` := "sub-header")(
       div(s"showing ${list.from} - ${list.until - 1}")
@@ -22,25 +22,27 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
         tbody(list.entries.map(entry => tr(cells(entry))))
       )
     ),
-    fullRow(
-      ulClass("pager")(
-        if (list.from > 0) liHref(list.prev)("Previous") else (),
+    nav(aria.label := "Popular and recent tracks")(
+      ulClass("pagination")(
+        if (list.from > 0) pageLink(list.prev, "Previous") else empty,
         " ",
-        if (list.entries.length >= list.meta.maxItems) liHref(list.next)("Next") else ()
+        if (list.entries.length >= list.meta.maxItems) pageLink(list.next, "Next") else empty
       )
     )
   )
+
+  def pageLink[V: AttrValue](url: V, text: String) =
+    li(`class` := "page-item")(a(href := url, `class` := "page-link")(text))
 }
 
 object TopHtml {
   val TableClass = "top-table"
-  val HiddenSmall = PimpHtml.HiddenSmall
   val HiddenXxs = "hidden-xxs"
 
   def toRow[T <: TopEntry](entry: T, fourth: T => Modifier) = Seq(
     td(entry.track.title),
     td(entry.track.artist, `class` := HiddenXxs),
-    td(`class` := HiddenSmall)(entry.track.album),
+    td(`class` := HiddenXxs)(entry.track.album),
     td(fourth(entry), `class` := HiddenXxs),
     td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
   )
@@ -49,7 +51,7 @@ object TopHtml {
     override def headers: Seq[Modifier] = Seq(
       th("Title", `class` := "top-popular"),
       th("Artist", `class` := s"top-popular $HiddenXxs"),
-      th(`class` := s"$HiddenSmall top-popular")("Album"),
+      th(`class` := s"$HiddenXxs top-popular")("Album"),
       th("Plays", `class` := s"plays $HiddenXxs"),
       th("Actions", `class` := "actions")
     )
@@ -62,7 +64,7 @@ object TopHtml {
     override def headers = Seq(
       th("Title"),
       th("Artist", `class` := HiddenXxs),
-      th(`class` := HiddenSmall)("Album"),
+      th(`class` := HiddenXxs)("Album"),
       th(`class` := s"cell-content when $HiddenXxs")("When"),
       th("Actions", `class` := "actions")
     )

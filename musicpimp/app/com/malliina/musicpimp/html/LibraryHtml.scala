@@ -62,8 +62,8 @@ object LibraryHtml extends PimpBootstrap {
   def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")
     divClass(s"${btn.group}$extra", role := Group, groupAttrs)(
-      iconicButton(s"${btn.primary} $itemClazz $PlayClass", "play-circle", itemId),
-      iconicButton(s"${btn.primary} $itemClazz $AddClass", "plus", itemId),
+      iconicButton(s"${btn.light} $itemClazz $PlayClass", "play-circle", itemId),
+      iconicButton(s"${btn.light} $itemClazz $AddClass", "plus", itemId),
       inner
     )
   }

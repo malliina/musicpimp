@@ -60,13 +60,11 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
           imageInput(imgLight.transport_pause_png, id := PauseButton, style := "display: none"),
           imageInput(imgLight.transport_ff_png, id := NextButton)
         ),
-        div(`class` := s"$Row $playerWidth", id := "volume-control")(
+        div(`class` := Row, id := "volume-control")(
           divClass(col.md.width("3"))(
             imageInput(imgLight.appbar_sound_3_png, id := VolumeButton, `class` := PullRight)
           ),
-          divClass(col.md.width("9"))(
-            divClass(s"${col.md.twelve} $PullLeft", id := VolumeId)
-          )
+          divClass(col.md.width("9"), id := VolumeId)
         )
       )
     )

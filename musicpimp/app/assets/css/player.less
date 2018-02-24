@@ -1,5 +1,10 @@
 :root {
+  --player-background: #F7F7F7;
+}
 
+#playerDiv {
+  background: var(--player-background);
+  padding: 0.6rem;
 }
 
 #volume {
@@ -13,10 +18,10 @@
 }
 
 #volume-control {
-  visibility: hidden;
+  display: none;
 
-  @media (min-width: 768px) {
-    visibility: visible;
+  @media (min-width: 992px) {
+    display: flex;
   }
 }
 
@@ -36,5 +41,5 @@
 }
 
 .playlist-list {
-  padding-left: 18px;
+  padding: 0.6rem 0.6rem 0.6rem 18px;
 }

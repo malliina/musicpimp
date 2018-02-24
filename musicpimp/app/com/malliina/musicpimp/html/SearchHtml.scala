@@ -13,11 +13,11 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
   def searchContent(query: Option[String], results: Seq[DataTrack]) = Seq(
     headerRow("Search"),
     row(
-      div4(
+      div6(
         searchForm()
       ),
-      divClass(s"${col.md.four} ${col.md.offset.four}")(
-        button(`type` := Button, `class` := s"${btn.info} ${btn.lg}", id := RefreshButton)(iconic("reload"), " "),
+      div6(
+        button(`type` := Button, `class` := btn.info, id := RefreshButton)(iconic("reload"), " "),
         span(id := IndexInfo)
       )
     ),
