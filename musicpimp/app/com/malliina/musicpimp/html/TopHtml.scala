@@ -17,7 +17,7 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
       div(s"showing ${list.from} - ${list.until - 1}")
     ),
     fullRow(
-      table(`class` := s"${tables.defaultClass} ${TopHtml.TableClass}")(
+      table(`class` := s"${tables.defaultClass} table-bordered ${TopHtml.TableClass}")(
         thead(headers),
         tbody(list.entries.map(entry => tr(cells(entry))))
       )
