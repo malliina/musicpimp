@@ -11,6 +11,7 @@ import scala.concurrent.duration.Duration
 
 class FooterSocket extends PlaybackSocket with FooterStrings {
   // Why do these need to be lazy?
+  lazy val footer = elem(FooterId)
   lazy val playButton: JQuery = elem(FooterPlay)
   lazy val pauseButton = elem(FooterPause)
   lazy val backwardButton = elem(FooterBackward)
@@ -59,8 +60,10 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
     if (track.title.nonEmpty) {
       updateTrack(track)
       updatePlayPause(status.state)
+      ensureClass(footer, FooterFixedClass)
     } else {
       hidePlaybackFooterShowCredits()
+      footer.removeClass(FooterFixedClass)
     }
   }
 

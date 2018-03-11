@@ -44,7 +44,7 @@ object TopHtml {
     td(entry.track.artist, `class` := HiddenXxs),
     td(`class` := HiddenXxs)(entry.track.album),
     td(fourth(entry), `class` := HiddenXxs),
-    td(LibraryHtml.trackActions(entry.track.id, Option("flex"))())
+    td(LibraryHtml.trackActions(entry.track.id, extraClass = Option("flex"))())
   )
 
   object popular extends TableRenderer[FullPopularEntry]("Most Played") {

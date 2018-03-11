@@ -56,8 +56,8 @@ object LibraryHtml extends PimpBootstrap {
       dataButton(s"${btn.light} ${btn.block} $TrackClass $PlayClass track-title", track.id.id)(track.title)
     )
 
-  def trackActions(track: TrackID, extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
-    musicItemActions(TrackClass, track.id, extraClass)(inner)
+  def trackActions(track: TrackID, trackExtra: String = "", extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
+    musicItemActions(s"$TrackClass $trackExtra", track.id, extraClass)(inner)
 
   def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")

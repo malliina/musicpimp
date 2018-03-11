@@ -225,7 +225,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
           ),
           ulClass(s"$Nav ${navbar.Nav} ${navbar.Right}")(
             divClass(s"$HiddenSmall")(
-              SearchHtml.searchForm()
+              SearchHtml.navbarSearch()
             ),
             li(`class` := s"nav-item $Dropdown")(
               a(href := "#", `class` := s"nav-link $DropdownToggle", dataToggle := Dropdown, role := Button, aria.haspopup := tags.True, aria.expanded := tags.False)(
@@ -291,7 +291,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
       body(
         inner,
         scripts,
-        footer(`class` := "footer", id := "footer")(
+        footer(`class` := "footer", id := FooterId)(
           nav(`class` := s"${navbar.Navbar} navbar-expand-sm ${navbar.Light} ${navbar.BgLight} $HiddenSmall", id := BottomNavbar)(
             divContainer(
               ulClass(s"${navbar.Nav}")(
