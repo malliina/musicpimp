@@ -29,7 +29,8 @@ val crossVersion = "1.4.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.9.0"
+val utilPlayVersion = "4.9.1"
+val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 
 scalaVersion in ThisBuild := "2.12.5"
 
@@ -71,7 +72,7 @@ lazy val crossSettings = Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.9",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
     "com.malliina" %%% "primitives" % "1.4.1",
-    "com.malliina" %%% "util-html" % "4.8.0"
+    "com.malliina" %%% "util-html" % utilPlayVersion
   )
 )
 
@@ -94,12 +95,8 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.9.0",
-        malliinaGroup %% "util-rmi" % "2.9.0",
+        malliinaGroup %% "util-actor" % "2.9.1",
         malliinaGroup %% "util-audio" % "2.4.0",
-        httpGroup % "httpclient" % httpVersion,
-        httpGroup % "httpcore" % httpVersion,
-        httpGroup % "httpmime" % httpVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
