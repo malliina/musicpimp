@@ -1,16 +1,16 @@
 package controllers.pimpcloud
 
 import akka.stream.Materializer
+import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.http.OkClient
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{AuthFailure, Authenticator, UserAuthenticator}
-import com.malliina.play.controllers.{AuthBundle, BaseSecurity, OAuthControl}
+import com.malliina.play.auth.{AuthConf, AuthFailure, Authenticator, BasicAuthHandler, CodeValidationConf, StandardCodeValidator, UserAuthenticator}
+import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.models.Email
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
 import play.api.mvc._
-
-import scala.concurrent.ExecutionContext
 
 class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth {
   override def logged(action: EssentialAction) =
@@ -32,30 +32,28 @@ trait PimpAuth extends Authenticator[AuthedRequest] {
     authAction(req => Ok(f(req)))
 }
 
-class OAuthCtrl(val oauth: AdminOAuth)
-  extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth, oauth.ec), oauth.mat)
+class OAuthCtrl(val oauth: AdminOAuth, mat: Materializer)
+  extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth), mat)
 
 object OAuthCtrl {
-  def bundle(oauth: OAuthControl, ec: ExecutionContext) = new AuthBundle[AuthedRequest] {
+  def bundle(oauth: AdminOAuth) = new AuthBundle[AuthedRequest] {
     override def authenticator: Authenticator[AuthedRequest] =
-      UserAuthenticator.session(oauth.sessionUserKey)
-        .transform((req, user) => Right(AuthedRequest(user, req)))(ec)
+      UserAuthenticator.session(oauth.sessionKey)
+        .transform((req, user) => Right(AuthedRequest(user, req)))
 
     override def onUnauthorized(failure: AuthFailure): Result =
-      Results.Redirect(oauth.startOAuth)
+      Results.Redirect(routes.AdminOAuth.googleStart())
   }
 }
 
-class AdminOAuth(actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials, val mat: Materializer)
-  extends OAuthControl(actions, creds) {
+class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials) {
+  val sessionKey = "username"
+  val authorizedEmail = Email("malliina123@gmail.com")
+  val handler = BasicAuthHandler(routes.Logs.index()).filter(_ == authorizedEmail)
+  val conf = AuthConf(creds.clientId, creds.clientSecret)
+  val validator = StandardCodeValidator(CodeValidationConf.google(routes.AdminOAuth.googleCallback(), handler, conf, OkClient.default))
 
-  override def isAuthorized(email: Email): Boolean = email == Email("malliina123@gmail.com")
+  def googleStart = actions.async { req => validator.start(req) }
 
-  override def startOAuth: Call = routes.AdminOAuth.initiate()
-
-  override def oAuthRedir: Call = routes.AdminOAuth.redirResponse()
-
-  override def onOAuthSuccess: Call = routes.Logs.index()
-
-  override def ejectCall: Call = routes.AdminAuth.eject()
+  def googleCallback = actions.async { req => validator.validateCallback(req) }
 }

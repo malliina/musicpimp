@@ -14,29 +14,15 @@ class CloudPushClient(host: FullUrl) {
   val pushUrl = host append "/push"
 
   def push(pushTask: PushTask)(implicit ec: ExecutionContext): Future[PushResult] =
-    AsyncHttp.postJson(pushUrl.url, Json.obj(Cmd -> PushValue, Body -> pushTask)).flatMap { r =>
-      if (r.code == 200) {
-        r.parse[PushResponse].map { response =>
-          Future.successful(response.result)
-        }.getOrElse {
-          Future.failed(new PushJsonException(r))
-        }
-      } else {
-        Future.failed(new ResponseException(r))
-      }
-    }
-
-  def okPush(pushTask: PushTask)(implicit ec: ExecutionContext): Future[PushResult] =
     OkClient.default.postJson(pushUrl, Json.obj(Cmd -> PushValue, Body -> pushTask)).flatMap { res =>
-      val r = new OkResponse(res)
-      if (r.code == 200) {
-        r.parse[PushResponse].map { response =>
+      if (res.code == 200) {
+        res.parse[PushResponse].map { response =>
           Future.successful(response.result)
         }.getOrElse {
-          Future.failed(new PushJsonException(r))
+          Future.failed(new PushJsonException(res))
         }
       } else {
-        Future.failed(new OkPushException(r))
+        Future.failed(new OkPushException(res))
       }
     }
 }
@@ -48,17 +34,7 @@ object CloudPushClient {
   def apply(host: FullUrl): CloudPushClient = new CloudPushClient(host)
 }
 
-class PushJsonException(response: ResponseLike)
+class PushJsonException(response: HttpResponse)
   extends PushException(s"Unexpected push response body: '${response.asString}'.")
 
-class OkResponse(val inner: Response) extends ResponseLike {
-  override lazy val asString = inner.body().string()
-
-  override def json: Try[JsValue] = Try(Json.parse(asString))
-
-  override def parse[T: Reads] = json.map(_.validate[T]).getOrElse(JsError(s"Not JSON: '$asString'."))
-
-  override def code: Int = inner.code()
-}
-
-class OkPushException(val response: OkResponse) extends PushException("Request failed")
+class OkPushException(val response: OkHttpResponse) extends PushException("Request failed")

@@ -192,7 +192,7 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
             navItem("Logs", "logs", routes.Logs.logs(), "list")
           ),
           ulClass(s"${navbar.Nav} ${navbar.Right}")(
-            li(`class` := "nav-item")(a(href := routes.AdminAuth.logout(), `class` := "nav-link")("Logout")),
+            li(`class` := "nav-item")(a(href := routes.Logs.logout(), `class` := "nav-link")("Logout")),
             div(
               eye(OkStatus, "bolt green"),
               eye(FailStatus, "bolt red")

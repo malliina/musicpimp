@@ -22,16 +22,16 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.12.1"
-val pimpcloudVersion = "1.10.1"
-val sharedVersion = "1.3.1"
-val crossVersion = "1.3.1"
+val musicpimpVersion = "3.13.0"
+val pimpcloudVersion = "1.11.0"
+val sharedVersion = "1.4.0"
+val crossVersion = "1.4.0"
 val malliinaGroup = "com.malliina"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
-val utilPlayDep = malliinaGroup %% "util-play" % "4.6.2"
+val utilPlayDep = malliinaGroup %% "util-play" % "4.9.0"
 
-scalaVersion in ThisBuild := "2.12.4"
+scalaVersion in ThisBuild := "2.12.5"
 
 lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -68,10 +68,10 @@ lazy val crossSettings = Seq(
   organization := "org.musicpimp",
   version := crossVersion,
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.8",
+    "com.typesafe.play" %%% "play-json" % "2.6.9",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
-    "com.malliina" %%% "primitives" % "1.3.5",
-    "com.malliina" %%% "util-html" % "4.6.0"
+    "com.malliina" %%% "primitives" % "1.4.1",
+    "com.malliina" %%% "util-html" % "4.8.0"
   )
 )
 
@@ -94,9 +94,9 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.8.2",
-        malliinaGroup %% "util-rmi" % "2.8.2",
-        malliinaGroup %% "util-audio" % "2.3.2",
+        malliinaGroup %% "util-actor" % "2.9.0",
+        malliinaGroup %% "util-rmi" % "2.9.0",
+        malliinaGroup %% "util-audio" % "2.4.0",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpcore" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
@@ -264,8 +264,8 @@ lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick" % "3.2.1",
-    malliinaGroup %% "mobile-push" % "1.9.0",
+    "com.typesafe.slick" %% "slick" % "3.2.2",
+    malliinaGroup %% "mobile-push" % "1.10.0",
     utilPlayDep
   )
 )

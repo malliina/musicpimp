@@ -35,11 +35,11 @@ GET         /servers/ws2                       com.malliina.pimpcloud.ws.JoinedS
 # Admin
 GET         /admin                             controllers.pimpcloud.Logs.index
 GET         /admin/logs                        controllers.pimpcloud.Logs.logs
-GET         /oauth                             controllers.pimpcloud.AdminOAuth.initiate
+GET         /oauth                             controllers.pimpcloud.AdminOAuth.googleStart
 # Must match a callback defined in the Google OAuth developer console
-GET         /oauthcb                           controllers.pimpcloud.AdminOAuth.redirResponse
-GET         /admin/eject                       controllers.pimpcloud.AdminAuth.eject
+GET         /oauthcb                           controllers.pimpcloud.AdminOAuth.googleCallback
 GET         /admin/ws                          controllers.pimpcloud.Logs.openSocket
 GET         /admin/usage                       controllers.pimpcloud.UsageStreaming.openSocket
-GET         /admin/logout                      controllers.pimpcloud.AdminAuth.logout
+GET         /admin/logout                      controllers.pimpcloud.Logs.logout
+GET         /admin/eject                       controllers.pimpcloud.Logs.eject
 GET         /assets/*file                      controllers.Assets.versioned(path = "/public", file: Asset)

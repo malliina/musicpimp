@@ -1,4 +1,4 @@
-scalaVersion := "2.12.4"
+scalaVersion := "2.12.5"
 resolvers ++= Seq(
   ivyRepo("bintray-sbt-plugin-releases",
     "http://dl.bintray.com/content/sbt/sbt-plugin-releases"),
@@ -7,6 +7,14 @@ resolvers ++= Seq(
   Resolver.bintrayRepo("malliina", "maven")
 )
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
+
+dependencyOverrides ++= Seq(
+  "org.scala-js" % "sbt-scalajs" % "0.6.22",
+  "io.netty" % "netty" % "3.10.6.Final",
+  "org.webjars" % "webjars-locator-core" % "0.33",
+  "org.codehaus.plexus" % "plexus-utils" % "3.0.17",
+  "com.google.guava" % "guava" % "23.0"
+)
 
 Seq(
   "com.malliina" %% "sbt-play" % "1.2.2",

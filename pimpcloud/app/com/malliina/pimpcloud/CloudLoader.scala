@@ -1,6 +1,7 @@
 package com.malliina.pimpcloud
 
 import _root_.pimpcloud.Routes
+import akka.stream.Materializer
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.{GoogleOAuthCredentials, GoogleOAuthReader}
@@ -20,19 +21,19 @@ import play.filters.headers.SecurityHeadersConfig
 import scala.concurrent.Future
 import scala.util.Try
 
-case class AppConf(pusher: Pusher, googleCreds: GoogleOAuthCredentials, pimpAuth: AdminOAuth => PimpAuth)
+case class AppConf(pusher: Pusher, googleCreds: GoogleOAuthCredentials, pimpAuth: (AdminOAuth, Materializer) => PimpAuth)
 
 object AppConf {
   def dev = AppConf(
     NoPusher,
     Try(GoogleOAuthReader.load).getOrElse(GoogleOAuthCredentials("id", "secret", "scope")),
-    auth => new ProdAuth(new OAuthCtrl(auth))
+    (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
   )
 
   def prod = AppConf(
     ProdPusher.fromConf,
     GoogleOAuthReader.load,
-    auth => new ProdAuth(new OAuthCtrl(auth))
+    (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
   )
 
   def forMode(mode: Mode) =
@@ -74,8 +75,8 @@ class CloudComponents(context: Context,
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
 
-  val adminAuth = new AdminOAuth(controllerComponents.actionBuilder, conf.googleCreds, materializer)
-  val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth)
+  val adminAuth = new AdminOAuth(defaultActionBuilder, conf.googleCreds)
+  val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth, materializer)
 
   lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
   lazy val ctx = ActorExecution(actorSystem, materializer)
@@ -86,10 +87,9 @@ class CloudComponents(context: Context,
   lazy val push = new Push(controllerComponents, conf.pusher)
   lazy val p = Phones.forAuth(controllerComponents, tags, cloudAuths.phone, materializer)
   lazy val sc = ServersController.forAuth(controllerComponents, cloudAuths.server, materializer)
-  lazy val aa = new AdminAuth(controllerComponents, pimpAuth, adminAuth, tags)
-  lazy val l = new Logs(tags, pimpAuth, ctx)
+  lazy val l = new Logs(tags, pimpAuth, ctx, defaultActionBuilder)
   lazy val w = new Web(controllerComponents, tags, cloudAuths)
   lazy val as = new Assets(httpErrorHandler, assetsMetadata)
-  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, aa, joined.us, as)
+  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
 }

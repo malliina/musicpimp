@@ -63,7 +63,7 @@ class MessagingTests extends FunSuite {
     val url = FullUrl("https", "cloud.musicpimp.org", "")
     val req = OkClient.default.get(url.append("/ping"))
     val res = await(req)
-    assert(res.code() === 200)
+    assert(res.code === 200)
   }
 
   ignore("can push notification using pimpcloud") {

@@ -37,7 +37,7 @@ class TokenService {
         log info s"Sent ${messages.size} notifications."
         removeUnregistered(response.apns)
       }.recoverAll { t =>
-        log.warn(s"Unable to send all notifications. ${t.getClass.getName}", t)
+        log.warn(s"Unable to send all notifications.", t)
       }
     }
   }

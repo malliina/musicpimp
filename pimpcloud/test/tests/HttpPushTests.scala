@@ -19,7 +19,7 @@ import scala.concurrent.Future
 
 class TestComponents(context: Context) extends CloudComponents(
   context,
-  AppConf(NoPusher, GoogleOAuthCredentials("id", "secret", "scope"), _ => TestAuth)
+  AppConf(NoPusher, GoogleOAuthCredentials("id", "secret", "scope"), (_, _) => TestAuth)
 )
 
 object TestAuth extends PimpAuth {
