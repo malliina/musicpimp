@@ -245,6 +245,7 @@ lazy val pimpcloudScalaJSSettings = Seq(
 )
 
 lazy val commonServerSettings = baseSettings ++ Seq(
+  resolvers += Resolver.bintrayRepo("malliina", "maven"),
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
