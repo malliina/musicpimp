@@ -16,17 +16,20 @@ import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
+import com.malliina.sbtutils.{SbtProjects, SbtUtils}
 
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 // wtf?
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
+val bootClasspath = taskKey[String]("bootClasspath")
 
 val musicpimpVersion = "3.15.0"
 val pimpcloudVersion = "1.13.0"
 val sharedVersion = "1.6.0"
 val crossVersion = "1.6.0"
 val malliinaGroup = "com.malliina"
+val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.11.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 
@@ -37,7 +40,7 @@ lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpim
   .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
   .enablePlugins(FileTreePlugin)
-  .dependsOn(shared, crossJvm)
+  .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
@@ -54,6 +57,8 @@ lazy val it = project.in(file("it"))
 lazy val cross = crossProject.in(file("cross"))
   .settings(crossSettings: _*)
   .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.1")
+lazy val utilAudio = SbtProjects.testableProject("util-audio", file("util-audio"))
+  .settings(utilAudioSettings: _*)
 
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
@@ -94,7 +99,6 @@ lazy val pimpPlaySettings =
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
         malliinaGroup %% "util-actor" % "2.10.0",
-        malliinaGroup %% "util-audio" % "2.5.0",
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
@@ -194,8 +198,6 @@ lazy val pimpcloudSettings =
       linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
     )
 
-val bootClasspath = taskKey[String]("bootClasspath")
-
 lazy val pimpcloudLinuxSettings = Seq(
   httpPort in Linux := Option("disabled"),
   httpsPort in Linux := Option("8458"),
@@ -237,6 +239,26 @@ lazy val artifactSettings = Seq(
 lazy val pimpcloudScalaJSSettings = Seq(
   scalaJSProjects := Seq(pimpcloudFrontend),
   pipelineStages in Assets ++= Seq(scalaJSPipeline)
+)
+
+lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
+  organization := malliinaGroup,
+  SbtUtils.gitUserName := "malliina",
+  SbtUtils.developerName := "Michael Skogberg",
+  libraryDependencies ++= Seq(
+    "commons-io" % "commons-io" % "2.6",
+    "org.slf4j" % "slf4j-api" % "1.7.25",
+    malliinaGroup %% "util-base" % "1.5.0",
+    "org" % "jaudiotagger" % "2.0.3",
+    soundGroup % "tritonus-share" % "0.3.7.4",
+    soundGroup % "jlayer" % "1.0.1.4",
+    soundGroup % "mp3spi" % "1.9.5.4"
+  ),
+  resolvers ++= Seq(
+    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+    "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
+    Resolver.bintrayRepo("malliina", "maven")
+  )
 )
 
 lazy val commonServerSettings = baseSettings ++ Seq(

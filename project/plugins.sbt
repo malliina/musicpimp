@@ -17,6 +17,7 @@ dependencyOverrides ++= Seq(
 )
 
 Seq(
+  "com.malliina" %% "sbt-utils" % "0.8.0",
   "com.malliina" %% "sbt-play" % "1.2.2",
   "org.scala-js" % "sbt-scalajs" % "0.6.22",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
