@@ -7,8 +7,10 @@ import java.nio.file._
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
+import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
-import com.malliina.http.TrustAllMultipartRequest
+import com.malliina.http.OkClient.MultiPartFile
+import com.malliina.http.{HttpResponse, OkClient}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.http.PimpContentController
@@ -20,13 +22,15 @@ import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileUploadRequest}
 import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
+import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageInt, StorageLong}
-import com.malliina.util.{Util, Utils}
-import com.malliina.values.UnixPath
+import com.malliina.util.Utils
+import com.malliina.values.{ErrorMessage, UnixPath}
+import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest.log
-import org.apache.http.HttpResponse
+import okhttp3.MediaType
 import play.api.Logger
-import play.api.http.HttpErrorHandler
+import play.api.http.{HeaderNames, HttpErrorHandler}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
@@ -96,23 +100,25 @@ class Rest(auth: AuthDeps,
     *
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
-  def stream = pimpParsedAction(parsers.json) { req =>
+  def stream = pimpParsedActionAsync(parsers.json) { req =>
     Json.fromJson[BeamCommand](req.body).fold(
-      invalid = _ => BadRequest(JsonMessages.invalidJson),
+      invalid = _ => fut(BadRequest(JsonMessages.invalidJson)),
       valid = cmd => {
-        try {
-          val (response, duration) = Utils.timed(Rest.beam(cmd))
-          response.fold(
-            errorMsg => badRequest(errorMsg),
+        val (response, duration) = Utils.timed(Rest.beam(cmd))
+        response.map { e =>
+          e.fold(
+            errorMsg => {
+              badRequest(errorMsg.message)
+            },
             httpResponse => {
               // relays MusicBeamer's response to the client
-              val statusCode = httpResponse.getStatusLine.getStatusCode
+              val statusCode = httpResponse.code
               log info s"Completed track upload in: $duration, relaying response: $statusCode"
               val result = new Results.Status(statusCode)
               if (statusCode >= 200 && statusCode < 300) result(JsonMessages.thanks)
               else result
             })
-        } catch {
+        }.recover {
           case uhe: UnknownHostException =>
             notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
           case e: Exception =>
@@ -268,27 +274,32 @@ class Rest(auth: AuthDeps,
 object Rest {
   private val log = Logger(getClass)
 
+  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
+  val audioMpeg = MediaType.parse("audio/mpeg")
+
   /** Beams a track to a URI as specified in `cmd`.
     *
     * @param cmd beam details
     */
-  def beam(cmd: BeamCommand): Either[String, HttpResponse] =
-    try {
-      val uri = cmd.uri
-      Util.using(new TrustAllMultipartRequest(uri))(req => {
-        req.setAuth(cmd.username.name, cmd.password.pass)
-        Library.findAbsolute(cmd.track).map(file => {
-          val size = Files.size(file).bytes
-          log info s"Beaming: $file of size: $size to: $uri..."
-          req addFile file
-          val response = req.execute()
-          log info s"Beamed file: $file of size: $size to: $uri"
-          Right(response)
-        }).getOrElse(Left(s"Unable to find track with id: ${cmd.track}"))
-      })
-    } catch {
-      case e: Throwable =>
-        log.warn("Unable to beam.", e)
-        Left("An error occurred while MusicBeaming. Please check your settings or try again later.")
+  def beam(cmd: BeamCommand): Future[Either[ErrorMessage, HttpResponse]] = {
+    val url = cmd.uri
+    Library.findAbsolute(cmd.track).map { file =>
+      val size = Files.size(file).bytes
+      log info s"Beaming: $file of size: $size to: $url..."
+      sslClient.multiPart(
+        url,
+        Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(cmd.username.name, cmd.password.pass)),
+        files = Seq(MultiPartFile(audioMpeg, file))
+      ).map { r =>
+        if (r.isSuccess) {
+          log info s"Beamed file: $file of size: $size to: $url"
+        } else {
+          log error s"Beam failed of file: $file of size: $size to: $url"
+        }
+        Right(r)
+      }
+    }.getOrElse {
+      fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
     }
+  }
 }

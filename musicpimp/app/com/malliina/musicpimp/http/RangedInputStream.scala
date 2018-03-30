@@ -12,8 +12,6 @@ class RangedInputStream(stream: InputStream, start: Int, rangeSize: Int) extends
 
   private val NO_MORE_BYTES = -1
   val skipped = stream.skip(start.toLong)
-  // TODO fix
-  assert(skipped == start)
   @volatile private var remaining = rangeSize
 
   override def read(b: Array[Byte], off: Int, len: Int): Int = {

@@ -10,7 +10,7 @@ class WSTests extends FunSuite {
     val json = Json.obj(
       "action" -> "play",
       "track" -> "123",
-      "uri" -> "http...",
+      "uri" -> "http://www.musicpimp.org",
       "username" -> "hm",
       "password" -> "secret"
     )

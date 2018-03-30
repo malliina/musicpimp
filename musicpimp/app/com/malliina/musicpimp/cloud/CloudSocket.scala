@@ -232,7 +232,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
       case PlaybackMessage(payload, user) =>
         handlePlayerMessage(payload, user)
       case beamCommand: BeamCommand =>
-        Future(Rest beam beamCommand)
+        Rest.beam(beamCommand)
           .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
@@ -309,7 +309,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, deps: Dep
     super.close()
   }
 
-  def failSocket(e: Exception) = {
+  def failSocket(e: Exception): Unit = {
     registrationPromise tryFailure e
     registrations onError e
   }

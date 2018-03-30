@@ -2,26 +2,32 @@ package tests
 
 import java.nio.file.{Files, Path}
 
-import com.malliina.http.MultipartRequest
+import com.malliina.http.FullUrl
+import com.malliina.http.OkClient.MultiPartFile
+import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.util.Util
-import com.malliina.util.Util._
+import com.malliina.ws.HttpUtil
+import controllers.musicpimp.Rest
 import org.apache.commons.io.FileUtils
 import org.scalatest.FunSuite
 
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 class UploadTests extends FunSuite {
   ignore("server plays uploaded track") {
-    multiPartUpload("http://localhost:9000/playback/uploads")
+    multiPartUpload(FullUrl("http", "localhost:9000", "/playback/uploads"))
   }
 
-  def multiPartUpload(uri: String) {
+  def multiPartUpload(url: FullUrl) {
     val file = TestUtils.makeTestMp3()
-    using(new MultipartRequest(uri)) { req =>
-      req.setAuth("admin", "test")
-      req addFile file
-      val response = req.execute()
-      val statusCode = response.getStatusLine.getStatusCode
-      assert(statusCode === 200)
-    }
+    val headers = Map(HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("admin", "test"))
+    val req = Rest.sslClient.multiPart(
+      url,
+      headers,
+      files = Seq(MultiPartFile(Rest.audioMpeg, file))
+    )
+    assert(Await.result(req, 10.seconds).code === 200)
   }
 }
 

@@ -22,14 +22,12 @@ val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 
-val musicpimpVersion = "3.13.1"
-val pimpcloudVersion = "1.11.1"
-val sharedVersion = "1.4.1"
-val crossVersion = "1.4.1"
+val musicpimpVersion = "3.15.0"
+val pimpcloudVersion = "1.13.0"
+val sharedVersion = "1.6.0"
+val crossVersion = "1.6.0"
 val malliinaGroup = "com.malliina"
-val httpGroup = "org.apache.httpcomponents"
-val httpVersion = "4.4.1"
-val utilPlayVersion = "4.9.1"
+val utilPlayVersion = "4.11.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 
 scalaVersion in ThisBuild := "2.12.5"
@@ -68,10 +66,11 @@ scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
 lazy val crossSettings = Seq(
   organization := "org.musicpimp",
   version := crossVersion,
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.9",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
-    "com.malliina" %%% "primitives" % "1.4.1",
+    "com.malliina" %%% "primitives" % "1.5.0",
     "com.malliina" %%% "util-html" % utilPlayVersion
   )
 )
@@ -88,15 +87,14 @@ lazy val pimpPlaySettings =
       buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
       javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
       resolvers ++= Seq(
-        "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
         Resolver.jcenterRepo,
         Resolver.bintrayRepo("malliina", "maven")
       ),
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.9.1",
-        malliinaGroup %% "util-audio" % "2.4.0",
+        malliinaGroup %% "util-actor" % "2.10.0",
+        malliinaGroup %% "util-audio" % "2.5.0",
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
@@ -254,8 +252,12 @@ lazy val commonServerSettings = baseSettings ++ Seq(
     "com.malliina.musicpimp.models._",
     "com.malliina.play.models.Username"
   ),
-  pipelineStages ++= Seq(digest, gzip)
-  //  pipelineStages in Assets ++= Seq(digest, gzip)
+  pipelineStages ++= Seq(digest, gzip),
+  //  pipelineStages in Assets ++= Seq(digest, gzip),
+  dependencyOverrides ++= Seq(
+    "com.typesafe.akka" %% "akka-actor" % "2.5.11",
+    "com.typesafe.akka" %% "akka-stream" % "2.5.8"
+  )
 )
 
 lazy val sharedSettings = baseSettings ++ Seq(
@@ -263,13 +265,13 @@ lazy val sharedSettings = baseSettings ++ Seq(
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.10.1",
+    malliinaGroup %% "mobile-push" % "1.12.0",
     utilPlayDep
   )
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.5",
   organization := "org.musicpimp"
 )
 

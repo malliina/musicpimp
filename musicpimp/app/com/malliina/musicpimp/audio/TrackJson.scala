@@ -1,15 +1,14 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.http.FullUrl
-import com.malliina.json.JsonFormats
+import com.malliina.json.PrimitiveFormats
 import com.malliina.musicpimp.models._
 import com.malliina.play.http.FullUrls
 import play.api.libs.json.{Format, Writes}
 import play.api.mvc.RequestHeader
 
 object TrackJson {
-  implicit val sto = JsonFormats.storageSizeFormat
-  implicit val dur = JsonFormats.durationFormat
+  implicit val dur = PrimitiveFormats.durationFormat
 
   def urlFor(host: FullUrl, track: TrackID): FullUrl =
     FullUrls.absolute(host, controllers.musicpimp.routes.LibraryController.supplyForPlayback(track))

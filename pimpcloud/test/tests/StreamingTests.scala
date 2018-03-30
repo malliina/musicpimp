@@ -4,14 +4,16 @@ import java.nio.file.{Files, Path, Paths}
 
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink}
 import akka.util.ByteString
-import com.malliina.http.{MultipartRequest, TrustAllMultipartRequest}
+import com.malliina.http.OkClient.MultiPartFile
+import com.malliina.http.{FullUrl, OkClient}
+import com.malliina.logstreams.client.HttpUtil
 import com.malliina.pimpcloud.auth.FakeAuth
 import com.malliina.play.Streaming
+import com.malliina.security.SSLUtils
 import com.malliina.util.Util
-import com.malliina.util.Util._
+import okhttp3.MediaType
 import org.apache.commons.io.FileUtils
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.impl.client.HttpClientBuilder
+import play.api.http.HeaderNames
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future, Promise}
@@ -74,33 +76,35 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
   }
 
   ignore("upload") {
+    val client = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
     // Register file listener
-    val listenUri = "http://localhost:9000/testfile"
-    val client = HttpClientBuilder.create().build()
-    val listenRequest = new HttpGet(listenUri)
-    val listenResponse = client.execute(listenRequest)
-    assert(listenResponse.getStatusLine.getStatusCode === 200)
+    val listenUri = FullUrl("http", "localhost:9000", "/testfile")
+    val listenResponse = await(client.get(listenUri))
+    assert(listenResponse.code === 200)
     Thread.sleep(200)
     // Upload file
-    val uploadUri = "http://localhost:9000/testup"
-    val response = Util.using(new TrustAllMultipartRequest(uploadUri)) { req =>
-      req.request.addHeader("request", FakeAuth.FakeUuid.toString)
-      req.addFile(filePath)
-      req.execute()
-    }
-    assert(response.getStatusLine.getStatusCode === 200)
+    val uploadUri = FullUrl("http", "localhost:9000", "/testup")
+    val request = client.multiPart(
+      uploadUri,
+      Map("request" -> FakeAuth.FakeUuid.toString),
+      files = Seq(MultiPartFile(MediaType.parse("audio/mpeg"), filePath))
+    )
+    val response = await(request)
+    assert(response.code === 200)
+    client.close()
   }
 
-
-  def multiPartUpload(uri: String, tempFile: Path) {
+  def multiPartUpload(uri: FullUrl, tempFile: Path) {
     val file = ensureTestMp3Exists(tempFile)
-    using(new MultipartRequest(uri)) { req =>
-      req.setAuth("admin", "test")
-      req addFile file
-      val response = req.execute()
-      val statusCode = response.getStatusLine.getStatusCode
-      assert(statusCode === 200)
-    }
+    val client = OkClient.default
+    val request = client.multiPart(
+      uri,
+      Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue("admin", "test")),
+      files = Seq(MultiPartFile(MediaType.parse("audio/mpeg"), file))
+    )
+    val response = await(request)
+    assert(response.code === 200)
+    client.close()
   }
 
   def ensureTestMp3Exists(tempFile: Path): Path = {

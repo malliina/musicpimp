@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.json.JsonFormats
+import com.malliina.json.PrimitiveFormats
 import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
@@ -26,8 +26,7 @@ object DataTrack {
   def fromValues(i: TrackID, ti: String, ar: String, al: String, du: Int, si: Long, fo: FolderID) =
     DataTrack(i, ti, ar, al, du.seconds, si.bytes, fo)
 
-  implicit val durJson = JsonFormats.durationFormat
-  implicit val storageJson = JsonFormats.storageSizeFormat
+  implicit val durJson = PrimitiveFormats.durationFormat
   implicit val format = Json.format[DataTrack]
   implicit val dataResult: GetResult[DataTrack] =
     GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, FolderID(r.<<)))

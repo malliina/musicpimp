@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import com.malliina.json.JsonFormats
+import com.malliina.json.PrimitiveFormats
 import com.malliina.push.wns._
 import play.api.libs.json.Json
 
@@ -18,6 +18,6 @@ case class WNSRequest(tile: Option[TileElement],
 }
 
 object WNSRequest {
-  implicit val dur = JsonFormats.durationFormat
+  implicit val dur = PrimitiveFormats.durationFormat
   implicit val json = Json.format[WNSRequest]
 }
