@@ -28,6 +28,7 @@ val musicpimpVersion = "3.17.1"
 val pimpcloudVersion = "1.18.1"
 val sharedVersion = "1.7.1"
 val crossVersion = "1.7.1"
+val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.11.0"
@@ -244,6 +245,7 @@ lazy val pimpcloudScalaJSSettings = Seq(
 )
 
 lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
+  version := utilAudioVersion,
   organization := malliinaGroup,
   SbtUtils.gitUserName := "malliina",
   SbtUtils.developerName := "Michael Skogberg",
