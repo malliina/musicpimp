@@ -9,9 +9,7 @@ case class FullSavedPlaylist(id: PlaylistID, name: String, tracks: Seq[FullTrack
 
 object FullSavedPlaylist {
   implicit val json = Json.format[FullSavedPlaylist]
-
   implicit val html: Writeable[FullSavedPlaylist] = Writeables.fromJson[FullSavedPlaylist]
-
   implicit val htmlSeq: Writeable[Seq[FullSavedPlaylist]] = Writeables.fromJson[Seq[FullSavedPlaylist]]
 }
 

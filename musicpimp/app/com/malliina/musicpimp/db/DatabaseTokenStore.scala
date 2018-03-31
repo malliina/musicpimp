@@ -1,9 +1,7 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.auth.{Token, TokenStore}
 import com.malliina.play.models.Username
-import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -11,7 +9,9 @@ class DatabaseTokenStore(db: PimpDb, val ec: ExecutionContext)
   extends Sessionizer(db)
     with TokenStore {
 
-  val tokens = PimpSchema.tokens
+  import db.api._
+  import db.mappings._
+  import db.schema._
 
   override def persist(token: Token): Future[Unit] =
     run(tokens += token).map(_ => ())(ec)

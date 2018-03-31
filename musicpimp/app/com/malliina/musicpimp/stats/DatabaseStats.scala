@@ -3,19 +3,18 @@ package com.malliina.musicpimp.stats
 import java.time.Instant
 
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.db.Mappings.{instant, username}
-import com.malliina.musicpimp.db.PimpSchema.{plays, tracks}
 import com.malliina.musicpimp.db._
-import com.malliina.musicpimp.models.TrackIDs
 import com.malliina.play.models.Username
-import slick.jdbc.H2Profile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DatabaseStats(db: PimpDb)(implicit ec: ExecutionContext)
+class DatabaseStats(val db: PimpDb)(implicit ec: ExecutionContext)
   extends Sessionizer(db)
     with PlaybackStats {
-  implicit val trackMapping = TrackIDs.db
+
+  import db.api._
+  import db.schema._
+  import db.mappings._
 
   override def played(track: TrackMeta, user: Username): Future[Unit] =
     run(plays += PlaybackRecord(track.id, Instant.now, user)).map(_ => ())

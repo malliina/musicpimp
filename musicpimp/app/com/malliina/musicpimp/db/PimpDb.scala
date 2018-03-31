@@ -3,19 +3,19 @@ package com.malliina.musicpimp.db
 import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.file.StorageFile
-import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.db.PimpDb.log
-import com.malliina.musicpimp.db.PimpSchema.{folders, tempFoldersTable, tempTracksTable, tracks}
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.FolderID
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils
+import com.malliina.values.ErrorMessage
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import javax.sql.DataSource
 import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
-import slick.jdbc.H2Profile.api._
 import slick.jdbc.GetResult.GetInt
-import slick.jdbc.{GetResult, PositionedResult}
+import slick.jdbc._
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -27,47 +27,116 @@ object PimpDb {
   val H2UrlSettings = "h2.url.settings"
   val H2Home = "h2.home"
 
-  def default()(implicit ec: ExecutionContext) = {
+  def default(ec: ExecutionContext) = {
+    DatabaseConf.forEnv().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
+  }
+
+  def defaultH2(ec: ExecutionContext) = {
     val dirByConf: Option[Path] = sys.props.get(H2Home).map(p => Paths.get(p))
     val dataHome: Path = dirByConf getOrElse (FileUtil.pimpHomeDir / "db")
-    file(dataHome / "pimp291")
+    file(dataHome / "pimp291", ec)
   }
 
   /**
     * @param path path to database file
     * @return a file-based database stored at `path`
     */
-  def file(path: Path)(implicit ec: ExecutionContext) = {
+  def file(path: Path, ec: ExecutionContext) = {
     Option(path.getParent).foreach(p => Files.createDirectories(p))
-    new PimpDb(path.toString)
+    h2(path.toString, ec)
   }
 
   // To keep the content of an in-memory database as long as the virtual machine is alive, use
   // jdbc:h2:mem:test1;DB_CLOSE_DELAY=-1
-  def test()(implicit ec: ExecutionContext) = new PimpDb("mem:test")
+  def test()(implicit ec: ExecutionContext) = h2("mem:test", ec)
+
+  def h2(conn: String, ec: ExecutionContext) = {
+    val databaseUrlSettings = sys.props.get(H2UrlSettings)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(ss => s";$ss")
+      .getOrElse("")
+    val url = s"jdbc:h2:$conn;DB_CLOSE_DELAY=-1$databaseUrlSettings"
+    log info s"Connecting to: $url"
+    val pool = JdbcConnectionPool.create(url, "", "")
+    apply(H2Profile, pool, ec)
+  }
+
+  def maria(conf: DatabaseConf, ec: ExecutionContext) = {
+    val hikariConfig = new HikariConfig()
+    hikariConfig.setJdbcUrl(conf.url)
+    hikariConfig.setUsername(conf.user)
+    hikariConfig.setPassword(conf.pass)
+    hikariConfig.setDriverClassName(conf.driver)
+    log.info(s"Connecting to '${conf.url}'...")
+    apply(MySQLProfile, new HikariDataSource(hikariConfig), ec)
+  }
+
+  def apply(profile: JdbcProfile, ds: DataSource, ec: ExecutionContext): PimpDb =
+    new PimpDb(profile, profile.api.Database.forDataSource(ds, None))(ec)
+
+  case class DatabaseConf(url: String, user: String, pass: String, driver: String)
+
+  object DatabaseConf {
+    val H2Driver = "org.h2.Driver"
+    val MariaDriver = "org.mariadb.jdbc.Driver"
+
+    def read(key: String) =
+      sys.env.get(key).orElse(sys.props.get(key)).toRight(ErrorMessage(s"Key missing: '$key'."))
+
+    def forEnv() = for {
+      driver <- read("db_driver")
+      url <- read("db_url")
+      user <- read("db_user")
+      pass <- read("db_pass")
+    } yield apply(url, user, pass, driver)
+  }
+
 }
 
-class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLike with AutoCloseable {
-  val databaseUrlSettings = sys.props.get(PimpDb.H2UrlSettings)
-    .map(_.trim)
-    .filter(_.nonEmpty)
-    .map(ss => s";$ss")
-    .getOrElse("")
-  val url = s"jdbc:h2:$conn;DB_CLOSE_DELAY=-1$databaseUrlSettings"
-  log info s"Connecting to: $url"
-  val pool = JdbcConnectionPool.create(url, "", "")
-  override val database = Database.forDataSource(pool, None)
-  val tracksName = PimpSchema.tracks.baseTableRow.tableName
-  override val tableQueries = PimpSchema.tableQueries
+class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(implicit val ec: ExecutionContext)
+  extends DatabaseLike(p)
+    with AutoCloseable {
+
+  val schema = PimpSchema(profile)
+  val mappings = schema.mappings
+  val api = schema.profile.api
+
+  import api._
+  import schema._
+  import mappings._
+
+  val tracksName = schema.tracks.baseTableRow.tableName
+  val tableQueries = schema.tableQueries
+
+  def init(): Unit = {
+    log info s"Ensuring all tables exist..."
+    createIfNotExists(tableQueries: _*)
+  }
+
+  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
+    tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+    if (p == MySQLProfile) fullTextMaria(searchTerm, limit, tableName)
+    else fullTextH2(searchTerm, limit, tableName)
+  }
+
+  def fullTextH2(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
     log debug s"Querying: $searchTerm"
     val action = sql"""SELECT T.* FROM FT_SEARCH_DATA($searchTerm,0,0) FT, #$tableName T WHERE FT.TABLE='#$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;""".as[DataTrack]
     run(action)
   }
 
+  def fullTextMaria(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+    log debug s"Querying: $searchTerm"
+    val words = searchTerm.split(" ")
+    val commaSeparated = words.mkString(",")
+    val exactAction = sql"""SELECT T.* FROM #$tableName T WHERE MATCH(title, artist, album) AGAINST($commaSeparated) LIMIT #$limit;""".as[DataTrack]
+    run(exactAction)
+  }
+
   def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
-    import com.malliina.musicpimp.models.FolderIDs.db
     val tracksQuery = tracks.filter(_.folder === id)
     // '=!=' in slick-lang is the same as '!='
     val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
@@ -81,8 +150,6 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
   }
 
   def folderOnly(id: FolderID): Future[Option[DataFolder]] = {
-    import com.malliina.musicpimp.models.FolderIDs.db
-
     run(folders.filter(folder => folder.id === id).result.headOption)
   }
 
@@ -90,8 +157,9 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
 
   def insertTracks(ts: Seq[DataTrack]) = run(tracks ++= ts)
 
-  override def initTable[T <: Table[_]](table: TableQuery[T]): Unit = {
-    super.initTable(table)
+  def initTable[T <: Table[_]](table: TableQuery[T]): Unit = {
+    await(database.run(table.schema.create))
+    log info s"Created table: ${table.baseTableRow.tableName}"
     val name = table.baseTableRow.tableName
     if (name == tracksName) {
       await {
@@ -108,16 +176,28 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
     override def apply(v1: PositionedResult) = 0
   }
 
+  def initIndex(tableName: String): Future[Unit] =
+    if (p == MySQLProfile) initIndexMaria(tableName)
+    else initIndexH2(tableName)
+
   /** Fails if the index is already created or if the table does not exist.
     *
     * TODO check when this throws and whether I'm calling it correctly
     */
-  def initIndex(tableName: String): Future[Unit] = {
+  def initIndexH2(tableName: String): Future[Unit] = {
     val clazz = "\"org.h2.fulltext.FullText.init\""
     for {
       _ <- executePlain(sqlu"CREATE ALIAS IF NOT EXISTS FT_INIT FOR #$clazz;")
       _ <- database.run(sql"CALL FT_INIT();".as[Int](GetDummy))
       _ <- database.run(sql"CALL FT_CREATE_INDEX('PUBLIC', '#$tableName', NULL);".as[Int](GetDummy))
+    } yield {
+      log info s"Initialized index for table $tableName"
+    }
+  }
+
+  def initIndexMaria(tableName: String): Future[Unit] = {
+    for {
+      _ <- executePlain(sqlu"create fulltext index track_search on TRACKS(title, artist, album);")
     } yield {
       log info s"Initialized index for table $tableName"
     }
@@ -168,7 +248,6 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
   }
 
   private def runIndexer(observer: Observer[Long]): Future[IndexResult] = {
-    import com.malliina.musicpimp.models.FolderIDs.db
     log info "Indexing..."
     // deletes any old rows from previous indexings
     val firstIdsDeletion = tempFoldersTable.delete
@@ -208,7 +287,7 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
         observer onNext fileCount
       }
     }
-    implicit val tdb = com.malliina.musicpimp.models.TrackIDs.db
+
     val tracksDeletion = tracks.filterNot(t => t.id.in(tempTracksTable.map(_.id))).delete
     val thirdIdsDeletion = tempFoldersTable.delete
 
@@ -247,7 +326,6 @@ class PimpDb(conn: String)(implicit val ec: ExecutionContext) extends DatabaseLi
 
   def close(): Unit = {
     database.close()
-    pool.dispose()
   }
 }
 

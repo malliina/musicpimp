@@ -4,24 +4,20 @@ import java.sql.SQLException
 
 import com.malliina.musicpimp.db.DatabaseLike.log
 import play.api.Logger
-import slick.jdbc.H2Profile.api._
+import slick.jdbc.JdbcProfile
 import slick.jdbc.meta.MTable
-import slick.lifted.{AbstractTable, TableQuery}
+import slick.lifted.AbstractTable
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-trait DatabaseLike {
+abstract class DatabaseLike(val profile: JdbcProfile) {
+
+  import profile.api._
+
   def ec: ExecutionContext
 
-  def database: Database
-
-  def tableQueries: Seq[TableQuery[_ <: Table[_]]]
-
-  def init(): Unit = {
-    log info s"Ensuring all tables exist..."
-    createIfNotExists(tableQueries: _*)
-  }
+  def database: JdbcProfile#Backend#Database
 
   def exists[T <: AbstractTable[_]](table: TableQuery[T]): Boolean = {
     val tableName = table.baseTableRow.tableName
@@ -33,14 +29,6 @@ trait DatabaseLike {
         log.error(s"Unable to verify table: $tableName", sqle)
         false
     }
-  }
-
-  def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
-    tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
-
-  def initTable[T <: Table[_]](table: TableQuery[T]) = {
-    await(database.run(table.schema.create))
-    log info s"Created table: ${table.baseTableRow.tableName}"
   }
 
   def executePlain(queries: DBIOAction[Int, NoStream, Nothing]*): Future[Seq[Int]] =

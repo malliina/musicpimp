@@ -102,6 +102,7 @@ lazy val pimpPlaySettings =
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
+        "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.3",
         "com.neovisionaries" % "nv-websocket-client" % "2.3"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
@@ -287,6 +288,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
+    "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
     malliinaGroup %% "mobile-push" % "1.12.0",
     utilPlayDep
   )

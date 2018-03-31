@@ -45,7 +45,7 @@ class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] 
   override def createComponents(context: Context) = {
     val env = context.environment
     val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
-    new PimpComponents(context, opts, ec => PimpDb.default()(ec))
+    new PimpComponents(context, opts, PimpDb.default)
   }
 }
 

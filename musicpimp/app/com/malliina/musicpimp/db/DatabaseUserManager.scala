@@ -3,20 +3,21 @@ package com.malliina.musicpimp.db
 import java.sql.SQLException
 
 import com.malliina.musicpimp.auth.{Auth, DataUser, UserManager}
-import com.malliina.musicpimp.db.Mappings.username
 import com.malliina.play.models.{Password, Username}
-import slick.jdbc.H2Profile.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 object DatabaseUserManager {
   val DefaultUser = Username("admin")
   val DefaultPass = Password("test")
 }
 
-class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
+class DatabaseUserManager(val db: PimpDb) extends UserManager[Username, Password] {
   implicit val ec = db.ec
-  import PimpSchema.{tokens, usersTable}
+
+  import db.api._
+  import db.mappings.username
+  import db.schema.{tokens, usersTable}
 
   def ensureAtLeastOneUserExists(): Future[Unit] = {
     users flatMap { us =>
@@ -55,14 +56,13 @@ class DatabaseUserManager(db: PimpDb) extends UserManager[Username, Password] {
     }
   }
 
-  override def deleteUser(user: Username): Future[Unit] = {
+  override def deleteUser(user: Username): Future[Unit] =
     db.run {
       DBIO.seq(
         tokens.filter(_.user === user).delete,
         usersTable.filter(_.user === user).delete
       )
     }
-  }
 
   override def updatePassword(user: Username, newPass: Password): Future[Unit] =
     db.run(usersTable
