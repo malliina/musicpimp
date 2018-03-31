@@ -126,18 +126,16 @@ class Phones(comps: ControllerComponents,
               // ranged request support
               rangeTry map { range =>
                 result.withHeaders(
-                  CONTENT_RANGE -> range.contentRange,
-                  CONTENT_LENGTH -> s"${range.contentLength}",
-                  CONTENT_TYPE -> fileMimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY)
-                )
+                  CONTENT_RANGE -> range.contentRange
+//                  CONTENT_LENGTH -> s"${range.contentLength}"
+                ).as(fileMimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY))
               } getOrElse {
                 result.withHeaders(
                   ACCEPT_RANGES -> Phones.Bytes,
-                  CONTENT_LENGTH -> trackSize.toString,
+//                  CONTENT_LENGTH -> trackSize.toBytes.toString,
                   CACHE_CONTROL -> HttpConstants.NoCache,
-                  CONTENT_TYPE -> HttpConstants.AudioMpeg,
                   CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
-                )
+                ).as(HttpConstants.AudioMpeg)
               }
             }.getOrElse {
               badGatewayDefault

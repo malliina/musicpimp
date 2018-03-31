@@ -17,8 +17,8 @@ class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRe
     val requestID = server.request
     log debug s"Processing '$requestID'..."
     val transfers = server.socket.fileTransfers
-    val parser = transfers parser requestID
-    parser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))) { parser =>
+    val maybeParser = transfers parser requestID
+    maybeParser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))) { parser =>
       receiveStream(parser, transfers, requestID)
     }
   }

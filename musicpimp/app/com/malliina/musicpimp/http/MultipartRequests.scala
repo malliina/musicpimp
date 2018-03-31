@@ -8,33 +8,35 @@ import com.malliina.play.ContentRange
 import controllers.musicpimp.Rest
 import okhttp3.{MultipartBody, RequestBody}
 import org.apache.commons.io.IOUtils
+import play.api.Logger
 
 import scala.concurrent.Future
 
 object MultipartRequests {
+  private val log = Logger(getClass)
+
   def rangedFile(url: FullUrl,
                  headers: Map[String, String],
                  file: Path,
                  range: ContentRange): Future[OkHttpResponse] = {
-    withParts(url, headers) {
-      val rangedStream = new RangedInputStream(new FileInputStream(file.toFile), range)
-      val bytes = IOUtils.toByteArray(rangedStream)
-      RequestBody.create(Rest.audioMpeg, bytes)
-    }
+    val rangedStream = new RangedInputStream(new FileInputStream(file.toFile), range)
+    val bytes = IOUtils.toByteArray(rangedStream)
+    val body = RequestBody.create(null, bytes)
+    withParts(url, headers, file.getFileName.toString, body)
   }
 
   def file(url: FullUrl,
            headers: Map[String, String],
            file: Path): Future[OkHttpResponse] = {
-    withParts(url, headers) {
-      RequestBody.create(Rest.audioMpeg, file.toFile)
-    }
+    val filePart = RequestBody.create(null, file.toFile)
+    withParts(url, headers, file.getFileName.toString, filePart)
   }
 
-  private def withParts(url: FullUrl, headers: Map[String, String])(part: RequestBody) = {
-    val client = Rest.sslClient
+  private def withParts(url: FullUrl, headers: Map[String, String], filename: String, part: RequestBody) = {
     val bodyBuilder = new MultipartBody.Builder()
-    bodyBuilder.addPart(part)
-    client.post(url, bodyBuilder.build(), headers)
+    val body = bodyBuilder.addFormDataPart("file", filename, part).build()
+    log.info(s"Uploading to '$url'...")
+    val client = if (url.proto == "https") Rest.sslClient else Rest.defaultClient
+    client.post(url, body, headers)
   }
 }

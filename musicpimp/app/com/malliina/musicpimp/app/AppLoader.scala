@@ -122,5 +122,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     Starter.stopServices(options)
     statsPlayer.close()
     db.close()
+    Rest.sslClient.close()
+    Rest.defaultClient.close()
   })
 }

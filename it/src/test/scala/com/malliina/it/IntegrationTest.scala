@@ -152,11 +152,9 @@ class IntegrationTest extends PimpcloudServerSuite {
       val r = makeGet("/folders?f=json", cloudId)
       assert(r.status === 200)
       musicpimp.components.indexer.index().toBlocking.toList
-      val r2 = makeGet("/folders?f=json", cloudId)
-      println(r2.body)
+      val _ = makeGet("/folders?f=json", cloudId)
       val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
       assert(r3.status === 200)
-      println(r3.body)
     }
   }
 

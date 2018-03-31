@@ -47,7 +47,7 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
-    val requestRange = if (range.isAll) Option(range) else None
+    val requestRange = if (range.isAll) None else Option(range)
     withUpload(rangedTrack.id, request, requestRange)
   }
 
@@ -74,13 +74,14 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
       val headers = authHeaders ++ Map(CloudResponse.RequestKey -> request.id)
       ongoing.put(request, trackID)
       val uploadRequest = range.map { r =>
-        log info s"Uploading $file, $r, request $request"
+        log info s"Uploading $file, $r, request $request to $uploadUri"
         MultipartRequests.rangedFile(uploadUri, headers, file, r)
       }.getOrElse {
-        log info s"Uploading entire $file, request $request"
+        log info s"Uploading entire $file, request $request to $uploadUri"
         MultipartRequests.file(uploadUri, headers, file)
       }
       uploadRequest.onComplete { _ =>
+        log info s"Upload of $request complete."
         ongoing.remove(request)
       }
       logUpload(trackID, request, uploadRequest, totalSize)

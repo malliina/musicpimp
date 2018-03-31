@@ -3,6 +3,7 @@ package controllers.musicpimp
 import java.io._
 import java.net.UnknownHostException
 import java.nio.file._
+import java.security.cert.X509Certificate
 
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
@@ -28,6 +29,7 @@ import com.malliina.util.Utils
 import com.malliina.values.{ErrorMessage, UnixPath}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest.log
+import javax.net.ssl.X509TrustManager
 import okhttp3.MediaType
 import play.api.Logger
 import play.api.http.{HeaderNames, HttpErrorHandler}
@@ -274,7 +276,17 @@ class Rest(auth: AuthDeps,
 object Rest {
   private val log = Logger(getClass)
 
-  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
+  object trustAllTrustManager extends X509TrustManager {
+    override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+
+    override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+
+    override def getAcceptedIssuers: Array[X509Certificate] = Array.empty[X509Certificate]
+  }
+
+
+  val defaultClient = OkClient.default
+  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
   val audioMpeg = MediaType.parse("audio/mpeg")
 
   /** Beams a track to a URI as specified in `cmd`.
