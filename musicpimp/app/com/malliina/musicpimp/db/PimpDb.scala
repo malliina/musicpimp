@@ -3,6 +3,7 @@ package com.malliina.musicpimp.db
 import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.file.StorageFile
+import com.malliina.musicpimp.app.PimpConf
 import com.malliina.musicpimp.db.PimpDb.log
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.FolderID
@@ -28,7 +29,7 @@ object PimpDb {
   val H2Home = "h2.home"
 
   def default(ec: ExecutionContext) = {
-    DatabaseConf.forEnv().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
+    DatabaseConf.prod().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
   }
 
   def defaultH2(ec: ExecutionContext) = {
@@ -81,15 +82,13 @@ object PimpDb {
     val H2Driver = "org.h2.Driver"
     val MariaDriver = "org.mariadb.jdbc.Driver"
 
-    def read(key: String) =
-      sys.env.get(key).orElse(sys.props.get(key)).toRight(ErrorMessage(s"Key missing: '$key'."))
+    def read(key: String) = PimpConf.read(key)
 
-    def forEnv() = for {
-      driver <- read("db_driver")
+    def prod(): Either[ErrorMessage, DatabaseConf] = for {
       url <- read("db_url")
       user <- read("db_user")
       pass <- read("db_pass")
-    } yield apply(url, user, pass, driver)
+    } yield apply(url, user, pass,  read("db_driver").getOrElse(MariaDriver))
   }
 
 }
