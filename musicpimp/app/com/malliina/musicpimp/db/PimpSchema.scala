@@ -7,6 +7,7 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.play.auth.Token
 import com.malliina.play.models.Username
 import com.malliina.values.UnixPath
+import play.api.libs.json.{Json, OFormat}
 import slick.jdbc.JdbcProfile
 import slick.lifted.ProvenShape
 
@@ -195,9 +196,21 @@ class PimpSchema(val profile: JdbcProfile) {
 
 case class PlaylistRow(id: Option[Long], name: String, user: Username)
 
+object PlaylistRow {
+  implicit val json = Json.format[PlaylistRow]
+}
+
 case class PlaylistTrack(id: Long, track: TrackID, index: Int)
 
+object PlaylistTrack {
+  implicit val json = Json.format[PlaylistTrack]
+}
+
 case class PlaybackRecord(track: TrackID, when: Instant, user: Username)
+
+object PlaybackRecord {
+  implicit val json: OFormat[PlaybackRecord] = Json.format[PlaybackRecord]
+}
 
 case class TempFolder(id: FolderID)
 

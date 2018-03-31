@@ -67,6 +67,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val ctx = ActorExecution(actorSystem, materializer)
   lazy val db = initDb(ec)
   lazy val indexer = new Indexer(db)
+  lazy val dumper = DataDumper(db)
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db)
   lazy val userManager = new DatabaseUserManager(db)
@@ -97,7 +98,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val sp = new SearchPage(tags, s, indexer, db, authDeps)
   lazy val r = new Rest(authDeps, handler, statsPlayer, httpErrorHandler)
   lazy val pl = new Playlists(tags, ps, authDeps)
-  lazy val settingsCtrl = new SettingsController(tags, messages, indexer, authDeps)
+  lazy val settingsCtrl = new SettingsController(tags, messages, indexer, dumper, authDeps)
   lazy val libCtrl = new LibraryController(tags, lib, authDeps)
   lazy val alarms = new Alarms(tags, authDeps, messages)
   lazy val accs = new AccountForms
