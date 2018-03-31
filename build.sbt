@@ -24,10 +24,10 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "3.17.0"
-val pimpcloudVersion = "1.18.0"
-val sharedVersion = "1.7.0"
-val crossVersion = "1.7.0"
+val musicpimpVersion = "3.17.1"
+val pimpcloudVersion = "1.18.1"
+val sharedVersion = "1.7.1"
+val crossVersion = "1.7.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.11.0"
@@ -233,7 +233,8 @@ lazy val artifactSettings = Seq(
   libs ++= Seq(
     (packageBin in Assets).value.toPath,
     (packageBin in shared in Compile).value.toPath,
-    (packageBin in crossJvm in Compile).value.toPath
+    (packageBin in crossJvm in Compile).value.toPath,
+    (packageBin in utilAudio in Compile).value.toPath,
   )
 )
 
