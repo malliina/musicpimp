@@ -107,7 +107,7 @@ class DataMigrator(db: PimpDb) {
     log.info("Index recreated.")
   }
 
-  def await[T](f: Future[T]) = db.await(f, 3600.seconds)
+  def await[T](f: Future[T]) = db.await(f, 7200.seconds)
 
   def writeDump(to: Path): Future[Unit] = {
     dump().map { data =>

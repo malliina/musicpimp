@@ -70,7 +70,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val db = initDb(ec)
   lazy val indexer = new Indexer(db)
   lazy val dumper = DataMigrator(db)
-//  dumper.migrateDatabase()
+  dumper.migrateDatabase()
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db, Library)
   lazy val userManager = new DatabaseUserManager(db)
