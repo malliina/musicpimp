@@ -43,7 +43,7 @@ class DataMigrator(db: PimpDb) {
   import concurrent.duration.DurationInt
 
   val versionFile = FileUtil.localPath("db-version.txt")
-  val desiredVersion = 1
+  val desiredVersion = 2
 
   def saveVersion(v: Int) = FileUtilities.stringToFile(v.toString, versionFile)
 
