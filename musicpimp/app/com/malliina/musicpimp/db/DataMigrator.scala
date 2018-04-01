@@ -43,7 +43,7 @@ class DataMigrator(db: PimpDb) {
   import concurrent.duration.DurationInt
 
   val versionFile = FileUtil.localPath("db-version.txt")
-  val desiredVersion = 2
+  val desiredVersion = 3
 
   def saveVersion(v: Int) = FileUtilities.stringToFile(v.toString, versionFile)
 
@@ -52,15 +52,25 @@ class DataMigrator(db: PimpDb) {
   def migrateDatabase() = {
     if (loadVersion() < desiredVersion) {
       log.info("Performing migration...")
-      alterTable()
-      updateFolderIds()
-      updateTrackIds()
-      recreateIndex()
+      updatePlays()
       saveVersion(desiredVersion)
       log.info(s"Migration to version $desiredVersion complete.")
     } else {
       log.info("Schema up to date.")
     }
+  }
+
+  def updatePlays(): Unit = {
+    val action = plays.result.flatMap { ps =>
+      val ops = ps.map { p =>
+        plays.filter(row => row.when === p.when && row.who === p.user && row.track === p.track)
+          .map(_.track)
+          .update(TrackID(Library.idFor(p.track.id)))
+      }
+      DBIO.sequence(ops)
+    }
+    await(db.run(action.transactionally))
+    log.info("Updated plays")
   }
 
   def alterTable() = {
@@ -86,11 +96,11 @@ class DataMigrator(db: PimpDb) {
   def updateTrackIds() = {
     val newIds = tracks.result.flatMap { ts =>
       val ops = ts.map { track =>
-        val src = UnixPath.fromRaw(PimpEnc.decodeId(track.id))
-        val newId = TrackID(Library.idFor(src.path))
+        val newPath = UnixPath.fromRaw(PimpEnc.decodeId(track.id))
+        val newId = TrackID(Library.idFor(newPath.path))
         val row = tracks.filter(t => t.id === track.id)
         DBIO.seq(
-          row.map(_.path).update(src),
+          row.map(_.path).update(newPath),
           row.map(_.id).update(newId)
         )
       }
