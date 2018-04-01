@@ -71,15 +71,7 @@ class PimpSchema(val profile: JdbcProfile) {
       onUpdate = ForeignKeyAction.Cascade,
       onDelete = ForeignKeyAction.Cascade)
 
-    def * = (id.?, name, user) <> (build, unbuild)
-
-    def build(kvs: (Option[Long], String, Username)): PlaylistRow = kvs match {
-      case (i, n, u) => PlaylistRow(i, n, u)
-    }
-
-    def unbuild(row: PlaylistRow): Option[(Option[Long], String, Username)] = {
-      Option((row.id, row.name, row.user))
-    }
+    def * = (id.?, name, user) <> ((PlaylistRow.apply _).tupled, PlaylistRow.unapply)
   }
 
   class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {

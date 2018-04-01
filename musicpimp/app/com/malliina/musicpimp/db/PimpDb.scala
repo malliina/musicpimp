@@ -2,10 +2,11 @@ package com.malliina.musicpimp.db
 
 import java.nio.file.{Files, Path, Paths}
 
+import com.malliina.concurrent.ExecutionContexts
 import com.malliina.file.StorageFile
 import com.malliina.musicpimp.app.PimpConf
 import com.malliina.musicpimp.audio.PimpEnc
-import com.malliina.musicpimp.db.PimpDb.log
+import com.malliina.musicpimp.db.PimpDb.{GetDummy, log}
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.util.FileUtil
@@ -64,7 +65,9 @@ object PimpDb {
     apply(H2Profile, pool, ec)
   }
 
-  def maria(conf: DatabaseConf, ec: ExecutionContext) = {
+  def maria(conf: DatabaseConf): PimpDb = maria(conf, ExecutionContexts.cached)
+
+  def maria(conf: DatabaseConf, ec: ExecutionContext): PimpDb = {
     val hikariConfig = new HikariConfig()
     hikariConfig.setJdbcUrl(conf.url)
     hikariConfig.setUsername(conf.user)
@@ -92,6 +95,9 @@ object PimpDb {
     } yield apply(url, user, pass, read("db_driver").getOrElse(MariaDriver))
   }
 
+  object GetDummy extends GetResult[Int] {
+    override def apply(v1: PositionedResult) = 0
+  }
 }
 
 class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(implicit val ec: ExecutionContext)
@@ -222,10 +228,6 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
         }
       }
     }
-  }
-
-  object GetDummy extends GetResult[Int] {
-    override def apply(v1: PositionedResult) = 0
   }
 
   def initIndex(tableName: String): Future[Unit] =

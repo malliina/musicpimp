@@ -6,6 +6,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.auth.DataUser
+import com.malliina.musicpimp.db.PimpDb.GetDummy
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.util.FileUtil
@@ -52,7 +53,7 @@ class DataMigrator(db: PimpDb) {
   def migrateDatabase() = {
     if (loadVersion() < desiredVersion) {
       log.info("Performing migration...")
-      updatePlays()
+      //      updatePlays()
       saveVersion(desiredVersion)
       log.info(s"Migration to version $desiredVersion complete.")
     } else {
@@ -144,17 +145,32 @@ class DataMigrator(db: PimpDb) {
   def restoreDump(from: Path, fromScratch: Boolean = false): Future[Unit] = {
     log.info(s"Restoring dump from '$from'...")
     val dump = Json.parse(Files.readAllBytes(from)).as[DataDump]
+    val playlistIn = dump.playlists.map { row =>
+      sql"insert into playlists values(${row.id}, ${row.name}, ${row.user.name})".as[Int](GetDummy)
+    }
+    val playlistInSeq = DBIO.sequence(playlistIn)
+    val playIn = dump.plays.map { r =>
+      val action = plays += r
+      action.asTry
+    }
+    val playInSeq = DBIO.sequence(playIn)
     val action = for {
       _ <- usersTable ++= dump.users
       _ <- folders ++= dump.folders
       _ <- tracks ++= dump.tracks
-      _ <- plays ++= dump.plays
-      _ <- playlistsTable ++= dump.playlists
+      psChanged <- playInSeq
+      _ <- playlistInSeq
       _ <- playlistTracksTable ++= dump.playlistTracks
       _ <- tokens ++= dump.tokens
-    } yield ()
-    if (fromScratch) deleteAll().flatMap(_ => db.run(action.transactionally))
-    else db.run(action.transactionally)
+    } yield psChanged
+    val res = if (fromScratch) deleteAll().flatMap(_ => db.run(action.transactionally))
+    else db.run(action)
+    res.map { ts =>
+      val failureCount = ts.count(_.isFailure)
+      val successCount = ts.count(_.isSuccess)
+      log.info(s"Failure $failureCount Success $successCount")
+      ()
+    }
   }
 
   def deleteAll() = {
@@ -167,6 +183,8 @@ class DataMigrator(db: PimpDb) {
       _ <- playlistTracksTable.delete
       _ <- tokens.delete
     } yield ()
-    db.run(action)
+    db.run(action).map { _ =>
+      log.info("Deleted all.")
+    }
   }
 }
