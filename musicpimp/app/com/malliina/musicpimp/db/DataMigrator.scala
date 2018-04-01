@@ -88,7 +88,7 @@ class DataMigrator(db: PimpDb) {
       val ops = ts.map { track =>
         val src = UnixPath.fromRaw(PimpEnc.decodeId(track.id))
         val newId = TrackID(Library.idFor(src.path))
-        val row = tracks.filter(t => t.id === track.id && t.path === UnixPath.Empty)
+        val row = tracks.filter(t => t.id === track.id)
         DBIO.seq(
           row.map(_.path).update(src),
           row.map(_.id).update(newId)
