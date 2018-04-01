@@ -19,7 +19,6 @@ case class SaveCmd(ap: ClockPlayback) extends AlarmCommand
 
 object SaveCmd {
   val Key = "save"
-  implicit val clockReader = ClockPlayback.shortJson
   implicit val json = cmd(Key, Json.format[SaveCmd])
 }
 

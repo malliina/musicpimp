@@ -19,21 +19,6 @@ object PimpEnc {
     UriEncoding.encodePathSegment(normalize(input.replace('\\', '/')), StandardCharsets.UTF_8)
   }
 
-  def relativePath(itemId: Identifier): Path = Paths get decodeId(itemId)
-
-  /** Generates a URL-safe ID of the given music item.
-    *
-    * TODO: make item unique
-    *
-    * @param path path to music file or folder
-    * @return the id
-    */
-  def encodePath(path: Path) = encode(path.toString)
-
-  def encodeFolder(path: Path) = FolderID(encodePath(path))
-
-  def encodeTrack(path: Path) = TrackID(encodePath(path))
-
   def encode(in: String) = URLEncoder.encode(in, UTF8)
 
   def decode(in: String) = URLDecoder.decode(in, UTF8)

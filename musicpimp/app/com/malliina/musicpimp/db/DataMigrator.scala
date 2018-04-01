@@ -3,8 +3,12 @@ package com.malliina.musicpimp.db
 import java.nio.file.{Files, Path, StandardOpenOption}
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.auth.DataUser
+import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.play.auth.Token
+import com.malliina.values.UnixPath
 import play.api.Logger
 import play.api.libs.json.{Json, OFormat}
 
@@ -22,15 +26,67 @@ object DataDump {
   implicit val json: OFormat[DataDump] = Json.format[DataDump]
 }
 
-object DataDumper {
-  def apply(db: PimpDb) = new DataDumper(db)
+object DataMigrator {
+  def apply(db: PimpDb) = new DataMigrator(db)
 }
 
-class DataDumper(db: PimpDb) {
+class DataMigrator(db: PimpDb) {
   private val log = Logger(getClass)
 
   import db.api._
   import db.schema._
+  import db.schema.mappings._
+
+  import concurrent.duration.DurationInt
+
+  def migrateDatabase() = {
+//    alterTable()
+//    updateFolderIds()
+//    updateIds()
+//    recreateIndex()
+  }
+
+  def alterTable() = {
+    val a = sqlu"""ALTER TABLE TRACKS ADD PATH VARCHAR(2048) NOT NULL DEFAULT '';"""
+    val result = db.run(a).recover { case e: Exception => log.debug("SQL error", e) }
+    await(result)
+  }
+
+  def updateFolderIds() = {
+    val newFolderIds = folders.result.flatMap { fs =>
+      val ops = fs.map { folder =>
+        val newId = FolderID(Library.idFor(folder.path.path))
+        folders.filter(f => f.id === folder.id).map(_.id).update(newId)
+      }
+      DBIO.sequence(ops)
+    }
+    val result = db.run(newFolderIds.transactionally)
+    await(result)
+  }
+
+  def updateIds() = {
+    val newIds = tracks.result.flatMap { ts =>
+      val ops = ts.map { track =>
+        val src = UnixPath.fromRaw(PimpEnc.decodeId(track.id))
+        val newId = TrackID(Library.idFor(src.path))
+        val row = tracks.filter(t => t.id === track.id && t.path === UnixPath.Empty)
+        DBIO.seq(
+          row.map(_.path).update(src),
+          row.map(_.id).update(newId)
+        )
+      }
+      DBIO.sequence(ops)
+    }
+    val result = db.run(newIds.transactionally)
+    await(result)
+  }
+
+  def recreateIndex() = {
+    log.info("Recreating index...")
+    await(db.recreateIndex())
+  }
+
+  def await[T](f: Future[T]) = db.await(f, 240.seconds)
 
   def writeDump(to: Path): Future[Unit] = {
     dump().map { data =>

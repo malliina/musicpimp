@@ -39,9 +39,9 @@ class SecureBase(auth: AuthDeps)
     * @param onFail result to return if authentication fails
     * @param f      the action we want to do
     */
-  def customFailingPimpAction(onFail: AuthFailure => Result)(f: AuthedRequest => Result) =
+  def customFailingPimpAction(onFail: AuthFailure => Result)(f: AuthedRequest => Future[Result]) =
     authenticatedAsync(req => authenticate(req), onFail) { user =>
-      logged(user, user => Action(_ => maybeWithCookie(user, f(user))))
+      logged(user, user => Action.async(_ => f(user).map(r => maybeWithCookie(user, r))))
     }
 
   def okPimpAction(f: CookiedRequest[AnyContent, Username] => Unit) =
@@ -56,15 +56,15 @@ class SecureBase(auth: AuthDeps)
   def pimpAction(f: CookiedRequest[AnyContent, Username] => Result): EssentialAction =
     pimpParsedAction(defaultParser)(req => f(req))
 
-  def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
+  def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]) =
     pimpUploadAction { req =>
       req.files.headOption
         .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user.name, req)))
-        .getOrElse(badRequest(s"File missing"))
+        .getOrElse(fut(badRequest(s"File missing")))
     }
 
-  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Result) =
-    pimpParsedAction(parsers.multipartFormData) { req =>
+  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Future[Result]) =
+    pimpParsedActionAsync(parsers.multipartFormData) { req =>
       val files: Seq[Path] = uploads.save(req)
       f(new FileUploadRequest(files, req.user, req))
     }

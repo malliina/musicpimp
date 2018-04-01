@@ -20,6 +20,7 @@ class PimpSchema(val profile: JdbcProfile) {
   val userMapping = mappings.username
   val trackMapping = mappings.trackId
   val instantMapping = mappings.instant
+  val unixPathMapping = mappings.unixPath
 
   import mappings._
   import profile.api._
@@ -139,6 +140,8 @@ class PimpSchema(val profile: JdbcProfile) {
 
     def size = column[Long]("SIZE")
 
+    def path = column[UnixPath]("PATH", O.Default(UnixPath.Empty))
+
     def folder = column[FolderID]("FOLDER", O.Length(191))
 
     def folderConstraint = foreignKey("FOLDER_FK", folder, folders)(
@@ -146,7 +149,7 @@ class PimpSchema(val profile: JdbcProfile) {
       onUpdate = ForeignKeyAction.Cascade,
       onDelete = ForeignKeyAction.Cascade)
 
-    def * = (id, title, artist, album, duration, size, folder) <> ((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
+    def * = (id, title, artist, album, duration, size, path, folder) <> ((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
   }
 
   class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {

@@ -13,6 +13,7 @@ import com.malliina.http.FullUrl
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Utils
+import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
 import org.apache.commons.codec.binary.Base64
 import play.api.Application
@@ -106,7 +107,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
-  test("phone-pimpcloud-musicpimp-phone request cycle works") {
+  ignore("phone-pimpcloud-musicpimp-phone request cycle works") {
 
   }
 
@@ -186,13 +187,14 @@ class IntegrationTest extends PimpcloudServerSuite {
       val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
       Files.createTempFile(created, "temp", ".mp3")
       Library.setFolders(Seq(trackFolder))
-      val trackId = TrackID(trackFile.getFileName.toString)
-      val file = Library.findAbsolute(trackId)
+      val _ = musicpimp.components.indexer.index().toBlocking.last
+      val file = Library.findAbsoluteNew(UnixPath(trackFile.getFileName))
       assert(file.isDefined)
       // connect to pimpcloud
       val cloudId = CloudID(desiredId)
       val id = await(cloudClient.connect(Option(cloudId)))
       assert(id === cloudId)
+      val trackId = Library.trackId(trackFile.getFileName)
       code(trackId, fileSize, id)
     } finally {
       cloudClient.disconnectAndForget("")

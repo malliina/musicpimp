@@ -1,9 +1,8 @@
 package com.malliina.musicpimp.audio
 
-import java.net.URLDecoder
+import java.nio.file.{Path, Paths}
 
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.audio.Enc.UTF8
 import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
@@ -43,6 +42,10 @@ trait TrackMeta extends MusicItem {
   def duration: Duration
 
   def size: StorageSize
+
+  def relativePath: Path = Paths.get(path.path)
+
+  def toTrack = Track(id, title, artist, album, duration, size, path)
 }
 
 object TrackMeta {
@@ -54,9 +57,8 @@ case class Track(id: TrackID,
                  artist: String,
                  album: String,
                  duration: Duration,
-                 size: StorageSize) extends TrackMeta {
-  override def path: UnixPath = UnixPath(URLDecoder.decode(id.id, UTF8))
-}
+                 size: StorageSize,
+                 path: UnixPath) extends TrackMeta
 
 object Track {
   implicit val dur = CrossFormats.duration

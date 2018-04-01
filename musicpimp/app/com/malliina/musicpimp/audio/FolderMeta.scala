@@ -1,16 +1,21 @@
 package com.malliina.musicpimp.audio
 
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.json.JsonStrings._
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, MusicItem}
-import com.malliina.http.FullUrl
 import com.malliina.play.http.FullUrls
 import com.malliina.values.UnixPath
 import play.api.libs.json.Json.obj
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Call
 
-case class FullFolder(id: FolderID, title: String, path: UnixPath, parent: FolderID, url: FullUrl)
+case class FullFolder(id: FolderID,
+                      title: String,
+                      path: UnixPath,
+                      src: UnixPath,
+                      parent: FolderID,
+                      url: FullUrl)
 
 object FullFolder {
   implicit val json = Json.format[FullFolder]
@@ -29,7 +34,7 @@ trait FolderMeta extends MusicItem {
   def parent: FolderID
 
   def toFull(host: FullUrl) =
-    FullFolder(id, title, path, parent, FolderMeta.urlFor(host, id))
+    FullFolder(id, title, path, path, parent, FolderMeta.urlFor(host, id))
 }
 
 object FolderMeta {

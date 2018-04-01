@@ -10,6 +10,7 @@ import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.models.{Connected, Connecting, Disconnected, Disconnecting}
 import com.malliina.musicpimp.models.{CloudEvent, CloudID}
+import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils
 import play.api.Logger
@@ -42,7 +43,7 @@ object Clouds {
   }
 }
 
-class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
+class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Observable.interval(60.seconds)
   private var poller: Option[Subscription] = None
@@ -127,7 +128,7 @@ class Clouds(deps: Deps, cloudEndpoint: FullUrl) {
 
 
   def newSocket(id: Option[CloudID]): CloudSocket =
-    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, deps)
+    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, deps)
 
   def disconnectAndForgetAsync(): Future[Boolean] =
     async(disconnectAndForget("Disconnected by user."))

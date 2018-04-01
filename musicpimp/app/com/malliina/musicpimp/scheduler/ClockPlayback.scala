@@ -1,30 +1,48 @@
 package com.malliina.musicpimp.scheduler
 
-import com.malliina.http.FullUrl
-import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
+import com.malliina.musicpimp.audio.FullTrack
+import com.malliina.musicpimp.models.TrackID
 import play.api.libs.json.Json
 
-case class TrackJob(track: Option[FullTrack])
+case class TrackJob(track: FullTrack)
 
 object TrackJob {
   implicit val json = Json.format[TrackJob]
 }
 
-case class FullClockPlayback(id: Option[String], job: TrackJob, when: ClockSchedule, enabled: Boolean)
+case class TrackWrapper(track: TrackID)
+
+object TrackWrapper {
+  implicit val json = Json.format[TrackWrapper]
+}
+
+case class FullClockPlayback(id: Option[String], job: TrackJob, when: ClockSchedule, enabled: Boolean) {
+  def describe = s"Plays ${job.track.title}"
+}
 
 object FullClockPlayback {
   implicit val json = Json.format[FullClockPlayback]
 }
 
+case class ClockPlaybackConf(id: Option[String],
+                             track: TrackID,
+                             when: ClockSchedule,
+                             enabled: Boolean)
+
+object ClockPlaybackConf {
+  implicit val json = Json.format[ClockPlaybackConf]
+}
+
 case class ClockPlayback(id: Option[String],
-                         job: PlaybackJob,
+                         job: TrackWrapper,
                          when: ClockSchedule,
-                         enabled: Boolean)
-  extends PlaybackAP[ClockSchedule] {
-  def toFull(host: FullUrl): FullClockPlayback =
-    FullClockPlayback(id, TrackJob(job.trackInfo.map(TrackJson.toFull(_, host))), when, enabled)
+                         enabled: Boolean) {
+  def toConf = ClockPlaybackConf(id, job.track, when, enabled)
 }
 
 object ClockPlayback {
-  val shortJson = Json.format[ClockPlayback]
+  implicit val json = Json.format[ClockPlayback]
+
+  def fromConf(conf: ClockPlaybackConf, job: PlaybackJob) =
+    apply(conf.id, TrackWrapper(job.trackId), conf.when, conf.enabled)
 }

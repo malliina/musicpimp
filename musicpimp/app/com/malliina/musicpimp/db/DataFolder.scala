@@ -2,7 +2,7 @@ package com.malliina.musicpimp.db
 
 import java.nio.file.Path
 
-import com.malliina.musicpimp.audio.{FolderMeta, PimpEnc}
+import com.malliina.musicpimp.audio.FolderMeta
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.FolderID
 import com.malliina.values.UnixPath
@@ -19,9 +19,9 @@ object DataFolder {
 
   def fromPath(p: Path) =
     DataFolder(
-      PimpEnc.encodeFolder(p),
+      Library.folderId(p),
       p.getFileName.toString,
       UnixPath(p),
-      PimpEnc.encodeFolder(Option(p.getParent).getOrElse(Library.EmptyPath))
+      Library.parent(p)
     )
 }

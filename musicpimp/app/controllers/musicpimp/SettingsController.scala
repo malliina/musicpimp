@@ -4,7 +4,7 @@ import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
 import com.malliina.file.FileUtilities
-import com.malliina.musicpimp.db.{DataDumper, Indexer}
+import com.malliina.musicpimp.db.{DataMigrator, Indexer}
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
 import com.malliina.musicpimp.library.{Library, Settings}
 import com.malliina.musicpimp.messaging.adm.AmazonDevices
@@ -31,7 +31,7 @@ object SettingsController {
 class SettingsController(tags: PimpHtml,
                          messages: Messages,
                          indexer: Indexer,
-                         dumper: DataDumper,
+                         dumper: DataMigrator,
                          auth: AuthDeps)
   extends HtmlController(auth) {
   val dirConstraint = Constraint((dir: String) =>

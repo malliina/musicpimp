@@ -6,7 +6,6 @@ import javax.sound.sampled.LineUnavailableException
 
 import com.malliina.audio._
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.Volume
 import play.api.Logger
 import rx.lang.scala.{Observable, Subject}
@@ -36,23 +35,23 @@ object MusicPlayer
 
   private def current: Option[TrackPlayer] = trackPlayer.get()
 
-  def handover(h: Handover): Unit = {
-    playlist.reset(h.index.getOrElse(BasePlaylist.NoPosition), h.tracks.map(Library.meta))
-    playlist.current.foreach { t =>
-      val attempt = for {
-        _ <- tryInitTrackWithFallback(t)
-        _ <- trySeek(h.position)
-      } yield {
-        if (PlayState.isPlaying(h.state)) {
-          play()
-        }
-      }
-      attempt.recover {
-        case t: Exception =>
-          log.error(s"Unable to perform handover.", t)
-      }
-    }
-  }
+//  def handover(h: Handover): Unit = {
+//    playlist.reset(h.index.getOrElse(BasePlaylist.NoPosition), h.tracks.map(Library.meta))
+//    playlist.current.foreach { t =>
+//      val attempt = for {
+//        _ <- tryInitTrackWithFallback(t)
+//        _ <- trySeek(h.position)
+//      } yield {
+//        if (PlayState.isPlaying(h.state)) {
+//          play()
+//        }
+//      }
+//      attempt.recover {
+//        case t: Exception =>
+//          log.error(s"Unable to perform handover.", t)
+//      }
+//    }
+//  }
 
   def reset(track: PlayableTrack): Try[Unit] = {
     playlist set track
@@ -77,10 +76,11 @@ object MusicPlayer
     Try(initTrack(track)).recoverWith {
       case ioe: IOException if Option(ioe.getMessage).exists(_.startsWith("Pipe closed")) =>
         val id = track.id
-        log.warn(s"Unable to initialize track '$id'. The stream is closed. Trying to reinitialize.")
-        Library.findMetaWithTempFallback(id)
-          .map(newTrack => Try(initTrack(newTrack)))
-          .getOrElse(Failure(ioe))
+        log.warn(s"Unable to initialize track '$id'. The stream is closed.")
+        Failure(ioe)
+//        Library.findMetaWithTempFallback(id)
+//          .map(newTrack => Try(initTrack(newTrack)))
+//          .getOrElse(Failure(ioe))
     }
   }
 

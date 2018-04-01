@@ -48,16 +48,16 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
       case SeekMsg(pos) =>
         player.seek(pos)
       case PlayMsg(track) =>
-        player.reset(Library meta track)
+        withTrack(track)(player.reset)
       case SkipMsg(index) =>
         Try(player skip index).recover {
           case iae: IllegalArgumentException =>
             log.warn(s"Cannot skip to index $index. Reason: ${iae.getMessage}")
         }
       case AddMsg(track) =>
-        playlist.add(Library meta track)
+        withTrack(track)(playlist.add)
       case InsertTrackMsg(index, track) =>
-        playlist.insert(index, Library meta track)
+        withTrack(track) { t => playlist.insert(index, t) }
       case MoveTrackMsg(from, to) =>
         playlist.move(from, to)
       case RemoveMsg(index) =>
@@ -73,23 +73,45 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
             log warn s"No tracks were resolved"
         }
       case ResetPlaylistMessage(index, tracks) =>
-        playlist.reset(index, tracks.map(Library.meta))
+        lib.tracks(tracks).map { ts =>
+          playlist.reset(index, ts)
+        }.recover {
+          case e: Exception =>
+            log.error("Unable to reset playlist.", e)
+        }
       case Handover(index, tracks, state, position) =>
-        playlist.reset(index.getOrElse(BasePlaylist.NoPosition), tracks.map(Library.meta))
-        playlist.current.foreach { t =>
-          for {
-            _ <- player.tryInitTrackWithFallback(t)
-            _ <- player.trySeek(position)
-          } yield {
-            if(PlayState.isPlaying(state)) {
-              player.play()
+        lib.tracks(tracks).map { ts =>
+          playlist.reset(index.getOrElse(BasePlaylist.NoPosition), ts)
+          playlist.current.foreach { t =>
+            for {
+              _ <- player.tryInitTrackWithFallback(t)
+              _ <- player.trySeek(position)
+            } yield {
+              if (PlayState.isPlaying(state)) {
+                player.play()
+              }
             }
           }
+        }.recover {
+          case e: Exception =>
+            log.error("Handover failed.", e)
         }
       case other =>
         log.warn(s"Unsupported message: '$other'.")
     }
   }
+
+  def withTrack(id: TrackID)(code: LocalTrack => Unit) =
+    lib.meta(id).map { t =>
+      t.map { local =>
+        code(local)
+      }.getOrElse {
+        log.error(s"Track not found: '$id'.")
+      }
+    }.recover {
+      case e: Exception =>
+        log.error(s"Track search failed.", e)
+    }
 
   def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
     resolveTracks(folders, tracks) recover {
@@ -100,7 +122,7 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
 
   def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] = {
     Future.traverse(folders)(folder => lib.tracksIn(folder).map(_.getOrElse(Nil)).map(Library.localize))
-      .map(_.flatten).map(subTracks => tracks.map(Library.meta) ++ subTracks)
+      .map(_.flatten).flatMap(subTracks => lib.tracks(tracks).map(lts => lts ++ subTracks))
   }
 }
 

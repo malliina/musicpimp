@@ -1,7 +1,9 @@
 package com.malliina.musicpimp.library
 
+import java.nio.file.Path
+
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.musicpimp.models.FolderID
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 
 import scala.concurrent.Future
 
@@ -22,4 +24,12 @@ trait MusicLibrary {
     * @return all the tracks, recursively, in folder `id`
     */
   def tracksIn(id: FolderID): Future[Option[Seq[TrackMeta]]]
+
+  def track(id: TrackID): Future[Option[TrackMeta]]
+
+  def findFile(id: TrackID): Future[Option[Path]]
+
+  def meta(id: TrackID): Future[Option[LocalTrack]]
+
+  def tracks(ids: Seq[TrackID]): Future[Seq[LocalTrack]]
 }

@@ -29,13 +29,13 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     Tray.installTray()
   }
 
-  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer)(implicit ec: ExecutionContext): Unit = {
+  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer, schedules: ScheduledPlaybackService)(implicit ec: ExecutionContext): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
       Files.createDirectories(FileUtil.pimpHomeDir)
       if (options.alarms) {
-        ScheduledPlaybackService.init()
+        schedules.init()
       }
       if (options.database) {
         db.init()
@@ -62,12 +62,12 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     }
   }
 
-  def stopServices(options: InitOptions): Unit = {
+  def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {
     log.info("Stopping services...")
     MusicPlayer.close()
     Scheduling.shutdown()
     //    if(options.alarms) {
-    ScheduledPlaybackService.stop()
+    schedules.stop()
     //    }
     //    Search.subscription.unsubscribe()
   }

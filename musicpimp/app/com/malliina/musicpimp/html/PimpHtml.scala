@@ -11,7 +11,7 @@ import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models._
-import com.malliina.musicpimp.scheduler.ClockPlayback
+import com.malliina.musicpimp.scheduler.{ClockPlayback, FullClockPlayback}
 import com.malliina.musicpimp.stats._
 import com.malliina.play.models.Username
 import com.malliina.play.tags.PlayTags.callAttr
@@ -21,7 +21,6 @@ import controllers.ReverseAssets
 import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 import play.api.mvc.Call
-
 import scalatags.Text.TypedTag
 import scalatags.Text.all._
 
@@ -160,7 +159,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
       PlayerHtml.playerContent(feedback)
     )
 
-  def alarms(clocks: Seq[ClockPlayback], username: Username) =
+  def alarms(clocks: Seq[FullClockPlayback], username: Username) =
     manage("alarms", username)(
       AlarmsHtml.alarmsContent(clocks)
     )

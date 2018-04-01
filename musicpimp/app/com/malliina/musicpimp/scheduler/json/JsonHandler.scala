@@ -10,13 +10,11 @@ import com.malliina.musicpimp.scheduler.json.JsonHandler._
 import play.api.Logger
 import play.api.libs.json._
 
-object AlarmJsonHandler extends JsonHandler
-
 object JsonHandler {
   private val log = Logger(getClass)
 }
 
-trait JsonHandler {
+class JsonHandler(val schedules: ScheduledPlaybackService) {
   def musicPlayer = MusicPlayer
 
   def handle(json: JsValue): JsResult[Unit] =
@@ -25,9 +23,9 @@ trait JsonHandler {
       .recover({ case (err: JsError) => log.warn(s"JSON error: '$err'.") })
 
   def handleCommand(cmd: AlarmCommand): Unit = cmd match {
-    case SaveCmd(ap) => ScheduledPlaybackService.save(ap)
-    case DeleteCmd(id) => ScheduledPlaybackService.remove(id)
-    case StartCmd(id) => ScheduledPlaybackService.find(id).foreach(_.job.run())
+    case SaveCmd(ap) => schedules.save(ap.toConf)
+    case DeleteCmd(id) => schedules.remove(id)
+    case StartCmd(id) => schedules.findJob(id).foreach(_.run())
     case StopPlayback => musicPlayer.stop()
     case AddWindowsDevice(device) => PushUrls add device
     case RemovePushTag(tag) => PushUrls removeID tag.tag

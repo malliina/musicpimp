@@ -9,9 +9,9 @@ import com.malliina.musicpimp.messaging.adm.AmazonDevices
 import com.malliina.musicpimp.messaging.apns.APNSDevices
 import com.malliina.musicpimp.messaging.gcm.GoogleDevices
 import com.malliina.musicpimp.messaging.mpns.PushUrls
-import com.malliina.musicpimp.scheduler.json.AlarmJsonHandler
+import com.malliina.musicpimp.scheduler._
+import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
-import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPlaybackService}
 import com.malliina.play.http.Proxies
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
@@ -19,18 +19,18 @@ import play.api.i18n.Messages
 import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.mvc.Result
 
-class Alarms(tags: PimpHtml, auth: AuthDeps, messages: Messages)
-  extends AlarmEditor(tags, auth, messages)
+class Alarms(handler: JsonHandler, tags: PimpHtml, auth: AuthDeps, messages: Messages)
+  extends AlarmEditor(handler.schedules, tags, auth, messages)
     with SchedulerStrings {
 
-  def alarms = pimpAction { request =>
-    def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
-
-    implicit val w = TrackJson.writer(request)
-    default.respond(request)(
-      html = tags.alarms(content, request.user),
-      json = Json.toJson(content.map(_.toFull(TrackJson.host(request))))
-    )
+  def alarms = pimpActionAsync { request =>
+    schedules.clockList(TrackJson.host(request)).map { fcps =>
+      implicit val w = TrackJson.writer(request)
+      default.respond(request)(
+        html = tags.alarms(fcps, request.user),
+        json = Json.toJson(fcps)
+      )
+    }
   }
 
   def tokens = pimpAction { request =>
@@ -64,7 +64,7 @@ class Alarms(tags: PimpHtml, auth: AuthDeps, messages: Messages)
   }
 
   private def onRequest(json: JsValue): Result = {
-    val jsResult = AlarmJsonHandler.handle(json)
+    val jsResult = handler.handle(json)
     simpleResult(json, jsResult)
   }
 
