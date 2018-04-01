@@ -3,16 +3,19 @@ package com.malliina.musicpimp.db
 import java.nio.file.{Files, Path, StandardOpenOption}
 
 import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.auth.DataUser
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.auth.Token
 import com.malliina.values.UnixPath
 import play.api.Logger
 import play.api.libs.json.{Json, OFormat}
 
 import scala.concurrent.Future
+import scala.util.Try
 
 case class DataDump(users: Seq[DataUser],
                     folders: Seq[DataFolder],
@@ -39,17 +42,32 @@ class DataMigrator(db: PimpDb) {
 
   import concurrent.duration.DurationInt
 
+  val versionFile = FileUtil.localPath("db-version.txt")
+  val desiredVersion = 1
+
+  def saveVersion(v: Int) = FileUtilities.stringToFile(v.toString, versionFile)
+
+  def loadVersion(): Int = Try(FileUtilities.fileToString(versionFile).toInt) getOrElse 0
+
   def migrateDatabase() = {
-//    alterTable()
-//    updateFolderIds()
-//    updateIds()
-//    recreateIndex()
+    if (loadVersion() < desiredVersion) {
+      log.info("Performing migration...")
+      alterTable()
+      updateFolderIds()
+      updateTrackIds()
+      recreateIndex()
+      saveVersion(desiredVersion)
+      log.info(s"Migration to version $desiredVersion complete.")
+    } else {
+      log.info("Schema up to date.")
+    }
   }
 
   def alterTable() = {
     val a = sqlu"""ALTER TABLE TRACKS ADD PATH VARCHAR(2048) NOT NULL DEFAULT '';"""
     val result = db.run(a).recover { case e: Exception => log.debug("SQL error", e) }
     await(result)
+    log.info("Schema migration complete.")
   }
 
   def updateFolderIds() = {
@@ -62,9 +80,10 @@ class DataMigrator(db: PimpDb) {
     }
     val result = db.run(newFolderIds.transactionally)
     await(result)
+    log.info("Folder ID update complete.")
   }
 
-  def updateIds() = {
+  def updateTrackIds() = {
     val newIds = tracks.result.flatMap { ts =>
       val ops = ts.map { track =>
         val src = UnixPath.fromRaw(PimpEnc.decodeId(track.id))
@@ -79,11 +98,13 @@ class DataMigrator(db: PimpDb) {
     }
     val result = db.run(newIds.transactionally)
     await(result)
+    log.info("Track ID update complete.")
   }
 
   def recreateIndex() = {
     log.info("Recreating index...")
     await(db.recreateIndex())
+    log.info("Index recreated.")
   }
 
   def await[T](f: Future[T]) = db.await(f, 240.seconds)
