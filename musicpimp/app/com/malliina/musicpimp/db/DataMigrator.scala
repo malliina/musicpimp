@@ -43,7 +43,7 @@ class DataMigrator(db: PimpDb) {
   import concurrent.duration.DurationInt
 
   val versionFile = FileUtil.localPath("db-version.txt")
-  val desiredVersion = 4
+  val desiredVersion = 5
 
   def saveVersion(v: Int) = FileUtilities.stringToFile(v.toString, versionFile)
 
@@ -65,7 +65,7 @@ class DataMigrator(db: PimpDb) {
       val ops = ps.map { p =>
         plays.filter(row => row.when === p.when && row.who === p.user && row.track === p.track)
           .map(_.track)
-          .update(TrackID(Library.idFor(PimpEnc.decodeId(p.track))))
+          .update(TrackID(Library.idFor(UnixPath.fromRaw(PimpEnc.decodeId(p.track)).path)))
       }
       DBIO.sequence(ops)
     }
