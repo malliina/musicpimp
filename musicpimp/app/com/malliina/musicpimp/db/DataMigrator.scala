@@ -46,7 +46,7 @@ class DataMigrator(db: PimpDb) {
   val versionFile = FileUtil.localPath("db-version.txt")
   val desiredVersion = 5
 
-  def saveVersion(v: Int) = FileUtilities.stringToFile(v.toString, versionFile)
+  def saveVersion(v: Int) = Try(FileUtilities.stringToFile(v.toString, versionFile))
 
   def loadVersion(): Int = Try(FileUtilities.fileToString(versionFile).toInt) getOrElse 0
 
