@@ -1,6 +1,5 @@
 package controllers.pimpcloud
 
-import java.net.{URLDecoder, URLEncoder}
 import java.nio.file.Paths
 
 import akka.stream.Materializer
@@ -22,7 +21,7 @@ import com.malliina.play.tags.TagPage
 import com.malliina.play.{ContentRange, ContentRanges}
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
-import play.api.http.{ContentTypes, Writeable}
+import play.api.http.Writeable
 import play.api.libs.json._
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
@@ -35,7 +34,6 @@ object Phones {
 
   val Bytes = "bytes"
   val DefaultSearchLimit = 100
-  val EncodingUTF8 = "UTF-8"
 
   def forAuth(comps: ControllerComponents,
               tags: CloudTags,
@@ -47,12 +45,6 @@ object Phones {
   }
 
   def invalidCredentials: NoSuchElementException = new NoSuchElementException("Invalid credentials.")
-
-  def path(id: TrackID) = Try(Paths get decode(id.id))
-
-  def decode(id: String) = URLDecoder.decode(id, EncodingUTF8)
-
-  def encode(id: String) = URLEncoder.encode(id, EncodingUTF8)
 }
 
 class Phones(comps: ControllerComponents,
@@ -111,38 +103,34 @@ class Phones(comps: ControllerComponents,
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
-        Phones.path(id).map { path =>
-          val name = path.getFileName.toString
-          // resolves track metadata from the server so we can set Content-Length
-          log debug s"Looking up meta..."
-          conn.meta(id).map[Result] { res =>
-            res.map { track =>
-              log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
-              // proxies request
-              val trackSize = track.size
-              val rangeTry = ContentRanges.fromHeader(req, trackSize)
-              val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
-              val result = sourceServer.requestTrack(track, rangeOrAll, req)
-              // ranged request support
-              rangeTry map { range =>
-                result.withHeaders(
-                  CONTENT_RANGE -> range.contentRange
-//                  CONTENT_LENGTH -> s"${range.contentLength}"
-                ).as(HttpConstants.AudioMpeg)
-              } getOrElse {
-                result.withHeaders(
-                  ACCEPT_RANGES -> Phones.Bytes,
-//                  CONTENT_LENGTH -> trackSize.toBytes.toString,
-                  CACHE_CONTROL -> HttpConstants.NoCache,
-                  CONTENT_DISPOSITION -> s"""attachment; filename="$name""""
-                ).as(HttpConstants.AudioMpeg)
-              }
+        // resolves track metadata from the server so we can set Content-Length
+        log debug s"Looking up meta..."
+        conn.meta(id).map[Result] { res =>
+          res.map { track =>
+            log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
+            // proxies request
+            val trackSize = track.size
+            val rangeTry = ContentRanges.fromHeader(req, trackSize)
+            val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
+            val result = sourceServer.requestTrack(track, rangeOrAll, req)
+            // ranged request support
+            val fileName = Option(Paths.get(track.path.path).getFileName).map(_.toString).getOrElse(in.id)
+            rangeTry.map { range =>
+              result.withHeaders(
+                CONTENT_RANGE -> range.contentRange
+              ).as(HttpConstants.AudioMpeg)
             }.getOrElse {
-              log.error(s"Found no info about track '$id', failing request.")
-              badGatewayDefault
+              result.withHeaders(
+                ACCEPT_RANGES -> Phones.Bytes,
+                CACHE_CONTROL -> HttpConstants.NoCache,
+                CONTENT_DISPOSITION -> s"""attachment; filename="$fileName""""
+              ).as(HttpConstants.AudioMpeg)
             }
-          }.recoverAll(_ => notFound(s"ID not found '$id'."))
-        }.getOrElse(fut(badRequest(s"Illegal track ID '$id'.")))
+          }.getOrElse {
+            log.error(s"Found no info about track '$id', failing request.")
+            badGatewayDefault
+          }
+        }.recoverAll(_ => notFound(s"ID not found '$id'."))
       }
     }
   }
@@ -184,7 +172,7 @@ class Phones(comps: ControllerComponents,
     body.asOpt[JsObject].toRight(s"Body is not JSON object: '$body'.")
   }
 
-  protected def customProxied(cmd: String)(body: Request[JsValue] => Either[String, JsObject]) =
+  protected def customProxied(cmd: String)(body: Request[JsValue] => Either[String, JsObject]): EssentialAction =
     executeOkProxied(parse.json)(cmd, body)
 
   private def proxiedGetAction(cmd: String) = proxiedJsonMessageAction(cmd)
