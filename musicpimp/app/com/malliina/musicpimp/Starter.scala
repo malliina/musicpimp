@@ -15,7 +15,7 @@ import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
-import com.malliina.util.{Logging, Scheduling, Utils}
+import com.malliina.util.{Logging, Utils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -65,11 +65,7 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
   def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {
     log.info("Stopping services...")
     MusicPlayer.close()
-    Scheduling.shutdown()
-    //    if(options.alarms) {
     schedules.stop()
-    //    }
-    //    Search.subscription.unsubscribe()
   }
 
   def printThreads() {
@@ -89,6 +85,6 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
   }
 
-  protected def tryReadInt(key: String) =
+  protected def tryReadInt(key: String): Option[Int] =
     sys.props.get(key).filter(_ != "disabled").flatMap(ps => Utils.opt[Int, NumberFormatException](Integer.parseInt(ps)))
 }

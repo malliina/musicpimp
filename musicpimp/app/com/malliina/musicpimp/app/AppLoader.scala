@@ -127,7 +127,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     Starter.stopServices(options, schedules)
     statsPlayer.close()
     db.close()
-    Rest.sslClient.close()
-    Rest.defaultClient.close()
+    Rest.close()
+    clouds.disconnect("Stopping MusicPimp.")
   })
 }

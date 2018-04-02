@@ -4,6 +4,7 @@ import java.io._
 import java.net.UnknownHostException
 import java.nio.file._
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
@@ -39,6 +40,7 @@ import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class Rest(lib: MusicLibrary,
            auth: AuthDeps,
@@ -165,10 +167,10 @@ class Rest(lib: MusicLibrary,
       }
     }
 
-//  EssentialAction { req =>
-//    val f: Future[EssentialAction] = ???
-//    Accumulator.flatten(f.map(_.apply(req)))
-//  }
+  //  EssentialAction { req =>
+  //    val f: Future[EssentialAction] = ???
+  //    Accumulator.flatten(f.map(_.apply(req)))
+  //  }
 
   private def streamingAction(meta: Track): EssentialAction = {
     val relative = meta.path
@@ -305,6 +307,22 @@ object Rest {
   val defaultClient = OkClient.default
   val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
   val audioMpeg = MediaType.parse("audio/mpeg")
+
+  def close(): Unit = {
+    closeOk(defaultClient)
+    closeOk(sslClient)
+  }
+
+  def closeOk(client: OkClient) = Try {
+    client.close()
+    val inner = client.client
+    inner.dispatcher().cancelAll()
+    inner.dispatcher().executorService().shutdownNow()
+    val terminated = inner.dispatcher().executorService().awaitTermination(5, TimeUnit.SECONDS)
+    if (!terminated) {
+      log.error("ExecutorService of HTTP client did not terminate in a timely manner.")
+    }
+  }
 
   /** Beams a track to a URI as specified in `cmd`.
     *

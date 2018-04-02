@@ -145,6 +145,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
     stopPolling()
     closeAnyConnection(client)
     registrations onNext Disconnected(reason)
+    activeSubscription.foreach(_.unsubscribe())
   }
 
   def closeAnyConnection(closeable: CloudSocket) = {
