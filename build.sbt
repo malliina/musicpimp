@@ -24,7 +24,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "3.18.9"
+val musicpimpVersion = "3.18.10"
 val pimpcloudVersion = "1.18.1"
 val sharedVersion = "1.8.1"
 val crossVersion = "1.8.1"
@@ -132,8 +132,8 @@ lazy val nativePackagingSettings =
     pimpMacSettings ++
     Seq(
       com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
-      httpPort in Linux := Option("disabled"),
-      httpsPort in Linux := Option("8455"),
+      httpPort in Linux := Option("8456"),
+      httpsPort in Linux := Option("disabled"),
       maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
