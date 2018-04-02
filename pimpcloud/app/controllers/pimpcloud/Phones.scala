@@ -111,13 +111,13 @@ class Phones(comps: ControllerComponents,
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
-        log info s"Serving track $id to user agent $userAgent"
         Phones.path(id).map { path =>
           val name = path.getFileName.toString
           // resolves track metadata from the server so we can set Content-Length
           log debug s"Looking up meta..."
           conn.meta(id).map[Result] { res =>
             res.map { track =>
+              log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
               // proxies request
               val trackSize = track.size
               val rangeTry = ContentRanges.fromHeader(req, trackSize)
@@ -128,7 +128,7 @@ class Phones(comps: ControllerComponents,
                 result.withHeaders(
                   CONTENT_RANGE -> range.contentRange
 //                  CONTENT_LENGTH -> s"${range.contentLength}"
-                ).as(fileMimeTypes.forFileName(name).getOrElse(ContentTypes.BINARY))
+                ).as(HttpConstants.AudioMpeg)
               } getOrElse {
                 result.withHeaders(
                   ACCEPT_RANGES -> Phones.Bytes,
@@ -138,6 +138,7 @@ class Phones(comps: ControllerComponents,
                 ).as(HttpConstants.AudioMpeg)
               }
             }.getOrElse {
+              log.error(s"Found no info about track '$id', failing request.")
               badGatewayDefault
             }
           }.recoverAll(_ => notFound(s"ID not found '$id'."))
