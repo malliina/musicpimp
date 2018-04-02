@@ -14,6 +14,7 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 
 import scala.concurrent.Future
+import scala.util.Try
 
 class ScheduledPlaybackService(lib: MusicLibrary) {
   private val log = Logger(getClass)
@@ -103,8 +104,8 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
 
   private def save(aps: Seq[ClockPlaybackConf]): Unit = save(aps, persistFile)
 
-  private def save(aps: Seq[ClockPlaybackConf], file: Path): Unit = {
-    FileUtilities.stringToFile(stringify(toJson(aps)), file)
+  private def save(aps: Seq[ClockPlaybackConf], file: Path): Try[Unit] = {
+    Try(FileUtilities.stringToFile(stringify(toJson(aps)), file))
   }
 
   private def randomID = UUID.randomUUID().toString
