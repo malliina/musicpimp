@@ -3,6 +3,7 @@ package com.malliina.musicpimp
 import java.awt.Desktop
 import java.net.URI
 import java.nio.file.Files
+import java.rmi.ConnectException
 
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
@@ -15,6 +16,7 @@ import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
+import com.malliina.rmi.RmiClient
 import com.malliina.util.{Logging, Utils}
 import org.slf4j.LoggerFactory
 
@@ -27,6 +29,22 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
   override def start(): Unit = {
     super.start()
     Tray.installTray()
+  }
+
+  override def main(args: Array[String]) {
+    args.headOption match {
+      case Some("stop") =>
+        try {
+          RmiClient.launchClient()
+          // this hack allows the System.exit() call in the stop method eventually to run before we exit
+          // obviously we can't await it from another vm
+          Thread sleep 12000
+        } catch {
+          case _: ConnectException =>
+            log warn "Unable to stop; perhaps MusicPimp is already stopped?"
+        }
+      case anythingElse => start()
+    }
   }
 
   def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer, schedules: ScheduledPlaybackService)(implicit ec: ExecutionContext): Unit = {

@@ -24,7 +24,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.0.2"
+val musicpimpVersion = "4.0.6"
 val pimpcloudVersion = "1.19.0"
 val sharedVersion = "1.8.2"
 val crossVersion = "1.8.1"
@@ -151,8 +151,9 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   // never change
   WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
   WinKeys.minJavaVersion := Some(8),
-  WinKeys.postInstallUrl := Some("http://localhost:8456"),
-  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe"
+//  WinKeys.postInstallUrl := Some("http://localhost:8456"),
+  WinKeys.forceStopOnUninstall := true,
+  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe",
 )
 
 lazy val windowsConfSettings = inConfig(Windows)(Seq(
