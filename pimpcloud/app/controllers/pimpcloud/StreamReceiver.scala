@@ -25,14 +25,6 @@ class StreamReceiver(comps: ControllerComponents) extends AbstractController(com
       // Signals to the phone that the transfer is complete
       transfers.remove(requestId, shouldAbort = false, wasSuccess = true)
       val data = parsedRequest.body
-      //      parsedRequest.body.fold(
-      //        tooMuch => {
-      //          log error s"Max size of ${tooMuch.length} exceeded for '$requestId'."
-      //          EntityTooLarge
-      //        },
-      //        data => {
-      //
-      //        })
       val streamedSize = data.files.foldLeft(0L)((acc, part) => acc + part.ref).bytes
       val fileCount = data.files.size
       val fileDesc = if (fileCount > 1) "files" else "file"
@@ -57,7 +49,7 @@ class StreamReceiver(comps: ControllerComponents) extends AbstractController(com
       // java.io.IOException: An existing connection was forcibly closed by the remote host
       override def apply(req: RequestHeader) = p(req) recoverWith {
         case t: IOException if Option(t.getMessage) exists (msg => cancelMessages.contains(msg)) =>
-          log debug s"Server cancelled upload for '$requestId'."
+          log info s"Server cancelled upload for '$requestId'."
           cleanup()
           Future.successful(Left(PartialContent))
         case t: Throwable =>

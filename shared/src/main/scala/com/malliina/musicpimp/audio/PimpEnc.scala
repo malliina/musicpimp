@@ -2,10 +2,10 @@ package com.malliina.musicpimp.audio
 
 import java.net.{URLDecoder, URLEncoder}
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Path, Paths}
 import java.text.Normalizer
 
 import com.malliina.musicpimp.models.{FolderID, Identifier, TrackID}
+import org.apache.commons.codec.digest.DigestUtils
 import play.utils.UriEncoding
 
 object PimpEnc {
@@ -19,21 +19,6 @@ object PimpEnc {
     UriEncoding.encodePathSegment(normalize(input.replace('\\', '/')), StandardCharsets.UTF_8)
   }
 
-  def relativePath(itemId: Identifier): Path = Paths get decodeId(itemId)
-
-  /** Generates a URL-safe ID of the given music item.
-    *
-    * TODO: make item unique
-    *
-    * @param path path to music file or folder
-    * @return the id
-    */
-  def encodePath(path: Path) = encode(path.toString)
-
-  def encodeFolder(path: Path) = FolderID(encodePath(path))
-
-  def encodeTrack(path: Path) = TrackID(encodePath(path))
-
   def encode(in: String) = URLEncoder.encode(in, UTF8)
 
   def decode(in: String) = URLDecoder.decode(in, UTF8)
@@ -42,7 +27,9 @@ object PimpEnc {
 
   def double(in: String): String = encode(decode(in))
 
-  def folder(in: FolderID) = FolderID(double(in.id))
+  def folder(in: FolderID) = if (in.id.length == 32) in else FolderID(idFor(decodeId(in)))
 
-  def track(in: TrackID) = TrackID(double(in.id))
+  def track(in: TrackID) = if (in.id.length == 32) in else TrackID(idFor(decodeId(in)))
+
+  def idFor(in: String) = DigestUtils.md5Hex(in)
 }

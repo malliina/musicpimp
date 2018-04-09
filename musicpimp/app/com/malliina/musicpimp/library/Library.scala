@@ -4,14 +4,13 @@ import java.io.FileNotFoundException
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
 import com.malliina.audio.meta.SongMeta
-import com.malliina.file.FileUtilities
-import com.malliina.musicpimp.audio.PimpEnc._
-import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.library.Library._
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.util.Utils
 import com.malliina.values.UnixPath
+import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 
 import scala.concurrent.stm.{Ref, atomic}
@@ -19,8 +18,16 @@ import scala.concurrent.stm.{Ref, atomic}
 object Library extends Library {
   private val log = Logger(getClass)
 
-  val RootId = FolderID("")
+  val RootId = FolderID(idFor(""))
   val EmptyPath = Paths get ""
+
+  def idFor(in: String) = DigestUtils.md5Hex(in)
+
+  def parent(p: Path) = folderId(Option(p.getParent).getOrElse(EmptyPath))
+
+  def folderId(p: Path) = FolderID(idFor(UnixPath(p).path))
+
+  def trackId(p: Path) = TrackID(idFor(UnixPath(p).path))
 }
 
 class Library {
@@ -34,7 +41,7 @@ class Library {
 
   def setFolders(folders: Seq[Path]) = atomic(txn => rootFolders.set(folders)(txn))
 
-  def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.id))
+  def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.relativePath))
 
   private def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
@@ -73,8 +80,8 @@ class Library {
 
   private def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val path = Option(relativePath(id).getParent) getOrElse EmptyPath
-    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, encodeFolder(path))
+    val parent = Option(track.relativePath.getParent).map(p => FolderID(idFor(UnixPath(p).path))) getOrElse RootId
+    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, track.path, parent)
   }
 
   /** This method has a bug.
@@ -82,43 +89,49 @@ class Library {
     * @param trackId the music item id
     * @return the absolute path to the music item id, or None if no such track exists
     */
-  def findAbsolute(trackId: TrackID): Option[Path] = findPathInfo(relativePath(trackId)).map(_.absolute)
+  def findAbsoluteLegacy(trackId: TrackID): Option[Path] = findPathInfo(Paths.get(PimpEnc.decodeId(trackId))).map(_.absolute)
+
+  def findAbsoluteNew(trackPath: UnixPath): Option[Path] = findPathInfo(Paths.get(trackPath.path)).map(_.absolute)
 
   def suggestAbsolute(relative: Path): Option[Path] = roots.headOption.map(_ resolve relative)
 
-  def suggestAbsolute(path: TrackID): Option[Path] = suggestAbsolute(relativePath(path))
+  //  def suggestAbsolute(path: TrackID): Option[Path] = suggestAbsolute(relativePath(path))
 
-  def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId))
+  //  private def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId))
 
-  private def meta(song: Path): LocalTrack = {
-    val pathData = pathInfo(song)
-    val meta = SongMeta.fromPath(pathData.absolute, pathData.root)
-    new LocalTrack(TrackID(encodePath(song)), UnixPath(pathData.relative), meta)
+  private def meta(relative: Path): LocalTrack =
+    localTrackFor(pathInfo(relative))
+
+  def localTrackFor(pi: PathInfo) = {
+    val meta = SongMeta.fromPath(pi.absolute, pi.root)
+    val path = UnixPath(pi.relative)
+    new LocalTrack(TrackID(idFor(path.path)), path, meta)
   }
 
-  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
+  def toLocal(track: TrackMeta) = meta(track.relativePath)
+
+  //  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
 
   private def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
 
   private def parseMeta(pi: PathInfo): Option[LocalTrack] =
     try {
       // InvalidAudioFrameException, CannotReadException
-      val meta = SongMeta.fromPath(pi.absolute, pi.root)
-      Option(new LocalTrack(encodeTrack(pi.relative), UnixPath(pi.relative), meta))
+      Option(localTrackFor(pi))
     } catch {
       case e: Exception =>
         log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)
         None
     }
 
-  def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
+  //  def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
 
-  private def searchTempDir(id: TrackID): Option[LocalTrack] = {
-    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
-    val absolute = pathInfo.absolute
-    if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
-    else None
-  }
+  //  private def searchTempDir(id: TrackID): Option[LocalTrack] = {
+  //    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
+  //    val absolute = pathInfo.absolute
+  //    if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
+  //    else None
+  //  }
 
   private def items(relative: Path): Option[Folder] = {
     val sources = findPathInfo2(relative)

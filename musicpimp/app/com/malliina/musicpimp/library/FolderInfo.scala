@@ -16,7 +16,7 @@ class FolderInfo(val id: FolderID,
 
 object FolderInfo {
   def fromPath(path: Path) = new FolderInfo(
-    PimpEnc.encodeFolder(path),
+    FolderID(Library.idFor(UnixPath(path).path)),
     Option(path.getFileName).map(_.toString).getOrElse(""),
     path
   )

@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.html
 
-import com.malliina.musicpimp.scheduler.ClockPlayback
+import com.malliina.musicpimp.scheduler.ClockPlaybackConf
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.models.Username
 import controllers.musicpimp.UserFeedback
@@ -12,7 +12,7 @@ case class LoginContent(accounts: AccountForms,
                         formFeedback: Option[UserFeedback],
                         topFeedback: Option[UserFeedback])
 
-case class AlarmContent(form: Form[ClockPlayback],
+case class AlarmContent(form: Form[ClockPlaybackConf],
                         feedback: Option[UserFeedback],
                         username: Username,
                         m: Messages) extends UserLike

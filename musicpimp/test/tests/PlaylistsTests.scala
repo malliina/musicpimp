@@ -37,7 +37,7 @@ class PlaylistsTests extends MusicPimpSuite {
     val folderId = FolderID("Testid")
 
     def trackInserts = db.insertTracks(Seq(
-      DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, folderId)
+      DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, UnixPath.Empty, folderId)
     ))
 
     val insertions = for {

@@ -1,20 +1,25 @@
 package com.malliina.musicpimp.scheduler
 
-import com.malliina.util.Log
+import com.malliina.musicpimp.scheduler.PlaybackScheduler.log
+import play.api.Logger
 
-class PlaybackScheduler[S <: DaySchedule, A <: PlaybackAP[S]](s: IScheduler) extends Log {
-  private var scheduled = Map.empty[String, A]
+object PlaybackScheduler {
+  private val log = Logger(getClass)
+}
+
+class PlaybackScheduler[S <: DaySchedule](s: IScheduler) {
+  private var scheduled = Map.empty[String, PlaybackJob]
 
   def saved = scheduled.values.toSeq
 
-  def schedule(ap: A): String = {
-    val taskId = s.schedule(ap.when, ap.job)
+  def schedule(ap: PlaybackJob): String = {
+    val taskId = s.schedule(ap.when, ap)
     scheduled += (taskId -> ap)
     log.info(s"Scheduled task with task ID: $taskId. Description: ${ap.describe}")
     taskId
   }
 
-  def deschedule(id: String): Option[A] = {
+  def deschedule(id: String): Option[PlaybackJob] = {
     val pairOpt = scheduled.find(pair => pair._2.id.contains(id))
     pairOpt.foreach {
       case (taskId, ap) =>
@@ -27,7 +32,6 @@ class PlaybackScheduler[S <: DaySchedule, A <: PlaybackAP[S]](s: IScheduler) ext
 
   def clear(): Unit = {
     scheduled.keys.foreach(deschedule)
-    scheduled = Map.empty[String, A]
+    scheduled = Map.empty[String, PlaybackJob]
   }
 }
-

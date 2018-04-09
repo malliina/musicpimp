@@ -9,7 +9,7 @@ import com.malliina.concurrent.ExecutionContexts
 import com.malliina.http.{FullUrl, OkHttpResponse}
 import com.malliina.musicpimp.cloud.TrackUploads.log
 import com.malliina.musicpimp.http.MultipartRequests
-import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
 import com.malliina.play.ContentRange
 import com.malliina.storage.{StorageLong, StorageSize}
@@ -27,11 +27,11 @@ object TrackUploads {
 
   val uploadPath = "/track"
 
-  def apply(host: FullUrl) = new TrackUploads(host + uploadPath, ExecutionContexts.cached)
+  def apply(lib: MusicLibrary, host: FullUrl) = new TrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
 }
 
-class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
-  implicit val exec = ec
+class TrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
+  implicit val exec: ExecutionContext = ec
   val scheduler = Executors.newSingleThreadScheduledExecutor()
   private val ongoing = TrieMap.empty[RequestID, TrackID]
 
@@ -47,7 +47,7 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
-    val requestRange = if (range.isAll) Option(range) else None
+    val requestRange = if (range.isAll) None else Option(range)
     withUpload(rangedTrack.id, request, requestRange)
   }
 
@@ -65,29 +65,31 @@ class TrackUploads(uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseab
   private def withUpload(trackID: TrackID,
                          request: RequestID,
                          range: Option[ContentRange]): Future[Unit] = {
-    val trackOpt = Library.findAbsolute(trackID)
-    trackOpt map { file =>
-      val totalSize = range.fold(Files.size(file).bytes)(_.contentSize)
-      val authHeaders = Clouds.loadID()
-        .map(id => Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(id.id, "pimp")))
-        .getOrElse(Map.empty)
-      val headers = authHeaders ++ Map(CloudResponse.RequestKey -> request.id)
-      ongoing.put(request, trackID)
-      val uploadRequest = range.map { r =>
-        log info s"Uploading $file, $r, request $request"
-        MultipartRequests.rangedFile(uploadUri, headers, file, r)
+    lib.findFile(trackID).flatMap { maybeAbsolute =>
+      maybeAbsolute.map { file =>
+        val totalSize = range.fold(Files.size(file).bytes)(_.contentSize)
+        val authHeaders = Clouds.loadID()
+          .map(id => Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(id.id, "pimp")))
+          .getOrElse(Map.empty)
+        val headers = authHeaders ++ Map(CloudResponse.RequestKey -> request.id)
+        ongoing.put(request, trackID)
+        val uploadRequest = range.map { r =>
+          log info s"Uploading $file, $r, request $request to $uploadUri"
+          MultipartRequests.rangedFile(uploadUri, headers, file, r)
+        }.getOrElse {
+          log info s"Uploading entire $file, request $request to $uploadUri"
+          MultipartRequests.file(uploadUri, headers, file)
+        }
+        uploadRequest.onComplete { _ =>
+          log info s"Upload of $request complete."
+          ongoing.remove(request)
+        }
+        logUpload(trackID, request, uploadRequest, totalSize)
       }.getOrElse {
-        log info s"Uploading entire $file, request $request"
-        MultipartRequests.file(uploadUri, headers, file)
+        val msg = s"Unable to find track: $trackID"
+        log warn msg
+        Future.failed(new FileNotFoundException(msg))
       }
-      uploadRequest.onComplete { _ =>
-        ongoing.remove(request)
-      }
-      logUpload(trackID, request, uploadRequest, totalSize)
-    } getOrElse {
-      val msg = s"Unable to find track: $trackID"
-      log warn msg
-      Future.failed(new FileNotFoundException(msg))
     }
   }
 

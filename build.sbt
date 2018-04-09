@@ -24,10 +24,11 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "3.16.0"
-val pimpcloudVersion = "1.13.0"
-val sharedVersion = "1.6.0"
-val crossVersion = "1.6.0"
+val musicpimpVersion = "4.0.7"
+val pimpcloudVersion = "1.19.1"
+val sharedVersion = "1.8.2"
+val crossVersion = "1.8.1"
+val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.11.0"
@@ -131,8 +132,8 @@ lazy val nativePackagingSettings =
     pimpMacSettings ++
     Seq(
       com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
-      httpPort in Linux := Option("disabled"),
-      httpsPort in Linux := Option("8455"),
+      httpPort in Linux := Option("8456"),
+      httpsPort in Linux := Option("disabled"),
       maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
@@ -150,8 +151,9 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   // never change
   WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
   WinKeys.minJavaVersion := Some(8),
-  WinKeys.postInstallUrl := Some("http://localhost:8456"),
-  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe"
+//  WinKeys.postInstallUrl := Some("http://localhost:8456"),
+  WinKeys.forceStopOnUninstall := true,
+  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe",
 )
 
 lazy val windowsConfSettings = inConfig(Windows)(Seq(
@@ -233,7 +235,8 @@ lazy val artifactSettings = Seq(
   libs ++= Seq(
     (packageBin in Assets).value.toPath,
     (packageBin in shared in Compile).value.toPath,
-    (packageBin in crossJvm in Compile).value.toPath
+    (packageBin in crossJvm in Compile).value.toPath,
+    (packageBin in utilAudio in Compile).value.toPath,
   )
 )
 
@@ -243,6 +246,7 @@ lazy val pimpcloudScalaJSSettings = Seq(
 )
 
 lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
+  version := utilAudioVersion,
   organization := malliinaGroup,
   SbtUtils.gitUserName := "malliina",
   SbtUtils.developerName := "Michael Skogberg",

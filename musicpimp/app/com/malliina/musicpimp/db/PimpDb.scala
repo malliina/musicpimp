@@ -2,13 +2,16 @@ package com.malliina.musicpimp.db
 
 import java.nio.file.{Files, Path, Paths}
 
+import com.malliina.concurrent.ExecutionContexts
 import com.malliina.file.StorageFile
-import com.malliina.musicpimp.db.PimpDb.log
+import com.malliina.musicpimp.app.PimpConf
+import com.malliina.musicpimp.audio.PimpEnc
+import com.malliina.musicpimp.db.PimpDb.{GetDummy, log}
 import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.models.FolderID
+import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.util.Utils
-import com.malliina.values.ErrorMessage
+import com.malliina.values.{ErrorMessage, UnixPath}
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import javax.sql.DataSource
 import org.h2.jdbcx.JdbcConnectionPool
@@ -28,7 +31,7 @@ object PimpDb {
   val H2Home = "h2.home"
 
   def default(ec: ExecutionContext) = {
-    DatabaseConf.forEnv().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
+    DatabaseConf.prod().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
   }
 
   def defaultH2(ec: ExecutionContext) = {
@@ -62,7 +65,9 @@ object PimpDb {
     apply(H2Profile, pool, ec)
   }
 
-  def maria(conf: DatabaseConf, ec: ExecutionContext) = {
+  def maria(conf: DatabaseConf): PimpDb = maria(conf, ExecutionContexts.cached)
+
+  def maria(conf: DatabaseConf, ec: ExecutionContext): PimpDb = {
     val hikariConfig = new HikariConfig()
     hikariConfig.setJdbcUrl(conf.url)
     hikariConfig.setUsername(conf.user)
@@ -81,17 +86,18 @@ object PimpDb {
     val H2Driver = "org.h2.Driver"
     val MariaDriver = "org.mariadb.jdbc.Driver"
 
-    def read(key: String) =
-      sys.env.get(key).orElse(sys.props.get(key)).toRight(ErrorMessage(s"Key missing: '$key'."))
+    def read(key: String) = PimpConf.read(key)
 
-    def forEnv() = for {
-      driver <- read("db_driver")
+    def prod(): Either[ErrorMessage, DatabaseConf] = for {
       url <- read("db_url")
       user <- read("db_user")
       pass <- read("db_pass")
-    } yield apply(url, user, pass, driver)
+    } yield apply(url, user, pass, read("db_driver").getOrElse(MariaDriver))
   }
 
+  object GetDummy extends GetResult[Int] {
+    override def apply(v1: PositionedResult) = 0
+  }
 }
 
 class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(implicit val ec: ExecutionContext)
@@ -123,7 +129,13 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   }
 
   def fullTextH2(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
-    log debug s"Querying: $searchTerm"
+    log info s"Querying: $searchTerm"
+    //    val conn = database.source.createConnection()
+    //    try {
+    //      val rs = FullText.searchData(conn, searchTerm, 0, 0)
+    //      val columnCount = rs.getMetaData.getColumnCount
+    //      log.info(s"Got $columnCount columns")
+    //    } finally conn.close()
     val action = sql"""SELECT T.* FROM FT_SEARCH_DATA($searchTerm,0,0) FT, #$tableName T WHERE FT.TABLE='#$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;""".as[DataTrack]
     run(action)
   }
@@ -136,22 +148,68 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     run(exactAction)
   }
 
-  def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
-    val tracksQuery = tracks.filter(_.folder === id)
-    // '=!=' in slick-lang is the same as '!='
-    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
-    //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
-    val tracksFuture = runQuery(tracksQuery)
-    val foldersFuture = runQuery(foldersQuery)
+  /** Fails if the index is already created or if the table does not exist.
+    *
+    * TODO check when this throws and whether I'm calling it correctly
+    */
+  def initIndexH2(tableName: String): Future[Unit] = {
+    val clazz = "\"org.h2.fulltext.FullText.init\""
     for {
-      ts <- tracksFuture
-      fs <- foldersFuture
+      _ <- executePlain(sqlu"CREATE ALIAS IF NOT EXISTS FT_INIT FOR #$clazz;")
+      _ <- database.run(sql"CALL FT_INIT();".as[Int](GetDummy))
+      _ <- database.run(sql"CALL FT_CREATE_INDEX('PUBLIC', '#$tableName', NULL);".as[Int](GetDummy))
+    } yield {
+      log info s"Initialized index for '$tableName'."
+    }
+  }
+
+  def initIndexMaria(tableName: String): Future[Unit] = {
+    for {
+      _ <- executePlain(sqlu"create fulltext index track_search on TRACKS(title, artist, album);")
+    } yield {
+      log info s"Initialized index for table '$tableName'."
+    }
+  }
+
+  def recreateIndex() = database.run(sql"SELECT FT_REINDEX()".as[Int](GetDummy)).map { _ =>
+    log.info(s"Recreated index.")
+  }
+
+  def dropIndex(tableName: String): Future[Unit] = {
+    val q = sql"CALL FT_DROP_INDEX('PUBLIC','#${tableName}')".as[Int](GetDummy)
+    database.run(q).map { _ =>
+      log.info(s"Dropped index for '$tableName'.")
+    }.recover {
+      case e: Exception =>
+        log.error(s"Unable to drop index for '$tableName'.", e)
+    }
+  }
+
+  def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
+    val tracksQuery = tracks.join(foldersFor(id)).on(_.folder === _.id).map(_._1)
+    // '=!=' in slick-lang is the same as '!='
+    val foldersQuery = folders.filter(_.id =!= Library.RootId).join(foldersFor(id)).on(_.parent === _.id).map(_._1).sortBy(_.title)
+//    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
+    //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
+    val action = for {
+      ts <- tracksQuery.result
+      fs <- foldersQuery.result
     } yield (ts, fs)
+    run(action)
   }
 
   def folderOnly(id: FolderID): Future[Option[DataFolder]] = {
-    run(folders.filter(folder => folder.id === id).result.headOption)
+    run(foldersFor(id).result.headOption)
   }
+
+  private def foldersFor(id: FolderID) = folders.filter(folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
+
+  def trackFor(id: TrackID): Future[Option[DataTrack]] =
+    tracksFor(Seq(id)).map(_.headOption)
+
+  // the path predicate is legacy
+  def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] =
+    run(tracks.filter(t => t.id.inSet(ids) || t.path.inSet(ids.map(i => UnixPath.fromRaw(PimpEnc.decodeId(i))))).result)
 
   def insertFolders(fs: Seq[DataFolder]) = run(folders ++= fs)
 
@@ -172,36 +230,10 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     }
   }
 
-  object GetDummy extends GetResult[Int] {
-    override def apply(v1: PositionedResult) = 0
-  }
-
   def initIndex(tableName: String): Future[Unit] =
     if (p == MySQLProfile) initIndexMaria(tableName)
     else initIndexH2(tableName)
 
-  /** Fails if the index is already created or if the table does not exist.
-    *
-    * TODO check when this throws and whether I'm calling it correctly
-    */
-  def initIndexH2(tableName: String): Future[Unit] = {
-    val clazz = "\"org.h2.fulltext.FullText.init\""
-    for {
-      _ <- executePlain(sqlu"CREATE ALIAS IF NOT EXISTS FT_INIT FOR #$clazz;")
-      _ <- database.run(sql"CALL FT_INIT();".as[Int](GetDummy))
-      _ <- database.run(sql"CALL FT_CREATE_INDEX('PUBLIC', '#$tableName', NULL);".as[Int](GetDummy))
-    } yield {
-      log info s"Initialized index for table $tableName"
-    }
-  }
-
-  def initIndexMaria(tableName: String): Future[Unit] = {
-    for {
-      _ <- executePlain(sqlu"create fulltext index track_search on TRACKS(title, artist, album);")
-    } yield {
-      log info s"Initialized index for table $tableName"
-    }
-  }
 
   def dropAll() = {
     tableQueries foreach { t =>
@@ -213,11 +245,6 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
       }
     }
     dropIndex(tracksName)
-  }
-
-  def dropIndex(tableName: String): Future[Unit] = {
-    val q = sqlu"CALL FT_DROP_INDEX('PUBLIC','#${tableName}');"
-    executePlain(q).map(_ => ())
   }
 
   /** Starts indexing on a background thread and returns an [[Observable]] with progress updates.

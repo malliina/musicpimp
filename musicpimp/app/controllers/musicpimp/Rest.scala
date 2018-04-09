@@ -3,6 +3,8 @@ package controllers.musicpimp
 import java.io._
 import java.net.UnknownHostException
 import java.nio.file._
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
@@ -16,7 +18,7 @@ import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
-import com.malliina.musicpimp.library.{Library, LocalTrack}
+import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models._
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileUploadRequest}
@@ -28,16 +30,20 @@ import com.malliina.util.Utils
 import com.malliina.values.{ErrorMessage, UnixPath}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest.log
+import javax.net.ssl.X509TrustManager
 import okhttp3.MediaType
 import play.api.Logger
 import play.api.http.{HeaderNames, HttpErrorHandler}
 import play.api.libs.json.{JsValue, Json}
+import play.api.libs.streams.Accumulator
 import play.api.libs.{Files => PlayFiles}
 import play.api.mvc._
 
 import scala.concurrent.Future
+import scala.util.Try
 
-class Rest(auth: AuthDeps,
+class Rest(lib: MusicLibrary,
+           auth: AuthDeps,
            handler: PlaybackMessageHandler,
            statsPlayer: StatsPlayer,
            errorHandler: HttpErrorHandler)
@@ -89,7 +95,10 @@ class Rest(auth: AuthDeps,
         error => pimpAction(BadRequest(error)),
         meta => {
           statsPlayer.updateUser(req.user)
-          localPlaybackAction(meta.id).getOrElse(streamingAction(meta))
+          EssentialAction { rh =>
+            val a = localPlaybackAction(meta.id).map(_.getOrElse(streamingAction(meta))).map(_.apply(rh))
+            Accumulator.flatten(a)(mat)
+          }
         }
       )
       authAction(requestHeader)
@@ -104,7 +113,7 @@ class Rest(auth: AuthDeps,
     Json.fromJson[BeamCommand](req.body).fold(
       invalid = _ => fut(BadRequest(JsonMessages.invalidJson)),
       valid = cmd => {
-        val (response, duration) = Utils.timed(Rest.beam(cmd))
+        val (response, duration) = Utils.timed(Rest.beam(cmd, lib))
         response.map { e =>
           e.fold(
             errorMsg => {
@@ -139,28 +148,35 @@ class Rest(auth: AuthDeps,
     )
   }
 
-  private def localPlaybackAction(id: TrackID): Option[EssentialAction] =
-    Library.findMetaWithTempFallback(id) map { track =>
+  private def localPlaybackAction(id: TrackID): Future[Option[EssentialAction]] =
+    lib.meta(id).map { maybeTrack =>
+      maybeTrack.map { track =>
 
-      /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
-        *
-        * The request has already been authenticated at this point because this method is called from within an
-        * Authenticated block only, see `streamedPlayback`. The following authentication made by PimpAction is thus
-        * superfluous. The next line is not inside the OkPimpAction block because we want to start playback before the
-        * body of the request, which may contain a large file, has been received: if the track is already available
-        * locally, the uploaded file is ignored. Clients should thus ask the server whether it already has a file before
-        * initiating long-running, possibly redundant, file uploads.
-        */
-      MusicPlayer.setPlaylistAndPlay(track)
-      log info s"Playing local file of: ${track.id}"
-      pimpAction(Ok)
+        /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
+          *
+          * The request has already been authenticated at this point because this method is called from within an
+          * Authenticated block only, see `streamedPlayback`. The following authentication made by PimpAction is thus
+          * superfluous. The next line is not inside the OkPimpAction block because we want to start playback before the
+          * body of the request, which may contain a large file, has been received: if the track is already available
+          * locally, the uploaded file is ignored. Clients should thus ask the server whether it already has a file before
+          * initiating long-running, possibly redundant, file uploads.
+          */
+        MusicPlayer.setPlaylistAndPlay(track)
+        log info s"Playing local file of: ${track.id}"
+        pimpAction(Ok)
+      }
     }
 
+  //  EssentialAction { req =>
+  //    val f: Future[EssentialAction] = ???
+  //    Accumulator.flatten(f.map(_.apply(req)))
+  //  }
+
   private def streamingAction(meta: Track): EssentialAction = {
-    val relative = PimpEnc.relativePath(meta.id)
+    val relative = meta.path
     // Saves the streamed media to file if possible
-    val fileOpt = Library.suggestAbsolute(relative).filter(canWriteNewFile) orElse
-      Option(FileUtilities.tempDir resolve relative).filter(canWriteNewFile)
+    val fileOpt = Library.findAbsoluteNew(relative).filter(canWriteNewFile) orElse
+      Option(FileUtilities.tempDir resolve meta.relativePath).filter(canWriteNewFile)
     val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
     val msg = fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
     log info msg
@@ -230,40 +246,45 @@ class Rest(auth: AuthDeps,
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
     metaUploadAction { req =>
-      songAction(req.track)
-      statsPlayer.updateUser(req.username)
-      default.AckResponse(req)
+      Future.successful {
+        songAction(req.track)
+        statsPlayer.updateUser(req.username)
+        default.AckResponse(req)
+      }
     }
 
-  private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Result) =
+  private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]) =
     headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
 
       def firstValue(key: String) = parameters.get(key).flatMap(_.headOption)
 
-      val pathParameterOpt = firstValue("path").map(TrackID.apply)
+      val pathParameterOpt = firstValue("path").map(p => Paths.get(p))
       // if a "path" parameter is specified, attempts to move the uploaded file to that library path
       val absolutePathOpt = pathParameterOpt.flatMap(Library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
       val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
-      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.flatMap(p => Library.findMeta(p)))
+      val trackId = Library.trackId(file)
+      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.map(p => lib.meta(trackId)))
 
       def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new LocalTrack(TrackID(""), UnixPath.Empty, meta)
+        new LocalTrack(Library.trackId(file), UnixPath(file), meta)
       }
 
-      val track = trackInfoFromFileOpt getOrElse trackInfoFromUpload
-      val user = Username(request.user)
-      val mediaInfo = track.meta.media
-      val fileSize = mediaInfo.size
-      log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
-      f(new TrackUploadRequest(track, file, user, request))
+      val track = trackInfoFromFileOpt.map(_.map(_.getOrElse(trackInfoFromUpload))).getOrElse(fut(trackInfoFromUpload))
+      track.flatMap { t =>
+        val user = Username(request.user)
+        val mediaInfo = t.meta.media
+        val fileSize = mediaInfo.size
+        log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
+        f(new TrackUploadRequest(t, file, user, request))
+      }
     }
 
   class TrackUploadRequest[A](val track: LocalTrack, file: Path, val username: Username, request: Request[A])
@@ -274,32 +295,64 @@ class Rest(auth: AuthDeps,
 object Rest {
   private val log = Logger(getClass)
 
-  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
+  object trustAllTrustManager extends X509TrustManager {
+    override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+
+    override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+
+    override def getAcceptedIssuers: Array[X509Certificate] = Array.empty[X509Certificate]
+  }
+
+
+  val defaultClient = OkClient.default
+  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
   val audioMpeg = MediaType.parse("audio/mpeg")
+
+  def close(): Unit = {
+    closeOk(defaultClient)
+    closeOk(sslClient)
+  }
+
+  def closeOk(client: OkClient) = Try {
+    client.close()
+    val inner = client.client
+    inner.dispatcher().cancelAll()
+    inner.dispatcher().executorService().shutdownNow()
+    val terminated = inner.dispatcher().executorService().awaitTermination(5, TimeUnit.SECONDS)
+    if (!terminated) {
+      log.error("ExecutorService of HTTP client did not terminate in a timely manner.")
+    }
+  }
 
   /** Beams a track to a URI as specified in `cmd`.
     *
     * @param cmd beam details
     */
-  def beam(cmd: BeamCommand): Future[Either[ErrorMessage, HttpResponse]] = {
+  def beam(cmd: BeamCommand, lib: MusicLibrary): Future[Either[ErrorMessage, HttpResponse]] = {
     val url = cmd.uri
-    Library.findAbsolute(cmd.track).map { file =>
-      val size = Files.size(file).bytes
-      log info s"Beaming: $file of size: $size to: $url..."
-      sslClient.multiPart(
-        url,
-        Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(cmd.username.name, cmd.password.pass)),
-        files = Seq(MultiPartFile(audioMpeg, file))
-      ).map { r =>
-        if (r.isSuccess) {
-          log info s"Beamed file: $file of size: $size to: $url"
-        } else {
-          log error s"Beam failed of file: $file of size: $size to: $url"
+    lib.findFile(cmd.track).flatMap { maybeFile =>
+      maybeFile.map { file =>
+        val size = Files.size(file).bytes
+        log info s"Beaming: $file of size: $size to: $url..."
+        sslClient.multiPart(
+          url,
+          Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(cmd.username.name, cmd.password.pass)),
+          files = Seq(MultiPartFile(audioMpeg, file))
+        ).map { r =>
+          if (r.isSuccess) {
+            log info s"Beamed file: $file of size: $size to: $url"
+          } else {
+            log error s"Beam failed of file: $file of size: $size to: $url"
+          }
+          Right(r)
         }
-        Right(r)
+      }.getOrElse {
+        fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
       }
-    }.getOrElse {
-      fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
+    }.recover {
+      case e: Exception =>
+        log.error("Beaming failed.", e)
+        Left(ErrorMessage("Beaming failed."))
     }
   }
 }

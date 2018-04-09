@@ -3,7 +3,7 @@ package com.malliina.pimpcloud.ws
 import akka.actor.ActorRef
 import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import akka.stream.scaladsl.Source
-import akka.stream.{Materializer, QueueOfferResult}
+import akka.stream.{Materializer, QueueOfferResult, StreamDetachedException}
 import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
@@ -13,7 +13,7 @@ import com.malliina.musicpimp.models.{CloudID, RangedRequest, RequestID, Wrapped
 import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.{DetachedMessage, log}
-import com.malliina.play.http.Proxies
+import com.malliina.play.http.{HttpConstants, Proxies}
 import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
@@ -101,8 +101,10 @@ class NoCacheByteStreams(id: CloudID,
       }.recover {
         case ist: IllegalStateException if Option(ist.getMessage).contains(DetachedMessage) =>
           log info s"Removed $description after detachment"
-        case t =>
-          log.error(s"Removed but failed to close $description", t)
+        case sde: StreamDetachedException =>
+          log.warn(s"Removed $description after exceptional detachment", sde)
+        case e: Exception =>
+          log.error(s"Removed but failed to close $description $e", e)
       }.map(_ => true)
     }.getOrElse {
       // This method is fired multiple times in normal circumstances
@@ -120,7 +122,7 @@ class NoCacheByteStreams(id: CloudID,
                               track: Track,
                               range: ContentRange): Result = {
     val status = if (range.isAll) Results.Ok else Results.PartialContent
-    val entity = HttpEntity.Streamed(source, Option(range.contentLength.toLong), None)
+    val entity = HttpEntity.Streamed(source, Option(range.contentLength.toLong), Option(HttpConstants.AudioMpeg))
     val result = status.sendEntity(entity)
     connect(request, track, range)
     result

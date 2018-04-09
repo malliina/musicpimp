@@ -5,7 +5,7 @@ import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
-import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
+import com.malliina.musicpimp.scheduler.{ClockPlayback, ClockPlaybackConf, FullClockPlayback, WeekDay}
 import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 import play.api.i18n.Messages
@@ -41,7 +41,7 @@ object AlarmsHtml extends PimpBootstrap {
       button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")
     )
 
-  def alarmsContent(clocks: Seq[ClockPlayback]) = {
+  def alarmsContent(clocks: Seq[FullClockPlayback]) = {
     val content: Modifier =
       if (clocks.isEmpty) {
         leadPara("No alarms.")
@@ -57,7 +57,7 @@ object AlarmsHtml extends PimpBootstrap {
     )
   }
 
-  def alarmRow(ap: ClockPlayback) = {
+  def alarmRow(ap: FullClockPlayback) = {
     val (enabledText, enabledAttr) =
       if (ap.enabled) ("Yes", empty)
       else ("No", `class` := "danger")

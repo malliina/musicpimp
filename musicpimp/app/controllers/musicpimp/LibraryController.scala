@@ -1,17 +1,19 @@
 package controllers.musicpimp
 
-import com.malliina.musicpimp.audio.{PimpEnc, TrackJson}
+import com.malliina.musicpimp.audio.{PimpEnc, TrackJson, TrackMeta}
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
+import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.{Library, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models._
-import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.FileResults
 import com.malliina.play.auth.AuthFailure
+import com.malliina.play.http.FullUrls
 import com.malliina.play.models.Username
 import com.malliina.play.tags.TagPage
 import controllers.musicpimp.LibraryController.log
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Writes}
 import play.api.mvc._
 
 object LibraryController {
@@ -50,7 +52,7 @@ class LibraryController(tags: PimpHtml,
 
   def tracksIn(in: FolderID) = pimpActionAsync { request =>
     val folderId = PimpEnc.folder(in)
-    implicit val writer = TrackJson.writer(request)
+    implicit val writer: Writes[TrackMeta] = TrackJson.writer(request)
     lib.tracksIn(folderId).map { maybeTracks =>
       maybeTracks.map { tracks =>
         Ok(Json.toJson(tracks))
@@ -92,14 +94,19 @@ class LibraryController(tags: PimpHtml,
     * Unauthorized as opposed to a redirect to make it easier to deal
     * with download errors on the client side.
     *
-    * @param in track to download
+    * @param id track to download
     */
-  def download(in: TrackID): EssentialAction =
+  def download(id: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
-      val trackId = PimpEnc.track(in)
-      Library.findAbsolute(trackId)
-        .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
-        .getOrElse(NotFound(LibraryController.noTrackJson(trackId)))
+      lib.findFile(id).map { maybeTrack =>
+        maybeTrack
+          .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
+          .getOrElse(NotFound(LibraryController.noTrackJson(id)))
+      }.recover {
+        case e: Exception =>
+          log.error("Track error.", e)
+          Results.InternalServerError(Json.toJson(JsonMessages.databaseFailure))
+      }
     }
 
   def onDownloadAuthFail(failure: AuthFailure): Result = {
@@ -107,12 +114,12 @@ class LibraryController(tags: PimpHtml,
     Unauthorized
   }
 
-  def meta(id: TrackID) = pimpAction { request =>
-    val trackId = PimpEnc.track(id)
-    implicit val writer = TrackJson.writer(request)
-    Library.findMeta(PimpEnc.track(trackId))
-      .map(t => Ok(Json.toJson(t)))
-      .getOrElse(trackNotFound(trackId))
+  def meta(id: TrackID) = pimpActionAsync { request =>
+    lib.track(id).map { maybeTrack =>
+      maybeTrack
+        .map(t => Ok(Json.toJson(TrackJson.toFull(t, FullUrls.hostOnly(request)))))
+        .getOrElse(trackNotFound(id))
+    }
   }
 
   private def trackNotFound(id: TrackID) = BadRequest(LibraryController.noTrackJson(id))

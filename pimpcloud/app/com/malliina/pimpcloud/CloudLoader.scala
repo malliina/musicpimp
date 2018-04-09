@@ -18,7 +18,7 @@ import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
 import play.filters.headers.SecurityHeadersConfig
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
 case class AppConf(pusher: Pusher, googleCreds: GoogleOAuthCredentials, pimpAuth: (AdminOAuth, Materializer) => PimpAuth)
@@ -70,7 +70,7 @@ class CloudComponents(context: Context,
   val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
 
-  implicit val ec = materializer.executionContext
+  implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
@@ -92,4 +92,8 @@ class CloudComponents(context: Context,
   lazy val as = new Assets(httpErrorHandler, assetsMetadata)
   lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
+
+  applicationLifecycle.addStopHook(() => Future.successful {
+    adminAuth.validator.http.close()
+  })
 }

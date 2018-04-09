@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.library
 
-import com.malliina.audio.meta.SongMeta
+import com.malliina.audio.meta.{SongMeta, StreamSource}
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 class LocalTrack(val id: TrackID,
                  val path: UnixPath,
                  val meta: SongMeta) extends MusicItem with PlayableTrack {
-  val media = meta.media
+  val media: StreamSource = meta.media
   override val title = meta.tags.title
   override val size: StorageSize = media.size
   override val duration: Duration = media.duration
@@ -20,5 +20,6 @@ class LocalTrack(val id: TrackID,
 
   override def toString = id.id
 
-  override def buildPlayer(eom: () => Unit): PimpPlayer = new StoragePlayer(this, eom)
+  override def buildPlayer(eom: () => Unit): PimpPlayer =
+    new StoragePlayer(this, eom)
 }

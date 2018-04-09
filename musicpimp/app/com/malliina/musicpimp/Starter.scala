@@ -3,6 +3,7 @@ package com.malliina.musicpimp
 import java.awt.Desktop
 import java.net.URI
 import java.nio.file.Files
+import java.rmi.ConnectException
 
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
@@ -15,7 +16,8 @@ import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.PlayLifeCycle
-import com.malliina.util.{Logging, Scheduling, Utils}
+import com.malliina.rmi.RmiClient
+import com.malliina.util.{Logging, Utils}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -29,13 +31,29 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     Tray.installTray()
   }
 
-  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer)(implicit ec: ExecutionContext): Unit = {
+  override def main(args: Array[String]) {
+    args.headOption match {
+      case Some("stop") =>
+        try {
+          RmiClient.launchClient()
+          // this hack allows the System.exit() call in the stop method eventually to run before we exit
+          // obviously we can't await it from another vm
+          Thread sleep 12000
+        } catch {
+          case _: ConnectException =>
+            log warn "Unable to stop; perhaps MusicPimp is already stopped?"
+        }
+      case anythingElse => start()
+    }
+  }
+
+  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer, schedules: ScheduledPlaybackService)(implicit ec: ExecutionContext): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
       Files.createDirectories(FileUtil.pimpHomeDir)
       if (options.alarms) {
-        ScheduledPlaybackService.init()
+        schedules.init()
       }
       if (options.database) {
         db.init()
@@ -62,14 +80,10 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     }
   }
 
-  def stopServices(options: InitOptions): Unit = {
+  def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {
     log.info("Stopping services...")
     MusicPlayer.close()
-    Scheduling.shutdown()
-    //    if(options.alarms) {
-    ScheduledPlaybackService.stop()
-    //    }
-    //    Search.subscription.unsubscribe()
+    schedules.stop()
   }
 
   def printThreads() {
@@ -89,6 +103,6 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
     Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
   }
 
-  protected def tryReadInt(key: String) =
+  protected def tryReadInt(key: String): Option[Int] =
     sys.props.get(key).filter(_ != "disabled").flatMap(ps => Utils.opt[Int, NumberFormatException](Integer.parseInt(ps)))
 }
