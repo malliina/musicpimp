@@ -83,7 +83,7 @@ class Accounts(tags: PimpHtml,
     Redirect(routes.Accounts.loginPage())
       .withNewSession
       .discardingCookies(RememberMe.discardingCookie)
-      .flashing(UserFeedback.success(logoutMessage).toSeq: _*)
+      .flashing(UserFeedback.success(logoutMessage).flash)
   }
 
   def formAddUser = pimpActionAsync { request =>
@@ -97,8 +97,10 @@ class Accounts(tags: PimpHtml,
       newUser => {
         val addCall = userManager.addUser(newUser.username, newUser.pass)
         addCall.map { addError =>
-          val userFeedback = addError.map(e => UserFeedback.error(s"User '${e.user}' already exists.")).getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
-          Redirect(routes.Accounts.users()).flashing(userFeedback.toSeq: _*)
+          val userFeedback = addError
+            .map(e => UserFeedback.error(s"User '${e.user}' already exists."))
+            .getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
+          Redirect(routes.Accounts.users()).flashing(userFeedback.flash)
         }
       }
     )
@@ -165,7 +167,7 @@ class Accounts(tags: PimpHtml,
             userManager.updatePassword(user, pc.newPass) map { _ =>
               log info s"Password changed for user '$user' from '$remoteAddress'."
               Redirect(routes.Accounts.account())
-                .flashing(UserFeedback.success(passwordChangedMessage).toSeq: _*)
+                .flashing(UserFeedback.success(passwordChangedMessage).flash)
             }
           } else {
             fut(BadRequest(tags.account(user, Option(UserFeedback.error(incorrectPasswordMessage)))))

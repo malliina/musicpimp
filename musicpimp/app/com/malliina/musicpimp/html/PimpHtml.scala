@@ -165,9 +165,9 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
       AlarmsHtml.alarmsContent(clocks)
     )
 
-  def tokens(tokens: Seq[TokenInfo], username: Username) =
+  def tokens(tokens: Seq[TokenInfo], username: Username, feedback: Option[UserFeedback]) =
     manage("tokens", username)(
-      AlarmsHtml.tokens(tokens)
+      AlarmsHtml.tokens(tokens, feedback)
     )
 
   def alarmEditor(conf: AlarmContent) =

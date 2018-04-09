@@ -5,10 +5,10 @@ import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 
 case class UserFeedback(message: String, isError: Boolean) {
-  def toSeq: Seq[(String, String)] = Seq(
+  def flash: Flash = Flash(Map(
     Feedback -> message,
     Success -> (if (isError) No else Yes)
-  )
+  ))
 }
 
 object UserFeedback {

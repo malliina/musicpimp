@@ -15,18 +15,26 @@ import com.malliina.musicpimp.scheduler.{ClockPlayback, PlaybackJob, ScheduledPl
 import com.malliina.play.http.Proxies
 import controllers.musicpimp.Alarms.log
 import play.api.Logger
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.i18n.Messages
 import play.api.libs.json.{JsResult, JsValue, Json}
 import play.api.mvc.Result
+
+case class RemoveToken(token: String, platform: String)
 
 class Alarms(tags: PimpHtml, auth: AuthDeps, messages: Messages)
   extends AlarmEditor(tags, auth, messages)
     with SchedulerStrings {
 
+  val removalForm = Form(mapping(
+    "token" -> nonEmptyText,
+    "platform" -> nonEmptyText
+  )(RemoveToken.apply)(RemoveToken.unapply))
+
   def alarms = pimpAction { request =>
     def content: Seq[ClockPlayback] = ScheduledPlaybackService.status
 
-    implicit val w = TrackJson.writer(request)
     default.respond(request)(
       html = tags.alarms(content, request.user),
       json = Json.toJson(content.map(_.toFull(TrackJson.host(request))))
@@ -34,16 +42,33 @@ class Alarms(tags: PimpHtml, auth: AuthDeps, messages: Messages)
   }
 
   def tokens = pimpAction { request =>
-    def ts = APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
-      PushUrls.get().map(p => TokenInfo(p.url, Mpns)) ++
-      GoogleDevices.get().map(g => TokenInfo(g.id, Gcm)) ++
-      AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
+    def ts =
+      APNSDevices.get().map(d => TokenInfo(d.id, Apns)) ++
+        PushUrls.get().map(p => TokenInfo(p.url, Mpns)) ++
+        GoogleDevices.get().map(g => TokenInfo(g.id, Gcm)) ++
+        AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
 
     default.respond(request)(
-      html = tags.tokens(ts, request.user),
+      html = tags.tokens(ts, request.user, UserFeedback.flashed(request)),
       json = Json.toJson(Tokens(ts))
     )
   }
+
+  def remove =
+    pimpParsedAction(parsers.form(removalForm)) { request =>
+      val spec = request.body
+      val token = spec.token
+      TokenPlatform.build(spec.platform).map {
+        case Apns => APNSDevices.removeWhere(_.id.token == token)
+        case Mpns => PushUrls.removeURL(token)
+        case Gcm => GoogleDevices.removeWhere(_.id.token == token)
+        case Adm => AmazonDevices.removeWhere(_.id.token == token)
+      }.map { _ =>
+        Redirect(routes.Alarms.tokens()).flashing(UserFeedback.success("Removed.").flash)
+      }.getOrElse {
+        BadRequest
+      }
+    }
 
   def handleJson = pimpParsedAction(parsers.json) { jsonRequest =>
     val json = jsonRequest.body

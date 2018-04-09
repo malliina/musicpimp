@@ -1,28 +1,31 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.musicpimp.html.PimpHtml.feedbackDiv
 import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, WeekDay}
-import controllers.musicpimp.routes
+import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 import play.api.i18n.Messages
-
 import scalatags.Text.all._
 
 object AlarmsHtml extends PimpBootstrap {
 
   import tags._
 
-  def tokens(tokens: Seq[TokenInfo]) = {
+  def tokens(tokens: Seq[TokenInfo], feedback: Option[UserFeedback]) = {
     val content =
       if (tokens.isEmpty) {
         leadPara("No push tokens.")
       } else {
-        table(`class` := s"${tables.defaultClass} tokens-table")(
-          thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"))),
-          tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform))))
+        modifier(
+          feedback.fold(empty)(feedbackDiv),
+          table(`class` := s"${tables.defaultClass} tokens-table")(
+            thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))),
+            tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform), td(`class` := "table-button")(removalForm(t)))))
+          )
         )
       }
     Seq(
@@ -30,6 +33,13 @@ object AlarmsHtml extends PimpBootstrap {
       fullRow(content)
     )
   }
+
+  def removalForm(tokenInfo: TokenInfo) =
+    form(role := "form", action := routes.Alarms.remove(), method := "POST")(
+      input(`type` := "hidden", name := "token", value := tokenInfo.token.token),
+      input(`type` := "hidden", name := "platform", value := tokenInfo.platform.platform),
+      button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")
+    )
 
   def alarmsContent(clocks: Seq[ClockPlayback]) = {
     val content: Modifier =

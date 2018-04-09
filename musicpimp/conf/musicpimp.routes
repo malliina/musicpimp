@@ -14,6 +14,7 @@ POST        /cloud                             controllers.musicpimp.Cloud.toggl
 GET         /about                             controllers.musicpimp.Website.about
 GET         /manage                            controllers.musicpimp.SettingsController.manage
 GET         /manage/push/tokens                controllers.musicpimp.Alarms.tokens
+POST        /manage/push/tokens/deletes        controllers.musicpimp.Alarms.remove
 GET         /account                           controllers.musicpimp.Accounts.account
 GET         /users                             controllers.musicpimp.Accounts.users
 POST        /users/delete/*id                  controllers.musicpimp.Accounts.delete(id: Username)
