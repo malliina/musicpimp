@@ -34,7 +34,6 @@ class Alarms(handler: JsonHandler, tags: PimpHtml, auth: AuthDeps, messages: Mes
 
   def alarms = pimpActionAsync { request =>
     schedules.clockList(TrackJson.host(request)).map { fcps =>
-      implicit val w = TrackJson.writer(request)
       default.respond(request)(
         html = tags.alarms(fcps, request.user),
         json = Json.toJson(fcps)

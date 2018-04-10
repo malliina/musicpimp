@@ -5,7 +5,7 @@ import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings._
-import com.malliina.musicpimp.scheduler.{ClockPlayback, ClockPlaybackConf, FullClockPlayback, WeekDay}
+import com.malliina.musicpimp.scheduler.{FullClockPlayback, WeekDay}
 import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 import play.api.i18n.Messages
@@ -20,17 +20,14 @@ object AlarmsHtml extends PimpBootstrap {
       if (tokens.isEmpty) {
         leadPara("No push tokens.")
       } else {
-        modifier(
-          feedback.fold(empty)(feedbackDiv),
-          table(`class` := s"${tables.defaultClass} tokens-table")(
-            thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))),
-            tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform), td(`class` := "table-button")(removalForm(t)))))
-          )
+        table(`class` := s"${tables.defaultClass} tokens-table")(
+          thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))),
+          tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform), td(`class` := "table-button")(removalForm(t)))))
         )
       }
     Seq(
       headerRow("Tokens"),
-      fullRow(content)
+      fullRow(modifier(feedback.fold(empty)(feedbackDiv), content))
     )
   }
 
