@@ -99,7 +99,7 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.10.0",
+        malliinaGroup %% "util-actor" % "2.10.2",
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
