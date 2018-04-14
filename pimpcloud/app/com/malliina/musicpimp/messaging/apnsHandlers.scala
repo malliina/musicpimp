@@ -1,21 +1,20 @@
 package com.malliina.musicpimp.messaging
 
 import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.musicpimp.messaging.cloud.{APNSHttpResult, APNSPayload, APNSResult}
+import com.malliina.musicpimp.messaging.APNSUtils.fold
+import com.malliina.musicpimp.messaging.cloud.{APNSHttpResult, APNSPayload}
 import com.malliina.push.apns._
+import com.malliina.values.ErrorMessage
+import play.api.Configuration
 
 import scala.concurrent.Future
 
-/** Legacy.
-  */
-class APNSHandler(client: APNSClient) extends PushRequestHandler[APNSPayload, APNSResult] {
-  override def push(requests: Seq[APNSPayload]): Future[Seq[APNSResult]] =
-    Future.traverse(requests) { r =>
-      client.push(r.token, r.message).map(APNSResult.fromAPNS)
-    }
-
-  override def pushOne(r: APNSPayload): Future[APNSResult] =
-    client.push(r.token, r.message).map(APNSResult.fromAPNS)
+object APNSUtils {
+  def fold(result: Either[APNSError, APNSIdentifier], token: APNSToken): APNSHttpResult =
+    result.fold(
+      err => APNSHttpResult(token, None, Option(err)),
+      id => APNSHttpResult(token, Option(id), None)
+    )
 }
 
 /** Using HTTP/2.
@@ -24,12 +23,27 @@ class APNSHttpHandler(client: APNSHttpClient) extends PushRequestHandler[APNSPay
   val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
   val meta = APNSMeta.withTopic(MusicPimpTopic)
 
-  def pushOne(request: APNSPayload) = {
-    val token = request.token
-    client.push(token, APNSRequest(request.message, meta)).map(_.fold(
-      err => APNSHttpResult(token, None, Option(err)),
-      id => APNSHttpResult(token, Option(id), None)
-    ))
+  def pushOne(request: APNSPayload) =
+    client.push(request.token, APNSRequest(request.message, meta))
+      .map(r => fold(r, request.token))
+}
+
+object APNSTokenHandler {
+  def fromConf(config: Configuration, isSandbox: Boolean) = {
+    val attempt = APNSTokenConf.parse { key =>
+      config.getOptional[String](key).toRight(ErrorMessage(s"Key not found: '$key'."))
+    }
+    attempt.fold(msg => throw new Exception(msg.message), apply(_, isSandbox))
   }
 
+  def apply(conf: APNSTokenConf, isSandbox: Boolean) =
+    new APNSTokenHandler(APNSTokenClient(conf, isSandbox))
+}
+
+class APNSTokenHandler(client: APNSTokenClient) extends PushRequestHandler[APNSPayload, APNSHttpResult] {
+  val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
+
+  override def pushOne(request: APNSPayload): Future[APNSHttpResult] =
+    client.push(request.token, APNSRequest.withTopic(MusicPimpTopic, request.message))
+      .map(r => fold(r, request.token))
 }

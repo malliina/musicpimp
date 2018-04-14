@@ -4,7 +4,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.messaging.ProdPusher.log
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.push.adm.ADMClient
-import com.malliina.push.apns.{APNSClient, APNSHttpClient}
+import com.malliina.push.apns.APNSTokenConf
 import com.malliina.push.gcm.GCMClient
 import com.malliina.push.mpns.MPNSClient
 import com.malliina.push.wns.{WNSClient, WNSCredentials}
@@ -12,7 +12,7 @@ import play.api.Logger
 
 import scala.concurrent.Future
 
-class ProdPusher(apnsCredentials: APNSCredentials,
+class ProdPusher(apnsConf: APNSTokenConf,
                  gcmApiKey: String,
                  admCredentials: ADMCredentials,
                  wnsCredentials: WNSCredentials) extends Pusher {
@@ -20,22 +20,8 @@ class ProdPusher(apnsCredentials: APNSCredentials,
 
   // We push both to the sandboxed and prod environments in all cases,
   // because if we deploy from xcode we need sandboxed notifications
-  val prodApns = new APNSHandler(new APNSClient(
-    apnsCredentials.keyStore,
-    apnsCredentials.keyStorePass,
-    isSandbox = false))
-  val sandboxApns = new APNSHandler(new APNSClient(
-    apnsCredentials.keyStore,
-    apnsCredentials.keyStorePass,
-    isSandbox = true))
-  val prodApnsHttp = new APNSHttpHandler(APNSHttpClient(
-    apnsCredentials.keyStore,
-    apnsCredentials.keyStorePass,
-    isSandbox = false))
-  val sandboxApnsHttp = new APNSHttpHandler(APNSHttpClient(
-    apnsCredentials.keyStore,
-    apnsCredentials.keyStorePass,
-    isSandbox = true))
+  val prodApnsHttp = APNSTokenHandler(apnsConf, isSandbox = false)
+  val sandboxApnsHttp = APNSTokenHandler(apnsConf, isSandbox = true)
   val gcmHandler = new GCMHandler(new GCMClient(gcmApiKey))
   val admHandler = new ADMHandler(new ADMClient(
     admCredentials.clientId,

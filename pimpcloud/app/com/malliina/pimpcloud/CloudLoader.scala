@@ -17,11 +17,14 @@ import play.api.{BuiltInComponentsFromContext, Logger, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
 import play.filters.headers.SecurityHeadersConfig
+import play.filters.hosts.AllowedHostsConfig
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
-case class AppConf(pusher: Pusher, googleCreds: GoogleOAuthCredentials, pimpAuth: (AdminOAuth, Materializer) => PimpAuth)
+case class AppConf(pusher: Pusher,
+                   googleCreds: GoogleOAuthCredentials,
+                   pimpAuth: (AdminOAuth, Materializer) => PimpAuth)
 
 object AppConf {
   def dev = AppConf(
@@ -69,7 +72,7 @@ class CloudComponents(context: Context,
 
   val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
-
+  override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   // Components

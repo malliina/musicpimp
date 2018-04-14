@@ -25,7 +25,7 @@ val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
 val musicpimpVersion = "4.0.8"
-val pimpcloudVersion = "1.19.2"
+val pimpcloudVersion = "1.19.3"
 val sharedVersion = "1.8.2"
 val crossVersion = "1.8.1"
 val utilAudioVersion = "2.5.1"
@@ -216,7 +216,6 @@ lazy val pimpcloudLinuxSettings = Seq(
     val installLocation = defaultLinuxInstallLocation.value
     s"$installLocation/$name/$alpnFile"
   },
-  //  bashScriptExtraDefines += s"""addJava "-Xbootclasspath/p:${bootClasspath.value}"""",
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
     Seq(
@@ -224,7 +223,8 @@ lazy val pimpcloudLinuxSettings = Seq(
       s"-J-Xbootclasspath/p:${bootClasspath.value}",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      "-Dlogger.resource=prod-logger.xml"
+      "-Dlogger.resource=prod-logger.xml",
+      s"-Dconfig.file=/etc/$linuxName/production.conf"
     )
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
