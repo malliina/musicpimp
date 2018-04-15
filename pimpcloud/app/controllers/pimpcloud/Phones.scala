@@ -118,13 +118,13 @@ class Phones(comps: ControllerComponents,
             rangeTry.map { range =>
               result.withHeaders(
                 CONTENT_RANGE -> range.contentRange
-              ).as(HttpConstants.AudioMpeg)
+              )
             }.getOrElse {
               result.withHeaders(
                 ACCEPT_RANGES -> Phones.Bytes,
                 CACHE_CONTROL -> HttpConstants.NoCache,
                 CONTENT_DISPOSITION -> s"""attachment; filename="$fileName""""
-              ).as(HttpConstants.AudioMpeg)
+              )
             }
           }.getOrElse {
             log.error(s"Found no info about track '$id', failing request.")
