@@ -21,7 +21,7 @@ import com.malliina.play.tags.TagPage
 import com.malliina.play.{ContentRange, ContentRanges}
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
-import play.api.http.Writeable
+import play.api.http.{ContentTypes, Writeable}
 import play.api.libs.json._
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
@@ -117,13 +117,17 @@ class Phones(comps: ControllerComponents,
             val fileName = Option(Paths.get(track.path.path).getFileName).map(_.toString).getOrElse(in.id)
             rangeTry.map { range =>
               result.withHeaders(
-                CONTENT_RANGE -> range.contentRange
+                CONTENT_RANGE -> range.contentRange,
+                CONTENT_LENGTH -> s"${range.contentLength}",
+                CONTENT_TYPE -> fileMimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)
               )
             }.getOrElse {
               result.withHeaders(
                 ACCEPT_RANGES -> Phones.Bytes,
                 CACHE_CONTROL -> HttpConstants.NoCache,
-                CONTENT_DISPOSITION -> s"""attachment; filename="$fileName""""
+                CONTENT_LENGTH -> trackSize.toBytes.toString,
+                CONTENT_DISPOSITION -> s"""attachment; filename="$fileName"""",
+                CONTENT_TYPE -> HttpConstants.AudioMpeg
               )
             }
           }.getOrElse {

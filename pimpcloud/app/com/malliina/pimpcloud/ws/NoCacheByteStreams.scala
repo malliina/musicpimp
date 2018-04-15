@@ -76,7 +76,7 @@ class NoCacheByteStreams(id: CloudID,
     val userAgent = req.headers.get(HeaderNames.USER_AGENT)
       .map(ua => s"user agent $ua")
       .getOrElse("unknown user agent")
-    val (queue, source) = Streaming.sourceQueue[ByteString](mat, NoCacheByteStreams.ByteStringBufferSize)
+    val (queue, source) = Streaming.sourceQueue[ByteString](mat)
     iteratees += (request -> new ChannelInfo(queue, id, track, range))
     streamChanged()
     val address = Proxies.realAddress(req)
