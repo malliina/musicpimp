@@ -59,7 +59,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
-  test("server notifications") {
+  test("server events") {
     val joinId = CloudID("join-test")
     val handler = new TestHandler
     val joinedPromise = Promise[PimpServer]()
@@ -84,7 +84,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
-  test("phone notifications") {
+  test("phone events") {
     try {
       val expectedId = CloudID("phone-test")
       val id = await(cloudClient.connect(Option(expectedId)))
@@ -111,7 +111,7 @@ class IntegrationTest extends PimpcloudServerSuite {
 
   }
 
-  test("stream notifications") {
+  test("stream events") {
     val p = Promise[String]()
 
     def onJson(json: JsValue) = {
@@ -134,6 +134,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       // request track
       val r = makeGet(s"/tracks/$trackId", cloudId)
       assert(r.status === 200)
+      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
       assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
     }
   }
@@ -144,6 +145,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
+      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
       assert(r.bodyAsBytes.size.toLong === 11)
     }
   }
