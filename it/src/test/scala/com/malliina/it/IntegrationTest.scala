@@ -134,7 +134,9 @@ class IntegrationTest extends PimpcloudServerSuite {
       // request track
       val r = makeGet(s"/tracks/$trackId", cloudId)
       assert(r.status === 200)
-      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
+      // It seems the content-length header is only set if the content is small enough for non-chunked encoding.
+      // So, while this test passes also with this line uncommented, it's not representative.
+//      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
       assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
     }
   }
@@ -145,7 +147,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
-      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
+//      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
       assert(r.bodyAsBytes.size.toLong === 11)
     }
   }
