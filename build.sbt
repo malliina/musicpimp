@@ -24,8 +24,8 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.10.0"
-val pimpcloudVersion = "1.20.0"
+val musicpimpVersion = "4.11.0"
+val pimpcloudVersion = "1.21.0"
 val sharedVersion = "1.8.2"
 val crossVersion = "1.8.1"
 val utilAudioVersion = "2.5.1"
@@ -33,6 +33,9 @@ val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.11.1"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
+
+val httpGroup = "org.apache.httpcomponents"
+val httpVersion = "4.4.1"
 
 scalaVersion in ThisBuild := "2.12.5"
 
@@ -106,7 +109,9 @@ lazy val pimpPlaySettings =
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
         "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.3",
-        "com.neovisionaries" % "nv-websocket-client" % "2.3"
+        "com.neovisionaries" % "nv-websocket-client" % "2.3",
+        httpGroup % "httpclient" % httpVersion,
+        httpGroup % "httpmime" % httpVersion
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
