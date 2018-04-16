@@ -102,7 +102,8 @@ class NoCacheByteStreams(id: CloudID,
         case ist: IllegalStateException if Option(ist.getMessage).contains(DetachedMessage) =>
           log info s"Removed $description after detachment"
         case sde: StreamDetachedException =>
-          log.warn(s"Removed $description after exceptional detachment", sde)
+          val msg = s"Removed $description after exceptional detachment"
+          if (wasSuccess) log.debug(msg, sde) else log.warn(msg, sde)
         case e: Exception =>
           log.error(s"Removed but failed to close $description $e", e)
       }.map(_ => true)

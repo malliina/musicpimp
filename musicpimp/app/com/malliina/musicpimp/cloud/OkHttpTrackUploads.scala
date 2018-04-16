@@ -28,7 +28,7 @@ object OkHttpTrackUploads {
   val uploadPath = "/track"
 
   def apply(lib: MusicLibrary, host: FullUrl) =
-    new ApacheTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
+    new OkHttpTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
 }
 
 class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
