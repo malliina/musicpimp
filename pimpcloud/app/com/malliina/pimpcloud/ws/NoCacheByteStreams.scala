@@ -12,7 +12,7 @@ import com.malliina.musicpimp.json.SocketStrings.Cancel
 import com.malliina.musicpimp.models.{CloudID, RangedRequest, RequestID, WrappedID}
 import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
-import com.malliina.pimpcloud.ws.NoCacheByteStreams.{DetachedMessage, log}
+import com.malliina.pimpcloud.ws.NoCacheByteStreams.{ByteStringBufferSize, DetachedMessage, log}
 import com.malliina.play.http.{HttpConstants, Proxies}
 import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
@@ -76,7 +76,7 @@ class NoCacheByteStreams(id: CloudID,
     val userAgent = req.headers.get(HeaderNames.USER_AGENT)
       .map(ua => s"user agent $ua")
       .getOrElse("unknown user agent")
-    val (queue, source) = Streaming.sourceQueue[ByteString](mat)
+    val (queue, source) = Streaming.sourceQueue[ByteString](mat, ByteStringBufferSize)
     iteratees += (request -> new ChannelInfo(queue, id, track, range))
     streamChanged()
     val address = Proxies.realAddress(req)
@@ -152,7 +152,7 @@ class NoCacheByteStreams(id: CloudID,
   }
 
   // Sends `msg` to the MusicPimp server
-  protected def sendMessage[M: Writes](msg: M) =
+  protected def sendMessage[M: Writes](msg: M): Unit =
     jsonOut ! Json.toJson(msg)
 
   protected def cancelMessage(request: RequestID) =
@@ -160,7 +160,7 @@ class NoCacheByteStreams(id: CloudID,
 
   protected def streamChanged(): Unit = onUpdate()
 
-  protected def analyzeResult(dest: StreamEndpoint, bytes: ByteString, result: QueueOfferResult) = {
+  protected def analyzeResult(dest: StreamEndpoint, bytes: ByteString, result: QueueOfferResult): Unit = {
     val suffix = s" for ${bytes.length} bytes of ${dest.describe}"
     result match {
       case Enqueued => ()

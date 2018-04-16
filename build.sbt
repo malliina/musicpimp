@@ -24,8 +24,8 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.11.2"
-val pimpcloudVersion = "1.21.2"
+val musicpimpVersion = "4.11.3"
+val pimpcloudVersion = "1.21.3"
 val sharedVersion = "1.8.3"
 val crossVersion = "1.8.1"
 val utilAudioVersion = "2.5.1"
