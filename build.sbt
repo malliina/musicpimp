@@ -24,8 +24,8 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.11.4"
-val pimpcloudVersion = "1.21.4"
+val musicpimpVersion = "4.11.5"
+val pimpcloudVersion = "1.21.5"
 val sharedVersion = "1.8.4"
 val crossVersion = "1.8.1"
 val utilAudioVersion = "2.5.1"
@@ -43,17 +43,17 @@ lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
-  .enablePlugins(FileTreePlugin)
-  //  .enablePlugins(FileTreePlugin, PlayNettyServer)
-  //  .disablePlugins(PlayAkkaHttpServer)
+  //  .enablePlugins(FileTreePlugin)
+  .enablePlugins(FileTreePlugin, PlayNettyServer)
+  .disablePlugins(PlayAkkaHttpServer)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
-  .enablePlugins(FileTreePlugin)
-  //  .enablePlugins(FileTreePlugin, PlayNettyServer)
-  //  .disablePlugins(PlayAkkaHttpServer)
+  //  .enablePlugins(FileTreePlugin)
+  .enablePlugins(FileTreePlugin, PlayNettyServer)
+  .disablePlugins(PlayAkkaHttpServer)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))

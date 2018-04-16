@@ -80,8 +80,8 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
   val lib = deps.lib
-//  val uploader = ApacheTrackUploads(lib, cloudHost)
-  val uploader = OkHttpTrackUploads(lib, cloudHost)
+  val uploader = ApacheTrackUploads(lib, cloudHost)
+//  val uploader = OkHttpTrackUploads(lib, cloudHost)
   val handler = deps.handler
   val stats = deps.stats
   private val registrationPromise = Promise[CloudID]()
