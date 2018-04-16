@@ -20,7 +20,6 @@ import play.api.http.HeaderNames
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 object OkHttpTrackUploads {
   private val log = Logger(getClass)
@@ -115,8 +114,8 @@ class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
   }
 
   def close(): Unit = {
-    Try(uploader.close())
     scheduler.awaitTermination(3, TimeUnit.SECONDS)
     scheduler.shutdown()
+    //    Try(uploader.close())
   }
 }
