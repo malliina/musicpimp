@@ -232,7 +232,7 @@ lazy val pimpcloudLinuxSettings = Seq(
       s"-J-Xbootclasspath/p:${bootClasspath.value}",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      "-Dlogger.resource=prod-logger.xml",
+      s"-Dlogger.resource=/etc/$linuxName/prod-logger.xml",
       s"-Dconfig.file=/etc/$linuxName/production.conf"
     )
   },

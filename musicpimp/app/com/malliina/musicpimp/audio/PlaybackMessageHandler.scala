@@ -65,7 +65,7 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
       case AddAllMsg(tracks, folders) =>
         resolveTracksOrEmpty(folders, tracks).map(_.foreach(playlist.add))
       case PlayAllMsg(tracks, folders) =>
-        resolveTracksOrEmpty(folders, tracks) map {
+        resolveTracksOrEmpty(folders, tracks).map {
           case head :: tail =>
             player.reset(head)
             tail.foreach(playlist.add)
@@ -113,9 +113,9 @@ class PlaybackMessageHandler(lib: MusicLibrary, statsPlayer: StatsPlayer)(implic
         log.error(s"Track search failed.", e)
     }
 
-  def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
-    resolveTracks(folders, tracks) recover {
-      case t: Throwable =>
+  def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[List[LocalTrack]] =
+    resolveTracks(folders, tracks).map(_.toList).recover {
+      case t: Exception =>
         log.error(s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references", t)
         Nil
     }

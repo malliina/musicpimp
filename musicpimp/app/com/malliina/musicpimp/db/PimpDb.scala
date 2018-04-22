@@ -202,7 +202,8 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     run(foldersFor(id).result.headOption)
   }
 
-  private def foldersFor(id: FolderID) = folders.filter(folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
+  private def foldersFor(id: FolderID) =
+    folders.filter(folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
 
   def trackFor(id: TrackID): Future[Option[DataTrack]] =
     tracksFor(Seq(id)).map(_.headOption)
