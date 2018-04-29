@@ -56,7 +56,7 @@ trait PimpContentController {
     PimpContentController.pimpResult(request)(html, json)
 
   def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
-    PimpContentController.pimpResult2(request)(html, json)
+    PimpContentController.pimpResultUneven(request)(html, json)
 }
 
 object PimpContentController {
@@ -69,8 +69,6 @@ object PimpContentController {
 
   def notAcceptable(msg: String) = Errors.withStatus(Results.NotAcceptable, msg)
 
-  // TODO dry
-
   def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpRequest.requestedResponseFormat(request) match {
       case Some(MimeTypes.HTML) => html
@@ -78,12 +76,8 @@ object PimpContentController {
       case _ => notAcceptableGeneric
     }
 
-  def pimpResult2(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
-    PimpRequest.requestedResponseFormat(request) match {
-      case Some(MimeTypes.HTML) => html
-      case Some(format) if format contains JsonKey => fut(json)
-      case _ => fut(notAcceptableGeneric)
-    }
+  def pimpResultUneven(request: RequestHeader)(html: => Future[Result], json: => Result): Future[Result] =
+    pimpResultAsync(request)(html = html, json = fut(json))
 
   def pimpResultAsync(request: RequestHeader)(html: => Future[Result], json: => Future[Result]): Future[Result] =
     PimpRequest.requestedResponseFormat(request) match {

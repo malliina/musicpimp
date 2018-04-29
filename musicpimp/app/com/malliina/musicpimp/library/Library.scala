@@ -39,7 +39,7 @@ class Library {
 
   def reloadFolders(): Unit = setFolders(Settings.read)
 
-  def setFolders(folders: Seq[Path]) = atomic(txn => rootFolders.set(folders)(txn))
+  def setFolders(folders: Seq[Path]): Unit = atomic(txn => rootFolders.set(folders)(txn))
 
   def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.relativePath))
 

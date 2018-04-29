@@ -37,23 +37,19 @@ val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.4.1"
 
-scalaVersion in ThisBuild := "2.12.5"
+scalaVersion in ThisBuild := "2.12.6"
 
 lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
   .enablePlugins(FileTreePlugin)
-  //  .enablePlugins(FileTreePlugin, PlayNettyServer)
-  //  .disablePlugins(PlayAkkaHttpServer)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
   .enablePlugins(FileTreePlugin)
-  //  .enablePlugins(FileTreePlugin, PlayNettyServer)
-  //  .disablePlugins(PlayAkkaHttpServer)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
@@ -302,13 +298,13 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
     "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.12.2",
+    malliinaGroup %% "mobile-push" % "1.12.4",
     utilPlayDep
   )
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.5",
+  scalaVersion := "2.12.6",
   organization := "org.musicpimp"
 )
 

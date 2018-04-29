@@ -136,7 +136,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       assert(r.status === 200)
       // It seems the content-length header is only set if the content is small enough for non-chunked encoding.
       // So, while this test passes also with this line uncommented, it's not representative.
-//      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
+      //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
       assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
     }
   }
@@ -147,7 +147,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
-//      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
+      //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
       assert(r.bodyAsBytes.size.toLong === 11)
     }
   }
@@ -160,6 +160,22 @@ class IntegrationTest extends PimpcloudServerSuite {
       val _ = makeGet("/folders?f=json", cloudId)
       val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
       assert(r3.status === 200)
+    }
+  }
+
+  test("get alarms") {
+    withCloud("alarms-test") { cloudId =>
+      val r = makeGet("/alarms?f=json", cloudId)
+      assert(r.contentType === "application/json")
+      assert(r.status === 200)
+    }
+  }
+
+  test("search") {
+    withCloud("search-test") { cloudId =>
+      val r = makeGet("/search?term=iron&f=json", cloudId)
+      assert(r.contentType === "application/json")
+      assert(r.status === 200)
     }
   }
 
@@ -182,24 +198,29 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   def withCloudTrack(desiredId: String)(code: (TrackID, StorageSize, CloudID) => Any) = {
+    // make sure musicpimp server has a track to serve
+    val trackFile = TestUtils.makeTestMp3()
+    val fileSize = Files.size(trackFile).bytes
+    assert(fileSize.toBytes === 198658L)
+    val trackFolder = trackFile.getParent
+    val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
+    Files.createTempFile(created, "temp", ".mp3")
+    Library.setFolders(Seq(trackFolder))
+    val _ = musicpimp.components.indexer.index().toBlocking.last
+    val file = Library.findAbsoluteNew(UnixPath(trackFile.getFileName))
+    assert(file.isDefined)
+    withCloud(desiredId) { cloudId =>
+      val trackId = Library.trackId(trackFile.getFileName)
+      code(trackId, fileSize, cloudId)
+    }
+  }
+
+  def withCloud(desiredId: String)(code: CloudID => Any) = {
     try {
-      // make sure musicpimp server has a track to serve
-      val trackFile = TestUtils.makeTestMp3()
-      val fileSize = Files.size(trackFile).bytes
-      assert(fileSize.toBytes === 198658L)
-      val trackFolder = trackFile.getParent
-      val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
-      Files.createTempFile(created, "temp", ".mp3")
-      Library.setFolders(Seq(trackFolder))
-      val _ = musicpimp.components.indexer.index().toBlocking.last
-      val file = Library.findAbsoluteNew(UnixPath(trackFile.getFileName))
-      assert(file.isDefined)
       // connect to pimpcloud
       val cloudId = CloudID(desiredId)
       val id = await(cloudClient.connect(Option(cloudId)))
       assert(id === cloudId)
-      val trackId = Library.trackId(trackFile.getFileName)
-      code(trackId, fileSize, id)
     } finally {
       cloudClient.disconnectAndForget("")
     }
