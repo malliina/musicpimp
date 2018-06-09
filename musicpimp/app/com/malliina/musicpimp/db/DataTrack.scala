@@ -27,6 +27,9 @@ object DataTrack {
 
   implicit val durJson = PrimitiveFormats.durationFormat
   implicit val format = Json.format[DataTrack]
-  implicit val dataResult: GetResult[DataTrack] =
-    GetResult(r => DataTrack(TrackID(r.<<), r.<<, r.<<, r.<<, r.nextInt().seconds, r.nextLong().bytes, UnixPath(r.nextString()), FolderID(r.<<)))
+  implicit val dataResult: GetResult[DataTrack] = GetResult { r =>
+    def readString(s: String) = r.rs.getString(s)
+
+    DataTrack(TrackID(readString("ID")), readString("TITLE"), readString("ARTIST"), readString("ALBUM"), r.rs.getInt("DURATION").seconds, r.rs.getLong("SIZE").bytes, UnixPath.fromRaw(readString("PATH")), FolderID(readString("FOLDER")))
+  }
 }
