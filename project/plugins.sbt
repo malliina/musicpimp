@@ -7,7 +7,7 @@ resolvers ++= Seq(
   Resolver.bintrayRepo("malliina", "maven")
 )
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
-
+classpathTypes += "maven-plugin"
 dependencyOverrides ++= Seq(
   "org.scala-js" % "sbt-scalajs" % "0.6.22",
   "io.netty" % "netty" % "3.10.6.Final",
@@ -17,9 +17,9 @@ dependencyOverrides ++= Seq(
 )
 
 Seq(
-  "com.malliina" %% "sbt-utils" % "0.8.0",
-  "com.malliina" %% "sbt-play" % "1.2.2",
-  "org.scala-js" % "sbt-scalajs" % "0.6.22",
+  "com.malliina" %% "sbt-utils" % "0.9.0",
+  "com.malliina" %% "sbt-play" % "1.3.0",
+  "org.scala-js" % "sbt-scalajs" % "0.6.24",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
   "com.malliina" % "sbt-filetree" % "0.2.1",
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",

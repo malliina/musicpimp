@@ -209,8 +209,14 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     tracksFor(Seq(id)).map(_.headOption)
 
   // the path predicate is legacy
-  def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] =
-    run(tracks.filter(t => t.id.inSet(ids) || t.path.inSet(ids.map(i => UnixPath.fromRaw(PimpEnc.decodeId(i))))).result)
+  def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] = {
+    val action = DBIO.sequence(
+      ids.map { id =>
+        tracks.filter(t => t.id === id || t.path === UnixPath.fromRaw(PimpEnc.decodeId(id))).result
+      }
+    ).map(_.flatten)
+    run(action)
+  }
 
   def insertFolders(fs: Seq[DataFolder]) = run(folders ++= fs)
 
