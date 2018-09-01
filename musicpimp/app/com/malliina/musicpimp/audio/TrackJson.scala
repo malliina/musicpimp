@@ -32,7 +32,7 @@ object TrackJson {
   def toFull(t: TrackMeta, host: FullUrl): FullTrack = t.toFull(urlFor(host, t.id))
 
   def toFullPlaylist(t: SavedPlaylist, host: FullUrl): FullSavedPlaylist =
-    FullSavedPlaylist(t.id, t.name, t.trackCount, t.tracks.map(toFull(_, host)))
+    FullSavedPlaylist(t.id, t.name, t.trackCount, t.duration, t.tracks.map(toFull(_, host)))
 
   def toFullPlaylistsMeta(t: PlaylistsMeta, host: FullUrl) =
     FullSavedPlaylistsMeta(t.playlists.map(toFullPlaylist(_, host)))
