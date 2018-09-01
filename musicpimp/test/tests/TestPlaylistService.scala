@@ -5,12 +5,14 @@ import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, SavedPlaylist, TrackID}
-import com.malliina.values.Username
-import com.malliina.values.UnixPath
+import com.malliina.values.{UnixPath, Username}
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestPlaylistService extends PlaylistService {
+
+  val zero = 0.seconds
 
   override implicit def ec: ExecutionContext = ActorMaterializer()(ActorSystem("test")).executionContext
 
@@ -27,8 +29,8 @@ class TestPlaylistService extends PlaylistService {
   )
 
   var playlists = Seq(
-    SavedPlaylist(PlaylistID(1), "name 1", tracks1, 5),
-    SavedPlaylist(PlaylistID(2), "name 2", tracks2, 1)
+    SavedPlaylist(PlaylistID(1), "name 1", 65, zero, tracks1),
+    SavedPlaylist(PlaylistID(2), "name 2", 1, zero, tracks2)
   )
 
   /**
