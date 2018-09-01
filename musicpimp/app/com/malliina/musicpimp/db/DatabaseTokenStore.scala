@@ -9,7 +9,7 @@ class DatabaseTokenStore(db: PimpDb, val ec: ExecutionContext)
   extends Sessionizer(db)
     with TokenStore {
 
-  import db.mappings._
+  import db.api._
   import db.schema._
 
   override def persist(token: Token): Future[Unit] =

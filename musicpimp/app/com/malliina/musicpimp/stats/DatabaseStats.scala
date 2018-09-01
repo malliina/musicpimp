@@ -13,7 +13,7 @@ class DatabaseStats(val db: PimpDb)(implicit ec: ExecutionContext)
     with PlaybackStats {
 
   import db.schema._
-  import db.mappings._
+  import db.api._
 
   override def played(track: TrackMeta, user: Username): Future[Unit] =
     run(plays += PlaybackRecord(track.id, Instant.now, user)).map(_ => ())

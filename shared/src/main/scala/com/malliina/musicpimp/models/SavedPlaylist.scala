@@ -5,7 +5,7 @@ import com.malliina.play.Writeables
 import play.api.http.Writeable
 import play.api.libs.json.Json
 
-case class FullSavedPlaylist(id: PlaylistID, name: String, tracks: Seq[FullTrack])
+case class FullSavedPlaylist(id: PlaylistID, name: String, trackCount: Int, tracks: Seq[FullTrack])
 
 object FullSavedPlaylist {
   implicit val json = Json.format[FullSavedPlaylist]
@@ -13,4 +13,4 @@ object FullSavedPlaylist {
   implicit val htmlSeq: Writeable[Seq[FullSavedPlaylist]] = Writeables.fromJson[Seq[FullSavedPlaylist]]
 }
 
-case class SavedPlaylist(id: PlaylistID, name: String, tracks: Seq[TrackMeta])
+case class SavedPlaylist(id: PlaylistID, name: String, tracks: Seq[TrackMeta], trackCount: Int)

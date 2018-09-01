@@ -3,12 +3,15 @@ package com.malliina.musicpimp.db
 import java.time.Instant
 
 import com.malliina.musicpimp.auth.DataUser
-import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID}
 import com.malliina.play.auth.Token
+import com.malliina.storage.StorageSize
 import com.malliina.values.{UnixPath, Username}
 import play.api.libs.json.{Json, OFormat}
 import slick.jdbc.JdbcProfile
 import slick.lifted.ProvenShape
+
+import scala.concurrent.duration.Duration
 
 object PimpSchema {
   def apply(profile: JdbcProfile) = new PimpSchema(profile)
@@ -16,12 +19,18 @@ object PimpSchema {
 
 class PimpSchema(val profile: JdbcProfile) {
   val api = new Mappings(profile) with profile.API
-  val userMapping = api.username
-  val trackMapping = api.trackId
-  val instantMapping = api.instant
-  val unixPathMapping = api.unixPath
-
   import api._
+
+  case class DataTrackRep(id: Rep[TrackID],
+                          title: Rep[String],
+                          artist: Rep[String],
+                          album: Rep[String],
+                          duration: Rep[Duration],
+                          size: Rep[StorageSize],
+                          path: Rep[UnixPath],
+                          folder: Rep[FolderID])
+
+  implicit object DataTrackShape extends CaseClassShape(DataTrackRep.tupled, (DataTrack.apply _).tupled)
 
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
@@ -58,7 +67,7 @@ class PimpSchema(val profile: JdbcProfile) {
   }
 
   class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
-    def id = column[Long]("ID", O.PrimaryKey, O.AutoInc)
+    def id = column[PlaylistID]("ID", O.PrimaryKey, O.AutoInc)
 
     def name = column[String]("NAME")
 
@@ -73,7 +82,7 @@ class PimpSchema(val profile: JdbcProfile) {
   }
 
   class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {
-    def playlist = column[Long]("PLAYLIST")
+    def playlist = column[PlaylistID]("PLAYLIST")
 
     def track = column[TrackID]("TRACK", O.Length(191))
 
@@ -126,9 +135,9 @@ class PimpSchema(val profile: JdbcProfile) {
 
     def album = column[String]("ALBUM")
 
-    def duration = column[Int]("DURATION")
+    def duration = column[Duration]("DURATION")
 
-    def size = column[Long]("SIZE")
+    def size = column[StorageSize]("SIZE")
 
     def path = column[UnixPath]("PATH", O.Default(UnixPath.Empty))
 
@@ -139,7 +148,9 @@ class PimpSchema(val profile: JdbcProfile) {
       onUpdate = ForeignKeyAction.Cascade,
       onDelete = ForeignKeyAction.Cascade)
 
-    def * = (id, title, artist, album, duration, size, path, folder) <> ((DataTrack.fromValues _).tupled, (t: DataTrack) => t.toValues)
+    def projection = DataTrackRep(id, title, artist, album, duration, size, path, folder)
+
+    def * = projection
   }
 
   class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
@@ -187,13 +198,13 @@ class PimpSchema(val profile: JdbcProfile) {
 
 }
 
-case class PlaylistRow(id: Option[Long], name: String, user: Username)
+case class PlaylistRow(id: Option[PlaylistID], name: String, user: Username)
 
 object PlaylistRow {
   implicit val json = Json.format[PlaylistRow]
 }
 
-case class PlaylistTrack(id: Long, track: TrackID, index: Int)
+case class PlaylistTrack(id: PlaylistID, track: TrackID, index: Int)
 
 object PlaylistTrack {
   implicit val json = Json.format[PlaylistTrack]

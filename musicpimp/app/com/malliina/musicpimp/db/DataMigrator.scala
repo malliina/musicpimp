@@ -145,7 +145,8 @@ class DataMigrator(db: PimpDb) {
     log.info(s"Restoring dump from '$from'...")
     val dump = Json.parse(Files.readAllBytes(from)).as[DataDump]
     val playlistIn = dump.playlists.map { row =>
-      sql"insert into playlists values(${row.id}, ${row.name}, ${row.user.name})".as[Int](GetDummy)
+      val id = row.id.map(_.id)
+      sql"insert into playlists values(${id}, ${row.name}, ${row.user.name})".as[Int](GetDummy)
     }
     val playlistInSeq = DBIO.sequence(playlistIn)
     val playIn = dump.plays.map { r =>

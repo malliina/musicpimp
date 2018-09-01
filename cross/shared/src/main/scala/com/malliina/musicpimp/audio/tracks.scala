@@ -46,6 +46,8 @@ trait TrackMeta extends MusicItem {
   def relativePath: Path = Paths.get(path.path)
 
   def toTrack = Track(id, title, artist, album, duration, size, path)
+
+  def toFull(url: FullUrl) = FullTrack(id, title, artist, album, path, duration, size, url)
 }
 
 object TrackMeta {

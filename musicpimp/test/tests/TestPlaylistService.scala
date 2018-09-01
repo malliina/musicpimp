@@ -27,8 +27,8 @@ class TestPlaylistService extends PlaylistService {
   )
 
   var playlists = Seq(
-    SavedPlaylist(PlaylistID(1), "name 1", tracks1),
-    SavedPlaylist(PlaylistID(2), "name 2", tracks2)
+    SavedPlaylist(PlaylistID(1), "name 1", tracks1, 5),
+    SavedPlaylist(PlaylistID(2), "name 2", tracks2, 1)
   )
 
   /**

@@ -18,7 +18,7 @@ case class DataTrack(id: TrackID,
                      size: StorageSize,
                      path: UnixPath,
                      folder: FolderID) extends TrackMeta {
-  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, path, folder))
+//  def toValues = Some((id, title, artist, album, duration.toSeconds.toInt, size.toBytes, path, folder))
 }
 
 object DataTrack {

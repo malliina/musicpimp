@@ -7,11 +7,22 @@ import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 
+case class IndexedTrack(track: DataTrack, index: Int)
+
+case class PlaylistInfo(id: PlaylistID, name: String, trackCount: Int, track: Option[IndexedTrack])
+
 class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistService {
-  implicit val trackMapping = db.mappings.trackId
-  implicit val userMapping = db.mappings.username
-  import db.schema._
+
   import db.api._
+  import db.schema._
+
+  case class IndexedTrackRep(track: DataTrackRep, index: Rep[Int])
+
+  implicit object IndexedShape extends CaseClassShape(IndexedTrackRep.tupled, IndexedTrack.tupled)
+
+  case class PlaylistInfoRep(id: Rep[PlaylistID], name: Rep[String], trackCount: Rep[Int], track: Rep[Option[IndexedTrackRep]])
+
+  implicit object PlaylistInfoShape extends CaseClassShape(PlaylistInfoRep.tupled, PlaylistInfo.tupled)
 
   override implicit def ec: ExecutionContext = db.ec
 
@@ -21,21 +32,20 @@ class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistServ
   }
 
   override protected def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] = {
-    val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id))
+    val q = playlistQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id))
     runQuery(q).map(collectPlaylists).map(_.headOption)
   }
 
-  private def collectPlaylists(rows: Seq[(Long, String, Option[(DataTrack, Int)])]): Seq[SavedPlaylist] = {
-    rows.foldLeft(Vector.empty[SavedPlaylist]) { case (acc, (id, name, link)) =>
-      val idx = acc.indexWhere(_.id.id == id)
+  private def collectPlaylists(rows: Seq[PlaylistInfo]): Seq[SavedPlaylist] =
+    rows.foldLeft(Vector.empty[SavedPlaylist]) { case (acc, row) =>
+      val idx = acc.indexWhere(_.id == row.id)
       if (idx >= 0) {
         val old = acc(idx)
-        link.fold(acc) { l => acc.updated(idx, old.copy(tracks = old.tracks :+ l._1)) }
+        row.track.fold(acc) { l => acc.updated(idx, old.copy(tracks = old.tracks :+ l.track)) }
       } else {
-        acc :+ SavedPlaylist(PlaylistID(id), name, link.map(_._1).toSeq)
+        acc :+ SavedPlaylist(row.id, row.name, row.track.map(_.track).toSeq, row.trackCount)
       }
     }
-  }
 
   override protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] = {
     val owns = playlist.id.map(ownsPlaylist(_, user)).getOrElse(Future.successful(true))
@@ -44,16 +54,16 @@ class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistServ
         def insertionQuery = (playlistsTable returning playlistsTable.map(_.id))
           .into((item, id) => item.copy(id = Option(id))) += PlaylistRow(None, playlist.name, user)
 
-        def newPlaylistId: Future[Long] = db.database.run(insertionQuery).map(_.id.getOrElse(0L))
+        def newPlaylistId: Future[PlaylistID] = db.database.run(insertionQuery).map(_.id.getOrElse(PlaylistID(0L)))
 
-        val playlistId: Future[Long] = playlist.id.map(plid => Future.successful(plid.id)).getOrElse(newPlaylistId)
+        val playlistId: Future[PlaylistID] = playlist.id.map(plid => Future.successful(plid)).getOrElse(newPlaylistId)
         playlistId.flatMap { id =>
           val entries = playlist.tracks.zipWithIndex.map {
             case (track, index) => PlaylistTrack(id, track, index)
           }
           val deletion = playlistTracksTable.filter(link => link.playlist === id && !link.idx.inSet(entries.map(_.index))).delete
           val action = DBIO.sequence(entries.map(entry => playlistTracksTable.insertOrUpdate(entry)) ++ Seq(deletion))
-          run(action.transactionally).map(_ => PlaylistID(id))
+          run(action.transactionally).map(_ => id)
         }
       } else {
         Future.failed(new UnauthorizedException(s"User $user is unauthorized"))
@@ -62,13 +72,15 @@ class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistServ
   }
 
   override def delete(id: PlaylistID, user: Username): Future[Unit] =
-    run(playlistsTable.filter(pl => pl.user === user && pl.id === id.id).delete).map(_ => ())
+    run(playlistsTable.filter(pl => pl.user === user && pl.id === id).delete).map(_ => ())
 
   protected def ownsPlaylist(id: PlaylistID, user: Username): Future[Boolean] =
-    runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id.id)).map(_.nonEmpty)
+    runQuery(playlistsTable.filter(pl => pl.user === user && pl.id === id)).map(_.nonEmpty)
 
-  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]) =
-    lists.joinLeft(playlistTracksTable.join(tracks).on(_.track === _.id)).on(_.id === _._1.playlist)
-      .map { case (pl, maybeLink) => (pl.id, pl.name, maybeLink.map(l => (l._2, l._1.idx))) }
-      .sortBy { case (id, name, maybeLink) => (name.asc, id, maybeLink.map({ case (_, idx) => idx }).asc.nullsLast) }
+  private def playlistQuery(lists: Query[PlaylistTable, PlaylistTable#TableElementType, Seq]): Query[PlaylistInfoRep, PlaylistInfo, Seq] =
+    lists
+      .joinLeft(playlistTracksTable.groupBy(_.playlist).map { case (id, q) => (id, q.length) }).on(_.id === _._1)
+      .joinLeft(playlistTracksTable.join(tracks).on(_.track === _.id)).on(_._1.id === _._1.playlist)
+      .map { case ((pl, counts), maybeLink) => PlaylistInfoRep(pl.id, pl.name, counts.map(_._2).getOrElse(0), maybeLink.map(l => IndexedTrackRep(l._2.projection, l._1.idx))) }
+      .sortBy { t => (t.name.asc, t.id, t.track.map(_.index).asc.nullsLast) }
 }

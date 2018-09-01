@@ -29,15 +29,14 @@ object TrackJson {
   def format(host: FullUrl): Format[TrackMeta] =
     Format(TrackMeta.reader, writer(host))
 
-  def toFull(t: TrackMeta, host: FullUrl): FullTrack =
-    FullTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, urlFor(host, t.id))
+  def toFull(t: TrackMeta, host: FullUrl): FullTrack = t.toFull(urlFor(host, t.id))
 
   def toFullPlaylist(t: SavedPlaylist, host: FullUrl): FullSavedPlaylist =
-    FullSavedPlaylist(t.id, t.name, t.tracks.map(toFull(_, host)))
+    FullSavedPlaylist(t.id, t.name, t.trackCount, t.tracks.map(toFull(_, host)))
 
   def toFullPlaylistsMeta(t: PlaylistsMeta, host: FullUrl) =
     FullSavedPlaylistsMeta(t.playlists.map(toFullPlaylist(_, host)))
 
-  def toFullMeta(p: PlaylistMeta, host: FullUrl) =
+  def toFullMeta(p: PlaylistMeta, host: FullUrl): FullPlaylistMeta =
     FullPlaylistMeta(toFullPlaylist(p.playlist, host))
 }

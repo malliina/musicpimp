@@ -16,7 +16,7 @@ class DatabaseUserManager(val db: PimpDb) extends UserManager[Username, Password
   implicit val ec = db.ec
 
   import db.api._
-  import db.mappings.username
+  import db.api.username
   import db.schema.{tokens, usersTable}
 
   def ensureAtLeastOneUserExists(): Future[Unit] = {

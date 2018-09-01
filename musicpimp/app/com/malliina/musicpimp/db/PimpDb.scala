@@ -105,11 +105,10 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     with AutoCloseable {
 
   val schema = PimpSchema(profile)
-  val mappings = schema.api
-  val api = schema.profile.api
+  val api = schema.api
 
   import schema._
-  import mappings._
+  import api._
 
   val tracksName = schema.tracks.baseTableRow.tableName
   val tableQueries = schema.tableQueries
