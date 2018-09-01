@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.stats
 
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{QueryStringBindable, RequestHeader}

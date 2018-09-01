@@ -2,7 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.libs.json.{JsValue, Json, Writes}
 
 case class UserRequest(cmd: String,

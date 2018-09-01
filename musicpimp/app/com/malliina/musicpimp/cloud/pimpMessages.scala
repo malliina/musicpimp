@@ -7,8 +7,8 @@ import com.malliina.musicpimp.models.{CloudID, PlaylistID, RequestID, TrackID}
 import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
-import com.malliina.play.models.Username
-import play.api.libs.json.{JsValue, Json}
+import com.malliina.values.Username
+import play.api.libs.json.Json
 
 trait UserMessage extends PimpMessage {
   def username: Username

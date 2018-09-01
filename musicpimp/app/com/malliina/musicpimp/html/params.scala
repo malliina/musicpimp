@@ -2,7 +2,7 @@ package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.scheduler.ClockPlaybackConf
 import com.malliina.play.controllers.AccountForms
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import controllers.musicpimp.UserFeedback
 import play.api.data.Form
 import play.api.i18n.Messages

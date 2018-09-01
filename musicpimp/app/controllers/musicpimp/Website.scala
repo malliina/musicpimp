@@ -1,13 +1,12 @@
 package controllers.musicpimp
 
-import javax.sound.sampled.{AudioSystem, LineUnavailableException}
-
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
-import com.malliina.musicpimp.html.PimpHtml
-import com.malliina.play.models.Username
 import com.malliina.play.tags.TagPage
+import com.malliina.values.Username
+import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 

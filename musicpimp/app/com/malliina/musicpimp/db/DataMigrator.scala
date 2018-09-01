@@ -37,9 +37,8 @@ object DataMigrator {
 class DataMigrator(db: PimpDb) {
   private val log = Logger(getClass)
 
-  import db.api._
   import db.schema._
-  import db.schema.mappings._
+  import db.schema.api._
 
   import concurrent.duration.DurationInt
 
@@ -50,7 +49,7 @@ class DataMigrator(db: PimpDb) {
 
   def loadVersion(): Int = Try(FileUtilities.fileToString(versionFile).toInt) getOrElse 0
 
-  def migrateDatabase() = {
+  def migrateDatabase(): Unit = {
     if (loadVersion() < desiredVersion) {
       log.info("Performing migration...")
       //      updatePlays()

@@ -22,12 +22,11 @@ import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models._
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileUploadRequest}
-import com.malliina.play.models.Username
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.Utils
-import com.malliina.values.{ErrorMessage, UnixPath}
+import com.malliina.values.{ErrorMessage, UnixPath, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest.log
 import javax.net.ssl.X509TrustManager

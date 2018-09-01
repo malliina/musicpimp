@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.db.DatabaseUserManager
 import com.malliina.musicpimp.stats.PlaybackStats
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.Logger
 
 import scala.concurrent.stm.{Ref, atomic}

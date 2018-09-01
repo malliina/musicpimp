@@ -3,7 +3,7 @@ package com.malliina.musicpimp.db
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 

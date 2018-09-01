@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.messaging.ProdPusher.log
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.push.adm.ADMClient
@@ -8,7 +8,7 @@ import com.malliina.push.apns.APNSTokenConf
 import com.malliina.push.gcm.GCMClient
 import com.malliina.push.mpns.MPNSClient
 import com.malliina.push.wns.{WNSClient, WNSCredentials}
-import play.api.Logger
+import play.api.{Configuration, Logger}
 
 import scala.concurrent.Future
 
@@ -61,5 +61,5 @@ class ProdPusher(apnsConf: APNSTokenConf,
 object ProdPusher {
   private val log = Logger(getClass)
 
-  def fromConf: ProdPusher = new ProdPusher(PushConfReader.load)
+  def apply(conf: Configuration): ProdPusher = new ProdPusher(PushConf.orFail(conf))
 }

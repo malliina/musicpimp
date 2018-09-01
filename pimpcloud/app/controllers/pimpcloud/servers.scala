@@ -7,13 +7,14 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.{Constants, PimpServerSocket}
 import com.malliina.musicpimp.models.{CloudID, RequestID}
-import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStream, PimpStreams}
 import com.malliina.pimpcloud.json.JsonStrings._
+import com.malliina.pimpcloud.{PimpServer, PimpServers, PimpStream, PimpStreams}
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth._
 import com.malliina.play.http.{AuthedRequest, Proxies}
-import com.malliina.play.models.{AuthInfo, Password, Username}
+import com.malliina.play.models.AuthInfo
 import com.malliina.play.ws._
+import com.malliina.values.Username
 import controllers.pimpcloud.ServerMediator._
 import controllers.pimpcloud.Servers.log
 import play.api.Logger

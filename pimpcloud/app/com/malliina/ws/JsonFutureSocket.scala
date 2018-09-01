@@ -2,12 +2,11 @@ package com.malliina.ws
 
 import java.util.UUID
 
-import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.{BodyAndId, UuidFutureMessaging}
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.util.Utils
 import com.malliina.ws.JsonFutureSocket.SuccessKey
+import com.malliina.concurrent.Execution.cached
 import play.api.libs.json._
 
 import scala.concurrent.Future
@@ -56,7 +55,11 @@ object JsonFutureSocket {
   val RequestId = "request"
   val SuccessKey = "success"
 
-  def tryParseUUID(id: String): Option[UUID] = {
-    Utils.opt[UUID, IllegalArgumentException](UUID.fromString(id))
-  }
+  def tryParseUUID(id: String): Option[UUID] =
+    try {
+      Option(UUID.fromString(id))
+    } catch {
+      case _: IllegalArgumentException =>
+        None
+    }
 }

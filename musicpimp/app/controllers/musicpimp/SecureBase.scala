@@ -6,7 +6,7 @@ import com.malliina.musicpimp.http.PimpUploads
 import com.malliina.play.auth.{Auth, AuthFailure}
 import com.malliina.play.controllers._
 import com.malliina.play.http._
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import controllers.musicpimp.SecureBase.log
 import play.api.Logger
 import play.api.http.Writeable

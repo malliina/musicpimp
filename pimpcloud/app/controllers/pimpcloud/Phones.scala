@@ -3,8 +3,7 @@ package controllers.pimpcloud
 import java.nio.file.Paths
 
 import akka.stream.Materializer
-import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.concurrent.FutureOps
+import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.audio.{Directory, PimpEnc}
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
@@ -134,7 +133,7 @@ class Phones(comps: ControllerComponents,
             log.error(s"Found no info about track '$id', failing request.")
             badGatewayDefault
           }
-        }.recoverAll(_ => notFound(s"ID not found '$id'."))
+        }.recover { case _ => notFound(s"ID not found '$id'.") }
       }
     }
   }
@@ -218,7 +217,7 @@ class Phones(comps: ControllerComponents,
         errorMessage => fut(badRequest(errorMessage)),
         parsedBody => phone.makeRequest(cmd, parsedBody)
           .map { response => toResult(req, response) }
-          .recoverAll { t =>
+          .recover { case t =>
             log.error("Phone request failed.", t)
             badGatewayDefault
           }

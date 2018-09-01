@@ -9,7 +9,7 @@ resolvers ++= Seq(
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
 classpathTypes += "maven-plugin"
 dependencyOverrides ++= Seq(
-  "org.scala-js" % "sbt-scalajs" % "0.6.22",
+  "org.scala-js" % "sbt-scalajs" % "0.6.24",
   "io.netty" % "netty" % "3.10.6.Final",
   "org.webjars" % "webjars-locator-core" % "0.33",
   "org.codehaus.plexus" % "plexus-utils" % "3.0.17",
@@ -18,8 +18,9 @@ dependencyOverrides ++= Seq(
 
 Seq(
   "com.malliina" %% "sbt-utils" % "0.9.0",
-  "com.malliina" %% "sbt-play" % "1.3.0",
+  "com.malliina" %% "sbt-play" % "1.3.1",
   "org.scala-js" % "sbt-scalajs" % "0.6.24",
+  "org.portable-scala" % "sbt-scalajs-crossproject" % "0.5.0",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
   "com.malliina" % "sbt-filetree" % "0.2.1",
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",

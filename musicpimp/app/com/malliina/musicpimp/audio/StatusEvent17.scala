@@ -26,7 +26,7 @@ object StatusEvent17 {
     OWrites[StatusEvent17] { o =>
       obj(
         EventKey -> StatusKey,
-        Id -> TrackID.format.writes(o.id),
+        Id -> TrackID.json.writes(o.id),
         Title -> o.title,
         Artist -> o.artist,
         Album -> o.album,

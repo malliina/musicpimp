@@ -1,6 +1,6 @@
 package com.malliina.concurrent
 
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import rx.lang.scala.Observable
 
 import scala.concurrent.duration.Duration

@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.messaging.APNSUtils.fold
 import com.malliina.musicpimp.messaging.cloud.{APNSHttpResult, APNSPayload}
 import com.malliina.push.apns._

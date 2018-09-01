@@ -5,8 +5,8 @@ import java.nio.file.Files
 
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.models.{Password, Username}
 import com.malliina.util.Utils
+import com.malliina.values.{Password, Username}
 
 import scala.concurrent.Future
 import scala.io.BufferedSource

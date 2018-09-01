@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.audio.TrackMeta
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 
 import scala.concurrent.Future
 

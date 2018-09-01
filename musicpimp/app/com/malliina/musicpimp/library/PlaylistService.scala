@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.library
 
 import com.malliina.musicpimp.models._
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 

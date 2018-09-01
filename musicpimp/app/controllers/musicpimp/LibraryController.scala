@@ -9,7 +9,7 @@ import com.malliina.musicpimp.models._
 import com.malliina.play.FileResults
 import com.malliina.play.auth.AuthFailure
 import com.malliina.play.http.FullUrls
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import com.malliina.play.tags.TagPage
 import controllers.musicpimp.LibraryController.log
 import play.api.Logger

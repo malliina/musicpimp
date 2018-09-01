@@ -4,7 +4,7 @@ import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, RemoteInfo, TrackID}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.Logger
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json.toJson

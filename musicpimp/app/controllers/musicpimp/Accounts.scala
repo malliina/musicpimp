@@ -5,8 +5,9 @@ import com.malliina.musicpimp.models.NewUser
 import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.{Auth, RememberMe}
 import com.malliina.play.controllers.AccountForms
+import com.malliina.play.forms.FormMappings
 import com.malliina.play.http.Proxies
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.Username
 import controllers.musicpimp.Accounts.{UsersFeedback, log}
 import play.api.Logger
 import play.api.data.Form
@@ -43,9 +44,9 @@ class Accounts(tags: PimpHtml,
   val rememberMeLoginForm = accs.rememberMeLoginForm
 
   val addUserForm = Form(mapping(
-    userFormKey -> Username.mapping,
-    accs.newPassKey -> Password.mapping,
-    accs.newPassAgainKey -> Password.mapping
+    userFormKey -> FormMappings.username,
+    accs.newPassKey -> FormMappings.password,
+    accs.newPassAgainKey -> FormMappings.password
   )(NewUser.apply)(NewUser.unapply)
     .verifying(repeatPassFailureMessage, _.passwordsMatch))
 

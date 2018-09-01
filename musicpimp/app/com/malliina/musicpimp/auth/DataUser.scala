@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.libs.json.{Json, OFormat}
 
 case class DataUser(username: Username, passwordHash: String)

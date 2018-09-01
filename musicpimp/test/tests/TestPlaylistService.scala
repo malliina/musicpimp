@@ -5,7 +5,7 @@ import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, SavedPlaylist, TrackID}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import com.malliina.values.UnixPath
 
 import scala.concurrent.{ExecutionContext, Future}

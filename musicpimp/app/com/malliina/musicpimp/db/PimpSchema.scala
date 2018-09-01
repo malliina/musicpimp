@@ -5,8 +5,7 @@ import java.time.Instant
 import com.malliina.musicpimp.auth.DataUser
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.play.auth.Token
-import com.malliina.play.models.Username
-import com.malliina.values.UnixPath
+import com.malliina.values.{UnixPath, Username}
 import play.api.libs.json.{Json, OFormat}
 import slick.jdbc.JdbcProfile
 import slick.lifted.ProvenShape
@@ -16,14 +15,13 @@ object PimpSchema {
 }
 
 class PimpSchema(val profile: JdbcProfile) {
-  val mappings = Mappings(profile)
-  val userMapping = mappings.username
-  val trackMapping = mappings.trackId
-  val instantMapping = mappings.instant
-  val unixPathMapping = mappings.unixPath
+  val api = new Mappings(profile) with profile.API
+  val userMapping = api.username
+  val trackMapping = api.trackId
+  val instantMapping = api.instant
+  val unixPathMapping = api.unixPath
 
-  import mappings._
-  import profile.api._
+  import api._
 
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]

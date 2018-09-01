@@ -3,7 +3,7 @@ package com.malliina.musicpimp.db
 import java.sql.SQLException
 
 import com.malliina.musicpimp.auth.{Auth, DataUser, UserManager}
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 
 import scala.concurrent.Future
 

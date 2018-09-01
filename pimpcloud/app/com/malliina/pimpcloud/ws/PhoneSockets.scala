@@ -2,7 +2,6 @@ package com.malliina.pimpcloud.ws
 
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.pattern.pipe
-import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.audio.WelcomeMessage
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.{PimpPhone, PimpPhones}
@@ -35,7 +34,7 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
     if (isStatus) {
       conn.status()
         .pipeTo(out)
-        .recoverAll(t => PhoneActor.log.warn("Status request failed.", t))
+        .recover { case t => PhoneActor.log.warn("Status request failed.", t) }
     } else {
       val payload = Json.obj(
         Cmd -> JsonStrings.Player,

@@ -2,7 +2,7 @@ package com.malliina.play
 
 import com.malliina.play.auth.{AuthFailure, Authenticator, UserAuthenticator}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.{ExecutionContext, Future}

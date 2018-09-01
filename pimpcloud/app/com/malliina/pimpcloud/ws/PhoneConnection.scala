@@ -5,7 +5,8 @@ import com.malliina.musicpimp.cloud.{GetMeta, PimpServerSocket}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.json.JsonStrings.{Meta, StatusKey}
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.{AuthInfo, Username}
+import com.malliina.play.models.AuthInfo
+import com.malliina.values.Username
 import play.api.libs.json.{JsResult, JsValue, Json, Writes}
 import play.api.mvc.RequestHeader
 

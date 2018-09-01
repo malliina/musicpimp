@@ -105,10 +105,9 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     with AutoCloseable {
 
   val schema = PimpSchema(profile)
-  val mappings = schema.mappings
+  val mappings = schema.api
   val api = schema.profile.api
 
-  import api._
   import schema._
   import mappings._
 
@@ -241,7 +240,6 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     if (p == MySQLProfile) initIndexMaria(tableName)
     else initIndexH2(tableName)
 
-
   def dropAll() = {
     tableQueries foreach { t =>
       if (exists(t)) {
@@ -309,7 +307,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     val oldTrackDeletion = tempTracksTable.delete
     var fileCount = 0L
 
-    def upsertAllTracks() = {
+    def upsertAllTracks(): Unit = {
       Library.dataTrackStream.grouped(100) foreach { chunk =>
         val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
         val chunkInsertion = run(DBIO.seq(

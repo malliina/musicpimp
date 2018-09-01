@@ -4,7 +4,7 @@ import com.malliina.http.FullUrl
 import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.{JsonFormatVersions, Target}
 import com.malliina.play.http.FullUrls
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.mvc.RequestHeader
 
 case class RemoteInfo(user: Username, apiVersion: String, host: FullUrl, target: Target)

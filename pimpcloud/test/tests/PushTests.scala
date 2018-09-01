@@ -1,12 +1,8 @@
 package tests
 
-import com.malliina.musicpimp.messaging.ProdPusher
 import com.malliina.musicpimp.messaging.cloud.{APNSPayload, PushTask}
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import org.scalatest.FunSuite
-
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 
 class PushTests extends FunSuite {
   val testTask = PushTask(
@@ -20,8 +16,8 @@ class PushTests extends FunSuite {
   )
 
   ignore("can push") {
-    val pusher = ProdPusher.fromConf
-    val res = Await.result(pusher.push(testTask), 30.seconds)
-    assert(res.apns.size === 1)
+    //    val pusher = ProdPusher.fromConf
+    //    val res = Await.result(pusher.push(testTask), 30.seconds)
+    //    assert(res.apns.size === 1)
   }
 }

@@ -3,7 +3,7 @@ package com.malliina.musicpimp.beam
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.PimpMessage
 import com.malliina.musicpimp.models.TrackID
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import play.api.libs.json.Json
 
 case class BeamCommand(track: TrackID,

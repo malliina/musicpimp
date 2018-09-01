@@ -2,7 +2,7 @@ package com.malliina.musicpimp.auth
 
 import com.malliina.play.auth._
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import controllers.musicpimp.fut
 import play.api.Logger
 

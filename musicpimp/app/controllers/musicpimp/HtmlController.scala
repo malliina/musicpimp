@@ -1,7 +1,7 @@
 package controllers.musicpimp
 
 import com.malliina.play.http.CookiedRequest
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.http.Writeable
 import play.api.mvc.{AnyContent, EssentialAction}
 import play.twirl.api.Html

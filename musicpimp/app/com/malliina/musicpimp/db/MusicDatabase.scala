@@ -2,7 +2,7 @@ package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.library.{MusicFolder, PlaylistSubmission}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, SavedPlaylist}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 
 import scala.concurrent.Future
 

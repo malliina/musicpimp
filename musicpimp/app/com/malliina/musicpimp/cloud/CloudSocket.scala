@@ -17,8 +17,8 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
-import com.malliina.play.models.{Password, Username}
 import com.malliina.rx.Observables
+import com.malliina.values.{Password, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.{LibraryController, Rest}
 import play.api.Logger

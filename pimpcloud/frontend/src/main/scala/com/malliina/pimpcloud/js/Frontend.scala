@@ -2,14 +2,10 @@ package com.malliina.pimpcloud.js
 
 import org.scalajs.dom
 
-import scala.scalajs.js.JSApp
-import scala.scalajs.js.annotation.JSExport
-
-object Frontend extends JSApp {
+object Frontend {
   var app: Option[SocketJS] = None
 
-  @JSExport
-  override def main() = {
+  def main(args: Array[String]): Unit = {
     val path = dom.window.location.pathname
     val jsImpl: PartialFunction[String, SocketJS] = {
       case "/admin/logs" => new LogsJS

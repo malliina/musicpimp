@@ -17,6 +17,7 @@ import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject => portableProject, CrossType => PortableType}
 
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 // wtf?
@@ -24,18 +25,19 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.11.7"
-val pimpcloudVersion = "1.21.6"
-val sharedVersion = "1.8.4"
-val crossVersion = "1.8.1"
+val musicpimpVersion = "4.12.0"
+val pimpcloudVersion = "1.23.0"
+val sharedVersion = "1.9.0"
+val crossVersion = "1.9.0"
 val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "4.11.1"
+val utilPlayVersion = "4.14.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
+val primitivesVersion = "1.6.0"
 
 val httpGroup = "org.apache.httpcomponents"
-val httpVersion = "4.4.1"
+val httpVersion = "4.5.6"
 
 scalaVersion in ThisBuild := "2.12.6"
 
@@ -58,14 +60,15 @@ lazy val shared = Project("pimp-shared", file("shared"))
 lazy val it = project.in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
   .settings(baseSettings: _*)
-lazy val cross = crossProject.in(file("cross"))
+lazy val cross = portableProject(JSPlatform, JVMPlatform)
+  .crossType(PortableType.Full)
+  .in(file("cross"))
   .settings(crossSettings: _*)
   .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.1")
-lazy val utilAudio = SbtProjects.testableProject("util-audio", file("util-audio"))
-  .settings(utilAudioSettings: _*)
-
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
+lazy val utilAudio = SbtProjects.testableProject("util-audio", file("util-audio"))
+  .settings(utilAudioSettings: _*)
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -79,8 +82,8 @@ lazy val crossSettings = Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.play" %%% "play-json" % "2.6.9",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
-    "com.malliina" %%% "primitives" % "1.5.2",
-    "com.malliina" %%% "util-html" % utilPlayVersion
+    malliinaGroup %%% "primitives" % primitivesVersion,
+    malliinaGroup %%% "util-html" % utilPlayVersion
   )
 )
 
@@ -102,28 +105,30 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.10.2",
+        malliinaGroup %% "util-actor" % "2.11.0",
+        malliinaGroup %% "util-rmi" % "2.11.0",
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
-        "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.3",
-        "com.neovisionaries" % "nv-websocket-client" % "2.3",
+        "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.6",
+        "com.neovisionaries" % "nv-websocket-client" % "2.5",
         httpGroup % "httpclient" % httpVersion,
-        httpGroup % "httpmime" % httpVersion
+        httpGroup % "httpmime" % httpVersion,
+        "org.scala-stm" %% "scala-stm" % "0.8"
       ).map(dep => dep withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
         "com.malliina.musicpimp.http.PimpImports._",
         "com.malliina.musicpimp.models._",
-        "com.malliina.play.models.Username"
+        "com.malliina.values.Username"
       ),
       fileTreeSources := Seq(
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
-        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.3.jar")
+        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")
       }
     )
 
@@ -199,7 +204,10 @@ lazy val pimpcloudSettings =
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (name in pimpcloudFrontend).value),
       version := pimpcloudVersion,
-      libraryDependencies += PlayImport.ehcache,
+      libraryDependencies ++= Seq(
+        malliinaGroup %% "play-social" % utilPlayVersion,
+        PlayImport.ehcache
+      ),
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
       buildInfoPackage := "com.malliina.pimpcloud",
@@ -258,7 +266,7 @@ lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % "2.6",
     "org.slf4j" % "slf4j-api" % "1.7.25",
-    malliinaGroup %% "util-base" % "1.5.2",
+    malliinaGroup %% "util-base" % primitivesVersion,
     "org" % "jaudiotagger" % "2.0.3",
     soundGroup % "tritonus-share" % "0.3.7.4",
     soundGroup % "jlayer" % "1.0.1.4",
@@ -276,13 +284,13 @@ lazy val commonServerSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
-    malliinaGroup %% "logstreams-client" % "0.0.9",
+    malliinaGroup %% "logstreams-client" % "1.1.0",
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
     "com.malliina.musicpimp.http.PimpImports._",
     "com.malliina.musicpimp.models._",
-    "com.malliina.play.models.Username"
+    "com.malliina.values.Username"
   ),
   pipelineStages ++= Seq(digest, gzip),
   //  pipelineStages in Assets ++= Seq(digest, gzip),
@@ -298,7 +306,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
     "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.12.4",
+    malliinaGroup %% "mobile-push" % "1.13.0",
     utilPlayDep
   )
 )
@@ -313,6 +321,6 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.4" % Test),
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.5" % Test),
       testFrameworks += new TestFramework("utest.runner.Framework")
     )

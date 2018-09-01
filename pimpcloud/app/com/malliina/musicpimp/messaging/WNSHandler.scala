@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.messaging.cloud.{WNSPayload, WNSResult}
 import com.malliina.push.PushException
 import com.malliina.push.wns.{WNSClient, WNSResponse}

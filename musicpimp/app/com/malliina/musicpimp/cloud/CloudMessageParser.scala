@@ -11,13 +11,10 @@ import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.json.JsonStrings.Cmd
-import com.malliina.play.models.Username
-import play.api.Logger
+import com.malliina.values.Username
 import play.api.libs.json._
 
-object CloudMessageParser extends CloudMessageParser {
-  private val log = Logger(getClass)
-}
+object CloudMessageParser extends CloudMessageParser
 
 trait CloudMessageParser {
   def parseRequest(json: JsValue): JsResult[CloudRequest] = {

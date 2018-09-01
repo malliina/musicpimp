@@ -5,8 +5,8 @@ import java.nio.file.Path
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.auth.{Token, TokenStore}
 import com.malliina.play.io.FileBackedList
-import com.malliina.play.models.Username
 import com.malliina.util.Utils
+import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 

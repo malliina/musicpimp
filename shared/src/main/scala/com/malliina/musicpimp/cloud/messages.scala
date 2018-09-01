@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.models.{FolderID, TrackID}
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import play.api.libs.json.Json
 
 trait PimpMessage

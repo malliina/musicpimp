@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.cloud
 
-import com.malliina.play.models.Password
+import com.malliina.values.Password
 
 object Constants extends Constants
 

@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.auth
 
 import com.malliina.musicpimp.db.{DatabaseUserManager, PimpDb}
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import org.apache.commons.codec.digest.DigestUtils
 
 import scala.concurrent.Future

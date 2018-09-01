@@ -5,7 +5,7 @@ import java.net.NetworkInterface
 import akka.stream.scaladsl.FileIO
 import com.malliina.json.JsonFormats
 import com.malliina.play.http.CookiedRequest
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import controllers.musicpimp.ConnectController.{Protocols, log}
 import net.glxn.qrgen.QRCode
 import play.api.Logger

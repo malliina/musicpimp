@@ -1,13 +1,13 @@
 package controllers.pimpcloud
 
-import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.models.{CloudID, CloudIDs}
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
 import com.malliina.pimpcloud.models.HealthResponse
 import com.malliina.play.auth.Auth
 import com.malliina.play.controllers.{AccountForms, Caching}
+import com.malliina.play.forms.FormMappings
 import com.malliina.play.http.Proxies
-import com.malliina.play.models.{Password, Username}
+import com.malliina.values.{Password, Username}
 import controllers.pimpcloud.Web.{cloudForm, forms, log}
 import play.api.Logger
 import play.api.data.Form
@@ -26,9 +26,9 @@ object Web {
   val serverFormKey = "server"
 
   val cloudForm = Form[CloudCreds](mapping(
-    serverFormKey -> CloudIDs.mapping,
-    forms.userFormKey -> Username.mapping,
-    forms.passFormKey -> Password.mapping
+    serverFormKey -> CloudIDs.form,
+    forms.userFormKey -> FormMappings.username,
+    forms.passFormKey -> FormMappings.password
   )(CloudCreds.apply)(CloudCreds.unapply))
 }
 
@@ -64,7 +64,7 @@ class Web(comps: ControllerComponents,
           log info s"Authentication succeeded to '$who' from '$remoteAddress'."
           val intendedUrl = request.session.get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
           Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
-        }.recoverAll { _ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)) }
+        }.recover { case _ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)) }
       }
     )
   }

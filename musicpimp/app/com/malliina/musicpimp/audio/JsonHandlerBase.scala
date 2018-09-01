@@ -5,7 +5,7 @@ import com.malliina.musicpimp.http.PimpRequest
 import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.http.{CookiedRequest, FullUrls}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import play.api.Logger
 import play.api.libs.json.JsValue
 

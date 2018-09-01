@@ -10,7 +10,7 @@ import com.malliina.logstreams.client.HttpUtil
 import com.malliina.pimpcloud.auth.FakeAuth
 import com.malliina.play.Streaming
 import com.malliina.security.SSLUtils
-import com.malliina.util.Util
+import com.malliina.concurrent.Execution.cached
 import okhttp3.MediaType
 import org.apache.commons.io.FileUtils
 import play.api.http.HeaderNames
@@ -94,7 +94,7 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     client.close()
   }
 
-  def multiPartUpload(uri: FullUrl, tempFile: Path) {
+  def multiPartUpload(uri: FullUrl, tempFile: Path): Unit = {
     val file = ensureTestMp3Exists(tempFile)
     val client = OkClient.default
     val request = client.multiPart(
@@ -110,8 +110,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
   def ensureTestMp3Exists(tempFile: Path): Path = {
     if (!Files.exists(tempFile)) {
       val dest = Files.createTempFile(null, null)
-      val resourceURL = Util.resourceOpt(fileName)
-      val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: " + fileName))
+      val resourceURL = Option(getClass.getClassLoader).flatMap(cl => Option(cl.getResource(fileName)))
+      val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: $fileName"))
       FileUtils.copyURLToFile(url, dest.toFile)
       if (!Files.exists(dest)) {
         throw new Exception(s"Unable to access $dest")

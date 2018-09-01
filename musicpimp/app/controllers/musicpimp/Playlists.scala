@@ -8,7 +8,7 @@ import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.play.http.CookiedRequest
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import controllers.musicpimp.Playlists.log
 import play.api.Logger
 import play.api.data.Forms._

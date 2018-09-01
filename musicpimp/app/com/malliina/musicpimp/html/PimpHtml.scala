@@ -13,9 +13,9 @@ import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.{ClockPlayback, FullClockPlayback}
 import com.malliina.musicpimp.stats._
-import com.malliina.play.models.Username
 import com.malliina.play.tags.PlayTags.callAttr
 import com.malliina.play.tags.TagPage
+import com.malliina.values.Username
 import controllers.Assets.Asset
 import controllers.ReverseAssets
 import controllers.musicpimp.{UserFeedback, routes}

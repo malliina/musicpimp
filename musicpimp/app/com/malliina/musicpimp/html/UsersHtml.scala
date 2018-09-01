@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 import controllers.musicpimp.{UserFeedback, routes}
 
 import scalatags.Text.all._

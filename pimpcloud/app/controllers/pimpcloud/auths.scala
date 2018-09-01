@@ -1,13 +1,13 @@
 package controllers.pimpcloud
 
 import akka.stream.Materializer
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.http.OkClient
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{AuthConf, AuthFailure, Authenticator, BasicAuthHandler, CodeValidationConf, StandardCodeValidator, UserAuthenticator}
+import com.malliina.play.auth.{AuthConf, AuthFailure, Authenticator, BasicAuthHandler, CodeValidationConf, PermissionError, StandardCodeValidator, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.models.Email
+import com.malliina.values.Email
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
 import play.api.mvc._
@@ -49,7 +49,11 @@ object OAuthCtrl {
 class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials) {
   val sessionKey = "username"
   val authorizedEmail = Email("malliina123@gmail.com")
-  val handler = BasicAuthHandler(routes.Logs.index()).filter(_ == authorizedEmail)
+  val handler = new BasicAuthHandler(
+    routes.Logs.index(),
+    BasicAuthHandler.LastIdCookie,
+    email => if (email == authorizedEmail) Right(email) else Left(PermissionError(s"Unauthorized: '$email'."))
+  )
   val conf = AuthConf(creds.clientId, creds.clientSecret)
   val validator = StandardCodeValidator(CodeValidationConf.google(routes.AdminOAuth.googleCallback(), handler, conf, OkClient.default))
 

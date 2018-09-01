@@ -4,7 +4,7 @@ import java.time.Instant
 
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.db._
-import com.malliina.play.models.Username
+import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -12,7 +12,6 @@ class DatabaseStats(val db: PimpDb)(implicit ec: ExecutionContext)
   extends Sessionizer(db)
     with PlaybackStats {
 
-  import db.api._
   import db.schema._
   import db.mappings._
 

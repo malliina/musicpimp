@@ -1,10 +1,9 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.play.json.SimpleCompanion
-import play.api.data.format.Formats.stringFormat
+import com.malliina.values.JsonCompanion
 
 case class ServerTag(tag: String)
 
-object ServerTag extends SimpleCompanion[String, ServerTag] {
-  override def raw(t: ServerTag): String = t.tag
+object ServerTag extends JsonCompanion[String, ServerTag] {
+  override def write(t: ServerTag): String = t.tag
 }

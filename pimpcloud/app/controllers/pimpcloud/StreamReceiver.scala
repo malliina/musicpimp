@@ -3,7 +3,7 @@ package controllers.pimpcloud
 import java.io.IOException
 
 import akka.http.scaladsl.model.EntityStreamException
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.storage.StorageLong
 import com.malliina.ws.Streamer
@@ -46,9 +46,10 @@ class StreamReceiver(comps: ControllerComponents) extends AbstractController(com
 
       // Signals to the phone that the transfer is complete
       def cleanup() = transfers.remove(requestId, shouldAbort = false, wasSuccess = false)
+
       // If the client disconnects while an upload is in progress, a BodyParser throws
       // java.io.IOException: An existing connection was forcibly closed by the remote host
-      override def apply(req: RequestHeader) = p(req) recoverWith {
+      override def apply(req: RequestHeader) = p(req).recoverWith {
         case t: IOException if Option(t.getMessage) exists (msg => cancelMessages.contains(msg)) =>
           log info s"Server cancelled upload for '$requestId'."
           cleanup()
