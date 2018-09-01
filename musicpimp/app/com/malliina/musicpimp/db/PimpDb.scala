@@ -17,8 +17,8 @@ import javax.sql.DataSource
 import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
 import rx.lang.scala.{Observable, Observer, Subject}
-import slick.jdbc.GetResult.GetInt
 import slick.jdbc._
+import slick.util.AsyncExecutor
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -29,6 +29,7 @@ object PimpDb {
   private val log = Logger(getClass)
   val H2UrlSettings = "h2.url.settings"
   val H2Home = "h2.home"
+  val maxConn = 20
 
   def default(ec: ExecutionContext) = {
     DatabaseConf.prod().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
@@ -77,8 +78,16 @@ object PimpDb {
     apply(MySQLProfile, new HikariDataSource(hikariConfig), ec)
   }
 
+  def executor(threads: Int) = AsyncExecutor(
+    name = "AsyncExecutor.musicpimp",
+    minThreads = threads,
+    maxThreads = threads,
+    queueSize = 2000,
+    maxConnections = threads
+  )
+
   def apply(profile: JdbcProfile, ds: DataSource, ec: ExecutionContext): PimpDb =
-    new PimpDb(profile, profile.api.Database.forDataSource(ds, None))(ec)
+    new PimpDb(profile, profile.api.Database.forDataSource(ds, Option(maxConn), executor(maxConn)))(ec)
 
   case class DatabaseConf(url: String, user: String, pass: String, driver: String)
 
