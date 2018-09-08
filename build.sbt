@@ -284,7 +284,7 @@ lazy val commonServerSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
-    malliinaGroup %% "logstreams-client" % "1.1.0",
+    malliinaGroup %% "logstreams-client" % "1.2.0",
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
