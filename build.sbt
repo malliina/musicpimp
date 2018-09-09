@@ -1,15 +1,13 @@
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 
 import com.malliina.appbundler.FileMapping
-import com.malliina.file.StorageFile
 import com.malliina.sbt.GenericKeys._
 import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
-import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
-import com.malliina.sbt.win.WinKeys.winSwExe
+import com.malliina.sbt.unix.LinuxKeys.{ciBuild, httpPort, httpsPort}
+import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
-import com.malliina.sbtplay.PlayProject
 import com.malliina.sbtutils.{SbtProjects, SbtUtils}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageName, packageSummary, rpmVendor}
@@ -17,7 +15,10 @@ import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject => portableProject, CrossType => PortableType}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
+import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
+
+import scala.sys.process.Process
 
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 // wtf?
@@ -25,7 +26,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.12.0"
+val musicpimpVersion = "4.19.5"
 val pimpcloudVersion = "1.23.0"
 val sharedVersion = "1.9.0"
 val crossVersion = "1.9.0"
@@ -44,14 +45,14 @@ scalaVersion in ThisBuild := "2.12.6"
 lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
-lazy val musicpimp = PlayProject.server("musicpimp", file("musicpimp"))
-  .enablePlugins(FileTreePlugin)
+lazy val musicpimp = project.in(file("musicpimp"))
+  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
-lazy val pimpcloud = PlayProject.server("pimpcloud", file("pimpcloud"))
-  .enablePlugins(FileTreePlugin)
+lazy val pimpcloud = project.in(file("pimpcloud"))
+  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
@@ -105,8 +106,7 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-actor" % "2.11.0",
-        malliinaGroup %% "util-rmi" % "2.11.0",
+        malliinaGroup %% "util" % "2.11.0",
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
@@ -129,12 +129,60 @@ lazy val pimpPlaySettings =
       libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
         !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")
-      }
+      },
+      useTerminateProcess := true,
+      msiMappings in Windows := (msiMappings in Windows).value
+        .map { case (src, dest) => (src, Paths.get(dest.toString.replace('[', '_')
+          .replace(']', '_')
+          .replace(',', '_')))
+        }
     )
 
-lazy val pimpAssetSettings = PlayProject.assetSettings ++ Seq(
+def serverSettings = linuxSettings ++ com.malliina.sbt.unix.LinuxPlugin.playSettings
+
+def linuxSettings = defaultSettings ++ Seq(
+  // https://github.com/sbt/sbt-release
+  releaseProcess := Seq[ReleaseStep](
+    releaseStepTask(clean in Compile),
+    checkSnapshotDependencies,
+    runTest,
+    releaseStepTask(ciBuild)
+  ),
+  buildInfoKeys := Seq[BuildInfoKey](
+    name,
+    version,
+    "hash" -> Process("git rev-parse --short HEAD").lineStream.head
+  )
+)
+
+def defaultSettings = routesSettings ++ libSettings
+
+def routesSettings = Seq(
+  RoutesKeys.routesGenerator := InjectedRoutesGenerator
+)
+
+def libSettings = Seq(
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  libraryDependencies ++= defaultDeps
+)
+
+def defaultDeps = Seq(
+  "com.lihaoyi" %% "scalatags" % "0.6.7",
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+  PlayImport.specs2 % Test
+)
+
+lazy val pimpAssetSettings = assetSettings ++ Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
   pipelineStages in Assets ++= Seq(scalaJSPipeline)
+)
+
+def assetSettings = Seq(
+  mappings in(Compile, packageBin) ++= {
+    (unmanagedResourceDirectories in Assets).value.flatMap { assetDir =>
+      assetDir.allPaths pair sbt.io.Path.relativeTo(baseDirectory.value)
+    }
+  }
 )
 
 lazy val nativePackagingSettings =
@@ -147,7 +195,6 @@ lazy val nativePackagingSettings =
       maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
-      mainClass := Some("com.malliina.musicpimp.Starter"),
       javaOptions in Universal ++= Seq(
         "-Dlogger.resource=prod-logger.xml"
       ),
@@ -163,7 +210,7 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   WinKeys.minJavaVersion := Some(8),
   //  WinKeys.postInstallUrl := Some("http://localhost:8456"),
   WinKeys.forceStopOnUninstall := true,
-  winSwExe in Windows := (pkgHome in Windows).value / "WinSW.NET2.exe",
+  winSwExe in Windows := (pkgHome in Windows).value.resolve("WinSW.NET2.exe"),
 )
 
 lazy val windowsConfSettings = inConfig(Windows)(Seq(
@@ -173,7 +220,7 @@ lazy val windowsConfSettings = inConfig(Windows)(Seq(
     }.sorted.mkString("\n")
     logger.value.log(Level.Info, out)
   },
-  appIcon := Some(pkgHome.value / "guitar-128x128-np.ico"),
+  appIcon := Some(pkgHome.value.resolve("guitar-128x128-np.ico")),
   buildAndMove := {
     val src = WinKeys.msi.value
     val dest = Files.move(src, target.value.toPath.resolve(name.value + ".msi"), StandardCopyOption.REPLACE_EXISTING)
@@ -183,14 +230,15 @@ lazy val windowsConfSettings = inConfig(Windows)(Seq(
 ))
 
 lazy val pimpMacSettings = macSettings ++ Seq(
+  mainClass := Some("play.core.server.ProdServerStart"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
   launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
-  appIcon in Mac := Some((pkgHome in Mac).value / "guitar.icns"),
-  pkgIcon := Some((pkgHome in Mac).value / "guitar.png"),
+  appIcon in Mac := Some((pkgHome in Mac).value.resolve("guitar.icns")),
+  pkgIcon := Some((pkgHome in Mac).value.resolve("guitar.png")),
   hideDock := true,
   extraDmgFiles := Seq(
-    FileMapping((pkgHome in Mac).value / "guitar.png", Paths get ".background/.bg.png"),
-    FileMapping((pkgHome in Mac).value / "DS_Store", Paths get ".DS_Store")
+    FileMapping((pkgHome in Mac).value.resolve("guitar.png"), Paths get ".background/.bg.png"),
+    FileMapping((pkgHome in Mac).value.resolve("DS_Store"), Paths get ".DS_Store")
   )
 )
 
@@ -279,7 +327,7 @@ lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
   )
 )
 
-lazy val commonServerSettings = baseSettings ++ Seq(
+lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   resolvers += Resolver.bintrayRepo("malliina", "maven"),
   libraryDependencies ++= Seq(
     utilPlayDep,

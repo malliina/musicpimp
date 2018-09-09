@@ -33,11 +33,12 @@ case class InitOptions(alarms: Boolean = true,
                        users: Boolean = true,
                        indexer: Boolean = true,
                        cloud: Boolean = true,
-                       cloudUri: FullUrl = CloudSocket.prodUri)
+                       cloudUri: FullUrl = CloudSocket.prodUri,
+                       useTray: Boolean = true)
 
 object InitOptions {
   val prod = InitOptions()
-  val dev = InitOptions(alarms = false, database = true, users = true, indexer = true, cloud = false)
+  val dev = InitOptions(alarms = false, database = true, users = true, indexer = true, cloud = false, useTray = false)
 }
 
 class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
@@ -64,7 +65,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = messagesApi.preferred(Seq(language))
-  implicit val ec = materializer.executionContext
+  implicit val ec: ExecutionContext = materializer.executionContext
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
   lazy val db = initDb(ec)
@@ -111,7 +112,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val connect = new ConnectController(authDeps)
   lazy val cloudWS = new CloudWS(clouds, ctx)
 
-  Starter.startServices(options, clouds, db, indexer, schedules)
+  Starter.startServices(options, clouds, db, indexer, schedules, applicationLifecycle)
   val dummyForInit = statsPlayer
 
   lazy val router: Routes = new Routes(

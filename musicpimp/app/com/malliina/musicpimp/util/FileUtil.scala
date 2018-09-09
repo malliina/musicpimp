@@ -14,14 +14,17 @@ object FileUtil {
 
   def localPath(name: String) = pimpHomeDir / name
 
-  protected def appHome = findPath(sys.props.get("musicpimp.home"))
+  protected def appHome: Option[Path] = findPath(sys.props.get("musicpimp.home"))
 
-  protected def localDirWindows = findPath(sys.env.get("LOCALAPPDATA")).map(_ / "MusicPimp")
-    .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
+  protected def localDirWindows: Option[Path] =
+    findPath(sys.env.get("ALLUSERSPROFILE")
+      .orElse(sys.env.get("LOCALAPPDATA")))
+      .map(_ / "MusicPimp")
+      .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
 
-  protected def localDirDefault = FileUtilities.tempDir / ".musicpimp"
+  protected def localDirDefault: Path = FileUtilities.tempDir / ".musicpimp"
 
-  private def findPath(dir: Option[String]) = dir.map(dir => Paths.get(dir))
+  private def findPath(dir: Option[String]): Option[Path] = dir.map(dir => Paths.get(dir))
 
   def pathTo(file: String, createIfNotExists: Boolean = false): Path = {
     val path = localPath(file)

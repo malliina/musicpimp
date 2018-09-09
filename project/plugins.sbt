@@ -18,14 +18,17 @@ dependencyOverrides ++= Seq(
 
 Seq(
   "com.malliina" %% "sbt-utils" % "0.9.0",
-  "com.malliina" %% "sbt-play" % "1.3.1",
   "org.scala-js" % "sbt-scalajs" % "0.6.25",
   "org.portable-scala" % "sbt-scalajs-crossproject" % "0.5.0",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
   "com.malliina" % "sbt-filetree" % "0.2.1",
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",
   "com.typesafe.sbt" % "sbt-gzip" % "1.0.2",
-  "com.typesafe.sbt" % "sbt-less" % "1.1.2"
+  "com.typesafe.sbt" % "sbt-less" % "1.1.2",
+  "com.typesafe.play" % "sbt-plugin" % "2.6.18",
+  "com.malliina" %% "sbt-packager" % "2.5.0",
+  "com.eed3si9n" % "sbt-buildinfo" % "0.9.0",
+  "com.github.gseitz" % "sbt-release" % "1.0.9"
 ) map addSbtPlugin
 
 def ivyRepo(name: String, urlString: String) =

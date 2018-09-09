@@ -2,10 +2,11 @@ package com.malliina.musicpimp
 
 import java.awt._
 import java.awt.event.{ActionEvent, ActionListener}
-import javax.swing.{ImageIcon, UIManager}
 
-import com.malliina.util.{Log, Util}
+import com.malliina.util.Util
+import javax.swing.{ImageIcon, UIManager}
 import play.api.Logger
+import play.api.inject.ApplicationLifecycle
 
 import scala.util.Try
 
@@ -19,12 +20,12 @@ object Tray {
   /** Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user to Open/Stop
     * MusicPimp.
     */
-  def installTray() = {
+  def installTray(lifecycle: ApplicationLifecycle): Unit = {
     if (SystemTray.isSupported) {
       Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
       val popup = new PopupMenu()
       popup add menuItem("Open", Starter.openWebInterface())
-      popup add menuItem("Stop", Starter.stop())
+      popup add menuItem("Stop", Starter.stop(lifecycle))
       val trayIcon = new TrayIcon(icon(iconResource, "MusicPimp"), "Open MusicPimp", popup)
       trayIcon setImageAutoSize true
       // commented because is triggered on all clicks on OSX, overriding the other listeners

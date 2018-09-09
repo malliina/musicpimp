@@ -3,7 +3,6 @@ package com.malliina.musicpimp
 import java.awt.Desktop
 import java.net.URI
 import java.nio.file.Files
-import java.rmi.ConnectException
 
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
@@ -15,39 +14,28 @@ import com.malliina.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
 import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.PlayLifeCycle
-import com.malliina.rmi.RmiClient
 import com.malliina.util.{Logging, Utils}
 import org.slf4j.LoggerFactory
+import play.api.inject.ApplicationLifecycle
 
 import scala.collection.JavaConverters._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 
-object Starter extends PlayLifeCycle("musicpimp", 2666) {
+object Starter {
+  protected val (httpPortKey, httpsPortKey, httpAddressKey) =
+    ("http.port", "https.port", "http.address")
+  protected val defaultHttpPort = 9000
+  protected val defaultHttpAddress = "0.0.0.0"
+
   private val log = LoggerFactory.getLogger(getClass)
 
-  override def start(): Unit = {
-    super.start()
-    Tray.installTray()
-  }
-
-  override def main(args: Array[String]) {
-    args.headOption match {
-      case Some("stop") =>
-        try {
-          RmiClient.launchClient()
-          // this hack allows the System.exit() call in the stop method eventually to run before we exit
-          // obviously we can't await it from another vm
-          Thread sleep 12000
-        } catch {
-          case _: ConnectException =>
-            log warn "Unable to stop; perhaps MusicPimp is already stopped?"
-        }
-      case anythingElse => start()
-    }
-  }
-
-  def startServices(options: InitOptions, clouds: Clouds, db: PimpDb, indexer: Indexer, schedules: ScheduledPlaybackService)(implicit ec: ExecutionContext): Unit = {
+  def startServices(options: InitOptions,
+                    clouds: Clouds,
+                    db: PimpDb,
+                    indexer: Indexer,
+                    schedules: ScheduledPlaybackService,
+                    lifecycle: ApplicationLifecycle)(implicit ec: ExecutionContext): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
@@ -71,13 +59,21 @@ object Starter extends PlayLifeCycle("musicpimp", 2666) {
       if (options.cloud) {
         clouds.init()
       }
-      val version = com.malliina.musicpimp.BuildInfo.version
+      if (options.useTray) {
+        Tray.installTray(lifecycle)
+      }
+      val version = BuildInfo.version
       log info s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
     } catch {
       case e: Exception =>
         log.error(s"Unable to initialize MusicPimp", e)
         throw e
     }
+  }
+
+  def stop(lifecycle: ApplicationLifecycle): Unit = {
+    Await.result(lifecycle.stop(), 5.seconds)
+    System.exit(0)
   }
 
   def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {

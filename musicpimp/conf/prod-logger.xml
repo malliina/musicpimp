@@ -1,13 +1,14 @@
 <configuration>
+    <property name="LOG_DIR" value="${ALLUSERSPROFILE}/MusicPimp/logs" />
     <appender name="RX" class="com.malliina.logbackrx.BasicBoundedReplayRxAppender">
         <bufferSize>500</bufferSize>
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="PIMPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.dir}/musicpimp.log</file>
+        <file>${log.dir:-${LOG_DIR}}/musicpimp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${log.dir}/musicpimp-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${log.dir:-${LOG_DIR}}/musicpimp-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <!-- or whenever the file size reaches 100MB -->
             <maxFileSize>100MB</maxFileSize>
