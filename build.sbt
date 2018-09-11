@@ -5,7 +5,8 @@ import com.malliina.sbt.GenericKeys._
 import com.malliina.sbt.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
-import com.malliina.sbt.unix.LinuxKeys.{ciBuild, httpPort, httpsPort}
+import com.malliina.sbt.unix.LinuxKeys.{appHome, ciBuild, httpPort, httpsPort}
+import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
 import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.malliina.sbtutils.{SbtProjects, SbtUtils}
@@ -19,6 +20,7 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossP
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
 
 import scala.sys.process.Process
+import scala.util.Try
 
 val prettyMappings = taskKey[Unit]("Prints the file mappings, prettily")
 // wtf?
@@ -42,7 +44,7 @@ val httpVersion = "4.5.6"
 
 scalaVersion in ThisBuild := "2.12.6"
 
-lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud)
+lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = project.in(file("musicpimp"))
@@ -70,6 +72,13 @@ lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
 lazy val utilAudio = SbtProjects.testableProject("util-audio", file("util-audio"))
   .settings(utilAudioSettings: _*)
+
+lazy val musicmeta = project.in(file("musicmeta"))
+  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
+  .settings(metaBackendSettings: _*)
+
+lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
+  .settings(metaFrontendSettings: _*)
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -327,6 +336,81 @@ lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
   )
 )
 
+// musicmeta
+lazy val metaBackendSettings = metaServerSettings ++ metaCommonSettings ++ Seq(
+  scalaJSProjects := Seq(musicmetaFrontend),
+  pipelineStages in Assets := Seq(scalaJSPipeline),
+  libraryDependencies ++= Seq(
+    malliinaGroup %% "logstreams-client" % "1.2.0",
+    malliinaGroup %% "play-social" % utilPlayVersion,
+    utilPlayDep,
+    utilPlayDep % Test classifier "tests"
+  ),
+  dependencyOverrides ++= Seq(
+    "com.typesafe.akka" %% "akka-stream" % "2.5.8",
+    "com.typesafe.akka" %% "akka-actor" % "2.5.8"
+  ),
+  httpPort in Linux := Option("disabled"),
+  httpsPort in Linux := Option("8460"),
+  maintainer := "Michael Skogberg <malliina123@gmail.com>",
+  javaOptions in Universal ++= {
+    val linuxName = (name in Linux).value
+    val metaHome = (appHome in Linux).value
+    Seq(
+      s"-Ddiscogs.oauth=/etc/$linuxName/discogs-oauth.key",
+      s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
+      s"-Dcover.dir=$metaHome/covers",
+      s"-Dconfig.file=/etc/$linuxName/production.conf",
+      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
+      "-Dfile.encoding=UTF-8",
+      "-Dsun.jnu.encoding=UTF-8"
+    )
+  },
+  pipelineStages := Seq(digest, gzip),
+  buildInfoKeys := Seq[BuildInfoKey](
+    name,
+    "frontName" -> (name in musicmetaFrontend).value,
+    version,
+    scalaVersion,
+    "gitHash" -> gitHash
+  ),
+  buildInfoPackage := "com.malliina.musicmeta",
+  linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
+)
+
+def metaServerSettings = LinusPlugin.playSettings ++ Seq(
+  // https://github.com/sbt/sbt-release
+  releaseProcess := Seq[ReleaseStep](
+    releaseStepTask(clean in Compile),
+    checkSnapshotDependencies,
+    runTest,
+    releaseStepTask(ciBuild)
+  ),
+  buildInfoKeys := Seq[BuildInfoKey](
+    name,
+    version,
+    "hash" -> Process("git rev-parse --short HEAD").lineStream.head
+  ),
+  RoutesKeys.routesGenerator := InjectedRoutesGenerator,
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  libraryDependencies ++= defaultDeps
+)
+
+lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
+  libraryDependencies ++= Seq(
+    "com.lihaoyi" %%% "scalatags" % "0.6.7",
+    "be.doeraene" %%% "scalajs-jquery" % "0.9.2",
+    "com.typesafe.play" %%% "play-json" % "2.6.10",
+    "com.malliina" %%% "primitives" % "1.6.0"
+  )
+)
+
+lazy val metaCommonSettings = Seq(
+  version := "1.12.0",
+  scalaVersion := "2.12.6",
+  scalacOptions := Seq("-unchecked", "-deprecation")
+)
+
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   resolvers += Resolver.bintrayRepo("malliina", "maven"),
   libraryDependencies ++= Seq(
@@ -372,3 +456,6 @@ def scalajsProject(name: String, path: File) =
       libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.5" % Test),
       testFrameworks += new TestFramework("utest.runner.Framework")
     )
+
+def gitHash: String =
+  Try(Process("git rev-parse --short HEAD").lineStream.head).toOption.getOrElse("unknown")

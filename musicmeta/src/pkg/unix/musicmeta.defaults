@@ -1,0 +1,7 @@
+APP_NAME=musicmeta
+APP_HOME=/opt/musicmeta
+APP_USER=musicmeta
+JAVA_OPTS="-Dmusicmeta.home=/opt/musicmeta -Dlogger.resource=prod-logger.xml"
+JAVA_CMD=/usr/bin/java
+PID_FILE=/var/run/musicmeta.pid
+MAIN_CLASS=com.mle.musicmeta.Starter
