@@ -13,6 +13,7 @@ import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.http.OkClient.MultiPartFile
 import com.malliina.http.{HttpResponse, OkClient}
+import com.malliina.musicpimp.BuildMeta
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.http.PimpContentController
@@ -50,7 +51,7 @@ class Rest(lib: MusicLibrary,
 
   def ping = Action(NoCache(Ok))
 
-  def pingAuth = pimpAction(_ => NoCacheOk(JsonMessages.version))
+  def pingAuth = pimpAction(_ => NoCacheOk(BuildMeta.default))
 
   /** Handles server playback commands POSTed as JSON.
     */

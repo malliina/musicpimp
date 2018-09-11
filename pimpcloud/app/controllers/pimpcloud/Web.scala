@@ -1,8 +1,8 @@
 package controllers.pimpcloud
 
 import com.malliina.musicpimp.models.{CloudID, CloudIDs}
+import com.malliina.pimpcloud.BuildMeta
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
-import com.malliina.pimpcloud.models.HealthResponse
 import com.malliina.play.auth.Auth
 import com.malliina.play.controllers.{AccountForms, Caching}
 import com.malliina.play.forms.FormMappings
@@ -12,7 +12,6 @@ import controllers.pimpcloud.Web.{cloudForm, forms, log}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.libs.json.Json
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -39,7 +38,7 @@ class Web(comps: ControllerComponents,
   implicit val ec = defaultExecutionContext
 
   def ping = Action {
-    Caching.NoCache(Ok(Json.toJson(HealthResponse.default)))
+    Caching.NoCache(Ok(BuildMeta.default))
   }
 
   def login = Action { req =>

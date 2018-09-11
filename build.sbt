@@ -38,6 +38,7 @@ val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.14.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.2.0"
 val primitivesVersion = "1.6.0"
 
 val httpGroup = "org.apache.httpcomponents"
@@ -151,40 +152,6 @@ lazy val pimpPlaySettings =
           .replace(',', '_')))
         }
     )
-
-def serverSettings = linuxSettings ++ com.malliina.sbt.unix.LinuxPlugin.playSettings
-
-def linuxSettings = defaultSettings ++ Seq(
-  // https://github.com/sbt/sbt-release
-  releaseProcess := Seq[ReleaseStep](
-    releaseStepTask(clean in Compile),
-    checkSnapshotDependencies,
-    runTest,
-    releaseStepTask(ciBuild)
-  ),
-  buildInfoKeys := Seq[BuildInfoKey](
-    name,
-    version,
-    "hash" -> Process("git rev-parse --short HEAD").lineStream.head
-  )
-)
-
-def defaultSettings = routesSettings ++ libSettings
-
-def routesSettings = Seq(
-  RoutesKeys.routesGenerator := InjectedRoutesGenerator
-)
-
-def libSettings = Seq(
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-  libraryDependencies ++= defaultDeps
-)
-
-def defaultDeps = Seq(
-  "com.lihaoyi" %% "scalatags" % "0.6.7",
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
-  PlayImport.specs2 % Test
-)
 
 lazy val pimpAssetSettings = assetSettings ++ Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
@@ -342,11 +309,11 @@ lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
 )
 
 // musicmeta
-lazy val metaBackendSettings = metaBeamServerSettings ++ metaCommonSettings ++ Seq(
+lazy val metaBackendSettings = serverSettings ++ metaCommonSettings ++ Seq(
   scalaJSProjects := Seq(musicmetaFrontend),
   pipelineStages in Assets := Seq(scalaJSPipeline),
   libraryDependencies ++= Seq(
-    malliinaGroup %% "logstreams-client" % "1.2.0",
+    logstreamsDep,
     malliinaGroup %% "play-social" % utilPlayVersion,
     utilPlayDep,
     utilPlayDep % Test classifier "tests"
@@ -394,12 +361,12 @@ lazy val metaCommonSettings = Seq(
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
-lazy val pimpbeamSettings = metaBeamServerSettings ++ Seq(
+lazy val pimpbeamSettings = serverSettings ++ Seq(
   version := "2.1.0",
   scalaVersion := "2.12.6",
   libraryDependencies ++= Seq(
-    "com.malliina" %% "util-play" % "4.14.0",
-    "com.malliina" %% "logstreams-client" % "1.2.0",
+    utilPlayDep,
+    logstreamsDep,
     "net.glxn" % "qrgen" % "1.3",
     PlayImport.ws
   ),
@@ -421,7 +388,7 @@ lazy val pimpbeamSettings = metaBeamServerSettings ++ Seq(
   buildInfoPackage := "com.malliina.beam"
 )
 
-def metaBeamServerSettings = LinusPlugin.playSettings ++ Seq(
+def serverSettings = LinusPlugin.playSettings ++ Seq(
   // https://github.com/sbt/sbt-release
   releaseProcess := Seq[ReleaseStep](
     releaseStepTask(clean in Compile),
@@ -440,12 +407,23 @@ def metaBeamServerSettings = LinusPlugin.playSettings ++ Seq(
   libraryDependencies ++= defaultDeps
 )
 
+def libSettings = Seq(
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  libraryDependencies ++= defaultDeps
+)
+
+def defaultDeps = Seq(
+  "com.lihaoyi" %% "scalatags" % "0.6.7",
+  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+  PlayImport.specs2 % Test
+)
+
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   resolvers += Resolver.bintrayRepo("malliina", "maven"),
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
-    malliinaGroup %% "logstreams-client" % "1.2.0",
+    logstreamsDep,
     PlayImport.filters
   ).map(dep => dep.withSources()),
   RoutesKeys.routesImport ++= Seq(
@@ -454,7 +432,6 @@ lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
     "com.malliina.values.Username"
   ),
   pipelineStages ++= Seq(digest, gzip),
-  //  pipelineStages in Assets ++= Seq(digest, gzip),
   dependencyOverrides ++= Seq(
     "com.typesafe.akka" %% "akka-actor" % "2.5.11",
     "com.typesafe.akka" %% "akka-stream" % "2.5.8"

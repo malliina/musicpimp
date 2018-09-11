@@ -16,7 +16,7 @@ object MetaFrontend {
   }
 }
 
-case class LogEvent(timeStamp: Long,
+case class LogEvent(timestamp: Long,
                     timeFormatted: String,
                     message: String,
                     loggerName: String,
@@ -46,7 +46,7 @@ class MetaSocket {
   installClick("label-verbose")(_ => updateVerbose(true))
   installClick("label-compact")(_ => updateVerbose(false))
 
-  def updateVerbose(newVerbose: Boolean) = {
+  def updateVerbose(newVerbose: Boolean): Unit = {
     isVerbose = newVerbose
     document.getElementsByClassName("verbose").foreach { e =>
       val classes = e.asInstanceOf[HTMLElement].classList
@@ -54,7 +54,7 @@ class MetaSocket {
     }
   }
 
-  def installClick(on: String)(onClick: Event => Unit) =
+  def installClick(on: String)(onClick: Event => Unit): Unit =
     elem[HTMLElement](on).addEventListener("click", onClick)
 
   def onMessage(msg: MessageEvent): Unit = {
@@ -66,7 +66,7 @@ class MetaSocket {
     }.recover { case e => onJsonFailure(e) }
   }
 
-  def handlePayload(value: JsValue) = {
+  def handlePayload(value: JsValue): Unit = {
     value.validate[LogEvents].fold(err => onJsonFailure(JsError(err)), prependAll)
   }
 
@@ -74,7 +74,7 @@ class MetaSocket {
     println(error)
   }
 
-  def prependAll(events: LogEvents) = events.events foreach prepend
+  def prependAll(events: LogEvents): Unit = events.events foreach prepend
 
   def prepend(event: LogEvent) =
     Option(tableContent.firstChild).map { first =>
@@ -95,7 +95,7 @@ class MetaSocket {
 
   def onError(e: ErrorEvent): Unit = updateStatus("Error.")
 
-  def updateStatus(status: String) = {
+  def updateStatus(status: String): Unit = {
     document.getElementById("status").innerHTML = status
   }
 

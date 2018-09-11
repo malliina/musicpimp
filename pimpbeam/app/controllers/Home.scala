@@ -20,7 +20,7 @@ import controllers.Home.log
 import net.glxn.qrgen.QRCode
 import play.api.Logger
 import play.api.http.{HeaderNames, HttpEntity, HttpErrorHandler, MimeTypes}
-import play.api.libs.json.JsObject
+import play.api.libs.json.{JsObject, Json}
 import play.api.libs.json.Json._
 import play.api.libs.streams.Accumulator
 import play.api.libs.ws.WSRequest
@@ -62,7 +62,7 @@ class Home(beamConf: BeamConf,
   val sessionKey = "username"
   val maxSize = 1024.megs
 
-  def ping = Action(Caching.NoCacheOk(BeamMessages.version))
+  def ping = Action(Caching.NoCacheOk(Json.toJson(BuildMeta.default)))
 
   // Player actions
 

@@ -8,7 +8,6 @@ import play.api.libs.json.Json._
 
 trait BeamMessages {
   val reset = obj(Cmd -> RESET)
-  val version = obj(VERSION -> BuildInfo.version)
 
   def playerExists(user: Username, exists: Boolean, ready: Boolean) =
     obj(USER -> user, EXISTS -> exists, READY -> ready)
