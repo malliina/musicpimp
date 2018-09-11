@@ -14,6 +14,7 @@ import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageName, packageSummary, rpmVendor}
 import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
+import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
@@ -44,7 +45,7 @@ val httpVersion = "4.5.6"
 
 scalaVersion in ThisBuild := "2.12.6"
 
-lazy val pimpRoot = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta)
+lazy val all = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = project.in(file("musicpimp"))
@@ -79,6 +80,10 @@ lazy val musicmeta = project.in(file("musicmeta"))
 
 lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
   .settings(metaFrontendSettings: _*)
+
+lazy val pimpbeam = project.in(file("pimpbeam"))
+  .enablePlugins(PlayScala, JavaServerAppPackaging, com.malliina.sbt.unix.LinuxPlugin, SystemdPlugin, BuildInfoPlugin)
+  .settings(pimpbeamSettings: _*)
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -337,7 +342,7 @@ lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
 )
 
 // musicmeta
-lazy val metaBackendSettings = metaServerSettings ++ metaCommonSettings ++ Seq(
+lazy val metaBackendSettings = metaBeamServerSettings ++ metaCommonSettings ++ Seq(
   scalaJSProjects := Seq(musicmetaFrontend),
   pipelineStages in Assets := Seq(scalaJSPipeline),
   libraryDependencies ++= Seq(
@@ -367,33 +372,11 @@ lazy val metaBackendSettings = metaServerSettings ++ metaCommonSettings ++ Seq(
     )
   },
   pipelineStages := Seq(digest, gzip),
-  buildInfoKeys := Seq[BuildInfoKey](
-    name,
+  buildInfoKeys ++= Seq[BuildInfoKey](
     "frontName" -> (name in musicmetaFrontend).value,
-    version,
-    scalaVersion,
-    "gitHash" -> gitHash
   ),
   buildInfoPackage := "com.malliina.musicmeta",
   linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
-)
-
-def metaServerSettings = LinusPlugin.playSettings ++ Seq(
-  // https://github.com/sbt/sbt-release
-  releaseProcess := Seq[ReleaseStep](
-    releaseStepTask(clean in Compile),
-    checkSnapshotDependencies,
-    runTest,
-    releaseStepTask(ciBuild)
-  ),
-  buildInfoKeys := Seq[BuildInfoKey](
-    name,
-    version,
-    "hash" -> Process("git rev-parse --short HEAD").lineStream.head
-  ),
-  RoutesKeys.routesGenerator := InjectedRoutesGenerator,
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-  libraryDependencies ++= defaultDeps
 )
 
 lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
@@ -409,6 +392,52 @@ lazy val metaCommonSettings = Seq(
   version := "1.12.0",
   scalaVersion := "2.12.6",
   scalacOptions := Seq("-unchecked", "-deprecation")
+)
+
+lazy val pimpbeamSettings = metaBeamServerSettings ++ Seq(
+  version := "2.1.0",
+  scalaVersion := "2.12.6",
+  libraryDependencies ++= Seq(
+    "com.malliina" %% "util-play" % "4.14.0",
+    "com.malliina" %% "logstreams-client" % "1.2.0",
+    "net.glxn" % "qrgen" % "1.3",
+    PlayImport.ws
+  ),
+  dependencyOverrides ++= Seq(
+    "com.typesafe.akka" %% "akka-stream" % "2.5.8",
+    "com.typesafe.akka" %% "akka-actor" % "2.5.8"
+  ),
+  resolvers += Resolver.bintrayRepo("malliina", "maven"),
+  httpPort in Linux := Option("8557"),
+  httpsPort in Linux := Option("disabled"),
+  maintainer := "Michael Skogberg <malliina123@gmail.com>",
+  javaOptions in Universal ++= {
+    val linuxName = (name in Linux).value
+    Seq(
+      s"-Dconfig.file=/etc/$linuxName/production.conf",
+      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml"
+    )
+  },
+  buildInfoPackage := "com.malliina.beam"
+)
+
+def metaBeamServerSettings = LinusPlugin.playSettings ++ Seq(
+  // https://github.com/sbt/sbt-release
+  releaseProcess := Seq[ReleaseStep](
+    releaseStepTask(clean in Compile),
+    checkSnapshotDependencies,
+    runTest,
+    releaseStepTask(ciBuild)
+  ),
+  buildInfoKeys := Seq[BuildInfoKey](
+    name,
+    version,
+    scalaVersion,
+    "gitHash" -> gitHash
+  ),
+  RoutesKeys.routesGenerator := InjectedRoutesGenerator,
+  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  libraryDependencies ++= defaultDeps
 )
 
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(

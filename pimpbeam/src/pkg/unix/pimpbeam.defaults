@@ -1,0 +1,7 @@
+APP_NAME=pimpbeam
+APP_HOME=/opt/pimpbeam
+APP_USER=pimpbeam
+JAVA_OPTS="-Dpimpbeam.home=/opt/pimpbeam -Dlogger.resource=prod-logger.xml"
+JAVA_CMD=/usr/bin/java
+PID_FILE=/var/run/pimpbeam.pid
+MAIN_CLASS=com.malliina.play.PlayStarter

@@ -1,0 +1,11 @@
+GET         /                             controllers.Home.index
+GET         /ping                         controllers.Home.ping
+GET         /image                        controllers.Home.image
+GET         /covers/:artist/:album        controllers.Home.cover(artist,album)
+GET         /ws/control                   com.malliina.beam.Beams.openPhone
+GET         /ws/player                    com.malliina.beam.Beams.openPlayer
+GET         /streamable                   controllers.Home.playerState
+GET         /stream                       controllers.Home.stream
+POST        /stream                       controllers.Home.resetAndReceiveFile
+POST        /stream/tail                  controllers.Home.receiveFile
+GET         /assets/*file                 controllers.Assets.versioned(path = "/public", file)

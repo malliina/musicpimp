@@ -1,0 +1,11 @@
+.hidden {
+    display: none;
+}
+
+.auto-height {
+    height: auto;
+}
+
+.centered {
+    text-align: center;
+}

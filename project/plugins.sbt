@@ -8,13 +8,6 @@ resolvers ++= Seq(
 )
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
 classpathTypes += "maven-plugin"
-dependencyOverrides ++= Seq(
-  "org.scala-js" % "sbt-scalajs" % "0.6.25",
-  "io.netty" % "netty" % "3.10.6.Final",
-  "org.webjars" % "webjars-locator-core" % "0.33",
-  "org.codehaus.plexus" % "plexus-utils" % "3.0.17",
-  "com.google.guava" % "guava" % "23.0"
-)
 
 Seq(
   "com.malliina" %% "sbt-utils" % "0.9.0",
@@ -30,6 +23,13 @@ Seq(
   "com.eed3si9n" % "sbt-buildinfo" % "0.9.0",
   "com.github.gseitz" % "sbt-release" % "1.0.9"
 ) map addSbtPlugin
+dependencyOverrides ++= Seq(
+  "org.scala-js" % "sbt-scalajs" % "0.6.25",
+  "io.netty" % "netty" % "3.10.6.Final",
+  "org.webjars" % "webjars-locator-core" % "0.33",
+  "org.codehaus.plexus" % "plexus-utils" % "3.0.17",
+  "com.google.guava" % "guava" % "23.0"
+)
 
 def ivyRepo(name: String, urlString: String) =
   Resolver.url(name, url(urlString))(Resolver.ivyStylePatterns)
