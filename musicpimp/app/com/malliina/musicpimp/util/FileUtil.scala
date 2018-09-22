@@ -35,7 +35,7 @@ object FileUtil {
   }
 
   // TODO DRY, this is in util
-  def props(file: Path) = {
+  def props(file: Path): Map[String, String] = {
     if (Files.exists(file)) {
       val kvs = scala.io.Source.fromFile(file.toFile).getLines().flatMap(line => {
         val kv = line.split("=", 2)

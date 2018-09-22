@@ -1,5 +1,9 @@
 package com.malliina.musicpimp.app
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
+import java.security.SecureRandom
+
 import _root_.musicpimp.Routes
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.Starter
@@ -12,17 +16,19 @@ import com.malliina.musicpimp.stats.DatabaseStats
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
+import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import controllers._
 import controllers.musicpimp._
+import org.slf4j.LoggerFactory
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
 import play.api.i18n.{I18nComponents, Lang}
 import play.api.mvc.EssentialFilter
-import play.api.{BuiltInComponentsFromContext, Mode}
+import play.api.{BuiltInComponentsFromContext, Configuration, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
 
@@ -39,17 +45,29 @@ case class InitOptions(alarms: Boolean = true,
 object InitOptions {
   val prod = InitOptions()
   val dev = InitOptions(alarms = false, database = true, users = true, indexer = true, cloud = false, useTray = false)
+
+  // Ripped from Play's ApplicationSecretGenerator.scala
+  def generateSecret(): String = {
+    val random = new SecureRandom()
+    (1 to 64).map { _ =>
+      (random.nextInt(75) + 48).toChar
+    }.mkString.replaceAll("\\\\+", "/")
+  }
 }
 
 class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
   // Probably needed due to reference in application.conf to only the class name
   def this() = this(InitOptions.prod)
 
-  override def createComponents(context: Context) = {
+  override def createComponents(context: Context): PimpComponents = {
     val env = context.environment
     val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
     new PimpComponents(context, opts, PimpDb.default)
   }
+}
+
+object PimpComponents {
+  private val log = LoggerFactory.getLogger(getClass)
 }
 
 class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionContext => PimpDb)
@@ -57,6 +75,30 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     with HttpFiltersComponents
     with AssetsComponents
     with I18nComponents {
+
+  /** We distribute the same app package as a downloadable, but still want every user to have a unique app secret. So,
+    * we generate and persist locally a random secret for each user on-demand on app launch.
+    */
+  override lazy val configuration: Configuration = {
+    val initial = context.initialConfiguration
+    val key = "play.http.secret.key"
+    val charset = StandardCharsets.UTF_8
+    if (environment.mode == Mode.Prod && initial.get[String](key) == "changeme") {
+      val dest: Path = FileUtil.pimpHomeDir.resolve("play.secret.key")
+      val secret =
+        if (Files.exists(dest) && Files.isReadable(dest)) {
+          new String(Files.readAllBytes(dest), charset)
+        } else {
+          val secret = InitOptions.generateSecret()
+          Files.write(dest, secret.getBytes(charset))
+          PimpComponents.log.info(s"Generated random secret key and saved it to '$dest'...")
+          secret
+        }
+      initial ++ Configuration(key -> secret)
+    } else {
+      initial
+    }
+  }
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
