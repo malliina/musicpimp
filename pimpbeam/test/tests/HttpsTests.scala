@@ -18,11 +18,11 @@ class HttpsTests extends FunSuite {
   val mat = ActorMaterializer()(ActorSystem("test"))
   implicit val ec = mat.executionContext
 
-  test("can ping MusicBeamer over HTTP") {
-    pingWithPlayAPI("http://beam.musicpimp.org/ping")
+  ignore("can ping MusicBeamer over HTTP") {
+    pingWithPlayAPI("https://beam.musicpimp.org/ping")
   }
 
-  test("ping MusicBeamer over HTTPS with Apache HttpClient") {
+  ignore("ping MusicBeamer over HTTPS with Apache HttpClient") {
     pingWithApacheHttpClient()
   }
 
