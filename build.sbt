@@ -29,14 +29,14 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.19.7"
-val pimpcloudVersion = "1.23.0"
+val musicpimpVersion = "4.19.8"
+val pimpcloudVersion = "1.23.1"
 val sharedVersion = "1.9.0"
 val crossVersion = "1.9.0"
 val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "4.14.0"
+val utilPlayVersion = "4.15.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.2.0"
 val primitivesVersion = "1.6.0"
@@ -44,7 +44,7 @@ val primitivesVersion = "1.6.0"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.5.6"
 
-scalaVersion in ThisBuild := "2.12.6"
+scalaVersion in ThisBuild := "2.12.7"
 
 lazy val all = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -96,7 +96,7 @@ lazy val crossSettings = Seq(
   version := crossVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.9",
+    "com.typesafe.play" %%% "play-json" % "2.6.10",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
     malliinaGroup %%% "primitives" % primitivesVersion,
     malliinaGroup %%% "util-html" % utilPlayVersion
@@ -357,13 +357,13 @@ lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
 
 lazy val metaCommonSettings = Seq(
   version := "1.12.0",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
 lazy val pimpbeamSettings = serverSettings ++ Seq(
   version := "2.1.0",
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   libraryDependencies ++= Seq(
     utilPlayDep,
     logstreamsDep,
@@ -450,7 +450,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.6",
+  scalaVersion := "2.12.7",
   organization := "org.musicpimp"
 )
 

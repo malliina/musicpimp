@@ -1,4 +1,4 @@
-scalaVersion := "2.12.6"
+scalaVersion := "2.12.7"
 resolvers ++= Seq(
   ivyRepo("bintray-sbt-plugin-releases",
     "http://dl.bintray.com/content/sbt/sbt-plugin-releases"),
@@ -18,7 +18,7 @@ Seq(
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",
   "com.typesafe.sbt" % "sbt-gzip" % "1.0.2",
   "com.typesafe.sbt" % "sbt-less" % "1.1.2",
-  "com.typesafe.play" % "sbt-plugin" % "2.6.18",
+  "com.typesafe.play" % "sbt-plugin" % "2.6.19",
   "com.malliina" %% "sbt-packager" % "2.6.0",
   "com.eed3si9n" % "sbt-buildinfo" % "0.9.0",
   "com.github.gseitz" % "sbt-release" % "1.0.9"

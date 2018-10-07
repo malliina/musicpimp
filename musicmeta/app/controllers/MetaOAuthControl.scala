@@ -2,7 +2,7 @@ package controllers
 
 import com.malliina.http.OkClient
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{AuthConf, AuthError, AuthHandler, CodeValidationConf, StandardCodeValidator}
+import com.malliina.play.auth.{AuthConf, AuthError, AuthHandler, GoogleCodeValidator, OAuthConf}
 import com.malliina.values.Email
 import play.api.libs.json.Json
 import play.api.mvc.Results.{Redirect, Unauthorized}
@@ -22,12 +22,12 @@ class MetaOAuthControl(val actions: ActionBuilder[Request, AnyContent], creds: G
 
     def ejectWith(message: String) = Redirect(routes.MetaOAuth.eject()).flashing("message" -> message)
   }
-  val authConf = CodeValidationConf.google(
+  val authConf = OAuthConf(
     routes.MetaOAuthControl.googleCallback(),
     handler,
     AuthConf(creds.clientId, creds.clientSecret),
     http)
-  val validator = StandardCodeValidator(authConf)
+  val validator = GoogleCodeValidator(authConf)
 
   def googleStart = actions.async { req => validator.start(req) }
 

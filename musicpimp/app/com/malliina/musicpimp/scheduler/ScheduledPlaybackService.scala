@@ -42,7 +42,8 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
     clockAPs.clear()
   }
 
-  def clockList(host: FullUrl) = Future.traverse(status)(toFull(_, host)).map(_.flatten)
+  def clockList(host: FullUrl): Future[Seq[FullClockPlayback]] =
+    Future.traverse(status)(toFull(_, host)).map(_.flatten).map(_.sortBy(_.id))
 
   private def toFull(conf: ClockPlaybackConf, host: FullUrl): Future[Option[FullClockPlayback]] =
     lib.track(conf.track).map { maybeTrack =>
