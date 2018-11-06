@@ -15,6 +15,9 @@ import scala.concurrent.duration.DurationInt
 class PlayerActor(player: ServerPlayer,
                   messageHandler: JsonHandlerBase,
                   conf: ActorConfig[AuthedRequest]) extends JsonActor(conf) {
+  // Keepalive for very old (Android) clients
+  val pings = Observable.interval(5.seconds)
+  // Playback updates
   val ticks = Observable.interval(900.millis)
   val messageWriter = ServerMessage.jsonWriter(TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
@@ -33,13 +36,15 @@ class PlayerActor(player: ServerPlayer,
       () => ()
     )
     val timeUpdates = ticks.subscribe(_ => onTick())
-    eventSub = Option(CompositeSubscription(playbackEvents, timeUpdates))
+    val pingUpdates = pings.subscribe(_ => onPing())
+    eventSub = Option(CompositeSubscription(playbackEvents, timeUpdates, pingUpdates))
   }
 
   override def onMessage(msg: JsValue): Unit =
     messageHandler.onJson(msg, remoteInfo)
 
-  def onTick() {
+
+  def onTick(): Unit = {
     val pos = player.position
     val posSeconds = pos.toSeconds
     if (posSeconds != previousPos) {
@@ -47,6 +52,8 @@ class PlayerActor(player: ServerPlayer,
       previousPos = posSeconds
     }
   }
+
+  def onPing(): Unit = sendOut(PingEvent)
 
   override def postStop(): Unit = {
     super.postStop()

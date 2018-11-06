@@ -14,7 +14,7 @@ import scala.language.implicitConversions
   */
 sealed trait ServerMessage
 
-case object PingEvent {
+case object PingEvent extends ServerMessage {
   val Key = "ping"
   implicit val json = evented(Key, CrossFormats.pure(PingEvent))
 }
@@ -114,6 +114,8 @@ object ServerMessage {
         WelcomeMessage.json.writes(WelcomeMessage)
       case s: StatusMessage =>
         StatusMessage.json.writes(s)
+      case PingEvent =>
+        PingEvent.json.writes(PingEvent)
       case _ =>
         // TODO ???
         Json.obj()
@@ -131,5 +133,6 @@ object ServerMessage {
       .orElse(json.validate[TimeUpdatedMessage])
       .orElse(WelcomeMessage.json.reads(json))
       .orElse(StatusMessage.json.reads(json))
+      .orElse(PingEvent.json.reads(json))
   }
 }

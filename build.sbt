@@ -29,7 +29,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.19.8"
+val musicpimpVersion = "4.19.9"
 val pimpcloudVersion = "1.23.1"
 val sharedVersion = "1.9.0"
 val crossVersion = "1.9.0"
@@ -432,11 +432,7 @@ lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
     "com.malliina.musicpimp.models._",
     "com.malliina.values.Username"
   ),
-  pipelineStages ++= Seq(digest, gzip),
-  dependencyOverrides ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % "2.5.11",
-    "com.typesafe.akka" %% "akka-stream" % "2.5.8"
-  )
+  pipelineStages ++= Seq(digest, gzip)
 )
 
 lazy val sharedSettings = baseSettings ++ Seq(
