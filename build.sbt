@@ -30,7 +30,7 @@ val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
 val musicpimpVersion = "4.19.9"
-val pimpcloudVersion = "1.23.1"
+val pimpcloudVersion = "1.24.0"
 val sharedVersion = "1.9.0"
 val crossVersion = "1.9.0"
 val utilAudioVersion = "2.5.1"
@@ -57,7 +57,8 @@ lazy val musicpimp = project.in(file("musicpimp"))
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = project.in(file("pimpcloud"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
+  .enablePlugins(PlayScala, PlayNettyServer, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
+  .disablePlugins(PlayAkkaHttpServer)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
