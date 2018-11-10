@@ -272,7 +272,8 @@ lazy val pimpcloudLinuxSettings = Seq(
     )
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
-  rpmVendor := "Skogberg Labs"
+  rpmVendor := "Skogberg Labs",
+  libraryDependencies += "com.typesafe.akka" %% "akka-http"   % "10.1.5"
 )
 
 lazy val artifactSettings = Seq(
