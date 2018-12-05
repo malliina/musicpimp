@@ -29,16 +29,16 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.19.9"
-val pimpcloudVersion = "1.24.0"
-val sharedVersion = "1.9.0"
-val crossVersion = "1.9.0"
+val musicpimpVersion = "4.19.10"
+val pimpcloudVersion = "1.24.1"
+val sharedVersion = "1.9.1"
+val crossVersion = "1.9.1"
 val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "4.15.0"
+val utilPlayVersion = "4.17.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.2.0"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.3.0"
 val primitivesVersion = "1.6.0"
 
 val httpGroup = "org.apache.httpcomponents"
@@ -46,19 +46,17 @@ val httpVersion = "4.5.6"
 
 scalaVersion in ThisBuild := "2.12.7"
 
-lazy val all = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
+lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
 lazy val musicpimp = project.in(file("musicpimp"))
-  .enablePlugins(PlayScala, PlayNettyServer, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
-  .disablePlugins(PlayAkkaHttpServer)
+  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
 lazy val pimpcloud = project.in(file("pimpcloud"))
-  .enablePlugins(PlayScala, PlayNettyServer, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
-  .disablePlugins(PlayAkkaHttpServer)
+  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
@@ -98,7 +96,7 @@ lazy val crossSettings = Seq(
   version := crossVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.10",
+    "com.typesafe.play" %%% "play-json" % "2.6.11",
     "com.lihaoyi" %%% "scalatags" % "0.6.7",
     malliinaGroup %%% "primitives" % primitivesVersion,
     malliinaGroup %%% "util-html" % utilPlayVersion

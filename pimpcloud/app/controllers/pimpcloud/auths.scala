@@ -8,6 +8,7 @@ import com.malliina.play.auth.{AuthConf, AuthFailure, Authenticator, BasicAuthHa
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.values.Email
+import play.api.Logger
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
 import play.api.mvc._
@@ -47,18 +48,28 @@ object OAuthCtrl {
 }
 
 class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials) {
-  val sessionKey = "username"
+  private val log = Logger(getClass)
+
+  val sessionKey = "cloudUser"
+  val lastIdKey = "cloudLastId"
   val authorizedEmail = Email("malliina123@gmail.com")
   val handler = new BasicAuthHandler(
     routes.Logs.index(),
-    BasicAuthHandler.LastIdCookie,
-    email => if (email == authorizedEmail) Right(email) else Left(PermissionError(s"Unauthorized: '$email'."))
+    lastIdKey = lastIdKey,
+    email => if (email == authorizedEmail) Right(email) else Left(PermissionError(s"Unauthorized: '$email'.")),
+    sessionKey = sessionKey,
+    lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge)
   )
   val conf = AuthConf(creds.clientId, creds.clientSecret)
   val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback(), handler, conf, OkClient.default)
   val validator = GoogleCodeValidator(oauthConf)
 
-  def googleStart = actions.async { req => validator.start(req) }
+  def googleStart = actions.async { req =>
+    val lastId = req.cookies.get(handler.lastIdKey).map(_.value)
+    val described = lastId.fold("without login hint")(h => s"with login hint '$h'")
+    log.info(s"Starting OAuth flow $described.")
+    validator.startHinted(req, lastId)
+  }
 
   def googleCallback = actions.async { req => validator.validateCallback(req) }
 }

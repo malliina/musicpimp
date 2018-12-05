@@ -12,6 +12,7 @@ import com.malliina.play.app.DefaultApp
 import controllers.pimpcloud._
 import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
+import play.api.http.HttpConfiguration
 import play.api.mvc.EssentialFilter
 import play.api.{BuiltInComponentsFromContext, Configuration, Logger, Mode}
 import play.filters.HttpFiltersComponents
@@ -71,6 +72,12 @@ class CloudComponents(context: Context, conf: AppConf)
   val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
+
+  val defaultHttpConf = HttpConfiguration.fromConfiguration(configuration, environment)
+  // Sets sameSite = None, otherwise the Google auth redirect will wipe out the session state
+  override lazy val httpConfiguration =
+    defaultHttpConf.copy(session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None))
+
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   // Components
