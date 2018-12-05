@@ -8,6 +8,7 @@ import com.malliina.play.app.DefaultApp
 import com.typesafe.config.ConfigFactory
 import controllers._
 import play.api.ApplicationLoader.Context
+import play.api.http.HttpConfiguration
 import play.api.routing.Router
 import play.api.{BuiltInComponentsFromContext, Configuration}
 import play.filters.HttpFiltersComponents
@@ -49,6 +50,11 @@ class AppComponents(context: Context, disco: Configuration => DiscoGsOAuthCreden
   val csp = s"default-src 'self' 'unsafe-inline'  $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("localhost", "api.musicpimp.org"))
+
+  val defaultHttpConf = HttpConfiguration.fromConfiguration(configuration, environment)
+  // Sets sameSite = None, otherwise the Google auth redirect will wipe out the session state
+  override lazy val httpConfiguration =
+    defaultHttpConf.copy(session = defaultHttpConf.session.copy(cookieName = "metaSession", sameSite = None))
 
   lazy val oauthControl = new MetaOAuthControl(controllerComponents.actionBuilder, google(configuration))
   lazy val exec = ActorExecution(actorSystem, materializer)
