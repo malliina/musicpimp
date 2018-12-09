@@ -39,7 +39,9 @@ val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "4.17.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.3.0"
-val primitivesVersion = "1.6.0"
+val primitivesVersion = "1.7.1"
+val playJsonVersion = "2.6.11"
+val scalaTagsVersion = "0.6.7"
 
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.5.6"
@@ -96,8 +98,8 @@ lazy val crossSettings = Seq(
   version := crossVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % "2.6.11",
-    "com.lihaoyi" %%% "scalatags" % "0.6.7",
+    "com.typesafe.play" %%% "play-json" % playJsonVersion,
+    "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
     malliinaGroup %%% "primitives" % primitivesVersion,
     malliinaGroup %%% "util-html" % utilPlayVersion
   )
@@ -126,7 +128,7 @@ lazy val pimpPlaySettings =
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
         "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.6",
-        "com.neovisionaries" % "nv-websocket-client" % "2.5",
+        "com.neovisionaries" % "nv-websocket-client" % "2.6",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         "org.scala-stm" %% "scala-stm" % "0.8"
@@ -141,9 +143,9 @@ lazy val pimpPlaySettings =
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.6.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
-        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.5.jar")
+        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.6.jar")
       },
       useTerminateProcess := true,
       msiMappings in Windows := (msiMappings in Windows).value
@@ -319,10 +321,6 @@ lazy val metaBackendSettings = serverSettings ++ metaCommonSettings ++ Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests"
   ),
-  dependencyOverrides ++= Seq(
-    "com.typesafe.akka" %% "akka-stream" % "2.5.8",
-    "com.typesafe.akka" %% "akka-actor" % "2.5.8"
-  ),
   httpPort in Linux := Option("disabled"),
   httpsPort in Linux := Option("8460"),
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
@@ -349,10 +347,10 @@ lazy val metaBackendSettings = serverSettings ++ metaCommonSettings ++ Seq(
 
 lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
   libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "scalatags" % "0.6.7",
+    "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
     "be.doeraene" %%% "scalajs-jquery" % "0.9.2",
-    "com.typesafe.play" %%% "play-json" % "2.6.10",
-    "com.malliina" %%% "primitives" % "1.6.0"
+    "com.typesafe.play" %%% "play-json" % playJsonVersion,
+    "com.malliina" %%% "primitives" % primitivesVersion
   )
 )
 
@@ -370,10 +368,6 @@ lazy val pimpbeamSettings = serverSettings ++ Seq(
     logstreamsDep,
     "net.glxn" % "qrgen" % "1.3",
     PlayImport.ws
-  ),
-  dependencyOverrides ++= Seq(
-    "com.typesafe.akka" %% "akka-stream" % "2.5.8",
-    "com.typesafe.akka" %% "akka-actor" % "2.5.8"
   ),
   resolvers += Resolver.bintrayRepo("malliina", "maven"),
   httpPort in Linux := Option("8557"),
@@ -414,7 +408,7 @@ def libSettings = Seq(
 )
 
 def defaultDeps = Seq(
-  "com.lihaoyi" %% "scalatags" % "0.6.7",
+  "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
   "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
   PlayImport.specs2 % Test
 )
@@ -441,7 +435,7 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
     "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.13.0",
+    malliinaGroup %% "mobile-push" % "1.15.0",
     utilPlayDep
   )
 )
