@@ -102,7 +102,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
-    new DefaultHttpErrorHandler(environment, configuration, sourceMapper, Some(router))
+    new DefaultHttpErrorHandler(environment, configuration, devContext.map(_.sourceMapper), Some(router))
       with PimpErrorHandling
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
@@ -153,8 +153,8 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val cloud = new Cloud(tags, clouds, authDeps)
   lazy val connect = new ConnectController(authDeps)
   lazy val cloudWS = new CloudWS(clouds, ctx)
-
-  Starter.startServices(options, clouds, db, indexer, schedules, applicationLifecycle)
+  val starter = new Starter(actorSystem)
+  starter.startServices(options, clouds, db, indexer, schedules, applicationLifecycle)
   val dummyForInit = statsPlayer
 
   lazy val router: Routes = new Routes(
@@ -167,7 +167,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
     s.subscription.unsubscribe()
-    Starter.stopServices(options, schedules)
+    starter.stopServices(options, schedules)
     statsPlayer.close()
     db.close()
     Rest.close()

@@ -2,6 +2,7 @@ package com.malliina.ws
 
 import java.util.UUID
 
+import akka.actor.Scheduler
 import com.malliina.musicpimp.cloud.{BodyAndId, UuidFutureMessaging}
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.models.PhoneRequest
@@ -12,12 +13,26 @@ import play.api.libs.json._
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
+object JsonFutureSocket {
+  val RequestId = "request"
+  val SuccessKey = "success"
+
+  def tryParseUUID(id: String): Option[UUID] =
+    try {
+      Option(UUID.fromString(id))
+    } catch {
+      case _: IllegalArgumentException =>
+        None
+    }
+}
+
 /** Emulates an HTTP client using a WebSocket channel. Supports timeouts.
   *
   * Protocol: Responses must be tagged with the same request ID we add to sent messages, so that we can
   * pair requests with responses.
   */
-abstract class JsonFutureSocket(val id: CloudID) extends UuidFutureMessaging {
+abstract class JsonFutureSocket(val id: CloudID, scheduler: Scheduler)
+    extends UuidFutureMessaging(scheduler)(cached) {
 
   val timeout = 20.seconds
 
@@ -49,17 +64,4 @@ abstract class JsonFutureSocket(val id: CloudID) extends UuidFutureMessaging {
     */
   def defaultProxy[W: Writes](data: PhoneRequest[W]): Future[JsValue] =
     request(data, timeout)
-}
-
-object JsonFutureSocket {
-  val RequestId = "request"
-  val SuccessKey = "success"
-
-  def tryParseUUID(id: String): Option[UUID] =
-    try {
-      Option(UUID.fromString(id))
-    } catch {
-      case _: IllegalArgumentException =>
-        None
-    }
 }

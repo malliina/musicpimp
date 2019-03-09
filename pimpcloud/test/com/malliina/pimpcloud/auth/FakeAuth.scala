@@ -16,9 +16,11 @@ import scala.concurrent.Future
 class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandler) extends CloudAuthentication {
   private var currentServer: Option[ServerRequest] = None
 
-  override lazy val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
+  override lazy val phone: Authenticator[PhoneConnection] =
+    Authenticator(rh => authPhone(rh, errorHandler))
 
-  override lazy val server: Authenticator[ServerRequest] = Authenticator(rh => authServer(rh, errorHandler))
+  override lazy val server: Authenticator[ServerRequest] =
+    Authenticator(rh => authServer(rh, errorHandler))
 
   override def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]] =
     Future.successful(Right(getOrInit(req, errorHandler)))
@@ -37,7 +39,7 @@ class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandle
 
   def fakeServerSocket(req: RequestHeader, errorHandler: HttpErrorHandler, mat: Materializer): PimpServerSocket = {
     val actor = as.actorOf(NoopActor.props())
-    new PimpServerSocket(actor, CloudID("test"), req, mat, errorHandler, () => ())
+    new PimpServerSocket(actor, CloudID("test"), req, mat, as.scheduler, errorHandler, () => ())
   }
 }
 

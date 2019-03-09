@@ -25,7 +25,7 @@ class PlayerActor(player: ServerPlayer,
   val user = conf.user.user
   var eventSub: Option[Subscription] = None
   var previousPos = -1L
-  val remoteInfo = RemoteInfo(user, PimpRequest.apiVersion(rh), FullUrls.hostOnly(rh), Target(json => out ! json))
+  val remoteInfo = RemoteInfo(user, apiVersion, FullUrls.hostOnly(rh), Target(json => out ! json))
 
   override def preStart(): Unit = {
     super.preStart()

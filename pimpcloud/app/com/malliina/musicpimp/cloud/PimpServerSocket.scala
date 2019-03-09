@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.cloud
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Scheduler}
 import akka.stream.Materializer
 import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.audio.Track
@@ -30,9 +30,10 @@ class PimpServerSocket(val jsonOut: ActorRef,
                        id: CloudID,
                        val headers: RequestHeader,
                        mat: Materializer,
+                       scheduler: Scheduler,
                        errorHandler: HttpErrorHandler,
                        onUpdate: () => Unit)
-  extends JsonFutureSocket(id) {
+    extends JsonFutureSocket(id, scheduler) {
   val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, errorHandler, onUpdate)
 
   override def send(payload: JsValue): Unit = jsonOut ! payload

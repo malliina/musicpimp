@@ -10,7 +10,7 @@ import rx.lang.scala.Observable
 object PimpSockets {
   def observingSockets(events: Observable[JsValue],
                        auth: Authenticator[AuthedRequest],
-                       ctx: ActorExecution) = {
+                       ctx: ActorExecution): Sockets[AuthedRequest] = {
     new Sockets(auth, ctx) {
       override def props(conf: ActorConfig[AuthedRequest]) =
         Props(new ObserverActor(events, conf))

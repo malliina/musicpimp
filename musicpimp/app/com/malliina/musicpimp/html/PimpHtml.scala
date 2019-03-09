@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
-import com.malliina.html.{Bootstrap, Tags}
+import com.malliina.html.{Bootstrap, HtmlTags}
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap._
@@ -11,7 +11,7 @@ import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models._
-import com.malliina.musicpimp.scheduler.{ClockPlayback, FullClockPlayback}
+import com.malliina.musicpimp.scheduler.FullClockPlayback
 import com.malliina.musicpimp.stats._
 import com.malliina.play.tags.PlayTags.callAttr
 import com.malliina.play.tags.TagPage
@@ -74,7 +74,10 @@ object PimpHtml {
   }
 }
 
-class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings with FrontStrings {
+class PimpHtml(scripts: Modifier*)
+    extends Bootstrap(HtmlTags)
+    with FooterStrings
+    with FrontStrings {
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -133,22 +136,33 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
   def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username)(inner)
 
-  def libraryBase(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
+  def libraryBase(tab: String, contentClass: String, username: Username)(
+      inner: Modifier*): TagPage =
     indexMain("library", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), iClass("fa fa-folder-open")),
-          iconNavItem("Most Played", "popular", tab, routes.Website.popular(), iClass("fa fa-list")),
-          iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), iClass("fa fa-clock-o")),
+          iconNavItem("Folders",
+                      "folders",
+                      tab,
+                      routes.LibraryController.rootLibrary(),
+                      iClass("fa fa-folder-open")),
+          iconNavItem("Most Played",
+                      "popular",
+                      tab,
+                      routes.Website.popular(),
+                      iClass("fa fa-list")),
+          iconNavItem("Most Recent",
+                      "recent",
+                      tab,
+                      routes.Website.recent(),
+                      iClass("fa fa-clock-o")),
           iconNavItem("Search", "search", tab, routes.SearchPage.search(), iClass("fa fa-search"))
         )
       ),
       section(divClass(contentClass)(inner))
     )
 
-  def cloud(cloudId: Option[CloudID],
-            feedback: Option[UserFeedback],
-            username: Username) = {
+  def cloud(cloudId: Option[CloudID], feedback: Option[UserFeedback], username: Username) = {
     manage("cloud", username)(
       CloudHtml.cloudContent
     )
@@ -183,7 +197,11 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
     indexMain("manage", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), fa("folder-open")),
+          iconNavItem("Music Folders",
+                      "folders",
+                      tab,
+                      routes.SettingsController.settings(),
+                      fa("folder-open")),
           iconNavItem("Users", "users", tab, routes.Accounts.users(), fa("user")),
           iconNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), fa("clock")),
           iconNavItem("Tokens", "tokens", tab, routes.Alarms.tokens(), fa("key")),
@@ -207,9 +225,8 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
   def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
     indexMain(tabName, user, Option(div(`class` := Container)))(inner: _*)
 
-  def indexMain(tabName: String,
-                user: Username,
-                contentWrapper: Option[TypedTag[String]])(inner: Modifier*): TagPage = {
+  def indexMain(tabName: String, user: Username, contentWrapper: Option[TypedTag[String]])(
+      inner: Modifier*): TagPage = {
     def navItem(thisTabName: String, url: Call, iconicName: String): TypedTag[String] =
       iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
@@ -218,24 +235,34 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
         routes.LibraryController.rootLibrary(),
         "MusicPimp",
         modifier(
-          ulClass(s"${navbar.Nav} $MrAuto")(
+          ulClass(s"${navbars.Nav} $MrAuto")(
             navItem("Library", routes.LibraryController.rootLibrary(), "list"),
             navItem("Player", routes.Website.player(), "musical-note")
           ),
-          ulClass(s"$Nav ${navbar.Nav} ${navbar.Right}")(
+          ulClass(s"$Nav ${navbars.Nav} ${navbars.Right}")(
             divClass(s"$HiddenSmall")(
               SearchHtml.navbarSearch()
             ),
             li(`class` := s"nav-item $Dropdown")(
-              a(href := "#", `class` := s"nav-link $DropdownToggle", dataToggle := Dropdown, role := Button, aria.haspopup := tags.True, aria.expanded := tags.False)(
-                iconic("person"), s" ${user.name} ", spanClass(Caret)
+              a(href := "#",
+                `class` := s"nav-link $DropdownToggle",
+                dataToggle := Dropdown,
+                role := Button,
+                aria.haspopup := tags.True,
+                aria.expanded := tags.False)(
+                iconic("person"),
+                s" ${user.name} ",
+                spanClass(Caret)
               ),
               ulClass(DropdownMenu)(
                 navItem("Account", routes.Accounts.account(), "pencil"),
                 navItem("Manage", routes.SettingsController.manage(), "wrench"),
                 navItem("About", routes.Website.about(), "globe"),
                 divClass("dropdown-divider"),
-                li(a(href := routes.Accounts.logout(), `class` := "nav-link")(iconic("account-logout"), " Sign Out"))
+                li(
+                  a(href := routes.Accounts.logout(), `class` := "nav-link")(
+                    iconic("account-logout"),
+                    " Sign Out"))
               )
             ),
             div(
@@ -268,7 +295,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
   }
 
   def eye(elemId: String, iconicName: String) =
-    span(`class` := s"${navbar.Text} $HiddenClass", id := elemId)(iconic(iconicName))
+    span(`class` := s"${navbars.Text} $HiddenClass", id := elemId)(iconic(iconicName))
 
   def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
     html(lang := En)(
@@ -276,24 +303,31 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
         meta(charset := "UTF-8"),
         titleTag(title),
         deviceWidthViewport,
-        cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css", "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
+        cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+                      "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
         cssLink(at("css/main.css")),
-        jsHashed("https://code.jquery.com/jquery-3.3.1.min.js", "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="),
-        jsHashed("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js", "sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="),
-        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
-        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"),
+        jsHashed("https://code.jquery.com/jquery-3.3.1.min.js",
+                 "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="),
+        jsHashed("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
+                 "sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="),
+        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js",
+                 "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
+        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js",
+                 "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"),
         extraHeader
       ),
       body(
         inner,
         scripts,
         footer(`class` := "footer", id := FooterId)(
-          nav(`class` := s"${navbar.Navbar} navbar-expand-sm ${navbar.Light} ${navbar.BgLight} $HiddenSmall", id := BottomNavbar)(
+          nav(
+            `class` := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",
+            id := BottomNavbar)(
             divContainer(
-              ulClass(s"${navbar.Nav}")(
+              ulClass(s"${navbars.Nav}")(
                 footerIcon(FooterBackward, "step-backward"),
                 footerIcon(FooterPlay, "play"),
                 footerIcon(FooterPause, "pause"),
@@ -302,8 +336,11 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
                 navbarPara(FooterTitle),
                 navbarPara(FooterArtist),
               ),
-              div(`class` := s"${navbar.Nav} ${navbar.Right}", id := FooterCredit)(
-                spanClass(s"${text.muted} ${navbar.Text} float-right")("Developed by ", a(href := "https://github.com/malliina")("Michael Skogberg"), ".")
+              div(`class` := s"${navbars.Nav} ${navbars.Right}", id := FooterCredit)(
+                spanClass(s"${text.muted} ${navbars.Text} float-right")(
+                  "Developed by ",
+                  a(href := "https://github.com/malliina")("Michael Skogberg"),
+                  ".")
               )
             )
           )
@@ -313,7 +350,7 @@ class PimpHtml(scripts: Modifier*) extends Bootstrap(Tags) with FooterStrings wi
   )
 
   def navbarPara(elemId: String) =
-    span(`class` := s"${navbar.Text} footer-text", id := elemId)("")
+    span(`class` := s"${navbars.Text} footer-text", id := elemId)("")
 
   def footerIcon(elemId: String, faIcon: String) =
     li(id := elemId, `class` := s"nav-item")(

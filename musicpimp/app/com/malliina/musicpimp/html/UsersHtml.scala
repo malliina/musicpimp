@@ -3,7 +3,6 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
 import com.malliina.values.Username
 import controllers.musicpimp.{UserFeedback, routes}
-
 import scalatags.Text.all._
 
 object UsersHtml extends PimpBootstrap {
@@ -21,7 +20,8 @@ object UsersHtml extends PimpBootstrap {
             content.us map { u =>
               tr(
                 td(u.name),
-                td(`class` := "table-button")(postableForm(routes.Accounts.delete(u))(button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")))
+                td(`class` := "table-button")(postableForm(routes.Accounts.delete(u))(
+                  button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")))
               )
             }
           )
@@ -56,7 +56,7 @@ object UsersHtml extends PimpBootstrap {
       formGroup(
         labelFor("user")("Username"),
         divClass("controls")(
-          spanClass(s"$UneditableInput $InputMd", id := "user")(username.name)
+          spanClass(s"$InputMd", id := "user", readonly)(username.name)
         )
       ),
       passwordGroup("oldPassword", "Old password"),
@@ -65,7 +65,8 @@ object UsersHtml extends PimpBootstrap {
       feedback.fold(empty)(feedbackDiv)
     )
 
-  def passwordInputs(firstLabel: String = "Password", repeatLabel: String = "Repeat password"): Modifier = Seq(
+  def passwordInputs(firstLabel: String = "Password",
+                     repeatLabel: String = "Repeat password"): Modifier = Seq(
     passwordGroup("newPassword", firstLabel),
     passwordGroup("newPasswordAgain", repeatLabel)
   )

@@ -17,9 +17,4 @@ object Observables {
   }
 
   def observeAfter(duration: Duration) = Observable.interval(duration).take(1)
-
-  def combineAll[T](obs: List[Observable[T]], f: (T, T) => T): Observable[T] = obs match {
-    case Nil => Observable.never
-    case h :: t => h.combineLatestWith(combineAll(t, f))(f)
-  }
 }

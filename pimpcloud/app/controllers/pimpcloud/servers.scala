@@ -2,7 +2,7 @@ package controllers.pimpcloud
 
 import java.util.UUID
 
-import akka.actor.{Actor, ActorRef, Props, Terminated}
+import akka.actor.{Actor, ActorRef, Props, Scheduler, Terminated}
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.{Constants, PimpServerSocket}
@@ -67,7 +67,13 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
   val serverMediator = ctx.actorSystem.actorOf(Props(new ServerMediator))
   val serverSockets = new Sockets(serverAuth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
-      Props(new ServerActor(serverMediator, phoneMediator, conf, errorHandler, ctx.materializer))
+      Props(
+        new ServerActor(serverMediator,
+                        phoneMediator,
+                        conf,
+                        errorHandler,
+                        ctx.materializer,
+                        ctx.actorSystem.scheduler))
   }
 
   import akka.pattern.ask
@@ -87,10 +93,17 @@ class ServerActor(serverMediator: ActorRef,
                   phoneMediator: ActorRef,
                   conf: ActorConfig[AuthedRequest],
                   errorHandler: HttpErrorHandler,
-                  mat: Materializer)
-  extends JsonActor(conf) {
+                  mat: Materializer,
+                  scheduler: Scheduler)
+    extends JsonActor(conf) {
   val cloudId = CloudID(conf.user.user.name)
-  val server = new PimpServerSocket(out, cloudId, conf.rh, mat, errorHandler, () => serverMediator ! StreamsUpdated)
+  val server = new PimpServerSocket(out,
+                                    cloudId,
+                                    conf.rh,
+                                    mat,
+                                    scheduler,
+                                    errorHandler,
+                                    () => serverMediator ! StreamsUpdated)
 
   override def preStart(): Unit = {
     super.preStart()
@@ -148,7 +161,7 @@ class ServerMediator extends Actor {
       servers.find(_.jsonOut == out) foreach { server =>
         servers -= server
         sendUpdate(serversJson)
-        // TODO kill all phones connected to this server
+      // TODO kill all phones connected to this server
       }
       listeners.find(_ == out) foreach { listener =>
         listeners -= listener

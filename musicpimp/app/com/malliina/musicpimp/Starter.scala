@@ -1,9 +1,8 @@
 package com.malliina.musicpimp
 
-import java.awt.Desktop
-import java.net.URI
 import java.nio.file.Files
 
+import akka.actor.ActorSystem
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.app.InitOptions
@@ -14,21 +13,16 @@ import com.malliina.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
 import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.util.{Logging, Utils}
+import com.malliina.util.Logging
 import org.slf4j.LoggerFactory
 import play.api.inject.ApplicationLifecycle
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
-object Starter {
-  protected val (httpPortKey, httpsPortKey, httpAddressKey) =
-    ("http.port", "https.port", "http.address")
-  protected val defaultHttpPort = 9000
-  protected val defaultHttpAddress = "0.0.0.0"
-
+class Starter(as: ActorSystem) {
   private val log = LoggerFactory.getLogger(getClass)
+  val tray = Tray(as)
 
   def startServices(options: InitOptions,
                     clouds: Clouds,
@@ -60,7 +54,7 @@ object Starter {
         clouds.init()
       }
       if (options.useTray) {
-        Tray.installTray(lifecycle)
+        tray.installTray(lifecycle)
       }
       val version = BuildInfo.version
       log info s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
@@ -69,11 +63,6 @@ object Starter {
         log.error(s"Unable to initialize MusicPimp", e)
         throw e
     }
-  }
-
-  def stop(lifecycle: ApplicationLifecycle): Unit = {
-    Await.result(lifecycle.stop(), 5.seconds)
-    System.exit(0)
   }
 
   def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {
@@ -90,15 +79,4 @@ object Starter {
     println("Threads in total: " + threads.seq.size)
   }
 
-  def openWebInterface(): Unit = {
-    val address = sys.props.get(httpAddressKey) getOrElse "localhost"
-    val (protocol, port) =
-      tryReadInt(httpsPortKey).map(p => ("https", p)) orElse
-        tryReadInt(httpPortKey).map(p => ("http", p)) getOrElse
-        (("http", 9000))
-    Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
-  }
-
-  protected def tryReadInt(key: String): Option[Int] =
-    sys.props.get(key).filter(_ != "disabled").flatMap(ps => Utils.opt[Int, NumberFormatException](Integer.parseInt(ps)))
 }

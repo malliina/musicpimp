@@ -1,7 +1,6 @@
 <configuration>
     <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel"/>
-    <appender name="RX" class="com.malliina.logbackrx.BasicBoundedReplayRxAppender">
-        <bufferSize>100</bufferSize>
+    <appender name="AKKA" class="com.malliina.logback.akka.DefaultAkkaAppender">
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -20,7 +19,7 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogStreamsLogbackAppender">
+    <appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogstreamsLogbackAkkaAppender">
         <endpoint>${LOGSTREAMS_HOST:-logs.malliina.com}</endpoint>
         <secure>true</secure>
         <username>${LOGSTREAMS_USER:-pimpcloud}</username>
@@ -34,7 +33,7 @@
     <logger name="play.core.server.netty.NettyModelConversion" level="ERROR"/>
     <root level="INFO">
         <appender-ref ref="FILE"/>
-        <appender-ref ref="RX"/>
+        <appender-ref ref="AKKA"/>
         <appender-ref ref="LOGSTREAMS"/>
     </root>
 </configuration>

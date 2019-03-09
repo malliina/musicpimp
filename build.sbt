@@ -9,7 +9,6 @@ import com.malliina.sbt.unix.LinuxKeys.{appHome, ciBuild, httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
 import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
-import com.malliina.sbtutils.{SbtProjects, SbtUtils}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageName, packageSummary, rpmVendor}
 import play.sbt.PlayImport
@@ -36,9 +35,9 @@ val crossVersion = "1.9.1"
 val utilAudioVersion = "2.5.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "4.17.0"
+val utilPlayVersion = "5.0.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.3.0"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.5.0"
 val primitivesVersion = "1.7.1"
 val playJsonVersion = "2.6.11"
 val scalaTagsVersion = "0.6.7"
@@ -46,7 +45,7 @@ val scalaTagsVersion = "0.6.7"
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.5.6"
 
-scalaVersion in ThisBuild := "2.12.7"
+scalaVersion in ThisBuild := "2.12.8"
 
 lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -74,7 +73,8 @@ lazy val cross = portableProject(JSPlatform, JVMPlatform)
   .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.1")
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
-lazy val utilAudio = SbtProjects.testableProject("util-audio", file("util-audio"))
+lazy val utilAudio = Project("util-audio", file("util-audio"))
+  .enablePlugins(MavenCentralPlugin)
   .settings(utilAudioSettings: _*)
 
 lazy val musicmeta = project.in(file("musicmeta"))
@@ -273,7 +273,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
-  libraryDependencies += "com.typesafe.akka" %% "akka-http"   % "10.1.5"
+  libraryDependencies += "com.typesafe.akka" %% "akka-http"   % "10.1.7"
 )
 
 lazy val artifactSettings = Seq(
@@ -290,11 +290,11 @@ lazy val pimpcloudScalaJSSettings = Seq(
   pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
-lazy val utilAudioSettings = SbtUtils.mavenSettings ++ Seq(
+lazy val utilAudioSettings = Seq(
   version := utilAudioVersion,
   organization := malliinaGroup,
-  SbtUtils.gitUserName := "malliina",
-  SbtUtils.developerName := "Michael Skogberg",
+  gitUserName := "malliina",
+  developerName := "Michael Skogberg",
   libraryDependencies ++= Seq(
     "commons-io" % "commons-io" % "2.6",
     "org.slf4j" % "slf4j-api" % "1.7.25",
@@ -316,6 +316,7 @@ lazy val metaBackendSettings = serverSettings ++ metaCommonSettings ++ Seq(
   scalaJSProjects := Seq(musicmetaFrontend),
   pipelineStages in Assets := Seq(scalaJSPipeline),
   libraryDependencies ++= Seq(
+    "commons-codec" % "commons-codec" % "1.12",
     logstreamsDep,
     malliinaGroup %% "play-social" % utilPlayVersion,
     utilPlayDep,
@@ -409,7 +410,7 @@ def libSettings = Seq(
 
 def defaultDeps = Seq(
   "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % Test,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.1" % Test,
   PlayImport.specs2 % Test
 )
 
@@ -435,13 +436,13 @@ lazy val sharedSettings = baseSettings ++ Seq(
   libraryDependencies ++= Seq(
     "com.typesafe.slick" %% "slick" % "3.2.2",
     "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.15.0",
+    malliinaGroup %% "mobile-push" % "1.17.0",
     utilPlayDep
   )
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.8",
   organization := "org.musicpimp"
 )
 

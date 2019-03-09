@@ -14,12 +14,18 @@ object SettingsHtml extends PimpBootstrap {
       ulClass(ListUnstyled)(
         content.folders.map(renderFolder)
       ),
-      postableForm(routes.SettingsController.newFolder(), `class` := FormHorizontal, name := "newFolderForm")(
+      postableForm(routes.SettingsController.newFolder(),
+                   `class` := FormHorizontal,
+                   name := "newFolderForm")(
         divClass(InputGroup)(
           divClass("input-group-prepend")(
             spanClass("input-group-text")(iconic("folder")),
           ),
-          textInputBase(Text, SettingsController.Path, Option(content.folderPlaceholder), `class` := FormControl, required),
+          textInputBase(Text,
+                        SettingsController.Path,
+                        Option(content.folderPlaceholder),
+                        `class` := FormControl,
+                        required),
           divClass("input-group-append")(
             submitButton(`class` := btn.primary)(iconic("plus"), " Add")
           )
@@ -34,7 +40,7 @@ object SettingsHtml extends PimpBootstrap {
         divClass("input-group-prepend")(
           spanClass("input-group-text")(iconic("folder")),
         ),
-        spanClass(s"$UneditableInput $FormControl")(folder),
+        spanClass(s"$FormControl", readonly)(folder),
         divClass("input-group-append")(
           submitButton(`class` := btn.danger)(iconic("delete"), " Delete")
         )

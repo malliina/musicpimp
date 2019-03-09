@@ -1,6 +1,5 @@
 <configuration>
-    <appender name="RX" class="com.malliina.logbackrx.BasicBoundedReplayRxAppender">
-        <bufferSize>500</bufferSize>
+    <appender name="AKKA" class="com.malliina.logback.akka.DefaultAkkaAppender">
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -16,6 +15,6 @@
     <logger name="play.core.server.netty.NettyModelConversion" level="ERROR"/>
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="RX"/>
+        <appender-ref ref="AKKA"/>
     </root>
 </configuration>

@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
-import com.malliina.concurrent.Observables
+import akka.actor.Scheduler
+import akka.pattern.after
 import com.malliina.musicpimp.cloud.UuidFutureMessaging.log
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.models.PhoneRequest
@@ -8,17 +9,22 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
-trait UuidFutureMessaging extends FutureMessaging[JsValue] {
+object UuidFutureMessaging {
+  private val log = Logger(getClass)
+}
+
+abstract class UuidFutureMessaging(scheduler: Scheduler)(implicit ec: ExecutionContext)
+    extends FutureMessaging[JsValue] {
   val ongoing = TrieMap.empty[RequestID, Promise[JsValue]]
 
   def extract(response: JsValue): Option[BodyAndId]
 
   def isSuccess(response: JsValue): Boolean = true
 
-  def request[W: Writes](req: PhoneRequest[W], timeout: Duration): Future[JsValue] = {
+  def request[W: Writes](req: PhoneRequest[W], timeout: FiniteDuration): Future[JsValue] = {
     // generates UUID for this request-response pair
     val request = RequestID.random()
     val responsePromise = Promise[JsValue]()
@@ -29,13 +35,15 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
     val task = responsePromise.future
     // fails promise after timeout
     if (!responsePromise.isCompleted) {
-      Observables.after(timeout) {
-        ongoing -= request
-        if (!responsePromise.isCompleted) {
-          val message = s"Request: $request timed out after: $timeout."
-          val failed = responsePromise tryFailure new concurrent.TimeoutException(message)
-          if (failed) {
-            log warn message
+      after(timeout, scheduler) {
+        Future {
+          ongoing -= request
+          if (!responsePromise.isCompleted) {
+            val message = s"Request: $request timed out after: $timeout."
+            val failed = responsePromise tryFailure new concurrent.TimeoutException(message)
+            if (failed) {
+              log warn message
+            }
           }
         }
       }
@@ -74,24 +82,11 @@ trait UuidFutureMessaging extends FutureMessaging[JsValue] {
   def failExceptionally(requestID: RequestID, t: Throwable) =
     baseComplete(requestID)(_.tryFailure(t))
 
-  private def baseComplete(request: RequestID)(f: Promise[JsValue] => Unit): Boolean = {
+  private def baseComplete(request: RequestID)(f: Promise[JsValue] => Unit): Boolean =
     (ongoing get request).exists { promise =>
       f(promise)
       ongoing -= request
       true
     }
-  }
 
 }
-
-object UuidFutureMessaging {
-  private val log = Logger(getClass)
-}
-
-case class BodyAndId(body: JsValue, request: RequestID)
-
-object BodyAndId {
-  implicit val json = Json.format[BodyAndId]
-}
-
-class RequestFailure(val response: JsValue) extends Exception

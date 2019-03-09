@@ -19,19 +19,23 @@ object APNSUtils {
 
 /** Using HTTP/2.
   */
-class APNSHttpHandler(client: APNSHttpClient) extends PushRequestHandler[APNSPayload, APNSHttpResult] {
+class APNSHttpHandler(client: APNSHttpClient)
+    extends PushRequestHandler[APNSPayload, APNSHttpResult] {
   val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
   val meta = APNSMeta.withTopic(MusicPimpTopic)
 
-  def pushOne(request: APNSPayload) =
-    client.push(request.token, APNSRequest(request.message, meta))
+  def pushOne(request: APNSPayload): Future[APNSHttpResult] =
+    client
+      .push(request.token, APNSRequest(request.message, meta))
       .map(r => fold(r, request.token))
 }
 
 object APNSTokenHandler {
   def fromConf(config: Configuration, isSandbox: Boolean) = {
     val attempt = APNSTokenConf.parse { key =>
-      config.getOptional[String](key).toRight(ErrorMessage(s"Key not found: '$key'."))
+      config
+        .getOptional[String](key)
+        .toRight(ErrorMessage(s"Key not found: '$key'."))
     }
     attempt.fold(msg => throw new Exception(msg.message), apply(_, isSandbox))
   }
@@ -40,10 +44,12 @@ object APNSTokenHandler {
     new APNSTokenHandler(APNSTokenClient(conf, isSandbox))
 }
 
-class APNSTokenHandler(client: APNSTokenClient) extends PushRequestHandler[APNSPayload, APNSHttpResult] {
+class APNSTokenHandler(client: APNSTokenClient)
+    extends PushRequestHandler[APNSPayload, APNSHttpResult] {
   val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
 
   override def pushOne(request: APNSPayload): Future[APNSHttpResult] =
-    client.push(request.token, APNSRequest.withTopic(MusicPimpTopic, request.message))
+    client
+      .push(request.token, APNSRequest.withTopic(MusicPimpTopic, request.message))
       .map(r => fold(r, request.token))
 }
