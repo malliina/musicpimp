@@ -29,6 +29,8 @@ object TrackJson {
   def format(host: FullUrl): Format[TrackMeta] =
     Format(TrackMeta.reader, writer(host))
 
+  def makeFull(t: TrackMeta, rh: RequestHeader) = toFull(t, host(rh))
+
   def toFull(t: TrackMeta, host: FullUrl): FullTrack = t.toFull(urlFor(host, t.id))
 
   def toFullPlaylist(t: SavedPlaylist, host: FullUrl): FullSavedPlaylist =

@@ -1,5 +1,6 @@
 package controllers.musicpimp
 
+import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.html.PimpHtml
@@ -32,7 +33,7 @@ class SearchPage(tags: PimpHtml,
     results.map { tracks =>
       PimpContentController.default.respond(req)(
         html = tags.search(term, tracks, req.user),
-        json = Json.toJson(tracks)
+        json = Json.toJson(tracks.map(t => TrackJson.makeFull(t, req)))
       )
     }
   }

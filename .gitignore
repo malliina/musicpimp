@@ -10,3 +10,4 @@ credentials.txt
 *.log
 *.data
 settings.json
+.hydra

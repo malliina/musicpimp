@@ -175,7 +175,10 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
           sendFailure(request, FailReason(msg))
         }
       case Search(term, limit) =>
-        databaseResponse(deps.db.fullText(term, limit))
+        val ts = deps.db.fullText(term, limit).map { dataTracks =>
+          dataTracks.map(t => TrackJson.toFull(t, cloudHost))
+        }
+        databaseResponse(ts)
       case PingAuth =>
         sendSuccess(request, JsonMessages.version)
       case PingMessage =>
