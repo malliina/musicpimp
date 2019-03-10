@@ -90,6 +90,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
           new String(Files.readAllBytes(dest), charset)
         } else {
           val secret = InitOptions.generateSecret()
+          Option(dest.getParent).foreach(dir => Files.createDirectories(dir))
           Files.write(dest, secret.getBytes(charset))
           PimpComponents.log.info(s"Generated random secret key and saved it to '$dest'...")
           secret
