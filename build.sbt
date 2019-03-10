@@ -28,7 +28,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.20.1"
+val musicpimpVersion = "4.20.2"
 val pimpcloudVersion = "1.25.0"
 val sharedVersion = "1.10.0"
 val crossVersion = "1.10.0"
@@ -110,7 +110,7 @@ lazy val crossSettings = Seq(
 lazy val pimpPlaySettings =
   commonServerSettings ++
     pimpAssetSettings ++
-    nativePackagingSettings ++
+    nativeMusicPimpSettings ++
     artifactSettings ++
     Seq(
       version := musicpimpVersion,
@@ -168,7 +168,7 @@ def assetSettings = Seq(
   }
 )
 
-lazy val nativePackagingSettings =
+lazy val nativeMusicPimpSettings =
   pimpWindowsSettings ++
     pimpMacSettings ++
     Seq(
@@ -181,6 +181,8 @@ lazy val nativePackagingSettings =
       javaOptions in Universal ++= Seq(
         "-Dlogger.resource=prod-logger.xml"
       ),
+      // Hack because I want to use log.dir on Linux but not Windows, and "javaOptions in Linux" seems not to work
+      bashScriptExtraDefines += """addJava "-Dlog.dir=/var/log/musicpimp"""",
       packageSummary in Linux := "MusicPimp summary here.",
       rpmVendor := "Skogberg Labs",
       rpmLicense := Option("BSD License"),
