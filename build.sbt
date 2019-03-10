@@ -28,18 +28,18 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.19.10"
-val pimpcloudVersion = "1.24.1"
-val sharedVersion = "1.9.1"
-val crossVersion = "1.9.1"
-val utilAudioVersion = "2.5.1"
+val musicpimpVersion = "4.20.0"
+val pimpcloudVersion = "1.25.0"
+val sharedVersion = "1.10.0"
+val crossVersion = "1.10.0"
+val utilAudioVersion = "2.6.0"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayVersion = "5.0.0"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.5.0"
-val primitivesVersion = "1.7.1"
-val playJsonVersion = "2.6.11"
+val primitivesVersion = "1.8.1"
+val playJsonVersion = "2.7.1"
 val scalaTagsVersion = "0.6.7"
 
 val httpGroup = "org.apache.httpcomponents"
