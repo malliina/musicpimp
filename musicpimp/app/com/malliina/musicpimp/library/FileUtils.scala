@@ -4,32 +4,26 @@ import java.io.File
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.{FileVisitResult, Files, Path, SimpleFileVisitor}
 
-import com.malliina.util.Log
+object FileUtils {
 
-/**
- * @author Michael
- */
-object FileUtils extends Log {
-  /**
-   * Non-recursively lists the paths (files and directories) under `dir`.
-   *
-   * The returned paths are relativized against the supplied root.
-   *
-   * @param dir parent
-   * @return Non-recursive files and dirs.
-   */
+  /** Non-recursively lists the paths (files and directories) under `dir`.
+    *
+    * The returned paths are relativized against the supplied root.
+    *
+    * @param dir parent
+    * @return Non-recursive files and dirs.
+    */
   def listFiles(dir: Path, root: Path): Folder = {
     val visitor = new MusicItemVisitor(dir, root)
     Files.walkFileTree(dir, visitor)
     Folder(visitor.dirs, visitor.files)
   }
 
-  /**
-   * '#::' is cons for [[Stream]]s
-   *
-   * @see http://stackoverflow.com/a/7264833/1863674
-   *
-   */
+  /** '#::' is cons for [[Stream]]s
+    *
+    * @see http://stackoverflow.com/a/7264833/1863674
+    *
+    */
   def fileTree(f: File): Stream[File] =
     f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(fileTree) else Stream.empty)
 
@@ -37,11 +31,11 @@ object FileUtils extends Log {
 
   def folders(path: Path): Stream[Path] = pathTree(path).filter(Files.isDirectory(_))
 
-  def readableFiles(path: Path) = pathTree(path).filter(p => !Files.isDirectory(p) && Files.isReadable(p))
+  def readableFiles(path: Path) =
+    pathTree(path).filter(p => !Files.isDirectory(p) && Files.isReadable(p))
 }
 
-class MusicItemVisitor(val startDir: Path, root: Path)
-  extends SimpleFileVisitor[Path] with Log {
+class MusicItemVisitor(val startDir: Path, root: Path) extends SimpleFileVisitor[Path] {
   private[this] var dirBuffer: List[Path] = Nil
 
   private[this] var fileBuffer: List[Path] = Nil

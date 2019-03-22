@@ -3,11 +3,12 @@ package com.malliina.musicpimp.library
 import java.nio.file.{Files, Path, Paths}
 
 import com.malliina.file.FileUtilities
+import com.malliina.musicpimp.library.Settings.log
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.util.Log
+import play.api.Logger
 import play.api.libs.json.Json
 
-trait Settings extends Log {
+trait Settings {
   val settingsFile = FileUtil.localPath("settings.json")
   val FOLDERS = "folders"
 
@@ -38,4 +39,6 @@ trait Settings extends Log {
   def delete(folder: Path): Unit = save(read.filter(_ != folder))
 }
 
-object Settings extends Settings
+object Settings extends Settings {
+  private val log = Logger(getClass)
+}

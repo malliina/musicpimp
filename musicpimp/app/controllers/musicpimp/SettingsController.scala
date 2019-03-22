@@ -7,9 +7,9 @@ import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.{DataMigrator, Indexer}
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
 import com.malliina.musicpimp.library.{Library, Settings}
-import com.malliina.musicpimp.messaging.adm.AmazonDevices
 import com.malliina.musicpimp.messaging._
-import com.malliina.musicpimp.messaging.apns.{APNSDevice, APNSDevices}
+import com.malliina.musicpimp.messaging.adm.AmazonDevices
+import com.malliina.musicpimp.messaging.apns.APNSDevices
 import com.malliina.musicpimp.messaging.gcm.GoogleDevices
 import com.malliina.musicpimp.messaging.mpns.PushUrls
 import com.malliina.util.EnvUtils

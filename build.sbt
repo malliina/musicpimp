@@ -35,10 +35,10 @@ val crossVersion = "1.10.0"
 val utilAudioVersion = "2.6.0"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "5.0.0"
+val utilPlayVersion = "5.1.1"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.5.0"
-val primitivesVersion = "1.8.1"
+val primitivesVersion = "1.9.0"
 val playJsonVersion = "2.7.1"
 val scalaTagsVersion = "0.6.7"
 
@@ -123,12 +123,12 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util" % "2.11.0",
+        malliinaGroup %% "util-base" % primitivesVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
         "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.6",
-        "com.neovisionaries" % "nv-websocket-client" % "2.6",
+        "com.neovisionaries" % "nv-websocket-client" % "2.8",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         "org.scala-stm" %% "scala-stm" % "0.8"
@@ -143,9 +143,9 @@ lazy val pimpPlaySettings =
         DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.6.jar")),
+      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
-        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.6.jar")
+        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")
       },
       useTerminateProcess := true,
       msiMappings in Windows := (msiMappings in Windows).value
@@ -359,13 +359,13 @@ lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
 
 lazy val metaCommonSettings = Seq(
   version := "1.12.0",
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.8",
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
 lazy val pimpbeamSettings = serverSettings ++ Seq(
   version := "2.1.0",
-  scalaVersion := "2.12.7",
+  scalaVersion := "2.12.8",
   libraryDependencies ++= Seq(
     utilPlayDep,
     logstreamsDep,
@@ -436,9 +436,9 @@ lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick" % "3.2.2",
-    "com.typesafe.slick" %% "slick-hikaricp" % "3.2.2",
-    malliinaGroup %% "mobile-push" % "1.17.0",
+    "com.typesafe.slick" %% "slick" % "3.2.3",
+    "com.typesafe.slick" %% "slick-hikaricp" % "3.2.3",
+    malliinaGroup %% "mobile-push" % "1.18.3",
     utilPlayDep
   )
 )
@@ -453,7 +453,7 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.5" % Test),
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.7" % Test),
       testFrameworks += new TestFramework("utest.runner.Framework")
     )
 

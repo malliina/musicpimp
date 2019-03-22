@@ -10,18 +10,20 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversio
 classpathTypes += "maven-plugin"
 
 Seq(
-  "com.malliina" %% "sbt-utils-maven" % "0.11.0",
+  "com.malliina" %% "sbt-utils-maven" % "0.12.1",
   "org.scala-js" % "sbt-scalajs" % "0.6.26",
   "org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
-  "com.malliina" % "sbt-filetree" % "0.2.1",
+  "com.malliina" % "sbt-filetree" % "0.3.0",
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",
   "com.typesafe.sbt" % "sbt-gzip" % "1.0.2",
   "com.typesafe.sbt" % "sbt-less" % "1.1.2",
   "com.typesafe.play" % "sbt-plugin" % "2.7.0",
   "com.malliina" %% "sbt-packager" % "2.7.0",
   "com.eed3si9n" % "sbt-buildinfo" % "0.9.0",
-  "com.github.gseitz" % "sbt-release" % "1.0.9"
+  "com.github.gseitz" % "sbt-release" % "1.0.9",
+  // TODO take into use
+  "ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.14.0"
 ) map addSbtPlugin
 
 def ivyRepo(name: String, urlString: String) =
