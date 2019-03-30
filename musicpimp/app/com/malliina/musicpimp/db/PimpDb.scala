@@ -32,7 +32,7 @@ object PimpDb {
   val maxConn = 20
 
   def default(ec: ExecutionContext) = {
-    DatabaseConf.prod().toOption.map(conf => maria(conf, ec)).getOrElse(defaultH2(ec))
+    DatabaseConf.prod().toOption.map(conf => mysql(conf, ec)).getOrElse(defaultH2(ec))
   }
 
   def defaultH2(ec: ExecutionContext) = {
@@ -66,9 +66,9 @@ object PimpDb {
     apply(H2Profile, pool, ec)
   }
 
-  def maria(conf: DatabaseConf): PimpDb = maria(conf, ExecutionContexts.cached)
+  def mysql(conf: DatabaseConf): PimpDb = mysql(conf, ExecutionContexts.cached)
 
-  def maria(conf: DatabaseConf, ec: ExecutionContext): PimpDb = {
+  def mysql(conf: DatabaseConf, ec: ExecutionContext): PimpDb = {
     val hikariConfig = new HikariConfig()
     hikariConfig.setJdbcUrl(conf.url)
     hikariConfig.setUsername(conf.user)
@@ -93,7 +93,7 @@ object PimpDb {
 
   object DatabaseConf {
     val H2Driver = "org.h2.Driver"
-    val MariaDriver = "org.mariadb.jdbc.Driver"
+    val MySQLDriver = "com.mysql.jdbc.Driver"
 
     def read(key: String) = PimpConf.read(key)
 
@@ -101,7 +101,7 @@ object PimpDb {
       url <- read("db_url")
       user <- read("db_user")
       pass <- read("db_pass")
-    } yield apply(url, user, pass, read("db_driver").getOrElse(MariaDriver))
+    } yield apply(url, user, pass, read("db_driver").getOrElse(MySQLDriver))
   }
 
   object GetDummy extends GetResult[Int] {
@@ -131,7 +131,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
   def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
-    if (p == MySQLProfile) fullTextMaria(searchTerm, limit, tableName)
+    if (p == MySQLProfile) fullTextMySQL(searchTerm, limit, tableName)
     else fullTextH2(searchTerm, limit, tableName)
   }
 
@@ -147,7 +147,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     run(action)
   }
 
-  def fullTextMaria(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullTextMySQL(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
     log debug s"Querying: $searchTerm"
     val words = searchTerm.split(" ")
     val commaSeparated = words.mkString(",")
@@ -170,7 +170,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     }
   }
 
-  def initIndexMaria(tableName: String): Future[Unit] = {
+  def initIndexMySQL(tableName: String): Future[Unit] = {
     for {
       _ <- executePlain(sqlu"create fulltext index track_search on TRACKS(title, artist, album);")
     } yield {
@@ -230,9 +230,10 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   def insertTracks(ts: Seq[DataTrack]) = run(tracks ++= ts)
 
   def initTable[T <: Table[_]](table: TableQuery[T]): Unit = {
-    await(database.run(table.schema.create))
-    log info s"Created table: ${table.baseTableRow.tableName}"
     val name = table.baseTableRow.tableName
+    log.info(s"Creating table: $name")
+    await(database.run(table.schema.create))
+    log.info(s"Created table: $name")
     if (name == tracksName) {
       await {
         initIndex(tracksName) recover {
@@ -245,7 +246,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   }
 
   def initIndex(tableName: String): Future[Unit] =
-    if (p == MySQLProfile) initIndexMaria(tableName)
+    if (p == MySQLProfile) initIndexMySQL(tableName)
     else initIndexH2(tableName)
 
   def dropAll() = {

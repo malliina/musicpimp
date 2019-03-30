@@ -16,8 +16,12 @@ import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
+import sbtcrossproject.CrossPlugin.autoImport.{
+  CrossType => PortableType,
+  crossProject => portableProject
+}
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
+import scalajsbundler.util.JSON
 
 import scala.sys.process.Process
 import scala.util.Try
@@ -50,42 +54,130 @@ scalaVersion in ThisBuild := "2.12.8"
 lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
-lazy val musicpimp = project.in(file("musicpimp"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
+//  .settings(
+//    npmDependencies in Compile ++= Seq(
+//      "jquery-ui" -> "1.12.1"
+//    )
+//  )
+lazy val musicpimp = project
+  .in(file("musicpimp"))
+  .enablePlugins(PlayScala,
+                 JavaServerAppPackaging,
+                 SystemdPlugin,
+                 BuildInfoPlugin,
+                 FileTreePlugin,
+                 WebScalaJSBundlerPlugin)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
-lazy val pimpcloud = project.in(file("pimpcloud"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
+//  .settings(
+//    npmDependencies in Compile ++= Seq(
+//      "jquery-ui" -> "1.12.1"
+//    )
+//  )
+lazy val pimpcloud = project
+  .in(file("pimpcloud"))
+  .enablePlugins(PlayScala,
+                 JavaServerAppPackaging,
+                 SystemdPlugin,
+                 BuildInfoPlugin,
+                 FileTreePlugin,
+                 WebScalaJSBundlerPlugin)
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
 lazy val shared = Project("pimp-shared", file("shared"))
   .dependsOn(crossJvm)
   .settings(sharedSettings: _*)
-lazy val it = project.in(file("it"))
+lazy val it = project
+  .in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
   .settings(baseSettings: _*)
 lazy val cross = portableProject(JSPlatform, JVMPlatform)
   .crossType(PortableType.Full)
   .in(file("cross"))
   .settings(crossSettings: _*)
-  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.1")
+  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.2")
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
+  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+  .settings(
+    npmDependencies in Compile ++= Seq(
+      "jquery" -> "3.3.1",
+      "jquery-ui" -> "1.12.1"
+    )
+  )
 lazy val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
   .settings(utilAudioSettings: _*)
 
-lazy val musicmeta = project.in(file("musicmeta"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, SystemdPlugin, BuildInfoPlugin, FileTreePlugin)
-  .settings(metaBackendSettings: _*)
+lazy val metaCommonSettings = Seq(
+  version := "1.12.0",
+  scalaVersion := "2.12.8",
+  scalacOptions := Seq("-unchecked", "-deprecation")
+)
 
+lazy val musicmeta = project
+  .in(file("musicmeta"))
+  .enablePlugins(PlayScala,
+                 JavaServerAppPackaging,
+                 SystemdPlugin,
+                 BuildInfoPlugin,
+                 FileTreePlugin,
+                 WebScalaJSBundlerPlugin)
+  .settings(serverSettings ++ metaCommonSettings)
+  .settings(
+    scalaJSProjects := Seq(musicmetaFrontend),
+    pipelineStages in Assets := Seq(scalaJSPipeline),
+    libraryDependencies ++= Seq(
+      "commons-codec" % "commons-codec" % "1.12",
+      logstreamsDep,
+      malliinaGroup %% "play-social" % utilPlayVersion,
+      utilPlayDep,
+      utilPlayDep % Test classifier "tests"
+    ),
+    httpPort in Linux := Option("disabled"),
+    httpsPort in Linux := Option("8460"),
+    maintainer := "Michael Skogberg <malliina123@gmail.com>",
+    javaOptions in Universal ++= {
+      val linuxName = (name in Linux).value
+      val metaHome = (appHome in Linux).value
+      Seq(
+        s"-Ddiscogs.oauth=/etc/$linuxName/discogs-oauth.key",
+        s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
+        s"-Dcover.dir=$metaHome/covers",
+        s"-Dconfig.file=/etc/$linuxName/production.conf",
+        s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
+        "-Dfile.encoding=UTF-8",
+        "-Dsun.jnu.encoding=UTF-8"
+      )
+    },
+    pipelineStages := Seq(digest, gzip),
+    buildInfoKeys ++= Seq[BuildInfoKey](
+      "frontName" -> (name in musicmetaFrontend).value,
+    ),
+    buildInfoPackage := "com.malliina.musicmeta",
+    linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
+  )
 lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
-  .settings(metaFrontendSettings: _*)
+  .settings(metaCommonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
+      "be.doeraene" %%% "scalajs-jquery" % "0.9.2",
+      "com.typesafe.play" %%% "play-json" % playJsonVersion,
+      "com.malliina" %%% "primitives" % primitivesVersion
+    ),
+    npmDependencies in Compile ++= Seq("jquery" -> "3.3.1")
+  )
 
-lazy val pimpbeam = project.in(file("pimpbeam"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, com.malliina.sbt.unix.LinuxPlugin, SystemdPlugin, BuildInfoPlugin)
+lazy val pimpbeam = project
+  .in(file("pimpbeam"))
+  .enablePlugins(PlayScala,
+                 JavaServerAppPackaging,
+                 com.malliina.sbt.unix.LinuxPlugin,
+                 SystemdPlugin,
+                 BuildInfoPlugin)
   .settings(pimpbeamSettings: _*)
 
 addCommandAlias("pimp", ";project musicpimp")
@@ -127,12 +219,13 @@ lazy val pimpPlaySettings =
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "com.h2database" % "h2" % "1.4.196",
-        "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.6",
+        "mysql" % "mysql-connector-java" % "5.1.47",
+//        "mysql" % "mysql-connector-java" % "8.0.15",
         "com.neovisionaries" % "nv-websocket-client" % "2.8",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        "org.scala-stm" %% "scala-stm" % "0.8"
-      ).map(dep => dep withSources()),
+        "org.scala-stm" %% "scala-stm" % "0.9"
+      ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
         "com.malliina.musicpimp.http.PimpImports._",
@@ -140,19 +233,26 @@ lazy val pimpPlaySettings =
         "com.malliina.values.Username"
       ),
       fileTreeSources := Seq(
-        DirMap((resourceDirectory in Assets).value, "com.malliina.musicpimp.assets.AppAssets", "com.malliina.musicpimp.html.PimpHtml.at"),
+        DirMap((resourceDirectory in Assets).value,
+               "com.malliina.musicpimp.assets.AppAssets",
+               "com.malliina.musicpimp.html.PimpHtml.at"),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")),
+      libs := libs.value.filter(lib =>
+        !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
         !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")
       },
       useTerminateProcess := true,
-      msiMappings in Windows := (msiMappings in Windows).value
-        .map { case (src, dest) => (src, Paths.get(dest.toString.replace('[', '_')
-          .replace(']', '_')
-          .replace(',', '_')))
-        }
+      msiMappings in Windows := (msiMappings in Windows).value.map {
+        case (src, dest) =>
+          (src,
+           Paths.get(
+             dest.toString
+               .replace('[', '_')
+               .replace(']', '_')
+               .replace(',', '_')))
+      }
     )
 
 lazy val pimpAssetSettings = assetSettings ++ Seq(
@@ -161,7 +261,7 @@ lazy val pimpAssetSettings = assetSettings ++ Seq(
 )
 
 def assetSettings = Seq(
-  mappings in(Compile, packageBin) ++= {
+  mappings in (Compile, packageBin) ++= {
     (unmanagedResourceDirectories in Assets).value.flatMap { assetDir =>
       assetDir.allPaths pair sbt.io.Path.relativeTo(baseDirectory.value)
     }
@@ -198,21 +298,24 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   winSwExe in Windows := (pkgHome in Windows).value.resolve("WinSW.NET2.exe"),
 )
 
-lazy val windowsConfSettings = inConfig(Windows)(Seq(
-  prettyMappings := {
-    val out: String = WinKeys.msiMappings.value.map {
-      case (src, dest) => s"$dest\t\t$src"
-    }.sorted.mkString("\n")
-    logger.value.log(Level.Info, out)
-  },
-  appIcon := Some(pkgHome.value.resolve("guitar-128x128-np.ico")),
-  buildAndMove := {
-    val src = WinKeys.msi.value
-    val dest = Files.move(src, target.value.toPath.resolve(name.value + ".msi"), StandardCopyOption.REPLACE_EXISTING)
-    streams.value.log.info(s"Moved '$src' to '$dest'.")
-    dest
-  }
-))
+lazy val windowsConfSettings = inConfig(Windows)(
+  Seq(
+    prettyMappings := {
+      val out: String = WinKeys.msiMappings.value.map {
+        case (src, dest) => s"$dest\t\t$src"
+      }.sorted.mkString("\n")
+      logger.value.log(Level.Info, out)
+    },
+    appIcon := Some(pkgHome.value.resolve("guitar-128x128-np.ico")),
+    buildAndMove := {
+      val src = WinKeys.msi.value
+      val dest = Files.move(src,
+                            target.value.toPath.resolve(name.value + ".msi"),
+                            StandardCopyOption.REPLACE_EXISTING)
+      streams.value.log.info(s"Moved '$src' to '$dest'.")
+      dest
+    }
+  ))
 
 lazy val pimpMacSettings = macSettings ++ Seq(
   mainClass := Some("play.core.server.ProdServerStart"),
@@ -242,7 +345,10 @@ lazy val pimpcloudSettings =
         PlayImport.ehcache
       ),
       PlayKeys.externalizeResources := false,
-      fileTreeSources := Seq(DirMap((resourceDirectory in Assets).value, "com.malliina.pimpcloud.assets.CloudAssets", "controllers.pimpcloud.CloudTags.at")),
+      fileTreeSources := Seq(
+        DirMap((resourceDirectory in Assets).value,
+               "com.malliina.pimpcloud.assets.CloudAssets",
+               "controllers.pimpcloud.CloudTags.at")),
       buildInfoPackage := "com.malliina.pimpcloud",
       linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
     )
@@ -254,8 +360,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   manufacturer := "Skogberg Labs",
   mainClass := Some("com.malliina.pimpcloud.Starter"),
   bootClasspath := {
-    val alpnFile = scriptClasspathOrdering.value
-      .map { case (_, dest) => dest }
+    val alpnFile = scriptClasspathOrdering.value.map { case (_, dest) => dest }
       .find(_.contains("alpn-boot"))
       .getOrElse(sys.error("Unable to find alpn-boot"))
     val name = (packageName in Debian).value
@@ -275,7 +380,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
-  libraryDependencies += "com.typesafe.akka" %% "akka-http"   % "10.1.7"
+  libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.1.7"
 )
 
 lazy val artifactSettings = Seq(
@@ -311,56 +416,6 @@ lazy val utilAudioSettings = Seq(
     "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
     Resolver.bintrayRepo("malliina", "maven")
   )
-)
-
-// musicmeta
-lazy val metaBackendSettings = serverSettings ++ metaCommonSettings ++ Seq(
-  scalaJSProjects := Seq(musicmetaFrontend),
-  pipelineStages in Assets := Seq(scalaJSPipeline),
-  libraryDependencies ++= Seq(
-    "commons-codec" % "commons-codec" % "1.12",
-    logstreamsDep,
-    malliinaGroup %% "play-social" % utilPlayVersion,
-    utilPlayDep,
-    utilPlayDep % Test classifier "tests"
-  ),
-  httpPort in Linux := Option("disabled"),
-  httpsPort in Linux := Option("8460"),
-  maintainer := "Michael Skogberg <malliina123@gmail.com>",
-  javaOptions in Universal ++= {
-    val linuxName = (name in Linux).value
-    val metaHome = (appHome in Linux).value
-    Seq(
-      s"-Ddiscogs.oauth=/etc/$linuxName/discogs-oauth.key",
-      s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
-      s"-Dcover.dir=$metaHome/covers",
-      s"-Dconfig.file=/etc/$linuxName/production.conf",
-      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
-      "-Dfile.encoding=UTF-8",
-      "-Dsun.jnu.encoding=UTF-8"
-    )
-  },
-  pipelineStages := Seq(digest, gzip),
-  buildInfoKeys ++= Seq[BuildInfoKey](
-    "frontName" -> (name in musicmetaFrontend).value,
-  ),
-  buildInfoPackage := "com.malliina.musicmeta",
-  linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
-)
-
-lazy val metaFrontendSettings = metaCommonSettings ++ Seq(
-  libraryDependencies ++= Seq(
-    "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-    "be.doeraene" %%% "scalajs-jquery" % "0.9.2",
-    "com.typesafe.play" %%% "play-json" % playJsonVersion,
-    "com.malliina" %%% "primitives" % primitivesVersion
-  )
-)
-
-lazy val metaCommonSettings = Seq(
-  version := "1.12.0",
-  scalaVersion := "2.12.8",
-  scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
 lazy val pimpbeamSettings = serverSettings ++ Seq(
@@ -450,11 +505,42 @@ lazy val baseSettings = Seq(
 
 def scalajsProject(name: String, path: File) =
   Project(name, path)
-    .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
+    .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.7" % Test),
-      testFrameworks += new TestFramework("utest.runner.Framework")
+      testFrameworks += new TestFramework("utest.runner.Framework"),
+      version in webpack := "4.27.1",
+      emitSourceMaps := false,
+      scalaJSUseMainModuleInitializer := true,
+      webpackBundlingMode := BundlingMode.LibraryOnly(),
+      npmDependencies in Compile ++= Seq(
+//        "jquery" -> "3.3.1",
+        "popper.js" -> "1.14.6",
+        "bootstrap" -> "4.2.1"
+      ),
+      npmDevDependencies in Compile ++= Seq(
+        "autoprefixer" -> "9.4.3",
+        "cssnano" -> "4.1.8",
+        "css-loader" -> "2.1.0",
+        "file-loader" -> "3.0.1",
+        "less" -> "3.9.0",
+        "less-loader" -> "4.1.0",
+        "mini-css-extract-plugin" -> "0.5.0",
+        "postcss-import" -> "12.0.1",
+        "postcss-loader" -> "3.0.0",
+        "postcss-preset-env" -> "6.5.0",
+        "style-loader" -> "0.23.1",
+        "url-loader" -> "1.1.2",
+        "webpack-merge" -> "4.1.5"
+      ),
+      additionalNpmConfig in Compile := Map(
+        "engines" -> JSON.obj("node" -> JSON.str("8.x")),
+        "private" -> JSON.bool(true),
+        "license" -> JSON.str("BSD")
+      ),
+      webpackConfigFile in fastOptJS := Some(baseDirectory.value / "webpack.dev.config.js"),
+      webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
     )
 
 def gitHash: String =

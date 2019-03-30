@@ -23,7 +23,10 @@ abstract class DatabaseLike(val profile: JdbcProfile) {
     val tableName = table.baseTableRow.tableName
     try {
       val future = database.run(MTable.getTables(tableName))
-      await(future).nonEmpty
+      val ts = await(future)
+      val described = if (ts.nonEmpty) "exists" else "does not exist"
+      log.debug(s"$tableName $described")
+      ts.nonEmpty
     } catch {
       case sqle: SQLException =>
         log.error(s"Unable to verify table: $tableName", sqle)

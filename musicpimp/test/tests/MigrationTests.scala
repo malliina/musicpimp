@@ -12,7 +12,7 @@ import scala.concurrent.{Await, Future}
 class MigrationTests extends FunSuite {
 
   ignore("restore dump") {
-    val db = PimpDb.maria(DatabaseConf("jdbc:mariadb://10.0.0.1:3306/musicpimp", "change", "me", DatabaseConf.MariaDriver))
+    val db = PimpDb.mysql(DatabaseConf("jdbc:mariadb://10.0.0.1:3306/musicpimp", "change", "me", DatabaseConf.MySQLDriver))
     val migrator = DataMigrator(db)
     val dumpFile = Paths.get("E:\\Stuff\\dump.json")
     val op = migrator.restoreDump(dumpFile, fromScratch = false)

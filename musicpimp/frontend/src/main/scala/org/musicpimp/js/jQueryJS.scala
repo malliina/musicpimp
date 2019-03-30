@@ -6,7 +6,8 @@ import org.scalajs.jquery._
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, |}
+import scala.scalajs.js.JSON
+import scala.scalajs.js.annotation.JSImport
 
 @js.native
 trait AutoItem extends js.Object {
@@ -67,7 +68,9 @@ object AutoOptions {
   def apply(src: js.Function2[Request, js.Function1[js.Array[AutoItem], js.Any], js.Any],
             minLength: Int,
             select: js.Function2[JQueryEventObject, SelectUi, js.Any]): AutoOptions =
-    js.Dynamic.literal(source = src, minLength = minLength, select = select).asInstanceOf[AutoOptions]
+    js.Dynamic
+      .literal(source = src, minLength = minLength, select = select)
+      .asInstanceOf[AutoOptions]
 }
 
 @js.native
@@ -81,9 +84,7 @@ object Request {
 }
 
 @js.native
-trait Response extends js.Object {
-
-}
+trait Response extends js.Object {}
 
 @js.native
 trait SelectUi extends js.Object {
@@ -96,6 +97,8 @@ trait SelectUi extends js.Object {
 @js.native
 trait JQueryUI extends JQuery {
   def autocomplete(options: AutoOptions): js.Dynamic = js.native
+  def slider(options: StopOptions): Unit = js.native
+  def slider(key: String, name: String, value: Any): Unit = js.native
 }
 
 object JQueryUI {
@@ -103,35 +106,22 @@ object JQueryUI {
     jQuery.asInstanceOf[JQueryUI]
 }
 
-@js.native
-trait PimpQuery extends js.Object {
-  def getJSON(url: String,
-              data: String | js.Object,
-              success: js.Function3[js.Dynamic, String, JQueryXHR, Any]): JQueryXHR = js.native
-}
-
 object PimpQuery {
   val dyn = js.Dynamic
   val literal = dyn.literal
-  val pimpQuery = dyn.global.jQuery.asInstanceOf[PimpQuery]
-  val jQuery = org.scalajs.jquery.jQuery
 
   def postSettings(url: String, contentType: String, data: String): JQueryAjaxSettings =
-    literal(url = url, `type` = "POST", contentType = contentType, data = data).asInstanceOf[JQueryAjaxSettings]
+    literal(url = url, `type` = "POST", contentType = contentType, data = data)
+      .asInstanceOf[JQueryAjaxSettings]
 
   def ajax(settings: JQueryAjaxSettings) =
-    jQuery.ajax(settings)
+    MyJQuery.ajax(settings)
 
-  def getJSON(url: String,
-              data: String | js.Object,
-              success: JsonResponse => Any): JQueryXHR =
-    pimpQuery.getJSON(url, data, (response: js.Dynamic, status: String, xhr: JQueryXHR) => {
+  def getJSON(url: String, data: Request, success: JsonResponse => Any): JQueryXHR =
+    MyJQuery.getJSON(url, data, (response: js.Dynamic, status: String, xhr: JQueryXHR) => {
       val asString = JSON.stringify(response)
       success(JsonResponse(asString, status, xhr))
     })
-
-  implicit def extensions(jQuery: JQueryStatic): PimpQuery =
-    jQuery.asInstanceOf[PimpQuery]
 
   case class JsonResponse(body: String, status: String, xhr: JQueryXHR)
 

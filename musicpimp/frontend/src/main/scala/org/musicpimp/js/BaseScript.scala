@@ -1,6 +1,6 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.{JQueryEventObject, jQuery}
+import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.{Json, Writes}
 
 import scala.scalajs.js
@@ -23,7 +23,7 @@ trait BaseScript {
     }
 
   def installClick(clazzSelector: String)(f: JQueryEventObject => Any) =
-    jQuery(clazzSelector).click(f)
+    MyJQuery(clazzSelector).click(f)
 }
 
 object BaseScript {
@@ -35,6 +35,6 @@ object BaseScript {
       ApplicationJson,
       Json.stringify(Json.toJson(payload))
     )
-    jQuery.ajax(settings)
+    MyJQuery.ajax(settings)
   }
 }

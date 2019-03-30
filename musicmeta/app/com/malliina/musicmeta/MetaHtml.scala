@@ -5,19 +5,32 @@ import com.malliina.play.tags.TagPage
 import controllers.routes
 import controllers.routes.MetaAssets.versioned
 import play.api.Mode
-import play.api.Mode.Prod
 import play.api.mvc.Call
 import scalatags.Text.GenericAttr
 import scalatags.Text.all._
 
-object MetaHtml {
-  def apply(appName: String, mode: Mode): MetaHtml = {
-    val suffix = if (mode == Prod) "opt" else "fastopt"
-    new MetaHtml(s"$appName-$suffix.js")
+case class ScalaScripts(jsFiles: Seq[String])
+
+object ScalaScripts {
+
+  /**
+    * @param appName typically the name of the Scala.js module
+    * @param isProd  true if the app runs in production, false otherwise
+    */
+  def forApp(appName: String, isProd: Boolean): ScalaScripts = {
+    val name = appName.toLowerCase
+    val opt = if (isProd) "opt" else "fastopt"
+    ScalaScripts(Seq(s"$name-$opt-library.js", s"$name-$opt-loader.js", s"$name-$opt.js"))
   }
 }
 
-class MetaHtml(jsName: String) extends Bootstrap(HtmlTags) {
+
+object MetaHtml {
+  def apply(appName: String, mode: Mode): MetaHtml =
+    new MetaHtml(ScalaScripts.forApp(appName, mode == Mode.Prod))
+}
+
+class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
 
   import tags._
 
@@ -52,7 +65,7 @@ class MetaHtml(jsName: String) extends Bootstrap(HtmlTags) {
         tbody(id := "log-table-body")
       )
     ),
-    jsScript(versioned(jsName))
+    scripts.jsFiles.map { file => jsScript(versioned(file)) }
   )
 
   def eject(feedback: Option[UserFeedback]) =
@@ -98,13 +111,7 @@ class MetaHtml(jsName: String) extends Bootstrap(HtmlTags) {
         cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
                       "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
-        cssLink(versioned("css/main.css")),
-        jsHashed("https://code.jquery.com/jquery-3.2.1.slim.min.js",
-                 "sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"),
-        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js",
-                 "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
-        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js",
-                 "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl")
+        cssLink(versioned("styles.css")),
       ),
       body(
         content,

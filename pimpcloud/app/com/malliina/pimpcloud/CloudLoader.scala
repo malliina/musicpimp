@@ -69,7 +69,7 @@ class CloudComponents(context: Context, conf: AppConf)
   )
   val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
+  val csp = s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
 

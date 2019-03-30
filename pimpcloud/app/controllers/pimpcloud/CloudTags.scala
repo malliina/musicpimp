@@ -30,16 +30,15 @@ object CloudTags {
     */
   def forApp(appName: String, isProd: Boolean): CloudTags = {
     val scripts = ScalaScripts.forApp(appName, isProd)
-    withLauncher(scripts.optimized)
+    withLauncher(scripts)
   }
 
-  def withLauncher(jsFiles: String*) =
-    new CloudTags(jsFiles.map(file => HtmlTags.jsScript(versioned(file))): _*)
+  def withLauncher(scripts: ScalaScripts) = new CloudTags(scripts)
 
   def versioned(file: Asset) = reverseAssets.versioned(file)
 }
 
-class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
+class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
   val WideContent = "wide-content"
 
   import tags._
@@ -249,25 +248,20 @@ class CloudTags(scripts: Modifier*) extends PimpBootstrap with CloudStrings {
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
-        cssLink(versioned("css/main.css")),
-        jsHashed("https://code.jquery.com/jquery-3.3.1.min.js",
-                 "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="),
-        jsHashed("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
-                 "sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="),
-        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js",
-                 "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
-        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js",
-                 "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"),
+        cssLink(versioned("styles.css")),
       ),
       body(
         section(
           inner,
-          scripts
+          scripts.scripts.map { file =>
+            HtmlTags.jsScript(versioned(file))
+          }
         )
       )
     )
   )
 
   def eye(elemId: String, iconicName: String) =
-    span(`class` := s"${navbars.Text} ${FrontStrings.HiddenClass}", id := elemId)(iconic(iconicName))
+    span(`class` := s"${navbars.Text} ${FrontStrings.HiddenClass}", id := elemId)(
+      iconic(iconicName))
 }

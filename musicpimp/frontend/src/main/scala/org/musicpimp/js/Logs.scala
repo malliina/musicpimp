@@ -77,7 +77,7 @@ class Logs extends SocketJS("/ws/logs?f=json") {
   }
 
   def toggle(row: String) = {
-    val rowElem = global.jQuery(s"#$row")
+    val rowElem = MyJQuery(s"#$row")
     rowElem.toggleClass(HiddenClass)
     false
   }

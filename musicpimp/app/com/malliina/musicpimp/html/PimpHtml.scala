@@ -37,15 +37,15 @@ object PimpHtml {
 
   def at(file: String): Call = versioned(file)
 
-  def versioned(file: Asset) = reverseAssets.versioned(file)
+  def versioned(file: Asset): Call = reverseAssets.versioned(file)
 
   def forApp(isProd: Boolean): PimpHtml = {
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
-    withJs(scripts.optimized)
+    withJs(scripts)
   }
 
-  def withJs(jsFiles: String*): PimpHtml =
-    new PimpHtml(jsFiles.map(file => jsScript(versioned(file))): _*)
+  def withJs(jsFiles: ScalaScripts): PimpHtml =
+    new PimpHtml(jsFiles)
 
   def postableForm(onAction: Call, more: Modifier*) =
     form(role := FormRole, action := onAction, method := Post, more)
@@ -74,7 +74,7 @@ object PimpHtml {
   }
 }
 
-class PimpHtml(scripts: Modifier*)
+class PimpHtml(scripts: ScalaScripts)
     extends Bootstrap(HtmlTags)
     with FooterStrings
     with FrontStrings {
@@ -308,20 +308,12 @@ class PimpHtml(scripts: Modifier*)
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
-        cssLink(at("css/main.css")),
-        jsHashed("https://code.jquery.com/jquery-3.3.1.min.js",
-                 "sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="),
-        jsHashed("https://code.jquery.com/ui/1.12.1/jquery-ui.min.js",
-                 "sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="),
-        jsHashed("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js",
-                 "sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"),
-        jsHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js",
-                 "sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"),
+        cssLink(at("styles.css")),
         extraHeader
       ),
       body(
         inner,
-        scripts,
+        scripts.jsFiles.map(file => jsScript(versioned(file))),
         footer(`class` := "footer", id := FooterId)(
           nav(
             `class` := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",
@@ -339,7 +331,7 @@ class PimpHtml(scripts: Modifier*)
               div(`class` := s"${navbars.Nav} ${navbars.Right}", id := FooterCredit)(
                 spanClass(s"${text.muted} ${navbars.Text} float-right")(
                   "Developed by ",
-                  a(href := "https://github.com/malliina")("Michael Skogberg"),
+                  a(href := "https://malliina.com")("Michael Skogberg"),
                   ".")
               )
             )

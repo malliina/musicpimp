@@ -2,13 +2,12 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.js.PlayerStrings
-import com.malliina.musicpimp.json.{CrossFormats, PlaybackStrings}
+import com.malliina.musicpimp.json.PlaybackStrings
 import com.malliina.musicpimp.models.Volume
 import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.Json
+import scalatags.Text.all._
 
 import scala.concurrent.duration.{Duration, DurationInt}
-import scalatags.Text.all._
 
 object Playback extends PlaybackStrings {
   val SocketUrl = "/ws/playback?f=json"
@@ -40,7 +39,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
   val playerDiv = elem(PlayerDivId)
   val durationElem = elem(DurationId)
   val sliderElem = elem(SliderId)
-  val sliderDyn = global.jQuery(s"#$SliderId")
+  val sliderDyn = MyJQuery(s"#$SliderId")
   val posElem = elem(PositionId)
   val playButton = elem(PlayButton)
   val pauseButton = elem(PauseButton)
@@ -53,7 +52,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
   val artistElem = elem(ArtistId)
   val playlistElem = elem(PlaylistId)
   val playlistEmptyElem = elem(EmptyPlaylistText)
-  val volumeElemDyn = global.jQuery(s"#$VolumeId")
+  val volumeElemDyn = MyJQuery(s"#$VolumeId")
 
   val zero = 0.seconds
 
@@ -62,6 +61,8 @@ class Playback extends PlaybackSocket with PlayerStrings {
 
   installHandlers()
 
+  import JQueryUI.jQueryExtensions
+
   private def installHandlers() = {
     prevButton.click((_: JQueryEventObject) => send(PrevMsg))
     nextButton.click((_: JQueryEventObject) => send(NextMsg))
@@ -69,7 +70,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
     pauseButton.click((_: JQueryEventObject) => send(StopMsg))
     volumeButton.click((_: JQueryEventObject) => toggleMute())
     val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
-    sliderDyn.slider(seekOptions)
+    sliderElem.slider(seekOptions)
     val volumeOptions = SliderOptions.horizontal(Min, 0, 100) { ui =>
       send(Playback.volume(ui.value))
     }
@@ -139,7 +140,7 @@ class Playback extends PlaybackSocket with PlayerStrings {
   }
 
   def updatePlaylist(tracks: Seq[TrackMeta]) = {
-    global.jQuery("li").remove(s".$SongClass")
+    MyJQuery("li").remove(s".$SongClass")
     val isEmpty = tracks.isEmpty
     if (isEmpty) playlistEmptyElem.show()
     else playlistEmptyElem.hide()

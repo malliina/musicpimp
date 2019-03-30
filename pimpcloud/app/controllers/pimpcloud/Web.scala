@@ -24,17 +24,16 @@ object Web {
   val forms = new AccountForms
   val serverFormKey = "server"
 
-  val cloudForm = Form[CloudCreds](mapping(
-    serverFormKey -> CloudIDs.form,
-    forms.userFormKey -> FormMappings.username,
-    forms.passFormKey -> FormMappings.password
-  )(CloudCreds.apply)(CloudCreds.unapply))
+  val cloudForm = Form[CloudCreds](
+    mapping(
+      serverFormKey -> CloudIDs.form,
+      forms.userFormKey -> FormMappings.username,
+      forms.passFormKey -> FormMappings.password
+    )(CloudCreds.apply)(CloudCreds.unapply))
 }
 
-class Web(comps: ControllerComponents,
-          tags: CloudTags,
-          authActions: CloudAuthentication)
-  extends AbstractController(comps) {
+class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthentication)
+    extends AbstractController(comps) {
   implicit val ec = defaultExecutionContext
 
   def ping = Action {
@@ -48,24 +47,41 @@ class Web(comps: ControllerComponents,
   def formAuthenticate = Action.async { request =>
     val flash = request.flash
     val remoteAddress = Proxies.realAddress(request)
-    cloudForm.bindFromRequest()(request).fold(
-      formWithErrors => {
-        val user = formWithErrors.data.getOrElse(forms.userFormKey, "")
-        log warn s"Authentication failed for user: $user from '$remoteAddress'."
-        fut(BadRequest(loginPage(formWithErrors, flash)))
-      },
-      cloudCreds => {
-        val creds = CloudCredentials(cloudCreds.cloudID, cloudCreds.username, cloudCreds.pass, request)
-        authActions.authWebClient(creds).map { _ =>
-          val server = creds.cloudID
-          val user = creds.username
-          val who = s"$user@$server"
-          log info s"Authentication succeeded to '$who' from '$remoteAddress'."
-          val intendedUrl = request.session.get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
-          Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
-        }.recover { case _ => BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)) }
-      }
-    )
+    cloudForm
+      .bindFromRequest()(request)
+      .fold(
+        formWithErrors => {
+          val user = formWithErrors.data.getOrElse(forms.userFormKey, "")
+          log warn s"Authentication failed for user: $user from '$remoteAddress'."
+          fut(BadRequest(loginPage(formWithErrors, flash)))
+        },
+        cloudCreds => {
+          val creds =
+            CloudCredentials(cloudCreds.cloudID, cloudCreds.username, cloudCreds.pass, request)
+          authActions
+            .authWebClient(creds)
+            .map {
+              result =>
+                result.fold(
+                  _ =>
+                    BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash)),
+                  _ => {
+                    val server = creds.cloudID
+                    val user = creds.username
+                    val who = s"$user@$server"
+                    log info s"Authentication succeeded to '$who' from '$remoteAddress'."
+                    val intendedUrl = request.session
+                      .get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
+                    Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
+                  }
+                )
+            }
+            .recover {
+              case _ =>
+                BadRequest(loginPage(cloudForm.withGlobalError("Invalid credentials."), flash))
+            }
+        }
+      )
   }
 
   def loginPage(form: Form[CloudCreds], flash: Flash) =
