@@ -1,6 +1,6 @@
 package tests
 
-import com.malliina.rx.Observables
+import com.malliina.rx.Sources
 import org.scalatest.FunSuite
 import rx.lang.scala.subjects.AsyncSubject
 import rx.lang.scala.{Observable, Subject}
@@ -9,18 +9,6 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Promise}
 
 class RxTests extends FunSuite {
-  test("rx hot/cold") {
-    val correctAnswer = 1
-    val p = Promise[Int]()
-    val cold = Observable.from(Seq(1)).map(_ => p success correctAnswer)
-    intercept[concurrent.TimeoutException] {
-      Await.result(p.future, 100.millis)
-    }
-    Observables hot cold
-    val result = Await.result(p.future, 100.millis)
-    assert(result === correctAnswer)
-  }
-
   test("Subject does not replay") {
     val s = Subject[Int]()
     var aValue = 0

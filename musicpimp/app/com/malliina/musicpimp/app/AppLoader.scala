@@ -112,7 +112,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
   lazy val db = initDb(ec)
-  lazy val indexer = new Indexer(db)
+  lazy val indexer = new Indexer(db, actorSystem.scheduler)
   lazy val dumper = DataMigrator(db)
   dumper.migrateDatabase()
   lazy val ps = new DatabasePlaylist(db)
@@ -124,7 +124,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
   lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats, schedules)
-  lazy val clouds = new Clouds(alarmHandler, deps, options.cloudUri)
+  lazy val clouds = new Clouds(alarmHandler, deps, options.cloudUri, actorSystem.scheduler)
   lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
   lazy val auths = new Auths(userManager, rememberMe)(ec)
   lazy val schedules = new ScheduledPlaybackService(lib)
@@ -167,7 +167,7 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
 
   applicationLifecycle.addStopHook(() => Future.successful {
     sws.subscription.unsubscribe()
-    s.subscription.unsubscribe()
+    s.close()
     starter.stopServices(options, schedules)
     statsPlayer.close()
     db.close()

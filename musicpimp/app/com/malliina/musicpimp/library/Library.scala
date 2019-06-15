@@ -120,18 +120,9 @@ class Library {
       Option(localTrackFor(pi))
     } catch {
       case e: Exception =>
-        log.warn(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)
+        log.debug(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)
         None
     }
-
-  //  def findMetaWithTempFallback(id: TrackID) = findMeta(id).orElse(searchTempDir(id))
-
-  //  private def searchTempDir(id: TrackID): Option[LocalTrack] = {
-  //    val pathInfo = PathInfo(relativePath(id), FileUtilities.tempDir)
-  //    val absolute = pathInfo.absolute
-  //    if (Files.exists(absolute) && Files.isReadable(absolute)) parseMeta(pathInfo)
-  //    else None
-  //  }
 
   private def items(relative: Path): Option[Folder] = {
     val sources = findPathInfo2(relative)

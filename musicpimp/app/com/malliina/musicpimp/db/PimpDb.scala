@@ -10,7 +10,6 @@ import com.malliina.musicpimp.db.PimpDb.{GetDummy, log}
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.util.Utils
 import com.malliina.values.{ErrorMessage, UnixPath}
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import javax.sql.DataSource
@@ -261,34 +260,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     dropIndex(tracksName)
   }
 
-  /** Starts indexing on a background thread and returns an [[Observable]] with progress updates.
-    *
-    * This algorithm adds new tracks and folders to the index, and removes tracks and folders that no longer exist in
-    * the library.
-    *
-    * Implementation:
-    *
-    * 1) Upsert all folders to the folders table, based on the (authoritative) library
-    * 2) Put all existing folder IDs also into a temporary table (also based on the library)
-    * 3) Delete all folders which don't have IDs in the temporary table
-    * 4) Delete the temporary table
-    * 5) Do the same thing for tracks (go to step 1)
-    *
-    * @return progress: total amount of files indexed
-    */
-  def refreshIndex(): Observable[Long] = observe { observer =>
-    observer onNext 0L
-    // we only want one thread to index at a time
-    this.synchronized {
-      val (result, duration) = Utils.timed {
-        await(runIndexer(observer), 3.hours)
-      }
-      log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
-        s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
-    }
-  }
-
-  private def runIndexer(observer: Observer[Long]): Future[IndexResult] = {
+  def runIndexer(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
     log info "Indexing..."
     // deletes any old rows from previous indexings
     val firstIdsDeletion = tempFoldersTable.delete
@@ -304,7 +276,8 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     val foldersInit = DBIO.seq(
       firstIdsDeletion,
       folderUpdates,
-      idInsertion)
+      idInsertion
+    )
 
     def updateFolders() = for {
       _ <- run(foldersInit)
@@ -317,7 +290,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     var fileCount = 0L
 
     def upsertAllTracks(): Unit = {
-      Library.dataTrackStream.grouped(100) foreach { chunk =>
+      Library.dataTrackStream.grouped(100).foreach { chunk =>
         val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
         val chunkInsertion = run(DBIO.seq(
           trackUpdates,
@@ -325,7 +298,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
         ))
         await(chunkInsertion, 1.hour)
         fileCount += chunk.size
-        observer onNext fileCount
+        onFileCountUpdate(fileCount)
       }
     }
 

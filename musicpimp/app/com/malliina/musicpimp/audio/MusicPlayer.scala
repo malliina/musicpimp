@@ -35,24 +35,6 @@ object MusicPlayer
 
   private def current: Option[TrackPlayer] = trackPlayer.get()
 
-//  def handover(h: Handover): Unit = {
-//    playlist.reset(h.index.getOrElse(BasePlaylist.NoPosition), h.tracks.map(Library.meta))
-//    playlist.current.foreach { t =>
-//      val attempt = for {
-//        _ <- tryInitTrackWithFallback(t)
-//        _ <- trySeek(h.position)
-//      } yield {
-//        if (PlayState.isPlaying(h.state)) {
-//          play()
-//        }
-//      }
-//      attempt.recover {
-//        case t: Exception =>
-//          log.error(s"Unable to perform handover.", t)
-//      }
-//    }
-//  }
-
   def reset(track: PlayableTrack): Try[Unit] = {
     playlist set track
     play(_.current)
@@ -78,9 +60,6 @@ object MusicPlayer
         val id = track.id
         log.warn(s"Unable to initialize track '$id'. The stream is closed.")
         Failure(ioe)
-//        Library.findMetaWithTempFallback(id)
-//          .map(newTrack => Try(initTrack(newTrack)))
-//          .getOrElse(Failure(ioe))
     }
   }
 

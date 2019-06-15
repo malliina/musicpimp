@@ -3,7 +3,7 @@ package org.musicpimp.js
 import com.malliina.musicpimp.js.FrontStrings._
 import org.scalajs.dom
 import org.scalajs.dom.CloseEvent
-import org.scalajs.dom.raw.{ErrorEvent, Event, MessageEvent}
+import org.scalajs.dom.raw.{Event, MessageEvent}
 import play.api.libs.json._
 
 import scala.util.Try
@@ -56,7 +56,7 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
 
   def onClosed(e: CloseEvent): Unit = showDisconnected()
 
-  def onError(e: ErrorEvent): Unit = showDisconnected()
+  def onError(e: Event): Unit = showDisconnected()
 
   def openSocket(pathAndQuery: String) = {
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
@@ -64,7 +64,7 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     socket.onopen = (e: Event) => onConnected(e)
     socket.onmessage = (e: MessageEvent) => onMessage(e)
     socket.onclose = (e: CloseEvent) => onClosed(e)
-    socket.onerror = (e: ErrorEvent) => onError(e)
+    socket.onerror = (e: Event) => onError(e)
     socket
   }
 

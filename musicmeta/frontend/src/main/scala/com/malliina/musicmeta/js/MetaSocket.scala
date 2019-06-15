@@ -68,7 +68,7 @@ class MetaSocket {
 
   def onClosed(e: CloseEvent): Unit = updateStatus("Closed.")
 
-  def onError(e: ErrorEvent): Unit = updateStatus("Error.")
+  def onError(e: Event): Unit = updateStatus("Error.")
 
   def updateStatus(status: String): Unit = {
     document.getElementById("status").innerHTML = status
@@ -80,7 +80,7 @@ class MetaSocket {
     socket.onopen = (e: Event) => onConnected(e)
     socket.onmessage = (e: MessageEvent) => onMessage(e)
     socket.onclose = (e: CloseEvent) => onClosed(e)
-    socket.onerror = (e: ErrorEvent) => onError(e)
+    socket.onerror = (e: Event) => onError(e)
     socket
   }
 

@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.cloud
 
+import akka.actor.Scheduler
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.http.FullUrl
@@ -17,7 +18,7 @@ import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
-import com.malliina.rx.Observables
+import com.malliina.rx.Sources
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.{LibraryController, Rest}
@@ -35,7 +36,9 @@ case class Deps(playlists: PlaylistService,
                 handler: PlaybackMessageHandler,
                 lib: MusicLibrary,
                 stats: PlaybackStats,
-                schedules: ScheduledPlaybackService)
+                schedules: ScheduledPlaybackService) {
+  val ec = db.ec
+}
 
 object CloudSocket {
   private val log = Logger(getClass)
@@ -44,16 +47,20 @@ object CloudSocket {
   val devUri = FullUrl("ws", "localhost:9000", path)
   val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(id: Option[CloudID], url: FullUrl, handler: JsonHandler, deps: Deps) =
-    new CloudSocket(url, id.filter(_.id.nonEmpty) getOrElse CloudID.empty, Constants.pass, handler, deps)
+  def build(id: Option[CloudID], url: FullUrl, handler: JsonHandler, s: Scheduler, deps: Deps) =
+    new CloudSocket(url,
+                    id.filter(_.id.nonEmpty) getOrElse CloudID.empty,
+                    Constants.pass,
+                    handler,
+                    s,
+                    deps)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
   val manuallyClosed = new Exception("Connection closed manually.")
 }
 
-/**
-  * Event format:
+/** Event format:
   *
   * {
   * "cmd": "...",
@@ -70,11 +77,16 @@ object CloudSocket {
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHandler: JsonHandler, deps: Deps)
-  extends JsonSocket8(
-    uri,
-    CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
-    HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
+class CloudSocket(uri: FullUrl,
+                  username: CloudID,
+                  password: Password,
+                  alarmHandler: JsonHandler,
+                  s: Scheduler,
+                  deps: Deps)
+    extends JsonSocket8(
+      uri,
+      CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
+      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
 
   val messageParser = CloudMessageParser
   val httpProto = if (uri.proto == "ws") "http" else "https"
@@ -102,7 +114,7 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
     */
   override def connect(): Future[Unit] = {
     log info s"Connecting as '$username' to $uri..."
-    Observables.timeoutAfter(10.seconds, registrationPromise)
+    Sources.timeoutAfter(10.seconds, registrationPromise)(s, deps.ec)
     super.connect()
   }
 
@@ -115,7 +127,8 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
       case e: Exception =>
         log.warn(s"Failed while handling JSON: '$json'.", e)
         (json \ CloudResponse.RequestKey).validate[RequestID] map { request =>
-          val reason = FailReason(s"The MusicPimp server failed while dealing with the request: '$json'.")
+          val reason =
+            FailReason(s"The MusicPimp server failed while dealing with the request: '$json'.")
           sendFailure(request, reason)
         }
     }
@@ -188,7 +201,8 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
       case GetRecent(meta) =>
         databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost)))
       case GetPlaylists(user) =>
-        databaseResponse(playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost)))
+        databaseResponse(
+          playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost)))
       case GetPlaylist(id, user) =>
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
@@ -208,14 +222,17 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
           }
         }
       case GetAlarms =>
-        deps.schedules.clockList(cloudHost).map { list =>
-          sendLogged(CloudResponse.success(request, list))
-        }.recover {
-          case e: Exception =>
-            val msg = "Unable to load schedules."
-            log.error(msg, e)
-            sendFailure(request, FailReason(msg))
-        }
+        deps.schedules
+          .clockList(cloudHost)
+          .map { list =>
+            sendLogged(CloudResponse.success(request, list))
+          }
+          .recover {
+            case e: Exception =>
+              val msg = "Unable to load schedules."
+              log.error(msg, e)
+              sendFailure(request, FailReason(msg))
+          }
       case AlarmEdit(payload) =>
         alarmHandler.handleCommand(payload)
         sendSuccess(request, Json.obj())
@@ -235,24 +252,30 @@ class CloudSocket(uri: FullUrl, username: CloudID, password: Password, alarmHand
       case GetVersion =>
         sendSuccess(request, JsonMessages.version)
       case GetMeta(id) =>
-        lib.meta(id).map { maybeTrack =>
-          maybeTrack.map { track =>
-            sendSuccess(request, TrackJson.toFull(track, cloudHost))
-          }.getOrElse {
-            sendFailure(request, LibraryController.noTrackJson(id))
+        lib
+          .meta(id)
+          .map { maybeTrack =>
+            maybeTrack.map { track =>
+              sendSuccess(request, TrackJson.toFull(track, cloudHost))
+            }.getOrElse {
+              sendFailure(request, LibraryController.noTrackJson(id))
+            }
           }
-        }.recover {
-          case e: Exception =>
-            log.error(s"Unable to obtain meta of '$id'.", e)
-            sendFailure(request, LibraryController.noTrackJson(id))
-        }
+          .recover {
+            case e: Exception =>
+              log.error(s"Unable to obtain meta of '$id'.", e)
+              sendFailure(request, LibraryController.noTrackJson(id))
+          }
       case RegistrationEvent(_, id) =>
         onRegistered(id)
       case PlaybackMessage(payload, user) =>
         handlePlayerMessage(payload, user)
       case beamCommand: BeamCommand =>
-        Rest.beam(beamCommand, lib)
-          .map(e => e.fold(err => log.warn(s"Unable to beam. $err"), _ => log info "Beaming completed successfully."))
+        Rest
+          .beam(beamCommand, lib)
+          .map(e =>
+            e.fold(err => log.warn(s"Unable to beam. $err"),
+                   _ => log info "Beaming completed successfully."))
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
       case _ =>

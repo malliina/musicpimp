@@ -17,7 +17,7 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
       div6(searchForm()),
       div6(
         button(`type` := Button, `class` := s"${btn.info} $verticalMargin", id := RefreshButton)(iconic("reload"), " "),
-        span(id := IndexInfo)
+        span(id := IndexInfo, `class` := "search-index-info")
       )
     ),
     fullRow(

@@ -3,6 +3,7 @@ package com.malliina.musicpimp.cloud
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 
+import akka.actor.Scheduler
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
@@ -43,7 +44,7 @@ object Clouds {
   }
 }
 
-class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
+class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, scheduler: Scheduler) {
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Observable.interval(60.seconds)
   private var poller: Option[Subscription] = None
@@ -128,7 +129,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
 
 
   def newSocket(id: Option[CloudID]): CloudSocket =
-    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, deps)
+    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, scheduler, deps)
 
   def disconnectAndForgetAsync(): Future[Boolean] =
     async(disconnectAndForget("Disconnected by user."))
@@ -140,7 +141,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
     Files.deleteIfExists(Clouds.idFile)
   }
 
-  def disconnect(reason: String) = {
+  def disconnect(reason: String): Unit = {
     registrations onNext Disconnecting
     stopPolling()
     closeAnyConnection(client)
@@ -148,7 +149,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl) {
     activeSubscription.foreach(_.unsubscribe())
   }
 
-  def closeAnyConnection(closeable: CloudSocket) = {
+  def closeAnyConnection(closeable: CloudSocket): Unit = {
     val wasConnected = closeable.isConnected
     closeable.close()
     if (wasConnected) {

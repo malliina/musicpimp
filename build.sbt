@@ -44,7 +44,7 @@ val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.5.0"
 val primitivesVersion = "1.9.0"
 val playJsonVersion = "2.7.1"
-val scalaTagsVersion = "0.6.7"
+val scalaTagsVersion = "0.6.8"
 
 val httpGroup = "org.apache.httpcomponents"
 val httpVersion = "4.5.6"
@@ -54,11 +54,6 @@ scalaVersion in ThisBuild := "2.12.8"
 lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
-//  .settings(
-//    npmDependencies in Compile ++= Seq(
-//      "jquery-ui" -> "1.12.1"
-//    )
-//  )
 lazy val musicpimp = project
   .in(file("musicpimp"))
   .enablePlugins(PlayScala,
@@ -71,11 +66,6 @@ lazy val musicpimp = project
   .settings(pimpPlaySettings: _*)
 lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
-//  .settings(
-//    npmDependencies in Compile ++= Seq(
-//      "jquery-ui" -> "1.12.1"
-//    )
-//  )
 lazy val pimpcloud = project
   .in(file("pimpcloud"))
   .enablePlugins(PlayScala,
