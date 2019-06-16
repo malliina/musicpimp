@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
+import akka.stream.scaladsl.Sink
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.library.Library
@@ -156,7 +157,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     withCloudTrack("folder-test") { (_, _, cloudId) =>
       val r = makeGet("/folders?f=json", cloudId)
       assert(r.status === 200)
-      musicpimp.components.indexer.index().toBlocking.toList
+      await(musicpimp.components.indexer.index().runWith(Sink.seq))
       val _ = makeGet("/folders?f=json", cloudId)
       val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
       assert(r3.status === 200)
