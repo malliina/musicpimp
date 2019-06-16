@@ -207,7 +207,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
     Files.createTempFile(created, "temp", ".mp3")
     Library.setFolders(Seq(trackFolder))
-    val _ = musicpimp.components.indexer.index().toBlocking.last
+    val _ = await(musicpimp.components.indexer.index().runWith(Sink.seq))
     val file = Library.findAbsoluteNew(UnixPath(trackFile.getFileName))
     assert(file.isDefined)
     withCloud(desiredId) { cloudId =>
