@@ -3,17 +3,25 @@ package com.malliina.audio.javasound
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
+import akka.NotUsed
+import akka.actor.{ActorRef, Kill}
+import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
+import akka.stream.{KillSwitches, Materializer, OverflowStrategy, UniqueKillSwitch}
 import com.malliina.audio.PlaybackEvents.TimeUpdated
+import com.malliina.audio._
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
 import com.malliina.audio.meta.OneShotStream
-import com.malliina.audio.{PlaybackEvents, _}
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
 import org.slf4j.LoggerFactory
-import rx.lang.scala.subjects.BehaviorSubject
-import rx.lang.scala.{Observable, Subject, Subscription}
 
 import scala.concurrent.duration.{Duration, DurationInt}
 import scala.concurrent.{ExecutionContext, Future}
+
+object JavaSoundPlayer {
+  private val log = LoggerFactory.getLogger(getClass)
+
+  val DefaultRwBufferSize: StorageSize = 4096.bytes
+}
 
 /** A music player. Plays one media source. To change source, for example to change track, create a new player.
   *
@@ -31,8 +39,10 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param media media info to play
   */
 class JavaSoundPlayer(val media: OneShotStream,
-                      readWriteBufferSize: StorageSize = DefaultRwBufferSize)(implicit val ec: ExecutionContext = ExecutionContexts.singleThreadContext)
-  extends IPlayer
+                      readWriteBufferSize: StorageSize = DefaultRwBufferSize)(
+    implicit mat: Materializer,
+    val ec: ExecutionContext = ExecutionContexts.singleThreadContext)
+    extends IPlayer
     with JavaSoundPlayerBase
     with StateAwarePlayer
     with AutoCloseable {
@@ -40,28 +50,33 @@ class JavaSoundPlayer(val media: OneShotStream,
   def this(stream: InputStream,
            duration: Duration,
            size: StorageSize,
-           readWriteBufferSize: StorageSize) =
+           readWriteBufferSize: StorageSize)(implicit mat: Materializer) =
     this(OneShotStream(stream, duration, size), readWriteBufferSize)
 
   val bufferSize = readWriteBufferSize.toBytes.toInt
   protected var stream = media.stream
   tryMarkStream()
-  private val subject = BehaviorSubject[PlayerStates.PlayerState](PlayerStates.Closed)
+  val (stateTarget, states) = connected[PlayerStates.PlayerState]()
+
   /** I use a Subject because the audio line might change and it seems easier then to keep one subject
     * instead of reacting to each audio line change in each observable (in addition to its events).
     */
-  private val playbackSubject = BehaviorSubject[PlaybackEvents.PlaybackEvent](PlaybackEvents.Closed)
-  private val pollingObservable = Observable.interval(500.millis)
-  protected var lineData: LineData = newLine(stream, subject)
+  private val pollingSource = Source.tick(500.millis, 500.millis, 0)
+  protected var lineData: LineData = newLine(stream, stateTarget)
   private val active = new AtomicBoolean(false)
   private var playThread: Option[Future[Unit]] = None
 
-  def isActive = active.get()
-
-  /**
-    * @return the current player state and any future states
-    */
-  def events: Observable[PlayerStates.PlayerState] = subject
+  private val (timeUpdatesTarget, moreTimeUpdates) = connected[PlaybackEvents.TimeUpdated]
+  val timeBroadcasts = moreTimeUpdates.toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
+  private var latestPos: Duration = position
+  val poller = pollingSource
+    .to(Sink.foreach { _ =>
+      if (latestPos != position) {
+        latestPos = position
+        timeUpdatesTarget ! TimeUpdated(position)
+      }
+    })
+    .run()
 
   /** A stream of time update events. Emits the current playback position, then emits at least one event per second
     * provided that the playback position changes. If there is no progress, for example if playback is stopped, no
@@ -69,39 +84,39 @@ class JavaSoundPlayer(val media: OneShotStream,
     *
     * @return time update events
     */
-  def timeUpdates: Observable[PlaybackEvents.TimeUpdated] = Observable { subscriber =>
-    var pollSubscription: Option[Subscription] = None
-    var latestPosition = position
-    subscriber onNext TimeUpdated(latestPosition)
-    val timeSubscription = events.subscribe(state => {
-      if (state == PlayerStates.Started && pollSubscription.isEmpty) {
-        pollSubscription = Some(pollingObservable.subscribe(_ => {
-          if (latestPosition != position) {
-            latestPosition = position
-            subscriber onNext TimeUpdated(position)
-          }
-        }))
-      } else {
-        pollSubscription.foreach(_.unsubscribe())
-        pollSubscription = None
-      }
-    })
-    pollSubscription.foreach(subscriber.add)
-    subscriber add timeSubscription
-  }
+  def timeUpdates: Source[TimeUpdated, NotUsed] =
+    Source.single(TimeUpdated(position)).concat(timeBroadcasts)
 
-  def playbackEvents: Observable[PlaybackEvents.PlaybackEvent] = playbackSubject
+  def timeUpdatesKillable: Source[TimeUpdated, UniqueKillSwitch] =
+    timeUpdates.viaMat(KillSwitches.single)(Keep.right)
+
+  def isActive = active.get()
+
+  /**
+    * @return the current player state and any future states
+    */
+  def events: Source[PlayerStates.PlayerState, NotUsed] = states
+
+  def eventsKillable: Source[PlayerStates.PlayerState, UniqueKillSwitch] =
+    states.viaMat(KillSwitches.single)(Keep.right)
+
+  def connected[U]()(implicit mat: Materializer): (ActorRef, Source[U, NotUsed]) = {
+    val publisherSink = Sink.asPublisher[U](fanout = true)
+    val (processedActor, publisher) =
+      Source.actorRef[U](65536, OverflowStrategy.dropHead).toMat(publisherSink)(Keep.both).run()
+    (processedActor, Source.fromPublisher(publisher))
+  }
 
   def audioLine = lineData.line
 
   def controlDescriptions = audioLine.getControls.map(_.toString)
 
-  def newLine(source: InputStream, subject: Subject[PlayerStates.PlayerState]): LineData =
-    LineData fromStream(source, subject)
+  def newLine(source: InputStream, target: ActorRef): LineData =
+    LineData.fromStream(source, target)
 
   def supportsSeek = stream.markSupported()
 
-  def play() {
+  def play(): Unit = {
     lineData.state match {
       case PlayerStates.Started =>
         log info "Start playback issued but playback already started: doing nothing"
@@ -115,7 +130,7 @@ class JavaSoundPlayer(val media: OneShotStream,
     }
   }
 
-  def stop() {
+  def stop(): Unit = {
     active.set(false)
     audioLine.stop()
   }
@@ -143,25 +158,27 @@ class JavaSoundPlayer(val media: OneShotStream,
 
   def seekProblem: Option[String] =
     if (lineData.state == PlayerStates.Closed) Some(s"Cannot seek a stream of a closed track.")
-    else if (!stream.markSupported()) Some("Cannot seek because the media stream does not support marking; see InputStream.markSupported() for more details")
+    else if (!stream.markSupported())
+      Some(
+        "Cannot seek because the media stream does not support marking; see InputStream.markSupported() for more details")
     else None
 
   override def onEndOfMedia(): Unit = {
     super.onEndOfMedia()
-    subject onNext PlayerStates.EndOfMedia
+    stateTarget ! PlayerStates.EndOfMedia
   }
 
   def close(): Unit = {
     closeLine()
-    subject.onCompleted()
+    stateTarget ! Kill
   }
 
-  def onPlaybackException(e: Exception) = onEndOfMedia()
+  def onPlaybackException(e: Exception): Unit = onEndOfMedia()
 
-  def reset() {
+  def reset(): Unit = {
     closeLine()
     stream = resetStream(stream)
-    lineData = newLine(stream, subject)
+    lineData = newLine(stream, stateTarget)
   }
 
   /** Returns a stream of the media reset to its initial read position. Helper method for seeking.
@@ -177,7 +194,7 @@ class JavaSoundPlayer(val media: OneShotStream,
     oldStream
   }
 
-  private def closeLine() {
+  private def closeLine(): Unit = {
     active.set(false)
     lineData.close()
     startedFromMicros = 0L
@@ -203,7 +220,7 @@ class JavaSoundPlayer(val media: OneShotStream,
     bytesSkipped
   }
 
-  private def startPlayback() {
+  private def startPlayback(): Unit = {
     val changedToActive = active.compareAndSet(false, true)
     if (changedToActive) {
       audioLine.start()
@@ -211,7 +228,7 @@ class JavaSoundPlayer(val media: OneShotStream,
       playThread = Some(Future(startPlayThread()).recover {
         // javazoom lib may throw at arbitrary playback moments
         case e: ArrayIndexOutOfBoundsException =>
-          log warn(e.getClass.getName, e)
+          log warn (e.getClass.getName, e)
           closeLine()
           onPlaybackException(e)
       })
@@ -245,9 +262,4 @@ class JavaSoundPlayer(val media: OneShotStream,
       //      log.info(s"Mark limit is: $markLimit")
     }
   }
-}
-
-object JavaSoundPlayer {
-  private val log = LoggerFactory.getLogger(getClass)
-  val DefaultRwBufferSize = 4096.bytes
 }

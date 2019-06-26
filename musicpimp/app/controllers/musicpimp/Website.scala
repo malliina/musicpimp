@@ -12,11 +12,12 @@ import play.api.mvc.{AnyContent, RequestHeader, Result}
 
 import scala.concurrent.Future
 
-class Website(tags: PimpHtml,
+class Website(musicPlayer: MusicPlayer,
+              tags: PimpHtml,
               serverWS: ServerWS,
               auth: AuthDeps,
               stats: PlaybackStats)
-  extends HtmlController(auth) {
+    extends HtmlController(auth) {
 
   def player = navigate[TagPage] { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty
@@ -24,7 +25,7 @@ class Website(tags: PimpHtml,
       if (!hasAudioDevice) {
         Some("Unable to access audio hardware. Playback on this machine is likely to fail.")
       } else {
-        MusicPlayer.errorOpt.map(errorMsg)
+        musicPlayer.errorOpt.map(errorMsg)
       }
     val userFeedback = feedback map UserFeedback.error
     tags.basePlayer(userFeedback, req.user)
@@ -52,10 +53,12 @@ class Website(tags: PimpHtml,
 
   protected def metaAction(f: (DataRequest, RequestHeader) => Future[Result]) =
     userAction { req =>
-      DataRequest.fromRequest(req).fold(
-        error => fut(badRequest(error)),
-        meta => f(meta, req)
-      )
+      DataRequest
+        .fromRequest(req)
+        .fold(
+          error => fut(badRequest(error)),
+          meta => f(meta, req)
+        )
     }
 
   protected def userAction(f: AuthenticatedRequest[AnyContent, Username] => Future[Result]) =

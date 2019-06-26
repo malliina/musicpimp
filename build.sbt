@@ -399,7 +399,8 @@ lazy val utilAudioSettings = Seq(
     "org" % "jaudiotagger" % "2.0.3",
     soundGroup % "tritonus-share" % "0.3.7.4",
     soundGroup % "jlayer" % "1.0.1.4",
-    soundGroup % "mp3spi" % "1.9.5.4"
+    soundGroup % "mp3spi" % "1.9.5.4",
+    "com.typesafe.akka" %% "akka-stream" % "2.5.23"
   ),
   resolvers ++= Seq(
     "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",

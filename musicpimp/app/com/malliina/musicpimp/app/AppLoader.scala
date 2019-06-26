@@ -7,7 +7,7 @@ import java.security.SecureRandom
 import _root_.musicpimp.Routes
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.Starter
-import com.malliina.musicpimp.audio.{PlaybackMessageHandler, StatsPlayer}
+import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
 import com.malliina.musicpimp.db._
@@ -106,49 +106,50 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     new DefaultHttpErrorHandler(environment, configuration, devContext.map(_.sourceMapper), Some(router))
       with PimpErrorHandling
 
+  val player = new MusicPlayer()
+  val library = Library(materializer)
+
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = messagesApi.preferred(Seq(language))
   implicit val ec: ExecutionContext = materializer.executionContext
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
   lazy val db = initDb(ec)
-  lazy val indexer = new Indexer(db, actorSystem.scheduler)
+  lazy val indexer = new Indexer(library, db, actorSystem.scheduler)
   lazy val dumper = DataMigrator(db)
   dumper.migrateDatabase()
   lazy val ps = new DatabasePlaylist(db)
-  lazy val lib = new DatabaseLibrary(db, Library)
+  lazy val lib = new DatabaseLibrary(db, library)
   lazy val userManager = new DatabaseUserManager(db)
   lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db, ec), cookieSigner, httpConfiguration.secret)
   lazy val stats = new DatabaseStats(db)
-  lazy val statsPlayer = new StatsPlayer(stats)
+  lazy val statsPlayer = new StatsPlayer(player, stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
-  lazy val handler = new PlaybackMessageHandler(lib, statsPlayer)
+  lazy val handler = new PlaybackMessageHandler(player, library, lib, statsPlayer)
   lazy val deps = Deps(ps, db, userManager, handler, lib, stats, schedules)
-  lazy val clouds = new Clouds(alarmHandler, deps, options.cloudUri, actorSystem.scheduler)
+  lazy val clouds = new Clouds(player, alarmHandler, deps, options.cloudUri, actorSystem.scheduler)
   lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
   lazy val auths = new Auths(userManager, rememberMe)(ec)
-  lazy val schedules = new ScheduledPlaybackService(lib)
-  lazy val alarmHandler = new JsonHandler(schedules)
+  lazy val schedules = new ScheduledPlaybackService(player, lib)
+  lazy val alarmHandler = new JsonHandler(player, schedules)
   lazy val compositeAuth = Authenticator.anyOne(
     CookieAuthenticator.default(auth)(ec),
     PimpAuthenticator.cookie(rememberMe)
   )
   lazy val webAuth = Secured.redirecting(compositeAuth)
   lazy val authDeps = AuthDeps(controllerComponents, webAuth, materializer)
-
   // Controllers
   lazy val ls = new PimpLogs(ctx)
   lazy val lp = new LogPage(tags, ls, authDeps)
-  //  lazy val wp = new WebPlayer(ctx)
-  lazy val sws = new ServerWS(clouds, auths.client, handler, ctx)
-  lazy val webCtrl = new Website(tags, sws, authDeps, stats)
+  lazy val sws = new ServerWS(player, clouds, auths.client, handler, ctx)
+  lazy val webCtrl = new Website(player, tags, sws, authDeps, stats)
   lazy val s = new Search(indexer, auths.client, ctx)
   lazy val sp = new SearchPage(tags, s, indexer, db, authDeps)
-  lazy val r = new Rest(lib, authDeps, handler, statsPlayer, httpErrorHandler)
+  lazy val r = new Rest(player, library, lib, authDeps, handler, statsPlayer, httpErrorHandler)
   lazy val pl = new Playlists(tags, ps, authDeps)
-  lazy val settingsCtrl = new SettingsController(tags, messages, indexer, dumper, authDeps)
+  lazy val settingsCtrl = new SettingsController(tags, messages, library, indexer, dumper, authDeps)
   lazy val libCtrl = new LibraryController(tags, lib, authDeps)
-  lazy val alarms = new Alarms(alarmHandler, tags, authDeps, messages)
+  lazy val alarms = new Alarms(library, alarmHandler, tags, authDeps, messages)
   lazy val accs = new AccountForms
   lazy val accounts = new Accounts(tags, auth, authDeps, accs)
   lazy val cloud = new Cloud(tags, clouds, authDeps)
@@ -166,9 +167,9 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
     ls, cloudWS, assets)
 
   applicationLifecycle.addStopHook(() => Future.successful {
-    sws.subscription.unsubscribe()
+    sws.subscription.shutdown()
     s.close()
-    starter.stopServices(options, schedules)
+    starter.stopServices(options, schedules, player)
     statsPlayer.close()
     db.close()
     Rest.close()

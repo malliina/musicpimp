@@ -1,5 +1,7 @@
 package controllers.musicpimp
 
+import akka.stream.scaladsl.{Keep, Sink}
+import akka.stream.{ActorMaterializer, KillSwitches, UniqueKillSwitch}
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.models.{CloudCommand, Connect, Disconnect, Noop}
 import com.malliina.play.ws.Mediator.Broadcast
@@ -8,7 +10,6 @@ import controllers.musicpimp.CloudMediator.log
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.RequestHeader
-import rx.lang.scala.Subscription
 
 object CloudMediator {
   private val log = Logger(getClass)
@@ -16,22 +17,24 @@ object CloudMediator {
 
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   private val jsonEvents = clouds.connection.map(event => Json.toJson(event))
-  private var subscription: Option[Subscription] = None
+  private var subscription: Option[UniqueKillSwitch] = None
+  implicit val mat = ActorMaterializer()
 
   override def preStart(): Unit = {
     super.preStart()
-    val sub = jsonEvents.subscribe(
-      e => {
-        log.info(s"Broadcast $e")
-        self ! Broadcast(e)
-      },
-      (err: Throwable) => log.error("WebSocket error.", err),
-      () => ())
-    subscription = Option(sub)
+    val killSwitch = jsonEvents
+      .viaMat(KillSwitches.single)(Keep.right)
+      .to(Sink.foreach { json =>
+        log.info(s"Broadcast $json")
+        self ! Broadcast(json)
+      })
+      .run()
+    subscription = Option(killSwitch)
   }
 
   override def onClientMessage(message: JsValue, rh: RequestHeader): Unit =
-    message.validate[CloudCommand]
+    message
+      .validate[CloudCommand]
       .map(handleCommand)
       .recoverTotal(err => log.error(s"Invalid JSON '$message'. $err"))
 
@@ -47,6 +50,8 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
 
   override def postStop(): Unit = {
     super.postStop()
-    subscription foreach { sub => sub.unsubscribe() }
+    subscription foreach { sub =>
+      sub.shutdown()
+    }
   }
 }

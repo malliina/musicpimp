@@ -2,21 +2,24 @@ package com.malliina.musicpimp.audio
 
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
-import javax.sound.sampled.LineUnavailableException
 
+import akka.NotUsed
+import akka.stream.Materializer
+import akka.stream.scaladsl.Source
 import com.malliina.audio._
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.models.Volume
+import com.malliina.rx.Sources
+import javax.sound.sampled.LineUnavailableException
 import play.api.Logger
-import rx.lang.scala.{Observable, Subject}
 
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Try}
 
 /** This is a mutable mess. It should be rewritten, maybe using Rx.
   */
-object MusicPlayer
-  extends IPlayer
+class MusicPlayer()(implicit val mat: Materializer)
+    extends IPlayer
     with PlaylistSupport[PlayableTrack]
     with ServerPlayer {
 
@@ -24,11 +27,9 @@ object MusicPlayer
   private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist = new PimpPlaylist
 
-  private val subject = Subject[ServerMessage]().toSerialized
-  val events: Observable[ServerMessage] = subject
-  val allEvents = events.merge(playlist.events)
-  private val trackHistorySubject = Subject[TrackMeta]().toSerialized
-  val trackHistory: Observable[TrackMeta] = trackHistorySubject
+  private val (eventsTarget, events) = Sources.connected[ServerMessage]
+  val allEvents: Source[ServerMessage, NotUsed] = events.merge(playlist.events)
+  val (trackHistoryTarget, trackHistory) = Sources.connected[TrackMeta]()
   private val trackPlayer = new AtomicReference[Option[TrackPlayer]](None)
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
@@ -77,7 +78,7 @@ object MusicPlayer
       old.close()
     }
     send(TrackChangedMessage(track))
-    trackHistorySubject.onNext(track)
+    trackHistoryTarget ! track
   }
 
   def play(): Unit = {
@@ -91,7 +92,7 @@ object MusicPlayer
   }
 
   def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer = {
-    val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), subject)
+    val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), eventsTarget)
     p.adjustVolume(initialVolume)
     p.mute(isMute)
     p
@@ -99,11 +100,12 @@ object MusicPlayer
 
   def stop(): Unit = current.foreach(_.stop())
 
-  def send(json: ServerMessage): Unit = subject.onNext(json)
+  def send(json: ServerMessage): Unit = eventsTarget ! json
 
   def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
 
-  def trySeek(pos: Duration): Try[Unit] = current.map(_.trySeek(pos))
+  def trySeek(pos: Duration): Try[Unit] = current
+    .map(_.trySeek(pos))
     .getOrElse(Failure(new Exception(s"Cannot seek to '$pos', no player available.")))
 
   def volume(level: Int): Unit = setVolume(Volume(level))

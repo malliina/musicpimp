@@ -3,6 +3,7 @@ package com.malliina.musicpimp.library
 import java.io.FileNotFoundException
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
+import akka.stream.Materializer
 import com.malliina.audio.meta.SongMeta
 import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.db._
@@ -13,13 +14,31 @@ import com.malliina.values.UnixPath
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 
+import scala.collection.immutable
 import scala.concurrent.stm.{Ref, atomic}
 
-object Library extends Library {
+trait FileStreams {
+  def dataTrackStream: Stream[DataTrack]
+  def folderStream: Stream[DataFolder]
+}
+
+trait FileLibrary extends FileStreams {
+  def trackFiles: Stream[Path]
+  def reloadFolders(): Unit
+  def findAbsoluteNew(trackPath: UnixPath): Option[Path]
+  def suggestAbsolute(relative: Path): Option[Path]
+  def localize(tracks: Seq[TrackMeta]): Seq[LocalTrack]
+  def songPathsRecursive: immutable.Iterable[Path]
+  def tracksRecursive: Iterable[LocalTrack]
+}
+
+object Library {
   private val log = Logger(getClass)
 
   val RootId = FolderID(idFor(""))
   val EmptyPath = Paths get ""
+
+  def apply(mat: Materializer): Library = new Library()(mat)
 
   def idFor(in: String) = DigestUtils.md5Hex(in)
 
@@ -30,7 +49,7 @@ object Library extends Library {
   def trackId(p: Path) = TrackID(idFor(UnixPath(p).path))
 }
 
-class Library {
+class Library()(implicit mat: Materializer) extends FileLibrary {
   private val rootFolders: Ref[Seq[Path]] = Ref(Settings.read)
 
   private def roots = rootFolders.single.get
@@ -41,16 +60,19 @@ class Library {
 
   def setFolders(folders: Seq[Path]): Unit = atomic(txn => rootFolders.set(folders)(txn))
 
-  def localize(tracks: Seq[TrackMeta]) = tracks.flatMap(track => findMeta(track.relativePath))
+  def localize(tracks: Seq[TrackMeta]): Seq[LocalTrack] =
+    tracks.flatMap(track => findMeta(track.relativePath))
 
   private def all(root: Path): Map[Path, Folder] = {
     def recurse(folder: Folder, acc: Map[Path, Folder]): Map[Path, Folder] = {
       if (folder.dirs.isEmpty) {
         acc
       } else {
-        Map(folder.dirs
-          .flatMap(dir => items(dir).toSeq
-            .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
+        Map(
+          folder.dirs
+            .flatMap(dir =>
+              items(dir).toSeq
+                .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
       }
     }
 
@@ -59,19 +81,24 @@ class Library {
 
   private def all(): Map[Path, Folder] = Map(roots.flatMap(all): _*)
 
-  def songPathsRecursive = all().flatMap(pair => pair._2.files)
+  def songPathsRecursive: immutable.Iterable[Path] =
+    all().flatMap(pair => pair._2.files)
 
-  def tracksRecursive: Iterable[LocalTrack] = (songPathsRecursive map findMeta).flatten
+  def tracksRecursive: Iterable[LocalTrack] =
+    (songPathsRecursive map findMeta).flatten
 
   def trackFiles: Stream[Path] = recursivePaths(audioFiles)
 
   private def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
 
-  private def tracksPathInfo = rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
+  private def tracksPathInfo =
+    rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
 
-  private def audioFiles(root: Path) = FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
+  private def audioFiles(root: Path) =
+    FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
 
-  def folderStream: Stream[DataFolder] = recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
+  def folderStream: Stream[DataFolder] =
+    recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
 
   private def recursivePaths(rootMap: Path => Stream[Path]) =
     rootStream.flatMap(root => rootMap(root).map(root.relativize))
@@ -80,8 +107,16 @@ class Library {
 
   private def toDataTrack(track: LocalTrack) = {
     val id = track.id
-    val parent = Option(track.relativePath.getParent).map(p => FolderID(idFor(UnixPath(p).path))) getOrElse RootId
-    DataTrack(id, track.title, track.artist, track.album, track.duration, track.size, track.path, parent)
+    val parent = Option(track.relativePath.getParent)
+      .map(p => FolderID(idFor(UnixPath(p).path))) getOrElse RootId
+    DataTrack(id,
+              track.title,
+              track.artist,
+              track.album,
+              track.duration,
+              track.size,
+              track.path,
+              parent)
   }
 
   /** This method has a bug.
@@ -89,20 +124,18 @@ class Library {
     * @param trackId the music item id
     * @return the absolute path to the music item id, or None if no such track exists
     */
-  def findAbsoluteLegacy(trackId: TrackID): Option[Path] = findPathInfo(Paths.get(PimpEnc.decodeId(trackId))).map(_.absolute)
+  def findAbsoluteLegacy(trackId: TrackID): Option[Path] =
+    findPathInfo(Paths.get(PimpEnc.decodeId(trackId))).map(_.absolute)
 
-  def findAbsoluteNew(trackPath: UnixPath): Option[Path] = findPathInfo(Paths.get(trackPath.path)).map(_.absolute)
+  def findAbsoluteNew(trackPath: UnixPath): Option[Path] =
+    findPathInfo(Paths.get(trackPath.path)).map(_.absolute)
 
   def suggestAbsolute(relative: Path): Option[Path] = roots.headOption.map(_ resolve relative)
-
-  //  def suggestAbsolute(path: TrackID): Option[Path] = suggestAbsolute(relativePath(path))
-
-  //  private def meta(itemId: TrackID): LocalTrack = meta(relativePath(itemId))
 
   private def meta(relative: Path): LocalTrack =
     localTrackFor(pathInfo(relative))
 
-  def localTrackFor(pi: PathInfo) = {
+  def localTrackFor(pi: PathInfo): LocalTrack = {
     val meta = SongMeta.fromPath(pi.absolute, pi.root)
     val path = UnixPath(pi.relative)
     new LocalTrack(TrackID(idFor(path.path)), path, meta)
@@ -110,9 +143,8 @@ class Library {
 
   def toLocal(track: TrackMeta) = meta(track.relativePath)
 
-  //  def findMeta(id: TrackID): Option[LocalTrack] = findMeta(relativePath(id))
-
-  private def findMeta(relative: Path): Option[LocalTrack] = findPathInfo(relative) flatMap parseMeta
+  private def findMeta(relative: Path): Option[LocalTrack] =
+    findPathInfo(relative) flatMap parseMeta
 
   private def parseMeta(pi: PathInfo): Option[LocalTrack] =
     try {
@@ -120,7 +152,9 @@ class Library {
       Option(localTrackFor(pi))
     } catch {
       case e: Exception =>
-        log.debug(s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.", e)
+        log.debug(
+          s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.",
+          e)
         None
     }
 
@@ -130,18 +164,21 @@ class Library {
     else Some(mergeContents(sources))
   }
 
-  private def mergeContents(sources: Seq[PathInfo]): Folder = sources.map(items).foldLeft(Folder.empty)(_ ++ _)
+  private def mergeContents(sources: Seq[PathInfo]): Folder =
+    sources.map(items).foldLeft(Folder.empty)(_ ++ _)
 
   private def items(pathInfo: PathInfo): Folder =
     tryReadFolder(FileUtils.listFiles(pathInfo.absolute, pathInfo.root))
 
   private def findPathInfo(relative: Path): Option[PathInfo] = {
-    roots.find(root => Files.isReadable(root resolve relative))
+    roots
+      .find(root => Files.isReadable(root resolve relative))
       .map(root => PathInfo(relative, root))
   }
 
   private def findPathInfo2(relative: Path): Seq[PathInfo] = {
-    roots.filter(root => Files.isReadable(root resolve relative))
+    roots
+      .filter(root => Files.isReadable(root resolve relative))
       .map(root => PathInfo(relative, root))
   }
 

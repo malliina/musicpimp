@@ -19,7 +19,7 @@ import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
-import com.malliina.musicpimp.library.{Library, LocalTrack, MusicLibrary}
+import com.malliina.musicpimp.library.{FileLibrary, Library, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models._
 import com.malliina.play.controllers.Caching.{NoCache, NoCacheOk}
 import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileUploadRequest}
@@ -42,7 +42,9 @@ import play.api.mvc._
 import scala.concurrent.Future
 import scala.util.Try
 
-class Rest(lib: MusicLibrary,
+class Rest(player: MusicPlayer,
+           library: FileLibrary,
+           lib: MusicLibrary,
            auth: AuthDeps,
            handler: PlaybackMessageHandler,
            statsPlayer: StatsPlayer,
@@ -62,13 +64,13 @@ class Rest(lib: MusicLibrary,
   def playlist = playback
 
   def playUploadedFile = UploadedSongAction { track =>
-    MusicPlayer.setPlaylistAndPlay(track)
+    player.setPlaylistAndPlay(track)
   }
 
   /** Adds the uploaded track to the server playlist.
     */
   def addUpload = UploadedSongAction { track =>
-    MusicPlayer.playlist.add(track)
+    player.playlist.add(track)
   }
 
   /** Starts playback of the track in the request.
@@ -143,8 +145,8 @@ class Rest(lib: MusicLibrary,
     val host = FullUrls.hostOnly(req)
     PimpContentController.default.pimpResponse(req)(
       html = Results.NoContent,
-      json17 = Json.toJson(MusicPlayer.status17(host)),
-      latest = Json.toJson(MusicPlayer.status(host))
+      json17 = Json.toJson(player.status17(host)),
+      latest = Json.toJson(player.status(host))
     )
   }
 
@@ -161,7 +163,7 @@ class Rest(lib: MusicLibrary,
           * locally, the uploaded file is ignored. Clients should thus ask the server whether it already has a file before
           * initiating long-running, possibly redundant, file uploads.
           */
-        MusicPlayer.setPlaylistAndPlay(track)
+        player.setPlaylistAndPlay(track)
         log info s"Playing local file of: ${track.id}"
         pimpAction(Ok)
       }
@@ -175,7 +177,7 @@ class Rest(lib: MusicLibrary,
   private def streamingAction(meta: Track): EssentialAction = {
     val relative = meta.path
     // Saves the streamed media to file if possible
-    val fileOpt = Library.findAbsoluteNew(relative).filter(canWriteNewFile) orElse
+    val fileOpt = library.findAbsoluteNew(relative).filter(canWriteNewFile) orElse
       Option(FileUtilities.tempDir resolve meta.relativePath).filter(canWriteNewFile)
     val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
     val msg = fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
@@ -187,8 +189,8 @@ class Rest(lib: MusicLibrary,
     // first. When the OutputStream onto which the InputStream is connected is closed,
     // the Future, if still not completed, will complete exceptionally with an IOException.
     Future {
-      val track = StreamedTrack.fromTrack(meta, inStream)
-      MusicPlayer.setPlaylistAndPlay(track)
+      val track = StreamedTrack.fromTrack(meta, inStream, mat)
+      player.setPlaylistAndPlay(track)
     }
     pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(mat)) { _ =>
       log.info(s"Received stream of track: ${meta.id}")
@@ -261,7 +263,7 @@ class Rest(lib: MusicLibrary,
 
       val pathParameterOpt = firstValue("path").map(p => Paths.get(p))
       // if a "path" parameter is specified, attempts to move the uploaded file to that library path
-      val absolutePathOpt = pathParameterOpt.flatMap(Library.suggestAbsolute).filter(!Files.exists(_))
+      val absolutePathOpt = pathParameterOpt.flatMap(library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
       val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
@@ -274,7 +276,7 @@ class Rest(lib: MusicLibrary,
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
         val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
-        new LocalTrack(Library.trackId(file), UnixPath(file), meta)
+        new LocalTrack(Library.trackId(file), UnixPath(file), meta)(mat)
       }
 
       val track = trackInfoFromFileOpt.map(_.map(_.getOrElse(trackInfoFromUpload))).getOrElse(fut(trackInfoFromUpload))
@@ -296,9 +298,9 @@ object Rest {
   private val log = Logger(getClass)
 
   object trustAllTrustManager extends X509TrustManager {
-    override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+    override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = ()
 
-    override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = ()
+    override def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = ()
 
     override def getAcceptedIssuers: Array[X509Certificate] = Array.empty[X509Certificate]
   }

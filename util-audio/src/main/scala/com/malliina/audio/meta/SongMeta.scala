@@ -14,7 +14,8 @@ object SongMeta {
   def fromPath(absolutePath: Path, root: Path): SongMeta = {
     val audioFile = AudioFileIO read absolutePath.toFile
     val duration = audioFile.getAudioHeader.getTrackLength.toDouble.seconds
-    val tags = SongTags.fromAudioFile(audioFile).getOrElse(SongTags.fromFilePath(absolutePath, root))
+    val tags =
+      SongTags.fromAudioFile(audioFile).getOrElse(SongTags.fromFilePath(absolutePath, root))
     SongMeta(FileSource(absolutePath, duration), tags)
   }
 
@@ -24,11 +25,15 @@ object SongMeta {
     val title = titleFromFileName(path)
     val album = maybeParent.flatMap(p => Option(p.getFileName).map(_.toString)).getOrElse("")
     // Both getParent and getFileName may return null. Thanks, Java.
-    val artist = maybeParent.map(p => {
-      Option(p.getParent).map(pp => {
-        Option(pp.getFileName).map(_.toString).getOrElse(album)
-      }).getOrElse(album)
-    }).getOrElse(album)
+    val artist = maybeParent
+      .map(p => {
+        Option(p.getParent)
+          .map(pp => {
+            Option(pp.getFileName).map(_.toString).getOrElse(album)
+          })
+          .getOrElse(album)
+      })
+      .getOrElse(album)
     SongMeta(StreamSource.fromFile(path), SongTags(title, album, artist))
   }
 
@@ -37,12 +42,14 @@ object SongMeta {
     if (fileName endsWith ".mp3") fileName.slice(0, fileName.length - 4) else fileName
   }
 
-  def titleOf(absolutePath: Path) = {
+  def titleOf(absolutePath: Path) =
     if (Files isDirectory absolutePath) {
       titleFromFileName(absolutePath)
     } else {
-      SongTags.fromTags(absolutePath).map(_.title).filter(_.nonEmpty)
+      SongTags
+        .fromTags(absolutePath)
+        .map(_.title)
+        .filter(_.nonEmpty)
         .getOrElse(titleFromFileName(absolutePath))
     }
-  }
 }

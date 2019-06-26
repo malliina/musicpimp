@@ -35,11 +35,12 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     */
   def index = pos.single.get
 
-  def index_=(newPlaylistPosition: PlaylistIndex) = atomic { implicit txn =>
+  def index_=(newPlaylistPosition: PlaylistIndex): Unit = atomic { implicit txn =>
     require(newPlaylistPosition >= 0, s"Negative playlist position: $newPlaylistPosition")
     songs()
     val songCount = songs.get.size
-    require(newPlaylistPosition < songCount, s"No song at index: $newPlaylistPosition, playlist only contains $songCount tracks")
+    require(newPlaylistPosition < songCount,
+            s"No song at index: $newPlaylistPosition, playlist only contains $songCount tracks")
     val changed = index != newPlaylistPosition
 
     pos.set(newPlaylistPosition)
@@ -88,7 +89,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     onPlaylistModified(songs.get)
   }
 
-  def insert(position: PlaylistIndex, song: T) = atomic { implicit txn =>
+  def insert(position: PlaylistIndex, song: T): Unit = atomic { implicit txn =>
     songs.transform(list => Lists.insertAt(position, list, song))
     onPlaylistModified(songs.get)
     val idx = pos.get
@@ -98,20 +99,21 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     }
   }
 
-  def move(sourcePosition: PlaylistIndex, destPosition: PlaylistIndex) = atomic { implicit txn =>
-    val songCount = songList.size
-    val isActionable =
-      sourcePosition != destPosition &&
-        sourcePosition < songCount &&
-        destPosition < songCount &&
-        sourcePosition >= 0 &&
-        destPosition >= 0
-    if (isActionable) {
-      val newIndex = indexAfterMove(index, sourcePosition, destPosition)
-      songs.transform(ts => Lists.move(sourcePosition, destPosition, ts))
-      onPlaylistModified(songs.get)
-      index = newIndex
-    }
+  def move(sourcePosition: PlaylistIndex, destPosition: PlaylistIndex): Unit = atomic {
+    implicit txn =>
+      val songCount = songList.size
+      val isActionable =
+        sourcePosition != destPosition &&
+          sourcePosition < songCount &&
+          destPosition < songCount &&
+          sourcePosition >= 0 &&
+          destPosition >= 0
+      if (isActionable) {
+        val newIndex = indexAfterMove(index, sourcePosition, destPosition)
+        songs.transform(ts => Lists.move(sourcePosition, destPosition, ts))
+        onPlaylistModified(songs.get)
+        index = newIndex
+      }
   }
 
   def indexAfterMove(current: Int, src: Int, dest: Int) = {
@@ -129,7 +131,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     }
   }
 
-  def reset(position: PlaylistIndex, tracks: Seq[T]) = atomic { implicit txn =>
+  def reset(position: PlaylistIndex, tracks: Seq[T]): Unit = atomic { implicit txn =>
     clearButDontTell()
     val previousSongs = songs.getAndTransform(_ => tracks)
     val previousIndex = pos.getAndTransform(_ => position)
@@ -141,7 +143,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     }
   }
 
-  def delete(position: PlaylistIndex) = atomic { implicit txn =>
+  def delete(position: PlaylistIndex): Unit = atomic { implicit txn =>
     songs.transform(list => Lists.removeAt(position, list))
     onPlaylistModified(songs.get)
     val idx = pos.get
@@ -151,7 +153,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     }
   }
 
-  private def clearButDontTell() = atomic { implicit txn =>
+  private def clearButDontTell(): Unit = atomic { implicit txn =>
     songs.transform(_ => Nil)
     pos.transform(_ => NO_POSITION)
   }
@@ -162,18 +164,14 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     onPlaylistIndexChanged(index)
   }
 
-  def set(song: T) = atomic { implicit txn =>
+  def set(song: T): Unit = atomic { implicit txn =>
     clearButDontTell()
     add(song)
     index = 0
     log.info(s"Playlist set to: $song")
   }
 
-  protected def onPlaylistIndexChanged(idx: PlaylistIndex) {
+  protected def onPlaylistIndexChanged(idx: PlaylistIndex) {}
 
-  }
-
-  protected def onPlaylistModified(songs: Seq[T]) {
-
-  }
+  protected def onPlaylistModified(songs: Seq[T]) {}
 }

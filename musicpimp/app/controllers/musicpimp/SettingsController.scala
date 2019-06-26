@@ -6,7 +6,7 @@ import java.nio.file.{Files, Paths}
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.{DataMigrator, Indexer}
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
-import com.malliina.musicpimp.library.{Library, Settings}
+import com.malliina.musicpimp.library.{FileLibrary, Library, Settings}
 import com.malliina.musicpimp.messaging._
 import com.malliina.musicpimp.messaging.adm.AmazonDevices
 import com.malliina.musicpimp.messaging.apns.APNSDevices
@@ -25,11 +25,13 @@ import scala.util.Try
 
 object SettingsController {
   private val log = Logger(getClass)
+
   val Path = "path"
 }
 
 class SettingsController(tags: PimpHtml,
                          messages: Messages,
+                         library: FileLibrary,
                          indexer: Indexer,
                          dumper: DataMigrator,
                          auth: AuthDeps)
@@ -98,7 +100,7 @@ class SettingsController(tags: PimpHtml,
 
   private def onFoldersChanged(successMessage: String) = {
     log info s"$successMessage"
-    Library.reloadFolders()
+    library.reloadFolders()
     indexer.indexAndSave()
     Redirect(routes.SettingsController.settings())
       .flashing(UserFeedback.Feedback -> successMessage)

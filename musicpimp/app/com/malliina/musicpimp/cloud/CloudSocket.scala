@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
-import akka.actor.Scheduler
+import akka.actor.{Kill, Scheduler}
+import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.http.FullUrl
@@ -24,7 +25,6 @@ import com.malliina.ws.HttpUtil
 import controllers.musicpimp.{LibraryController, Rest}
 import play.api.Logger
 import play.api.libs.json._
-import rx.lang.scala.Subject
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
@@ -47,13 +47,20 @@ object CloudSocket {
   val devUri = FullUrl("ws", "localhost:9000", path)
   val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(id: Option[CloudID], url: FullUrl, handler: JsonHandler, s: Scheduler, deps: Deps) =
-    new CloudSocket(url,
+  def build(player: MusicPlayer,
+            id: Option[CloudID],
+            url: FullUrl,
+            handler: JsonHandler,
+            s: Scheduler,
+            deps: Deps,
+            mat: Materializer) =
+    new CloudSocket(player,
+                    url,
                     id.filter(_.id.nonEmpty) getOrElse CloudID.empty,
                     Constants.pass,
                     handler,
                     s,
-                    deps)
+                    deps)(mat)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -77,17 +84,17 @@ object CloudSocket {
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(uri: FullUrl,
+class CloudSocket(player: MusicPlayer,
+                  uri: FullUrl,
                   username: CloudID,
                   password: Password,
                   alarmHandler: JsonHandler,
                   s: Scheduler,
-                  deps: Deps)
+                  deps: Deps)(implicit mat: Materializer)
     extends JsonSocket8(
       uri,
       CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
       HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
-
   val messageParser = CloudMessageParser
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
@@ -100,7 +107,8 @@ class CloudSocket(uri: FullUrl,
   val registration = registrationPromise.future
   val playlists = deps.playlists
 
-  val registrations = Subject[CloudID]().toSerialized
+  private val (registrationsTarget, registrationsSource) = Sources.connected[CloudID]()
+  val registrations = registrationsSource
 
   def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
 
@@ -155,7 +163,7 @@ class CloudSocket(uri: FullUrl,
 
     message match {
       case GetStatus =>
-        sendSuccess(request, StatusMessage(MusicPlayer.status(cloudHost)))
+        sendSuccess(request, StatusMessage(player.status(cloudHost)))
       case GetTrack(id) =>
         uploader.upload(id, request).recoverAll { t =>
           log.error(s"Upload failed for $request", t)
@@ -332,7 +340,7 @@ class CloudSocket(uri: FullUrl,
 
   def onRegistered(id: CloudID): Unit = {
     registrationPromise trySuccess id
-    registrations onNext id
+    registrationsTarget ! id
     log info s"Connected as '$username' to $uri."
   }
 
@@ -353,6 +361,6 @@ class CloudSocket(uri: FullUrl,
 
   def failSocket(e: Exception): Unit = {
     registrationPromise tryFailure e
-    registrations onError e
+    registrationsTarget ! Kill
   }
 }

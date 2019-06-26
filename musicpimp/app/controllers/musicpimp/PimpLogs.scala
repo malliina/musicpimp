@@ -26,7 +26,6 @@ class PimpLogs(ctx: ActorExecution) {
   lazy val appender = LogbackUtils.getAppender[DefaultAkkaAppender](appenderName)
   lazy val jsonEvents =
     appender.logEvents.groupedWithin(5, 100.millis).filter(_.nonEmpty).map(Json.toJson(_))
-//  val _ = jsonEvents.runWith(Sink.ignore)
 
   def openSocket = WebSocket.acceptOrResult[JsValue, JsValue] { rh =>
     Auths.session.authenticate(rh).map { authResult =>

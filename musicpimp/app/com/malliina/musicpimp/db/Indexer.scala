@@ -1,13 +1,13 @@
 package com.malliina.musicpimp.db
 
 import akka.NotUsed
-import akka.actor.{Cancellable, PoisonPill, Scheduler}
+import akka.actor.{Cancellable, Kill, Scheduler}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
-import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.library.FileLibrary
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.rx.Sources
 import play.api.Logger
@@ -26,7 +26,7 @@ object Indexer {
   * Indexes the music library if it changes. Runs when `init()` is first called and
   * every six hours from then on.
   */
-class Indexer(db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
+class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
   val indexFile = FileUtil.localPath("files7.cache")
   val indexInterval = 6.hours
 //  val indexInterval = 15.seconds
@@ -104,20 +104,22 @@ class Indexer(db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
   private def refreshIndex(): Source[Long, NotUsed] = {
     val (target, source) = Sources.connected[Long]()
     val start = System.currentTimeMillis()
-    db.runIndexer { fileCount =>
-      log.info(s"File count at $fileCount...")
-      Future.successful(target ! fileCount)
-    }.map { result =>
-      val end = System.currentTimeMillis()
-      val duration = (end - start).millis
-      target ! PoisonPill
-      log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
-        s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
-    }.recover {
-      case e =>
-        log.error(s"Indexing failed.", e)
-        target ! PoisonPill
-    }
+    db.runIndexer(library) { fileCount =>
+        log.info(s"File count at $fileCount...")
+        Future.successful(target ! fileCount)
+      }
+      .map { result =>
+        val end = System.currentTimeMillis()
+        val duration = (end - start).millis
+        target ! Kill
+        log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
+          s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
+      }
+      .recover {
+        case e =>
+          log.error(s"Indexing failed.", e)
+          target ! Kill
+      }
     source
   }
 
@@ -126,18 +128,6 @@ class Indexer(db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
     countAndSaveFiles()
     ret
   }
-
-//  def index(): Observable[Long] = {
-//    val observable = Observables.hot(db.refreshIndex())
-//    ongoingIndexings onNext observable
-//    observable
-//  }
-//
-//  def indexAndSave(): Observable[Long] = {
-//    val ret = index()
-//    countAndSaveFiles()
-//    ret
-//  }
 
   private def countAndSaveFiles(): Future[Int] = for {
     count <- calculateFileCount()
@@ -151,6 +141,6 @@ class Indexer(db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
 
   private def calculateFileCount() = Future {
     log info s"Calculating file count..."
-    Library.trackFiles.size
+    library.trackFiles.size
   }
 }

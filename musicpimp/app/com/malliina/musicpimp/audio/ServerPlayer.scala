@@ -1,12 +1,13 @@
 package com.malliina.musicpimp.audio
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
 import com.malliina.http.FullUrl
-import rx.lang.scala.Observable
 
 import scala.concurrent.duration.Duration
 
 trait ServerPlayer {
-  def allEvents: Observable[ServerMessage]
+  def allEvents: Source[ServerMessage, NotUsed]
 
   def position: Duration
 

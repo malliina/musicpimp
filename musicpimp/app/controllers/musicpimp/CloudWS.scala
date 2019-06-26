@@ -16,7 +16,8 @@ object CloudWS {
 }
 
 class CloudWS(clouds: Clouds, ctx: ActorExecution) {
-  val sockets = new MediatorSockets[AuthedRequest](Props(new CloudMediator(clouds)), CloudWS.sessionAuth, ctx)
+  val sockets =
+    new MediatorSockets[AuthedRequest](Props(new CloudMediator(clouds)), CloudWS.sessionAuth, ctx)
 
   def openSocket = sockets.newSocket
 }

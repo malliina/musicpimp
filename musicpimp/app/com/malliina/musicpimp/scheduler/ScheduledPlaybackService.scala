@@ -6,7 +6,7 @@ import java.util.UUID
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.audio.TrackJson
+import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.util.FileUtil
 import play.api.Logger
@@ -16,7 +16,7 @@ import play.api.libs.json.Json._
 import scala.concurrent.Future
 import scala.util.Try
 
-class ScheduledPlaybackService(lib: MusicLibrary) {
+class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary) {
   private val log = Logger(getClass)
 
   private val s: IScheduler = Cron4jScheduler
@@ -34,7 +34,7 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
 
   private def start(): Unit = {
     s.start()
-    readConf().filter(_.enabled).foreach(conf => clockAPs.schedule(PlaybackJob(conf, lib)))
+    readConf().filter(_.enabled).foreach(conf => clockAPs.schedule(PlaybackJob(conf, player, lib)))
   }
 
   def stop(): Unit = {
@@ -56,7 +56,9 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
 
   def find(id: String) = readConf().find(_.id.contains(id))
 
-  def findJob(id: String) = find(id).map { conf => PlaybackJob(conf, lib) }
+  def findJob(id: String) = find(id).map { conf =>
+    PlaybackJob(conf, player, lib)
+  }
 
   /** Saves or updates action point ´ap´.
     *
@@ -73,7 +75,7 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
     idOpt.foreach(clockAPs.deschedule)
     save(readConf().filter(_.id != idOpt) ++ Seq(withId))
     if (withId.enabled) {
-      clockAPs.schedule(PlaybackJob(withId, lib))
+      clockAPs.schedule(PlaybackJob(withId, player, lib))
     }
     log debug s"Saved scheduled playback: $ap"
   }
@@ -95,19 +97,19 @@ class ScheduledPlaybackService(lib: MusicLibrary) {
     }
 
   def parseConf(json: String): Seq[ClockPlaybackConf] = {
-    Json.parse(json).validate[Seq[ClockPlaybackConf]].fold(
-      invalid => {
+    Json
+      .parse(json)
+      .validate[Seq[ClockPlaybackConf]]
+      .fold(invalid => {
         log.warn(s"Ignoring configuration because the JSON is invalid: $invalid")
         Seq.empty
-      },
-      valid => valid)
+      }, valid => valid)
   }
 
   private def save(aps: Seq[ClockPlaybackConf]): Unit = save(aps, persistFile)
 
-  private def save(aps: Seq[ClockPlaybackConf], file: Path): Try[Unit] = {
+  private def save(aps: Seq[ClockPlaybackConf], file: Path): Try[Unit] =
     Try(FileUtilities.stringToFile(stringify(toJson(aps)), file))
-  }
 
   private def randomID = UUID.randomUUID().toString
 }

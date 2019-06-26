@@ -1,40 +1,48 @@
 package controllers
 
-import akka.actor.Props
-import com.malliina.logbackrx.{BasicBoundedReplayRxAppender, LogbackUtils}
+import akka.NotUsed
+import akka.stream.scaladsl.{Flow, Sink, Source}
+import com.malliina.http.{Errors, SingleError}
+import com.malliina.logback.akka.DefaultAkkaAppender
+import com.malliina.logbackrx.LogbackUtils
 import com.malliina.logstreams.client.LogEvents
-import com.malliina.play.ActorExecution
-import com.malliina.play.auth.{Authenticator, UserAuthenticator}
-import com.malliina.play.models.AuthRequest
-import com.malliina.play.ws.{ActorConfig, ObserverActor, Sockets}
-import com.malliina.values.Username
+import com.malliina.play.auth.UserAuthenticator
+import controllers.LogStreamer.log
+import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.Call
-import rx.lang.scala.Observable
+import play.api.mvc.Results.Unauthorized
+import play.api.mvc.{Call, WebSocket}
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 
 object LogStreamer {
-  def sockets(events: Observable[JsValue],
-              auth: Authenticator[Username],
-              ctx: ActorExecution): Sockets[Username] = {
-    new Sockets(auth, ctx) {
-      override def props(conf: ActorConfig[Username]): Props =
-        Props(new ObserverActor(events, conf))
-    }
-  }
+  private val log = Logger(getClass)
 
-  def apply(ctx: ActorExecution): LogStreamer =
-    new LogStreamer(UserAuthenticator.session().transform((rh, user) => Right(new AuthRequest(user, rh)))(ctx.executionContext), ctx)
+  def apply(ec: ExecutionContext): LogStreamer =
+    new LogStreamer()(ec)
 }
 
-class LogStreamer(auth: Authenticator[AuthRequest], ctx: ActorExecution) {
-  lazy val jsonEvents = LogbackUtils.getAppender[BasicBoundedReplayRxAppender]("RX")
+class LogStreamer()(implicit ec: ExecutionContext) {
+  lazy val jsonEvents: Source[JsValue, NotUsed] = LogbackUtils
+    .getAppender[DefaultAkkaAppender]("AKKA")
     .logEvents
-    .tumblingBuffer(50.millis)
+    .groupedWithin(5, 100.millis)
     .filter(_.nonEmpty)
     .map(es => Json.toJson(LogEvents(es)))
-  lazy val sockets = LogStreamer.sockets(jsonEvents, UserAuthenticator.session(), ctx)
+  val auth = UserAuthenticator.session()
+
+  def openSocket = WebSocket.acceptOrResult[JsValue, JsValue] { rh =>
+    UserAuthenticator.session().authenticate(rh).map { authResult =>
+      authResult.map { ok =>
+        log.info(s"Opening logs socket for '${ok.name}'...")
+        Flow.fromSinkAndSource(Sink.ignore, jsonEvents)
+      }.left.map { err =>
+        log.error(s"Unauthorized request '$rh': '$err'.")
+        Unauthorized(Json.toJson(Errors(Seq(SingleError("Access denied.")))))
+      }
+    }
+  }
 
   def openSocketCall: Call = routes.MetaOAuth.openSocket()
 }

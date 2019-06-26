@@ -3,21 +3,23 @@ package com.malliina.musicpimp.cloud
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.actor.Scheduler
+import akka.NotUsed
+import akka.actor.{Cancellable, Scheduler}
+import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.{KillSwitches, Materializer, UniqueKillSwitch}
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
+import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.cloud.Clouds.log
-import com.malliina.musicpimp.models.{Connected, Connecting, Disconnected, Disconnecting}
-import com.malliina.musicpimp.models.{CloudEvent, CloudID}
+import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.util.FileUtil
+import com.malliina.rx.Sources
 import com.malliina.util.Utils
 import play.api.Logger
 import play.api.libs.json.JsValue
-import rx.lang.scala.subjects.BehaviorSubject
-import rx.lang.scala.{Observable, Subscription}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -44,17 +46,18 @@ object Clouds {
   }
 }
 
-class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, scheduler: Scheduler) {
+class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, scheduler: Scheduler)(
+    implicit mat: Materializer) {
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
-  private val timer = Observable.interval(60.seconds)
-  private var poller: Option[Subscription] = None
+  private val timer = Source.tick(3.seconds, 60.seconds, 0)
+  private var poller: Option[Cancellable] = None
   val MaxFailures = 720
   var successiveFailures = 0
   val notConnected = Disconnected("Not connected.")
-  private val registrations = BehaviorSubject[CloudEvent](notConnected).toSerialized
-  private var activeSubscription: Option[Subscription] = None
+  private val (registrationsTarget, registrations) = Sources.connected[CloudEvent]()
+  private var activeSubscription: Option[UniqueKillSwitch] = None
 
-  val connection: Observable[CloudEvent] = registrations
+  val connection: Source[CloudEvent, NotUsed] = registrations
 
   def client = clientRef.get()
 
@@ -72,12 +75,8 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
 
   def maintainConnectivity(): Unit = {
     if (poller.isEmpty) {
-      val subscription = timer.subscribe(
-        _ => ensureConnectedIfEnabled(),
-        (err: Throwable) => log.error("Cloud poller failed", err),
-        () => log.error("Cloud poller completed")
-      )
-      poller = Some(subscription)
+      val cancellable = timer.toMat(Sink.foreach(_ => ensureConnectedIfEnabled()))(Keep.left).run()
+      poller = Option(cancellable)
     }
   }
 
@@ -98,19 +97,31 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
   }
 
   def connect(id: Option[CloudID]): Future[CloudID] = reg {
-    activeSubscription.foreach(_.unsubscribe())
-    registrations onNext Connecting
+    activeSubscription.foreach(_.shutdown())
+    registrationsTarget ! Connecting
     val prep = async {
       val name = id.map(i => s"'$i'") getOrElse "a random client"
       log debug s"Connecting as $name to ${client.uri}..."
       val old = clientRef.getAndSet(newSocket(id))
       closeAnyConnection(old)
-      val sub = client.registrations.subscribe(
-        id => registrations.onNext(Connected(id)),
-        _ => registrations.onNext(Disconnected("The connection failed.")),
-        () => ()
-      )
-      activeSubscription = Option(sub)
+
+      val connectionSink = Sink.foreach[CloudID] { id =>
+        registrationsTarget ! Connected(id)
+      }
+      val (_, killSwitch) = client.registrations
+        .watchTermination()(Keep.right)
+        .viaMat(KillSwitches.single)(Keep.both)
+        .mapMaterializedValue {
+          case (done, ks) =>
+            val f = done.transform { t =>
+              registrationsTarget ! Disconnected("The connection failed.")
+              t
+            }
+            (f, ks)
+        }
+        .to(connectionSink)
+        .run()
+      activeSubscription = Option(killSwitch)
     }
     for {
       _ <- prep
@@ -127,9 +138,8 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
     id
   }
 
-
   def newSocket(id: Option[CloudID]): CloudSocket =
-    CloudSocket.build(id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, scheduler, deps)
+    CloudSocket.build(player, id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, scheduler, deps, mat)
 
   def disconnectAndForgetAsync(): Future[Boolean] =
     async(disconnectAndForget("Disconnected by user."))
@@ -142,11 +152,11 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
   }
 
   def disconnect(reason: String): Unit = {
-    registrations onNext Disconnecting
+    registrationsTarget ! Disconnecting
     stopPolling()
     closeAnyConnection(client)
-    registrations onNext Disconnected(reason)
-    activeSubscription.foreach(_.unsubscribe())
+    registrationsTarget ! Disconnected(reason)
+    activeSubscription.foreach(_.shutdown())
   }
 
   def closeAnyConnection(closeable: CloudSocket): Unit = {
@@ -158,7 +168,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
   }
 
   def stopPolling(): Unit = {
-    poller.foreach(_.unsubscribe())
+    poller.foreach(_.cancel())
     poller = None
   }
 
@@ -168,7 +178,7 @@ class Clouds(alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, sche
     if (client.isConnected) {
       client send msg match {
         case Success(()) => MessageSent
-        case Failure(t) => SendFailure(t)
+        case Failure(t)  => SendFailure(t)
       }
     } else {
       NotConnected

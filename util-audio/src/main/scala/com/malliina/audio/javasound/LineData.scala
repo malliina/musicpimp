@@ -1,15 +1,15 @@
 package com.malliina.audio.javasound
 
 import java.io.InputStream
+
+import akka.actor.ActorRef
 import javax.sound.sampled.DataLine.Info
 import javax.sound.sampled._
-
 import com.malliina.audio.AudioImplicits._
 import com.malliina.audio.PlayerStates
 import com.malliina.audio.PlayerStates.PlayerState
 import com.malliina.audio.javasound.LineData.log
 import org.slf4j.LoggerFactory
-import rx.lang.scala.Subject
 
 object LineData {
   private val log = LoggerFactory.getLogger(getClass)
@@ -18,22 +18,19 @@ object LineData {
     * of audio bytes has been made available to it.
     *
     * Therefore you must not, in the same thread, call this before bytes are made available to the stream.
-    *
-    * @param stream
-    * @return
     */
-  def fromStream(stream: InputStream, subject: Subject[PlayerState]) =
-    new LineData(AudioSystem.getAudioInputStream(stream), subject)
+  def fromStream(stream: InputStream, target: ActorRef) =
+    new LineData(AudioSystem.getAudioInputStream(stream), target)
 }
 
-class LineData(inStream: AudioInputStream, subject: Subject[PlayerState]) {
+class LineData(inStream: AudioInputStream, target: ActorRef) {
   private val baseFormat = inStream.getFormat
   private val decodedFormat = toDecodedFormat(baseFormat)
   // this is read
   private val decodedIn = AudioSystem.getAudioInputStream(decodedFormat, inStream)
   // this is written to during playback
   val line = buildLine(decodedFormat)
-  line.addLineListener((lineEvent: LineEvent) => subject.onNext(toPlayerEvent(lineEvent)))
+  line.addLineListener((lineEvent: LineEvent) => target ! toPlayerEvent(lineEvent))
   line open decodedFormat
 
   def toPlayerEvent(lineEvent: LineEvent): PlayerState = {
@@ -48,15 +45,15 @@ class LineData(inStream: AudioInputStream, subject: Subject[PlayerState]) {
     else Unknown
   }
 
-  def read(buffer: Array[Byte]) = decodedIn.read(buffer)
+  def read(buffer: Array[Byte]): Int = decodedIn.read(buffer)
 
-  def skip(bytes: Long) = {
+  def skip(bytes: Long): Long = {
     val skipped = decodedIn skip bytes
     log debug s"Attempted to skip $bytes bytes, skipped $skipped bytes"
     skipped
   }
 
-  def state = {
+  def state: PlayerStates.Value = {
     import PlayerStates._
     if (line.isOpen) {
       if (line.isActive) {
@@ -69,7 +66,7 @@ class LineData(inStream: AudioInputStream, subject: Subject[PlayerState]) {
     }
   }
 
-  def close() {
+  def close(): Unit = {
     line.stop()
     line.flush()
     line.close()

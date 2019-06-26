@@ -65,9 +65,9 @@ class Starter(as: ActorSystem) {
     }
   }
 
-  def stopServices(options: InitOptions, schedules: ScheduledPlaybackService): Unit = {
+  def stopServices(options: InitOptions, schedules: ScheduledPlaybackService, player: MusicPlayer): Unit = {
     log.info("Stopping services...")
-    MusicPlayer.close()
+    player.close()
     schedules.stop()
   }
 

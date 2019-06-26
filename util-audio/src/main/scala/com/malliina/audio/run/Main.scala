@@ -2,6 +2,8 @@ package com.malliina.audio.run
 
 import java.nio.file.{Files, Path, Paths}
 
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
 import com.malliina.util.Utils
@@ -23,10 +25,12 @@ object Main {
     maybeConf.fold(println, play)
   }
 
-  def play(conf: Conf) = {
+  def play(conf: Conf): Unit = {
+    val as = ActorSystem("run")
+    val mat = ActorMaterializer()(as)
     val size = conf.size
     println(s"Playing with buffer size: $size.")
-    val player = new FileJavaSoundPlayer(conf.path, conf.size)
+    val player = new FileJavaSoundPlayer(conf.path, conf.size)(mat)
     player.play()
   }
 

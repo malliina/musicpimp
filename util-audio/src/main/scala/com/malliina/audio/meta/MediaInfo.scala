@@ -5,8 +5,9 @@ import java.net.URI
 import java.nio.file.{Files, Path}
 
 import com.malliina.storage.{StorageLong, StorageSize}
+import org.jaudiotagger.audio.AudioFileIO
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, DurationDouble}
 
 trait MediaMeta {
   def duration: Duration
@@ -22,13 +23,19 @@ trait StreamSource extends MediaMeta {
 
 object StreamSource {
   def fromFile(file: Path) =
-    FileSource(file, MediaTags.audioDuration(file))
+    FileSource(file, audioDuration(file))
 
   def fromURI(uri: URI, duration: Duration, size: StorageSize) =
     UriSource(uri, duration, size)
+
+  def audioDuration(media: Path): Duration = {
+    val f = AudioFileIO read media.toFile
+    f.getAudioHeader.getTrackLength.toDouble.seconds
+  }
 }
 
-case class OneShotStream(stream: InputStream, duration: Duration, size: StorageSize) extends MediaMeta
+case class OneShotStream(stream: InputStream, duration: Duration, size: StorageSize)
+    extends MediaMeta
 
 case class UriSource(uri: URI, duration: Duration, size: StorageSize) extends StreamSource {
   override def openStream: InputStream = uri.toURL.openStream()

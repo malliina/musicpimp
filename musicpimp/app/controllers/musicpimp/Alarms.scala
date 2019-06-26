@@ -3,7 +3,7 @@ package controllers.musicpimp
 import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
-import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.library.FileLibrary
 import com.malliina.musicpimp.messaging._
 import com.malliina.musicpimp.messaging.adm.AmazonDevices
 import com.malliina.musicpimp.messaging.apns.APNSDevices
@@ -23,14 +23,19 @@ import play.api.mvc.Result
 
 case class RemoveToken(token: String, platform: String)
 
-class Alarms(handler: JsonHandler, tags: PimpHtml, auth: AuthDeps, messages: Messages)
-  extends AlarmEditor(handler.schedules, tags, auth, messages)
+class Alarms(library: FileLibrary,
+             handler: JsonHandler,
+             tags: PimpHtml,
+             auth: AuthDeps,
+             messages: Messages)
+    extends AlarmEditor(handler.schedules, tags, auth, messages)
     with SchedulerStrings {
 
-  val removalForm = Form(mapping(
-    "token" -> nonEmptyText,
-    "platform" -> nonEmptyText
-  )(RemoveToken.apply)(RemoveToken.unapply))
+  val removalForm = Form(
+    mapping(
+      "token" -> nonEmptyText,
+      "platform" -> nonEmptyText
+    )(RemoveToken.apply)(RemoveToken.unapply))
 
   def alarms = pimpActionAsync { request =>
     schedules.clockList(TrackJson.host(request)).map { fcps =>
@@ -58,16 +63,20 @@ class Alarms(handler: JsonHandler, tags: PimpHtml, auth: AuthDeps, messages: Mes
     pimpParsedAction(parsers.form(removalForm)) { request =>
       val spec = request.body
       val token = spec.token
-      TokenPlatform.build(spec.platform).map {
-        case Apns => APNSDevices.removeWhere(_.id.token == token)
-        case Mpns => PushUrls.removeURL(token)
-        case Gcm => GoogleDevices.removeWhere(_.id.token == token)
-        case Adm => AmazonDevices.removeWhere(_.id.token == token)
-      }.map { _ =>
-        Redirect(routes.Alarms.tokens()).flashing(UserFeedback.success("Removed.").flash)
-      }.getOrElse {
-        BadRequest
-      }
+      TokenPlatform
+        .build(spec.platform)
+        .map {
+          case Apns => APNSDevices.removeWhere(_.id.token == token)
+          case Mpns => PushUrls.removeURL(token)
+          case Gcm  => GoogleDevices.removeWhere(_.id.token == token)
+          case Adm  => AmazonDevices.removeWhere(_.id.token == token)
+        }
+        .map { _ =>
+          Redirect(routes.Alarms.tokens()).flashing(UserFeedback.success("Removed.").flash)
+        }
+        .getOrElse {
+          BadRequest
+        }
     }
 
   def handleJson = pimpParsedAction(parsers.json) { jsonRequest =>
@@ -78,12 +87,13 @@ class Alarms(handler: JsonHandler, tags: PimpHtml, auth: AuthDeps, messages: Mes
   }
 
   def tracks = pimpAction { request =>
-    val tracks: Iterable[FullTrack] = Library.tracksRecursive.map(TrackJson.toFull(_, TrackJson.host(request)))
+    val tracks: Iterable[FullTrack] =
+      library.tracksRecursive.map(TrackJson.toFull(_, TrackJson.host(request)))
     Ok(Json.toJson(tracks))
   }
 
   def paths = pimpAction { _ =>
-    val tracks = Library.songPathsRecursive
+    val tracks = library.songPathsRecursive
     implicit val pathFormat = PlaybackJob.pathFormat
     Ok(Json.toJson(tracks))
   }

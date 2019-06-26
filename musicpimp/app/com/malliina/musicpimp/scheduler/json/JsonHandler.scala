@@ -14,13 +14,11 @@ object JsonHandler {
   private val log = Logger(getClass)
 }
 
-class JsonHandler(val schedules: ScheduledPlaybackService) {
-  def musicPlayer = MusicPlayer
-
+class JsonHandler(musicPlayer: MusicPlayer, val schedules: ScheduledPlaybackService) {
   def handle(json: JsValue): JsResult[Unit] =
     json.validate[AlarmCommand]
       .map(handleCommand)
-      .recover({ case (err: JsError) => log.warn(s"JSON error: '$err'.") })
+      .recover { case (err: JsError) => log.warn(s"JSON error: '$err'.") }
 
   def handleCommand(cmd: AlarmCommand): Unit = cmd match {
     case SaveCmd(ap) => schedules.save(ap.toConf)

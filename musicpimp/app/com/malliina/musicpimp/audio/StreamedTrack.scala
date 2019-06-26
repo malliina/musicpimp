@@ -2,6 +2,7 @@ package com.malliina.musicpimp.audio
 
 import java.io.InputStream
 
+import akka.stream.Materializer
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
@@ -15,11 +16,12 @@ case class StreamedTrack(id: TrackID,
                          path: UnixPath,
                          duration: Duration,
                          size: StorageSize,
-                         stream: InputStream) extends PlayableTrack {
-  override def buildPlayer(eom: () => Unit): PimpPlayer = new StreamPlayer(this, eom)
+                         stream: InputStream)(implicit mat: Materializer) extends PlayableTrack {
+  override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
+    new StreamPlayer(this, eom)
 }
 
 object StreamedTrack {
-  def fromTrack(t: TrackMeta, inStream: InputStream): StreamedTrack =
-    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)
+  def fromTrack(t: TrackMeta, inStream: InputStream, mat: Materializer): StreamedTrack =
+    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)(mat)
 }

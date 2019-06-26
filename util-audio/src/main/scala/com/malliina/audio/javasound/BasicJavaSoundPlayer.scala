@@ -4,13 +4,14 @@ import java.io.InputStream
 import java.net.URI
 import java.nio.file.Path
 
+import akka.stream.Materializer
 import com.malliina.audio.javasound.JavaSoundPlayer.DefaultRwBufferSize
 import com.malliina.audio.meta.StreamSource
 import com.malliina.storage.StorageSize
 
 import scala.concurrent.duration.Duration
 
-class BasicJavaSoundPlayer(media: StreamSource, readWriteBufferSize: StorageSize = DefaultRwBufferSize)
+class BasicJavaSoundPlayer(media: StreamSource, readWriteBufferSize: StorageSize = DefaultRwBufferSize)(implicit mat: Materializer)
   extends JavaSoundPlayer(media.toOneShot, readWriteBufferSize)
     with SourceClosing {
 
@@ -23,9 +24,9 @@ class BasicJavaSoundPlayer(media: StreamSource, readWriteBufferSize: StorageSize
 }
 
 object BasicJavaSoundPlayer {
-  def fromFile(file: Path) =
-    new BasicJavaSoundPlayer(StreamSource.fromFile(file))
+  def fromFile(file: Path, mat: Materializer) =
+    new BasicJavaSoundPlayer(StreamSource.fromFile(file))(mat)
 
-  def fromUri(uri: URI, duration: Duration, size: StorageSize) =
-    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))
+  def fromUri(uri: URI, duration: Duration, size: StorageSize, mat: Materializer) =
+    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))(mat)
 }

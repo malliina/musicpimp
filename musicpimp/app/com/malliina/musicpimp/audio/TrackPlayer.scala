@@ -2,10 +2,12 @@ package com.malliina.musicpimp.audio
 
 import java.io.IOException
 
+import akka.actor.ActorRef
+import akka.stream.Materializer
+import akka.stream.scaladsl.Sink
 import com.malliina.musicpimp.audio.TrackPlayer.log
 import com.malliina.musicpimp.models.Volume
 import play.api.Logger
-import rx.lang.scala.Observer
 
 import scala.concurrent.duration.Duration
 import scala.util.Try
@@ -14,14 +16,20 @@ object TrackPlayer {
   private val log = Logger(getClass)
 }
 
-class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
+class TrackPlayer(val player: PimpPlayer, serverMessageTarget: ActorRef)(
+    implicit mat: Materializer) {
   val track = player.track
-  private val stateSubscription = player.events.map(PimpPlayer.playState).subscribe { state =>
-    send(PlayStateChangedMessage(state))
-  }
-  private val timeSubscription = player.timeUpdates.subscribe { time =>
-    send(TimeUpdatedMessage(time.position))
-  }
+  private val stateSubscription = player.eventsKillable
+    .map(PimpPlayer.playState)
+    .to(Sink.foreach { state =>
+      send(PlayStateChangedMessage(state))
+    })
+    .run()
+  private val timeSubscription = player.timeUpdatesKillable
+    .to(Sink.foreach { time =>
+      send(TimeUpdatedMessage(time.position))
+    })
+    .run()
 
   def position = player.position
 
@@ -77,11 +85,11 @@ class TrackPlayer(val player: PimpPlayer, events: Observer[ServerMessage]) {
     }
   }
 
-  def send(json: ServerMessage): Unit = events.onNext(json)
+  def send(json: ServerMessage): Unit = serverMessageTarget ! json
 
   def close(): Unit = {
-    stateSubscription.unsubscribe()
-    timeSubscription.unsubscribe()
+    stateSubscription.shutdown()
+    timeSubscription.shutdown()
     player.close()
     player.media.stream.close()
   }

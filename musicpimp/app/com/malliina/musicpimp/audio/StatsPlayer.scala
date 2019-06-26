@@ -1,5 +1,7 @@
 package com.malliina.musicpimp.audio
 
+import akka.stream.KillSwitches
+import akka.stream.scaladsl.{Keep, Sink}
 import com.malliina.musicpimp.db.DatabaseUserManager
 import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.values.Username
@@ -11,23 +13,22 @@ import scala.concurrent.stm.{Ref, atomic}
   *
   * @param stats stats database
   */
-class StatsPlayer(stats: PlaybackStats) extends AutoCloseable {
+class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable {
+  implicit val mat = player.mat
   val latestUser = Ref[Username](DatabaseUserManager.DefaultUser)
-  val player = MusicPlayer
-  val subscription = player.trackHistory.subscribe(
-    track => {
+  val subscription = player.trackHistory
+    .viaMat(KillSwitches.single)(Keep.right)
+    .to(Sink.foreach { track =>
       val user = latestUser.single.get
       stats.played(track, user)
-    },
-    err => (),
-    () => ()
-  )
+    })
+    .run()
 
   def updateUser(user: Username): Unit =
     atomic(txn => latestUser.update(user)(txn))
 
   def close(): Unit =
-    subscription.unsubscribe()
+    subscription.shutdown()
 }
 
 object StatsPlayer {

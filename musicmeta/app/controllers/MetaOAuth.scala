@@ -15,7 +15,9 @@ object MetaOAuth {
             html: MetaHtml,
             actions: ActionBuilder[Request, AnyContent],
             ctx: ActorExecution) = {
-    val bundle = AuthBundle.oauth((r, u) => AuthedRequest(u, r), routes.MetaOAuthControl.googleStart(), sessionKey)
+    val bundle = AuthBundle.oauth((r, u) => AuthedRequest(u, r),
+                                  routes.MetaOAuthControl.googleStart(),
+                                  sessionKey)
     new MetaOAuth(html, actions, bundle, ctx)
   }
 }
@@ -24,9 +26,9 @@ class MetaOAuth(html: MetaHtml,
                 actions: ActionBuilder[Request, AnyContent],
                 auth: AuthBundle[AuthRequest],
                 ctx: ActorExecution)
-  extends BaseSecurity(actions, auth, ctx.materializer) {
+    extends BaseSecurity(actions, auth, ctx.materializer) {
 
-  val streamer = new LogStreamer(auth.authenticator, ctx)
+  val streamer = LogStreamer(ctx.executionContext)
 
   def index = authAction(_ => Redirect(routes.MetaOAuth.logs()))
 
@@ -34,7 +36,7 @@ class MetaOAuth(html: MetaHtml,
 
   def logs = authAction(_ => Ok(html.logs(None)))
 
-  def openSocket = streamer.sockets.newSocket
+  def openSocket = streamer.openSocket
 
   def eject = logged {
     actions { req =>

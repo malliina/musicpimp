@@ -7,7 +7,7 @@ import com.malliina.file.StorageFile
 import com.malliina.musicpimp.app.PimpConf
 import com.malliina.musicpimp.audio.PimpEnc
 import com.malliina.musicpimp.db.PimpDb.{GetDummy, log}
-import com.malliina.musicpimp.library.Library
+import com.malliina.musicpimp.library.{FileStreams, Library}
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.{ErrorMessage, UnixPath}
@@ -15,14 +15,12 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import javax.sql.DataSource
 import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
-import rx.lang.scala.{Observable, Observer, Subject}
 import slick.jdbc._
 import slick.util.AsyncExecutor
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.higherKinds
-import scala.util.{Failure, Success}
 
 object PimpDb {
   private val log = Logger(getClass)
@@ -54,7 +52,8 @@ object PimpDb {
   def test()(implicit ec: ExecutionContext) = h2("mem:test", ec)
 
   def h2(conn: String, ec: ExecutionContext) = {
-    val databaseUrlSettings = sys.props.get(H2UrlSettings)
+    val databaseUrlSettings = sys.props
+      .get(H2UrlSettings)
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(ss => s";$ss")
@@ -86,7 +85,8 @@ object PimpDb {
   )
 
   def apply(profile: JdbcProfile, ds: DataSource, ec: ExecutionContext): PimpDb =
-    new PimpDb(profile, profile.api.Database.forDataSource(ds, Option(maxConn), executor(maxConn)))(ec)
+    new PimpDb(profile, profile.api.Database.forDataSource(ds, Option(maxConn), executor(maxConn)))(
+      ec)
 
   case class DatabaseConf(url: String, user: String, pass: String, driver: String)
 
@@ -108,8 +108,9 @@ object PimpDb {
   }
 }
 
-class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(implicit val ec: ExecutionContext)
-  extends DatabaseLike(p)
+class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(
+    implicit val ec: ExecutionContext)
+    extends DatabaseLike(p)
     with AutoCloseable {
 
   val schema = PimpSchema(profile)
@@ -129,12 +130,16 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
     tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
-  def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullText(searchTerm: String,
+               limit: Int = 1000,
+               tableName: String = tracksName): Future[Seq[DataTrack]] = {
     if (p == MySQLProfile) fullTextMySQL(searchTerm, limit, tableName)
     else fullTextH2(searchTerm, limit, tableName)
   }
 
-  def fullTextH2(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullTextH2(searchTerm: String,
+                 limit: Int = 1000,
+                 tableName: String = tracksName): Future[Seq[DataTrack]] = {
     log info s"Querying: $searchTerm"
     //    val conn = database.source.createConnection()
     //    try {
@@ -142,15 +147,21 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     //      val columnCount = rs.getMetaData.getColumnCount
     //      log.info(s"Got $columnCount columns")
     //    } finally conn.close()
-    val action = sql"""SELECT T.* FROM FT_SEARCH_DATA($searchTerm,0,0) FT, #$tableName T WHERE FT.TABLE='#$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;""".as[DataTrack]
+    val action =
+      sql"""SELECT T.* FROM FT_SEARCH_DATA($searchTerm,0,0) FT, #$tableName T WHERE FT.TABLE='#$tableName' AND T.ID=FT.KEYS[0] LIMIT $limit;"""
+        .as[DataTrack]
     run(action)
   }
 
-  def fullTextMySQL(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullTextMySQL(searchTerm: String,
+                    limit: Int = 1000,
+                    tableName: String = tracksName): Future[Seq[DataTrack]] = {
     log debug s"Querying: $searchTerm"
     val words = searchTerm.split(" ")
     val commaSeparated = words.mkString(",")
-    val exactAction = sql"""SELECT T.* FROM #$tableName T WHERE MATCH(title, artist, album) AGAINST($commaSeparated) LIMIT #$limit;""".as[DataTrack]
+    val exactAction =
+      sql"""SELECT T.* FROM #$tableName T WHERE MATCH(title, artist, album) AGAINST($commaSeparated) LIMIT #$limit;"""
+        .as[DataTrack]
     run(exactAction)
   }
 
@@ -183,18 +194,26 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
 
   def dropIndex(tableName: String): Future[Unit] = {
     val q = sql"CALL FT_DROP_INDEX('PUBLIC','#${tableName}')".as[Int](GetDummy)
-    database.run(q).map { _ =>
-      log.info(s"Dropped index for '$tableName'.")
-    }.recover {
-      case e: Exception =>
-        log.error(s"Unable to drop index for '$tableName'.", e)
-    }
+    database
+      .run(q)
+      .map { _ =>
+        log.info(s"Dropped index for '$tableName'.")
+      }
+      .recover {
+        case e: Exception =>
+          log.error(s"Unable to drop index for '$tableName'.", e)
+      }
   }
 
   def folder(id: FolderID): Future[(Seq[DataTrack], Seq[DataFolder])] = {
     val tracksQuery = tracks.join(foldersFor(id)).on(_.folder === _.id).map(_._1)
     // '=!=' in slick-lang is the same as '!='
-    val foldersQuery = folders.filter(_.id =!= Library.RootId).join(foldersFor(id)).on(_.parent === _.id).map(_._1).sortBy(_.title)
+    val foldersQuery = folders
+      .filter(_.id =!= Library.RootId)
+      .join(foldersFor(id))
+      .on(_.parent === _.id)
+      .map(_._1)
+      .sortBy(_.title)
 //    val foldersQuery = folders.filter(f => f.parent === id && f.id =!= Library.RootId).sortBy(_.title)
     //    println(tracksQuery.selectStatement + "\n" + foldersQuery.selectStatement)
     val action = for {
@@ -209,18 +228,23 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   }
 
   private def foldersFor(id: FolderID) =
-    folders.filter(folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
+    folders.filter(folder =>
+      folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
 
   def trackFor(id: TrackID): Future[Option[DataTrack]] =
     tracksFor(Seq(id)).map(_.headOption)
 
   // the path predicate is legacy
   def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] = {
-    val action = DBIO.sequence(
-      ids.map { id =>
-        tracks.filter(t => t.id === id || t.path === UnixPath.fromRaw(PimpEnc.decodeId(id))).result
-      }
-    ).map(_.flatten)
+    val action = DBIO
+      .sequence(
+        ids.map { id =>
+          tracks
+            .filter(t => t.id === id || t.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
+            .result
+        }
+      )
+      .map(_.flatten)
     run(action)
   }
 
@@ -260,11 +284,12 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     dropIndex(tracksName)
   }
 
-  def runIndexer(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
+  def runIndexer(library: FileStreams)(
+      onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
     log info "Indexing..."
     // deletes any old rows from previous indexings
     val firstIdsDeletion = tempFoldersTable.delete
-    val musicFolders = Library.folderStream
+    val musicFolders = library.folderStream
     // upserts every folder in the library to the database
     val updateActions = musicFolders.map(folder => folders.insertOrUpdate(folder))
     val folderUpdates = DBIO.sequence(updateActions)
@@ -290,12 +315,13 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     var fileCount = 0L
 
     def upsertAllTracks(): Unit = {
-      Library.dataTrackStream.grouped(100).foreach { chunk =>
+      library.dataTrackStream.grouped(100).foreach { chunk =>
         val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
-        val chunkInsertion = run(DBIO.seq(
-          trackUpdates,
-          tempTracksTable ++= chunk.map(t => TempTrack(t.id))
-        ))
+        val chunkInsertion = run(
+          DBIO.seq(
+            trackUpdates,
+            tempTracksTable ++= chunk.map(t => TempTrack(t.id))
+          ))
         await(chunkInsertion, 1.hour)
         fileCount += chunk.size
         onFileCountUpdate(fileCount)
@@ -322,15 +348,6 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     } yield IndexResult(fileCount, fs, ts)
   }
 
-  def observe[T](f: Observer[T] => Unit): Observable[T] = {
-    val subject = Subject[T]()
-    Future(f(subject)) onComplete {
-      case Success(_) => subject.onCompleted()
-      case Failure(t) => subject.onError(t)
-    }
-    subject
-  }
-
   def runQuery[A, B, C[_]](query: Query[A, B, C]): Future[C[B]] = run(query.result)
 
   def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = database.run(a)
@@ -338,9 +355,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   def await[T](f: Future[T], dur: FiniteDuration = 5.seconds): T =
     Await.result(f, dur)
 
-  def close(): Unit = {
-    database.close()
-  }
+  def close(): Unit = database.close()
 }
 
 case class IndexResult(totalFiles: Long, foldersPurged: Int, tracksPurged: Int)
