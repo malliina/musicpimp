@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.cloud
 
-import akka.actor.{Kill, Scheduler}
+import akka.actor.Scheduler
+import akka.actor.Status.Failure
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.FutureOps
@@ -361,6 +362,6 @@ class CloudSocket(player: MusicPlayer,
 
   def failSocket(e: Exception): Unit = {
     registrationPromise tryFailure e
-    registrationsTarget ! Kill
+    registrationsTarget ! Failure(e)
   }
 }

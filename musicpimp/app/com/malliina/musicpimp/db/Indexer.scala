@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.db
 
 import akka.NotUsed
-import akka.actor.{Cancellable, Kill, Scheduler}
-import akka.stream.Materializer
+import akka.actor.Status.{Failure, Success}
+import akka.actor.{Cancellable, Scheduler}
 import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
+import akka.stream.{CompletionStrategy, Materializer}
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
@@ -103,14 +104,14 @@ class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: 
       .map { result =>
         val end = System.currentTimeMillis()
         val duration = (end - start).millis
-        target ! Kill
+        target ! Success(CompletionStrategy.draining)
         log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
           s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
       }
       .recover {
         case e =>
           log.error(s"Indexing failed.", e)
-          target ! Kill
+          target ! Failure(e)
       }
     source
   }

@@ -4,9 +4,10 @@ import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 import akka.NotUsed
-import akka.actor.{ActorRef, Kill}
+import akka.actor.ActorRef
+import akka.actor.Status.Success
 import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
-import akka.stream.{KillSwitches, Materializer, OverflowStrategy, UniqueKillSwitch}
+import akka.stream._
 import com.malliina.audio.PlaybackEvents.TimeUpdated
 import com.malliina.audio._
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
@@ -170,7 +171,7 @@ class JavaSoundPlayer(val media: OneShotStream,
 
   def close(): Unit = {
     closeLine()
-    stateTarget ! Kill
+    stateTarget ! Success(CompletionStrategy.draining)
   }
 
   def onPlaybackException(e: Exception): Unit = onEndOfMedia()
