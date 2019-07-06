@@ -255,7 +255,7 @@ class JavaSoundPlayer(val media: OneShotStream,
 
   def state = lineData.state
 
-  private def tryMarkStream() {
+  private def tryMarkStream(): Unit = {
     if (stream.markSupported()) {
       val markLimit = math.min(Integer.MAX_VALUE.toLong, 2 * media.size.toBytes).toInt
       stream mark markLimit

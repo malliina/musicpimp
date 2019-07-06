@@ -19,8 +19,8 @@ object Main {
       .fold[Either[ErrorMessage, Path]](Left(noTrack))(validate)
     val maybeStorage = args.tail.headOption.map(parseSize).getOrElse(Right(JavaSoundPlayer.DefaultRwBufferSize))
     val maybeConf = for {
-      path <- maybePath.right
-      size <- maybeStorage.right
+      path <- maybePath
+      size <- maybeStorage
     } yield Conf(path, size)
     maybeConf.fold(println, play)
   }

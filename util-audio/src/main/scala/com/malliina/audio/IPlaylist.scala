@@ -8,7 +8,7 @@ trait IPlaylist[T] {
 
   def index: Int
 
-  def index_=(newIndex: Int)
+  def index_=(newIndex: Int): Unit
 
   /**
     *
@@ -32,13 +32,13 @@ trait IPlaylist[T] {
     *
     * @param song to add
     */
-  def add(song: T)
+  def add(song: T): Unit
 
   /**
     *
     * @param pos index of track to remove
     */
-  def delete(pos: Int)
+  def delete(pos: Int): Unit
 
-  def clear()
+  def clear(): Unit
 }

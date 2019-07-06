@@ -19,7 +19,7 @@ object ItemLimits {
   def fromRequest(request: RequestHeader): Either[String, ItemLimits] = {
     val queryString = request.queryString
     def readInt(key: String, default: Int) =
-      (intBinder.bind(key, queryString) getOrElse Right(default)).right
+      intBinder.bind(key, queryString) getOrElse Right(default)
     for {
       from <- readInt(From, 0)
       until <- readInt(Until, from + DefaultItemCount)

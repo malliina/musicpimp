@@ -12,6 +12,7 @@ import org.apache.commons.io.IOUtils
 import play.api.Logger
 
 import scala.concurrent.Future
+import scala.jdk.CollectionConverters.ListHasAsScala
 
 class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
   private val log = Logger(getClass)
@@ -30,7 +31,7 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
       } finally {
         inStream.close()
       }
-      val body = RequestBody.create(null, bytes)
+      val body = RequestBody.create(bytes, null)
       withParts(url, headers, file.getFileName.toString, body, tag)
     } catch {
       case e: Exception => Future.failed(e)
@@ -40,7 +41,7 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
            headers: Map[String, String],
            file: Path,
            tag: RequestID): Future[OkHttpResponse] = {
-    val filePart = RequestBody.create(null, file.toFile)
+    val filePart = RequestBody.create(file.toFile, null)
     withParts(url, headers, file.getFileName.toString, filePart, tag)
   }
 
@@ -50,7 +51,6 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
     */
   def cancel(tag: RequestID): Boolean = {
     val dispatcher = client.client.dispatcher()
-    import collection.JavaConverters.asScalaBufferConverter
     val cancellable = (dispatcher.queuedCalls().asScala ++ dispatcher.runningCalls().asScala)
       .filter(_.request().tag() == tag)
     cancellable.foreach(_.cancel())

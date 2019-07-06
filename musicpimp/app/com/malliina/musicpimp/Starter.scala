@@ -17,8 +17,8 @@ import com.malliina.util.Logging
 import org.slf4j.LoggerFactory
 import play.api.inject.ApplicationLifecycle
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters.SetHasAsScala
 
 class Starter(as: ActorSystem) {
   private val log = LoggerFactory.getLogger(getClass)
@@ -65,7 +65,9 @@ class Starter(as: ActorSystem) {
     }
   }
 
-  def stopServices(options: InitOptions, schedules: ScheduledPlaybackService, player: MusicPlayer): Unit = {
+  def stopServices(options: InitOptions,
+                   schedules: ScheduledPlaybackService,
+                   player: MusicPlayer): Unit = {
     log.info("Stopping services...")
     player.close()
     schedules.stop()
@@ -76,7 +78,7 @@ class Starter(as: ActorSystem) {
     threads.foreach { thread =>
       println("T: " + thread.getName + ", state: " + thread.getState)
     }
-    println("Threads in total: " + threads.seq.size)
+    println("Threads in total: " + threads.size)
   }
 
 }

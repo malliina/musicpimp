@@ -5,7 +5,7 @@ package com.malliina.audio.javasound
   * the stream.
   */
 trait SourceClosing extends JavaSoundPlayer {
-  abstract override def close() {
+  abstract override def close(): Unit = {
     super.close()
     stream.close()
   }

@@ -3,6 +3,7 @@ package com.malliina.audio
 import javax.sound.sampled.{LineEvent, LineListener}
 
 import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
 
 object AudioImplicits {
   implicit def lineEvent2listener(onEvent: LineEvent => Unit): LineListener = new LineListener {

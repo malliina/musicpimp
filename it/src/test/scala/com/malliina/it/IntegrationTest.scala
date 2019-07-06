@@ -39,6 +39,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   val pimpOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
   val musicpimp = new MusicPimpSuite(pimpOptions)
   val cloudClient = musicpimp.components.clouds
+  val library = musicpimp.components.library
   val pimp = musicpimp.app
   val httpClient = AhcWSClient()
   val adminPath = "/admin/usage"
@@ -92,7 +93,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       assert(id === expectedId)
       val p = Promise[PimpPhone]()
 
-      def onJson(json: JsValue) = {
+      def onJson(json: JsValue): Unit = {
         json.validate[PimpPhones].map(_.phones).filter(_.nonEmpty)
           .foreach { ps => p.trySuccess(ps.head) }
       }
@@ -115,7 +116,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   test("stream events") {
     val p = Promise[String]()
 
-    def onJson(json: JsValue) = {
+    def onJson(json: JsValue): Unit = {
       json.validate[PimpStreams].map(_.streams.map(_.track.title)).filter(_.nonEmpty)
         .foreach { titles => p success titles.head }
     }
@@ -154,6 +155,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   test("get folders") {
+
     withCloudTrack("folder-test") { (_, _, cloudId) =>
       val r = makeGet("/folders?f=json", cloudId)
       assert(r.status === 200)
@@ -185,7 +187,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     val phones = Promise[JsValue]()
     val servers = Promise[JsValue]()
 
-    def handle(json: JsValue) = {
+    def handle(json: JsValue): Unit = {
       json.validate[PimpStreams].foreach(_ => requests.success(json))
       json.validate[PimpPhones].foreach(_ => phones.success(json))
       json.validate[PimpServers].foreach(_ => servers.success(json))
@@ -206,9 +208,9 @@ class IntegrationTest extends PimpcloudServerSuite {
     val trackFolder = trackFile.getParent
     val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
     Files.createTempFile(created, "temp", ".mp3")
-    Library.setFolders(Seq(trackFolder))
+    library.setFolders(Seq(trackFolder))
     val _ = await(musicpimp.components.indexer.index().runWith(Sink.seq))
-    val file = Library.findAbsoluteNew(UnixPath(trackFile.getFileName))
+    val file = library.findAbsoluteNew(UnixPath(trackFile.getFileName))
     assert(file.isDefined)
     withCloud(desiredId) { cloudId =>
       val trackId = Library.trackId(trackFile.getFileName)
@@ -268,7 +270,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     SSLUtils.trustAllSslContext().getSocketFactory,
     Seq(HttpUtil.Authorization -> authValue)
   ) {
-    override def onText(message: String) = onJson(Json.parse(message))
+    override def onText(message: String): Unit = onJson(Json.parse(message))
 
     def sendJson[C: Writes](message: C) = send(Json.stringify(Json.toJson(message)))
   }

@@ -36,7 +36,7 @@ object DataRequest {
     fromRequest(request.user, request)
 
   def fromRequest(user: Username, request: RequestHeader): Either[String, DataRequest] =
-    ItemLimits.fromRequest(request).right map { limits =>
+    ItemLimits.fromRequest(request) map { limits =>
       DataRequest(user, limits.from, limits.until)
     }
 

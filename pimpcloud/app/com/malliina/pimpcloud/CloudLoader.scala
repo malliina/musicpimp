@@ -29,13 +29,15 @@ case class AppConf(pusher: Configuration => Pusher,
 object AppConf {
   def dev = AppConf(
     _ => NoPusher,
-    conf => GoogleOAuthCredentials(conf).toOption.getOrElse(GoogleOAuthCredentials("id", "secret", "scope")),
+    conf =>
+      GoogleOAuthCredentials(conf).toOption
+        .getOrElse(GoogleOAuthCredentials("id", "secret", "scope")),
     (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
   )
 
   def prod = AppConf(
     conf => ProdPusher(conf),
-    conf => GoogleOAuthCredentials(conf).right.get,
+    conf => GoogleOAuthCredentials(conf).toOption.get,
     (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
   )
 
@@ -44,7 +46,8 @@ object AppConf {
     else prod
 }
 
-class CloudLoader extends DefaultApp(ctx => new CloudComponents(ctx, AppConf.forMode(ctx.environment.mode)))
+class CloudLoader
+    extends DefaultApp(ctx => new CloudComponents(ctx, AppConf.forMode(ctx.environment.mode)))
 
 object NoPusher extends Pusher {
   override def push(pushTask: PushTask): Future[PushResult] =
@@ -56,7 +59,7 @@ object CloudComponents {
 }
 
 class CloudComponents(context: Context, conf: AppConf)
-  extends BuiltInComponentsFromContext(context)
+    extends BuiltInComponentsFromContext(context)
     with HttpFiltersComponents
     with AssetsComponents {
 
@@ -69,14 +72,17 @@ class CloudComponents(context: Context, conf: AppConf)
   )
   val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp = s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
-  override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
+  val csp =
+    s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
+  override lazy val securityHeadersConfig = SecurityHeadersConfig(
+    contentSecurityPolicy = Option(csp))
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
 
   val defaultHttpConf = HttpConfiguration.fromConfiguration(configuration, environment)
   // Sets sameSite = None, otherwise the Google auth redirect will wipe out the session state
   override lazy val httpConfiguration =
-    defaultHttpConf.copy(session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None))
+    defaultHttpConf.copy(
+      session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None))
 
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
@@ -98,10 +104,12 @@ class CloudComponents(context: Context, conf: AppConf)
   lazy val l = new Logs(tags, pimpAuth, ctx, defaultActionBuilder)
   lazy val w = new Web(controllerComponents, tags, cloudAuths)
   lazy val as = new Assets(httpErrorHandler, assetsMetadata)
-  lazy val router = new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
+  lazy val router =
+    new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
 
-  applicationLifecycle.addStopHook(() => Future.successful {
-    adminAuth.validator.http.close()
+  applicationLifecycle.addStopHook(() =>
+    Future.successful {
+      adminAuth.validator.http.close()
   })
 }
