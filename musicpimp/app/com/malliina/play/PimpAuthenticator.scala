@@ -22,10 +22,10 @@ class PimpAuthenticator(val userManager: UserManager[Username, Password],
 }
 
 object PimpAuthenticator {
-  def cookie(rememberMe: RememberMe)(implicit ec: ExecutionContext) =
+  def cookie(rememberMe: RememberMe)(implicit ec: ExecutionContext): Authenticator[AuthedRequest] =
     Authenticator[AuthedRequest] { rh =>
       rememberMe.authenticate(rh).map { either =>
-        either.right.map { token =>
+        either.map { token =>
           AuthedRequest(token.user, rh, Option(rememberMe.cookify(token)))
         }
       }

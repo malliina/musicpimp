@@ -62,7 +62,7 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
   protected def downloadFile(url: FullUrl, file: Path): Future[StorageSize] = {
     httpClient.download(url, file, Map(AUTHORIZATION -> authValue)).flatMap { either =>
       either.fold(
-        err => Future.failed(new ResponseException(err.response, url)),
+        err => Future.failed(new ResponseException(err)),
         s => Future.successful(s)
       )
     }
@@ -116,11 +116,11 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
     FullUrl.https("api.discogs.com", s"/database/search?artist=$artistEnc&release_title=$albumEnc")
   }
 
-  private def validate(wsResponse: HttpResponse, url: FullUrl): Option[Exception] = {
+  private def validate(wsResponse: OkHttpResponse, url: FullUrl): Option[Exception] = {
     val code = wsResponse.code
     code match {
       case c if (c >= 200 && c < 300) || c == 404 => None
-      case _ => Option(new ResponseException(wsResponse, url))
+      case _ => Option(new ResponseException(StatusError(wsResponse, url)))
     }
   }
 

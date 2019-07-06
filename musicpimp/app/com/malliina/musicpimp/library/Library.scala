@@ -18,12 +18,12 @@ import scala.collection.immutable
 import scala.concurrent.stm.{Ref, atomic}
 
 trait FileStreams {
-  def dataTrackStream: Stream[DataTrack]
-  def folderStream: Stream[DataFolder]
+  def dataTrackStream: LazyList[DataTrack]
+  def folderStream: LazyList[DataFolder]
 }
 
 trait FileLibrary extends FileStreams {
-  def trackFiles: Stream[Path]
+  def trackFiles: LazyList[Path]
   def reloadFolders(): Unit
   def findAbsoluteNew(trackPath: UnixPath): Option[Path]
   def suggestAbsolute(relative: Path): Option[Path]
@@ -54,7 +54,7 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
 
   private def roots = rootFolders.single.get
 
-  private def rootStream = roots.toStream
+  private def rootStream: LazyList[Path] = LazyList.from(roots)
 
   def reloadFolders(): Unit = setFolders(Settings.read)
 
@@ -87,9 +87,9 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
   def tracksRecursive: Iterable[LocalTrack] =
     (songPathsRecursive map findMeta).flatten
 
-  def trackFiles: Stream[Path] = recursivePaths(audioFiles)
+  def trackFiles: LazyList[Path] = recursivePaths(audioFiles)
 
-  private def tracksStream: Stream[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
+  private def tracksStream: LazyList[LocalTrack] = (tracksPathInfo.distinct map parseMeta).flatten
 
   private def tracksPathInfo =
     rootStream.flatMap(root => audioFiles(root).map(f => PathInfo(root.relativize(f), root)))
@@ -97,13 +97,13 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
   private def audioFiles(root: Path) =
     FileUtils.readableFiles(root).filter(_.getFileName.toString endsWith "mp3")
 
-  def folderStream: Stream[DataFolder] =
+  def folderStream: LazyList[DataFolder] =
     recursivePaths(FileUtils.folders).distinct.map(DataFolder.fromPath)
 
-  private def recursivePaths(rootMap: Path => Stream[Path]) =
+  private def recursivePaths(rootMap: Path => LazyList[Path]) =
     rootStream.flatMap(root => rootMap(root).map(root.relativize))
 
-  def dataTrackStream: Stream[DataTrack] = tracksStream map toDataTrack
+  def dataTrackStream: LazyList[DataTrack] = tracksStream map toDataTrack
 
   private def toDataTrack(track: LocalTrack) = {
     val id = track.id

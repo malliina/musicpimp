@@ -7,38 +7,38 @@ import play.api.libs.json._
 
 trait PlaylistCommand
 
-case object GetPlaylists extends PlaylistCommand {
+case object GetPlaylistsCommand extends PlaylistCommand {
   val Key = "playlists"
-  implicit val json = singleCmd(Key, GetPlaylists)
+  implicit val json = singleCmd(Key, GetPlaylistsCommand)
 }
 
-case class GetPlaylist(id: PlaylistID) extends PlaylistCommand
+case class GetPlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
-object GetPlaylist {
+object GetPlaylistCommand {
   val Key = "playlist"
-  implicit val json = cmd(Key, Json.format[GetPlaylist])
+  implicit val json = cmd(Key, Json.format[GetPlaylistCommand])
 }
 
-case class SavePlaylist(playlist: PlaylistSubmission) extends PlaylistCommand
+case class SavePlaylistCommand(playlist: PlaylistSubmission) extends PlaylistCommand
 
-object SavePlaylist {
+object SavePlaylistCommand {
   val Key = "playlist_save"
-  implicit val json = cmd(Key, Json.format[SavePlaylist])
+  implicit val json = cmd(Key, Json.format[SavePlaylistCommand])
 }
 
-case class DeletePlaylist(id: PlaylistID) extends PlaylistCommand
+case class DeletePlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
-object DeletePlaylist {
+object DeletePlaylistCommand {
   val Key = "playlist_delete"
-  implicit val json = cmd(Key, Json.format[DeletePlaylist])
+  implicit val json = cmd(Key, Json.format[DeletePlaylistCommand])
 }
 
 object PlaylistCommand {
   implicit val reader: Reads[PlaylistCommand] = Reads { json =>
-    GetPlaylists.json.reads(json)
-      .orElse(GetPlaylist.json.reads(json))
-      .orElse(SavePlaylist.json.reads(json))
-      .orElse(DeletePlaylist.json.reads(json))
+    GetPlaylistsCommand.json.reads(json)
+      .orElse(GetPlaylistCommand.json.reads(json))
+      .orElse(SavePlaylistCommand.json.reads(json))
+      .orElse(DeletePlaylistCommand.json.reads(json))
   }
 }
 

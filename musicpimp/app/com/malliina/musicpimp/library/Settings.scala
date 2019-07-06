@@ -26,7 +26,7 @@ trait Settings {
     }
   }
 
-  def save(folders: Seq[Path]) {
+  def save(folders: Seq[Path]): Unit = {
     val pathStrings = folders map (_.toAbsolutePath.toString)
     val json = Json toJson Map(FOLDERS -> pathStrings)
     val jsonString = Json stringify json

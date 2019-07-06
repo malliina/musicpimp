@@ -11,7 +11,7 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogStreamsLogbackAppender">
+    <appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogstreamsLogbackAkkaAppender">
         <endpoint>${LOGSTREAMS_HOST:-logs.malliina.com}</endpoint>
         <secure>true</secure>
         <username>${LOGSTREAMS_USER:-pimpbeam}</username>

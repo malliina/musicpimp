@@ -35,7 +35,7 @@ class HttpsTests extends FunSuite {
 //    assert(responseContent contains "version")
 //  }
 
-  private def pingWithApacheHttpClient() {
+  private def pingWithApacheHttpClient(): Unit = {
     val client = HttpClientBuilder.create().build()
     val req = new HttpGet("https://beam.musicpimp.org/ping")
     val response = client.execute(req)

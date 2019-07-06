@@ -37,19 +37,20 @@ val pimpcloudVersion = "1.25.0"
 val sharedVersion = "1.10.0"
 val crossVersion = "1.10.0"
 val utilAudioVersion = "2.6.0"
+val primitivesVersion = "1.11.0"
+val playJsonVersion = "2.7.4"
+val scalaTagsVersion = "0.7.0"
+val utilPlayVersion = "5.2.3"
+val httpVersion = "4.5.9"
+
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayVersion = "5.1.1"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.5.0"
-val primitivesVersion = "1.9.0"
-val playJsonVersion = "2.7.1"
-val scalaTagsVersion = "0.6.8"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.6.0"
 
 val httpGroup = "org.apache.httpcomponents"
-val httpVersion = "4.5.6"
 
-scalaVersion in ThisBuild := "2.12.8"
+scalaVersion in ThisBuild := "2.13.0"
 
 lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
@@ -87,7 +88,7 @@ lazy val cross = portableProject(JSPlatform, JVMPlatform)
   .crossType(PortableType.Full)
   .in(file("cross"))
   .settings(crossSettings: _*)
-  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.2")
+  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.5")
 lazy val crossJvm = cross.jvm
 lazy val crossJs = cross.js
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
@@ -103,7 +104,6 @@ lazy val utilAudio = Project("util-audio", file("util-audio"))
 
 lazy val metaCommonSettings = Seq(
   version := "1.12.0",
-  scalaVersion := "2.12.8",
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
@@ -154,7 +154,7 @@ lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmet
   .settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-      "be.doeraene" %%% "scalajs-jquery" % "0.9.2",
+      "be.doeraene" %%% "scalajs-jquery" % "0.9.5",
       "com.typesafe.play" %%% "play-json" % playJsonVersion,
       "com.malliina" %%% "primitives" % primitivesVersion
     ),
@@ -208,13 +208,13 @@ lazy val pimpPlaySettings =
         malliinaGroup %% "util-base" % primitivesVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.4.196",
+        "com.h2database" % "h2" % "1.4.199",
         "mysql" % "mysql-connector-java" % "5.1.47",
 //        "mysql" % "mysql-connector-java" % "8.0.15",
-        "com.neovisionaries" % "nv-websocket-client" % "2.8",
+        "com.neovisionaries" % "nv-websocket-client" % "2.9",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        "org.scala-stm" %% "scala-stm" % "0.9"
+        "org.scala-stm" %% "scala-stm" % "0.9.1"
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
@@ -229,9 +229,9 @@ lazy val pimpPlaySettings =
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
       libs := libs.value.filter(lib =>
-        !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")),
+        !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
-        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.8.jar")
+        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")
       },
       useTerminateProcess := true,
       msiMappings in Windows := (msiMappings in Windows).value.map {
@@ -370,7 +370,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
-  libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.1.7"
+  libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.1.8"
 )
 
 lazy val artifactSettings = Seq(
@@ -411,11 +411,10 @@ lazy val utilAudioSettings = Seq(
 
 lazy val pimpbeamSettings = serverSettings ++ Seq(
   version := "2.1.0",
-  scalaVersion := "2.12.8",
   libraryDependencies ++= Seq(
     utilPlayDep,
     logstreamsDep,
-    "net.glxn" % "qrgen" % "1.3",
+    "net.glxn" % "qrgen" % "1.4",
     PlayImport.ws
   ),
   resolvers += Resolver.bintrayRepo("malliina", "maven"),
@@ -458,7 +457,7 @@ def libSettings = Seq(
 
 def defaultDeps = Seq(
   "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.1" % Test,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
   PlayImport.specs2 % Test
 )
 
@@ -482,15 +481,14 @@ lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= Seq(
-    "com.typesafe.slick" %% "slick" % "3.2.3",
-    "com.typesafe.slick" %% "slick-hikaricp" % "3.2.3",
-    malliinaGroup %% "mobile-push" % "1.18.3",
+    "com.typesafe.slick" %% "slick" % "3.3.2",
+    "com.typesafe.slick" %% "slick-hikaricp" % "3.3.2",
+    malliinaGroup %% "mobile-push" % "1.18.4",
     utilPlayDep
   )
 )
 
 lazy val baseSettings = Seq(
-  scalaVersion := "2.12.8",
   organization := "org.musicpimp"
 )
 
@@ -499,9 +497,9 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.7" % Test),
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.8" % Test),
       testFrameworks += new TestFramework("utest.runner.Framework"),
-      version in webpack := "4.27.1",
+      version in webpack := "4.35.2",
       emitSourceMaps := false,
       scalaJSUseMainModuleInitializer := true,
       webpackBundlingMode := BundlingMode.LibraryOnly(),
@@ -513,11 +511,11 @@ def scalajsProject(name: String, path: File) =
       npmDevDependencies in Compile ++= Seq(
         "autoprefixer" -> "9.4.3",
         "cssnano" -> "4.1.8",
-        "css-loader" -> "2.1.0",
-        "file-loader" -> "3.0.1",
+        "css-loader" -> "3.0.0",
+        "file-loader" -> "4.0.0",
         "less" -> "3.9.0",
         "less-loader" -> "4.1.0",
-        "mini-css-extract-plugin" -> "0.5.0",
+        "mini-css-extract-plugin" -> "0.7.0",
         "postcss-import" -> "12.0.1",
         "postcss-loader" -> "3.0.0",
         "postcss-preset-env" -> "6.5.0",

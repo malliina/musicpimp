@@ -21,21 +21,24 @@ import scala.util.Try
 /** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
   * Apache HttpClient.
   */
-class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b) extends AutoCloseable {
+class MultipartRequest(uri: String,
+                       buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b)
+    extends AutoCloseable {
   private val client = buildInstructions(HttpClientBuilder.create()).build()
   val request = new HttpPost(uri)
   request.addHeader(ACCEPT, JSON)
-  private val reqContent = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+  private val reqContent =
+    MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
   private val isCancelled = new AtomicBoolean(false)
 
   @volatile private var streams: List[InputStream] = Nil
 
-  def setAuth(username: String, password: String) {
+  def setAuth(username: String, password: String): Unit = {
     val creds = new UsernamePasswordCredentials(username, password)
     request addHeader new BasicScheme().authenticate(creds, request, new BasicHttpContext())
   }
 
-  def addHeaders(kvs: (String, String)*) = kvs foreach (kv => request.addHeader(kv._1, kv._2))
+  def addHeaders(kvs: (String, String)*): Unit = kvs foreach (kv => request.addHeader(kv._1, kv._2))
 
   def addFile(file: Path): Unit = {
     def fileName = file.getFileName.toString
@@ -77,7 +80,7 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
     */
   def executeToString() = Option(execute().getEntity) map EntityUtils.toString
 
-  override def close() {
+  override def close(): Unit = {
     val isFirstClose = isCancelled.compareAndSet(false, true)
     if (isFirstClose) {
       Try(request.abort())
@@ -89,4 +92,6 @@ class MultipartRequest(uri: String, buildInstructions: HttpClientBuilder => Http
 }
 
 class TrustAllMultipartRequest(uri: String)
-  extends MultipartRequest(uri, _.setSSLSocketFactory(ApacheHttpHelper.allowAllCertificatesSocketFactory()))
+    extends MultipartRequest(
+      uri,
+      _.setSSLSocketFactory(ApacheHttpHelper.allowAllCertificatesSocketFactory()))

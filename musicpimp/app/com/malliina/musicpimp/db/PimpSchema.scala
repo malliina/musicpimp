@@ -50,9 +50,7 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
     def user = column[Username]("USER")
-
     def series = column[Long]("SERIES")
-
     def token = column[Long]("TOKEN")
 
     def * = (user, series, token) <> ((TokensTable.fromRaw _).tupled, TokensTable.write)
@@ -68,9 +66,7 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class PlaylistTable(tag: Tag) extends Table[PlaylistRow](tag, "PLAYLISTS") {
     def id = column[PlaylistID]("ID", O.PrimaryKey, O.AutoInc)
-
     def name = column[String]("NAME")
-
     def user = column[Username]("USER", O.Length(100))
 
     def userConstraint = foreignKey("USER_FK", user, usersTable)(
@@ -83,9 +79,7 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class PlaylistTracks(tag: Tag) extends Table[PlaylistTrack](tag, "PLAYLIST_TRACKS") {
     def playlist = column[PlaylistID]("PLAYLIST")
-
     def track = column[TrackID]("TRACK", O.Length(191))
-
     def idx = column[Int]("INDEX")
 
     def pk = primaryKey("PT_PK", (playlist, idx))
@@ -105,9 +99,7 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class Plays(tag: Tag) extends Table[PlaybackRecord](tag, "PLAYS") {
     def track = column[TrackID]("TRACK", O.Length(191))
-
     def when = column[Instant]("WHEN")
-
     def who = column[Username]("WHO", O.Length(100))
 
     def trackConstraint = foreignKey("TRACK_FK", track, tracks)(
@@ -128,17 +120,11 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class Tracks(tag: Tag) extends Table[DataTrack](tag, "TRACKS") {
     def id = column[TrackID]("ID", O.PrimaryKey, O.Length(191))
-
     def title = column[String]("TITLE")
-
     def artist = column[String]("ARTIST")
-
     def album = column[String]("ALBUM")
-
     def duration = column[Duration]("DURATION")
-
     def size = column[StorageSize]("SIZE")
-
     def path = column[UnixPath]("PATH", O.Default(UnixPath.Empty))
 
     def folder = column[FolderID]("FOLDER", O.Length(191))
@@ -155,9 +141,7 @@ class PimpSchema(val profile: JdbcProfile) {
 
   class Folders(tag: Tag) extends Table[DataFolder](tag, "FOLDERS") {
     def id = column[FolderID]("ID", O.PrimaryKey, O.Length(191))
-
     def title = column[String]("TITLE")
-
     def path = column[UnixPath]("PATH")
 
     def parent = column[FolderID]("PARENT", O.Length(191))

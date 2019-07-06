@@ -124,7 +124,7 @@ class BeamMediator(mat: Materializer) extends Actor {
     case ToPlayer(message, to) =>
       players.filter(_.user == to).foreach(_.out ! message)
     case ToPhone(message, to) =>
-      phones.filterKeys(u => u == to).foreach { case (_, ref) => ref ! message }
+      phones.view.filterKeys(u => u == to).toMap.foreach { case (_, ref) => ref ! message }
     case PlayerJoined(user, ref) =>
       context watch ref
       players = players :+ new PlayerClient(user, ref, mat)

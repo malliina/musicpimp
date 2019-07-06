@@ -152,7 +152,7 @@ class Phones(comps: ControllerComponents,
 
   def metaAction(cmd: String) =
     proxiedJsonAction(cmd) { req =>
-      ItemLimits.fromRequest(req).right.flatMap { limits =>
+      ItemLimits.fromRequest(req).flatMap { limits =>
         Json.toJson(limits).asOpt[JsObject].toRight("Not a JSON object.")
       }
     }
@@ -227,7 +227,7 @@ class Phones(comps: ControllerComponents,
   private def proxiedParsedAction[A](parser: BodyParser[A])(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
     phoneAuth.authenticatedLogged((socket: PhoneConnection) => Action.async(parser)(req => f(req, socket)))
 
-  private def onGatewayParseErrorResult(err: scala.Seq[(JsPath, Seq[JsonValidationError])]) = {
+  private def onGatewayParseErrorResult(err: collection.Seq[(JsPath, collection.Seq[JsonValidationError])]) = {
     log.error(s"Parse error. $err")
     badGateway("A dependent server returned unexpected data.")
   }

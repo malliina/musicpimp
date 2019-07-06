@@ -9,7 +9,7 @@
             <!--<pattern>%coloredLevel %logger{15} - %message%n%xException{5}</pattern>-->
         </encoder>
     </appender>
-    <!--<appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogStreamsLogbackAppender">-->
+    <!--<appender name="LOGSTREAMS" class="com.malliina.logstreams.client.LogstreamsLogbackAkkaAppender">-->
         <!--<endpoint>${LOGSTREAMS_HOST:-logs.malliina.com}</endpoint>-->
         <!--<secure>true</secure>-->
         <!--<username>${LOGSTREAMS_USER:-cloud}</username>-->

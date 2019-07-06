@@ -71,7 +71,7 @@ class Starter(as: ActorSystem) {
     schedules.stop()
   }
 
-  def printThreads() {
+  def printThreads(): Unit = {
     val threads = Thread.getAllStackTraces.keySet().asScala
     threads.foreach { thread =>
       println("T: " + thread.getName + ", state: " + thread.getState)

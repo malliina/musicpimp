@@ -17,8 +17,10 @@ object FileUtil {
   protected def appHome: Option[Path] = findPath(sys.props.get("musicpimp.home"))
 
   protected def localDirWindows: Option[Path] =
-    findPath(sys.env.get("ALLUSERSPROFILE")
-      .orElse(sys.env.get("LOCALAPPDATA")))
+    findPath(
+      sys.env
+        .get("ALLUSERSPROFILE")
+        .orElse(sys.env.get("LOCALAPPDATA")))
       .map(_ / "MusicPimp")
       .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
 
@@ -37,15 +39,22 @@ object FileUtil {
   // TODO DRY, this is in util
   def props(file: Path): Map[String, String] = {
     if (Files.exists(file)) {
-      val kvs = scala.io.Source.fromFile(file.toFile).getLines().flatMap(line => {
-        val kv = line.split("=", 2)
-        if (kv.size >= 2) {
-          Some(kv(0) -> kv(1))
-        } else {
-          None
-        }
-      })
-      Map(kvs.toList: _*)
+      val src = scala.io.Source.fromFile(file.toFile)
+      try {
+        val kvs = src
+          .getLines()
+          .flatMap(line => {
+            val kv = line.split("=", 2)
+            if (kv.size >= 2) {
+              Some(kv(0) -> kv(1))
+            } else {
+              None
+            }
+          })
+        Map(kvs.toList: _*)
+      } finally {
+        src.close()
+      }
     } else {
       Map.empty[String, String]
     }
@@ -60,7 +69,7 @@ object FileUtil {
 
   def trySetPermissions(file: Path, perms: java.util.Set[PosixFilePermission]) =
     Utils.opt[Unit, UnsupportedOperationException] {
-      Files setPosixFilePermissions(file, perms)
+      Files setPosixFilePermissions (file, perms)
     }
 
   def trySetOwnerOnlyPermissions(file: Path) = trySetPermissions(file, ownerOnlyPermissions)

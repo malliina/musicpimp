@@ -48,7 +48,7 @@ object FileVisitors {
       */
     def files = fileBuffer
 
-    def add(path: Path) {
+    def add(path: Path): Unit = {
       fileBuffer = path :: fileBuffer
     }
   }
@@ -95,9 +95,7 @@ object FileVisitors {
   /** Visitor for directory traversals. Visited files and directories are available in the <code>paths</code> member.
     */
   class FileAndDirCollector extends FileCollectingVisitor {
-
     override def visitFile(file: Path, attrs: BasicFileAttributes) = handlePath(file)
-
     override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes) = handlePath(dir)
 
     private def handlePath(path: Path) = {
@@ -105,12 +103,6 @@ object FileVisitors {
       FileVisitResult.CONTINUE
     }
   }
-
-  //	class RegexVisitor(pattern: Pattern) extends FilteringFileVisitor with Log {
-  //		def this(regex: String) = this(Pattern compile regex)
-  //
-  //		override def qualifies(file: Path, attrs: BasicFileAttributes) = RegexUtils.matches(pattern, file.getFileName.toString)
-  //	}
 
   trait TimestampComparison {
 

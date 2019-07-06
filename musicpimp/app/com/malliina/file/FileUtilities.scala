@@ -17,7 +17,7 @@ object FileUtilities {
   val tempDir = Paths get sys.props("java.io.tmpdir")
   var basePath = Paths get sys.props.getOrElse("app.home", userDirString)
 
-  def init(appName: String) {
+  def init(appName: String): Unit = {
     basePath = Paths get sys.props.get(appName + ".home").getOrElse(userDirString)
   }
 
@@ -81,7 +81,7 @@ object FileUtilities {
   def fileToString(file: Path): String =
     readerFrom(file)(_.mkString(lineSep))
 
-  def stringToFile(str: String, file: Path) =
+  def stringToFile(str: String, file: Path): Unit =
     writerTo(file)(_.println(str))
 
   /**
@@ -137,7 +137,7 @@ object FileUtilities {
     * @param path the path to the file to create
     * @see [[java.nio.file.Files]], [[java.nio.file.Paths]]
     */
-  def createFile(path: String) {
+  def createFile(path: String): Unit = {
     val file = pathTo(path)
     if (!Files.exists(file)) {
       val maybeParent = file.getParent

@@ -128,7 +128,7 @@ class Home(beamConf: BeamConf,
     }
   }
 
-  def defaultCover = Redirect(routes.Assets.versioned("img/guitar.png"))
+  def defaultCover = Redirect(controllers.routes.Assets.versioned("img/guitar.png"))
 
   private def coordinate(user: Username): JsObject = obj(
     BEAM_HOST -> beamConf.host,

@@ -70,5 +70,5 @@ class DatabaseUserManager(val db: PimpDb) extends UserManager[Username, Password
       .map(_.passHash)
       .update(hash(user, newPass))).map(_ => ())
 
-  private def hash(user: Username, pass: Password) = Auth.hash(user.name, pass.pass)
+  private def hash(user: Username, pass: Password) = Auth.hash(user, pass)
 }

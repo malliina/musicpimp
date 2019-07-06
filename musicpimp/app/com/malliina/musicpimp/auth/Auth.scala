@@ -8,9 +8,9 @@ import scala.concurrent.Future
 
 object Auth {
   def hash(user: Username, password: Password): String =
-    hash(user.name, password.pass)
+    hashStrings(user.name, password.pass)
 
-  def hash(username: String, password: String): String =
+  private def hashStrings(username: String, password: String): String =
     DigestUtils.md5Hex(username + ":" + password)
 }
 

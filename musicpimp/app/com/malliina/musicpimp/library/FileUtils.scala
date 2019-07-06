@@ -19,17 +19,17 @@ object FileUtils {
     Folder(visitor.dirs, visitor.files)
   }
 
-  /** '#::' is cons for [[Stream]]s
+  /** '#::' is cons for [[LazyList]]s
     *
     * @see http://stackoverflow.com/a/7264833/1863674
     *
     */
-  def fileTree(f: File): Stream[File] =
-    f #:: (if (f.isDirectory) f.listFiles().toStream.flatMap(fileTree) else Stream.empty)
+  def fileTree(f: File): LazyList[File] =
+    f #:: (if (f.isDirectory) LazyList.from(f.listFiles()).flatMap(fileTree) else LazyList.empty)
 
-  def pathTree(path: Path): Stream[Path] = fileTree(path.toFile) map (_.toPath)
+  def pathTree(path: Path): LazyList[Path] = fileTree(path.toFile) map (_.toPath)
 
-  def folders(path: Path): Stream[Path] = pathTree(path).filter(Files.isDirectory(_))
+  def folders(path: Path): LazyList[Path] = pathTree(path).filter(Files.isDirectory(_))
 
   def readableFiles(path: Path) =
     pathTree(path).filter(p => !Files.isDirectory(p) && Files.isReadable(p))

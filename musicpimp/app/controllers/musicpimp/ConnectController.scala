@@ -13,12 +13,11 @@ import play.api.libs.json.Json
 import play.api.libs.json.Json._
 import play.api.mvc.{AnyContent, RequestHeader}
 
-import scala.collection.JavaConverters.enumerationAsScalaIteratorConverter
+import scala.jdk.CollectionConverters.EnumerationHasAsScala
 
 /** Unused.
   */
-class ConnectController(auth: AuthDeps)
-  extends HtmlController(auth) {
+class ConnectController(auth: AuthDeps) extends HtmlController(auth) {
 
   def connect = navigate(_ => "todo")
 
@@ -45,7 +44,9 @@ class ConnectController(auth: AuthDeps)
 object ConnectController {
   private val log = Logger(getClass)
 
-  implicit object protoJson extends JsonFormats.SimpleFormat[Protocols.Protocol](name => Protocols.withName(name.toLowerCase))
+  implicit object protoJson
+      extends JsonFormats.SimpleFormat[Protocols.Protocol](name =>
+        Protocols.withName(name.toLowerCase))
 
   object Protocols extends Enumeration {
     type Protocol = Value
@@ -54,9 +55,7 @@ object ConnectController {
 
 }
 
-case class Coordinate(protocol: Protocols.Protocol,
-                      hosts: Seq[String],
-                      username: Username)
+case class Coordinate(protocol: Protocols.Protocol, hosts: Seq[String], username: Username)
 
 object Coordinate {
   implicit val json = Json.format[Coordinate]

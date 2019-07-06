@@ -158,7 +158,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     pos.transform(_ => NO_POSITION)
   }
 
-  def clear() {
+  def clear(): Unit = {
     clearButDontTell()
     onPlaylistModified(songList)
     onPlaylistIndexChanged(index)
@@ -171,7 +171,7 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     log.info(s"Playlist set to: $song")
   }
 
-  protected def onPlaylistIndexChanged(idx: PlaylistIndex) {}
+  protected def onPlaylistIndexChanged(idx: PlaylistIndex): Unit = {}
 
-  protected def onPlaylistModified(songs: Seq[T]) {}
+  protected def onPlaylistModified(songs: Seq[T]): Unit = {}
 }

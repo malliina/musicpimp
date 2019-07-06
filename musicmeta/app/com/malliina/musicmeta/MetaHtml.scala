@@ -132,4 +132,6 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
     if (feedback.isError) alertDanger(message)
     else alertSuccess(message)
   }
+
+  def iconic(iconicName: String) = spanClass(s"oi oi-$iconicName", title := iconicName, aria.hidden := True)
 }

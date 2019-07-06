@@ -1,6 +1,8 @@
 package com.malliina.musicpimp.db
 
 import java.nio.file.{Files, Path, Paths}
+import java.sql.{PreparedStatement, ResultSet, Timestamp}
+import java.time.Instant
 
 import com.malliina.concurrent.ExecutionContexts
 import com.malliina.file.StorageFile
@@ -15,12 +17,47 @@ import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import javax.sql.DataSource
 import org.h2.jdbcx.JdbcConnectionPool
 import play.api.Logger
+import slick.ast.FieldSymbol
 import slick.jdbc._
 import slick.util.AsyncExecutor
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.higherKinds
+
+object InstantMySQLProfile extends JdbcProfile with MySQLProfile {
+  override val columnTypes = new JdbcTypes
+
+  class JdbcTypes extends super.JdbcTypes {
+    override val instantType = new InstantJdbcType {
+      override def sqlTypeName(sym: Option[FieldSymbol]) = "TIMESTAMP(3)"
+      override def setValue(v: Instant, p: PreparedStatement, idx: Int): Unit =
+        p.setTimestamp(idx, Timestamp.from(v))
+      override def getValue(r: ResultSet, idx: Int): Instant =
+        Option(r.getTimestamp(idx)).map(_.toInstant).orNull
+      override def updateValue(v: Instant, r: ResultSet, idx: Int): Unit =
+        r.updateTimestamp(idx, Timestamp.from(v))
+      override def valueToSQLLiteral(value: Instant): String = s"'${Timestamp.from(value)}'"
+    }
+  }
+}
+
+object InstantH2Profile extends JdbcProfile with H2Profile {
+  override val columnTypes = new JdbcTypes
+
+  class JdbcTypes extends super.JdbcTypes {
+    override val instantType = new InstantJdbcType {
+      override def sqlTypeName(sym: Option[FieldSymbol]) = "TIMESTAMP(3)"
+      override def setValue(v: Instant, p: PreparedStatement, idx: Int): Unit =
+        p.setTimestamp(idx, Timestamp.from(v))
+      override def getValue(r: ResultSet, idx: Int): Instant =
+        Option(r.getTimestamp(idx)).map(_.toInstant).orNull
+      override def updateValue(v: Instant, r: ResultSet, idx: Int): Unit =
+        r.updateTimestamp(idx, Timestamp.from(v))
+      override def valueToSQLLiteral(value: Instant): String = s"'${Timestamp.from(value)}'"
+    }
+  }
+}
 
 object PimpDb {
   private val log = Logger(getClass)
@@ -61,7 +98,7 @@ object PimpDb {
     val url = s"jdbc:h2:$conn;DB_CLOSE_DELAY=-1$databaseUrlSettings"
     log info s"Connecting to: $url"
     val pool = JdbcConnectionPool.create(url, "", "")
-    apply(H2Profile, pool, ec)
+    apply(InstantH2Profile, pool, ec)
   }
 
   def mysql(conf: DatabaseConf): PimpDb = mysql(conf, ExecutionContexts.cached)
@@ -73,7 +110,7 @@ object PimpDb {
     hikariConfig.setPassword(conf.pass)
     hikariConfig.setDriverClassName(conf.driver)
     log.info(s"Connecting to '${conf.url}'...")
-    apply(MySQLProfile, new HikariDataSource(hikariConfig), ec)
+    apply(InstantMySQLProfile, new HikariDataSource(hikariConfig), ec)
   }
 
   def executor(threads: Int) = AsyncExecutor(
@@ -292,7 +329,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(
     val musicFolders = library.folderStream
     // upserts every folder in the library to the database
     val updateActions = musicFolders.map(folder => folders.insertOrUpdate(folder))
-    val folderUpdates = DBIO.sequence(updateActions)
+    val folderUpdates = DBIO.sequence(updateActions.toList)
     // adds every existing folder to the temp table
     val idInsertion = tempFoldersTable ++= musicFolders.map(f => TempFolder(f.id))
     // deletes non-existing folders
@@ -316,7 +353,7 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(
 
     def upsertAllTracks(): Unit = {
       library.dataTrackStream.grouped(100).foreach { chunk =>
-        val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)))
+        val trackUpdates = DBIO.sequence(chunk.map(track => tracks.insertOrUpdate(track)).toList)
         val chunkInsertion = run(
           DBIO.seq(
             trackUpdates,

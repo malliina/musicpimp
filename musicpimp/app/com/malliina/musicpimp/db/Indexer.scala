@@ -11,7 +11,6 @@ import com.malliina.musicpimp.library.FileLibrary
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.rx.Sources
 import play.api.Logger
-import rx.lang.scala.Observable
 
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, DurationLong}
@@ -71,14 +70,7 @@ class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: 
 
   /** Indexes the music library.
     *
-    * Note that this is a hot [[Observable]] for two reasons: we want the indexing to run regardless of whether there are
-    * any subscribers, and we want it to run only once. All subscribers to the returned [[Observable]] will share the
-    * same stream of events.
-    *
-    * I think an observable should be hot when the event stream in itself is side-effecting, whereas normally we
-    * subscribe to cold observables to cause side effects.
-    *
-    * @return a hot [[Observable]] with indexing progress
+    * @return indexing progress
     */
   def index(): Source[Long, NotUsed] = {
     val task = refreshIndex().toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()

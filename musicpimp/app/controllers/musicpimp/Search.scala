@@ -9,21 +9,13 @@ import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.http.AuthedRequest
 import com.malliina.play.ws.{ActorConfig, ActorMeta, JsonActor, Sockets}
-import controllers.musicpimp.Search.{indexingObserver, log}
+import controllers.musicpimp.Search.log
 import play.api.Logger
 import play.api.libs.json.JsValue
-import rx.lang.scala.Observer
 
 object Search {
   private val log = Logger(getClass)
   val DefaultLimit = 1000
-
-  def indexingObserver(onNext: String => Unit,
-                       onErr: (String, Throwable) => Unit,
-                       onCompleted: String => Unit) = Observer[Long](
-    (next: Long) => onNext(s"Indexing... $next files indexed..."),
-    (t: Throwable) => onErr("Indexing failed.", t),
-    () => onCompleted("Indexing complete."))
 
   def indexingSink(onNext: String => Unit) = Sink.foreach[String](s => onNext(s))
 }
@@ -61,8 +53,6 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta) extends JsonActor(ctx) {
   import SearchActor.log
   implicit val mat = indexer.mat
   var killSwitchOpt: Option[UniqueKillSwitch] = None
-  val socketBroadcaster =
-    indexingObserver(msg => send(msg), (msg, _) => send(msg), compl => send(compl))
   val socketSink = Sink.foreach[Long] { fileCount =>
     send(s"Indexing... $fileCount files indexed so far...")
   }

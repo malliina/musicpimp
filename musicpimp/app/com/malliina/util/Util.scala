@@ -23,9 +23,9 @@ object Util {
       resource.close()
     }
 
-  def addShutdownHook(code: => Unit) {
+  def addShutdownHook(code: => Unit): Unit = {
     Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run() {
+      override def run(): Unit = {
         code
       }
     })
@@ -93,7 +93,7 @@ object Util {
     *
     * Use for SSL troubleshooting.
     */
-  def sslDebug() {
+  def sslDebug(): Unit = {
     sys.props("javax.net.debug") = "ssl"
   }
 }
