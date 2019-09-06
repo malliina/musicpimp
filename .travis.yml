@@ -3,6 +3,6 @@ language: scala
 scala:
    - 2.13.0
 jdk:
-  - openjdk8
+  - openjdk11
 script:
   - sbt ++$TRAVIS_SCALA_VERSION test && sbt ++$TRAVIS_SCALA_VERSION "project it" test

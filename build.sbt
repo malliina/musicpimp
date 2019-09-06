@@ -349,28 +349,22 @@ lazy val pimpcloudLinuxSettings = Seq(
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
   manufacturer := "Skogberg Labs",
   mainClass := Some("com.malliina.pimpcloud.Starter"),
-  bootClasspath := {
-    val alpnFile = scriptClasspathOrdering.value.map { case (_, dest) => dest }
-      .find(_.contains("alpn-boot"))
-      .getOrElse(sys.error("Unable to find alpn-boot"))
-    val name = (packageName in Debian).value
-    val installLocation = defaultLinuxInstallLocation.value
-    s"$installLocation/$name/$alpnFile"
-  },
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
     Seq(
-      // for HTTP/2 support
-      s"-J-Xbootclasspath/p:${bootClasspath.value}",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      s"-Dlogger.resource=/etc/$linuxName/prod-logger.xml",
+      s"-Dlogger.resource=/etc/$linuxName/logback-prod.xml",
       s"-Dconfig.file=/etc/$linuxName/production.conf"
     )
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
-  libraryDependencies += "com.typesafe.akka" %% "akka-http" % "10.1.8"
+  libraryDependencies ++= Seq(
+    "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
+    "org.eclipse.jetty" % "jetty-alpn-java-client" % "9.4.20.v20190813",
+    "com.typesafe.akka" %% "akka-http" % "10.1.9"
+  )
 )
 
 lazy val artifactSettings = Seq(
@@ -404,7 +398,7 @@ lazy val utilAudioSettings = Seq(
   ),
   resolvers ++= Seq(
     "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-    "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
+    "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/",
     Resolver.bintrayRepo("malliina", "maven")
   )
 )

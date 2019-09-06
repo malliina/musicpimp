@@ -1,7 +1,7 @@
 scalaVersion := "2.12.8"
 resolvers ++= Seq(
   ivyRepo("bintray-sbt-plugin-releases",
-    "http://dl.bintray.com/content/sbt/sbt-plugin-releases"),
+    "https://dl.bintray.com/content/sbt/sbt-plugin-releases"),
   ivyRepo("malliina bintray sbt",
     "https://dl.bintray.com/malliina/sbt-plugins/"),
   Resolver.bintrayRepo("malliina", "maven")
@@ -10,8 +10,8 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversio
 classpathTypes += "maven-plugin"
 
 Seq(
-  "com.malliina" %% "sbt-utils-maven" % "0.14.0",
-  "com.malliina" %% "sbt-nodejs" % "0.14.0",
+  "com.malliina" %% "sbt-utils-maven" % "0.14.2",
+  "com.malliina" %% "sbt-nodejs" % "0.14.2",
   "org.scala-js" % "sbt-scalajs" % "0.6.28",
   "org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0",
   "com.vmunier" % "sbt-web-scalajs" % "1.0.6",
