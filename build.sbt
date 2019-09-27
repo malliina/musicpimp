@@ -32,7 +32,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.20.2"
+val musicpimpVersion = "4.20.3"
 val pimpcloudVersion = "1.25.0"
 val sharedVersion = "1.10.0"
 val crossVersion = "1.10.0"
@@ -50,7 +50,7 @@ val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.6.0"
 
 val httpGroup = "org.apache.httpcomponents"
 
-scalaVersion in ThisBuild := "2.13.0"
+scalaVersion in ThisBuild := "2.13.1"
 
 lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
 lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")

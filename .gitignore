@@ -11,3 +11,5 @@ credentials.txt
 *.data
 settings.json
 .hydra
+hydra.sbt
+.bloop

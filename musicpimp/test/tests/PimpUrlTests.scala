@@ -6,7 +6,7 @@ import org.scalatest.FunSuite
 class PimpUrlTests extends FunSuite {
   test("url") {
     val raw = "http://www.google.com/p?a=b"
-    val url = FullUrl.build(raw).right.get
+    val url = FullUrl.build(raw).toOption.get
     assert(url.proto === "http")
     assert(url.hostAndPort === "www.google.com")
     assert(url.uri === "/p?a=b")

@@ -19,7 +19,7 @@ class UploadTests extends FunSuite {
     multiPartUpload(FullUrl("http", "localhost:9000", "/playback/uploads"))
   }
 
-  def multiPartUpload(url: FullUrl) {
+  def multiPartUpload(url: FullUrl): Unit = {
     val file = TestUtils.makeTestMp3()
     val headers = Map(HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("admin", "test"))
     val req = Rest.sslClient.multiPart(

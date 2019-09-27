@@ -25,10 +25,10 @@ object TestOptions {
 }
 
 class MusicPimpSuite(options: InitOptions = TestOptions.default)
-  extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
+    extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
 
 class PlaylistsTests extends MusicPimpSuite {
-  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").right.get)
+  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
@@ -36,9 +36,11 @@ class PlaylistsTests extends MusicPimpSuite {
     val db = components.deps.db
     val folderId = FolderID("Testid")
 
-    def trackInserts = db.insertTracks(Seq(
-      DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, UnixPath.Empty, folderId)
-    ))
+    def trackInserts =
+      db.insertTracks(
+        Seq(
+          DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, UnixPath.Empty, folderId)
+        ))
 
     val insertions = for {
       _ <- db.insertFolders(Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId)))
@@ -58,7 +60,8 @@ class PlaylistsTests extends MusicPimpSuite {
 
   test("POST /playlists") {
     def postPlaylist(in: PlaylistSubmission) = {
-      val response = fetch(FakeRequest("POST", "/playlists").withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in))))
+      val response =
+        fetch(FakeRequest("POST", "/playlists").withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in))))
       assert(status(response) === 202)
       (contentAsJson(response) \ "id").as[PlaylistID]
     }
@@ -86,8 +89,11 @@ class PlaylistsTests extends MusicPimpSuite {
   }
 
   def fetch[T: Writeable](request: FakeRequest[T]) = {
-    route(app, request.withHeaders(
-      AUTHORIZATION -> HttpUtil.authorizationValue(DatabaseUserManager.DefaultUser.name, DatabaseUserManager.DefaultPass.pass),
-      ACCEPT -> JSON)).get
+    route(
+      app,
+      request.withHeaders(AUTHORIZATION -> HttpUtil.authorizationValue(DatabaseUserManager.DefaultUser.name,
+                                                                       DatabaseUserManager.DefaultPass.pass),
+                          ACCEPT -> JSON)
+    ).get
   }
 }

@@ -25,9 +25,10 @@ class WebSocketTests extends FunSuite {
 
   def openSocket(socketFactory: SSLSocketFactory) = {
     val s = new JsonSocket8(
-      FullUrl.build("wss://cloud.musicpimp.org/servers/ws").right.get,
+      FullUrl.build("wss://cloud.musicpimp.org/servers/ws").toOption.get,
       socketFactory,
-      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("u", Constants.pass.pass))
+      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue("u", Constants.pass.pass)
+    )
     val _ = Await.result(s.connect(), 5.seconds)
   }
 }
