@@ -65,19 +65,18 @@ object PimpHtml {
   def stripedTable(tableClass: String, headers: Seq[Modifier])(tableBody: Modifier*) =
     headeredTable(tableClass, headers)(tableBody)
 
-  def textInputBase(inType: String,
-                    idAndName: String,
-                    placeHolder: Option[String],
-                    more: Modifier*) = {
+  def textInputBase(
+    inType: String,
+    idAndName: String,
+    placeHolder: Option[String],
+    more: Modifier*
+  ) = {
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
     namedInput(idAndName, `type` := inType, placeholderAttr, more)
   }
 }
 
-class PimpHtml(scripts: ScalaScripts)
-    extends Bootstrap(HtmlTags)
-    with FooterStrings
-    with FrontStrings {
+class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStrings with FrontStrings {
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -113,11 +112,13 @@ class PimpHtml(scripts: ScalaScripts)
   def topList(tab: String, username: Username, inner: Modifier) =
     libraryBase(tab, username)(inner)
 
-  def logs(levelField: Field,
-           levels: Seq[Level],
-           currentLevel: Level,
-           username: Username,
-           feedback: Option[UserFeedback]) =
+  def logs(
+    levelField: Field,
+    levels: Seq[Level],
+    currentLevel: Level,
+    username: Username,
+    feedback: Option[UserFeedback]
+  ) =
     manage("logs", WideContent, username)(
       LogsHtml.logsContent(levelField, levels, currentLevel, feedback)
     )
@@ -136,37 +137,23 @@ class PimpHtml(scripts: ScalaScripts)
   def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username)(inner)
 
-  def libraryBase(tab: String, contentClass: String, username: Username)(
-      inner: Modifier*): TagPage =
+  def libraryBase(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
     indexMain("library", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Folders",
-                      "folders",
-                      tab,
-                      routes.LibraryController.rootLibrary(),
-                      iClass("fa fa-folder-open")),
-          iconNavItem("Most Played",
-                      "popular",
-                      tab,
-                      routes.Website.popular(),
-                      iClass("fa fa-list")),
-          iconNavItem("Most Recent",
-                      "recent",
-                      tab,
-                      routes.Website.recent(),
-                      iClass("fa fa-clock-o")),
+          iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), iClass("fa fa-folder-open")),
+          iconNavItem("Most Played", "popular", tab, routes.Website.popular(), iClass("fa fa-list")),
+          iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), iClass("fa fa-clock-o")),
           iconNavItem("Search", "search", tab, routes.SearchPage.search(), iClass("fa fa-search"))
         )
       ),
       section(divClass(contentClass)(inner))
     )
 
-  def cloud(cloudId: Option[CloudID], feedback: Option[UserFeedback], username: Username) = {
+  def cloud(cloudId: Option[CloudID], feedback: Option[UserFeedback], username: Username) =
     manage("cloud", username)(
       CloudHtml.cloudContent
     )
-  }
 
   def basePlayer(feedback: Option[UserFeedback], username: Username) =
     indexMain("player", username)(
@@ -197,11 +184,7 @@ class PimpHtml(scripts: ScalaScripts)
     indexMain("manage", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Music Folders",
-                      "folders",
-                      tab,
-                      routes.SettingsController.settings(),
-                      fa("folder-open")),
+          iconNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), fa("folder-open")),
           iconNavItem("Users", "users", tab, routes.Accounts.users(), fa("user")),
           iconNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), fa("clock")),
           iconNavItem("Tokens", "tokens", tab, routes.Alarms.tokens(), fa("key")),
@@ -225,8 +208,12 @@ class PimpHtml(scripts: ScalaScripts)
   def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
     indexMain(tabName, user, Option(div(`class` := Container)))(inner: _*)
 
-  def indexMain(tabName: String, user: Username, contentWrapper: Option[TypedTag[String]])(
-      inner: Modifier*): TagPage = {
+  def indexMain(
+    tabName: String,
+    user: Username,
+    contentWrapper: Option[TypedTag[String]]
+  )(inner: Modifier*
+  ): TagPage = {
     def navItem(thisTabName: String, url: Call, iconicName: String): TypedTag[String] =
       iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
@@ -244,12 +231,14 @@ class PimpHtml(scripts: ScalaScripts)
               SearchHtml.navbarSearch()
             ),
             li(`class` := s"nav-item $Dropdown")(
-              a(href := "#",
+              a(
+                href := "#",
                 `class` := s"nav-link $DropdownToggle",
                 dataToggle := Dropdown,
                 role := Button,
                 aria.haspopup := tags.True,
-                aria.expanded := tags.False)(
+                aria.expanded := tags.False
+              )(
                 iconic("person"),
                 s" ${user.name} ",
                 spanClass(Caret)
@@ -259,10 +248,7 @@ class PimpHtml(scripts: ScalaScripts)
                 navItem("Manage", routes.SettingsController.manage(), "wrench"),
                 navItem("About", routes.Website.about(), "globe"),
                 divClass("dropdown-divider"),
-                li(
-                  a(href := routes.Accounts.logout(), `class` := "nav-link")(
-                    iconic("account-logout"),
-                    " Sign Out"))
+                li(a(href := routes.Accounts.logout(), `class` := "nav-link")(iconic("account-logout"), " Sign Out"))
               )
             ),
             div(
@@ -276,18 +262,22 @@ class PimpHtml(scripts: ScalaScripts)
     )
   }
 
-  def iconicNavItem(thisTabName: String,
-                    thisTabId: String,
-                    activeTab: String,
-                    url: Call,
-                    iconicName: String): TypedTag[String] =
+  def iconicNavItem(
+    thisTabName: String,
+    thisTabId: String,
+    activeTab: String,
+    url: Call,
+    iconicName: String
+  ): TypedTag[String] =
     iconNavItem(thisTabName, thisTabId, activeTab, url, iconic(iconicName))
 
-  def iconNavItem(thisTabName: String,
-                  thisTabId: String,
-                  activeTab: String,
-                  url: Call,
-                  iconHtml: Modifier): TypedTag[String] = {
+  def iconNavItem(
+    thisTabName: String,
+    thisTabId: String,
+    activeTab: String,
+    url: Call,
+    iconHtml: Modifier
+  ): TypedTag[String] = {
     val linkClass =
       if (thisTabId == activeTab) "nav-link active"
       else "nav-link"
@@ -303,8 +293,10 @@ class PimpHtml(scripts: ScalaScripts)
         meta(charset := "UTF-8"),
         titleTag(title),
         deviceWidthViewport,
-        cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
-                      "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
+        cssLinkHashed(
+          "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+          "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        ),
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
@@ -317,7 +309,8 @@ class PimpHtml(scripts: ScalaScripts)
         footer(`class` := "footer", id := FooterId)(
           nav(
             `class` := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",
-            id := BottomNavbar)(
+            id := BottomNavbar
+          )(
             divContainer(
               ulClass(s"${navbars.Nav}")(
                 footerIcon(FooterBackward, "step-backward"),
@@ -326,13 +319,14 @@ class PimpHtml(scripts: ScalaScripts)
                 footerIcon(FooterForward, "step-forward"),
                 navbarPara(FooterProgress),
                 navbarPara(FooterTitle),
-                navbarPara(FooterArtist),
+                navbarPara(FooterArtist)
               ),
               div(`class` := s"${navbars.Nav} ${navbars.Right}", id := FooterCredit)(
                 spanClass(s"${text.muted} ${navbars.Text} float-right")(
                   "Developed by ",
                   a(href := "https://malliina.com")("Michael Skogberg"),
-                  ".")
+                  "."
+                )
               )
             )
           )

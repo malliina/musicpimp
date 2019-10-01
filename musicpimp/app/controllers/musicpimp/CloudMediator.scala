@@ -30,6 +30,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
       })
       .run()
     subscription = Option(killSwitch)
+    clouds.emitLatest()
   }
 
   override def onClientMessage(message: JsValue, rh: RequestHeader): Unit =

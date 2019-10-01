@@ -18,46 +18,52 @@ object Cloud {
   val idFormKey = "id"
 }
 
-class Cloud(tags: PimpHtml,
-            clouds: Clouds,
-            auth: AuthDeps)
-  extends Secured(auth) {
+class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth) {
 
   val FEEDBACK = "feedback"
   val cloudForm = Form(Cloud.idFormKey -> optional(text))
 
   def cloud = pimpActionAsync { request =>
-    val id = clouds
-      .registration.map[(Option[CloudID], Option[UserFeedback])](id => (Some(id), None))
-      .recoverAll(t => (None, Option(UserFeedback.error(t.getMessage))))
-    id.map { case (cloudId, errorMessage) =>
-      val feedback = UserFeedback.flashed(request) orElse errorMessage
-      Ok(tags.cloud(cloudId, feedback, request.user))
+    val id = clouds.registration
+      .map[(Option[CloudID], Option[UserFeedback])](id => (Some(id), None))
+      .recoverAll { t =>
+        log.warn(s"Cloud connection failed.", t)
+        (None, Option(UserFeedback.error(t.getMessage)))
+      }
+    id.map {
+      case (cloudId, errorMessage) =>
+        val feedback = UserFeedback.flashed(request) orElse errorMessage
+        Ok(tags.cloud(cloudId, feedback, request.user))
     }
   }
 
   def toggle = pimpParsedActionAsync(parsers.default) { request =>
-    cloudForm.bindFromRequest()(request).fold(
-      formErrors => {
-        log debug s"Form errors: $formErrors"
-        val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
-        Future successful BadRequest(tags.cloud(None, feedback, request.user))
-      },
-      desiredID => {
-        val redir = Redirect(routes.Cloud.cloud())
-        if (clouds.isConnected) {
-          clouds.disconnectAndForget("Disconnected by request.")
-          fut(redir)
-        } else {
-          val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
-          clouds
-            .connect(maybeID).map(_ => redir)
-            .recover(errorMessage andThen (msg => redir.flashing(
-              UserFeedback.Feedback -> msg,
-              UserFeedback.Success -> UserFeedback.No)))
+    cloudForm
+      .bindFromRequest()(request)
+      .fold(
+        formErrors => {
+          log debug s"Form errors: $formErrors"
+          val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
+          Future successful BadRequest(tags.cloud(None, feedback, request.user))
+        },
+        desiredID => {
+          val redir = Redirect(routes.Cloud.cloud())
+          if (clouds.isConnected) {
+            clouds.disconnectAndForget("Disconnected by request.")
+            fut(redir)
+          } else {
+            val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
+            clouds
+              .connect(maybeID)
+              .map(_ => redir)
+              .recover(
+                errorMessage andThen (
+                  msg => redir.flashing(UserFeedback.Feedback -> msg, UserFeedback.Success -> UserFeedback.No)
+                )
+              )
+          }
         }
-      }
-    )
+      )
   }
 
   def errorMessage: PartialFunction[Throwable, String] = {

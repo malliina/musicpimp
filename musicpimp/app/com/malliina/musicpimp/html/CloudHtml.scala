@@ -14,13 +14,15 @@ object CloudHtml extends PimpBootstrap with CloudStrings {
   def cloudContent = Seq(
     headerRow("Cloud"),
     div(id := CloudForm)(
-      leadPara("Connecting...")
+      leadPara("Checking status...")
     ),
     halfRow(
       p("How does this work?"),
-      p("This server will open a connection to a machine on the internet. Your mobile device connects to the " +
-        "same machine on the internet and communicates with this server through the machine both parties have " +
-        "connected to. All traffic is encrypted. All music is streamed.")
+      p(
+        "This server will open a connection to a machine on the internet. Your mobile device connects to the " +
+          "same machine on the internet and communicates with this server through the machine both parties have " +
+          "connected to. All traffic is encrypted. All music is streamed."
+      )
     )
   )
 
@@ -39,10 +41,12 @@ object CloudHtml extends PimpBootstrap with CloudStrings {
     )
   }
 
-  def textInput(inType: String,
-                clazz: String,
-                idAndName: String,
-                placeHolder: Option[String],
-                more: Modifier*) =
+  def textInput(
+    inType: String,
+    clazz: String,
+    idAndName: String,
+    placeHolder: Option[String],
+    more: Modifier*
+  ) =
     PimpHtml.textInputBase(inType, idAndName, placeHolder, `class` := clazz, more)
 }

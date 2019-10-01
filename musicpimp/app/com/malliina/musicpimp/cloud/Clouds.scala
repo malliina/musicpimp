@@ -46,18 +46,31 @@ object Clouds {
   }
 }
 
-class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEndpoint: FullUrl, scheduler: Scheduler)(
-    implicit mat: Materializer) {
+class Clouds(
+  player: MusicPlayer,
+  alarmHandler: JsonHandler,
+  deps: Deps,
+  cloudEndpoint: FullUrl,
+  scheduler: Scheduler
+)(implicit mat: Materializer) {
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Source.tick(3.seconds, 60.seconds, 0)
   private var poller: Option[Cancellable] = None
-  val MaxFailures = 720
-  var successiveFailures = 0
-  val notConnected = Disconnected("Not connected.")
+  private val MaxFailures = 720
+  private var successiveFailures = 0
+  private val notConnected = Disconnected("Not connected.")
   private val (registrationsTarget, registrations) = Sources.connected[CloudEvent]()
   private var activeSubscription: Option[UniqueKillSwitch] = None
 
+  private val currentState: AtomicReference[CloudEvent] = new AtomicReference[CloudEvent](notConnected)
   val connection: Source[CloudEvent, NotUsed] = registrations
+
+  def updateState(state: CloudEvent): Unit = {
+    currentState.set(state)
+    registrationsTarget ! state
+  }
+
+  def emitLatest(): Unit = registrationsTarget ! currentState.get()
 
   def client = clientRef.get()
 
@@ -76,6 +89,7 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
   def maintainConnectivity(): Unit = {
     if (poller.isEmpty) {
       val cancellable = timer.toMat(Sink.foreach(_ => ensureConnectedIfEnabled()))(Keep.left).run()
+      log.info(s"Maintaining connectivity to the cloud: '${Clouds.isEnabled}'.")
       poller = Option(cancellable)
     }
   }
@@ -98,7 +112,7 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
 
   def connect(id: Option[CloudID]): Future[CloudID] = reg {
     activeSubscription.foreach(_.shutdown())
-    registrationsTarget ! Connecting
+    updateState(Connecting)
     val prep = async {
       val name = id.map(i => s"'$i'") getOrElse "a random client"
       log debug s"Connecting as $name to ${client.uri}..."
@@ -106,7 +120,7 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
       closeAnyConnection(old)
 
       val connectionSink = Sink.foreach[CloudID] { id =>
-        registrationsTarget ! Connected(id)
+        updateState(Connected(id))
       }
       val (_, killSwitch) = client.registrations
         .watchTermination()(Keep.right)
@@ -114,7 +128,7 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
         .mapMaterializedValue {
           case (done, ks) =>
             val f = done.transform { t =>
-              registrationsTarget ! Disconnected("The connection failed.")
+              updateState(Disconnected("The connection failed."))
               t
             }
             (f, ks)
@@ -152,10 +166,10 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
   }
 
   def disconnect(reason: String): Unit = {
-    registrationsTarget ! Disconnecting
+    updateState(Disconnecting)
     stopPolling()
     closeAnyConnection(client)
-    registrationsTarget ! Disconnected(reason)
+    updateState(Disconnected(reason))
     activeSubscription.foreach(_.shutdown())
   }
 
@@ -174,7 +188,7 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
 
   def registration: Future[CloudID] = reg(Future.failed(CloudSocket.notConnected))
 
-  def sendIfConnected(msg: JsValue): SendResult = {
+  def sendIfConnected(msg: JsValue): SendResult =
     if (client.isConnected) {
       client send msg match {
         case Success(()) => MessageSent
@@ -183,19 +197,14 @@ class Clouds(player: MusicPlayer, alarmHandler: JsonHandler, deps: Deps, cloudEn
     } else {
       NotConnected
     }
-  }
 
-  private def reg(ifDisconnected: => Future[CloudID]) = {
+  private def reg(ifDisconnected: => Future[CloudID]) =
     if (client.isConnected) client.registration
     else ifDisconnected
-  }
 
   trait SendResult
 
   case object MessageSent extends SendResult
-
   case object NotConnected extends SendResult
-
   case class SendFailure(t: Throwable) extends SendResult
-
 }

@@ -28,7 +28,8 @@ object Cloud extends Bootstrap(HtmlTags) {
       Seq(
         halfRow(connectedForm()),
         halfRow(alertSuccess(msg))
-      ))
+      )
+    )
   }
 
   def disconnectedContent(reason: String): Frag =
@@ -36,17 +37,20 @@ object Cloud extends Bootstrap(HtmlTags) {
       Seq(
         halfRow(disconnectedForm()),
         halfRow(alertDanger(reason))
-      ))
+      )
+    )
 
   private def disconnectedForm() =
     div(
       formGroup(
         label(`for` := inputId)("Desired cloud ID (optional)"),
-        input(`type` := "text",
-              id := CloudIdentifier,
-              name := inputId,
-              placeholder := "Your desired ID or leave empty",
-              `class` := FormControl)
+        input(
+          `type` := "text",
+          id := CloudIdentifier,
+          name := inputId,
+          placeholder := "Your desired ID or leave empty",
+          `class` := FormControl
+        )
       ),
       cloudButton("Connect", ConnectId)
     )
@@ -82,13 +86,13 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   }
 
   def installHandlers() = {
-    elem(ConnectId).click { (_: JQueryEventObject) =>
+    elem(ConnectId).click { _: JQueryEventObject =>
       connect()
     }
-    elem(DisconnectId).click { (_: JQueryEventObject) =>
+    elem(DisconnectId).click { _: JQueryEventObject =>
       send(Disconnect)
     }
-    elem(CloudIdentifier).keypress { (e: JQueryEventObject) =>
+    elem(CloudIdentifier).keypress { e: JQueryEventObject =>
       val isEnter = e.which == 10 || e.which == 13
       if (isEnter) {
         connect()
