@@ -32,8 +32,11 @@ object LibraryHtml extends PimpBootstrap {
         }
       ),
       if (items.isEmpty && relativePath.path.isEmpty) {
-        leadPara("The library is empty. To get started, add music folders under ",
-          a(href := routes.SettingsController.settings())("Music Folders"), ".")
+        leadPara(
+          "The library is empty. To get started, add music folders under ",
+          a(href := routes.SettingsController.settings())("Music Folders"),
+          "."
+        )
       } else {
         empty
       }
@@ -45,21 +48,39 @@ object LibraryHtml extends PimpBootstrap {
   def renderLibraryFolder(folder: FolderMeta): Modifier = Seq[Modifier](
     folderActions(folder.id),
     " ",
-    a(href := routes.LibraryController.library(folder.id), `class` := s"$Lead folder-link")(folder.title)
+    a(href := routes.LibraryController.library(folder.id), `class` := s"$Lead folder-link")(
+      folder.title
+    )
   )
 
   def folderActions(folder: FolderID) =
-    musicItemActions(FolderClass, folder.id, Option("folder-buttons"), aria.label := "folder action")()
+    musicItemActions(
+      FolderClass,
+      folder.id,
+      Option("folder-buttons"),
+      aria.label := "folder action"
+    )()
 
   def titledTrackActions(track: TrackMeta) =
     trackActions(track.id)(
-      dataButton(s"${btn.light} ${btn.block} $TrackClass $PlayClass track-title", track.id.id)(track.title)
+      dataButton(s"${btn.light} ${btn.block} $TrackClass $PlayClass track-title", track.id.id)(
+        track.title
+      )
     )
 
-  def trackActions(track: TrackID, trackExtra: String = "", extraClass: Option[String] = Option("track-buttons"))(inner: Modifier*) =
+  def trackActions(
+    track: TrackID,
+    trackExtra: String = "",
+    extraClass: Option[String] = Option("track-buttons")
+  )(inner: Modifier*) =
     musicItemActions(s"$TrackClass $trackExtra", track.id, extraClass)(inner)
 
-  def musicItemActions(itemClazz: String, itemId: String, extraClass: Option[String], groupAttrs: Modifier*)(inner: Modifier*) = {
+  def musicItemActions(
+    itemClazz: String,
+    itemId: String,
+    extraClass: Option[String],
+    groupAttrs: Modifier*
+  )(inner: Modifier*) = {
     val extra = extraClass.map(c => s" $c").getOrElse("")
     divClass(s"${btn.group}$extra", role := Group, groupAttrs)(
       iconicButton(s"${btn.light} $itemClazz $PlayClass", "play-circle", itemId),

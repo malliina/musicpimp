@@ -58,8 +58,12 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
               .map(_ => redir)
               .recover(
                 errorMessage andThen (
-                  msg => redir.flashing(UserFeedback.Feedback -> msg, UserFeedback.Success -> UserFeedback.No)
-                )
+                  msg =>
+                    redir.flashing(
+                      UserFeedback.Feedback -> msg,
+                      UserFeedback.Success -> UserFeedback.No
+                    )
+                  )
               )
           }
         }

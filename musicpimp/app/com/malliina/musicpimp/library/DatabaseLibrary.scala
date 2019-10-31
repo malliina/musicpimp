@@ -29,7 +29,13 @@ class DatabaseLibrary(db: PimpDb, library: Library) extends MusicLibrary {
   def tracksIn(id: FolderID): Future[Option[Seq[TrackMeta]]] = {
     folder(id) flatMap { maybeFolder =>
       maybeFolder
-        .map(folder => Future.traverse(folder.folders)(sub => tracksInOrEmpty(sub.id)).map(subs => folder.tracks ++ subs.flatten)).map(_.map(Option.apply))
+        .map(
+          folder =>
+            Future
+              .traverse(folder.folders)(sub => tracksInOrEmpty(sub.id))
+              .map(subs => folder.tracks ++ subs.flatten)
+        )
+        .map(_.map(Option.apply))
         .getOrElse(Future.successful(None))
     }
   }
@@ -45,7 +51,9 @@ class DatabaseLibrary(db: PimpDb, library: Library) extends MusicLibrary {
 
   def findFile(id: TrackID): Future[Option[Path]] = {
     track(id).map { maybeTrack =>
-      maybeTrack.flatMap(t => library.findAbsoluteNew(t.path)).orElse(library.findAbsoluteLegacy(id))
+      maybeTrack
+        .flatMap(t => library.findAbsoluteNew(t.path))
+        .orElse(library.findAbsoluteLegacy(id))
     }
   }
 

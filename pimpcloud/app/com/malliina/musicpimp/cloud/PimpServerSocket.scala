@@ -26,14 +26,15 @@ object PimpServerSocket {
   * @param jsonOut send messages to this actor to send messages to the server
   * @param id      the cloud ID of the server
   */
-class PimpServerSocket(val jsonOut: ActorRef,
-                       id: CloudID,
-                       val headers: RequestHeader,
-                       mat: Materializer,
-                       scheduler: Scheduler,
-                       errorHandler: HttpErrorHandler,
-                       onUpdate: () => Unit)
-    extends JsonFutureSocket(id, scheduler) {
+class PimpServerSocket(
+  val jsonOut: ActorRef,
+  id: CloudID,
+  val headers: RequestHeader,
+  mat: Materializer,
+  scheduler: Scheduler,
+  errorHandler: HttpErrorHandler,
+  onUpdate: () => Unit
+) extends JsonFutureSocket(id, scheduler) {
   val fileTransfers: Streamer = new NoCacheByteStreams(id, jsonOut, mat, errorHandler, onUpdate)
 
   override def send(payload: JsValue): Unit = jsonOut ! payload

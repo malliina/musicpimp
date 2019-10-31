@@ -65,10 +65,13 @@ class DatabaseUserManager(val db: PimpDb) extends UserManager[Username, Password
     }
 
   override def updatePassword(user: Username, newPass: Password): Future[Unit] =
-    db.run(usersTable
-      .filter(u => u.user === user)
-      .map(_.passHash)
-      .update(hash(user, newPass))).map(_ => ())
+    db.run(
+        usersTable
+          .filter(u => u.user === user)
+          .map(_.passHash)
+          .update(hash(user, newPass))
+      )
+      .map(_ => ())
 
   private def hash(user: Username, pass: Password) = Auth.hash(user, pass)
 }

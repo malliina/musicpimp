@@ -16,17 +16,37 @@ object LoginHtml extends PimpBootstrap {
         conf.topFeedback.fold(empty)(feedbackDiv)
       ),
       rowColumn(col.md.four)(
-        postableForm(routes.Accounts.formAuthenticate(), `class` := FormSignin, name := "loginForm")(
+        postableForm(
+          routes.Accounts.formAuthenticate(),
+          `class` := FormSignin,
+          name := "loginForm"
+        )(
           h2("Please sign in"),
           formGroup(
-            textInputBase(Text, accounts.userFormKey, Option("Username"), `class` := FormControl, autofocus)
+            textInputBase(
+              Text,
+              accounts.userFormKey,
+              Option("Username"),
+              `class` := FormControl,
+              autofocus
+            )
           ),
           formGroup(
-            textInputBase(Password, accounts.passFormKey, Option("Password"), `class` := FormControl)
+            textInputBase(
+              Password,
+              accounts.passFormKey,
+              Option("Password"),
+              `class` := FormControl
+            )
           ),
           divClass(Checkbox)(
             label(
-              input(`type` := Checkbox, value := True, name := accounts.rememberMeKey, id := accounts.rememberMeKey),
+              input(
+                `type` := Checkbox,
+                value := True,
+                name := accounts.rememberMeKey,
+                id := accounts.rememberMeKey
+              ),
               " Remember me"
             )
           ),

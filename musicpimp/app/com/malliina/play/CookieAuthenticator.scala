@@ -8,6 +8,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.{ExecutionContext, Future}
 
 trait CookieAuthenticator {
+
   /**
     * @param user username
     * @param pass password
@@ -19,7 +20,9 @@ trait CookieAuthenticator {
 }
 
 object CookieAuthenticator {
-  def default(auth: CookieAuthenticator)(implicit ec: ExecutionContext): Authenticator[AuthedRequest] =
+  def default(
+    auth: CookieAuthenticator
+  )(implicit ec: ExecutionContext): Authenticator[AuthedRequest] =
     bundle(auth).transform((rh, user) => Right(AuthedRequest(user, rh)))
 
   def bundle(auth: CookieAuthenticator)(implicit ec: ExecutionContext) =

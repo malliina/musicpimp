@@ -16,19 +16,32 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
     row(
       div6(searchForm()),
       div6(
-        button(`type` := Button, `class` := s"${btn.info} $verticalMargin", id := RefreshButton)(iconic("reload"), " "),
+        button(`type` := Button, `class` := s"${btn.info} $verticalMargin", id := RefreshButton)(
+          iconic("reload"),
+          " "
+        ),
         span(id := IndexInfo, `class` := "search-index-info")
       )
     ),
     fullRow(
       if (results.nonEmpty) {
         headeredTable(tables.stripedHover, Seq("Track", "Artist", "Album", "Actions"))(
-          tbody(results.map(track => tr(Seq(
-            td(track.title),
-            td(track.artist),
-            td(track.album),
-            td(`class` := "table-button")(LibraryHtml.trackActions(track.id, trackExtra = btn.sm, extraClass = Option("flex"))())
-          ))))
+          tbody(
+            results.map(
+              track =>
+                tr(
+                  Seq(
+                    td(track.title),
+                    td(track.artist),
+                    td(track.album),
+                    td(`class` := "table-button")(
+                      LibraryHtml
+                        .trackActions(track.id, trackExtra = btn.sm, extraClass = Option("flex"))()
+                    )
+                  )
+                )
+            )
+          )
         )
       } else {
         query.fold(empty) { term =>
@@ -42,12 +55,14 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
     form(action := routes.SearchPage.search(), role := Search, `class` := "form")(
       divClass("form-row")(
         divClass("col-8 col-md-8")(
-          input(`type` := Search,
+          input(
+            `type` := Search,
             `class` := s"$FormControl $verticalMargin mr-sm-2",
             placeholder := query.getOrElse("artist, album or track..."),
             name := "term",
             id := TermId,
-            aria.label := "Search"),
+            aria.label := "Search"
+          )
         ),
         divClass("col")(
           button(`type` := Submit, `class` := s"${btnOutline.success} $verticalMargin")("Search")
@@ -57,12 +72,14 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
 
   def navbarSearch(query: Option[String] = None) =
     form(action := routes.SearchPage.search(), role := Search, `class` := "form-inline")(
-      input(`type` := Search,
+      input(
+        `type` := Search,
         `class` := s"$FormControl mr-sm-2",
         placeholder := query.getOrElse("artist, album or track..."),
         name := "term",
         id := TermId,
-        aria.label := "Search"),
+        aria.label := "Search"
+      ),
       button(`type` := Submit, `class` := s"${btnOutline.success} my-2 my-sm-0")("Search")
     )
 }

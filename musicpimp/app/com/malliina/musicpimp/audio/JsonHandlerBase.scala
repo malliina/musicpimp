@@ -15,7 +15,8 @@ trait JsonHandlerBase {
 
   def onJson(req: CookiedRequest[JsValue, Username]): Unit = {
     // Safe to use Target.noop because this method is called form POSTing which is write-only (in our case)
-    val remoteInfo = RemoteInfo(req.user, PimpRequest.apiVersion(req.rh), FullUrls.hostOnly(req.rh), Target.noop)
+    val remoteInfo =
+      RemoteInfo(req.user, PimpRequest.apiVersion(req.rh), FullUrls.hostOnly(req.rh), Target.noop)
     onJson(req.body, remoteInfo)
   }
 
@@ -27,7 +28,8 @@ trait JsonHandlerBase {
   }
 
   def handleMessage(msg: JsValue, request: RemoteInfo): Unit = {
-    msg.validate[PlayerMessage]
+    msg
+      .validate[PlayerMessage]
       .map(fulfillMessage(_, request))
       .recoverTotal(err => log error s"Invalid JSON: '$msg', error: $err.")
   }

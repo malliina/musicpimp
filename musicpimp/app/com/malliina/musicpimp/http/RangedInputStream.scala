@@ -5,10 +5,11 @@ import java.io.InputStream
 import com.malliina.play.ContentRange
 
 /**
- * @see http://stackoverflow.com/a/28119691/1863674
- */
+  * @see http://stackoverflow.com/a/28119691/1863674
+  */
 class RangedInputStream(stream: InputStream, start: Int, rangeSize: Int) extends InputStream {
-  def this(stream: InputStream, range: ContentRange) = this(stream, range.start, range.contentLength)
+  def this(stream: InputStream, range: ContentRange) =
+    this(stream, range.start, range.contentLength)
 
   private val NO_MORE_BYTES = -1
   val skipped = stream.skip(start.toLong)

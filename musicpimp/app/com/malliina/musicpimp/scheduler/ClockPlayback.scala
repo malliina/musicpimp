@@ -16,7 +16,12 @@ object TrackWrapper {
   implicit val json = Json.format[TrackWrapper]
 }
 
-case class FullClockPlayback(id: Option[String], job: TrackJob, when: ClockSchedule, enabled: Boolean) {
+case class FullClockPlayback(
+  id: Option[String],
+  job: TrackJob,
+  when: ClockSchedule,
+  enabled: Boolean
+) {
   def describe = s"Plays ${job.track.title}"
 }
 
@@ -24,19 +29,23 @@ object FullClockPlayback {
   implicit val json = Json.format[FullClockPlayback]
 }
 
-case class ClockPlaybackConf(id: Option[String],
-                             track: TrackID,
-                             when: ClockSchedule,
-                             enabled: Boolean)
+case class ClockPlaybackConf(
+  id: Option[String],
+  track: TrackID,
+  when: ClockSchedule,
+  enabled: Boolean
+)
 
 object ClockPlaybackConf {
   implicit val json = Json.format[ClockPlaybackConf]
 }
 
-case class ClockPlayback(id: Option[String],
-                         job: TrackWrapper,
-                         when: ClockSchedule,
-                         enabled: Boolean) {
+case class ClockPlayback(
+  id: Option[String],
+  job: TrackWrapper,
+  when: ClockSchedule,
+  enabled: Boolean
+) {
   def toConf = ClockPlaybackConf(id, job.track, when, enabled)
 }
 

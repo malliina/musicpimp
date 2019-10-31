@@ -12,8 +12,7 @@ object PlayerClient {
   private val log = Logger(getClass)
 }
 
-class PlayerClient(user: Username, out: ActorRef, mat: Materializer)
-  extends BeamClient(user, out) {
+class PlayerClient(user: Username, out: ActorRef, mat: Materializer) extends BeamClient(user, out) {
 
   @volatile
   var streamer = StreamManager.empty(mat)

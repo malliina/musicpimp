@@ -10,12 +10,14 @@ import play.api.libs.json.Json.obj
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.Call
 
-case class FullFolder(id: FolderID,
-                      title: String,
-                      path: UnixPath,
-                      src: UnixPath,
-                      parent: FolderID,
-                      url: FullUrl)
+case class FullFolder(
+  id: FolderID,
+  title: String,
+  path: UnixPath,
+  src: UnixPath,
+  parent: FolderID,
+  url: FullUrl
+)
 
 object FullFolder {
   implicit val json = Json.format[FullFolder]

@@ -62,7 +62,8 @@ class Clouds(
   private val (registrationsTarget, registrations) = Sources.connected[CloudEvent]()
   private var activeSubscription: Option[UniqueKillSwitch] = None
 
-  private val currentState: AtomicReference[CloudEvent] = new AtomicReference[CloudEvent](notConnected)
+  private val currentState: AtomicReference[CloudEvent] =
+    new AtomicReference[CloudEvent](notConnected)
   val connection: Source[CloudEvent, NotUsed] = registrations
 
   def updateState(state: CloudEvent): Unit = {
@@ -153,7 +154,15 @@ class Clouds(
   }
 
   def newSocket(id: Option[CloudID]): CloudSocket =
-    CloudSocket.build(player, id orElse Clouds.loadID(), cloudEndpoint, alarmHandler, scheduler, deps, mat)
+    CloudSocket.build(
+      player,
+      id orElse Clouds.loadID(),
+      cloudEndpoint,
+      alarmHandler,
+      scheduler,
+      deps,
+      mat
+    )
 
   def disconnectAndForgetAsync(): Future[Boolean] =
     async(disconnectAndForget("Disconnected by user."))

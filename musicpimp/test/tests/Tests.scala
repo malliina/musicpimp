@@ -29,7 +29,7 @@ class Tests extends FunSuite {
     val arr = "a:b".split(":")
     arr match {
       case Array(a, b) => assert(a === "a")
-      case _ => assert(1 === 2)
+      case _           => assert(1 === 2)
     }
   }
 

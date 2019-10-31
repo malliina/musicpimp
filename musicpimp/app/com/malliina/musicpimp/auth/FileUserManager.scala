@@ -17,24 +17,27 @@ class FileUserManager extends UserManager[Username, Password] {
   val defaultPass = Password("test")
 
   def savedPassHash: Option[String] =
-    Utils.opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
+    Utils
+      .opt[BufferedSource, FileNotFoundException](scala.io.Source.fromFile(passFile.toFile))
       .flatMap(_.getLines().toList.headOption)
 
   /**
-   * Validates the supplied credentials.
-   *
-   * Hashes the supplied credentials and compares the hash with the first line of
-   * the password file. If they equal, validation succeeds, otherwise it fails.
-   *
-   * If the password file doesn't exist, it means no password has ever been set thus
-   * the credentials are compared against the default credentials.
-   *
-   * @param user the supplied username
-   * @param pass the supplied password
-   * @return true if the credentials are valid, false otherwise
-   */
+    * Validates the supplied credentials.
+    *
+    * Hashes the supplied credentials and compares the hash with the first line of
+    * the password file. If they equal, validation succeeds, otherwise it fails.
+    *
+    * If the password file doesn't exist, it means no password has ever been set thus
+    * the credentials are compared against the default credentials.
+    *
+    * @param user the supplied username
+    * @param pass the supplied password
+    * @return true if the credentials are valid, false otherwise
+    */
   override def authenticate(user: Username, pass: Password): Future[Boolean] = fut {
-    savedPassHash.fold(ifEmpty = user == defaultUser && pass == defaultPass)(_ == Auth.hash(user, pass))
+    savedPassHash.fold(ifEmpty = user == defaultUser && pass == defaultPass)(
+      _ == Auth.hash(user, pass)
+    )
   }
 
   override def deleteUser(user: Username): Future[Unit] = fut(())

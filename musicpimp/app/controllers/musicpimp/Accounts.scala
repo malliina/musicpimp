@@ -20,10 +20,7 @@ object Accounts {
   val UsersFeedback = "usersFeedback"
 }
 
-class Accounts(tags: PimpHtml,
-               auth: PimpAuthenticator,
-               pimpAuth: AuthDeps,
-               accs: AccountForms)
+class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs: AccountForms)
   extends HtmlController(pimpAuth) {
 
   val userFormKey = accs.userFormKey
@@ -43,12 +40,14 @@ class Accounts(tags: PimpHtml,
 
   val rememberMeLoginForm = accs.rememberMeLoginForm
 
-  val addUserForm = Form(mapping(
-    userFormKey -> FormMappings.username,
-    accs.newPassKey -> FormMappings.password,
-    accs.newPassAgainKey -> FormMappings.password
-  )(NewUser.apply)(NewUser.unapply)
-    .verifying(repeatPassFailureMessage, _.passwordsMatch))
+  val addUserForm = Form(
+    mapping(
+      userFormKey -> FormMappings.username,
+      accs.newPassKey -> FormMappings.password,
+      accs.newPassAgainKey -> FormMappings.password
+    )(NewUser.apply)(NewUser.unapply)
+      .verifying(repeatPassFailureMessage, _.passwordsMatch)
+  )
 
   def account = pimpAction { request =>
     Ok(tags.account(request.user, UserFeedback.flashed(request)))
@@ -65,9 +64,10 @@ class Accounts(tags: PimpHtml,
         redir.flashing(UsersFeedback -> s"Deleted user '${user.name}'.")
       }
     } else {
-      fut(redir.flashing(
-        UsersFeedback -> cannotDeleteYourself,
-        UserFeedback.Success -> UserFeedback.No))
+      fut(
+        redir
+          .flashing(UsersFeedback -> cannotDeleteYourself, UserFeedback.Success -> UserFeedback.No)
+      )
     }
   }
 
@@ -81,35 +81,37 @@ class Accounts(tags: PimpHtml,
 
   def logout = authAction { _ =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Accounts.loginPage())
-      .withNewSession
+    Redirect(routes.Accounts.loginPage()).withNewSession
       .discardingCookies(RememberMe.discardingCookie)
       .flashing(UserFeedback.success(logoutMessage).flash)
   }
 
   def formAddUser = pimpActionAsync { request =>
     val remoteAddress = Proxies.realAddress(request)
-    addUserForm.bindFromRequest()(request).fold(
-      formWithErrors => {
-        val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Unable to add user '$user' from '$remoteAddress', form: $formWithErrors"
-        userManager.users.map(users => BadRequest(usersPage(users, formWithErrors, request)))
-      },
-      newUser => {
-        val addCall = userManager.addUser(newUser.username, newUser.pass)
-        addCall.map { addError =>
-          val userFeedback = addError
-            .map(e => UserFeedback.error(s"User '${e.user}' already exists."))
-            .getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
-          Redirect(routes.Accounts.users()).flashing(userFeedback.flash)
+    addUserForm
+      .bindFromRequest()(request)
+      .fold(
+        formWithErrors => {
+          val user = formWithErrors.data.getOrElse(userFormKey, "")
+          log warn s"Unable to add user '$user' from '$remoteAddress', form: $formWithErrors"
+          userManager.users.map(users => BadRequest(usersPage(users, formWithErrors, request)))
+        },
+        newUser => {
+          val addCall = userManager.addUser(newUser.username, newUser.pass)
+          addCall.map { addError =>
+            val userFeedback = addError
+              .map(e => UserFeedback.error(s"User '${e.user}' already exists."))
+              .getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
+            Redirect(routes.Accounts.users()).flashing(userFeedback.flash)
+          }
         }
-      }
-    )
+      )
   }
 
   def usersPage(users: Seq[Username], form: Form[NewUser], req: PimpUserRequest) = {
     val addFeedback =
-      form.globalError.map(err => UserFeedback.error(err.message))
+      form.globalError
+        .map(err => UserFeedback.error(err.message))
         .orElse(UserFeedback.flashed(req))
     val listFeedback = UserFeedback.flashed(req.flash, textKey = UsersFeedback)
     tags.users(UsersContent(users, req.user, listFeedback, addFeedback))
@@ -118,36 +120,45 @@ class Accounts(tags: PimpHtml,
   def formAuthenticate = Action.async { request =>
     val remoteAddress = Proxies.realAddress(request)
     val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
-    rememberMeLoginForm.bindFromRequest()(request).fold(
-      formWithErrors => {
-        val user = formWithErrors.data.getOrElse(userFormKey, "")
-        log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
-        val formFeedback = UserFeedback.formed(formWithErrors)
-        fut(BadRequest(tags.login(LoginContent(accs, None, formFeedback, flashFeedback))))
-      },
-      credentials => {
-        val username = credentials.username
-        auth.authenticate(username, credentials.password) flatMap { isValid =>
-          if (isValid) {
-            log info s"Authentication succeeded for user '$username' from '$remoteAddress'."
-            val intendedUrl: String = request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
-            val result = Results.Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> username.name)
-            if (credentials.rememberMe) {
-              log debug s"Remembering auth..."
-              // create token, retrieve cookie
-              val cookie = rememberMe persistNewCookie username
-              cookie.map(c => result.withCookies(c))
-            } else {
-              fut(result)
-            }
-          } else {
-            log.warn(s"Invalid form authentication for user '$username'.")
-            val formFeedback = UserFeedback.error("Incorrect username or password.")
-            fut(BadRequest(tags.login(LoginContent(accs, None, Option(formFeedback), flashFeedback))))
+    rememberMeLoginForm
+      .bindFromRequest()(request)
+      .fold(
+        formWithErrors => {
+          val user = formWithErrors.data.getOrElse(userFormKey, "")
+          log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
+          val formFeedback = UserFeedback.formed(formWithErrors)
+          fut(BadRequest(tags.login(LoginContent(accs, None, formFeedback, flashFeedback))))
+        },
+        credentials => {
+          val username = credentials.username
+          auth.authenticate(username, credentials.password) flatMap {
+            isValid =>
+              if (isValid) {
+                log info s"Authentication succeeded for user '$username' from '$remoteAddress'."
+                val intendedUrl: String =
+                  request.session.get(accs.intendedUri).getOrElse(defaultLoginSuccessPage.url)
+                val result =
+                  Results.Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> username.name)
+                if (credentials.rememberMe) {
+                  log debug s"Remembering auth..."
+                  // create token, retrieve cookie
+                  val cookie = rememberMe persistNewCookie username
+                  cookie.map(c => result.withCookies(c))
+                } else {
+                  fut(result)
+                }
+              } else {
+                log.warn(s"Invalid form authentication for user '$username'.")
+                val formFeedback = UserFeedback.error("Incorrect username or password.")
+                fut(
+                  BadRequest(
+                    tags.login(LoginContent(accs, None, Option(formFeedback), flashFeedback))
+                  )
+                )
+              }
           }
         }
-      }
-    )
+      )
   }
 
   def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
@@ -155,26 +166,30 @@ class Accounts(tags: PimpHtml,
   def formChangePassword = pimpActionAsync { request =>
     val remoteAddress = Proxies.realAddress(request)
     val user = request.user
-    accs.changePasswordForm.bindFromRequest()(request).fold(
-      errors => {
-        val feedback = UserFeedback.formed(errors)
-        val msg = feedback.fold("")(m => s" ${m.message}")
-        log warn s"Unable to change password for user '$user' from '$remoteAddress'.$msg"
-        fut(BadRequest(tags.account(user, feedback)))
-      },
-      pc => {
-        auth.authenticate(user, pc.oldPass) flatMap { isValid =>
-          if (isValid) {
-            userManager.updatePassword(user, pc.newPass) map { _ =>
-              log info s"Password changed for user '$user' from '$remoteAddress'."
-              Redirect(routes.Accounts.account())
-                .flashing(UserFeedback.success(passwordChangedMessage).flash)
+    accs.changePasswordForm
+      .bindFromRequest()(request)
+      .fold(
+        errors => {
+          val feedback = UserFeedback.formed(errors)
+          val msg = feedback.fold("")(m => s" ${m.message}")
+          log warn s"Unable to change password for user '$user' from '$remoteAddress'.$msg"
+          fut(BadRequest(tags.account(user, feedback)))
+        },
+        pc => {
+          auth.authenticate(user, pc.oldPass) flatMap { isValid =>
+            if (isValid) {
+              userManager.updatePassword(user, pc.newPass) map { _ =>
+                log info s"Password changed for user '$user' from '$remoteAddress'."
+                Redirect(routes.Accounts.account())
+                  .flashing(UserFeedback.success(passwordChangedMessage).flash)
+              }
+            } else {
+              fut(
+                BadRequest(tags.account(user, Option(UserFeedback.error(incorrectPasswordMessage))))
+              )
             }
-          } else {
-            fut(BadRequest(tags.account(user, Option(UserFeedback.error(incorrectPasswordMessage)))))
           }
         }
-      }
-    )
+      )
   }
 }

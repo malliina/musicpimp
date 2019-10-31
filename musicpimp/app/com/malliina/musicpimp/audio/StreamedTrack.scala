@@ -9,14 +9,17 @@ import com.malliina.values.UnixPath
 
 import scala.concurrent.duration.Duration
 
-case class StreamedTrack(id: TrackID,
-                         title: String,
-                         artist: String,
-                         album: String,
-                         path: UnixPath,
-                         duration: Duration,
-                         size: StorageSize,
-                         stream: InputStream)(implicit mat: Materializer) extends PlayableTrack {
+case class StreamedTrack(
+  id: TrackID,
+  title: String,
+  artist: String,
+  album: String,
+  path: UnixPath,
+  duration: Duration,
+  size: StorageSize,
+  stream: InputStream
+)(implicit mat: Materializer)
+  extends PlayableTrack {
   override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
     new StreamPlayer(this, eom)
 }

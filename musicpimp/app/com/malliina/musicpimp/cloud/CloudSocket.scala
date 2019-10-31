@@ -31,13 +31,15 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
-case class Deps(playlists: PlaylistService,
-                db: PimpDb,
-                userManager: UserManager[Username, Password],
-                handler: PlaybackMessageHandler,
-                lib: MusicLibrary,
-                stats: PlaybackStats,
-                schedules: ScheduledPlaybackService) {
+case class Deps(
+  playlists: PlaylistService,
+  db: PimpDb,
+  userManager: UserManager[Username, Password],
+  handler: PlaybackMessageHandler,
+  lib: MusicLibrary,
+  stats: PlaybackStats,
+  schedules: ScheduledPlaybackService
+) {
   val ec = db.ec
 }
 
@@ -48,20 +50,24 @@ object CloudSocket {
   val devUri = FullUrl("ws", "localhost:9000", path)
   val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(player: MusicPlayer,
-            id: Option[CloudID],
-            url: FullUrl,
-            handler: JsonHandler,
-            s: Scheduler,
-            deps: Deps,
-            mat: Materializer) =
-    new CloudSocket(player,
-                    url,
-                    id.filter(_.id.nonEmpty) getOrElse CloudID.empty,
-                    Constants.pass,
-                    handler,
-                    s,
-                    deps)(mat)
+  def build(
+    player: MusicPlayer,
+    id: Option[CloudID],
+    url: FullUrl,
+    handler: JsonHandler,
+    s: Scheduler,
+    deps: Deps,
+    mat: Materializer
+  ) =
+    new CloudSocket(
+      player,
+      url,
+      id.filter(_.id.nonEmpty) getOrElse CloudID.empty,
+      Constants.pass,
+      handler,
+      s,
+      deps
+    )(mat)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -85,17 +91,20 @@ object CloudSocket {
   *
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or may not exist, depending on cmd.
   */
-class CloudSocket(player: MusicPlayer,
-                  uri: FullUrl,
-                  username: CloudID,
-                  password: Password,
-                  alarmHandler: JsonHandler,
-                  s: Scheduler,
-                  deps: Deps)(implicit mat: Materializer)
-    extends JsonSocket8(
-      uri,
-      CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
-      HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)) {
+class CloudSocket(
+  player: MusicPlayer,
+  uri: FullUrl,
+  username: CloudID,
+  password: Password,
+  alarmHandler: JsonHandler,
+  s: Scheduler,
+  deps: Deps
+)(implicit mat: Materializer)
+  extends JsonSocket8(
+    uri,
+    CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
+    HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)
+  ) {
   val messageParser = CloudMessageParser
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
@@ -211,7 +220,8 @@ class CloudSocket(player: MusicPlayer,
         databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost)))
       case GetPlaylists(user) =>
         databaseResponse(
-          playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost)))
+          playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost))
+        )
       case GetPlaylist(id, user) =>
         withDatabaseExcuse(request) {
           playlists.playlistMeta(id, user).map { maybePlaylist =>
@@ -282,9 +292,13 @@ class CloudSocket(player: MusicPlayer,
       case beamCommand: BeamCommand =>
         Rest
           .beam(beamCommand, lib)
-          .map(e =>
-            e.fold(err => log.warn(s"Unable to beam. $err"),
-                   _ => log info "Beaming completed successfully."))
+          .map(
+            e =>
+              e.fold(
+                err => log.warn(s"Unable to beam. $err"),
+                _ => log info "Beaming completed successfully."
+              )
+          )
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
       case _ =>

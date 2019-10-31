@@ -12,7 +12,9 @@ object Auths {
   private val log = Logger(getClass)
 
   val session = Authenticator[AuthedRequest] { rh =>
-    val result = rh.session.get(com.malliina.play.auth.Auth.DefaultSessionKey).map(Username.apply)
+    val result = rh.session
+      .get(com.malliina.play.auth.Auth.DefaultSessionKey)
+      .map(Username.apply)
       .map(user => Right(new AuthedRequest(user, rh)))
       .getOrElse(Left(InvalidCredentials(rh)))
     fut(result)
@@ -31,7 +33,9 @@ object Auths {
     *
     * @return the first result that satisfies `p`, or the last result if there's no match
     */
-  def first[T, R](ts: List[T])(f: T => Future[R])(p: R => Boolean)(implicit ec: ExecutionContext): Future[R] =
+  def first[T, R](
+    ts: List[T]
+  )(f: T => Future[R])(p: R => Boolean)(implicit ec: ExecutionContext): Future[R] =
     ts match {
       case Nil =>
         Future.failed(new NoSuchElementException)
@@ -43,7 +47,9 @@ object Auths {
     }
 }
 
-class Auths(userManager: UserManager[Username, Password], rememberMe: RememberMe)(implicit ec: ExecutionContext) {
+class Auths(userManager: UserManager[Username, Password], rememberMe: RememberMe)(
+  implicit ec: ExecutionContext
+) {
   private val database = Authenticator[AuthedRequest] { rh =>
     com.malliina.play.auth.Auth.basicCredentials(rh) map { creds =>
       userManager.authenticate(creds.username, creds.password) map { isValid =>

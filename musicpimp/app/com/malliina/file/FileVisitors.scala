@@ -6,14 +6,17 @@ import java.nio.file.attribute.BasicFileAttributes
 /** Directory listing classes using Java 7 APIs.
   */
 object FileVisitors {
-  def build(srcDir: Path,
-            recursive: Boolean = true,
-            ageLimitHours: Option[Long] = None,
-            sortByAge: Boolean = true) = {
+  def build(
+    srcDir: Path,
+    recursive: Boolean = true,
+    ageLimitHours: Option[Long] = None,
+    sortByAge: Boolean = true
+  ) = {
     if (recursive) {
       if (sortByAge) {
-        ageLimitHours.fold(new FilteringFileVisitor with FileSorting)(age =>
-          new AgeLimitFilteringFileVisitor(age) with FileSorting)
+        ageLimitHours.fold(new FilteringFileVisitor with FileSorting)(
+          age => new AgeLimitFilteringFileVisitor(age) with FileSorting
+        )
       } else {
         ageLimitHours.fold(new FilteringFileVisitor)(age => new AgeLimitFilteringFileVisitor(age))
       }
@@ -22,17 +25,21 @@ object FileVisitors {
       if (sortByAge) {
         ageLimitHours.fold(new FilteringFileVisitor with FileSorting with NonRecursiveSearch {
           val startDir = srcDir
-        })(age =>
-          new AgeLimitFilteringFileVisitor(age) with FileSorting with NonRecursiveSearch {
-            val startDir = srcDir
-        })
+        })(
+          age =>
+            new AgeLimitFilteringFileVisitor(age) with FileSorting with NonRecursiveSearch {
+              val startDir = srcDir
+            }
+        )
       } else {
         ageLimitHours.fold(new FilteringFileVisitor with NonRecursiveSearch {
           val startDir = srcDir
-        })(age =>
-          new AgeLimitFilteringFileVisitor(age) with NonRecursiveSearch {
-            val startDir = srcDir
-        })
+        })(
+          age =>
+            new AgeLimitFilteringFileVisitor(age) with NonRecursiveSearch {
+              val startDir = srcDir
+            }
+        )
       }
 
     }
@@ -79,8 +86,8 @@ object FileVisitors {
     * @param ageLimitHours the threshold age in hours: files with an older timestamp, as defined by <code>comparisonTimestamp</code>, will qualify for inclusion
     */
   class AgeLimitFilteringFileVisitor(ageLimitHours: Long)
-      extends FilteringFileVisitor
-      with TimestampComparison {
+    extends FilteringFileVisitor
+    with TimestampComparison {
     val ageLimitMillis = ageLimitHours * 60 * 60 * 1000
 
     override def qualifies(file: Path, attrs: BasicFileAttributes) = {
@@ -116,8 +123,8 @@ object FileVisitors {
   }
 
   trait FileSorting extends FileCollectingVisitor with TimestampComparison {
-    override def files = super.files.sortBy(file =>
-      comparisonTimestamp(Files.readAttributes(file, classOf[BasicFileAttributes])))
+    override def files = super.files
+      .sortBy(file => comparisonTimestamp(Files.readAttributes(file, classOf[BasicFileAttributes])))
   }
 
   trait NonRecursiveSearch extends SimpleFileVisitor[Path] {

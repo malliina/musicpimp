@@ -17,7 +17,7 @@ object UuidFutureMessaging {
 }
 
 abstract class UuidFutureMessaging(scheduler: Scheduler)(implicit ec: ExecutionContext)
-    extends FutureMessaging[JsValue] {
+  extends FutureMessaging[JsValue] {
   val ongoing = TrieMap.empty[RequestID, Promise[JsValue]]
 
   def extract(response: JsValue): Option[BodyAndId]

@@ -21,8 +21,19 @@ object AlarmsHtml extends PimpBootstrap {
         leadPara("No push tokens.")
       } else {
         table(`class` := s"${tables.defaultClass} tokens-table")(
-          thead(Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))),
-          tbody(tokens.map(t => tr(td(t.token.token), td(t.platform.platform), td(`class` := "table-button")(removalForm(t)))))
+          thead(
+            Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))
+          ),
+          tbody(
+            tokens.map(
+              t =>
+                tr(
+                  td(t.token.token),
+                  td(t.platform.platform),
+                  td(`class` := "table-button")(removalForm(t))
+                )
+            )
+          )
         )
       }
     Seq(
@@ -67,8 +78,17 @@ object AlarmsHtml extends PimpBootstrap {
 
   def alarmActions(id: String) =
     divClass(btn.group)(
-      a(href := routes.Alarms.editAlarm(id), `class` := s"${btn.secondary} ${btn.sm}")(iconic("edit"), " Edit"),
-      button(`type` := Button, `class` := s"${btn.secondary} ${btn.sm} dropdown-toggle dropdown-toggle-split", dataToggle := Dropdown, aria.haspopup := True, aria.expanded := False),
+      a(href := routes.Alarms.editAlarm(id), `class` := s"${btn.secondary} ${btn.sm}")(
+        iconic("edit"),
+        " Edit"
+      ),
+      button(
+        `type` := Button,
+        `class` := s"${btn.secondary} ${btn.sm} dropdown-toggle dropdown-toggle-split",
+        dataToggle := Dropdown,
+        aria.haspopup := True,
+        aria.expanded := False
+      ),
       divClass(DropdownMenu)(
         jsListElem(DeleteClass, id, "delete", "Delete"),
         jsListElem(PlayClass, id, "play-circle", "Play"),
@@ -77,7 +97,10 @@ object AlarmsHtml extends PimpBootstrap {
     )
 
   def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
-    a(href := "#", `class` := names(Seq("dropdown-item", clazz)), PimpHtml.dataIdAttr := dataId)(iconic(glyph), s" $linkText")
+    a(href := "#", `class` := names(Seq("dropdown-item", clazz)), PimpHtml.dataIdAttr := dataId)(
+      iconic(glyph),
+      s" $linkText"
+    )
 
   def alarmEditorContent(conf: AlarmContent) = {
     val m = conf.m
@@ -93,7 +116,13 @@ object AlarmsHtml extends PimpBootstrap {
           numberTextIn(form(Minutes), "Minute", "mm", m),
           weekdayCheckboxes(form(Days), m),
           formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hide")),
-          formTextIn(form(TrackKey), "Track", m, Option("Start typing the name of the track..."), inClasses = Seq(Selector)),
+          formTextIn(
+            form(TrackKey),
+            "Track",
+            m,
+            Option("Start typing the name of the track..."),
+            inClasses = Seq(Selector)
+          ),
           divClass(FormGroup)(enabledCheck(form(Enabled), "Enabled")),
           saveButton(),
           conf.feedback.fold(empty)(fb => PimpHtml.feedbackDiv(fb))
@@ -132,38 +161,79 @@ object AlarmsHtml extends PimpBootstrap {
   def formCheckField(field: Field, isChecked: Boolean, labelText: String, checkId: String) =
     checkField(field.name, field.value, isChecked, labelText, checkId)
 
-  def checkField(checkName: String, checkValue: Option[String], isChecked: Boolean, labelText: String, checkId: String) = {
+  def checkField(
+    checkName: String,
+    checkValue: Option[String],
+    isChecked: Boolean,
+    labelText: String,
+    checkId: String
+  ) = {
     val checkedAttr = if (isChecked) checked else empty
     val valueAttr = checkValue.map(value := _).getOrElse(empty)
     divClass("form-check")(
-      input(`type` := Checkbox, `class` := "form-check-input", name := checkName, id := checkId, valueAttr, checkedAttr),
+      input(
+        `type` := Checkbox,
+        `class` := "form-check-input",
+        name := checkName,
+        id := checkId,
+        valueAttr,
+        checkedAttr
+      ),
       label(`class` := "form-check-label", `for` := checkId)(labelText)
     )
   }
 
   def numberTextIn(field: Field, label: String, placeholderValue: String, m: Messages) =
-    formTextIn(field, label, m, Option(placeholderValue), typeName = Number, inputWidth = col.sm.two)
+    formTextIn(
+      field,
+      label,
+      m,
+      Option(placeholderValue),
+      typeName = Number,
+      inputWidth = col.sm.two
+    )
 
-  def formTextIn(field: Field,
-                 labelText: String,
-                 m: Messages,
-                 placeholder: Option[String] = None,
-                 typeName: String = Text,
-                 inputWidth: String = col.sm.width("10"),
-                 inClasses: Seq[String] = Nil,
-                 formGroupClasses: Seq[String] = Nil,
-                 defaultValue: String = "") = {
+  def formTextIn(
+    field: Field,
+    labelText: String,
+    m: Messages,
+    placeholder: Option[String] = None,
+    typeName: String = Text,
+    inputWidth: String = col.sm.width("10"),
+    inClasses: Seq[String] = Nil,
+    formGroupClasses: Seq[String] = Nil,
+    defaultValue: String = ""
+  ) = {
     val errorClass = if (field.hasErrors) Seq(HasError) else Nil
     divClass(names(Seq(FormGroup) ++ errorClass ++ formGroupClasses))(
       labelFor(field.id)(labelText),
-      inputField(field, typeName, defaultValue, placeholder, `class` := names(Seq(FormControl) ++ inClasses)),
+      inputField(
+        field,
+        typeName,
+        defaultValue,
+        placeholder,
+        `class` := names(Seq(FormControl) ++ inClasses)
+      ),
       helpSpan(field, m)
     )
   }
 
-  def inputField(field: Field, typeName: String, defaultValue: String, placeHolder: Option[String], more: Modifier*) = {
+  def inputField(
+    field: Field,
+    typeName: String,
+    defaultValue: String,
+    placeHolder: Option[String],
+    more: Modifier*
+  ) = {
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
-    input(`type` := typeName, id := field.id, name := field.name, value := field.value.getOrElse(defaultValue), placeholderAttr, more)
+    input(
+      `type` := typeName,
+      id := field.id,
+      name := field.name,
+      value := field.value.getOrElse(defaultValue),
+      placeholderAttr,
+      more
+    )
   }
 
   def names(ns: Seq[String]) = ns.mkString(" ")

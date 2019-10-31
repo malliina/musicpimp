@@ -9,8 +9,11 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request}
 
 import scala.concurrent.ExecutionContext
 
-class CloudAuth(actions: ActionBuilder[Request, AnyContent], auth: Authenticator[AuthedRequest], mat: Materializer)
-  extends BaseSecurity(actions, CloudAuth.redirecting(auth), mat)
+class CloudAuth(
+  actions: ActionBuilder[Request, AnyContent],
+  auth: Authenticator[AuthedRequest],
+  mat: Materializer
+) extends BaseSecurity(actions, CloudAuth.redirecting(auth), mat)
 
 object CloudAuth {
   def session(actions: ActionBuilder[Request, AnyContent], mat: Materializer): CloudAuth =

@@ -27,12 +27,14 @@ class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution, actions: Defaul
     .getAppender[DefaultAkkaAppender](appenderName)
     .logEvents
     .map { e =>
-      JVMLogEntry(e.level.levelStr,
-                  e.message,
-                  e.loggerName,
-                  e.threadName,
-                  e.timeFormatted,
-                  e.stackTrace)
+      JVMLogEntry(
+        e.level.levelStr,
+        e.message,
+        e.loggerName,
+        e.threadName,
+        e.timeFormatted,
+        e.stackTrace
+      )
     }
     .groupedWithin(5, 100.millis)
     .filter(_.nonEmpty)

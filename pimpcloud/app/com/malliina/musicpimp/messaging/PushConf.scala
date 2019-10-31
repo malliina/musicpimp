@@ -5,10 +5,12 @@ import com.malliina.push.wns.WNSCredentials
 import com.malliina.values.ErrorMessage
 import play.api.Configuration
 
-case class PushConf(apns: APNSTokenConf,
-                    gcmApiKey: String,
-                    adm: ADMCredentials,
-                    wns: WNSCredentials)
+case class PushConf(
+  apns: APNSTokenConf,
+  gcmApiKey: String,
+  adm: ADMCredentials,
+  wns: WNSCredentials
+)
 
 object PushConf {
   val GcmApiKey = "push.gcm.apiKey"
@@ -17,7 +19,8 @@ object PushConf {
   val WnsPackageSid = "push.wns.packageSid"
   val WnsClientSecret = "push.wns.clientSecret"
 
-  def orFail(conf: Configuration) = apply(conf).fold(err => throw new Exception(err.message), identity)
+  def orFail(conf: Configuration) =
+    apply(conf).fold(err => throw new Exception(err.message), identity)
 
   def apply(conf: Configuration): Either[ErrorMessage, PushConf] = {
     def get(key: String) = conf.getOptional[String](key).toRight(ErrorMessage(s"Missing: '$key'."))

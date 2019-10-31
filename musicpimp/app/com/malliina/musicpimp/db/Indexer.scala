@@ -128,7 +128,8 @@ class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: 
   } yield count
 
   private def saveFileCount(count: Int) = Future(
-    FileUtilities.stringToFile(count.toString, indexFile))
+    FileUtilities.stringToFile(count.toString, indexFile)
+  )
 
   private def loadSavedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
 

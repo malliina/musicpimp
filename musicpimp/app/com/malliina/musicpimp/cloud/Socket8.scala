@@ -19,8 +19,11 @@ object Socket8 {
   private val log = Logger(getClass)
 }
 
-abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
-  extends WebSocketBase[T] {
+abstract class Socket8[T](
+  val uri: FullUrl,
+  socketFactory: SSLSocketFactory,
+  headers: (String, String)*
+) extends WebSocketBase[T] {
 
   protected val connectPromise = Promise[Unit]()
   // For some reason, onDisconnected() is called even when the socket has never been connected.
@@ -36,7 +39,10 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
     case (key, value) => socket.addHeader(key, value)
   }
   val adapter = new WebSocketAdapter {
-    override def onConnected(websocket: WebSocket, headers: util.Map[String, util.List[String]]): Unit = {
+    override def onConnected(
+      websocket: WebSocket,
+      headers: util.Map[String, util.List[String]]
+    ): Unit = {
       hasBeenConnected.set(true)
       connectPromise.trySuccess(())
       Socket8.this.onConnect(websocket.getURI)
@@ -46,14 +52,18 @@ abstract class Socket8[T](val uri: FullUrl, socketFactory: SSLSocketFactory, hea
       Socket8.this.onRawMessage(text)
     }
 
-    override def onDisconnected(websocket: WebSocket,
-                                serverCloseFrame: WebSocketFrame,
-                                clientCloseFrame: WebSocketFrame,
-                                closedByServer: Boolean): Unit = {
+    override def onDisconnected(
+      websocket: WebSocket,
+      serverCloseFrame: WebSocketFrame,
+      clientCloseFrame: WebSocketFrame,
+      closedByServer: Boolean
+    ): Unit = {
       if (hasBeenConnected.get()) {
         val uri = websocket.getURI
         val suffix = if (closedByServer) " by the server" else ""
-        connectPromise tryFailure new NotConnectedException(s"The websocket to $uri was closed$suffix.")
+        connectPromise tryFailure new NotConnectedException(
+          s"The websocket to $uri was closed$suffix."
+        )
         Socket8.this.onClose()
       }
     }

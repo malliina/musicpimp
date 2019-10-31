@@ -43,12 +43,13 @@ object NoCacheByteStreams {
   * 5) Read the request ID from the response and push the response to the channel (or complete the promise)
   * 6) EOF and close the channel; this completes the request-response cycle
   */
-class NoCacheByteStreams(id: CloudID,
-                         val jsonOut: ActorRef,
-                         val mat: Materializer,
-                         errorHandler: HttpErrorHandler,
-                         onUpdate: () => Unit)
-  extends Streamer {
+class NoCacheByteStreams(
+  id: CloudID,
+  val jsonOut: ActorRef,
+  val mat: Materializer,
+  errorHandler: HttpErrorHandler,
+  onUpdate: () => Unit
+) extends Streamer {
 
   implicit val ec = mat.executionContext
   private val iteratees = TrieMap.empty[RequestID, StreamEndpoint]
@@ -57,10 +58,14 @@ class NoCacheByteStreams(id: CloudID,
     get(request) map { info =>
       // info.send is called sequentially, i.e. the next send call occurs only after the previous call has completed
       StreamParsers.multiPartByteStreaming(
-        bytes => info.send(bytes)
-          .map(analyzeResult(info, bytes, _))
-          .recover(onOfferError(request, info, bytes)),
-        maxUploadSize, errorHandler)(mat)
+        bytes =>
+          info
+            .send(bytes)
+            .map(analyzeResult(info, bytes, _))
+            .recover(onOfferError(request, info, bytes)),
+        maxUploadSize,
+        errorHandler
+      )(mat)
     }
 
   def snapshot: Seq[PimpStream] = iteratees.map {
@@ -73,7 +78,8 @@ class NoCacheByteStreams(id: CloudID,
     */
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result = {
     val request = RequestID.random()
-    val userAgent = req.headers.get(HeaderNames.USER_AGENT)
+    val userAgent = req.headers
+      .get(HeaderNames.USER_AGENT)
       .map(ua => s"user agent $ua")
       .getOrElse("unknown user agent")
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, ByteStringBufferSize)
@@ -84,15 +90,22 @@ class NoCacheByteStreams(id: CloudID,
     // Watches completion and disposes of resources
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails
-    val src = source.watchTermination()((_, task) => task.onComplete { res =>
-      remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
-    })
+    val src = source.watchTermination()(
+      (_, task) =>
+        task.onComplete { res =>
+          remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
+        }
+    )
     connectSource(request, src, track, range)
   }
 
   def exists(request: RequestID): Boolean = iteratees contains request
 
-  override def remove(request: RequestID, shouldAbort: Boolean, wasSuccess: Boolean): Future[Boolean] = {
+  override def remove(
+    request: RequestID,
+    shouldAbort: Boolean,
+    wasSuccess: Boolean
+  ): Future[Boolean] = {
     val desc = if (wasSuccess) "successful" else "failed"
     val description = s"$desc request '$request'"
     val disposal = disposeUUID(request).map { fut =>
@@ -118,12 +131,18 @@ class NoCacheByteStreams(id: CloudID,
     disposal
   }
 
-  protected def connectSource(request: RequestID,
-                              source: Source[ByteString, _],
-                              track: Track,
-                              range: ContentRange): Result = {
+  protected def connectSource(
+    request: RequestID,
+    source: Source[ByteString, _],
+    track: Track,
+    range: ContentRange
+  ): Result = {
     val status = if (range.isAll) Results.Ok else Results.PartialContent
-    val entity = HttpEntity.Streamed(source, Option(range.contentLength.toLong), Option(HttpConstants.AudioMpeg))
+    val entity = HttpEntity.Streamed(
+      source,
+      Option(range.contentLength.toLong),
+      Option(HttpConstants.AudioMpeg)
+    )
     val result = status.sendEntity(entity)
     connect(request, track, range)
     result
@@ -161,17 +180,25 @@ class NoCacheByteStreams(id: CloudID,
 
   protected def streamChanged(): Unit = onUpdate()
 
-  protected def analyzeResult(dest: StreamEndpoint, bytes: ByteString, result: QueueOfferResult): Unit = {
+  protected def analyzeResult(
+    dest: StreamEndpoint,
+    bytes: ByteString,
+    result: QueueOfferResult
+  ): Unit = {
     val suffix = s" for ${bytes.length} bytes of ${dest.describe}"
     result match {
-      case Enqueued => ()
-      case Dropped => log.warn(s"Offer dropped$suffix")
-      case Failure(t) => log.error(s"Offer failed$suffix", t)
+      case Enqueued    => ()
+      case Dropped     => log.warn(s"Offer dropped$suffix")
+      case Failure(t)  => log.error(s"Offer failed$suffix", t)
       case QueueClosed => () //log.error(s"Queue closed$suffix")
     }
   }
 
-  protected def onOfferError(request: RequestID, dest: StreamEndpoint, bytes: ByteString): PartialFunction[Throwable, Unit] = {
+  protected def onOfferError(
+    request: RequestID,
+    dest: StreamEndpoint,
+    bytes: ByteString
+  ): PartialFunction[Throwable, Unit] = {
     case iae: IllegalStateException if Option(iae.getMessage).contains(DetachedMessage) =>
       log info s"Client disconnected '$request'."
       remove(request, shouldAbort = true, wasSuccess = false)

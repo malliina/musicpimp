@@ -13,16 +13,20 @@ class CloudPushClient(host: FullUrl) {
   val pushUrl = host append "/push"
 
   def push(pushTask: PushTask)(implicit ec: ExecutionContext): Future[PushResult] =
-    Rest.defaultClient.postJson(pushUrl, Json.obj(Cmd -> PushValue, Body -> pushTask)).flatMap { res =>
-      if (res.code == 200) {
-        res.parse[PushResponse].map { response =>
-          Future.successful(response.result)
-        }.getOrElse {
-          Future.failed(new PushJsonException(res))
+    Rest.defaultClient.postJson(pushUrl, Json.obj(Cmd -> PushValue, Body -> pushTask)).flatMap {
+      res =>
+        if (res.code == 200) {
+          res
+            .parse[PushResponse]
+            .map { response =>
+              Future.successful(response.result)
+            }
+            .getOrElse {
+              Future.failed(new PushJsonException(res))
+            }
+        } else {
+          Future.failed(new OkPushException(res))
         }
-      } else {
-        Future.failed(new OkPushException(res))
-      }
     }
 }
 

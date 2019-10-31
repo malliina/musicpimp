@@ -39,8 +39,10 @@ trait BasePlaylist[T] extends IPlaylist[T] {
     require(newPlaylistPosition >= 0, s"Negative playlist position: $newPlaylistPosition")
     songs()
     val songCount = songs.get.size
-    require(newPlaylistPosition < songCount,
-            s"No song at index: $newPlaylistPosition, playlist only contains $songCount tracks")
+    require(
+      newPlaylistPosition < songCount,
+      s"No song at index: $newPlaylistPosition, playlist only contains $songCount tracks"
+    )
     val changed = index != newPlaylistPosition
 
     pos.set(newPlaylistPosition)

@@ -17,7 +17,8 @@ class DiscoGsTests extends FunSuite {
   ignore("download cover") {
     val creds = DiscoGsOAuthCredentials("", "", "", "")
     using(new DiscoClient(creds, Covers.tempDir)) { client =>
-      val result = client.downloadCover("Iron Maiden", "Powerslave")
+      val result = client
+        .downloadCover("Iron Maiden", "Powerslave")
         .map(p => s"Downloaded to $p")
         .recover { case t => s"Failure: $t" }
       val r = Await.result(result, 20.seconds)

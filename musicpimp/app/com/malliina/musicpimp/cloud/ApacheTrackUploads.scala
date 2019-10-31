@@ -28,7 +28,8 @@ object ApacheTrackUploads {
     new ApacheTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
 }
 
-class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
+class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext)
+  extends AutoCloseable {
   implicit val exec: ExecutionContext = ec
   val scheduler = Executors.newSingleThreadScheduledExecutor()
   private val ongoing = TrieMap.empty[RequestID, TrustAllMultipartRequest]
@@ -48,15 +49,20 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
 
   def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] = {
     val range = rangedTrack.range
-    withUploadApache(rangedTrack.id, request, _ => range.contentSize, (file, req) => {
-      if (range.isAll) {
-        log info s"Uploading $file, request $request"
-        req.addFile(file)
-      } else {
-        log info s"Uploading $file, $range, request $request"
-        req.addRangedFile(file, range)
+    withUploadApache(
+      rangedTrack.id,
+      request,
+      _ => range.contentSize,
+      (file, req) => {
+        if (range.isAll) {
+          log info s"Uploading $file, request $request"
+          req.addFile(file)
+        } else {
+          log info s"Uploading $file, $range, request $request"
+          req.addRangedFile(file, range)
+        }
       }
-    })
+    )
   }
 
   def cancelSoon(request: RequestID) = cancelIn(request, 5.seconds)
@@ -70,10 +76,12 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
     log info s"Cancelled $request"
   }
 
-  private def withUploadApache(trackID: TrackID,
-                               request: RequestID,
-                               sizeCalc: Path => StorageSize,
-                               content: (Path, MultipartRequest) => Unit): Future[Unit] = {
+  private def withUploadApache(
+    trackID: TrackID,
+    request: RequestID,
+    sizeCalc: Path => StorageSize,
+    content: (Path, MultipartRequest) => Unit
+  ): Future[Unit] = {
     lib.findFile(trackID) flatMap { maybePath =>
       maybePath.map { path =>
         Future {
@@ -84,7 +92,10 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
             // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
             log info s"Aborted upload of $request"
           case e: Exception =>
-            log.warn(s"Upload of track $trackID with request ID $request terminated exceptionally", e)
+            log.warn(
+              s"Upload of track $trackID with request ID $request terminated exceptionally",
+              e
+            )
         }
       }.getOrElse {
         val msg = s"Unable to find track: $trackID"
@@ -96,12 +107,14 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
 
   /** Blocks until the upload completes.
     */
-  private def uploadMediaApache(uploadUri: FullUrl,
-                                trackID: TrackID,
-                                path: Path,
-                                request: RequestID,
-                                sizeCalc: Path => StorageSize,
-                                content: (Path, MultipartRequest) => Unit): Unit = {
+  private def uploadMediaApache(
+    uploadUri: FullUrl,
+    trackID: TrackID,
+    path: Path,
+    request: RequestID,
+    sizeCalc: Path => StorageSize,
+    content: (Path, MultipartRequest) => Unit
+  ): Unit = {
     def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request"
 
     Util.using(new TrustAllMultipartRequest(uploadUri.url)) { req =>
@@ -115,7 +128,9 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
         val entity = response.getEntity
         val len = entity.getContentLength
         val contentType = entity.getContentType.getValue
-        log error appendMeta(s"Non-success response code $code len $len type $contentType for track $trackID")
+        log error appendMeta(
+          s"Non-success response code $code len $len type $contentType for track $trackID"
+        )
       } else {
         val prefix = s"Uploaded ${sizeCalc(path)} of $trackID"
         log info appendMeta(s"$prefix with response $code")
@@ -123,7 +138,11 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
     }
   }
 
-  private def stored[T](request: RequestID, uploadRequest: TrustAllMultipartRequest, body: => T): T = {
+  private def stored[T](
+    request: RequestID,
+    uploadRequest: TrustAllMultipartRequest,
+    body: => T
+  ): T = {
     ongoing.put(request, uploadRequest)
     try {
       body

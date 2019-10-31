@@ -4,7 +4,8 @@ import com.malliina.musicmeta.AppComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-class AppTests extends AppSuite(new AppComponents(_, _ => APITests.fakeCreds, _ => APITests.fakeGoogle)) {
+class AppTests
+  extends AppSuite(new AppComponents(_, _ => APITests.fakeCreds, _ => APITests.fakeGoogle)) {
   test("router.ping") {
     val result = getRequest("/ping")
     assert(status(result) === 200)

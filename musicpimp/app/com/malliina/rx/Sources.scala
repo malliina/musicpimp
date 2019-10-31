@@ -19,10 +19,13 @@ object Sources {
     (processedActor, Source.fromPublisher(publisher))
   }
 
-  def timeoutAfter[T](duration: FiniteDuration, promise: Promise[T])(implicit s: Scheduler,
-                                                                     ec: ExecutionContext) = {
+  def timeoutAfter[T](
+    duration: FiniteDuration,
+    promise: Promise[T]
+  )(implicit s: Scheduler, ec: ExecutionContext) = {
     val soonFailing = akka.pattern.after(duration, s)(
-      Future.failed(new concurrent.TimeoutException(s"Timed out after $duration.")))
+      Future.failed(new concurrent.TimeoutException(s"Timed out after $duration."))
+    )
     Future.firstCompletedOf(Seq(promise.future, soonFailing))
   }
 }

@@ -13,7 +13,8 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandler) extends CloudAuthentication {
+class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandler)
+  extends CloudAuthentication {
   private var currentServer: Option[ServerRequest] = None
 
   override lazy val phone: Authenticator[PhoneConnection] =
@@ -22,22 +23,33 @@ class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandle
   override lazy val server: Authenticator[ServerRequest] =
     Authenticator(rh => authServer(rh, errorHandler))
 
-  override def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]] =
+  override def authServer(
+    req: RequestHeader,
+    errorHandler: HttpErrorHandler
+  ): Future[Either[AuthFailure, ServerRequest]] =
     Future.successful(Right(getOrInit(req, errorHandler)))
 
   override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
-    Future.successful(Right(PhoneConnection(Username("test"), req, getOrInit(req, errorHandler).socket)))
+    Future.successful(
+      Right(PhoneConnection(Username("test"), req, getOrInit(req, errorHandler).socket))
+    )
 
   override def authWebClient(creds: CloudCredentials): PhoneAuthResult =
     Future.successful(Left(InvalidCredentials(creds.rh)))
 
   def getOrInit(req: RequestHeader, errorHandler: HttpErrorHandler) = {
-    val s: ServerRequest = currentServer.getOrElse(ServerRequest(FakeAuth.FakeUuid, fakeServerSocket(req, errorHandler, mat)))
+    val s: ServerRequest = currentServer.getOrElse(
+      ServerRequest(FakeAuth.FakeUuid, fakeServerSocket(req, errorHandler, mat))
+    )
     currentServer = Option(s)
     s
   }
 
-  def fakeServerSocket(req: RequestHeader, errorHandler: HttpErrorHandler, mat: Materializer): PimpServerSocket = {
+  def fakeServerSocket(
+    req: RequestHeader,
+    errorHandler: HttpErrorHandler,
+    mat: Materializer
+  ): PimpServerSocket = {
     val actor = as.actorOf(NoopActor.props())
     new PimpServerSocket(actor, CloudID("test"), req, mat, as.scheduler, errorHandler, () => ())
   }

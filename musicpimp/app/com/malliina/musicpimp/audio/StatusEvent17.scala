@@ -9,17 +9,19 @@ import play.api.libs.json.{OWrites, Writes}
 
 import scala.concurrent.duration.Duration
 
-case class StatusEvent17(id: TrackID,
-                         title: String,
-                         artist: String,
-                         album: String,
-                         state: PlayState,
-                         position: Duration,
-                         duration: Duration,
-                         gain: Float,
-                         mute: Boolean,
-                         playlist: Seq[FullTrack],
-                         index: Int)
+case class StatusEvent17(
+  id: TrackID,
+  title: String,
+  artist: String,
+  album: String,
+  state: PlayState,
+  position: Duration,
+  duration: Duration,
+  gain: Float,
+  mute: Boolean,
+  playlist: Seq[FullTrack],
+  index: Int
+)
 
 object StatusEvent17 {
   implicit def status17writer: OWrites[StatusEvent17] =
@@ -50,7 +52,7 @@ object StatusEvent17 {
     Closed,
     Duration.fromNanos(0),
     Duration.fromNanos(0),
-    0F,
+    0f,
     false,
     Seq.empty,
     0

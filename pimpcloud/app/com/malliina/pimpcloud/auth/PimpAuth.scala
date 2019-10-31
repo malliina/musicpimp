@@ -18,7 +18,9 @@ object PimpAuth {
   }
 }
 
-case class CloudCredentials(cloudID: CloudID,
-                            username: Username,
-                            password: Password,
-                            rh: RequestHeader)
+case class CloudCredentials(
+  cloudID: CloudID,
+  username: Username,
+  password: Password,
+  rh: RequestHeader
+)

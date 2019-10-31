@@ -14,12 +14,13 @@ import play.api.Logger
 /**
   * @param trackId the track to play when this job runs
   */
-case class PlaybackJob(id: Option[String],
-                       when: ClockSchedule,
-                       trackId: TrackID,
-                       player: MusicPlayer,
-                       lib: MusicLibrary)
-    extends Job {
+case class PlaybackJob(
+  id: Option[String],
+  when: ClockSchedule,
+  trackId: TrackID,
+  player: MusicPlayer,
+  lib: MusicLibrary
+) extends Job {
   def describe: String = s"Plays $trackId"
 
   override def run(): Unit =

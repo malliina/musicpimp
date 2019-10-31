@@ -16,24 +16,25 @@ object JsonHandler {
 
 class JsonHandler(musicPlayer: MusicPlayer, val schedules: ScheduledPlaybackService) {
   def handle(json: JsValue): JsResult[Unit] =
-    json.validate[AlarmCommand]
+    json
+      .validate[AlarmCommand]
       .map(handleCommand)
       .recover { case (err: JsError) => log.warn(s"JSON error: '$err'.") }
 
   def handleCommand(cmd: AlarmCommand): Unit = cmd match {
-    case SaveCmd(ap) => schedules.save(ap.toConf)
-    case DeleteCmd(id) => schedules.remove(id)
-    case StartCmd(id) => schedules.findJob(id).foreach(_.run())
-    case StopPlayback => musicPlayer.stop()
+    case SaveCmd(ap)              => schedules.save(ap.toConf)
+    case DeleteCmd(id)            => schedules.remove(id)
+    case StartCmd(id)             => schedules.findJob(id).foreach(_.run())
+    case StopPlayback             => musicPlayer.stop()
     case AddWindowsDevice(device) => PushUrls add device
-    case RemovePushTag(tag) => PushUrls removeID tag.tag
+    case RemovePushTag(tag)       => PushUrls removeID tag.tag
     case RemoveWindowsDevice(url) => PushUrls removeURL url
-    case goog: AddGoogleDevice => GoogleDevices add goog.dest
-    case RemoveGoogleDevice(tag) => GoogleDevices removeID tag.tag
-    case amzn: AddAmazonDevice => AmazonDevices add amzn.dest
-    case RemoveAmazonDevice(tag) => AmazonDevices removeID tag.tag
-    case apns: AddApnsDevice => APNSDevices add apns.dest
-    case RemoveApnsDevice(tag) => APNSDevices removeID tag.tag
-    case _ => log.warn(s"Unknown command: $cmd")
+    case goog: AddGoogleDevice    => GoogleDevices add goog.dest
+    case RemoveGoogleDevice(tag)  => GoogleDevices removeID tag.tag
+    case amzn: AddAmazonDevice    => AmazonDevices add amzn.dest
+    case RemoveAmazonDevice(tag)  => AmazonDevices removeID tag.tag
+    case apns: AddApnsDevice      => APNSDevices add apns.dest
+    case RemoveApnsDevice(tag)    => APNSDevices removeID tag.tag
+    case _                        => log.warn(s"Unknown command: $cmd")
   }
 }

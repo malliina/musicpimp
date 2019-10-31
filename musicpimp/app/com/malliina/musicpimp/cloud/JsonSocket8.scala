@@ -7,9 +7,7 @@ import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.util.Try
 
-class JsonSocket8(uri: FullUrl,
-                  socketFactory: SSLSocketFactory,
-                  headers: (String, String)*)
+class JsonSocket8(uri: FullUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
   extends Socket8[JsValue](uri, socketFactory, headers: _*) {
 
   def sendMessage[T: Writes](message: T): Try[Unit] =

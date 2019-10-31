@@ -3,8 +3,8 @@ package com.malliina.musicpimp.cloud
 import play.api.libs.json.Json
 
 /**
- * @author Michael
- */
+  * @author Michael
+  */
 case class ServerInfo(server: String, username: String, password: String)
 
 object ServerInfo {

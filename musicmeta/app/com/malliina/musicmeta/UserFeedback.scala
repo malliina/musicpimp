@@ -5,10 +5,12 @@ import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 
 case class UserFeedback(message: String, isError: Boolean) {
-  def flash: Flash = Flash(Map(
-    Feedback -> message,
-    Success -> (if (isError) No else Yes)
-  ))
+  def flash: Flash = Flash(
+    Map(
+      Feedback -> message,
+      Success -> (if (isError) No else Yes)
+    )
+  )
 }
 
 object UserFeedback {
@@ -31,6 +33,7 @@ object UserFeedback {
     } yield UserFeedback(message, isError)
 
   def formed(form: Form[_]) =
-    form.globalError.orElse(form.errors.headOption)
+    form.globalError
+      .orElse(form.errors.headOption)
       .map(formError => error(formError.message))
 }

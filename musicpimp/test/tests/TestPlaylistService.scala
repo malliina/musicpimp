@@ -14,18 +14,73 @@ class TestPlaylistService extends PlaylistService {
 
   val zero = 0.seconds
 
-  override implicit def ec: ExecutionContext = ActorMaterializer()(ActorSystem("test")).executionContext
+  override implicit def ec: ExecutionContext =
+    ActorMaterializer()(ActorSystem("test")).executionContext
 
   val tracks1 = Seq(
-    DataTrack.fromValues(TrackID("1"), "Aces High", "Iron Maiden", "Powerslave", 100, 1000000, UnixPath.Empty, FolderID("folder 1")),
-    DataTrack.fromValues(TrackID("2"), "So What", "Pink", "Funhouse", 120, 2000000, UnixPath.Empty, FolderID("folder 2")),
-    DataTrack.fromValues(TrackID("3"), "Under the Waves", "Pendulum", "Immersion", 234, 12356889, UnixPath.Empty, FolderID("folder 3")),
-    DataTrack.fromValues(TrackID("4"), "Witchcraft", "Pendulum", "Immersion", 100, 1234567, UnixPath.Empty, FolderID("folder 3")),
-    DataTrack.fromValues(TrackID("5"), "A Track", "Pendulum", "Immersion", 123, 3455789, UnixPath.Empty, FolderID("folder 3"))
+    DataTrack.fromValues(
+      TrackID("1"),
+      "Aces High",
+      "Iron Maiden",
+      "Powerslave",
+      100,
+      1000000,
+      UnixPath.Empty,
+      FolderID("folder 1")
+    ),
+    DataTrack.fromValues(
+      TrackID("2"),
+      "So What",
+      "Pink",
+      "Funhouse",
+      120,
+      2000000,
+      UnixPath.Empty,
+      FolderID("folder 2")
+    ),
+    DataTrack.fromValues(
+      TrackID("3"),
+      "Under the Waves",
+      "Pendulum",
+      "Immersion",
+      234,
+      12356889,
+      UnixPath.Empty,
+      FolderID("folder 3")
+    ),
+    DataTrack.fromValues(
+      TrackID("4"),
+      "Witchcraft",
+      "Pendulum",
+      "Immersion",
+      100,
+      1234567,
+      UnixPath.Empty,
+      FolderID("folder 3")
+    ),
+    DataTrack.fromValues(
+      TrackID("5"),
+      "A Track",
+      "Pendulum",
+      "Immersion",
+      123,
+      3455789,
+      UnixPath.Empty,
+      FolderID("folder 3")
+    )
   )
 
   val tracks2 = Seq(
-    DataTrack.fromValues(TrackID("3"), "Under the Waves", "Pendulum", "Immersion", 234, 12356889, UnixPath.Empty, FolderID("folder 3"))
+    DataTrack.fromValues(
+      TrackID("3"),
+      "Under the Waves",
+      "Pendulum",
+      "Immersion",
+      234,
+      12356889,
+      UnixPath.Empty,
+      FolderID("folder 3")
+    )
   )
 
   var playlists = Seq(
@@ -43,7 +98,10 @@ class TestPlaylistService extends PlaylistService {
     * @param playlist playlist submission
     * @return a Future that completes when saving is done
     */
-  override def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID] =
+  override def saveOrUpdatePlaylist(
+    playlist: PlaylistSubmission,
+    user: Username
+  ): Future[PlaylistID] =
     Future.successful(PlaylistID(0))
 
   /**

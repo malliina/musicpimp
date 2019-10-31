@@ -17,18 +17,16 @@ object SearchPage {
   val TermKey = "term"
 }
 
-class SearchPage(tags: PimpHtml,
-                 s: Search,
-                 indexer: Indexer,
-                 db: PimpDb,
-                 auth: AuthDeps)
+class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, db: PimpDb, auth: AuthDeps)
   extends HtmlController(auth) {
 
   def search = pimpActionAsync { req =>
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
 
     val term = query(TermKey)
-    val limit = query(LimitKey).filter(i => Try(i.toInt).isSuccess).map(_.toInt) getOrElse Search.DefaultLimit
+    val limit = query(LimitKey)
+      .filter(i => Try(i.toInt).isSuccess)
+      .map(_.toInt) getOrElse Search.DefaultLimit
     val results = term.fold(fut(Seq.empty[DataTrack]))(databaseSearch(_, limit))
     results.map { tracks =>
       PimpContentController.default.respond(req)(

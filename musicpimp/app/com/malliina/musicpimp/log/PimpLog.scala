@@ -6,7 +6,8 @@ import com.malliina.file.StorageFile
 import com.malliina.musicpimp.util.FileUtil
 
 trait PimpLog {
-  val logDir = sys.props.get("log.dir").map(str => Paths.get(str)).getOrElse(FileUtil.pimpHomeDir / "logs")
+  val logDir =
+    sys.props.get("log.dir").map(str => Paths.get(str)).getOrElse(FileUtil.pimpHomeDir / "logs")
 
   def logFile = logDir / "musicpimp.log"
 }

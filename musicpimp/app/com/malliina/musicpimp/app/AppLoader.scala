@@ -34,17 +34,26 @@ import play.filters.gzip.GzipFilter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class InitOptions(alarms: Boolean = true,
-                       database: Boolean = true,
-                       users: Boolean = true,
-                       indexer: Boolean = true,
-                       cloud: Boolean = true,
-                       cloudUri: FullUrl = CloudSocket.prodUri,
-                       useTray: Boolean = true)
+case class InitOptions(
+  alarms: Boolean = true,
+  database: Boolean = true,
+  users: Boolean = true,
+  indexer: Boolean = true,
+  cloud: Boolean = true,
+  cloudUri: FullUrl = CloudSocket.prodUri,
+  useTray: Boolean = true
+)
 
 object InitOptions {
   val prod = InitOptions()
-  val dev = InitOptions(alarms = false, database = true, users = true, indexer = true, cloud = false, useTray = false)
+  val dev = InitOptions(
+    alarms = false,
+    database = true,
+    users = true,
+    indexer = true,
+    cloud = false,
+    useTray = false
+  )
 
   // Ripped from Play's ApplicationSecretGenerator.scala
   def generateSecret(): String = {
@@ -72,9 +81,9 @@ object PimpComponents {
 
 class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionContext => PimpDb)
   extends BuiltInComponentsFromContext(context)
-    with HttpFiltersComponents
-    with AssetsComponents
-    with I18nComponents {
+  with HttpFiltersComponents
+  with AssetsComponents
+  with I18nComponents {
 
   /** We distribute the same app package as a downloadable, but still want every user to have a unique app secret. So,
     * we generate and persist locally a random secret for each user on-demand on app launch.
@@ -103,8 +112,12 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
 
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
-    new DefaultHttpErrorHandler(environment, configuration, devContext.map(_.sourceMapper), Some(router))
-      with PimpErrorHandling
+    new DefaultHttpErrorHandler(
+      environment,
+      configuration,
+      devContext.map(_.sourceMapper),
+      Some(router)
+    ) with PimpErrorHandling
 
   val player = new MusicPlayer()
   val library = Library(materializer)
@@ -121,7 +134,8 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   lazy val ps = new DatabasePlaylist(db)
   lazy val lib = new DatabaseLibrary(db, library)
   lazy val userManager = new DatabaseUserManager(db)
-  lazy val rememberMe = new RememberMe(new DatabaseTokenStore(db, ec), cookieSigner, httpConfiguration.secret)
+  lazy val rememberMe =
+    new RememberMe(new DatabaseTokenStore(db, ec), cookieSigner, httpConfiguration.secret)
   lazy val stats = new DatabaseStats(db)
   lazy val statsPlayer = new StatsPlayer(player, stats)
   lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
@@ -160,19 +174,35 @@ class PimpComponents(context: Context, options: InitOptions, initDb: ExecutionCo
   val dummyForInit = statsPlayer
 
   lazy val router: Routes = new Routes(
-    httpErrorHandler, libCtrl, webCtrl,
-    settingsCtrl, connect, lp,
-    cloud, alarms, accounts, r, pl,
-    sp, s, sws,
-    ls, cloudWS, assets)
+    httpErrorHandler,
+    libCtrl,
+    webCtrl,
+    settingsCtrl,
+    connect,
+    lp,
+    cloud,
+    alarms,
+    accounts,
+    r,
+    pl,
+    sp,
+    s,
+    sws,
+    ls,
+    cloudWS,
+    assets
+  )
 
-  applicationLifecycle.addStopHook(() => Future.successful {
-    sws.subscription.shutdown()
-    s.close()
-    starter.stopServices(options, schedules, player)
-    statsPlayer.close()
-    db.close()
-    Rest.close()
-    clouds.disconnect("Stopping MusicPimp.")
-  })
+  applicationLifecycle.addStopHook(
+    () =>
+      Future.successful {
+        sws.subscription.shutdown()
+        s.close()
+        starter.stopServices(options, schedules, player)
+        statsPlayer.close()
+        db.close()
+        Rest.close()
+        clouds.disconnect("Stopping MusicPimp.")
+      }
+  )
 }

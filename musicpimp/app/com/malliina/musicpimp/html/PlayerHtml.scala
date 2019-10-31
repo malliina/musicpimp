@@ -46,13 +46,16 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
           h2(id := TitleId, centerAttr)("No track"),
           h4(id := AlbumId, centerAttr),
           h3(id := ArtistId, centerAttr)
-        )),
+        )
+      ),
       fullRow(
         divClass(playerWidth)(
           div(id := SliderId)
         ),
         divClass(s"$Row $playerWidth", id := ProgressId)(
-          span(id := PositionId)("00:00"), span(" / "), span(id := DurationId)("00:00")
+          span(id := PositionId)("00:00"),
+          span(" / "),
+          span(id := DurationId)("00:00")
         ),
         divClass(s"$Row mx-auto justify-content-center")(
           imageInput(img.transport_rew_png, id := PrevButton),

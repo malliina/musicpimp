@@ -22,9 +22,11 @@ import play.filters.hosts.AllowedHostsConfig
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-case class AppConf(pusher: Configuration => Pusher,
-                   conf: Configuration => GoogleOAuthCredentials,
-                   pimpAuth: (AdminOAuth, Materializer) => PimpAuth)
+case class AppConf(
+  pusher: Configuration => Pusher,
+  conf: Configuration => GoogleOAuthCredentials,
+  pimpAuth: (AdminOAuth, Materializer) => PimpAuth
+)
 
 object AppConf {
   def dev = AppConf(
@@ -47,7 +49,7 @@ object AppConf {
 }
 
 class CloudLoader
-    extends DefaultApp(ctx => new CloudComponents(ctx, AppConf.forMode(ctx.environment.mode)))
+  extends DefaultApp(ctx => new CloudComponents(ctx, AppConf.forMode(ctx.environment.mode)))
 
 object NoPusher extends Pusher {
   override def push(pushTask: PushTask): Future[PushResult] =
@@ -59,9 +61,9 @@ object CloudComponents {
 }
 
 class CloudComponents(context: Context, conf: AppConf)
-    extends BuiltInComponentsFromContext(context)
-    with HttpFiltersComponents
-    with AssetsComponents {
+  extends BuiltInComponentsFromContext(context)
+  with HttpFiltersComponents
+  with AssetsComponents {
 
   val allowedCsp = Seq(
     "*.bootstrapcdn.com",
@@ -75,14 +77,16 @@ class CloudComponents(context: Context, conf: AppConf)
   val csp =
     s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(
-    contentSecurityPolicy = Option(csp))
+    contentSecurityPolicy = Option(csp)
+  )
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
 
   val defaultHttpConf = HttpConfiguration.fromConfiguration(configuration, environment)
   // Sets sameSite = None, otherwise the Google auth redirect will wipe out the session state
   override lazy val httpConfiguration =
     defaultHttpConf.copy(
-      session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None))
+      session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None)
+    )
 
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
@@ -108,8 +112,10 @@ class CloudComponents(context: Context, conf: AppConf)
     new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
 
-  applicationLifecycle.addStopHook(() =>
-    Future.successful {
-      adminAuth.validator.http.close()
-  })
+  applicationLifecycle.addStopHook(
+    () =>
+      Future.successful {
+        adminAuth.validator.http.close()
+      }
+  )
 }

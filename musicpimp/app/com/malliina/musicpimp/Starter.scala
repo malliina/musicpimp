@@ -24,12 +24,14 @@ class Starter(as: ActorSystem) {
   private val log = LoggerFactory.getLogger(getClass)
   val tray = Tray(as)
 
-  def startServices(options: InitOptions,
-                    clouds: Clouds,
-                    db: PimpDb,
-                    indexer: Indexer,
-                    schedules: ScheduledPlaybackService,
-                    lifecycle: ApplicationLifecycle)(implicit ec: ExecutionContext): Unit = {
+  def startServices(
+    options: InitOptions,
+    clouds: Clouds,
+    db: PimpDb,
+    indexer: Indexer,
+    schedules: ScheduledPlaybackService,
+    lifecycle: ApplicationLifecycle
+  )(implicit ec: ExecutionContext): Unit = {
     try {
       Logging.level = Level.INFO
       FileUtilities init "musicpimp"
@@ -65,9 +67,11 @@ class Starter(as: ActorSystem) {
     }
   }
 
-  def stopServices(options: InitOptions,
-                   schedules: ScheduledPlaybackService,
-                   player: MusicPlayer): Unit = {
+  def stopServices(
+    options: InitOptions,
+    schedules: ScheduledPlaybackService,
+    player: MusicPlayer
+  ): Unit = {
     log.info("Stopping services...")
     player.close()
     schedules.stop()

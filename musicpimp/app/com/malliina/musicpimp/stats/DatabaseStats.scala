@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DatabaseStats(val db: PimpDb)(implicit ec: ExecutionContext)
   extends Sessionizer(db)
-    with PlaybackStats {
+  with PlaybackStats {
 
   import db.schema._
   import db.api._
@@ -31,12 +31,11 @@ class DatabaseStats(val db: PimpDb)(implicit ec: ExecutionContext)
   }
 
   override def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = {
-    val query = playbackHistory(request.username)
-      .groupBy { case (_, track) => track }
-      .map { case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(Instant.now()))) }
-      .sortBy { case (_, (count, date)) => (count.desc, date.desc) }
-      .map { case (track, (count, _)) => (track, count) }
-      .drop(request.from)
+    val query = playbackHistory(request.username).groupBy { case (_, track) => track }.map {
+      case (track, rs) => (track, (rs.length, rs.map(_._1.when).min.getOrElse(Instant.now())))
+    }.sortBy { case (_, (count, date)) => (count.desc, date.desc) }.map {
+      case (track, (count, _)) => (track, count)
+    }.drop(request.from)
       .take(request.maxItems)
     runQuery(query).map { rows =>
       rows.map {

@@ -12,8 +12,8 @@ import scala.concurrent.Future
 /**
   * @see http://greweb.me/2012/08/zound-a-playframework-2-audio-streaming-experiment-using-iteratees/
   */
-class StreamManager(val stream: Source[ByteString, _],
-                    val channel: SourceQueue[Option[ByteString]]) extends StreamEndpoint {
+class StreamManager(val stream: Source[ByteString, _], val channel: SourceQueue[Option[ByteString]])
+  extends StreamEndpoint {
   val isClosed = new AtomicBoolean(false)
   @volatile
   var isReceivingStream: Boolean = false

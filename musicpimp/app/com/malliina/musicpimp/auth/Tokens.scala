@@ -11,7 +11,8 @@ import com.malliina.values.Username
 import scala.concurrent.{ExecutionContext, Future}
 
 class Tokens(file: Path) extends FileBackedList[Token](file) {
-  protected override def load(): Seq[Token] = Utils.opt[Seq[Token], Exception](super.load()) getOrElse Nil
+  protected override def load(): Seq[Token] =
+    Utils.opt[Seq[Token], Exception](super.load()) getOrElse Nil
 }
 
 class TokensStore(tokensFile: Path, val ec: ExecutionContext) extends TokenStore {
@@ -24,7 +25,9 @@ class TokensStore(tokensFile: Path, val ec: ExecutionContext) extends TokenStore
 
   override def removeAll(user: Username): Future[Unit] = removeWhere(_.user == user)
 
-  override def remove(user: Username, series: Long): Future[Unit] = removeWhere(t => t.user == user && t.series == series)
+  override def remove(user: Username, series: Long): Future[Unit] = removeWhere(
+    t => t.user == user && t.series == series
+  )
 
   def removeWhere(p: Token => Boolean): Future[Unit] = fut(tokens.get() filter p foreach remove)
 

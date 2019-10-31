@@ -33,12 +33,15 @@ class TokenService {
     if (messages.isEmpty) {
       log.info(s"No push notification URLs are active, so no push notifications were sent.")
     } else {
-      CloudPushClient.default.push(task).map { response =>
-        log info s"Sent ${messages.size} notifications."
-        removeUnregistered(response.apns)
-      }.recoverAll { t =>
-        log.warn(s"Unable to send all notifications.", t)
-      }
+      CloudPushClient.default
+        .push(task)
+        .map { response =>
+          log info s"Sent ${messages.size} notifications."
+          removeUnregistered(response.apns)
+        }
+        .recoverAll { t =>
+          log.warn(s"Unable to send all notifications.", t)
+        }
     }
   }
 

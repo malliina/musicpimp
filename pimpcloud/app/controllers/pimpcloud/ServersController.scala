@@ -18,8 +18,9 @@ class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRe
     log debug s"Processing '$requestID'..."
     val transfers = server.socket.fileTransfers
     val maybeParser = transfers parser requestID
-    maybeParser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))) { parser =>
-      receiveStream(parser, transfers, requestID)
+    maybeParser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))) {
+      parser =>
+        receiveStream(parser, transfers, requestID)
     }
   }
 }
@@ -27,11 +28,14 @@ class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRe
 object ServersController {
   private val log = Logger(getClass)
 
-  def forAuth(comps: ControllerComponents,
-              auth: Authenticator[ServerRequest],
-              mat: Materializer): ServersController = {
+  def forAuth(
+    comps: ControllerComponents,
+    auth: Authenticator[ServerRequest],
+    mat: Materializer
+  ): ServersController = {
     val serverBundle = AuthBundle.default(auth)
-    val serverAuth: BaseSecurity[ServerRequest] = new BaseSecurity(comps.actionBuilder, serverBundle, mat)
+    val serverAuth: BaseSecurity[ServerRequest] =
+      new BaseSecurity(comps.actionBuilder, serverBundle, mat)
     new ServersController(comps, serverAuth)
   }
 }

@@ -122,7 +122,9 @@ object PimpDb {
   )
 
   def apply(profile: JdbcProfile, ds: DataSource, ec: ExecutionContext): PimpDb =
-    new PimpDb(profile, profile.api.Database.forDataSource(ds, Option(maxConn), executor(maxConn)))(ec)
+    new PimpDb(profile, profile.api.Database.forDataSource(ds, Option(maxConn), executor(maxConn)))(
+      ec
+    )
 
   case class DatabaseConf(url: String, user: String, pass: String, driver: String)
 
@@ -145,9 +147,10 @@ object PimpDb {
   }
 }
 
-class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(implicit val ec: ExecutionContext)
-    extends DatabaseLike(p)
-    with AutoCloseable {
+class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(
+  implicit val ec: ExecutionContext
+) extends DatabaseLike(p)
+  with AutoCloseable {
 
   val schema = PimpSchema(profile)
   val api = schema.api
@@ -166,12 +169,20 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   def createIfNotExists[T <: Table[_]](tables: TableQuery[T]*): Unit =
     tables.reverse.filter(t => !exists(t)).foreach(t => initTable(t))
 
-  def fullText(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullText(
+    searchTerm: String,
+    limit: Int = 1000,
+    tableName: String = tracksName
+  ): Future[Seq[DataTrack]] = {
     if (p == InstantMySQLProfile) fullTextMySQL(searchTerm, limit, tableName)
     else fullTextH2(searchTerm, limit, tableName)
   }
 
-  def fullTextH2(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullTextH2(
+    searchTerm: String,
+    limit: Int = 1000,
+    tableName: String = tracksName
+  ): Future[Seq[DataTrack]] = {
     log info s"Querying: $searchTerm"
     //    val conn = database.source.createConnection()
     //    try {
@@ -185,7 +196,11 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     run(action)
   }
 
-  def fullTextMySQL(searchTerm: String, limit: Int = 1000, tableName: String = tracksName): Future[Seq[DataTrack]] = {
+  def fullTextMySQL(
+    searchTerm: String,
+    limit: Int = 1000,
+    tableName: String = tracksName
+  ): Future[Seq[DataTrack]] = {
     log debug s"Querying: $searchTerm"
     val words = searchTerm.split(" ")
     val commaSeparated = words.mkString(",")
@@ -258,7 +273,9 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
   }
 
   private def foldersFor(id: FolderID) =
-    folders.filter(folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id)))
+    folders.filter(
+      folder => folder.id === id || folder.path === UnixPath.fromRaw(PimpEnc.decodeId(id))
+    )
 
   def trackFor(id: TrackID): Future[Option[DataTrack]] =
     tracksFor(Seq(id)).map(_.headOption)
@@ -313,7 +330,9 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
     dropIndex(tracksName)
   }
 
-  def runIndexer(library: FileStreams)(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
+  def runIndexer(
+    library: FileStreams
+  )(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
     log info "Indexing..."
     // deletes any old rows from previous indexings
     val firstIdsDeletion = tempFoldersTable.delete
@@ -350,7 +369,8 @@ class PimpDb(val p: JdbcProfile, val database: JdbcProfile#Backend#Database)(imp
           DBIO.seq(
             trackUpdates,
             tempTracksTable ++= chunk.map(t => TempTrack(t.id))
-          ))
+          )
+        )
         await(chunkInsertion, 1.hour)
         fileCount += chunk.size
         onFileCountUpdate(fileCount)

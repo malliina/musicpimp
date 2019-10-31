@@ -7,5 +7,6 @@ case class BuildMeta(name: String, version: String, scalaVersion: String, gitHas
 object BuildMeta {
   implicit val json = Json.format[BuildMeta]
 
-  def default = BuildMeta(BuildInfo.name, BuildInfo.version, BuildInfo.scalaVersion, BuildInfo.gitHash)
+  def default =
+    BuildMeta(BuildInfo.name, BuildInfo.version, BuildInfo.scalaVersion, BuildInfo.gitHash)
 }

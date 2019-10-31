@@ -30,7 +30,8 @@ object OkHttpTrackUploads {
     new OkHttpTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
 }
 
-class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext) extends AutoCloseable {
+class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext)
+  extends AutoCloseable {
   implicit val exec: ExecutionContext = ec
   val scheduler = Executors.newSingleThreadScheduledExecutor()
   val uploader = new MultipartRequests(uploadUri.url.startsWith("https"))
@@ -61,13 +62,16 @@ class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
       log info s"Cancelled $request"
   }
 
-  private def performUpload(trackID: TrackID,
-                            request: RequestID,
-                            range: Option[ContentRange]): Future[Unit] =
+  private def performUpload(
+    trackID: TrackID,
+    request: RequestID,
+    range: Option[ContentRange]
+  ): Future[Unit] =
     lib.findFile(trackID).flatMap { maybeAbsolute =>
       maybeAbsolute.map { file =>
         val totalSize = range.fold(Files.size(file).bytes)(_.contentSize)
-        val authHeaders = Clouds.loadID()
+        val authHeaders = Clouds
+          .loadID()
           .map(id => Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(id.id, "pimp")))
           .getOrElse(Map.empty)
         val headers = authHeaders ++ Map(CloudResponse.RequestKey -> request.id)
@@ -91,7 +95,12 @@ class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
 
   /** Blocks until the upload completes.
     */
-  private def logUpload(track: TrackID, request: RequestID, task: Future[OkHttpResponse], totalSize: StorageSize): Future[Unit] = {
+  private def logUpload(
+    track: TrackID,
+    request: RequestID,
+    task: Future[OkHttpResponse],
+    totalSize: StorageSize
+  ): Future[Unit] = {
     def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request"
 
     task.map { response =>
@@ -100,8 +109,11 @@ class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
         log info appendMeta(s"$prefix with response ${response.code}.")
       } else {
         val len = response.inner.body().contentLength()
-        val contentType = Option(response.inner.body().contentType()).map(_.toString).getOrElse("unknown")
-        log error appendMeta(s"Non-success response code ${response.code} len $len type $contentType for track $track.")
+        val contentType =
+          Option(response.inner.body().contentType()).map(_.toString).getOrElse("unknown")
+        log error appendMeta(
+          s"Non-success response code ${response.code} len $len type $contentType for track $track."
+        )
       }
     }.recover {
       case se: SocketException if Option(se.getMessage) contains "Socket closed" =>

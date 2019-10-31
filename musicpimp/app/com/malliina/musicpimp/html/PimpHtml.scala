@@ -76,7 +76,10 @@ object PimpHtml {
   }
 }
 
-class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStrings with FrontStrings {
+class PimpHtml(scripts: ScalaScripts)
+  extends Bootstrap(HtmlTags)
+  with FooterStrings
+  with FrontStrings {
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -137,13 +140,33 @@ class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStr
   def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username)(inner)
 
-  def libraryBase(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
+  def libraryBase(tab: String, contentClass: String, username: Username)(
+    inner: Modifier*
+  ): TagPage =
     indexMain("library", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Folders", "folders", tab, routes.LibraryController.rootLibrary(), iClass("fa fa-folder-open")),
-          iconNavItem("Most Played", "popular", tab, routes.Website.popular(), iClass("fa fa-list")),
-          iconNavItem("Most Recent", "recent", tab, routes.Website.recent(), iClass("fa fa-clock-o")),
+          iconNavItem(
+            "Folders",
+            "folders",
+            tab,
+            routes.LibraryController.rootLibrary(),
+            iClass("fa fa-folder-open")
+          ),
+          iconNavItem(
+            "Most Played",
+            "popular",
+            tab,
+            routes.Website.popular(),
+            iClass("fa fa-list")
+          ),
+          iconNavItem(
+            "Most Recent",
+            "recent",
+            tab,
+            routes.Website.recent(),
+            iClass("fa fa-clock-o")
+          ),
           iconNavItem("Search", "search", tab, routes.SearchPage.search(), iClass("fa fa-search"))
         )
       ),
@@ -184,7 +207,13 @@ class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStr
     indexMain("manage", username, None)(
       divContainer(
         ulClass(NavTabs)(
-          iconNavItem("Music Folders", "folders", tab, routes.SettingsController.settings(), fa("folder-open")),
+          iconNavItem(
+            "Music Folders",
+            "folders",
+            tab,
+            routes.SettingsController.settings(),
+            fa("folder-open")
+          ),
           iconNavItem("Users", "users", tab, routes.Accounts.users(), fa("user")),
           iconNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), fa("clock")),
           iconNavItem("Tokens", "tokens", tab, routes.Alarms.tokens(), fa("key")),
@@ -212,8 +241,7 @@ class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStr
     tabName: String,
     user: Username,
     contentWrapper: Option[TypedTag[String]]
-  )(inner: Modifier*
-  ): TagPage = {
+  )(inner: Modifier*): TagPage = {
     def navItem(thisTabName: String, url: Call, iconicName: String): TypedTag[String] =
       iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
@@ -248,7 +276,12 @@ class PimpHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) with FooterStr
                 navItem("Manage", routes.SettingsController.manage(), "wrench"),
                 navItem("About", routes.Website.about(), "globe"),
                 divClass("dropdown-divider"),
-                li(a(href := routes.Accounts.logout(), `class` := "nav-link")(iconic("account-logout"), " Sign Out"))
+                li(
+                  a(href := routes.Accounts.logout(), `class` := "nav-link")(
+                    iconic("account-logout"),
+                    " Sign Out"
+                  )
+                )
               )
             ),
             div(

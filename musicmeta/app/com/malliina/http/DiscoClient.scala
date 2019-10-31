@@ -29,7 +29,9 @@ object DiscoClient {
     new DiscoClient(creds, coverDir)(Execution.cached)
 }
 
-class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit ec: ExecutionContext) extends Closeable {
+class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(
+  implicit ec: ExecutionContext
+) extends Closeable {
   Files.createDirectories(coverDir)
   val httpClient = OkClient.default
   val consumerKey = credentials.consumerKey
@@ -45,7 +47,8 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
     */
   def cover(artist: String, album: String): Future[Path] = {
     val file = coverFile(artist, album)
-    if (Files.isReadable(file) && Files.size(file) != iLoveDiscoGsFakeCoverSize) Future.successful(file)
+    if (Files.isReadable(file) && Files.size(file) != iLoveDiscoGsFakeCoverSize)
+      Future.successful(file)
     else downloadCover(artist, album).filter(f => Files.size(f) != iLoveDiscoGsFakeCoverSize)
   }
 
@@ -89,7 +92,11 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
     * @param fileFor the file to download the cover to, given its remote URL
     * @return the downloaded album cover along with the number of bytes downloaded
     */
-  protected def downloadCover(artist: String, album: String, fileFor: FullUrl => Path): Future[Path] =
+  protected def downloadCover(
+    artist: String,
+    album: String,
+    fileFor: FullUrl => Path
+  ): Future[Path] =
     for {
       url <- albumCoverForSearch(albumIdUrl(artist, album))
       file = fileFor(url)
@@ -99,7 +106,11 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
   private def albumCoverForSearch(url: FullUrl): Future[FullUrl] =
     getResponse(url).map { r =>
       coverImageForResult(Json.parse(r.asString))
-        .getOrElse(throw new CoverNotFoundException(s"Unable to find cover image from response: '${r.asString}'."))
+        .getOrElse(
+          throw new CoverNotFoundException(
+            s"Unable to find cover image from response: '${r.asString}'."
+          )
+        )
     }
 
   private def getResponse(url: FullUrl): Future[HttpResponse] = authenticated(url)
@@ -120,7 +131,7 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(implicit
     val code = wsResponse.code
     code match {
       case c if (c >= 200 && c < 300) || c == 404 => None
-      case _ => Option(new ResponseException(StatusError(wsResponse, url)))
+      case _                                      => Option(new ResponseException(StatusError(wsResponse, url)))
     }
   }
 

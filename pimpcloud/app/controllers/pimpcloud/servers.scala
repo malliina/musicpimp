@@ -68,12 +68,15 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
   val serverSockets = new Sockets(serverAuth, ctx) {
     override def props(conf: ActorConfig[AuthedRequest]) =
       Props(
-        new ServerActor(serverMediator,
-                        phoneMediator,
-                        conf,
-                        errorHandler,
-                        ctx.materializer,
-                        ctx.actorSystem.scheduler))
+        new ServerActor(
+          serverMediator,
+          phoneMediator,
+          conf,
+          errorHandler,
+          ctx.materializer,
+          ctx.actorSystem.scheduler
+        )
+      )
   }
 
   import akka.pattern.ask
@@ -89,21 +92,24 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
 
 }
 
-class ServerActor(serverMediator: ActorRef,
-                  phoneMediator: ActorRef,
-                  conf: ActorConfig[AuthedRequest],
-                  errorHandler: HttpErrorHandler,
-                  mat: Materializer,
-                  scheduler: Scheduler)
-    extends JsonActor(conf) {
+class ServerActor(
+  serverMediator: ActorRef,
+  phoneMediator: ActorRef,
+  conf: ActorConfig[AuthedRequest],
+  errorHandler: HttpErrorHandler,
+  mat: Materializer,
+  scheduler: Scheduler
+) extends JsonActor(conf) {
   val cloudId = CloudID(conf.user.user.name)
-  val server = new PimpServerSocket(out,
-                                    cloudId,
-                                    conf.rh,
-                                    mat,
-                                    scheduler,
-                                    errorHandler,
-                                    () => serverMediator ! StreamsUpdated)
+  val server = new PimpServerSocket(
+    out,
+    cloudId,
+    conf.rh,
+    mat,
+    scheduler,
+    errorHandler,
+    () => serverMediator ! StreamsUpdated
+  )
 
   override def preStart(): Unit = {
     super.preStart()

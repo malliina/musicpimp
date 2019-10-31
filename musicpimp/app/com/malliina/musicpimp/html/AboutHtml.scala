@@ -16,7 +16,11 @@ object AboutHtml extends PimpBootstrap {
     rowColumn(col.md.eight)(
       leadPara(s"MusicPimp ${BuildInfo.version}"),
       p("Developed by Michael Skogberg."),
-      p("Check out ", a(href := "https://www.musicpimp.org")("www.musicpimp.org"), " for the latest documentation.")
+      p(
+        "Check out ",
+        a(href := "https://www.musicpimp.org")("www.musicpimp.org"),
+        " for the latest documentation."
+      )
     ),
     rowColumn(col.md.eight)(
       h3("Third Party Software"),
@@ -25,7 +29,12 @@ object AboutHtml extends PimpBootstrap {
         licensePanel("one", Licenses.SCALA, "Scala, licensed under the ", "Scala License"),
         licensePanel("two", Licenses.MIT, "software licensed under the ", "MIT License"),
         licensePanel("three", Licenses.APACHE, "software licensed under ", "Apache License 2.0"),
-        licensePanel("four", Licenses.LGPL, "Tritonus plugins, licensed under the ", "GNU Lesser General Public License (LGPL)")
+        licensePanel(
+          "four",
+          Licenses.LGPL,
+          "Tritonus plugins, licensed under the ",
+          "GNU Lesser General Public License (LGPL)"
+        )
       ),
       p("... and icons by ", a(href := "https://useiconic.com/open")("Iconic"), ".")
     )
@@ -33,7 +42,8 @@ object AboutHtml extends PimpBootstrap {
 
   def licensePanel(elemId: String, licenseText: String, prefix: String, linkText: String) =
     thirdPartyPanel(elemId, licenseText)(
-      prefix, panelSummary(prefix, elemId, linkText)
+      prefix,
+      panelSummary(prefix, elemId, linkText)
     )
 
   def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) = {
@@ -44,7 +54,11 @@ object AboutHtml extends PimpBootstrap {
           toggleHtml
         )
       ),
-      divClass(s"accordion-body $Collapse", id := s"collapse-$elemId", aria.labelledby := headingId)(
+      divClass(
+        s"accordion-body $Collapse",
+        id := s"collapse-$elemId",
+        aria.labelledby := headingId
+      )(
         divClass("accordion-inner")(
           pre(`class` := "pre-scrollable card-body")(innerContent)
         )
@@ -52,7 +66,12 @@ object AboutHtml extends PimpBootstrap {
     )
   }
 
-
   def panelSummary(prefix: String, elemId: String, linkText: String) =
-    button(`class` := "btn btn-link collapsed", dataTarget := s"#collapse-$elemId", dataToggle := Collapse, dataParent := s"#$accordionId", aria.expanded := False)(linkText)
+    button(
+      `class` := "btn btn-link collapsed",
+      dataTarget := s"#collapse-$elemId",
+      dataToggle := Collapse,
+      dataParent := s"#$accordionId",
+      aria.expanded := False
+    )(linkText)
 }

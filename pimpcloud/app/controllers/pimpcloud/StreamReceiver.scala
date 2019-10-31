@@ -15,9 +15,11 @@ import scala.concurrent.Future
 
 class StreamReceiver(comps: ControllerComponents) extends AbstractController(comps) {
 
-  def receiveStream(parser: BodyParser[MultipartFormData[Long]],
-                    transfers: Streamer,
-                    requestId: RequestID) = {
+  def receiveStream(
+    parser: BodyParser[MultipartFormData[Long]],
+    transfers: Streamer,
+    requestId: RequestID
+  ) = {
     val maxSize = transfers.maxUploadSize
     log info s"Streaming at most $maxSize for '$requestId'."
     //    val composedParser = recoveringParser(parse.maxLength(maxSize.toBytes, parser)(mat), transfers, requestId)
@@ -37,7 +39,11 @@ class StreamReceiver(comps: ControllerComponents) extends AbstractController(com
   /** This is not strictly necessary, but cleans up ugly and confusing stacktraces if
     * the client disconnects while an upload is in progress.
     */
-  def recoveringParser[T](p: BodyParser[T], transfers: Streamer, requestId: RequestID): BodyParser[T] =
+  def recoveringParser[T](
+    p: BodyParser[T],
+    transfers: Streamer,
+    requestId: RequestID
+  ): BodyParser[T] =
     new BodyParser[T] {
       val clientClosedMessage = "An existing connection was forcibly closed by the remote host"
       val ioMessage = "Connection reset by peer"

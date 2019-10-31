@@ -8,10 +8,11 @@ import play.api.test.WithApplicationLoader
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import play.filters.HttpFiltersComponents
 
-class TrivialAppLoader extends WithApplicationLoader(new ApplicationLoader {
-  override def load(context: Context): Application =
-    TrivialAppLoader.components(context).application
-})
+class TrivialAppLoader
+  extends WithApplicationLoader(new ApplicationLoader {
+    override def load(context: Context): Application =
+      TrivialAppLoader.components(context).application
+  })
 
 object TrivialAppLoader {
   def components(context: Context) =

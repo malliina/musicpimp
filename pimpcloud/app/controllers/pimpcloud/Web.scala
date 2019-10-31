@@ -29,11 +29,12 @@ object Web {
       serverFormKey -> CloudIDs.form,
       forms.userFormKey -> FormMappings.username,
       forms.passFormKey -> FormMappings.password
-    )(CloudCreds.apply)(CloudCreds.unapply))
+    )(CloudCreds.apply)(CloudCreds.unapply)
+  )
 }
 
 class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthentication)
-    extends AbstractController(comps) {
+  extends AbstractController(comps) {
   implicit val ec = defaultExecutionContext
 
   def ping = Action {

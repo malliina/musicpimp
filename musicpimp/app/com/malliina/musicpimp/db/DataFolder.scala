@@ -8,10 +8,8 @@ import com.malliina.musicpimp.models.FolderID
 import com.malliina.values.UnixPath
 import play.api.libs.json.{Json, OFormat}
 
-case class DataFolder(id: FolderID,
-                      title: String,
-                      path: UnixPath,
-                      parent: FolderID) extends FolderMeta
+case class DataFolder(id: FolderID, title: String, path: UnixPath, parent: FolderID)
+  extends FolderMeta
 
 object DataFolder {
   implicit val json: OFormat[DataFolder] = Json.format[DataFolder]

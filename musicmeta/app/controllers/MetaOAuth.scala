@@ -11,22 +11,27 @@ import play.api.mvc.Results.{Ok, Redirect}
 import play.api.mvc.{ActionBuilder, AnyContent, Request}
 
 object MetaOAuth {
-  def apply(sessionKey: String,
-            html: MetaHtml,
-            actions: ActionBuilder[Request, AnyContent],
-            ctx: ActorExecution) = {
-    val bundle = AuthBundle.oauth((r, u) => AuthedRequest(u, r),
-                                  routes.MetaOAuthControl.googleStart(),
-                                  sessionKey)
+  def apply(
+    sessionKey: String,
+    html: MetaHtml,
+    actions: ActionBuilder[Request, AnyContent],
+    ctx: ActorExecution
+  ) = {
+    val bundle = AuthBundle.oauth(
+      (r, u) => AuthedRequest(u, r),
+      routes.MetaOAuthControl.googleStart(),
+      sessionKey
+    )
     new MetaOAuth(html, actions, bundle, ctx)
   }
 }
 
-class MetaOAuth(html: MetaHtml,
-                actions: ActionBuilder[Request, AnyContent],
-                auth: AuthBundle[AuthRequest],
-                ctx: ActorExecution)
-    extends BaseSecurity(actions, auth, ctx.materializer) {
+class MetaOAuth(
+  html: MetaHtml,
+  actions: ActionBuilder[Request, AnyContent],
+  auth: AuthBundle[AuthRequest],
+  ctx: ActorExecution
+) extends BaseSecurity(actions, auth, ctx.materializer) {
 
   val streamer = LogStreamer(ctx.executionContext)
 

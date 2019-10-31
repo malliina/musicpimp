@@ -21,9 +21,10 @@ import scala.util.Try
 /** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
   * Apache HttpClient.
   */
-class MultipartRequest(uri: String,
-                       buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b)
-    extends AutoCloseable {
+class MultipartRequest(
+  uri: String,
+  buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b
+) extends AutoCloseable {
   private val client = buildInstructions(HttpClientBuilder.create()).build()
   val request = new HttpPost(uri)
   request.addHeader(ACCEPT, JSON)
@@ -92,6 +93,7 @@ class MultipartRequest(uri: String,
 }
 
 class TrustAllMultipartRequest(uri: String)
-    extends MultipartRequest(
-      uri,
-      _.setSSLSocketFactory(ApacheHttpHelper.allowAllCertificatesSocketFactory()))
+  extends MultipartRequest(
+    uri,
+    _.setSSLSocketFactory(ApacheHttpHelper.allowAllCertificatesSocketFactory())
+  )

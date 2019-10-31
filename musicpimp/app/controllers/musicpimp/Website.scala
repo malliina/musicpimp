@@ -12,12 +12,13 @@ import play.api.mvc.{AnyContent, RequestHeader, Result}
 
 import scala.concurrent.Future
 
-class Website(musicPlayer: MusicPlayer,
-              tags: PimpHtml,
-              serverWS: ServerWS,
-              auth: AuthDeps,
-              stats: PlaybackStats)
-    extends HtmlController(auth) {
+class Website(
+  musicPlayer: MusicPlayer,
+  tags: PimpHtml,
+  serverWS: ServerWS,
+  auth: AuthDeps,
+  stats: PlaybackStats
+) extends HtmlController(auth) {
 
   def player = navigate[TagPage] { req =>
     val hasAudioDevice = AudioSystem.getMixerInfo.nonEmpty

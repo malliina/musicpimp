@@ -9,7 +9,8 @@ class MPNSBuilder {
       "MusicPimp",
       "Tap to stop",
       s"/MusicPimp/Xaml/AlarmClock.xaml?DeepLink=true&cmd=stop&tag=${dest.tag}",
-      silent = dest.silent)
+      silent = dest.silent
+    )
     MPNSPayload(token = dest.url, MPNSRequest(toast = Option(message)))
   }
 }

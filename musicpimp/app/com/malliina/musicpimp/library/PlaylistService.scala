@@ -23,7 +23,10 @@ trait PlaylistService {
     * @param playlist playlist submission
     * @return a Future that completes when saving is done
     */
-  protected def saveOrUpdatePlaylist(playlist: PlaylistSubmission, user: Username): Future[PlaylistID]
+  protected def saveOrUpdatePlaylist(
+    playlist: PlaylistSubmission,
+    user: Username
+  ): Future[PlaylistID]
 
   def delete(id: PlaylistID, user: Username): Future[Unit]
 
@@ -33,6 +36,9 @@ trait PlaylistService {
   def playlistMeta(id: PlaylistID, user: Username): Future[Option[PlaylistMeta]] =
     playlist(id, user).map(o => o.map(PlaylistMeta.apply))
 
-  def saveOrUpdatePlaylistMeta(playlist: PlaylistSubmission, user: Username): Future[PlaylistSavedMeta] =
+  def saveOrUpdatePlaylistMeta(
+    playlist: PlaylistSubmission,
+    user: Username
+  ): Future[PlaylistSavedMeta] =
     saveOrUpdatePlaylist(playlist, user).map(PlaylistSavedMeta.apply)
 }

@@ -16,8 +16,8 @@ case class IntervalSchedule(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay
     def minutesHoursDays =
       timeUnit match {
         case Minutes => s"*/$interval * *"
-        case Hours => s"* */$interval *"
-        case Days => s"* * */$interval"
+        case Hours   => s"* */$interval *"
+        case Days    => s"* * */$interval"
       }
     new SchedulingPattern(s"$minutesHoursDays * $daysStringified")
   }

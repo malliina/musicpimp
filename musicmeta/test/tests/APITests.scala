@@ -25,9 +25,15 @@ class APITests extends FunSuite {
   implicit val actorSystem = ActorSystem("test")
   implicit val mat = ActorMaterializer()
 
-  val oauthControl = new MetaOAuthControl(stubControllerComponents().actionBuilder, APITests.fakeGoogle)
+  val oauthControl =
+    new MetaOAuthControl(stubControllerComponents().actionBuilder, APITests.fakeGoogle)
   val exec = ActorExecution(actorSystem, mat)
-  val oauth = MetaOAuth("username", MetaHtml("musicmeta-frontend", Mode.Test), stubControllerComponents().actionBuilder, exec)
+  val oauth = MetaOAuth(
+    "username",
+    MetaHtml("musicmeta-frontend", Mode.Test),
+    stubControllerComponents().actionBuilder,
+    exec
+  )
   val covers = new Covers(oauth, APITests.fakeCreds, stubControllerComponents())
 
   test("respond to ping") {
@@ -35,20 +41,30 @@ class APITests extends FunSuite {
   }
 
   ignore("proper cover search") {
-    verifyActionResponse(covers.cover, OK, FakeRequest(GET, "/covers?artist=iron%20maiden&album=powerslave"))
+    verifyActionResponse(
+      covers.cover,
+      OK,
+      FakeRequest(GET, "/covers?artist=iron%20maiden&album=powerslave")
+    )
   }
 
   ignore("nonexistent cover return 404") {
-    verifyActionResponse(covers.cover, NOT_FOUND, FakeRequest(GET, "/covers?artist=zyz&album=abcde"))
+    verifyActionResponse(
+      covers.cover,
+      NOT_FOUND,
+      FakeRequest(GET, "/covers?artist=zyz&album=abcde")
+    )
   }
 
   test("invalid request returns HTTP 400 BAD REQUEST") {
     verifyActionResponse(covers.cover, http.Status.BAD_REQUEST)
   }
 
-  private def verifyActionResponse(action: EssentialAction,
-                                   expectedStatus: Int,
-                                   req: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()) = {
+  private def verifyActionResponse(
+    action: EssentialAction,
+    expectedStatus: Int,
+    req: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  ) = {
     verifyResponse(action.apply(req).run, expectedStatus)
   }
 

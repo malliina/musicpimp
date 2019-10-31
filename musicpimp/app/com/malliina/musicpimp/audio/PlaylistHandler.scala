@@ -35,7 +35,8 @@ object DeletePlaylistCommand {
 
 object PlaylistCommand {
   implicit val reader: Reads[PlaylistCommand] = Reads { json =>
-    GetPlaylistsCommand.json.reads(json)
+    GetPlaylistsCommand.json
+      .reads(json)
       .orElse(GetPlaylistCommand.json.reads(json))
       .orElse(SavePlaylistCommand.json.reads(json))
       .orElse(DeletePlaylistCommand.json.reads(json))

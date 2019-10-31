@@ -22,11 +22,56 @@ class DatabaseTests extends FunSuite {
   val folder2 = testFolders(2)
   val folder2Id = folder2.id
   val testTracks = Seq(
-    DataTrack.fromValues(TrackID("1"), "Aces High", "Iron Maiden", "Powerslave", 100, 1000000, UnixPath.Empty, folder1Id),
-    DataTrack.fromValues(TrackID("2"), "So What", "Pink", "Funhouse", 120, 2000000, UnixPath.Empty, folder1Id),
-    DataTrack.fromValues(TrackID("3"), "Under the Waves", "Pendulum", "Immersion", 234, 12356889, UnixPath.Empty, folder2Id),
-    DataTrack.fromValues(TrackID("4"), "Witchcraft", "Pendulum", "Immersion", 100, 1234567, UnixPath.Empty, folder2Id),
-    DataTrack.fromValues(TrackID("5"), "A Track", "Pendulum", "Immersion", 123, 3455789, UnixPath.Empty, folder2Id)
+    DataTrack.fromValues(
+      TrackID("1"),
+      "Aces High",
+      "Iron Maiden",
+      "Powerslave",
+      100,
+      1000000,
+      UnixPath.Empty,
+      folder1Id
+    ),
+    DataTrack.fromValues(
+      TrackID("2"),
+      "So What",
+      "Pink",
+      "Funhouse",
+      120,
+      2000000,
+      UnixPath.Empty,
+      folder1Id
+    ),
+    DataTrack.fromValues(
+      TrackID("3"),
+      "Under the Waves",
+      "Pendulum",
+      "Immersion",
+      234,
+      12356889,
+      UnixPath.Empty,
+      folder2Id
+    ),
+    DataTrack.fromValues(
+      TrackID("4"),
+      "Witchcraft",
+      "Pendulum",
+      "Immersion",
+      100,
+      1234567,
+      UnixPath.Empty,
+      folder2Id
+    ),
+    DataTrack.fromValues(
+      TrackID("5"),
+      "A Track",
+      "Pendulum",
+      "Immersion",
+      123,
+      3455789,
+      UnixPath.Empty,
+      folder2Id
+    )
   )
   val tracksInFolder2 = testTracks.slice(2, 5)
 

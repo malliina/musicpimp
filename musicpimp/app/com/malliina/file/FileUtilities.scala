@@ -49,8 +49,8 @@ object FileUtilities {
     Util.using(new PrintWriter(new BufferedWriter(new FileWriter(filename.toFile))))(op)
 
   def readerFrom[T](path: Path)(code: Iterator[String] => T): T =
-    Utils.resource(Source.fromFile(path.toFile)) {
-      source => code(source.getLines())
+    Utils.resource(Source.fromFile(path.toFile)) { source =>
+      code(source.getLines())
     }
 
   /** Throws if the file doesn't exist/has no first line (?)
@@ -127,7 +127,7 @@ object FileUtilities {
     */
   def listPaths(basePath: Path): Seq[Path] = {
     val visitor = new FileVisitors.FileAndDirCollector
-    Files walkFileTree(basePath, visitor)
+    Files walkFileTree (basePath, visitor)
     visitor.files
   }
 

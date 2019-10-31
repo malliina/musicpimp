@@ -25,17 +25,18 @@ object Playlists {
   val Tracks = "tracks"
 }
 
-class Playlists(tags: PimpHtml,
-                service: PlaylistService,
-                auth: AuthDeps) extends Secured(auth) {
+class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extends Secured(auth) {
 
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
-  val tracksMapping: Mapping[Seq[TrackID]] = seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
-  val playlistForm: Form[PlaylistSubmission] = Form(mapping(
-    Playlists.Id -> optional(playlistIdField),
-    Playlists.Name -> nonEmptyText,
-    Playlists.Tracks -> tracksMapping
-  )(PlaylistSubmission.apply)(PlaylistSubmission.unapply))
+  val tracksMapping: Mapping[Seq[TrackID]] =
+    seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
+  val playlistForm: Form[PlaylistSubmission] = Form(
+    mapping(
+      Playlists.Id -> optional(playlistIdField),
+      Playlists.Name -> nonEmptyText,
+      Playlists.Tracks -> tracksMapping
+    )(PlaylistSubmission.apply)(PlaylistSubmission.unapply)
+  )
 
   def playlists = recoveredAsync { req =>
     val user = req.user
@@ -61,8 +62,14 @@ class Playlists(tags: PimpHtml,
 
   def savePlaylist = parsedRecoveredAsync(parsers.json) { req =>
     val json = req.body
-    (json \ PlaylistKey).validate[PlaylistSubmission]
-      .map(playlist => service.saveOrUpdatePlaylistMeta(playlist, req.user).map(meta => Accepted(Json.toJson(meta))))
+    (json \ PlaylistKey)
+      .validate[PlaylistSubmission]
+      .map(
+        playlist =>
+          service
+            .saveOrUpdatePlaylistMeta(playlist, req.user)
+            .map(meta => Accepted(Json.toJson(meta)))
+      )
       .getOrElse(fut(badRequest(s"Invalid JSON: $json")))
   }
 
@@ -76,20 +83,24 @@ class Playlists(tags: PimpHtml,
 
   def handleSubmission = recoveredAsync { req =>
     val user = req.user
-    playlistForm.bindFromRequest()(req).fold(
-      errors => {
-        service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user)))
-      },
-      submission => {
-        fut(Redirect(routes.Playlists.playlists()))
-      }
-    )
+    playlistForm
+      .bindFromRequest()(req)
+      .fold(
+        errors => {
+          service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user)))
+        },
+        submission => {
+          fut(Redirect(routes.Playlists.playlists()))
+        }
+      )
   }
 
   protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
     parsedRecoveredAsync(parsers.anyContent)(f)
 
-  protected def parsedRecoveredAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]) =
+  protected def parsedRecoveredAsync[T](
+    parser: BodyParser[T]
+  )(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(auth => f(auth).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {

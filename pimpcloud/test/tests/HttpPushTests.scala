@@ -17,10 +17,15 @@ import play.api.test.Helpers._
 
 import scala.concurrent.Future
 
-class TestComponents(context: Context) extends CloudComponents(
-  context,
-  AppConf(_ => NoPusher, _ => GoogleOAuthCredentials("id", "secret", "scope"), (_, _) => TestAuth)
-)
+class TestComponents(context: Context)
+  extends CloudComponents(
+    context,
+    AppConf(
+      _ => NoPusher,
+      _ => GoogleOAuthCredentials("id", "secret", "scope"),
+      (_, _) => TestAuth
+    )
+  )
 
 object TestAuth extends PimpAuth {
   val testUser = Username("test")
@@ -30,9 +35,10 @@ object TestAuth extends PimpAuth {
   override def authenticate(request: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
     Future.successful(Right(AuthedRequest(testUser, request)))
 
-  override def authAction(f: AuthedRequest => Result) = stubControllerComponents().actionBuilder { req =>
-    val fakeRequest = AuthedRequest(testUser, req, None)
-    f(fakeRequest)
+  override def authAction(f: AuthedRequest => Result) = stubControllerComponents().actionBuilder {
+    req =>
+      val fakeRequest = AuthedRequest(testUser, req, None)
+      f(fakeRequest)
   }
 }
 
@@ -43,10 +49,7 @@ class HttpPushTests extends PimpcloudSuite {
   val tokenString = "81bae54a590a3ae871408bd565d7e441aa952744770783209b2fd54219e3d9fe"
   val testToken = APNSToken.build(tokenString).get
   val testTask = PushTask(
-    Seq(
-      APNSPayload(
-        testToken,
-        APNSMessage.badged("this is a test", badge = 4))),
+    Seq(APNSPayload(testToken, APNSMessage.badged("this is a test", badge = 4))),
     Nil,
     Nil,
     Nil,

@@ -7,9 +7,9 @@ object Platform {
   val platform: Architecture = sys.props.get("os.arch") map fromName getOrElse Unknown
 
   def fromName(name: String) = name match {
-    case "arm" => ARM
+    case "arm"   => ARM
     case "amd64" => AMD64
-    case other => Other(other)
+    case other   => Other(other)
   }
 
   trait Architecture

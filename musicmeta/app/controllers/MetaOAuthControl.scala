@@ -8,7 +8,10 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc._
 
-class MetaOAuthControl(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials) {
+class MetaOAuthControl(
+  val actions: ActionBuilder[Request, AnyContent],
+  creds: GoogleOAuthCredentials
+) {
   val http = OkClient.default
   val handler: AuthHandler = new AuthHandler {
     override def onAuthenticated(email: Email, req: RequestHeader): Result =
@@ -20,16 +23,22 @@ class MetaOAuthControl(val actions: ActionBuilder[Request, AnyContent], creds: G
     override def onUnauthorized(error: AuthError, req: RequestHeader): Result =
       Unauthorized(Json.obj("message" -> "Authentication failed."))
 
-    def ejectWith(message: String) = Redirect(routes.MetaOAuth.eject()).flashing("message" -> message)
+    def ejectWith(message: String) =
+      Redirect(routes.MetaOAuth.eject()).flashing("message" -> message)
   }
   val authConf = OAuthConf(
     routes.MetaOAuthControl.googleCallback(),
     handler,
     AuthConf(creds.clientId, creds.clientSecret),
-    http)
+    http
+  )
   val validator = GoogleCodeValidator(authConf)
 
-  def googleStart = actions.async { req => validator.start(req) }
+  def googleStart = actions.async { req =>
+    validator.start(req)
+  }
 
-  def googleCallback = actions.async { req => validator.validateCallback(req) }
+  def googleCallback = actions.async { req =>
+    validator.validateCallback(req)
+  }
 }

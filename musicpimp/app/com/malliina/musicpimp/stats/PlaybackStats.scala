@@ -6,6 +6,7 @@ import com.malliina.values.Username
 import scala.concurrent.Future
 
 trait PlaybackStats {
+
   /** Increments the playback count of `track` by one.
     *
     * @param track track being played

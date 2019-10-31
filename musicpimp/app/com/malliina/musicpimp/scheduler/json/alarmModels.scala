@@ -110,7 +110,8 @@ case object StopPlayback extends AlarmCommand {
 
 object AlarmCommand {
   implicit val reader = Reads[AlarmCommand] { json =>
-    DeleteCmd.json.reads(json)
+    DeleteCmd.json
+      .reads(json)
       .orElse(SaveCmd.json.reads(json))
       .orElse(StartCmd.json.reads(json))
       .orElse(StopPlayback.json.reads(json))

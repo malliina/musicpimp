@@ -3,8 +3,7 @@ package com.malliina.musicpimp.models
 import com.malliina.json.ValidatingCompanion
 import play.api.libs.json._
 
-abstract class ValidatorLike[In: Format, T]
-  extends ValidatingCompanion[In, T] {
+abstract class ValidatorLike[In: Format, T] extends ValidatingCompanion[In, T] {
   def apply(in: In): T
 
   def build(input: In): Option[T] =

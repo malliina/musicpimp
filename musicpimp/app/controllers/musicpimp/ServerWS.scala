@@ -12,11 +12,13 @@ import com.malliina.play.ws._
 
 /** Emits playback events to and accepts commands from listening clients.
   */
-class ServerWS(player: MusicPlayer,
-               val clouds: Clouds,
-               auth: Authenticator[AuthedRequest],
-               handler: PlaybackMessageHandler,
-               ctx: ActorExecution) {
+class ServerWS(
+  player: MusicPlayer,
+  val clouds: Clouds,
+  auth: Authenticator[AuthedRequest],
+  handler: PlaybackMessageHandler,
+  ctx: ActorExecution
+) {
   implicit val mat = ctx.materializer
   val serverMessages = player.allEvents
   val subscription = serverMessages

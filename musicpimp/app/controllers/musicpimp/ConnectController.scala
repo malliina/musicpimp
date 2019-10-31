@@ -45,8 +45,9 @@ object ConnectController {
   private val log = Logger(getClass)
 
   implicit object protoJson
-      extends JsonFormats.SimpleFormat[Protocols.Protocol](name =>
-        Protocols.withName(name.toLowerCase))
+    extends JsonFormats.SimpleFormat[Protocols.Protocol](
+      name => Protocols.withName(name.toLowerCase)
+    )
 
   object Protocols extends Enumeration {
     type Protocol = Value

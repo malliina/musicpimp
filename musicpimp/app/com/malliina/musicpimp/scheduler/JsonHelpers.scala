@@ -6,11 +6,11 @@ import play.api.libs.json.{Format, JsResult, JsValue}
 trait JsonHelpers {
 
   /**
-   * Json reader/writer. Writes toString and reads as specified by `f`.
-   *
-   * @param reader maps a name to the type
-   * @tparam T type of element
-   */
+    * Json reader/writer. Writes toString and reads as specified by `f`.
+    *
+    * @param reader maps a name to the type
+    * @tparam T type of element
+    */
   class SimpleFormat[T](reader: String => T) extends Format[T] {
     def reads(json: JsValue): JsResult[T] =
       json.validate[String].map(reader)

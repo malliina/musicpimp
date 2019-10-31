@@ -21,16 +21,19 @@ class PimpSchema(val profile: JdbcProfile) {
   val api = new Mappings(profile) with profile.API
   import api._
 
-  case class DataTrackRep(id: Rep[TrackID],
-                          title: Rep[String],
-                          artist: Rep[String],
-                          album: Rep[String],
-                          duration: Rep[Duration],
-                          size: Rep[StorageSize],
-                          path: Rep[UnixPath],
-                          folder: Rep[FolderID])
+  case class DataTrackRep(
+    id: Rep[TrackID],
+    title: Rep[String],
+    artist: Rep[String],
+    album: Rep[String],
+    duration: Rep[Duration],
+    size: Rep[StorageSize],
+    path: Rep[UnixPath],
+    folder: Rep[FolderID]
+  )
 
-  implicit object DataTrackShape extends CaseClassShape(DataTrackRep.tupled, (DataTrack.apply _).tupled)
+  implicit object DataTrackShape
+    extends CaseClassShape(DataTrackRep.tupled, (DataTrack.apply _).tupled)
 
   val tracks = TableQuery[Tracks]
   val folders = TableQuery[Folders]
@@ -43,9 +46,15 @@ class PimpSchema(val profile: JdbcProfile) {
   val plays = TableQuery[Plays]
 
   val tableQueries: Seq[TableQuery[_ <: Table[_]]] = Seq(
-    plays, playlistTracksTable, playlistsTable,
-    tempFoldersTable, tempTracksTable, tracks,
-    folders, tokens, usersTable
+    plays,
+    playlistTracksTable,
+    playlistsTable,
+    tempFoldersTable,
+    tempTracksTable,
+    tracks,
+    folders,
+    tokens,
+    usersTable
   )
 
   class TokensTable(tag: Tag) extends Table[Token](tag, "TOKENS") {
@@ -72,7 +81,8 @@ class PimpSchema(val profile: JdbcProfile) {
     def userConstraint = foreignKey("USER_FK", user, usersTable)(
       _.user,
       onUpdate = ForeignKeyAction.Cascade,
-      onDelete = ForeignKeyAction.Cascade)
+      onDelete = ForeignKeyAction.Cascade
+    )
 
     def * = (id.?, name, user) <> ((PlaylistRow.apply _).tupled, PlaylistRow.unapply)
   }
@@ -87,12 +97,14 @@ class PimpSchema(val profile: JdbcProfile) {
     def playlistConstraint = foreignKey("PLAYLIST_FK", playlist, playlistsTable)(
       _.id,
       onUpdate = ForeignKeyAction.Cascade,
-      onDelete = ForeignKeyAction.Cascade)
+      onDelete = ForeignKeyAction.Cascade
+    )
 
     def trackConstraint = foreignKey("PL_TRACK_FK", track, tracks)(
       _.id,
       onUpdate = ForeignKeyAction.Cascade,
-      onDelete = ForeignKeyAction.Cascade)
+      onDelete = ForeignKeyAction.Cascade
+    )
 
     def * = (playlist, track, idx) <> ((PlaylistTrack.apply _).tupled, PlaylistTrack.unapply)
   }
@@ -132,7 +144,8 @@ class PimpSchema(val profile: JdbcProfile) {
     def folderConstraint = foreignKey("FOLDER_FK", folder, folders)(
       _.id,
       onUpdate = ForeignKeyAction.Cascade,
-      onDelete = ForeignKeyAction.Cascade)
+      onDelete = ForeignKeyAction.Cascade
+    )
 
     def projection = DataTrackRep(id, title, artist, album, duration, size, path, folder)
 
@@ -150,7 +163,8 @@ class PimpSchema(val profile: JdbcProfile) {
     def parentFolder = foreignKey("PARENT_FK", parent, folders)(
       _.id,
       onUpdate = ForeignKeyAction.Cascade,
-      onDelete = ForeignKeyAction.Cascade)
+      onDelete = ForeignKeyAction.Cascade
+    )
 
     def * = (id, title, path, parent) <> ((DataFolder.apply _).tupled, DataFolder.unapply)
   }
@@ -164,13 +178,11 @@ class PimpSchema(val profile: JdbcProfile) {
     def * = id <> (TempFolder.apply, TempFolder.unapply)
   }
 
-
   class TempTracks(tag: Tag) extends Table[TempTrack](tag, "TEMP_TRACKS") {
     def id = column[TrackID]("ID", O.PrimaryKey, O.Length(191))
 
     def * = id <> (TempTrack.apply, TempTrack.unapply)
   }
-
 
   class Users(tag: Tag) extends Table[DataUser](tag, "USERS") {
     def user = column[Username]("USER", O.PrimaryKey, O.Length(100))

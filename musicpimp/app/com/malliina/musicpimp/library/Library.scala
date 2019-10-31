@@ -70,9 +70,12 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
       } else {
         Map(
           folder.dirs
-            .flatMap(dir =>
-              items(dir).toSeq
-                .flatMap(f => recurse(f, acc.updated(dir, f)))): _*)
+            .flatMap(
+              dir =>
+                items(dir).toSeq
+                  .flatMap(f => recurse(f, acc.updated(dir, f)))
+            ): _*
+        )
       }
     }
 
@@ -109,14 +112,16 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
     val id = track.id
     val parent = Option(track.relativePath.getParent)
       .map(p => FolderID(idFor(UnixPath(p).path))) getOrElse RootId
-    DataTrack(id,
-              track.title,
-              track.artist,
-              track.album,
-              track.duration,
-              track.size,
-              track.path,
-              parent)
+    DataTrack(
+      id,
+      track.title,
+      track.artist,
+      track.album,
+      track.duration,
+      track.size,
+      track.path,
+      parent
+    )
   }
 
   /** This method has a bug.
@@ -154,7 +159,8 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
       case e: Exception =>
         log.debug(
           s"Unable to read file: ${pi.absolute}. The file will be excluded from the library.",
-          e)
+          e
+        )
         None
     }
 

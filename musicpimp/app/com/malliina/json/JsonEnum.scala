@@ -20,7 +20,8 @@ trait JsonEnum[T] {
           n =>
             withName(n)
               .map(tu => JsSuccess(tu))
-              .getOrElse(JsError(s"Unknown name: $n. Must be one of: $allNames.")))
+              .getOrElse(JsError(s"Unknown name: $n. Must be one of: $allNames."))
+        )
 
     override def writes(o: T): JsValue = Json.toJson(resolveName(o))
   }

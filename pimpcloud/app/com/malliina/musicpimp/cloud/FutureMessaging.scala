@@ -12,6 +12,7 @@ import scala.concurrent.Future
   * @tparam T type of message and response
   */
 trait FutureMessaging[T] {
+
   /** Sends a request.
     *
     * @param payload

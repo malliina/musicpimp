@@ -18,13 +18,15 @@ import play.api.libs.json.{Json, OFormat}
 import scala.concurrent.Future
 import scala.util.Try
 
-case class DataDump(users: Seq[DataUser],
-                    folders: Seq[DataFolder],
-                    tracks: Seq[DataTrack],
-                    plays: Seq[PlaybackRecord],
-                    playlists: Seq[PlaylistRow],
-                    playlistTracks: Seq[PlaylistTrack],
-                    tokens: Seq[Token])
+case class DataDump(
+  users: Seq[DataUser],
+  folders: Seq[DataFolder],
+  tracks: Seq[DataTrack],
+  plays: Seq[PlaybackRecord],
+  playlists: Seq[PlaylistRow],
+  playlistTracks: Seq[PlaylistTrack],
+  tokens: Seq[Token]
+)
 
 object DataDump {
   implicit val json: OFormat[DataDump] = Json.format[DataDump]
@@ -63,7 +65,8 @@ class DataMigrator(db: PimpDb) {
   def updatePlays(): Unit = {
     val action = plays.result.flatMap { ps =>
       val ops = ps.map { p =>
-        plays.filter(row => row.when === p.when && row.who === p.user && row.track === p.track)
+        plays
+          .filter(row => row.when === p.when && row.who === p.user && row.track === p.track)
           .map(_.track)
           .update(TrackID(Library.idFor(UnixPath.fromRaw(PimpEnc.decodeId(p.track)).path)))
       }
@@ -163,8 +166,9 @@ class DataMigrator(db: PimpDb) {
       _ <- playlistTracksTable ++= dump.playlistTracks
       _ <- tokens ++= dump.tokens
     } yield psChanged
-    val res = if (fromScratch) deleteAll().flatMap(_ => db.run(action.transactionally))
-    else db.run(action)
+    val res =
+      if (fromScratch) deleteAll().flatMap(_ => db.run(action.transactionally))
+      else db.run(action)
     res.map { ts =>
       val failureCount = ts.count(_.isFailure)
       val successCount = ts.count(_.isSuccess)

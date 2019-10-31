@@ -17,7 +17,8 @@ object TrackPlayer {
 }
 
 class TrackPlayer(val player: PimpPlayer, serverMessageTarget: ActorRef)(
-    implicit mat: Materializer) {
+  implicit mat: Materializer
+) {
   val track = player.track
   private val stateSubscription = player.eventsKillable
     .map(PimpPlayer.playState)

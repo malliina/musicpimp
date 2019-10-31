@@ -19,9 +19,9 @@ import scala.util.{Failure, Try}
 /** This is a mutable mess. It should be rewritten, maybe using Rx.
   */
 class MusicPlayer()(implicit val mat: Materializer)
-    extends IPlayer
-    with PlaylistSupport[PlayableTrack]
-    with ServerPlayer {
+  extends IPlayer
+  with PlaylistSupport[PlayableTrack]
+  with ServerPlayer {
 
   private val log = Logger(getClass)
   private val defaultVolume = Volume(40)

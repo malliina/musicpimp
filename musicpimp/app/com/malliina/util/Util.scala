@@ -11,6 +11,7 @@ import scala.io.{BufferedSource, Source}
 /** Utility methods.
   */
 object Util {
+
   /**
     * try-with-resources Scala style
     *
@@ -83,11 +84,13 @@ object Util {
     uriOpt(path).map(r => Utils.resource(Source.fromURI(r))(mappify))
   }
 
-  private def mappify(src: BufferedSource) = src.getLines()
+  private def mappify(src: BufferedSource) = src
+    .getLines()
     .filter(line => line.contains("=") && !line.startsWith("#") && !line.startsWith("//"))
     .map(line => line.split("=", 2))
     .filter(_.length >= 2)
-    .map(arr => arr(0) -> arr(1)).toMap
+    .map(arr => arr(0) -> arr(1))
+    .toMap
 
   /** Turns on SSL debug logging.
     *

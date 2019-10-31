@@ -20,7 +20,10 @@ object ProdAuth {
 class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAuthentication {
   implicit val ec = servers.ctx.executionContext
 
-  override def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]] = {
+  override def authServer(
+    req: RequestHeader,
+    errorHandler: HttpErrorHandler
+  ): Future[Either[AuthFailure, ServerRequest]] = {
     val requestOpt = for {
       requestID <- req.headers get JsonFutureSocket.RequestId
       request <- RequestID.build(requestID)
@@ -34,8 +37,12 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
     }
   }
 
-  override val phone: Authenticator[PhoneConnection] = Authenticator(rh => authPhone(rh, errorHandler))
-  override val server: Authenticator[ServerRequest] = Authenticator(rh => authServer(rh, errorHandler))
+  override val phone: Authenticator[PhoneConnection] = Authenticator(
+    rh => authPhone(rh, errorHandler)
+  )
+  override val server: Authenticator[ServerRequest] = Authenticator(
+    rh => authServer(rh, errorHandler)
+  )
 
   override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
     connectedServers.flatMap(servers => authPhone(req, servers))
@@ -56,7 +63,8 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
   }
 
   private def headerAuth(req: RequestHeader, servers: Set[PimpServerSocket]): PhoneAuthResult =
-    PimpAuth.cloudCredentials(req)
+    PimpAuth
+      .cloudCredentials(req)
       .map(creds => validate(creds, servers))
       .getOrElse(missing(req))
 
@@ -69,25 +77,34 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
     maybeResult getOrElse missing(rh)
   }
 
-  private def sessionAuth(req: RequestHeader, servers: Set[PimpServerSocket]): Either[AuthFailure, PhoneConnection] =
-    req.session.get(Auth.DefaultSessionKey)
+  private def sessionAuth(
+    req: RequestHeader,
+    servers: Set[PimpServerSocket]
+  ): Either[AuthFailure, PhoneConnection] =
+    req.session
+      .get(Auth.DefaultSessionKey)
       .map(Username.apply)
-      .flatMap(user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, req, server)))
+      .flatMap(
+        user => servers.find(_.id.id == user.name).map(server => PhoneConnection(user, req, server))
+      )
       .toRight(InvalidCredentials(req))
 
   /**
     * @return a socket or a [[Future]] failed with [[NoSuchElementException]] if validation fails
     */
   private def validate(creds: CloudCredentials, servers: Set[PimpServerSocket]): PhoneAuthResult = {
-    servers.find(_.id == creds.cloudID).map { server =>
-      val user = creds.username
-      server.authenticate(user, creds.password).map { isValid =>
-        if (isValid) Right(PhoneConnection(user, creds.rh, server))
-        else Left(InvalidCredentials(creds.rh))
+    servers
+      .find(_.id == creds.cloudID)
+      .map { server =>
+        val user = creds.username
+        server.authenticate(user, creds.password).map { isValid =>
+          if (isValid) Right(PhoneConnection(user, creds.rh, server))
+          else Left(InvalidCredentials(creds.rh))
+        }
       }
-    }.getOrElse {
-      fail(creds.rh)
-    }
+      .getOrElse {
+        fail(creds.rh)
+      }
   }
 
   def fail(rh: RequestHeader) = fut(Left(InvalidCredentials(rh)))

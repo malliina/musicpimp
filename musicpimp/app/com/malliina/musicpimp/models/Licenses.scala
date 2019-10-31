@@ -11,5 +11,6 @@ object Licenses {
   val GPL = fileToString("gpl.txt")
   val LGPL = fileToString("lgpl.txt")
 
-  private def fileToString(resource: String) = FileUtilities.readerFrom(s"licenses/$resource")(_.mkString(lineSep))
+  private def fileToString(resource: String) =
+    FileUtilities.readerFrom(s"licenses/$resource")(_.mkString(lineSep))
 }

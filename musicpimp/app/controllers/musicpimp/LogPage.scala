@@ -9,11 +9,11 @@ import play.api.Logger
 import play.api.data.{Form, Forms}
 import play.api.mvc.Result
 
-class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps)
-  extends HtmlController(auth) {
+class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps) extends HtmlController(auth) {
   val LevelKey = "level"
 
-  val levelForm = Form[Level](LevelKey -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
+  val levelForm =
+    Form[Level](LevelKey -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
   val frontLog = Logger("frontend")
 
   def logs = navigate { req =>
@@ -23,17 +23,19 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps)
   def frontendLog = pimpParsedAction(parsers.json) { req =>
     implicit val json = FrontLogEvents.json
 
-    req.body.validate[FrontLogEvents].fold[Result](
-      invalid => {
-        val msg = "Invalid JSON for log events."
-        log.warn(s"$msg $invalid")
-        badRequest(msg)
-      },
-      es => {
-        es.events foreach handleLog
-        Accepted
-      }
-    )
+    req.body
+      .validate[FrontLogEvents]
+      .fold[Result](
+        invalid => {
+          val msg = "Invalid JSON for log events."
+          log.warn(s"$msg $invalid")
+          badRequest(msg)
+        },
+        es => {
+          es.events foreach handleLog
+          Accepted
+        }
+      )
   }
 
   def handleLog(event: FrontLogEvent): Unit =
@@ -47,17 +49,19 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps)
     else logger.trace(_)
 
   def changeLogLevel = pimpAction { req =>
-    levelForm.bindFromRequest()(req).fold(
-      erroredForm => {
-        log warn s"Log level change submission failed"
-        BadRequest(logPage(erroredForm, req))
-      },
-      level => {
-        Logging.level = level
-        log warn s"Changed log level to $level"
-        Redirect(routes.LogPage.logs())
-      }
-    )
+    levelForm
+      .bindFromRequest()(req)
+      .fold(
+        erroredForm => {
+          log warn s"Log level change submission failed"
+          BadRequest(logPage(erroredForm, req))
+        },
+        level => {
+          Logging.level = level
+          log warn s"Changed log level to $level"
+          Redirect(routes.LogPage.logs())
+        }
+      )
   }
 
   private def logPage(form: Form[Level], req: PimpUserRequest) =

@@ -5,7 +5,8 @@ import com.malliina.json.JsonFormats.SimpleFormat
 
 trait PimpJson {
 
-  implicit object playStateFormat extends SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
+  implicit object playStateFormat
+    extends SimpleFormat[PlayerStates.PlayerState](PlayerStates.withName)
 
 }
 

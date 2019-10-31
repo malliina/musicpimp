@@ -17,7 +17,11 @@ case class MusicFolder(folder: FolderMeta, folders: Seq[FolderMeta], tracks: Seq
   val isEmpty = folders.isEmpty && tracks.isEmpty
 
   def toFull(host: FullUrl) =
-    MusicFolderResult(folder.toFull(host), folders.map(_.toFull(host)), tracks.map(t => TrackJson.toFull(t, host)))
+    MusicFolderResult(
+      folder.toFull(host),
+      folders.map(_.toFull(host)),
+      tracks.map(t => TrackJson.toFull(t, host))
+    )
 }
 
 object MusicFolder {

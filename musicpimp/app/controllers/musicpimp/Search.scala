@@ -66,12 +66,16 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta) extends JsonActor(ctx) {
       .toMat(
         Sink.foreach(
           s =>
-            s.watchTermination()((_, d) =>
-                d.onComplete { _ =>
-                  log.info("Indexing complete.")
-                  send("Indexing complete.")
-              })
-              .runWith(socketSink)))(Keep.both)
+            s.watchTermination()(
+                (_, d) =>
+                  d.onComplete { _ =>
+                    log.info("Indexing complete.")
+                    send("Indexing complete.")
+                  }
+              )
+              .runWith(socketSink)
+        )
+      )(Keep.both)
       .run()
     killSwitchOpt = Option(killSwitch)
     fut.onComplete { _ =>

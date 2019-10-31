@@ -42,14 +42,15 @@ import play.api.mvc._
 import scala.concurrent.Future
 import scala.util.Try
 
-class Rest(player: MusicPlayer,
-           library: FileLibrary,
-           lib: MusicLibrary,
-           auth: AuthDeps,
-           handler: PlaybackMessageHandler,
-           statsPlayer: StatsPlayer,
-           errorHandler: HttpErrorHandler)
-  extends Secured(auth) {
+class Rest(
+  player: MusicPlayer,
+  library: FileLibrary,
+  lib: MusicLibrary,
+  auth: AuthDeps,
+  handler: PlaybackMessageHandler,
+  statsPlayer: StatsPlayer,
+  errorHandler: HttpErrorHandler
+) extends Secured(auth) {
 
   def ping = Action(NoCache(Ok))
 
@@ -87,18 +88,23 @@ class Rest(player: MusicPlayer,
   def streamedPlayback = authenticated { (req: AuthedRequest) =>
     com.malliina.musicpimp.audio.Track
     EssentialAction { requestHeader =>
-      val headerValue = requestHeader.headers.get(JsonStrings.TrackHeader)
+      val headerValue = requestHeader.headers
+        .get(JsonStrings.TrackHeader)
         .map(Json.parse(_).validate[Track](Track.jsonFormat))
-      val metaOrError = headerValue.map(jsonResult => jsonResult.fold(
-        invalid => Left(loggedJson(s"Invalid JSON: $invalid")),
-        valid => Right(valid))
-      ).getOrElse(Left(loggedJson("No Track header is defined.")))
+      val metaOrError = headerValue
+        .map(
+          jsonResult =>
+            jsonResult
+              .fold(invalid => Left(loggedJson(s"Invalid JSON: $invalid")), valid => Right(valid))
+        )
+        .getOrElse(Left(loggedJson("No Track header is defined.")))
       val authAction = metaOrError.fold(
         error => pimpAction(BadRequest(error)),
         meta => {
           statsPlayer.updateUser(req.user)
           EssentialAction { rh =>
-            val a = localPlaybackAction(meta.id).map(_.getOrElse(streamingAction(meta))).map(_.apply(rh))
+            val a =
+              localPlaybackAction(meta.id).map(_.getOrElse(streamingAction(meta))).map(_.apply(rh))
             Accumulator.flatten(a)(mat)
           }
         }
@@ -112,33 +118,37 @@ class Rest(player: MusicPlayer,
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous HTTP response instead
     */
   def stream = pimpParsedActionAsync(parsers.json) { req =>
-    Json.fromJson[BeamCommand](req.body).fold(
-      invalid = _ => fut(BadRequest(JsonMessages.invalidJson)),
-      valid = cmd => {
-        val (response, duration) = Utils.timed(Rest.beam(cmd, lib))
-        response.map { e =>
-          e.fold(
-            errorMsg => {
-              badRequest(errorMsg.message)
-            },
-            httpResponse => {
-              // relays MusicBeamer's response to the client
-              val statusCode = httpResponse.code
-              log info s"Completed track upload in: $duration, relaying response: $statusCode"
-              val result = new Results.Status(statusCode)
-              if (statusCode >= 200 && statusCode < 300) result(JsonMessages.thanks)
-              else result
-            })
-        }.recover {
-          case uhe: UnknownHostException =>
-            notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
-          case e: Exception =>
-            val msg = "Stream failure."
-            log.error(msg, e)
-            serverError(msg)
+    Json
+      .fromJson[BeamCommand](req.body)
+      .fold(
+        invalid = _ => fut(BadRequest(JsonMessages.invalidJson)),
+        valid = cmd => {
+          val (response, duration) = Utils.timed(Rest.beam(cmd, lib))
+          response.map {
+            e =>
+              e.fold(
+                errorMsg => {
+                  badRequest(errorMsg.message)
+                },
+                httpResponse => {
+                  // relays MusicBeamer's response to the client
+                  val statusCode = httpResponse.code
+                  log info s"Completed track upload in: $duration, relaying response: $statusCode"
+                  val result = new Results.Status(statusCode)
+                  if (statusCode >= 200 && statusCode < 300) result(JsonMessages.thanks)
+                  else result
+                }
+              )
+          }.recover {
+            case uhe: UnknownHostException =>
+              notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
+            case e: Exception =>
+              val msg = "Stream failure."
+              log.error(msg, e)
+              serverError(msg)
+          }
         }
-      }
-    )
+      )
   }
 
   def status = pimpAction { req =>
@@ -153,7 +163,6 @@ class Rest(player: MusicPlayer,
   private def localPlaybackAction(id: TrackID): Future[Option[EssentialAction]] =
     lib.meta(id).map { maybeTrack =>
       maybeTrack.map { track =>
-
         /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why this is correct:
           *
           * The request has already been authenticated at this point because this method is called from within an
@@ -180,7 +189,8 @@ class Rest(player: MusicPlayer,
     val fileOpt = library.findAbsoluteNew(relative).filter(canWriteNewFile) orElse
       Option(FileUtilities.tempDir resolve meta.relativePath).filter(canWriteNewFile)
     val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
-    val msg = fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
+    val msg =
+      fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
     log info msg
     // Runs on another thread because setPlaylistAndPlay blocks until the InputStream has
     // enough data. Data will only be made available after this call, when the body of
@@ -192,9 +202,10 @@ class Rest(player: MusicPlayer,
       val track = StreamedTrack.fromTrack(meta, inStream, mat)
       player.setPlaylistAndPlay(track)
     }
-    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(mat)) { _ =>
-      log.info(s"Received stream of track: ${meta.id}")
-      Ok
+    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(mat)) {
+      _ =>
+        log.info(s"Received stream of track: ${meta.id}")
+        Ok
     }
   }
 
@@ -218,7 +229,9 @@ class Rest(player: MusicPlayer,
     * @param file file to write to
     * @return an [[InputStream]] and a [[Sink]]
     */
-  private def streamingAndFileWritingIteratee(file: Path): (PipedInputStream, Sink[ByteString, Future[Long]]) = {
+  private def streamingAndFileWritingIteratee(
+    file: Path
+  ): (PipedInputStream, Sink[ByteString, Future[Long]]) = {
     Option(file.getParent).foreach(p => Files.createDirectories(p))
     val streamOut = new PipedOutputStream()
     val bufferSize = math.min(10.megs.toBytes.toInt, Int.MaxValue)
@@ -228,22 +241,26 @@ class Rest(player: MusicPlayer,
     (pipeIn, iteratee)
   }
 
-  private def ackPimpAction[T](parser: BodyParser[T])(bodyHandler: CookiedRequest[T, Username] => Unit): EssentialAction =
+  private def ackPimpAction[T](
+    parser: BodyParser[T]
+  )(bodyHandler: CookiedRequest[T, Username] => Unit): EssentialAction =
     pimpParsedAction(parser) { request =>
       try {
         bodyHandler(request)
         default.AckResponse(request)
       } catch {
         case iae: IllegalArgumentException =>
-          log error("Illegal argument", iae)
+          log error ("Illegal argument", iae)
           badRequest(iae.getMessage)
         case t: Throwable =>
-          log error("Unable to execute action", t)
+          log error ("Unable to execute action", t)
           serverErrorGeneric
       }
     }
 
-  private def jsonAckAction(jsonHandler: CookiedRequest[JsValue, Username] => Unit): EssentialAction =
+  private def jsonAckAction(
+    jsonHandler: CookiedRequest[JsValue, Username] => Unit
+  ): EssentialAction =
     ackPimpAction(parsers.json)(jsonHandler)
 
   private def UploadedSongAction(songAction: PlayableTrack => Unit) =
@@ -255,7 +272,9 @@ class Rest(player: MusicPlayer,
       }
     }
 
-  private def metaUploadAction(f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]) =
+  private def metaUploadAction(
+    f: TrackUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]
+  ) =
     headPimpUploadAction { request =>
       val parameters = request.body.asFormUrlEncoded
 
@@ -263,23 +282,32 @@ class Rest(player: MusicPlayer,
 
       val pathParameterOpt = firstValue("path").map(p => Paths.get(p))
       // if a "path" parameter is specified, attempts to move the uploaded file to that library path
-      val absolutePathOpt = pathParameterOpt.flatMap(library.suggestAbsolute).filter(!Files.exists(_))
+      val absolutePathOpt =
+        pathParameterOpt.flatMap(library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
-      val file = absolutePathOpt.fold(requestFile)(dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING))
+      val file = absolutePathOpt.fold(requestFile)(
+        dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING)
+      )
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
       val trackId = Library.trackId(file)
-      val trackInfoFromFileOpt = absolutePathOpt.flatMap(_ => pathParameterOpt.map(p => lib.meta(trackId)))
+      val trackInfoFromFileOpt =
+        absolutePathOpt.flatMap(_ => pathParameterOpt.map(p => lib.meta(trackId)))
 
       def trackInfoFromUpload: LocalTrack = {
         val title = firstValue("title")
         val album = firstValue("album") getOrElse ""
         val artist = firstValue("artist") getOrElse ""
-        val meta = SongMeta(StreamSource.fromFile(file), SongTags(title.getOrElse(file.getFileName.toString), album, artist))
+        val meta = SongMeta(
+          StreamSource.fromFile(file),
+          SongTags(title.getOrElse(file.getFileName.toString), album, artist)
+        )
         new LocalTrack(Library.trackId(file), UnixPath(file), meta)(mat)
       }
 
-      val track = trackInfoFromFileOpt.map(_.map(_.getOrElse(trackInfoFromUpload))).getOrElse(fut(trackInfoFromUpload))
+      val track = trackInfoFromFileOpt
+        .map(_.map(_.getOrElse(trackInfoFromUpload)))
+        .getOrElse(fut(trackInfoFromUpload))
       track.flatMap { t =>
         val user = Username(request.user)
         val mediaInfo = t.meta.media
@@ -289,8 +317,12 @@ class Rest(player: MusicPlayer,
       }
     }
 
-  class TrackUploadRequest[A](val track: LocalTrack, file: Path, val username: Username, request: Request[A])
-    extends OneFileUploadRequest(file, username.name, request)
+  class TrackUploadRequest[A](
+    val track: LocalTrack,
+    file: Path,
+    val username: Username,
+    request: Request[A]
+  ) extends OneFileUploadRequest(file, username.name, request)
 
 }
 
@@ -304,7 +336,6 @@ object Rest {
 
     override def getAcceptedIssuers: Array[X509Certificate] = Array.empty[X509Certificate]
   }
-
 
   val defaultClient = OkClient.default
   val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
@@ -332,29 +363,37 @@ object Rest {
     */
   def beam(cmd: BeamCommand, lib: MusicLibrary): Future[Either[ErrorMessage, HttpResponse]] = {
     val url = cmd.uri
-    lib.findFile(cmd.track).flatMap { maybeFile =>
-      maybeFile.map { file =>
-        val size = Files.size(file).bytes
-        log info s"Beaming: $file of size: $size to: $url..."
-        sslClient.multiPart(
-          url,
-          Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(cmd.username.name, cmd.password.pass)),
-          files = Seq(MultiPartFile(audioMpeg, file))
-        ).map { r =>
-          if (r.isSuccess) {
-            log info s"Beamed file: $file of size: $size to: $url"
-          } else {
-            log error s"Beam failed of file: $file of size: $size to: $url"
-          }
-          Right(r)
+    lib
+      .findFile(cmd.track)
+      .flatMap { maybeFile =>
+        maybeFile.map { file =>
+          val size = Files.size(file).bytes
+          log info s"Beaming: $file of size: $size to: $url..."
+          sslClient
+            .multiPart(
+              url,
+              Map(
+                HeaderNames.AUTHORIZATION -> HttpUtil
+                  .authorizationValue(cmd.username.name, cmd.password.pass)
+              ),
+              files = Seq(MultiPartFile(audioMpeg, file))
+            )
+            .map { r =>
+              if (r.isSuccess) {
+                log info s"Beamed file: $file of size: $size to: $url"
+              } else {
+                log error s"Beam failed of file: $file of size: $size to: $url"
+              }
+              Right(r)
+            }
+        }.getOrElse {
+          fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
         }
-      }.getOrElse {
-        fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
       }
-    }.recover {
-      case e: Exception =>
-        log.error("Beaming failed.", e)
-        Left(ErrorMessage("Beaming failed."))
-    }
+      .recover {
+        case e: Exception =>
+          log.error("Beaming failed.", e)
+          Left(ErrorMessage("Beaming failed."))
+      }
   }
 }

@@ -13,10 +13,12 @@ import play.api.libs.json.JsValue
 
 import scala.concurrent.duration.DurationInt
 
-class PlayerActor(player: ServerPlayer,
-                  messageHandler: JsonHandlerBase,
-                  conf: ActorConfig[AuthedRequest])(implicit mat: Materializer)
-    extends JsonActor(conf) {
+class PlayerActor(
+  player: ServerPlayer,
+  messageHandler: JsonHandlerBase,
+  conf: ActorConfig[AuthedRequest]
+)(implicit mat: Materializer)
+  extends JsonActor(conf) {
   // Keepalive for very old (Android) clients
   val pings = Source.tick(1.seconds, 5.seconds, 0)
   // Playback updates
@@ -46,13 +48,15 @@ class PlayerActor(player: ServerPlayer,
         .to(Sink.foreach { _ =>
           onTick()
         })
-        .run())
+        .run()
+    )
     pingSub = Option(
       pings
         .to(Sink.foreach { _ =>
           onPing()
         })
-        .run())
+        .run()
+    )
   }
 
   override def onMessage(msg: JsValue): Unit =

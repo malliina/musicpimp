@@ -12,11 +12,13 @@ import play.api.libs.json.Json.toJson
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-class PlaybackMessageHandler(player: MusicPlayer,
-                             library: FileLibrary,
-                             lib: MusicLibrary,
-                             statsPlayer: StatsPlayer)(implicit ec: ExecutionContext)
-    extends JsonHandlerBase {
+class PlaybackMessageHandler(
+  player: MusicPlayer,
+  library: FileLibrary,
+  lib: MusicLibrary,
+  statsPlayer: StatsPlayer
+)(implicit ec: ExecutionContext)
+  extends JsonHandlerBase {
 
   val playlist = player.playlist
 
@@ -131,7 +133,8 @@ class PlaybackMessageHandler(player: MusicPlayer,
       case t: Exception =>
         log.error(
           s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references",
-          t)
+          t
+        )
         Nil
     }
 

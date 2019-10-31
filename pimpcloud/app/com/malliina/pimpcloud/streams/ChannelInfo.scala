@@ -12,10 +12,12 @@ import play.api.Logger
 
 import scala.concurrent.Future
 
-class ChannelInfo(val channel: SourceQueue[Option[ByteString]],
-                  serverID: CloudID,
-                  val track: Track,
-                  val range: ContentRange) extends StreamEndpoint {
+class ChannelInfo(
+  val channel: SourceQueue[Option[ByteString]],
+  serverID: CloudID,
+  val track: Track,
+  val range: ContentRange
+) extends StreamEndpoint {
   val isClosed = new AtomicBoolean(false)
 
   def send(t: ByteString): Future[QueueOfferResult] = {

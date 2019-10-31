@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class DatabaseTokenStore(db: PimpDb, val ec: ExecutionContext)
   extends Sessionizer(db)
-    with TokenStore {
+  with TokenStore {
 
   import db.api._
   import db.schema._

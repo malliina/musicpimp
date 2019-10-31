@@ -37,11 +37,11 @@ object TokenInfo {
     (json \ TokenPlatform.Key).validate[TokenPlatform].flatMap { platform =>
       val tokenJson = json \ TokenKey
       platform match {
-        case Adm => tokenJson.validate[ADMToken]
-        case Gcm => tokenJson.validate[GCMToken]
+        case Adm  => tokenJson.validate[ADMToken]
+        case Gcm  => tokenJson.validate[GCMToken]
         case Mpns => tokenJson.validate[MPNSToken]
         case Apns => tokenJson.validate[APNSToken]
-        case _ => JsError(s"Unsupported platform: '$platform'.")
+        case _    => JsError(s"Unsupported platform: '$platform'.")
       }
     }
   }

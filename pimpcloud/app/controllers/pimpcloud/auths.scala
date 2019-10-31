@@ -4,7 +4,16 @@ import akka.stream.Materializer
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.OkClient
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{AuthConf, AuthFailure, Authenticator, BasicAuthHandler, GoogleCodeValidator, OAuthConf, PermissionError, UserAuthenticator}
+import com.malliina.play.auth.{
+  AuthConf,
+  AuthFailure,
+  Authenticator,
+  BasicAuthHandler,
+  GoogleCodeValidator,
+  OAuthConf,
+  PermissionError,
+  UserAuthenticator
+}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.values.Email
@@ -39,7 +48,8 @@ class OAuthCtrl(val oauth: AdminOAuth, mat: Materializer)
 object OAuthCtrl {
   def bundle(oauth: AdminOAuth) = new AuthBundle[AuthedRequest] {
     override def authenticator: Authenticator[AuthedRequest] =
-      UserAuthenticator.session(oauth.sessionKey)
+      UserAuthenticator
+        .session(oauth.sessionKey)
         .transform((req, user) => Right(AuthedRequest(user, req)))
 
     override def onUnauthorized(failure: AuthFailure): Result =
@@ -56,7 +66,9 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
   val handler = new BasicAuthHandler(
     routes.Logs.index(),
     lastIdKey = lastIdKey,
-    email => if (email == authorizedEmail) Right(email) else Left(PermissionError(s"Unauthorized: '$email'.")),
+    email =>
+      if (email == authorizedEmail) Right(email)
+      else Left(PermissionError(s"Unauthorized: '$email'.")),
     sessionKey = sessionKey,
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge)
   )
@@ -71,5 +83,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     validator.startHinted(req, lastId)
   }
 
-  def googleCallback = actions.async { req => validator.validateCallback(req) }
+  def googleCallback = actions.async { req =>
+    validator.validateCallback(req)
+  }
 }

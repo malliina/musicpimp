@@ -8,6 +8,7 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 import scala.concurrent.Future
 
 trait MusicLibrary {
+
   /**
     * @return the contents of the root library folder
     */

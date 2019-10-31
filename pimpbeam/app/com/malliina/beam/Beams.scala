@@ -147,8 +147,9 @@ class BeamMediator(mat: Materializer) extends Actor {
       players.find(_.out == ref).foreach { player =>
         self ! PlayerLeft(player.user)
       }
-      phones.find { case (_, saved) => saved == ref }.foreach { case (user, _) =>
-        self ! PhoneLeft(user)
+      phones.find { case (_, saved) => saved == ref }.foreach {
+        case (user, _) =>
+          self ! PhoneLeft(user)
       }
   }
 }

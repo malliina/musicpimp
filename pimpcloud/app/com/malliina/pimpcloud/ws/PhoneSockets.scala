@@ -16,8 +16,7 @@ import play.api.mvc.RequestHeader
 
 /** A mobile client connected to pimpcloud.
   * */
-class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
-  extends JsonActor(conf) {
+class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection]) extends JsonActor(conf) {
   val conn = conf.user
   val user = conn.user
   val server = conn.server
@@ -32,7 +31,8 @@ class PhoneActor(mediator: ActorRef, conf: ActorConfig[PhoneConnection])
   override def onMessage(msg: JsValue): Unit = {
     val isStatus = (msg \ Cmd).validate[String].filter(_ == StatusKey).isSuccess
     if (isStatus) {
-      conn.status()
+      conn
+        .status()
         .pipeTo(out)
         .recover { case t => PhoneActor.log.warn("Status request failed.", t) }
     } else {

@@ -11,7 +11,10 @@ import scala.concurrent.Future
 trait CloudAuthentication {
   type PhoneAuthResult = Future[Either[AuthFailure, PhoneConnection]]
 
-  def authServer(req: RequestHeader, errorHandler: HttpErrorHandler): Future[Either[AuthFailure, ServerRequest]]
+  def authServer(
+    req: RequestHeader,
+    errorHandler: HttpErrorHandler
+  ): Future[Either[AuthFailure, ServerRequest]]
 
   def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult
 

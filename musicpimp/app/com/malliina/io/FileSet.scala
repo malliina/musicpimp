@@ -4,7 +4,8 @@ import com.malliina.file.FileUtilities
 import play.api.libs.json.Format
 
 abstract class FileSet[T](file: String)(implicit format: Format[T])
-  extends FileBackedSet[T](FileUtilities pathTo file) with LoggingList[T] {
+  extends FileBackedSet[T](FileUtilities pathTo file)
+  with LoggingList[T] {
   protected def id(elem: T): String
 
   def areSame(first: T, second: T) = id(first) == id(second)

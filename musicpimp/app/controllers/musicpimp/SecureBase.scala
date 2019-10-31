@@ -56,14 +56,27 @@ class SecureBase(auth: AuthDeps)
   def pimpAction(f: CookiedRequest[AnyContent, Username] => Result): EssentialAction =
     pimpParsedAction(defaultParser)(req => f(req))
 
-  def headPimpUploadAction(f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]) =
+  def headPimpUploadAction(
+    f: OneFileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile]] => Future[Result]
+  ) =
     pimpUploadAction { req =>
       req.files.headOption
-        .map(firstFile => f(new OneFileUploadRequest[MultipartFormData[TemporaryFile]](firstFile, req.user.name, req)))
+        .map(
+          firstFile =>
+            f(
+              new OneFileUploadRequest[MultipartFormData[TemporaryFile]](
+                firstFile,
+                req.user.name,
+                req
+              )
+            )
+        )
         .getOrElse(fut(badRequest(s"File missing")))
     }
 
-  def pimpUploadAction(f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Future[Result]) =
+  def pimpUploadAction(
+    f: FileUploadRequest[MultipartFormData[PlayFiles.TemporaryFile], Username] => Future[Result]
+  ) =
     pimpParsedActionAsync(parsers.multipartFormData) { req =>
       val files: Seq[Path] = uploads.save(req)
       f(new FileUploadRequest(files, req.user, req))
@@ -78,13 +91,17 @@ class SecureBase(auth: AuthDeps)
   def pimpActionAsync2[R: Writeable](f: CookiedRequest[AnyContent, Username] => Future[R]) =
     okAsyncAction(defaultParser)(f)
 
-  def okAsyncAction[T, R: Writeable](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[R]) =
+  def okAsyncAction[T, R: Writeable](
+    parser: BodyParser[T]
+  )(f: CookiedRequest[T, Username] => Future[R]) =
     actionAsync(parser)(req => f(req).map(r => Ok(r)))
 
   def actionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
-  def pimpParsedActionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
+  def pimpParsedActionAsync[T](
+    parser: BodyParser[T]
+  )(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
     authenticatedLogged { (auth: AuthedRequest) =>
       comps.actionBuilder.async(parser) { req =>
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))

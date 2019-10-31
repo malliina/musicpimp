@@ -9,7 +9,11 @@ import scala.concurrent.Future
 
 trait PimpErrorHandling extends HttpErrorHandler {
 
-  abstract override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
+  abstract override def onClientError(
+    request: RequestHeader,
+    statusCode: Int,
+    message: String
+  ): Future[Result] = {
     PimpContentController.pimpResultUneven(request)(
       html = super.onClientError(request, statusCode, message),
       json = Errors.withStatus(Results.Status(statusCode), message)

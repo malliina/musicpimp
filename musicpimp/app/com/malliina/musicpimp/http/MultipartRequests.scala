@@ -18,11 +18,13 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
   private val log = Logger(getClass)
   val client = if (isHttps) Rest.sslClient else Rest.defaultClient
 
-  def rangedFile(url: FullUrl,
-                 headers: Map[String, String],
-                 file: Path,
-                 range: ContentRange,
-                 tag: RequestID): Future[OkHttpResponse] =
+  def rangedFile(
+    url: FullUrl,
+    headers: Map[String, String],
+    file: Path,
+    range: ContentRange,
+    tag: RequestID
+  ): Future[OkHttpResponse] =
     try {
       val inStream = new FileInputStream(file.toFile)
       val bytes = try {
@@ -37,10 +39,12 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
       case e: Exception => Future.failed(e)
     }
 
-  def file(url: FullUrl,
-           headers: Map[String, String],
-           file: Path,
-           tag: RequestID): Future[OkHttpResponse] = {
+  def file(
+    url: FullUrl,
+    headers: Map[String, String],
+    file: Path,
+    tag: RequestID
+  ): Future[OkHttpResponse] = {
     val filePart = RequestBody.create(file.toFile, null)
     withParts(url, headers, file.getFileName.toString, filePart, tag)
   }
@@ -57,11 +61,13 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
     cancellable.nonEmpty
   }
 
-  private def withParts(url: FullUrl,
-                        headers: Map[String, String],
-                        filename: String,
-                        part: RequestBody,
-                        tag: RequestID): Future[OkHttpResponse] = {
+  private def withParts(
+    url: FullUrl,
+    headers: Map[String, String],
+    filename: String,
+    part: RequestBody,
+    tag: RequestID
+  ): Future[OkHttpResponse] = {
     val bodyBuilder = new MultipartBody.Builder()
     val body = bodyBuilder.addFormDataPart("file", filename, part).build()
     log.info(s"Uploading to '$url'...")

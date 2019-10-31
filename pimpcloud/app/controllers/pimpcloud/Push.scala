@@ -22,7 +22,7 @@ class Push(comps: ControllerComponents, pusher: Pusher) extends AbstractControll
   def parseJson(json: JsValue): JsResult[PushTask] = {
     (json \ Cmd).validate[String].flatMap {
       case PushValue => (json \ Body).validate[PushTask]
-      case other => JsError(s"Unknown $Cmd: $other")
+      case other     => JsError(s"Unknown $Cmd: $other")
     }
   }
 }

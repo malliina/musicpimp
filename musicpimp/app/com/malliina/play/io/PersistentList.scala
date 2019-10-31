@@ -1,6 +1,7 @@
 package com.malliina.play.io
 
 trait PersistentList[T] {
+
   /**
     * @return true if the collection was modified, false otherwise
     */

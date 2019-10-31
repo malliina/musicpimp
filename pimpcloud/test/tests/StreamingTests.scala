@@ -67,8 +67,11 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
 
   ignore("file to source") {
     val (queue, source) = Streaming.sourceQueue[ByteString](mat)
-    val byteCalculator: Sink[ByteString, Future[Long]] = Sink.fold[Long, ByteString](0)((acc, bytes) => acc + bytes.length)
-    val asyncSink = Flow[ByteString].mapAsync(1)(bytes => queue.offer(Option(bytes)).map(_ => bytes)).toMat(byteCalculator)(Keep.right)
+    val byteCalculator: Sink[ByteString, Future[Long]] =
+      Sink.fold[Long, ByteString](0)((acc, bytes) => acc + bytes.length)
+    val asyncSink = Flow[ByteString]
+      .mapAsync(1)(bytes => queue.offer(Option(bytes)).map(_ => bytes))
+      .toMat(byteCalculator)(Keep.right)
     //    val bytesFuture = source.to(asyncSink).run()
     val bytes = FileIO.fromPath(filePath).runWith(asyncSink)
     Await.result(bytes, 10.seconds)
@@ -76,7 +79,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
   }
 
   ignore("upload") {
-    val client = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
+    val client =
+      OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
     // Register file listener
     val listenUri = FullUrl("http", "localhost:9000", "/testfile")
     val listenResponse = await(client.get(listenUri))
@@ -110,7 +114,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
   def ensureTestMp3Exists(tempFile: Path): Path = {
     if (!Files.exists(tempFile)) {
       val dest = Files.createTempFile(null, null)
-      val resourceURL = Option(getClass.getClassLoader).flatMap(cl => Option(cl.getResource(fileName)))
+      val resourceURL =
+        Option(getClass.getClassLoader).flatMap(cl => Option(cl.getResource(fileName)))
       val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: $fileName"))
       FileUtils.copyURLToFile(url, dest.toFile)
       if (!Files.exists(dest)) {

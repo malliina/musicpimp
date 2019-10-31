@@ -20,8 +20,8 @@ object FileUtil {
     findPath(
       sys.env
         .get("ALLUSERSPROFILE")
-        .orElse(sys.env.get("LOCALAPPDATA")))
-      .map(_ / "MusicPimp")
+        .orElse(sys.env.get("LOCALAPPDATA"))
+    ).map(_ / "MusicPimp")
       .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
 
   protected def localDirDefault: Path = FileUtilities.tempDir / ".musicpimp"

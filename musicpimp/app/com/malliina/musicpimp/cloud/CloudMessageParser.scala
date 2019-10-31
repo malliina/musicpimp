@@ -33,27 +33,29 @@ trait CloudMessageParser {
 
     request flatMap { req =>
       val message: JsResult[PimpMessage] = cmd flatMap {
-        case VersionKey => JsSuccess(GetVersion)
-        case TrackKey => body.validate[RangedTrack] orElse body.validate[GetTrack]
-        case Cancel => JsSuccess(CancelStream(req))
-        case Meta => body.validate[GetMeta]
-        case Ping => JsSuccess(PingMessage)
+        case VersionKey      => JsSuccess(GetVersion)
+        case TrackKey        => body.validate[RangedTrack] orElse body.validate[GetTrack]
+        case Cancel          => JsSuccess(CancelStream(req))
+        case Meta            => body.validate[GetMeta]
+        case Ping            => JsSuccess(PingMessage)
         case AuthenticateKey => body.validate[Authenticate]
-        case RootFolderKey => JsSuccess(RootFolder)
-        case FolderKey => body.validate[GetFolder]
-        case SearchKey => body.validate[Search]
-        case PlaylistsGet => user.map(u => GetPlaylists(u))
-        case PlaylistGet => withUser(u => (body \ Id).validate[PlaylistID].map(GetPlaylist(_, u)))
-        case PlaylistSave => withUser(u => (body \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist(_, u)))
-        case PlaylistDelete => withUser(u => (body \ Id).validate[PlaylistID].map(DeletePlaylist(_, u)))
-        case AlarmsKey => JsSuccess(GetAlarms)
+        case RootFolderKey   => JsSuccess(RootFolder)
+        case FolderKey       => body.validate[GetFolder]
+        case SearchKey       => body.validate[Search]
+        case PlaylistsGet    => user.map(u => GetPlaylists(u))
+        case PlaylistGet     => withUser(u => (body \ Id).validate[PlaylistID].map(GetPlaylist(_, u)))
+        case PlaylistSave =>
+          withUser(u => (body \ PlaylistKey).validate[PlaylistSubmission].map(SavePlaylist(_, u)))
+        case PlaylistDelete =>
+          withUser(u => (body \ Id).validate[PlaylistID].map(DeletePlaylist(_, u)))
+        case AlarmsKey  => JsSuccess(GetAlarms)
         case AlarmsEdit => body.validate[AlarmCommand].map(AlarmEdit.apply)
-        case AlarmsAdd => body.validate[AlarmCommand].map(AlarmAdd.apply)
-        case Beam => body.validate[BeamCommand]
-        case StatusKey => JsSuccess(GetStatus)
-        case Recent => readMeta.map(GetRecent.apply)
-        case Popular => readMeta.map(GetPopular.apply)
-        case other => JsError(s"Unknown JSON command: '$other' in '$json'.")
+        case AlarmsAdd  => body.validate[AlarmCommand].map(AlarmAdd.apply)
+        case Beam       => body.validate[BeamCommand]
+        case StatusKey  => JsSuccess(GetStatus)
+        case Recent     => readMeta.map(GetRecent.apply)
+        case Popular    => readMeta.map(GetPopular.apply)
+        case other      => JsError(s"Unknown JSON command: '$other' in '$json'.")
       }
       message.map(msg => CloudRequest(msg, req))
     }

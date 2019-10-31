@@ -13,5 +13,9 @@ object PimpConf {
   def readConfFile(key: String): Option[String] = fileProps.get(key)
 
   def read(key: String) =
-    sys.env.get(key).orElse(sys.props.get(key)).orElse(readConfFile(key)).toRight(ErrorMessage(s"Key missing: '$key'."))
+    sys.env
+      .get(key)
+      .orElse(sys.props.get(key))
+      .orElse(readConfFile(key))
+      .toRight(ErrorMessage(s"Key missing: '$key'."))
 }

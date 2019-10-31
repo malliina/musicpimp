@@ -20,8 +20,11 @@ object UsersHtml extends PimpBootstrap {
             content.us map { u =>
               tr(
                 td(u.name),
-                td(`class` := "table-button")(postableForm(routes.Accounts.delete(u))(
-                  button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")))
+                td(`class` := "table-button")(
+                  postableForm(routes.Accounts.delete(u))(
+                    button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")
+                  )
+                )
               )
             }
           )
@@ -65,8 +68,10 @@ object UsersHtml extends PimpBootstrap {
       feedback.fold(empty)(feedbackDiv)
     )
 
-  def passwordInputs(firstLabel: String = "Password",
-                     repeatLabel: String = "Repeat password"): Modifier = Seq(
+  def passwordInputs(
+    firstLabel: String = "Password",
+    repeatLabel: String = "Repeat password"
+  ): Modifier = Seq(
     passwordGroup("newPassword", firstLabel),
     passwordGroup("newPasswordAgain", repeatLabel)
   )

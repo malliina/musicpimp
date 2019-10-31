@@ -12,10 +12,12 @@ import play.api.{Configuration, Logger}
 
 import scala.concurrent.Future
 
-class ProdPusher(apnsConf: APNSTokenConf,
-                 gcmApiKey: String,
-                 admCredentials: ADMCredentials,
-                 wnsCredentials: WNSCredentials) extends Pusher {
+class ProdPusher(
+  apnsConf: APNSTokenConf,
+  gcmApiKey: String,
+  admCredentials: ADMCredentials,
+  wnsCredentials: WNSCredentials
+) extends Pusher {
   def this(conf: PushConf) = this(conf.apns, conf.gcmApiKey, conf.adm, conf.wns)
 
   // We push both to the sandboxed and prod environments in all cases,
@@ -23,9 +25,9 @@ class ProdPusher(apnsConf: APNSTokenConf,
   val prodApnsHttp = APNSTokenHandler(apnsConf, isSandbox = false)
   val sandboxApnsHttp = APNSTokenHandler(apnsConf, isSandbox = true)
   val gcmHandler = new GCMHandler(new GCMClient(gcmApiKey))
-  val admHandler = new ADMHandler(new ADMClient(
-    admCredentials.clientId,
-    admCredentials.clientSecret))
+  val admHandler = new ADMHandler(
+    new ADMClient(admCredentials.clientId, admCredentials.clientSecret)
+  )
   val mpnsHandler = new MPNSHandler(new MPNSClient)
   val wnsHandler = new WNSHandler(new WNSClient(wnsCredentials))
 

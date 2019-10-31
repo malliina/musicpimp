@@ -50,13 +50,14 @@ object Home {
   }
 }
 
-class Home(beamConf: BeamConf,
-           beams: Beams,
-           disco: DiscoGs,
-           mat: Materializer,
-           errorHandler: HttpErrorHandler,
-           comps: ControllerComponents)
-  extends AbstractController(comps) {
+class Home(
+  beamConf: BeamConf,
+  beams: Beams,
+  disco: DiscoGs,
+  mat: Materializer,
+  errorHandler: HttpErrorHandler,
+  comps: ControllerComponents
+) extends AbstractController(comps) {
   implicit val m = mat
   implicit val ec = mat.executionContext
   val sessionKey = "username"
@@ -147,9 +148,11 @@ class Home(beamConf: BeamConf,
   def stream = PlayerSecureAction { player =>
     Action { req =>
       log info s"Sending stream to player '${player.user}'..."
-      Ok.chunked(player.stream).as(AudioMpeg).withHeaders(
-        CACHE_CONTROL -> HttpConstants.NoCache
-      )
+      Ok.chunked(player.stream)
+        .as(AudioMpeg)
+        .withHeaders(
+          CACHE_CONTROL -> HttpConstants.NoCache
+        )
     }
   }
 
@@ -161,7 +164,8 @@ class Home(beamConf: BeamConf,
         val json = BeamMessages.playerExists(
           user,
           maybePlayer.isDefined,
-          maybePlayer.exists(p => !p.streamer.isReceivingStream))
+          maybePlayer.exists(p => !p.streamer.isReceivingStream)
+        )
         Caching.NoCacheOk(json)
       }
     }
@@ -199,7 +203,11 @@ class Home(beamConf: BeamConf,
     log info s"Serving file to user '$user'..."
     streamer.isReceivingStream = true
     // the body parser pushes the request content to the player through `streamer.send`
-    val parser = StreamParsers.multiPartByteStreaming(bytes => streamer.send(bytes).map(analyzeResult(streamer, bytes, _)), maxSize, errorHandler)
+    val parser = StreamParsers.multiPartByteStreaming(
+      bytes => streamer.send(bytes).map(analyzeResult(streamer, bytes, _)),
+      maxSize,
+      errorHandler
+    )
     Action(parser) { request =>
       log info s"Served file to '$user'."
       streamer.close()
@@ -212,12 +220,16 @@ class Home(beamConf: BeamConf,
     }
   }
 
-  protected def analyzeResult(dest: StreamEndpoint, bytes: ByteString, result: QueueOfferResult): Unit = {
+  protected def analyzeResult(
+    dest: StreamEndpoint,
+    bytes: ByteString,
+    result: QueueOfferResult
+  ): Unit = {
     val suffix = s" for ${bytes.length} bytes"
     result match {
-      case Enqueued => ()
-      case Dropped => log.warn(s"Offer dropped$suffix")
-      case Failure(t) => log.error(s"Offer failed$suffix", t)
+      case Enqueued    => ()
+      case Dropped     => log.warn(s"Offer dropped$suffix")
+      case Failure(t)  => log.error(s"Offer failed$suffix", t)
       case QueueClosed => () //log.error(s"Queue closed$suffix")
     }
   }
@@ -225,7 +237,10 @@ class Home(beamConf: BeamConf,
   private def streamRefusalResponse(user: Username): EssentialAction =
     Action { request =>
       log warn s"Refused upload from '${request.remoteAddress}' to user '$user' because another upload to that user is currently in progress."
-      BadRequest(JsonMessages.failure("Concurrent streaming to the same player is not supported; try again later."))
+      BadRequest(
+        JsonMessages
+          .failure("Concurrent streaming to the same player is not supported; try again later.")
+      )
     }
 
   /**
@@ -270,7 +285,7 @@ class Home(beamConf: BeamConf,
   private def headerUsername(request: RequestHeader): Option[Username] = {
     Auth.basicCredentials(request).flatMap { creds =>
       val isValid = Home.validateCredentials(creds)
-      if(isValid) Option(creds.username) else None
+      if (isValid) Option(creds.username) else None
     }
   }
 
@@ -284,8 +299,10 @@ class Home(beamConf: BeamConf,
     * @param action         authenticated action
     * @return an authenticated action
     */
-  def authenticatedAsync[A](auth: RequestHeader => Future[Either[AuthFailure, A]],
-                            onUnauthorized: AuthFailure => Result)(action: A => EssentialAction): EssentialAction =
+  def authenticatedAsync[A](
+    auth: RequestHeader => Future[Either[AuthFailure, A]],
+    onUnauthorized: AuthFailure => Result
+  )(action: A => EssentialAction): EssentialAction =
     EssentialAction { rh =>
       val futureAccumulator = auth(rh) map { authResult =>
         authResult.fold(

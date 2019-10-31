@@ -29,29 +29,34 @@ object SettingsController {
   val Path = "path"
 }
 
-class SettingsController(tags: PimpHtml,
-                         messages: Messages,
-                         library: FileLibrary,
-                         indexer: Indexer,
-                         dumper: DataMigrator,
-                         auth: AuthDeps)
-  extends HtmlController(auth) {
-  val dirConstraint = Constraint((dir: String) =>
-    if (validateDirectory(dir)) Valid
-    else Invalid(Seq(ValidationError(s"Invalid directory '$dir'."))))
+class SettingsController(
+  tags: PimpHtml,
+  messages: Messages,
+  library: FileLibrary,
+  indexer: Indexer,
+  dumper: DataMigrator,
+  auth: AuthDeps
+) extends HtmlController(auth) {
+  val dirConstraint = Constraint(
+    (dir: String) =>
+      if (validateDirectory(dir)) Valid
+      else Invalid(Seq(ValidationError(s"Invalid directory '$dir'.")))
+  )
 
   protected val newFolderForm = Form(
     SettingsController.Path -> nonEmptyText.verifying(dirConstraint)
   )
   private val folderPlaceHolder = EnvUtils.operatingSystem match {
     case EnvUtils.Windows => "C:\\music\\"
-    case EnvUtils.Mac => "/Users/me/music"
-    case _ => "/opt/music"
+    case EnvUtils.Mac     => "/Users/me/music"
+    case _                => "/opt/music"
   }
 
   def writeDump = pimpActionAsync { _ =>
     val to = FileUtilities.tempDir.resolve("dump.json")
-    dumper.writeDump(to).map { _ => Ok }
+    dumper.writeDump(to).map { _ =>
+      Ok
+    }
   }
 
   def manage = settings
@@ -67,16 +72,18 @@ class SettingsController(tags: PimpHtml,
   def settings = navigate(req => foldersPage(newFolderForm, req))
 
   def newFolder = pimpAction { request =>
-    newFolderForm.bindFromRequest()(request).fold(
-      formWithErrors => {
-        log warn s"Errors: ${formWithErrors.errors}"
-        BadRequest(foldersPage(formWithErrors, request))
-      },
-      path => {
-        Settings.add(Paths get path)
-        onFoldersChanged(s"Added folder '$path'.")
-      }
-    )
+    newFolderForm
+      .bindFromRequest()(request)
+      .fold(
+        formWithErrors => {
+          log warn s"Errors: ${formWithErrors.errors}"
+          BadRequest(foldersPage(formWithErrors, request))
+        },
+        path => {
+          Settings.add(Paths get path)
+          onFoldersChanged(s"Added folder '$path'.")
+        }
+      )
   }
 
   def deleteFolder(folder: String) = pimpAction {

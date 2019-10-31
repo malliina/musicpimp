@@ -16,7 +16,9 @@ abstract class PlayLifeCycle(appName: String, registryPort: Int) {
   def start(): Unit = {
     // Init conf
     sys.props += ("pidfile.path" -> "/dev/null")
-    FileUtilities.basePath = Paths get sys.props.get(s"$appName.home").getOrElse(sys.props("user.dir"))
+    FileUtilities.basePath = Paths get sys.props
+      .get(s"$appName.home")
+      .getOrElse(sys.props("user.dir"))
     log info s"Starting $appName... app home: ${FileUtilities.basePath}"
     sys.props ++= conformize(readConfFile(appName))
     validateKeyStoreIfSpecified()
@@ -39,12 +41,15 @@ abstract class PlayLifeCycle(appName: String, registryPort: Int) {
     * @return key-value pairs where key https.keyStore, if any, is an absolute path
     */
   def conformize(params: Map[String, String]): Map[String, String] = {
-    params.get(keyStoreKey).map { keyStorePath =>
-      val absKeyStorePath = FileUtilities.pathTo(keyStorePath).toAbsolutePath
-      params.updated(keyStoreKey, absKeyStorePath.toString)
-    }.getOrElse {
-      params
-    }
+    params
+      .get(keyStoreKey)
+      .map { keyStorePath =>
+        val absKeyStorePath = FileUtilities.pathTo(keyStorePath).toAbsolutePath
+        params.updated(keyStoreKey, absKeyStorePath.toString)
+      }
+      .getOrElse {
+        params
+      }
   }
 
   private def propsFromFile(file: Path): Map[String, String] = {

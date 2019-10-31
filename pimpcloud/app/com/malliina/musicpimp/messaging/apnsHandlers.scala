@@ -20,7 +20,7 @@ object APNSUtils {
 /** Using HTTP/2.
   */
 class APNSHttpHandler(client: APNSHttpClient)
-    extends PushRequestHandler[APNSPayload, APNSHttpResult] {
+  extends PushRequestHandler[APNSPayload, APNSHttpResult] {
   val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
   val meta = APNSMeta.withTopic(MusicPimpTopic)
 
@@ -45,7 +45,7 @@ object APNSTokenHandler {
 }
 
 class APNSTokenHandler(client: APNSTokenClient)
-    extends PushRequestHandler[APNSPayload, APNSHttpResult] {
+  extends PushRequestHandler[APNSPayload, APNSHttpResult] {
   val MusicPimpTopic = APNSTopic("org.musicpimp.MusicPimp")
 
   override def pushOne(request: APNSPayload): Future[APNSHttpResult] =

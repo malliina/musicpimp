@@ -21,11 +21,12 @@ import play.api.test.Helpers._
 import scala.concurrent.duration.DurationInt
 
 object TestOptions {
-  val default = InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
+  val default =
+    InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
 }
 
 class MusicPimpSuite(options: InitOptions = TestOptions.default)
-    extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
+  extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
 
 class PlaylistsTests extends MusicPimpSuite {
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
@@ -40,7 +41,8 @@ class PlaylistsTests extends MusicPimpSuite {
       db.insertTracks(
         Seq(
           DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, UnixPath.Empty, folderId)
-        ))
+        )
+      )
 
     val insertions = for {
       _ <- db.insertFolders(Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId)))
@@ -61,7 +63,10 @@ class PlaylistsTests extends MusicPimpSuite {
   test("POST /playlists") {
     def postPlaylist(in: PlaylistSubmission) = {
       val response =
-        fetch(FakeRequest("POST", "/playlists").withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in))))
+        fetch(
+          FakeRequest("POST", "/playlists")
+            .withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in)))
+        )
       assert(status(response) === 202)
       (contentAsJson(response) \ "id").as[PlaylistID]
     }
@@ -91,9 +96,13 @@ class PlaylistsTests extends MusicPimpSuite {
   def fetch[T: Writeable](request: FakeRequest[T]) = {
     route(
       app,
-      request.withHeaders(AUTHORIZATION -> HttpUtil.authorizationValue(DatabaseUserManager.DefaultUser.name,
-                                                                       DatabaseUserManager.DefaultPass.pass),
-                          ACCEPT -> JSON)
+      request.withHeaders(
+        AUTHORIZATION -> HttpUtil.authorizationValue(
+          DatabaseUserManager.DefaultUser.name,
+          DatabaseUserManager.DefaultPass.pass
+        ),
+        ACCEPT -> JSON
+      )
     ).get
   }
 }

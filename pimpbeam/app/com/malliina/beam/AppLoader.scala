@@ -19,9 +19,9 @@ class AppLoader extends DefaultApp(ctx => new AppComponents(ctx))
 
 class AppComponents(context: Context)
   extends BuiltInComponentsFromContext(context)
-    with AssetsComponents
-    with HttpFiltersComponents
-    with AhcWSComponents {
+  with AssetsComponents
+  with HttpFiltersComponents
+  with AhcWSComponents {
 
   val allowedCsp = Seq(
     "netdna.bootstrapcdn.com",
@@ -34,8 +34,11 @@ class AppComponents(context: Context)
   )
   val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp = s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
-  override lazy val securityHeadersConfig = SecurityHeadersConfig(contentSecurityPolicy = Option(csp))
+  val csp =
+    s"default-src 'self' 'unsafe-inline' $allowedEntry; connect-src *; img-src 'self' data:;"
+  override lazy val securityHeadersConfig = SecurityHeadersConfig(
+    contentSecurityPolicy = Option(csp)
+  )
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("localhost", "beam.musicpimp.org"))
   implicit val ec: ExecutionContext = materializer.executionContext
   // Services
@@ -48,9 +51,12 @@ class AppComponents(context: Context)
 
   log info s"Started MusicBeamer endpoint. Advertising address: ${conf.host}:${conf.port}/${conf.sslPort}."
 
-  applicationLifecycle.addStopHook(() => Future.successful {
-    disco.close()
-  })
+  applicationLifecycle.addStopHook(
+    () =>
+      Future.successful {
+        disco.close()
+      }
+  )
 }
 
 object AppComponents {

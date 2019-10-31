@@ -22,10 +22,7 @@ object LibraryController {
   def noTrackJson(id: TrackID) = FailReason(s"Track not found: $id")
 }
 
-class LibraryController(tags: PimpHtml,
-                        lib: MusicLibrary,
-                        auth: AuthDeps)
-  extends Secured(auth) {
+class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) extends Secured(auth) {
 
   def siteRoot = rootLibrary
 
@@ -98,15 +95,18 @@ class LibraryController(tags: PimpHtml,
     */
   def download(id: TrackID): EssentialAction =
     customFailingPimpAction(onDownloadAuthFail) { authReq =>
-      lib.findFile(id).map { maybeTrack =>
-        maybeTrack
-          .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
-          .getOrElse(NotFound(LibraryController.noTrackJson(id)))
-      }.recover {
-        case e: Exception =>
-          log.error("Track error.", e)
-          Results.InternalServerError(Json.toJson(JsonMessages.databaseFailure))
-      }
+      lib
+        .findFile(id)
+        .map { maybeTrack =>
+          maybeTrack
+            .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
+            .getOrElse(NotFound(LibraryController.noTrackJson(id)))
+        }
+        .recover {
+          case e: Exception =>
+            log.error("Track error.", e)
+            Results.InternalServerError(Json.toJson(JsonMessages.databaseFailure))
+        }
     }
 
   def onDownloadAuthFail(failure: AuthFailure): Result = {

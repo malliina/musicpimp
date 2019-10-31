@@ -23,19 +23,21 @@ import play.api.mvc.Result
 
 case class RemoveToken(token: String, platform: String)
 
-class Alarms(library: FileLibrary,
-             handler: JsonHandler,
-             tags: PimpHtml,
-             auth: AuthDeps,
-             messages: Messages)
-    extends AlarmEditor(handler.schedules, tags, auth, messages)
-    with SchedulerStrings {
+class Alarms(
+  library: FileLibrary,
+  handler: JsonHandler,
+  tags: PimpHtml,
+  auth: AuthDeps,
+  messages: Messages
+) extends AlarmEditor(handler.schedules, tags, auth, messages)
+  with SchedulerStrings {
 
   val removalForm = Form(
     mapping(
       "token" -> nonEmptyText,
       "platform" -> nonEmptyText
-    )(RemoveToken.apply)(RemoveToken.unapply))
+    )(RemoveToken.apply)(RemoveToken.unapply)
+  )
 
   def alarms = pimpActionAsync { request =>
     schedules.clockList(TrackJson.host(request)).map { fcps =>

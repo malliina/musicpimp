@@ -12,7 +12,8 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-class PhoneConnection(val user: Username, val rh: RequestHeader, val server: PimpServerSocket) extends AuthInfo {
+class PhoneConnection(val user: Username, val rh: RequestHeader, val server: PimpServerSocket)
+  extends AuthInfo {
   def meta(id: TrackID): Future[JsResult[Track]] = {
     val req = PhoneRequest(Meta, user, GetMeta(id))
     server.proxyValidated[GetMeta, Track](req)

@@ -24,7 +24,6 @@ object ScalaScripts {
   }
 }
 
-
 object MetaHtml {
   def apply(appName: String, mode: Mode): MetaHtml =
     new MetaHtml(ScalaScripts.forApp(appName, mode == Mode.Prod))
@@ -42,22 +41,28 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
     fullRow(
       feedback.fold(empty)(feedbackDiv),
       span(id := "status", `class` := Lead)("Initializing..."),
-      divClass(s"${btn.group} btn-group-toggle compact-group float-right",
-               role := "group",
-               data("toggle") := "buttons")(
+      divClass(
+        s"${btn.group} btn-group-toggle compact-group float-right",
+        role := "group",
+        data("toggle") := "buttons"
+      )(
         label(`class` := s"${btn.info} ${btn.sm}", id := "label-verbose")(
-          input(`type` := "radio",
-                name := "options",
-                id := "option-verbose",
-                autocomplete := "off")(" Verbose"),
+          input(
+            `type` := "radio",
+            name := "options",
+            id := "option-verbose",
+            autocomplete := "off"
+          )(" Verbose")
         ),
         label(`class` := s"${btn.info} ${btn.sm} active", id := "label-compact")(
-          input(`type` := "radio",
-                name := "options",
-                id := "option-compact",
-                autocomplete := "off")(" Compact"),
-        ),
-      ),
+          input(
+            `type` := "radio",
+            name := "options",
+            id := "option-compact",
+            autocomplete := "off"
+          )(" Compact")
+        )
+      )
     ),
     fullRow(
       table(`class` := tables.defaultClass)(
@@ -65,7 +70,9 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
         tbody(id := "log-table-body")
       )
     ),
-    scripts.jsFiles.map { file => jsScript(versioned(file)) }
+    scripts.jsFiles.map { file =>
+      jsScript(versioned(file))
+    }
   )
 
   def eject(feedback: Option[UserFeedback]) =
@@ -82,7 +89,8 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
     def navItem(thisTabName: String, tabId: String, url: Call, iconicName: String) = {
       val itemClass = if (tabId == tabName) "nav-item active" else "nav-item"
       li(`class` := itemClass)(
-        a(href := url, `class` := "nav-link")(iconic(iconicName), s" $thisTabName"))
+        a(href := url, `class` := "nav-link")(iconic(iconicName), s" $thisTabName")
+      )
     }
 
     basePage("MusicPimp")(
@@ -95,7 +103,8 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
           ),
           ulClass(s"${navbars.Nav} ${navbars.Right}")(
             li(`class` := "nav-item")(
-              a(href := routes.MetaOAuth.logout(), `class` := "nav-link")("Logout"))
+              a(href := routes.MetaOAuth.logout(), `class` := "nav-link")("Logout")
+            )
           )
         )
       ),
@@ -108,10 +117,12 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
       head(
         titleTag(title),
         deviceWidthViewport,
-        cssLinkHashed("https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
-                      "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"),
+        cssLinkHashed(
+          "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css",
+          "sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        ),
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
-        cssLink(versioned("styles.css")),
+        cssLink(versioned("styles.css"))
       ),
       body(
         content,
@@ -120,7 +131,8 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
             spanClass(s"${text.muted} float-right")(
               "Developed by ",
               a(href := "https://github.com/malliina")("Michael Skogberg"),
-              ".")
+              "."
+            )
           )
         )
       )
@@ -133,5 +145,6 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
     else alertSuccess(message)
   }
 
-  def iconic(iconicName: String) = spanClass(s"oi oi-$iconicName", title := iconicName, aria.hidden := True)
+  def iconic(iconicName: String) =
+    spanClass(s"oi oi-$iconicName", title := iconicName, aria.hidden := True)
 }

@@ -10,9 +10,9 @@ import com.malliina.values.UnixPath
 import scala.concurrent.duration._
 
 class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)(
-    implicit mat: Materializer)
-    extends MusicItem
-    with PlayableTrack {
+  implicit mat: Materializer
+) extends MusicItem
+  with PlayableTrack {
   val media: StreamSource = meta.media
   override val title = meta.tags.title
   override val size: StorageSize = media.size

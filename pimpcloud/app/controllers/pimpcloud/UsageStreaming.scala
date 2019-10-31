@@ -16,8 +16,7 @@ class UsageStreaming(phones: ActorRef, servers: ActorRef, auth: PimpAuth, ctx: A
   def openSocket = sockets.newSocket
 }
 
-class AdminActor(phones: ActorRef, servers: ActorRef, ctx: ActorMeta)
-  extends JsonActor(ctx) {
+class AdminActor(phones: ActorRef, servers: ActorRef, ctx: ActorMeta) extends JsonActor(ctx) {
   override def preStart() = {
     super.preStart()
     servers ! Listen(out)
