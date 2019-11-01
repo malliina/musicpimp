@@ -70,7 +70,8 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
       if (email == authorizedEmail) Right(email)
       else Left(PermissionError(s"Unauthorized: '$email'.")),
     sessionKey = sessionKey,
-    lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge)
+    lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
+    returnUriKey = BasicAuthHandler.DefaultReturnUriKey
   )
   val conf = AuthConf(creds.clientId, creds.clientSecret)
   val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback(), handler, conf, OkClient.default)

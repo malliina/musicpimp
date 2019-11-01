@@ -7,7 +7,7 @@ import com.malliina.musicpimp.models.TrackID
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 
 case class StreamedTrack(
   id: TrackID,
@@ -15,7 +15,7 @@ case class StreamedTrack(
   artist: String,
   album: String,
   path: UnixPath,
-  duration: Duration,
+  duration: FiniteDuration,
   size: StorageSize,
   stream: InputStream
 )(implicit mat: Materializer)

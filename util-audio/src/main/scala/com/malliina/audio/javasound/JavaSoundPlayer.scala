@@ -15,7 +15,7 @@ import com.malliina.audio.meta.OneShotStream
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 object JavaSoundPlayer {
@@ -39,19 +39,21 @@ object JavaSoundPlayer {
   * @see [[UriJavaSoundPlayer]]
   * @param media media info to play
   */
-class JavaSoundPlayer(val media: OneShotStream,
-                      readWriteBufferSize: StorageSize = DefaultRwBufferSize)(
-    implicit mat: Materializer,
-    val ec: ExecutionContext = ExecutionContexts.singleThreadContext)
-    extends IPlayer
-    with JavaSoundPlayerBase
-    with StateAwarePlayer
-    with AutoCloseable {
+class JavaSoundPlayer(
+  val media: OneShotStream,
+  readWriteBufferSize: StorageSize = DefaultRwBufferSize
+)(implicit mat: Materializer, val ec: ExecutionContext = ExecutionContexts.singleThreadContext)
+  extends IPlayer
+  with JavaSoundPlayerBase
+  with StateAwarePlayer
+  with AutoCloseable {
 
-  def this(stream: InputStream,
-           duration: Duration,
-           size: StorageSize,
-           readWriteBufferSize: StorageSize)(implicit mat: Materializer) =
+  def this(
+    stream: InputStream,
+    duration: FiniteDuration,
+    size: StorageSize,
+    readWriteBufferSize: StorageSize
+  )(implicit mat: Materializer) =
     this(OneShotStream(stream, duration, size), readWriteBufferSize)
 
   val bufferSize = readWriteBufferSize.toBytes.toInt
@@ -161,7 +163,8 @@ class JavaSoundPlayer(val media: OneShotStream,
     if (lineData.state == PlayerStates.Closed) Some(s"Cannot seek a stream of a closed track.")
     else if (!stream.markSupported())
       Some(
-        "Cannot seek because the media stream does not support marking; see InputStream.markSupported() for more details")
+        "Cannot seek because the media stream does not support marking; see InputStream.markSupported() for more details"
+      )
     else None
 
   override def onEndOfMedia(): Unit = {

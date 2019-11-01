@@ -11,7 +11,7 @@ import play.api.libs.json.{Json, OFormat}
 import slick.jdbc.JdbcProfile
 import slick.lifted.ProvenShape
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 
 object PimpSchema {
   def apply(profile: JdbcProfile) = new PimpSchema(profile)
@@ -26,7 +26,7 @@ class PimpSchema(val profile: JdbcProfile) {
     title: Rep[String],
     artist: Rep[String],
     album: Rep[String],
-    duration: Rep[Duration],
+    duration: Rep[FiniteDuration],
     size: Rep[StorageSize],
     path: Rep[UnixPath],
     folder: Rep[FolderID]
@@ -135,7 +135,7 @@ class PimpSchema(val profile: JdbcProfile) {
     def title = column[String]("TITLE")
     def artist = column[String]("ARTIST")
     def album = column[String]("ALBUM")
-    def duration = column[Duration]("DURATION")
+    def duration = column[FiniteDuration]("DURATION")
     def size = column[StorageSize]("SIZE")
     def path = column[UnixPath]("PATH", O.Default(UnixPath.Empty))
 
@@ -200,7 +200,7 @@ object PlaylistRow {
   implicit val json = Json.format[PlaylistRow]
 }
 
-case class PlaylistTrack(id: PlaylistID, track: TrackID, index: Int)
+case class PlaylistTrack(playlist: PlaylistID, track: TrackID, idx: Int)
 
 object PlaylistTrack {
   implicit val json = Json.format[PlaylistTrack]
@@ -213,5 +213,4 @@ object PlaybackRecord {
 }
 
 case class TempFolder(id: FolderID)
-
 case class TempTrack(id: TrackID)

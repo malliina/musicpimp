@@ -8,18 +8,15 @@ import play.api.libs.json.Json
 /**
   * @param id the cloud ID of a connected MusicPimp server
   */
-case class CloudID(id: String) extends Identifier
-
+case class CloudID(id: String) extends AnyVal with Identifier
 object CloudID extends IdentCompanion[CloudID] {
   val empty = CloudID("")
 }
 
-case class TrackID(id: String) extends Identifier
-
+case class TrackID(id: String) extends AnyVal with Identifier
 object TrackID extends IdentCompanion[TrackID]
 
-case class FolderID(id: String) extends Identifier
-
+case class FolderID(id: String) extends AnyVal with Identifier
 object FolderID extends IdentCompanion[FolderID]
 
 trait MusicItem {
@@ -28,7 +25,7 @@ trait MusicItem {
   def title: String
 }
 
-case class Volume private(volume: Int)
+case class Volume private (volume: Int)
 
 object Volume extends IntValidator[Volume] {
   override val Min = 0

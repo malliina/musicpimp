@@ -4,25 +4,35 @@ import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.values.Username
+import io.getquill.Embedded
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
-case class IndexedTrack(track: DataTrack, index: Int)
+case class IndexedTrack(track: DataTrack, index: Int) extends Embedded
+case class IndexedPlaylistTrack(playlist: PlaylistID, track: DataTrack, index: Int) extends Embedded
 
 case class PlaylistInfo(
   id: PlaylistID,
   name: String,
   trackCount: Int,
-  duration: Duration,
+  duration: FiniteDuration,
   track: Option[IndexedTrack]
-)
+) extends Embedded
+
+case class PlaylistInfo2(
+  id: PlaylistID,
+  name: String,
+  trackCount: Long,
+  duration: FiniteDuration,
+  track: Option[IndexedPlaylistTrack]
+) extends Embedded
 
 class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistService {
 
   import db.api._
   import db.schema._
 
-  val zero: Rep[Duration] = Duration.fromNanos(0d).bind
+  val zero: Rep[FiniteDuration] = Duration.Zero.bind
 
   case class IndexedTrackRep(track: DataTrackRep, index: Rep[Int])
 
@@ -32,7 +42,7 @@ class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistServ
     id: Rep[PlaylistID],
     name: Rep[String],
     trackCount: Rep[Int],
-    duration: Rep[Duration],
+    duration: Rep[FiniteDuration],
     track: Rep[Option[IndexedTrackRep]]
   )
 
@@ -91,7 +101,7 @@ class DatabasePlaylist(val db: PimpDb) extends Sessionizer(db) with PlaylistServ
             case (track, index) => PlaylistTrack(id, track, index)
           }
           val deletion = playlistTracksTable
-            .filter(link => link.playlist === id && !link.idx.inSet(entries.map(_.index)))
+            .filter(link => link.playlist === id && !link.idx.inSet(entries.map(_.idx)))
             .delete
           val action = DBIO.sequence(
             entries.map(entry => playlistTracksTable.insertOrUpdate(entry)) ++ Seq(deletion)

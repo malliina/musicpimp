@@ -6,7 +6,7 @@ case class RequestIdentifier(id: String) extends Identifier
 
 object RequestIdentifier extends IdentCompanion[RequestIdentifier]
 
-trait Identifier {
+trait Identifier extends Any {
   def id: String
 
   override def toString: String = id
