@@ -2,11 +2,11 @@ package controllers.musicpimp
 
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
+import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.json.JsonStrings.PlaylistKey
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{Errors, PlaylistID, PlaylistsMeta, TrackID}
-import com.malliina.musicpimp.html.PimpHtml
+import com.malliina.musicpimp.models.{Errors, PlaylistID, TrackID}
 import com.malliina.play.http.CookiedRequest
 import com.malliina.values.Username
 import controllers.musicpimp.Playlists.log
@@ -26,7 +26,6 @@ object Playlists {
 }
 
 class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extends Secured(auth) {
-
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val tracksMapping: Mapping[Seq[TrackID]] =
     seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))

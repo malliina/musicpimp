@@ -3,10 +3,9 @@ package controllers.musicpimp
 import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
 
-import com.malliina.file.FileUtilities
-import com.malliina.musicpimp.db.{DataMigrator, Indexer}
+import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
-import com.malliina.musicpimp.library.{FileLibrary, Library, Settings}
+import com.malliina.musicpimp.library.{FileLibrary, Settings}
 import com.malliina.musicpimp.messaging._
 import com.malliina.musicpimp.messaging.adm.AmazonDevices
 import com.malliina.musicpimp.messaging.apns.APNSDevices
@@ -34,7 +33,6 @@ class SettingsController(
   messages: Messages,
   library: FileLibrary,
   indexer: Indexer,
-  dumper: DataMigrator,
   auth: AuthDeps
 ) extends HtmlController(auth) {
   val dirConstraint = Constraint(
@@ -50,13 +48,6 @@ class SettingsController(
     case EnvUtils.Windows => "C:\\music\\"
     case EnvUtils.Mac     => "/Users/me/music"
     case _                => "/opt/music"
-  }
-
-  def writeDump = pimpActionAsync { _ =>
-    val to = FileUtilities.tempDir.resolve("dump.json")
-    dumper.writeDump(to).map { _ =>
-      Ok
-    }
   }
 
   def manage = settings

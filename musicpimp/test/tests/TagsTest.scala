@@ -2,7 +2,6 @@ package tests
 
 import com.malliina.musicpimp.assets.AppAssets
 import org.scalatest.FunSuite
-
 import scalatags.Text.all._
 
 class TagsTest extends FunSuite {

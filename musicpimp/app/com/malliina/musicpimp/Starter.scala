@@ -7,9 +7,8 @@ import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.MusicPlayer
-import com.malliina.musicpimp.auth.Auth
 import com.malliina.musicpimp.cloud.Clouds
-import com.malliina.musicpimp.db.{DatabaseUserManager, Indexer, PimpDb}
+import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.util.FileUtil
@@ -27,7 +26,6 @@ class Starter(as: ActorSystem) {
   def startServices(
     options: InitOptions,
     clouds: Clouds,
-    db: PimpDb,
     indexer: Indexer,
     schedules: ScheduledPlaybackService,
     lifecycle: ApplicationLifecycle
@@ -38,11 +36,6 @@ class Starter(as: ActorSystem) {
       Files.createDirectories(FileUtil.pimpHomeDir)
       if (options.alarms) {
         schedules.init()
-      }
-      if (options.database) {
-        db.init()
-        new Auth(db).migrateFileCredentialsToDatabaseIfExists()
-        new DatabaseUserManager(db).ensureAtLeastOneUserExists()
       }
       if (options.indexer) {
         Future {

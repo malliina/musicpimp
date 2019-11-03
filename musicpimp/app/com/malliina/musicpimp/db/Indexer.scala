@@ -26,7 +26,7 @@ object Indexer {
   * Indexes the music library if it changes. Runs when `init()` is first called and
   * every six hours from then on.
   */
-class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: Materializer) {
+class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit mat: Materializer) {
   val indexFile = FileUtil.localPath("files7.cache")
   val indexInterval = 6.hours
 //  val indexInterval = 15.seconds
@@ -97,7 +97,8 @@ class Indexer(library: FileLibrary, db: PimpDb, s: Scheduler)(implicit val mat: 
   private def refreshIndex(): Source[Long, NotUsed] = {
     val (target, source) = Sources.connected[Long]()
     val start = System.currentTimeMillis()
-    db.runIndexer(library) { fileCount =>
+    indexer
+      .runIndexer(library) { fileCount =>
         log.info(s"File count at $fileCount...")
         Future.successful(target ! fileCount)
       }

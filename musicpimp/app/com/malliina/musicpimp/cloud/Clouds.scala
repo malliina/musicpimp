@@ -13,6 +13,7 @@ import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.cloud.Clouds.log
+import com.malliina.musicpimp.db.FullText
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.util.FileUtil
@@ -50,6 +51,7 @@ class Clouds(
   player: MusicPlayer,
   alarmHandler: JsonHandler,
   deps: Deps,
+  fullText: FullText,
   cloudEndpoint: FullUrl,
   scheduler: Scheduler
 )(implicit mat: Materializer) {
@@ -160,6 +162,7 @@ class Clouds(
       cloudEndpoint,
       alarmHandler,
       scheduler,
+      fullText,
       deps,
       mat
     )

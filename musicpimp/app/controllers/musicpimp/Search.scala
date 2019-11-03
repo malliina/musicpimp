@@ -2,7 +2,7 @@ package controllers.musicpimp
 
 import akka.actor.Props
 import akka.stream.scaladsl.{Keep, Sink}
-import akka.stream.{KillSwitches, UniqueKillSwitch}
+import akka.stream.{KillSwitches, Materializer, UniqueKillSwitch}
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.models.{Refresh, SearchMessage, SearchStatus, Subscribe}
 import com.malliina.play.ActorExecution
@@ -49,9 +49,9 @@ object SearchActor {
   private val log = Logger(getClass)
 }
 
-class SearchActor(indexer: Indexer, ctx: ActorMeta) extends JsonActor(ctx) {
+class SearchActor(indexer: Indexer, ctx: ActorMeta)(implicit mat: Materializer)
+  extends JsonActor(ctx) {
   import SearchActor.log
-  implicit val mat = indexer.mat
   var killSwitchOpt: Option[UniqueKillSwitch] = None
   val socketSink = Sink.foreach[Long] { fileCount =>
     send(s"Indexing... $fileCount files indexed so far...")

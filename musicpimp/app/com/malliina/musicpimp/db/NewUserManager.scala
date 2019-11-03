@@ -3,12 +3,27 @@ package com.malliina.musicpimp.db
 import com.malliina.musicpimp.auth.{Auth, DataUser, UserManager}
 import com.malliina.values.{Password, Username}
 
-import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
+
+object NewUserManager {
+  val defaultUser = Username("admin")
+  val defaultPass = Password("test")
+
+  def withUser(db: PimpMySQL): NewUserManager = {
+    val users = apply(db)
+    Await.result(users.ensureAtLeastOneUserExists(), 10.seconds)
+    users
+  }
+
+  def apply(db: PimpMySQL): NewUserManager = new NewUserManager(db)
+}
 
 class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] {
   import db._
-  val defaultUser = Username("admin")
-  val defaultPass = Password("test")
+
+  override val defaultUser: Username = NewUserManager.defaultUser
+  override val defaultPass: Password = NewUserManager.defaultPass
 
   val usersTable = quote(querySchema[DataUser]("USERS"))
 
@@ -21,7 +36,7 @@ class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] 
   }
 
   override def users: Future[Seq[Username]] = performAsync("Get users") {
-    runIO(usersTable.sortBy(_.username).map(_.username))
+    runIO(usersTable.sortBy(_.user).map(_.user))
   }
 
   override def authenticate(user: Username, pass: Password): Future[Boolean] =
@@ -31,7 +46,7 @@ class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] 
       for {
         userExists <- runIO(
           usersTable
-            .filter(u => u.username == lift(user) && u.passwordHash == lift(passHash))
+            .filter(u => u.user == lift(user) && u.passHash == lift(passHash))
             .nonEmpty
         )
         noUsers <- runIO(usersTable.isEmpty)
@@ -44,12 +59,12 @@ class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] 
     }
 
   private def addUserIO(user: Username, pass: Password) =
-    runIO(usersTable.filter(_.username == lift(user)).nonEmpty).flatMap { exists =>
+    runIO(usersTable.filter(_.user == lift(user)).nonEmpty).flatMap { exists =>
       if (exists) {
         IO.successful(Option(AlreadyExists(user)))
       } else {
         runIO(
-          usersTable.insert(_.username -> lift(user), _.passwordHash -> lift(hash(user, pass)))
+          usersTable.insert(_.user -> lift(user), _.passHash -> lift(hash(user, pass)))
         ).map(_ => None)
       }
     }
@@ -58,7 +73,7 @@ class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] 
     IO.sequence(
         List(
           runIO(tokensTable.filter(_.user == lift(user)).delete),
-          runIO(usersTable.filter(_.username == lift(user)).delete)
+          runIO(usersTable.filter(_.user == lift(user)).delete)
         )
       )
       .map(_ => ())
@@ -68,8 +83,8 @@ class NewUserManager(val db: PimpMySQL) extends UserManager[Username, Password] 
     performAsync(s"Update password for $user") {
       runIO(
         usersTable
-          .filter(_.username == lift(user))
-          .update(_.passwordHash -> lift(hash(user, newPass)))
+          .filter(_.user == lift(user))
+          .update(_.passHash -> lift(hash(user, newPass)))
       ).map(_ => ())
     }
 

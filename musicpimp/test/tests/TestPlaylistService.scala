@@ -5,20 +5,20 @@ import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, SavedPlaylist, TrackID}
+import com.malliina.storage.StorageLong
 import com.malliina.values.{UnixPath, Username}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 class TestPlaylistService extends PlaylistService {
-
   val zero = 0.seconds
 
   override implicit def ec: ExecutionContext =
     ActorMaterializer()(ActorSystem("test")).executionContext
 
   val tracks1 = Seq(
-    DataTrack.fromValues(
+    fromValues(
       TrackID("1"),
       "Aces High",
       "Iron Maiden",
@@ -28,7 +28,7 @@ class TestPlaylistService extends PlaylistService {
       UnixPath.Empty,
       FolderID("folder 1")
     ),
-    DataTrack.fromValues(
+    fromValues(
       TrackID("2"),
       "So What",
       "Pink",
@@ -38,7 +38,7 @@ class TestPlaylistService extends PlaylistService {
       UnixPath.Empty,
       FolderID("folder 2")
     ),
-    DataTrack.fromValues(
+    fromValues(
       TrackID("3"),
       "Under the Waves",
       "Pendulum",
@@ -48,7 +48,7 @@ class TestPlaylistService extends PlaylistService {
       UnixPath.Empty,
       FolderID("folder 3")
     ),
-    DataTrack.fromValues(
+    fromValues(
       TrackID("4"),
       "Witchcraft",
       "Pendulum",
@@ -58,7 +58,7 @@ class TestPlaylistService extends PlaylistService {
       UnixPath.Empty,
       FolderID("folder 3")
     ),
-    DataTrack.fromValues(
+    fromValues(
       TrackID("5"),
       "A Track",
       "Pendulum",
@@ -71,7 +71,7 @@ class TestPlaylistService extends PlaylistService {
   )
 
   val tracks2 = Seq(
-    DataTrack.fromValues(
+    fromValues(
       TrackID("3"),
       "Under the Waves",
       "Pendulum",
@@ -113,4 +113,16 @@ class TestPlaylistService extends PlaylistService {
 
   override def delete(id: PlaylistID, user: Username): Future[Unit] =
     Future.successful(())
+
+  def fromValues(
+    i: TrackID,
+    ti: String,
+    ar: String,
+    al: String,
+    du: Int,
+    si: Long,
+    path: UnixPath,
+    fo: FolderID
+  ) =
+    DataTrack(i, ti, ar, al, du.seconds, si.bytes, path, fo)
 }

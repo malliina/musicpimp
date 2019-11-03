@@ -2,10 +2,9 @@ package com.malliina.musicpimp.audio
 
 import akka.stream.KillSwitches
 import akka.stream.scaladsl.{Keep, Sink}
-import com.malliina.musicpimp.db.DatabaseUserManager
+import com.malliina.musicpimp.db.NewUserManager
 import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.values.Username
-import play.api.Logger
 
 import scala.concurrent.stm.{Ref, atomic}
 
@@ -15,7 +14,7 @@ import scala.concurrent.stm.{Ref, atomic}
   */
 class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable {
   implicit val mat = player.mat
-  val latestUser = Ref[Username](DatabaseUserManager.DefaultUser)
+  val latestUser = Ref[Username](NewUserManager.defaultUser)
   val subscription = player.trackHistory
     .viaMat(KillSwitches.single)(Keep.right)
     .to(Sink.foreach { track =>
@@ -29,8 +28,4 @@ class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseab
 
   def close(): Unit =
     subscription.shutdown()
-}
-
-object StatsPlayer {
-  private val log = Logger(getClass)
 }

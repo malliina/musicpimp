@@ -1,5 +1,7 @@
 package com.malliina.musicpimp.db
 
+import java.time.Instant
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 import com.malliina.play.auth.Token
@@ -10,7 +12,11 @@ import io.getquill.idiom.Idiom
 import scala.concurrent.duration.FiniteDuration
 
 trait Quotes[I <: Idiom, N <: NamingStrategy] { this: Context[I, N] =>
+  val foldersTable = quote(querySchema[DataFolder]("FOLDERS"))
+  val tracksTable = quote(querySchema[DataTrack]("TRACKS"))
   val tokensTable = quote(querySchema[Token]("TOKENS"))
+
+  implicit val instantDecoder = MappedEncoding[Date, Instant](d => d.toInstant)
 
   implicit val numericDuration: Numeric[FiniteDuration] = new Numeric[FiniteDuration] {
     override def plus(x: FiniteDuration, y: FiniteDuration): FiniteDuration = x.plus(y)

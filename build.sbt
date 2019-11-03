@@ -16,7 +16,10 @@ import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
+import sbtcrossproject.CrossPlugin.autoImport.{
+  CrossType => PortableType,
+  crossProject => portableProject
+}
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
 import scalajsbundler.util.JSON
 
@@ -166,7 +169,13 @@ lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmet
 
 lazy val pimpbeam = project
   .in(file("pimpbeam"))
-  .enablePlugins(PlayScala, JavaServerAppPackaging, com.malliina.sbt.unix.LinuxPlugin, SystemdPlugin, BuildInfoPlugin)
+  .enablePlugins(
+    PlayScala,
+    JavaServerAppPackaging,
+    com.malliina.sbt.unix.LinuxPlugin,
+    SystemdPlugin,
+    BuildInfoPlugin
+  )
   .settings(pimpbeamSettings: _*)
 
 addCommandAlias("pimp", ";project musicpimp")
@@ -207,13 +216,12 @@ lazy val pimpPlaySettings =
         malliinaGroup %% "util-base" % primitivesVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "com.h2database" % "h2" % "1.4.199",
         "mysql" % "mysql-connector-java" % "5.1.47",
-//        "mysql" % "mysql-connector-java" % "8.0.15",
         "com.neovisionaries" % "nv-websocket-client" % "2.9",
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        "org.scala-stm" %% "scala-stm" % "0.9.1"
+        "org.scala-stm" %% "scala-stm" % "0.9.1",
+        "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0"
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
@@ -229,7 +237,9 @@ lazy val pimpPlaySettings =
         ),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")),
+      libs := libs.value.filter(
+        lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")
+      ),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
         !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")
       },
@@ -294,18 +304,20 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
 lazy val windowsConfSettings = inConfig(Windows)(
   Seq(
     prettyMappings := {
-      val out: String = WinKeys.msiMappings.value
-        .map {
-          case (src, dest) => s"$dest\t\t$src"
-        }
-        .sorted
+      val out: String = WinKeys.msiMappings.value.map {
+        case (src, dest) => s"$dest\t\t$src"
+      }.sorted
         .mkString("\n")
       logger.value.log(Level.Info, out)
     },
     appIcon := Some(pkgHome.value.resolve("guitar-128x128-np.ico")),
     buildAndMove := {
       val src = WinKeys.msi.value
-      val dest = Files.move(src, target.value.toPath.resolve(name.value + ".msi"), StandardCopyOption.REPLACE_EXISTING)
+      val dest = Files.move(
+        src,
+        target.value.toPath.resolve(name.value + ".msi"),
+        StandardCopyOption.REPLACE_EXISTING
+      )
       streams.value.log.info(s"Moved '$src' to '$dest'.")
       dest
     }
@@ -486,8 +498,6 @@ lazy val sharedSettings = baseSettings ++ Seq(
     "io.getquill" %% "quill-jdbc" % "3.4.10",
     "org.flywaydb" % "flyway-core" % "6.0.3",
     "mysql" % "mysql-connector-java" % "5.1.47",
-    "com.typesafe.slick" %% "slick" % "3.3.2",
-    "com.typesafe.slick" %% "slick-hikaricp" % "3.3.2",
     malliinaGroup %% "mobile-push" % "1.18.4",
     utilPlayDep
   )

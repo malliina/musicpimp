@@ -1,16 +1,18 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.musicpimp.db.NewPlaylist.collectPlaylists
+import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist, TrackID}
+import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.values.Username
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
-import NewPlaylist.collectPlaylists
-import com.malliina.musicpimp.exception.UnauthorizedException
 
 object NewPlaylist {
-  private def collectPlaylists(rows: Seq[PlaylistInfo2]): Seq[SavedPlaylist] =
+  def apply(db: PimpMySQL): NewPlaylist = new NewPlaylist(db)
+
+  private def collectPlaylists(rows: Seq[NewPlaylistInfo]): Seq[SavedPlaylist] =
     rows.foldLeft(Vector.empty[SavedPlaylist]) {
       case (acc, row) =>
         val idx = acc.indexWhere(_.id == row.id)
@@ -31,16 +33,12 @@ object NewPlaylist {
     }
 }
 
-case class PlayPair(track: DataTrack, link: PlaylistTrack)
-case class IndexedTrackId(track: TrackID, idx: Int)
-
 class NewPlaylist(val db: PimpMySQL) extends PlaylistService {
+  override implicit val ec: ExecutionContext = db.ec
   import db._
 
   val playlistsTable = quote(querySchema[PlaylistRecord]("PLAYLISTS"))
-  // The _.idx trick works around buggy aliasing due to INDEX being a keyword in MySQL
-  val playlistTracksTable = quote(querySchema[PlaylistTrack]("PLAYLIST_TRACKS", _.idx -> "INDEX"))
-  val tracksTable = quote(querySchema[DataTrack]("TRACKS"))
+  val playlistTracksTable = quote(querySchema[PlaylistTrack]("PLAYLIST_TRACKS"))
 
   val linked = quote {
     for {
@@ -70,7 +68,7 @@ class NewPlaylist(val db: PimpMySQL) extends PlaylistService {
       pl <- q
       totals <- aggregates.leftJoin(a => a.id == pl.id)
       it <- indexed.leftJoin(it => it.playlist == pl.id)
-    } yield PlaylistInfo2(
+    } yield NewPlaylistInfo(
       pl.id,
       pl.name,
       totals.map(_.tracks).getOrElse(lift(0L)),
@@ -80,7 +78,7 @@ class NewPlaylist(val db: PimpMySQL) extends PlaylistService {
   }
 
   protected def playlists(user: Username): Future[Seq[SavedPlaylist]] =
-    performAsync("Load playlists") {
+    performAsync(s"Load playlists by $user") {
       runIO(playlistQuery(playlistsTable.filter(pl => pl.user == lift(user)))).map { rows =>
         collectPlaylists(rows)
       }

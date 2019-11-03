@@ -4,7 +4,7 @@ import akka.actor.Scheduler
 import akka.actor.Status.Failure
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.concurrent.FutureOps
+import com.malliina.concurrent.{Execution, FutureOps}
 import com.malliina.http.FullUrl
 import com.malliina.logstreams.client.CustomSSLSocketFactory
 import com.malliina.musicpimp.audio._
@@ -12,7 +12,7 @@ import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.log
 import com.malliina.musicpimp.cloud.CloudStrings.Unregister
-import com.malliina.musicpimp.db.PimpDb
+import com.malliina.musicpimp.db.FullText
 import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library._
@@ -33,15 +33,12 @@ import scala.util.Try
 
 case class Deps(
   playlists: PlaylistService,
-  db: PimpDb,
   userManager: UserManager[Username, Password],
   handler: PlaybackMessageHandler,
   lib: MusicLibrary,
   stats: PlaybackStats,
   schedules: ScheduledPlaybackService
-) {
-  val ec = db.ec
-}
+)
 
 object CloudSocket {
   private val log = Logger(getClass)
@@ -56,9 +53,10 @@ object CloudSocket {
     url: FullUrl,
     handler: JsonHandler,
     s: Scheduler,
+    fullText: FullText,
     deps: Deps,
     mat: Materializer
-  ) =
+  ): CloudSocket =
     new CloudSocket(
       player,
       url,
@@ -66,8 +64,9 @@ object CloudSocket {
       Constants.pass,
       handler,
       s,
+      fullText,
       deps
-    )(mat)
+    ) (mat)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -98,6 +97,7 @@ class CloudSocket(
   password: Password,
   alarmHandler: JsonHandler,
   s: Scheduler,
+  fullText: FullText,
   deps: Deps
 )(implicit mat: Materializer)
   extends JsonSocket8(
@@ -132,7 +132,7 @@ class CloudSocket(
     */
   override def connect(): Future[Unit] = {
     log info s"Connecting as '$username' to $uri..."
-    Sources.timeoutAfter(10.seconds, registrationPromise)(s, deps.ec)
+    Sources.timeoutAfter(10.seconds, registrationPromise)(s, Execution.cached)
     super.connect()
   }
 
@@ -206,7 +206,7 @@ class CloudSocket(
           sendFailure(request, FailReason(msg))
         }
       case Search(term, limit) =>
-        val ts = deps.db.fullText(term, limit).map { dataTracks =>
+        val ts = fullText.fullText(term, limit).map { dataTracks =>
           dataTracks.map(t => TrackJson.toFull(t, cloudHost))
         }
         databaseResponse(ts)

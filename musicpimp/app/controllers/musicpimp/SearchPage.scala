@@ -1,14 +1,13 @@
 package controllers.musicpimp
 
 import com.malliina.musicpimp.audio.TrackJson
-import com.malliina.musicpimp.db.{DataTrack, Indexer, PimpDb}
-import com.malliina.musicpimp.http.PimpContentController
+import com.malliina.musicpimp.db.{DataTrack, FullText, Indexer}
 import com.malliina.musicpimp.html.PimpHtml
+import com.malliina.musicpimp.http.PimpContentController
 import controllers.musicpimp.SearchPage.{LimitKey, TermKey}
 import play.api.libs.json.Json
 import play.api.mvc.Results
 
-import scala.concurrent.Future
 import scala.util.Try
 
 object SearchPage {
@@ -17,7 +16,7 @@ object SearchPage {
   val TermKey = "term"
 }
 
-class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, db: PimpDb, auth: AuthDeps)
+class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, fullText: FullText, auth: AuthDeps)
   extends HtmlController(auth) {
 
   def search = pimpActionAsync { req =>
@@ -27,7 +26,7 @@ class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, db: PimpDb, auth: 
     val limit = query(LimitKey)
       .filter(i => Try(i.toInt).isSuccess)
       .map(_.toInt) getOrElse Search.DefaultLimit
-    val results = term.fold(fut(Seq.empty[DataTrack]))(databaseSearch(_, limit))
+    val results = term.fold(fut(Seq.empty[DataTrack]))(fullText.fullText(_, limit))
     results.map { tracks =>
       PimpContentController.default.respond(req)(
         html = tags.search(term, tracks, req.user),
@@ -40,7 +39,4 @@ class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, db: PimpDb, auth: 
     indexer.indexAndSave()
     Results.Ok
   }
-
-  private def databaseSearch(query: String, limit: Int): Future[Seq[DataTrack]] =
-    db.fullText(query, limit)
 }

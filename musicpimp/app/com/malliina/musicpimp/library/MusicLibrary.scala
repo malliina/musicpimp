@@ -25,12 +25,8 @@ trait MusicLibrary {
     * @return all the tracks, recursively, in folder `id`
     */
   def tracksIn(id: FolderID): Future[Option[Seq[TrackMeta]]]
-
   def track(id: TrackID): Future[Option[TrackMeta]]
-
   def findFile(id: TrackID): Future[Option[Path]]
-
   def meta(id: TrackID): Future[Option[LocalTrack]]
-
   def tracks(ids: Seq[TrackID]): Future[Seq[LocalTrack]]
 }

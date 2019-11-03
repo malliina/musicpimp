@@ -1,13 +1,11 @@
 package tests
 
-import com.malliina.concurrent.ExecutionContexts.cached
-import com.malliina.musicpimp.app.{InitOptions, PimpComponents}
+import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.TrackJson
-import com.malliina.musicpimp.db.{DataFolder, DataTrack, DatabaseUserManager, PimpDb}
+import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models._
-import com.malliina.http.FullUrl
 import com.malliina.storage.StorageInt
 import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
@@ -20,21 +18,13 @@ import play.api.test.Helpers._
 
 import scala.concurrent.duration.DurationInt
 
-object TestOptions {
-  val default =
-    InitOptions(alarms = false, database = true, users = true, indexer = false, cloud = false)
-}
-
-class MusicPimpSuite(options: InitOptions = TestOptions.default)
-  extends AppSuite(ctx => new PimpComponents(ctx, options, ec => PimpDb.test()(ec)))
-
 class PlaylistsTests extends MusicPimpSuite {
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
   test("add tracks") {
-    val db = components.deps.db
+    val db = components.lib
     val folderId = FolderID("Testid")
 
     def trackInserts =
@@ -45,14 +35,16 @@ class PlaylistsTests extends MusicPimpSuite {
       )
 
     val insertions = for {
-      _ <- db.insertFolders(Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId)))
-      _ <- trackInserts
-    } yield ()
-    await(insertions)
-    val maybeFolder = await(components.lib.folder(folderId))
+      foldersInserted <- db.insertFolders(
+        Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId))
+      )
+      tracksInserted <- trackInserts
+    } yield (foldersInserted, tracksInserted)
+    val (fsi, tsi) = await(insertions)
+    assert(fsi === 1)
+    assert(tsi === 1)
+    val maybeFolder = await(db.folder(folderId))
     assert(maybeFolder.isDefined)
-    val ts = maybeFolder.get.tracks
-    ts foreach println
   }
 
   test("GET /playlists") {
@@ -98,8 +90,8 @@ class PlaylistsTests extends MusicPimpSuite {
       app,
       request.withHeaders(
         AUTHORIZATION -> HttpUtil.authorizationValue(
-          DatabaseUserManager.DefaultUser.name,
-          DatabaseUserManager.DefaultPass.pass
+          NewUserManager.defaultUser.name,
+          NewUserManager.defaultPass.pass
         ),
         ACCEPT -> JSON
       )

@@ -38,14 +38,10 @@ object Library {
   val RootId = FolderID(idFor(""))
   val EmptyPath = Paths get ""
 
-  def apply(mat: Materializer): Library = new Library()(mat)
-
+  def apply(mat: Materializer): Library = new Library() (mat)
   def idFor(in: String) = DigestUtils.md5Hex(in)
-
   def parent(p: Path) = folderId(Option(p.getParent).getOrElse(EmptyPath))
-
   def folderId(p: Path) = FolderID(idFor(UnixPath(p).path))
-
   def trackId(p: Path) = TrackID(idFor(UnixPath(p).path))
 }
 

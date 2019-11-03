@@ -3,11 +3,15 @@ package com.malliina.musicpimp.db
 import com.malliina.play.auth.{Token, TokenStore}
 import com.malliina.values.Username
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
+
+object NewTokenStore {
+  def apply(db: PimpMySQL): NewTokenStore = new NewTokenStore(db)
+}
 
 class NewTokenStore(db: PimpMySQL) extends TokenStore {
-  override implicit val ec = db.ec
   import db._
+  override implicit val ec: ExecutionContext = db.ec
 
   override def persist(token: Token): Future[Unit] = removal {
     runIO(
