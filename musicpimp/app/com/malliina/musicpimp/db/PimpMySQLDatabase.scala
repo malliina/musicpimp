@@ -16,6 +16,8 @@ object PimpMySQLDatabase {
     val flyway =
       Flyway.configure
         .dataSource(conf.url, conf.user, conf.pass)
+        .baselineVersion("1")
+        .baselineOnMigrate(true)
         .load()
     flyway.migrate()
     apply(as, conf)

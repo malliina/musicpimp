@@ -26,8 +26,6 @@ create table if not exists tracks
     constraint TRACKS_FOLDER_FK foreign key (FOLDER) references folders (ID) on update cascade on delete cascade
 );
 
-create fulltext index track_search_2 on tracks (TITLE, ARTIST, ALBUM);
-
 create table if not exists tokens
 (
     USER   varchar(100) not null,
