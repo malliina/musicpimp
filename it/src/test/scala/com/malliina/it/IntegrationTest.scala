@@ -94,8 +94,9 @@ class IntegrationTest extends PimpcloudServerSuite {
       val p = Promise[PimpPhone]()
 
       def onJson(json: JsValue): Unit = {
-        json.validate[PimpPhones].map(_.phones).filter(_.nonEmpty)
-          .foreach { ps => p.trySuccess(ps.head) }
+        json.validate[PimpPhones].map(_.phones).filter(_.nonEmpty).foreach { ps =>
+          p.trySuccess(ps.head)
+        }
       }
 
       withPimpSocket(adminPath, onJson) { adminSocket =>
@@ -113,8 +114,10 @@ class IntegrationTest extends PimpcloudServerSuite {
     val p = Promise[String]()
 
     def onJson(json: JsValue): Unit = {
-      json.validate[PimpStreams].map(_.streams.map(_.track.title)).filter(_.nonEmpty)
-        .foreach { titles => p success titles.head }
+      json.validate[PimpStreams].map(_.streams.map(_.track.title)).filter(_.nonEmpty).foreach {
+        titles =>
+          p success titles.head
+      }
     }
 
     withCloudTrack("notification-test") { (trackId, _, cloudId) =>
@@ -244,7 +247,9 @@ class IntegrationTest extends PimpcloudServerSuite {
     await(result)
   }
 
-  def withPhoneSocket[T](path: String, cloudId: CloudID, onMessage: JsValue => Any)(code: TestSocket => T) = {
+  def withPhoneSocket[T](path: String, cloudId: CloudID, onMessage: JsValue => Any)(
+    code: TestSocket => T
+  ) = {
     val authValue = s"Basic ${cloudAuthorization(cloudId)}"
     withCloudSocket(path, authValue, onMessage)(code)
   }
@@ -252,7 +257,9 @@ class IntegrationTest extends PimpcloudServerSuite {
   def withPimpSocket[T](path: String, onMessage: JsValue => Any)(code: TestSocket => T) =
     withCloudSocket(path, HttpUtil.authorizationValue("u", "p"), onMessage)(code)
 
-  def withCloudSocket[T](path: String, authValue: String, onMessage: JsValue => Any)(code: TestSocket => T) = {
+  def withCloudSocket[T](path: String, authValue: String, onMessage: JsValue => Any)(
+    code: TestSocket => T
+  ) = {
     val uri = new URI(s"ws://$cloudHostPort$path")
     Utils.using(new TestSocket(uri, authValue, onMessage)) { client =>
       await(client.initialConnection)
@@ -260,11 +267,12 @@ class IntegrationTest extends PimpcloudServerSuite {
     }
   }
 
-  class TestSocket(wsUri: URI, authValue: String, onJson: JsValue => Any) extends SocketClient(
-    wsUri,
-    SSLUtils.trustAllSslContext().getSocketFactory,
-    Seq(HttpUtil.Authorization -> authValue)
-  ) {
+  class TestSocket(wsUri: URI, authValue: String, onJson: JsValue => Any)
+    extends SocketClient(
+      wsUri,
+      SSLUtils.trustAllSslContext().getSocketFactory,
+      Seq(HttpUtil.Authorization -> authValue)
+    ) {
     override def onText(message: String): Unit = onJson(Json.parse(message))
 
     def sendJson[C: Writes](message: C) = send(Json.stringify(Json.toJson(message)))

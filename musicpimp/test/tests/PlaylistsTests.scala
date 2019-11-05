@@ -1,5 +1,6 @@
 package tests
 
+import com.malliina.concurrent.Execution.cached
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db._
@@ -18,7 +19,7 @@ import play.api.test.Helpers._
 
 import scala.concurrent.duration.DurationInt
 
-class PlaylistsTests extends MusicPimpSuite {
+class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
