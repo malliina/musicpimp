@@ -10,7 +10,7 @@ create table if not exists FOLDERS
     TITLE  text         not null,
     PATH   text         not null,
     PARENT varchar(191) not null,
-    constraint FOLDERS_PARENT_FK foreign key (PARENT) references folders (ID) on update cascade on delete cascade
+    constraint FOLDERS_PARENT_FK foreign key (PARENT) references FOLDERS (ID) on update cascade on delete cascade
 );
 
 create table if not exists TRACKS
@@ -23,7 +23,7 @@ create table if not exists TRACKS
     SIZE     bigint                  not null,
     PATH     varchar(254) default '' not null,
     FOLDER   varchar(191)            not null,
-    constraint TRACKS_FOLDER_FK foreign key (FOLDER) references folders (ID) on update cascade on delete cascade
+    constraint TRACKS_FOLDER_FK foreign key (FOLDER) references FOLDERS (ID) on update cascade on delete cascade
 );
 
 create table if not exists TOKENS
@@ -31,7 +31,7 @@ create table if not exists TOKENS
     USER   varchar(100) not null,
     SERIES bigint       not null,
     TOKEN  bigint       not null,
-    constraint TOKENS_USER_FK foreign key (USER) references users (USER) on update cascade on delete cascade
+    constraint TOKENS_USER_FK foreign key (USER) references USERS (USER) on update cascade on delete cascade
 );
 
 create table if not exists TEMP_TRACKS
@@ -49,8 +49,8 @@ create table if not exists PLAYS
     TRACK  varchar(191)                              not null,
     `WHEN` timestamp(3) default CURRENT_TIMESTAMP(3) not null on update CURRENT_TIMESTAMP(3),
     WHO    varchar(100)                              not null,
-    constraint PLAYS_TRACK_FK foreign key (TRACK) references tracks (ID) on update cascade,
-    constraint PLAYS_WHO_FK foreign key (WHO) references users (USER) on update cascade on delete cascade
+    constraint PLAYS_TRACK_FK foreign key (TRACK) references TRACKS (ID) on update cascade,
+    constraint PLAYS_WHO_FK foreign key (WHO) references USERS (USER) on update cascade on delete cascade
 );
 
 create table if not exists PLAYLISTS
@@ -58,7 +58,7 @@ create table if not exists PLAYLISTS
     ID   bigint auto_increment primary key,
     NAME text         not null,
     USER varchar(100) not null,
-    constraint PLAYLISTS_USER_FK foreign key (USER) references users (USER) on update cascade on delete cascade
+    constraint PLAYLISTS_USER_FK foreign key (USER) references USERS (USER) on update cascade on delete cascade
 );
 
 create table if not exists PLAYLIST_TRACKS
@@ -67,6 +67,6 @@ create table if not exists PLAYLIST_TRACKS
     TRACK    varchar(191) not null,
     `INDEX`  int          not null,
     primary key (PLAYLIST, `INDEX`),
-    constraint PLAYLIST_TRACKS_PLAYLIST_FK foreign key (PLAYLIST) references playlists (ID) on update cascade on delete cascade,
-    constraint PLAYLIST_TRACKS_TRACK_FK foreign key (TRACK) references tracks (ID) on update cascade on delete cascade
+    constraint PLAYLIST_TRACKS_PLAYLIST_FK foreign key (PLAYLIST) references PLAYLISTS (ID) on update cascade on delete cascade,
+    constraint PLAYLIST_TRACKS_TRACK_FK foreign key (TRACK) references TRACKS (ID) on update cascade on delete cascade
 );
