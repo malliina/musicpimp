@@ -28,9 +28,8 @@ object PimpMySQLDatabase {
     apply(Conf.dataSource(dbConf), pool)
   }
 
-  private def apply(ds: HikariDataSource, ec: ExecutionContext): PimpMySQL = {
+  private def apply(ds: HikariDataSource, ec: ExecutionContext): PimpMySQL =
     new PimpMySQL(ds, ec)
-  }
 
   def fail(message: String): Nothing = throw new Exception(message)
 }

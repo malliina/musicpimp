@@ -26,7 +26,9 @@ class EmbeddedMySQL(baseDir: Path, temporary: Boolean) {
   lazy val db = DB.newEmbeddedDB(dbConfig)
   lazy val conf: Conf = {
     db.start()
-    Conf(dbConfig.getURL("test"), "root", "", Conf.MySQLDriver)
+    val dbName = "pimptest"
+    db.createDB(dbName)
+    Conf(dbConfig.getURL(dbName), "root", "", Conf.MySQLDriver)
   }
 
   def stop(): Unit = db.stop()
