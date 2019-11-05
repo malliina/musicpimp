@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.app.{AppConf, EmbeddedMySQL, InitOptions, PimpComponents}
 import com.malliina.musicpimp.db.Conf
-import org.scalatest.{BeforeAndAfterAll, FunSuite, FunSuiteLike}
+import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 import play.api.ApplicationLoader
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -60,9 +60,8 @@ class TestAppConf(conf: Conf) extends AppConf {
 }
 
 class MusicPimpSuite(options: InitOptions = TestOptions.default)
-  extends FunSuite
-  with OneAppPerSuite2[PimpComponents]
-  with EmbeddedMySQLSuite {
+  extends EmbeddedMySQLSuite
+  with OneAppPerSuite2[PimpComponents] {
   override def createComponents(context: ApplicationLoader.Context): PimpComponents =
     new PimpComponents(context, options, _ => new TestAppConf(embedded.conf))
 }
