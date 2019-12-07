@@ -3,6 +3,8 @@ package controllers.pimpcloud
 import java.nio.file.Paths
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.malliina.concurrent.Execution.cached
 import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
 import com.malliina.musicpimp.auth.PimpAuths
@@ -88,15 +90,19 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
   }
 
   def alarms = proxiedGetAction(AlarmsKey)
-
   def editAlarm = bodyProxied(AlarmsEdit)
-
   def newAlarm = bodyProxied(AlarmsAdd)
-
   def beam = bodyProxied(Beam)
 
   def headTrack(t: TrackID): EssentialAction = withTrack(t) { (track, _, _) =>
-    PartialContent.withHeaders(trackHeaders(track.size, name(track, t)): _*)
+    // .withHeaders does not work for Content-Length; akka http ignores it
+    PartialContent
+      .streamed[ByteString](
+        Source.empty,
+        Option(track.size.toBytes),
+        Option(HttpConstants.AudioMpeg)
+      )
+      .withHeaders(trackHeaders(name(track, t)): _*)
   }
 
   /** Proxies track `id` from the desired target server to the requesting client.
@@ -123,15 +129,16 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
       rangeTry.map { range =>
         result.withHeaders(
           CONTENT_RANGE -> range.contentRange,
-          CONTENT_LENGTH -> s"${range.contentLength}",
           CONTENT_TYPE -> fileMimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)
         )
       }.getOrElse {
-        result.withHeaders(trackHeaders(trackSize, fileName): _*)
+        result.withHeaders(trackHeaders(fileName): _*)
       }
     }
 
-  private def withTrack(in: TrackID)(code: (Track, PhoneConnection, Request[AnyContent]) => Result) = {
+  private def withTrack(
+    in: TrackID
+  )(code: (Track, PhoneConnection, Request[AnyContent]) => Result) = {
     val id = PimpEnc.track(in)
     phoneAuth.authenticatedLogged { conn: PhoneConnection =>
       val sourceServer: PimpServerSocket = conn.server
@@ -154,14 +161,13 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
     }
   }
 
-  def name(t: Track, in: TrackID) = Option(Paths.get(t.path.path).getFileName).map(_.toString).getOrElse(in.id)
+  def name(t: Track, in: TrackID) =
+    Option(Paths.get(t.path.path).getFileName).map(_.toString).getOrElse(in.id)
 
-  def trackHeaders(size: StorageSize, fileName: String) = Seq(
+  def trackHeaders(fileName: String) = Seq(
     ACCEPT_RANGES -> Phones.Bytes,
     CACHE_CONTROL -> HttpConstants.NoCache,
-    CONTENT_LENGTH -> size.toBytes.toString,
-    CONTENT_DISPOSITION -> s"""attachment; filename="$fileName"""",
-    CONTENT_TYPE -> HttpConstants.AudioMpeg
+    CONTENT_DISPOSITION -> s"""attachment; filename="$fileName""""
   )
 
   def playlists = proxiedGetAction(PlaylistsGet)

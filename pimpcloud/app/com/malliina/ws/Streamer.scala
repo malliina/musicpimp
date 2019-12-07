@@ -17,11 +17,8 @@ trait Streamer {
   val maxUploadSize = Streamer.DefaultMaxUploadSize
 
   def snapshot: Seq[PimpStream]
-
   def exists(uuid: RequestID): Boolean
-
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result
-
   def parser(uuid: RequestID): Option[BodyParser[MultipartFormData[Long]]]
 
   /**

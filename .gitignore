@@ -13,3 +13,4 @@ settings.json
 .hydra
 hydra.sbt
 .bloop
+out
