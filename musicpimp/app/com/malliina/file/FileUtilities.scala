@@ -18,7 +18,7 @@ object FileUtilities {
   var basePath = Paths get sys.props.getOrElse("app.home", userDirString)
 
   def init(appName: String): Unit = {
-    basePath = Paths get sys.props.get(appName + ".home").getOrElse(userDirString)
+    basePath = Paths get sys.props.get(s"$appName.home").getOrElse(userDirString)
   }
 
   def pathTo(location: String) = basePath / location

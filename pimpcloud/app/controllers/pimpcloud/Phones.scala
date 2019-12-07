@@ -4,7 +4,7 @@ import java.nio.file.Paths
 
 import akka.stream.Materializer
 import com.malliina.concurrent.Execution.cached
-import com.malliina.musicpimp.audio.{Directory, PimpEnc}
+import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
@@ -18,6 +18,7 @@ import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import com.malliina.play.tags.TagPage
 import com.malliina.play.{ContentRange, ContentRanges}
+import com.malliina.storage.StorageSize
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
 import play.api.http.{ContentTypes, Writeable}
@@ -94,6 +95,10 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
 
   def beam = bodyProxied(Beam)
 
+  def headTrack(t: TrackID): EssentialAction = withTrack(t) { (track, _, _) =>
+    PartialContent.withHeaders(trackHeaders(track.size, name(track, t)): _*)
+  }
+
   /** Proxies track `id` from the desired target server to the requesting client.
     *
     * Sends a message over WebSocket to the target server that it should send `id` to this server.
@@ -101,9 +106,34 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
     *
     * @param in id of the requested track
     */
-  def track(in: TrackID): EssentialAction = {
+  def track(in: TrackID): EssentialAction =
+    withTrack(in) { (track, conn, req) =>
+      val id = PimpEnc.track(in)
+      val sourceServer: PimpServerSocket = conn.server
+      val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
+      log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
+      // proxies request
+      val trackSize = track.size
+      val rangeTry = ContentRanges.fromHeader(req, trackSize)
+
+      val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
+      val result = sourceServer.requestTrack(track, rangeOrAll, req)
+      // ranged request support
+      val fileName = name(track, in)
+      rangeTry.map { range =>
+        result.withHeaders(
+          CONTENT_RANGE -> range.contentRange,
+          CONTENT_LENGTH -> s"${range.contentLength}",
+          CONTENT_TYPE -> fileMimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)
+        )
+      }.getOrElse {
+        result.withHeaders(trackHeaders(trackSize, fileName): _*)
+      }
+    }
+
+  private def withTrack(in: TrackID)(code: (Track, PhoneConnection, Request[AnyContent]) => Result) = {
     val id = PimpEnc.track(in)
-    phoneAuth.authenticatedLogged { (conn: PhoneConnection) =>
+    phoneAuth.authenticatedLogged { conn: PhoneConnection =>
       val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
         val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
@@ -113,30 +143,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
           .meta(id)
           .map[Result] { res =>
             res.map { track =>
-              log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
-              // proxies request
-              val trackSize = track.size
-              val rangeTry = ContentRanges.fromHeader(req, trackSize)
-              val rangeOrAll = rangeTry getOrElse ContentRange.all(trackSize)
-              val result = sourceServer.requestTrack(track, rangeOrAll, req)
-              // ranged request support
-              val fileName =
-                Option(Paths.get(track.path.path).getFileName).map(_.toString).getOrElse(in.id)
-              rangeTry.map { range =>
-                result.withHeaders(
-                  CONTENT_RANGE -> range.contentRange,
-                  CONTENT_LENGTH -> s"${range.contentLength}",
-                  CONTENT_TYPE -> fileMimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)
-                )
-              }.getOrElse {
-                result.withHeaders(
-                  ACCEPT_RANGES -> Phones.Bytes,
-                  CACHE_CONTROL -> HttpConstants.NoCache,
-                  CONTENT_LENGTH -> trackSize.toBytes.toString,
-                  CONTENT_DISPOSITION -> s"""attachment; filename="$fileName"""",
-                  CONTENT_TYPE -> HttpConstants.AudioMpeg
-                )
-              }
+              code(track, conn, req)
             }.getOrElse {
               log.error(s"Found no info about track '$id', failing request.")
               badGatewayDefault
@@ -146,6 +153,16 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
       }
     }
   }
+
+  def name(t: Track, in: TrackID) = Option(Paths.get(t.path.path).getFileName).map(_.toString).getOrElse(in.id)
+
+  def trackHeaders(size: StorageSize, fileName: String) = Seq(
+    ACCEPT_RANGES -> Phones.Bytes,
+    CACHE_CONTROL -> HttpConstants.NoCache,
+    CONTENT_LENGTH -> size.toBytes.toString,
+    CONTENT_DISPOSITION -> s"""attachment; filename="$fileName"""",
+    CONTENT_TYPE -> HttpConstants.AudioMpeg
+  )
 
   def playlists = proxiedGetAction(PlaylistsGet)
 
