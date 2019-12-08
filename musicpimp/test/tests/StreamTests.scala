@@ -49,4 +49,6 @@ class StreamTests extends FunSuite {
     assert(allRange.length === fileRange.length)
     assert(allRange === fileRange)
   }
+
+  test("Read range from file") {}
 }

@@ -1,11 +1,14 @@
 package com.malliina.play
 
+import java.io.FileInputStream
 import java.nio.file.{Files, Path}
 
 import akka.stream.IOResult
-import akka.stream.scaladsl.{FileIO, Source}
+import akka.stream.scaladsl.{FileIO, Source, StreamConverters}
 import akka.util.ByteString
+import com.malliina.musicpimp.http.RangedInputStream
 import com.malliina.play.FileResults.log
+import com.malliina.play.http.RequestHeaderOps
 import com.malliina.storage.StorageLong
 import play.api.Logger
 import play.api.http.HeaderNames._
@@ -31,7 +34,9 @@ trait FileResults {
         rangedResult(path, range, request, fmts)
       }
       .getOrElse {
-        log.info(s"Serving all of '$path', $size, as response to '${request.uri}'...")
+        log.info(
+          s"Serving all of '$path', $size, as response to ${request.describe}..."
+        )
         Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
       }
   }
@@ -41,15 +46,19 @@ trait FileResults {
     range: ContentRange,
     request: RequestHeader,
     fmts: FileMimeTypes
-  ): Result = {
+  )(implicit ec: ExecutionContext): Result = {
     val fileName = path.getFileName.toString
     val contentType = fmts.forFileName(fileName) getOrElse ContentTypes.BINARY
     val contentLength = range.contentLength.toLong
-    val source: Source[ByteString, Future[IOResult]] = FileIO
-      .fromPath(path)
-      .drop(range.start.toLong)
-      .take(contentLength)
-    log.info(s"Serving range $range of '$path' as '$contentType' response to '${request.uri}'...")
+    // FileIO.fromPath().drop(...).take(...) does not seem to actually `.take()`, so I use my own range implementation
+    val source: Source[ByteString, Future[IOResult]] = StreamConverters
+      .fromInputStream(
+        () =>
+          new RangedInputStream(new FileInputStream(path.toFile), range.start, range.contentLength)
+      )
+    log.info(
+      s"Serving range $range of '$path' as '$contentType' response to ${request.describe}..."
+    )
     PartialContent
       .streamed(source, Option(contentLength), Option(contentType))
       .withHeaders(CONTENT_RANGE -> range.contentRange)
