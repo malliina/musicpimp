@@ -10,13 +10,9 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
   val totalSizeBytes = size.toBytes
 
   def endExclusive = endInclusive + 1
-
   def contentLength = endExclusive - start
-
   def contentSize: StorageSize = contentLength.bytes
-
   def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$totalSizeBytes"
-
   def isAll = start == 0 && endInclusive == totalSizeBytes.toInt - 1
 
   def description = {
@@ -31,15 +27,18 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize) {
 object ContentRange {
   val BYTES = "bytes"
 
-  implicit val ssf = CrossFormats.storageSize
-  val writer = Writes[ContentRange](range => Json.obj(
-    "start" -> range.start,
-    "endInclusive" -> range.endInclusive,
-    "size" -> range.size,
-    "isAll" -> range.isAll,
-    "description" -> range.description
-  ))
-  implicit val json = Format(Json.reads[ContentRange], writer)
+  implicit val ssf: Format[StorageSize] = CrossFormats.storageSize
+  val writer = Writes[ContentRange](
+    range =>
+      Json.obj(
+        "start" -> range.start,
+        "endInclusive" -> range.endInclusive,
+        "size" -> range.size,
+        "isAll" -> range.isAll,
+        "description" -> range.description
+      )
+  )
+  implicit val json: Format[ContentRange] = Format(Json.reads[ContentRange], writer)
 
   def all(size: StorageSize) = ContentRange(0, size.toBytes.toInt - 1, size)
 

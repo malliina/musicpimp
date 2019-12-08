@@ -38,7 +38,7 @@ GET         /downloads/*id                     controllers.musicpimp.LibraryCont
 GET         /tracks/folders                    controllers.musicpimp.LibraryController.allTracks
 GET         /tracks/folders/*id                controllers.musicpimp.LibraryController.tracksIn(id: FolderID)
 GET         /tracks/meta/*id                   controllers.musicpimp.LibraryController.meta(id: TrackID)
-GET         /tracks/*id                        controllers.musicpimp.LibraryController.supplyForPlayback(id: TrackID)
+GET         /tracks/*id                        controllers.musicpimp.LibraryController.download(id: TrackID)
 GET         /playlists                         controllers.musicpimp.Playlists.playlists
 POST        /playlists                         controllers.musicpimp.Playlists.savePlaylist
 GET         /playlists/*playlist               controllers.musicpimp.Playlists.playlist(playlist: PlaylistID)

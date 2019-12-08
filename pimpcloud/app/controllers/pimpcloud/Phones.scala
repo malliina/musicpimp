@@ -141,9 +141,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
   )(code: (Track, PhoneConnection, Request[AnyContent]) => Result) = {
     val id = PimpEnc.track(in)
     phoneAuth.authenticatedLogged { conn: PhoneConnection =>
-      val sourceServer: PimpServerSocket = conn.server
       Action.async { req =>
-        val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
         // resolves track metadata from the server so we can set Content-Length
         log debug s"Looking up meta..."
         conn

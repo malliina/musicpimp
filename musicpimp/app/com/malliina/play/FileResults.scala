@@ -8,8 +8,9 @@ import akka.util.ByteString
 import com.malliina.storage.StorageLong
 import play.api.Logger
 import play.api.http.HeaderNames._
-import play.api.http.{ContentTypes, FileMimeTypes, HttpEntity, Status}
-import play.api.mvc.{RequestHeader, ResponseHeader, Result, Results}
+import play.api.http.{ContentTypes, FileMimeTypes}
+import play.api.mvc.Results.{Ok, PartialContent}
+import play.api.mvc.{RequestHeader, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -25,7 +26,7 @@ trait FileResults {
     range.toOption
       .map(range => rangedResult(path, range, request, fmts))
       .getOrElse(
-        Results.Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
+        Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
       )
   }
 
@@ -35,25 +36,12 @@ trait FileResults {
     val fileName = path.getFileName.toString
     val contentType = fmts.forFileName(fileName) getOrElse ContentTypes.BINARY
     val contentLength = range.contentLength.toLong
-    val responseHeader = ResponseHeader(
-      Status.PARTIAL_CONTENT,
-      Map(
-        CONTENT_RANGE -> range.contentRange,
-        CONTENT_LENGTH -> s"$contentLength",
-        CONTENT_TYPE -> fmts.forFileName(fileName).getOrElse(ContentTypes.BINARY)
-      )
-    )
     val source: Source[ByteString, Future[IOResult]] = FileIO
       .fromPath(path)
       .drop(range.start.toLong)
       .take(contentLength)
-    //    val loggedSource: Source[ByteString, Future[IOResult]] = source.watchTermination() { (io, done) =>
-    //      log.info(s"Watching streaming of $fileName with range ${request.headers.get(RANGE)}")
-    //      io.onComplete(t => log.info(s"Completed IO for $fileName with range ${request.headers.get(RANGE)}"))
-    //      done.onComplete(t => log.info(s"Done streaming $fileName with range ${request.headers.get(RANGE)}"))
-    //      io
-    //    }
-    val streamedBody = HttpEntity.Streamed(source, Option(contentLength), Option(contentType))
-    Result(responseHeader, streamedBody)
+    PartialContent
+      .streamed(source, Option(contentLength), Option(contentType))
+      .withHeaders(CONTENT_RANGE -> range.contentRange)
   }
 }
