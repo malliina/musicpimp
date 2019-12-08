@@ -73,7 +73,7 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
   def cancel(request: RequestID): Unit = ongoing.remove(request) foreach { httpRequest =>
     httpRequest.request.abort()
     httpRequest.close()
-    log info s"Cancelled $request"
+    log.info(s"Cancelled '$request'.")
   }
 
   private def withUploadApache(
@@ -82,7 +82,7 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
     sizeCalc: Path => StorageSize,
     content: (Path, MultipartRequest) => Unit
   ): Future[Unit] = {
-    lib.findFile(trackID) flatMap { maybePath =>
+    lib.findFile(trackID).flatMap { maybePath =>
       maybePath.map { path =>
         Future {
           uploadMediaApache(uploadUri, trackID, path, request, sizeCalc, content)

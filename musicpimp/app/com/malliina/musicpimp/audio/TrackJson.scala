@@ -7,18 +7,21 @@ import com.malliina.play.http.FullUrls
 import play.api.libs.json.{Format, Writes}
 import play.api.mvc.RequestHeader
 
+import scala.concurrent.duration.Duration
+
 object TrackJson {
-  implicit val dur = PrimitiveFormats.durationFormat
+  val reverse = controllers.musicpimp.routes.LibraryController
+  implicit val dur: Format[Duration] = PrimitiveFormats.durationFormat
 
   def urlFor(host: FullUrl, track: TrackID): FullUrl =
-    FullUrls.absolute(host, controllers.musicpimp.routes.LibraryController.supplyForPlayback(track))
+    FullUrls.absolute(host, reverse.download(track))
 
   def writer(request: RequestHeader): Writes[TrackMeta] =
     writer(FullUrls.hostOnly(request))
 
   def writer(host: FullUrl): Writes[TrackMeta] = TrackMetas.writer(
     host,
-    id => controllers.musicpimp.routes.LibraryController.supplyForPlayback(id)
+    id => reverse.download(id)
   )
 
   def format(request: RequestHeader): Format[TrackMeta] =

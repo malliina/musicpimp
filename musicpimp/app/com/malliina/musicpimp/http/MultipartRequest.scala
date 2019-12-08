@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.malliina.play.ContentRange
 import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.mime.content.{FileBody, InputStreamBody}
 import org.apache.http.entity.mime.{HttpMultipartMode, MultipartEntityBuilder}
@@ -15,7 +16,7 @@ import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import play.api.http.ContentTypes._
 import play.api.http.HeaderNames._
-
+import concurrent.duration.DurationInt
 import scala.util.Try
 
 /** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
@@ -25,7 +26,16 @@ class MultipartRequest(
   uri: String,
   buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b
 ) extends AutoCloseable {
-  private val client = buildInstructions(HttpClientBuilder.create()).build()
+
+  private val timeout = 60.minutes
+  private val config = RequestConfig
+    .custom()
+    .setConnectTimeout(timeout.toMillis.toInt)
+    .setConnectionRequestTimeout(timeout.toMillis.toInt)
+    .setSocketTimeout(timeout.toMillis.toInt)
+    .build()
+  private val client =
+    buildInstructions(HttpClientBuilder.create().setDefaultRequestConfig(config)).build()
   val request = new HttpPost(uri)
   request.addHeader(ACCEPT, JSON)
   private val reqContent =
@@ -64,8 +74,7 @@ class MultipartRequest(
       reqContent.addTextBody(key, value)
     }
 
-  /**
-    * Executes the request.
+  /** Executes the request.
     *
     * @return the response
     */
@@ -74,8 +83,7 @@ class MultipartRequest(
     client execute request
   }
 
-  /**
-    * Executes the request.
+  /** Executes the request.
     *
     * @return the stringified response, if any
     */

@@ -75,12 +75,6 @@ class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) exten
     )
   }
 
-  /** Legacy.
-    *
-    * @param trackId track to serve
-    */
-  def supplyForPlayback(trackId: TrackID) = download(trackId)
-
   /** Responds with the song with the given ID.
     *
     * Note: If an unauthorized request is made here, the result is always
