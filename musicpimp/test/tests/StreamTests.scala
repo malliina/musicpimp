@@ -22,13 +22,13 @@ class StreamTests extends FunSuite {
   }
 
   test("RangedInputStream to Array[Byte]") {
-    val fiveTo14 = Util.using(new RangedInputStream(new FileInputStream(file), 5, 10)) { stream =>
+    val fiveTo14 = Util.using(RangedInputStream(path, 5, 10)) { stream =>
       val bytes = IOUtils.toByteArray(stream)
       assert(bytes.length === 10)
       bytes.toSeq
     }
 
-    val tenTo19 = Util.using(new RangedInputStream(new FileInputStream(file), 10, 10)) { stream =>
+    val tenTo19 = Util.using(RangedInputStream(path, 10, 10)) { stream =>
       val bytes = IOUtils.toByteArray(stream)
       assert(bytes.length === 10)
       bytes.toSeq
@@ -40,7 +40,7 @@ class StreamTests extends FunSuite {
     val fileSize = Files.size(path).bytes
     val range = ContentRange.all(fileSize)
     assert(range.isAll)
-    val allRange = Util.using(new RangedInputStream(new FileInputStream(file), range)) { stream =>
+    val allRange = Util.using(RangedInputStream(path, range)) { stream =>
       IOUtils.toByteArray(stream)
     }
     val fileRange = Util.using(new FileInputStream(file)) { stream =>
@@ -49,6 +49,4 @@ class StreamTests extends FunSuite {
     assert(allRange.length === fileRange.length)
     assert(allRange === fileRange)
   }
-
-  test("Read range from file") {}
 }

@@ -111,7 +111,19 @@ lazy val metaCommonSettings = Seq(
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
 
-lazy val musicmeta = project
+val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
+  .settings(metaCommonSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
+      "be.doeraene" %%% "scalajs-jquery" % "0.9.5",
+      "com.typesafe.play" %%% "play-json" % playJsonVersion,
+      "com.malliina" %%% "primitives" % primitivesVersion
+    ),
+    npmDependencies in Compile ++= Seq("jquery" -> "3.3.1")
+  )
+
+val musicmeta = project
   .in(file("musicmeta"))
   .enablePlugins(
     PlayScala,
@@ -155,19 +167,8 @@ lazy val musicmeta = project
     buildInfoPackage := "com.malliina.musicmeta",
     linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
   )
-lazy val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
-  .settings(metaCommonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-      "be.doeraene" %%% "scalajs-jquery" % "0.9.5",
-      "com.typesafe.play" %%% "play-json" % playJsonVersion,
-      "com.malliina" %%% "primitives" % primitivesVersion
-    ),
-    npmDependencies in Compile ++= Seq("jquery" -> "3.3.1")
-  )
 
-lazy val pimpbeam = project
+val pimpbeam = project
   .in(file("pimpbeam"))
   .enablePlugins(
     PlayScala,
@@ -176,7 +177,28 @@ lazy val pimpbeam = project
     SystemdPlugin,
     BuildInfoPlugin
   )
-  .settings(pimpbeamSettings: _*)
+  .settings(serverSettings: _*)
+  .settings(
+    version := "2.1.0",
+    libraryDependencies ++= Seq(
+      utilPlayDep,
+      logstreamsDep,
+      "net.glxn" % "qrgen" % "1.4",
+      PlayImport.ws
+    ),
+    resolvers += Resolver.bintrayRepo("malliina", "maven"),
+    httpPort in Linux := Option("8557"),
+    httpsPort in Linux := Option("disabled"),
+    maintainer := "Michael Skogberg <malliina123@gmail.com>",
+    javaOptions in Universal ++= {
+      val linuxName = (name in Linux).value
+      Seq(
+        s"-Dconfig.file=/etc/$linuxName/production.conf",
+        s"-Dlogger.file=/etc/$linuxName/logback-prod.xml"
+      )
+    },
+    buildInfoPackage := "com.malliina.beam"
+  )
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -421,28 +443,6 @@ lazy val utilAudioSettings = Seq(
     "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/",
     Resolver.bintrayRepo("malliina", "maven")
   )
-)
-
-lazy val pimpbeamSettings = serverSettings ++ Seq(
-  version := "2.1.0",
-  libraryDependencies ++= Seq(
-    utilPlayDep,
-    logstreamsDep,
-    "net.glxn" % "qrgen" % "1.4",
-    PlayImport.ws
-  ),
-  resolvers += Resolver.bintrayRepo("malliina", "maven"),
-  httpPort in Linux := Option("8557"),
-  httpsPort in Linux := Option("disabled"),
-  maintainer := "Michael Skogberg <malliina123@gmail.com>",
-  javaOptions in Universal ++= {
-    val linuxName = (name in Linux).value
-    Seq(
-      s"-Dconfig.file=/etc/$linuxName/production.conf",
-      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml"
-    )
-  },
-  buildInfoPackage := "com.malliina.beam"
 )
 
 def serverSettings = LinusPlugin.playSettings ++ Seq(

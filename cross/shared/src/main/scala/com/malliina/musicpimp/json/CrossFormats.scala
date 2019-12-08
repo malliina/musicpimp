@@ -18,7 +18,7 @@ object CrossFormats {
       json.validate[Long].map(_.seconds)
   }
 
-  implicit val finiteDuration = Format[FiniteDuration](
+  implicit val finiteDuration: Format[FiniteDuration] = Format[FiniteDuration](
     Reads(_.validate[Long].map(_.seconds)),
     Writes(d => toJson(d.toSeconds))
   )
@@ -44,7 +44,8 @@ object CrossFormats {
     */
   def keyValued[T](key: String, value: String, payload: OFormat[T]): OFormat[T] = {
     val reader: Reads[T] = Reads { json =>
-      (json \ key).validate[String]
+      (json \ key)
+        .validate[String]
         .filter(_ == value)
         .flatMap(_ => payload.reads(json))
     }

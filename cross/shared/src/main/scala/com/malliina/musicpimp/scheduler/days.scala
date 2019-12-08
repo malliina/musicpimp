@@ -3,17 +3,11 @@ package com.malliina.musicpimp.scheduler
 sealed abstract class WeekDay(val shortName: String, val longName: String)
 
 case object Monday extends WeekDay("mon", "Monday")
-
 case object Tuesday extends WeekDay("tue", "Tuesday")
-
 case object Wednesday extends WeekDay("wed", "Wednesday")
-
 case object Thursday extends WeekDay("thu", "Thursday")
-
 case object Friday extends WeekDay("fri", "Friday")
-
 case object Saturday extends WeekDay("sat", "Saturday")
-
 case object Sunday extends WeekDay("sun", "Sunday")
 
 object WeekDay {

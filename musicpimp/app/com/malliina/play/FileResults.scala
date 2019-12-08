@@ -1,10 +1,9 @@
 package com.malliina.play
 
-import java.io.FileInputStream
 import java.nio.file.{Files, Path}
 
 import akka.stream.IOResult
-import akka.stream.scaladsl.{FileIO, Source, StreamConverters}
+import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import com.malliina.musicpimp.http.RangedInputStream
 import com.malliina.play.FileResults.log
@@ -52,10 +51,7 @@ trait FileResults {
     val contentLength = range.contentLength.toLong
     // FileIO.fromPath().drop(...).take(...) does not seem to actually `.take()`, so I use my own range implementation
     val source: Source[ByteString, Future[IOResult]] = StreamConverters
-      .fromInputStream(
-        () =>
-          new RangedInputStream(new FileInputStream(path.toFile), range.start, range.contentLength)
-      )
+      .fromInputStream(() => RangedInputStream(path, range))
     log.info(
       s"Serving range $range of '$path' as '$contentType' response to ${request.describe}..."
     )

@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.http
 
-import java.io.FileInputStream
 import java.nio.file.Path
 
 import com.malliina.http.{FullUrl, OkHttpResponse}
@@ -26,13 +25,10 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable {
     tag: RequestID
   ): Future[OkHttpResponse] =
     try {
-      val inStream = new FileInputStream(file.toFile)
-      val bytes = try {
-        val rangedStream = new RangedInputStream(inStream, range)
-        IOUtils.toByteArray(rangedStream)
-      } finally {
-        inStream.close()
-      }
+      val rangedStream = RangedInputStream(file, range)
+      val bytes =
+        try IOUtils.toByteArray(rangedStream)
+        finally rangedStream.close()
       val body = RequestBody.create(bytes, null)
       withParts(url, headers, file.getFileName.toString, body, tag)
     } catch {

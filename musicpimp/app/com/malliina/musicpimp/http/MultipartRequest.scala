@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.http
 
-import java.io.{FileInputStream, InputStream}
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -16,7 +16,8 @@ import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import play.api.http.ContentTypes._
 import play.api.http.HeaderNames._
-import concurrent.duration.DurationInt
+
+import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 /** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
@@ -61,7 +62,7 @@ class MultipartRequest(
       addFile(file)
     } else {
       val fileName = file.getFileName.toString
-      val rangedStream = new RangedInputStream(new FileInputStream(file.toFile), range)
+      val rangedStream = RangedInputStream(file, range)
       streams = rangedStream :: streams
       val contentBody = new InputStreamBody(rangedStream, fileName)
       reqContent.addPart(fileName, contentBody)

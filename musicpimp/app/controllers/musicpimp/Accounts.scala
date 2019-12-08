@@ -6,7 +6,7 @@ import com.malliina.play.PimpAuthenticator
 import com.malliina.play.auth.{Auth, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.forms.FormMappings
-import com.malliina.play.http.Proxies
+import com.malliina.play.http.RequestHeaderOps
 import com.malliina.values.Username
 import controllers.musicpimp.Accounts.{UsersFeedback, log}
 import play.api.Logger
@@ -87,13 +87,12 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   }
 
   def formAddUser = pimpActionAsync { request =>
-    val remoteAddress = Proxies.realAddress(request)
     addUserForm
       .bindFromRequest()(request)
       .fold(
         formWithErrors => {
           val user = formWithErrors.data.getOrElse(userFormKey, "")
-          log warn s"Unable to add user '$user' from '$remoteAddress', form: $formWithErrors"
+          log warn s"Unable to add user '$user' from '${request.realAddress}', form: $formWithErrors"
           userManager.users.map(users => BadRequest(usersPage(users, formWithErrors, request)))
         },
         newUser => {
@@ -118,7 +117,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   }
 
   def formAuthenticate = Action.async { request =>
-    val remoteAddress = Proxies.realAddress(request)
+    val remoteAddress = request.realAddress
     val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
     rememberMeLoginForm
       .bindFromRequest()(request)
@@ -164,7 +163,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
 
   def formChangePassword = pimpActionAsync { request =>
-    val remoteAddress = Proxies.realAddress(request)
+    val remoteAddress = request.realAddress
     val user = request.user
     accs.changePasswordForm
       .bindFromRequest()(request)
