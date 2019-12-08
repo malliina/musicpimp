@@ -52,10 +52,73 @@ val httpGroup = "org.apache.httpcomponents"
 
 scalaVersion in ThisBuild := "2.13.1"
 
-lazy val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
-lazy val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
+val utilAudio = Project("util-audio", file("util-audio"))
+  .enablePlugins(MavenCentralPlugin)
+  .settings(
+    version := utilAudioVersion,
+    organization := malliinaGroup,
+    gitUserName := "malliina",
+    developerName := "Michael Skogberg",
+    libraryDependencies ++= Seq(
+      "commons-io" % "commons-io" % "2.6",
+      "org.slf4j" % "slf4j-api" % "1.7.25",
+      malliinaGroup %% "util-base" % primitivesVersion,
+      "org" % "jaudiotagger" % "2.0.3",
+      soundGroup % "tritonus-share" % "0.3.7.4",
+      soundGroup % "jlayer" % "1.0.1.4",
+      soundGroup % "mp3spi" % "1.9.5.4",
+      "com.typesafe.akka" %% "akka-stream" % "2.5.23"
+    ),
+    resolvers ++= Seq(
+      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+      "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/",
+      Resolver.bintrayRepo("malliina", "maven")
+    )
+  )
+
+val cross = portableProject(JSPlatform, JVMPlatform)
+  .crossType(PortableType.Full)
+  .in(file("cross"))
+  .settings(
+    organization := "org.musicpimp",
+    version := crossVersion,
+    resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+    libraryDependencies ++= Seq(
+      "com.typesafe.play" %%% "play-json" % playJsonVersion,
+      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
+      malliinaGroup %%% "primitives" % primitivesVersion,
+      malliinaGroup %%% "util-html" % utilPlayVersion
+    )
+  )
+  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.5")
+val crossJvm = cross.jvm
+val crossJs = cross.js
+  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+  .settings(
+    npmDependencies in Compile ++= Seq(
+      "jquery" -> "3.3.1",
+      "jquery-ui" -> "1.12.1"
+    )
+  )
+
+val shared = Project("pimp-shared", file("shared"))
+  .dependsOn(crossJvm)
+  .settings(baseSettings: _*)
+  .settings(
+    version := sharedVersion,
+    resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+    libraryDependencies ++= Seq(
+      "io.getquill" %% "quill-jdbc" % "3.4.10",
+      "org.flywaydb" % "flyway-core" % "6.0.3",
+      "mysql" % "mysql-connector-java" % "5.1.47",
+      malliinaGroup %% "mobile-push" % "1.18.4",
+      utilPlayDep
+    )
+  )
+
+val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
-lazy val musicpimp = project
+val musicpimp = project
   .in(file("musicpimp"))
   .enablePlugins(
     PlayScala,
@@ -67,9 +130,10 @@ lazy val musicpimp = project
   )
   .dependsOn(shared, crossJvm, utilAudio)
   .settings(pimpPlaySettings: _*)
-lazy val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
+
+val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
-lazy val pimpcloud = project
+val pimpcloud = project
   .in(file("pimpcloud"))
   .enablePlugins(
     PlayScala,
@@ -81,36 +145,16 @@ lazy val pimpcloud = project
   )
   .dependsOn(shared, shared % Test, crossJvm)
   .settings(pimpcloudSettings: _*)
-lazy val shared = Project("pimp-shared", file("shared"))
-  .dependsOn(crossJvm)
-  .settings(sharedSettings: _*)
-lazy val it = project
+
+val it = project
   .in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
   .settings(baseSettings: _*)
-lazy val cross = portableProject(JSPlatform, JVMPlatform)
-  .crossType(PortableType.Full)
-  .in(file("cross"))
-  .settings(crossSettings: _*)
-  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.5")
-lazy val crossJvm = cross.jvm
-lazy val crossJs = cross.js
-  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
-  .settings(
-    npmDependencies in Compile ++= Seq(
-      "jquery" -> "3.3.1",
-      "jquery-ui" -> "1.12.1"
-    )
-  )
-lazy val utilAudio = Project("util-audio", file("util-audio"))
-  .enablePlugins(MavenCentralPlugin)
-  .settings(utilAudioSettings: _*)
 
-lazy val metaCommonSettings = Seq(
+val metaCommonSettings = Seq(
   version := "1.12.0",
   scalacOptions := Seq("-unchecked", "-deprecation")
 )
-
 val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
   .settings(metaCommonSettings)
   .settings(
@@ -122,7 +166,6 @@ val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") /
     ),
     npmDependencies in Compile ++= Seq("jquery" -> "3.3.1")
   )
-
 val musicmeta = project
   .in(file("musicmeta"))
   .enablePlugins(
@@ -200,22 +243,12 @@ val pimpbeam = project
     buildInfoPackage := "com.malliina.beam"
   )
 
+val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
+
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
 scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
-
-lazy val crossSettings = Seq(
-  organization := "org.musicpimp",
-  version := crossVersion,
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-  libraryDependencies ++= Seq(
-    "com.typesafe.play" %%% "play-json" % playJsonVersion,
-    "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-    malliinaGroup %%% "primitives" % primitivesVersion,
-    malliinaGroup %%% "util-html" % utilPlayVersion
-  )
-)
 
 // musicpimp settings
 
@@ -423,28 +456,6 @@ lazy val pimpcloudScalaJSSettings = Seq(
   pipelineStages in Assets ++= Seq(scalaJSPipeline)
 )
 
-lazy val utilAudioSettings = Seq(
-  version := utilAudioVersion,
-  organization := malliinaGroup,
-  gitUserName := "malliina",
-  developerName := "Michael Skogberg",
-  libraryDependencies ++= Seq(
-    "commons-io" % "commons-io" % "2.6",
-    "org.slf4j" % "slf4j-api" % "1.7.25",
-    malliinaGroup %% "util-base" % primitivesVersion,
-    "org" % "jaudiotagger" % "2.0.3",
-    soundGroup % "tritonus-share" % "0.3.7.4",
-    soundGroup % "jlayer" % "1.0.1.4",
-    soundGroup % "mp3spi" % "1.9.5.4",
-    "com.typesafe.akka" %% "akka-stream" % "2.5.23"
-  ),
-  resolvers ++= Seq(
-    "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-    "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/",
-    Resolver.bintrayRepo("malliina", "maven")
-  )
-)
-
 def serverSettings = LinusPlugin.playSettings ++ Seq(
   // https://github.com/sbt/sbt-release
   releaseProcess := Seq[ReleaseStep](
@@ -491,6 +502,10 @@ lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   pipelineStages ++= Seq(digest, gzip)
 )
 
+lazy val baseSettings = Seq(
+  organization := "org.musicpimp"
+)
+
 lazy val sharedSettings = baseSettings ++ Seq(
   version := sharedVersion,
   resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
@@ -501,10 +516,6 @@ lazy val sharedSettings = baseSettings ++ Seq(
     malliinaGroup %% "mobile-push" % "1.18.4",
     utilPlayDep
   )
-)
-
-lazy val baseSettings = Seq(
-  organization := "org.musicpimp"
 )
 
 def scalajsProject(name: String, path: File) =
