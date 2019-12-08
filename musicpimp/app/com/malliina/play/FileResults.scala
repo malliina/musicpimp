@@ -5,6 +5,7 @@ import java.nio.file.{Files, Path}
 import akka.stream.IOResult
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
+import com.malliina.play.FileResults.log
 import com.malliina.storage.StorageLong
 import play.api.Logger
 import play.api.http.HeaderNames._
@@ -22,16 +23,24 @@ trait FileResults {
   def fileResult(path: Path, request: RequestHeader, fmts: FileMimeTypes)(
     implicit ec: ExecutionContext
   ): Result = {
-    val range = ContentRanges.fromHeader(request, Files.size(path).bytes)
-    range.toOption
-      .map(range => rangedResult(path, range, request, fmts))
-      .getOrElse(
+    val size = Files.size(path).bytes
+    ContentRanges
+      .fromHeader(request, size)
+      .toOption
+      .map { range =>
+        rangedResult(path, range, request, fmts)
+      }
+      .getOrElse {
+        log.info(s"Serving all of '$path', $size, as response to '${request.uri}'...")
         Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
-      )
+      }
   }
 
-  def rangedResult(path: Path, range: ContentRange, request: RequestHeader, fmts: FileMimeTypes)(
-    implicit ec: ExecutionContext
+  def rangedResult(
+    path: Path,
+    range: ContentRange,
+    request: RequestHeader,
+    fmts: FileMimeTypes
   ): Result = {
     val fileName = path.getFileName.toString
     val contentType = fmts.forFileName(fileName) getOrElse ContentTypes.BINARY
@@ -40,6 +49,7 @@ trait FileResults {
       .fromPath(path)
       .drop(range.start.toLong)
       .take(contentLength)
+    log.info(s"Serving range $range of '$path' as '$contentType' response to '${request.uri}'...")
     PartialContent
       .streamed(source, Option(contentLength), Option(contentType))
       .withHeaders(CONTENT_RANGE -> range.contentRange)
