@@ -106,12 +106,14 @@ val shared = Project("pimp-shared", file("shared"))
   .settings(baseSettings: _*)
   .settings(
     version := sharedVersion,
-    resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
+    resolvers ++= Seq(
+      "GitHub packages" at "https://maven.pkg.github.com/malliina/mobile-push"
+    ),
     libraryDependencies ++= Seq(
       "io.getquill" %% "quill-jdbc" % "3.4.10",
       "org.flywaydb" % "flyway-core" % "6.0.3",
       "mysql" % "mysql-connector-java" % "5.1.47",
-      malliinaGroup %% "mobile-push" % "1.18.4",
+      malliinaGroup %% "mobile-push" % "1.21.2",
       utilPlayDep
     )
   )
@@ -504,18 +506,6 @@ lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
 
 lazy val baseSettings = Seq(
   organization := "org.musicpimp"
-)
-
-lazy val sharedSettings = baseSettings ++ Seq(
-  version := sharedVersion,
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-  libraryDependencies ++= Seq(
-    "io.getquill" %% "quill-jdbc" % "3.4.10",
-    "org.flywaydb" % "flyway-core" % "6.0.3",
-    "mysql" % "mysql-connector-java" % "5.1.47",
-    malliinaGroup %% "mobile-push" % "1.18.4",
-    utilPlayDep
-  )
 )
 
 def scalajsProject(name: String, path: File) =
