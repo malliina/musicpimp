@@ -1,7 +1,7 @@
 package tests
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import com.malliina.musicmeta.MetaHtml
 import com.malliina.oauth.{DiscoGsOAuthCredentials, GoogleOAuthCredentials}
 import com.malliina.play.ActorExecution
@@ -23,8 +23,7 @@ object APITests {
 class APITests extends FunSuite {
   implicit val timeout = 20.seconds
   implicit val actorSystem = ActorSystem("test")
-  implicit val mat = ActorMaterializer()
-
+  val mat = Materializer.matFromSystem(actorSystem)
   val oauthControl =
     new MetaOAuthControl(stubControllerComponents().actionBuilder, APITests.fakeGoogle)
   val exec = ActorExecution(actorSystem, mat)

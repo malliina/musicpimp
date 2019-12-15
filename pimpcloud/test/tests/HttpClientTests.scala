@@ -7,9 +7,8 @@ import play.api.libs.ws.ahc.{AhcWSClientConfig, StandaloneAhcWSClient}
 
 class HttpClientTests extends FunSuite with BaseSuite {
   test("can instantiate http client") {
-    val sys = ActorSystem("test")
-    val mat = ActorMaterializer()(sys)
+    implicit val as = ActorSystem("test")
     val conf = AhcWSClientConfig()
-    StandaloneAhcWSClient(conf)(mat)
+    StandaloneAhcWSClient(conf)
   }
 }

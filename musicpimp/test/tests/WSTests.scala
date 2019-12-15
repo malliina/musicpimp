@@ -3,7 +3,6 @@ package tests
 import com.malliina.musicpimp.beam.BeamCommand
 import org.scalatest.FunSuite
 import play.api.libs.json._
-import play.api.mvc.Controller
 
 class WSTests extends FunSuite {
   test("json to case class") {

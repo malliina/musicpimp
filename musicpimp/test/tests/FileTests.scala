@@ -13,9 +13,8 @@ import scala.concurrent.duration.{DurationDouble, DurationInt}
 class FileTests extends FunSuite {
   val minPathsPerSecond = 400
   val testRootOpt: Option[Path] = None
-  val as = ActorSystem("test")
-  val mat = ActorMaterializer()(as)
-  val library = Library(mat)
+  implicit val as = ActorSystem("test")
+  val library = Library()
 
   test(s"lists at least $minPathsPerSecond files per second or completes within 3 seconds") {
     testRootOpt foreach { testRoot =>

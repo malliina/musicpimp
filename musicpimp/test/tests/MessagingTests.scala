@@ -1,7 +1,6 @@
 package tests
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import com.malliina.http.{FullUrl, OkClient}
 import com.malliina.musicpimp.messaging.adm.ADMBuilder
 import com.malliina.musicpimp.messaging.cloud._
@@ -11,12 +10,12 @@ import com.malliina.push.adm.ADMToken
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.{MPNSToken, ToastMessage}
-import org.scalatest.FunSuite
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
-class MessagingTests extends FunSuite {
+class MessagingTests extends FunSuite with BeforeAndAfterAll {
   //  val testToken = APNSToken.build("6c9969eee832f6ed2a11d04d6daa404db13cc3d97f7298f0c042616fc2a5cc34").get
   val testTokenStr = "e0d82212038b938c51dde9f49577ff1f70442fcfe93ec1ff26a2948e36821934"
   val testToken = APNSToken.build(testTokenStr).get
@@ -28,7 +27,8 @@ class MessagingTests extends FunSuite {
     Nil,
     Nil
   )
-  implicit val ec = ActorMaterializer()(ActorSystem("test")).executionContext
+  implicit val as = ActorSystem("test")
+  implicit val ec = as.dispatcher
   val admClient = new ADMBuilder()
   val gcmClient = new GCMBuilder()
 
@@ -84,6 +84,8 @@ class MessagingTests extends FunSuite {
     val response = await(request)
     assert(!response.isEmpty)
   }
+
+  override protected def afterAll(): Unit = await(as.terminate())
 
   def await[T](f: Future[T]): T = Await.result(f, 60.seconds)
 }

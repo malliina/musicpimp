@@ -18,8 +18,7 @@ trait BaseSuite extends FunSuiteLike {
 
 trait AsyncSuite extends BaseSuite with BeforeAndAfterAll {
   implicit val as: ActorSystem = ActorSystem()
-  implicit val mat: ActorMaterializer = ActorMaterializer()
-  implicit val ec: ExecutionContext = mat.executionContext
+  implicit val ec: ExecutionContext = as.dispatcher
 
   override protected def afterAll(): Unit = {
     await(as.terminate())

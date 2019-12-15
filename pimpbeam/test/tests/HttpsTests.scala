@@ -15,8 +15,8 @@ import scala.concurrent.duration._
 class HttpsTests extends FunSuite {
   val testTrustStorePassword = "???"
 
-  val mat = ActorMaterializer()(ActorSystem("test"))
-  implicit val ec = mat.executionContext
+  implicit val as = ActorSystem("test")
+  implicit val ec = as.dispatcher
 
   ignore("can ping MusicBeamer over HTTP") {
     pingWithPlayAPI("https://beam.musicpimp.org/ping")
@@ -44,7 +44,7 @@ class HttpsTests extends FunSuite {
   }
 
   private def pingWithPlayAPI(url: String): WSResponse = {
-    val client = AhcWSClient()(mat)
+    val client = AhcWSClient()
     val response = client.url(url).get()
     response.onComplete(_ => client.close())
     Await.result(response, 5.seconds)

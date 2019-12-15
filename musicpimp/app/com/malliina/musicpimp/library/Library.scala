@@ -38,7 +38,7 @@ object Library {
   val RootId = FolderID(idFor(""))
   val EmptyPath = Paths get ""
 
-  def apply(mat: Materializer): Library = new Library() (mat)
+  def apply()(implicit mat: Materializer): Library = new Library()(mat)
   def idFor(in: String) = DigestUtils.md5Hex(in)
   def parent(p: Path) = folderId(Option(p.getParent).getOrElse(EmptyPath))
   def folderId(p: Path) = FolderID(idFor(UnixPath(p).path))
@@ -66,10 +66,9 @@ class Library()(implicit mat: Materializer) extends FileLibrary {
       } else {
         Map(
           folder.dirs
-            .flatMap(
-              dir =>
-                items(dir).toSeq
-                  .flatMap(f => recurse(f, acc.updated(dir, f)))
+            .flatMap(dir =>
+              items(dir).toSeq
+                .flatMap(f => recurse(f, acc.updated(dir, f)))
             ): _*
         )
       }

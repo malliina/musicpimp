@@ -40,7 +40,8 @@ class AppComponents(
 ) extends BuiltInComponentsFromContext(context)
   with HttpFiltersComponents
   with AssetsComponents {
-  override val configuration: Configuration = context.initialConfiguration ++ LocalConf.localConf
+  override val configuration: Configuration =
+    LocalConf.localConf.withFallback(context.initialConfiguration)
   val allowedCsp = Seq(
     "*.musicpimp.org",
     "*.bootstrapcdn.com",

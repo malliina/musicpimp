@@ -7,7 +7,8 @@ import com.malliina.musicpimp.db.Conf
 import com.malliina.musicpimp.util.FileUtil
 
 object EmbeddedMySQL {
-  def temporary: EmbeddedMySQL = apply(Files.createTempDirectory("embedded"), temporary = true)
+  def temporary: EmbeddedMySQL =
+    apply(Files.createTempDirectory("embedded"), temporary = true)
   def permanent: EmbeddedMySQL =
     apply(FileUtil.pimpHomeDir.resolve("embedded"), temporary = false)
 

@@ -32,21 +32,23 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.20.5"
-val pimpcloudVersion = "1.25.2"
-val sharedVersion = "1.10.2"
-val crossVersion = "1.10.2"
-val utilAudioVersion = "2.6.0"
-val primitivesVersion = "1.11.0"
-val playJsonVersion = "2.7.4"
+val musicpimpVersion = "4.21.0"
+val pimpcloudVersion = "1.26.0"
+val sharedVersion = "1.11.0"
+val crossVersion = "1.11.0"
+val utilAudioVersion = "2.7.0"
+val primitivesVersion = "1.13.0"
+val playJsonVersion = "2.8.1"
 val scalaTagsVersion = "0.7.0"
-val utilPlayVersion = "5.2.4"
+val utilPlayVersion = "5.4.0"
 val httpVersion = "4.5.10"
+val mysqlVersion = "5.1.48"
+val nvWebSocketVersion = "2.9"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.6.0"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.7.0"
 
 val httpGroup = "org.apache.httpcomponents"
 
@@ -110,10 +112,10 @@ val shared = Project("pimp-shared", file("shared"))
       "GitHub packages" at "https://maven.pkg.github.com/malliina/mobile-push"
     ),
     libraryDependencies ++= Seq(
-      "io.getquill" %% "quill-jdbc" % "3.4.10",
+      "io.getquill" %% "quill-jdbc" % "3.5.0",
       "org.flywaydb" % "flyway-core" % "6.0.3",
-      "mysql" % "mysql-connector-java" % "5.1.47",
-      malliinaGroup %% "mobile-push" % "1.21.2",
+      "mysql" % "mysql-connector-java" % mysqlVersion,
+      malliinaGroup %% "mobile-push" % "1.22.1-SNAPSHOT",
       utilPlayDep
     )
   )
@@ -273,8 +275,8 @@ lazy val pimpPlaySettings =
         malliinaGroup %% "util-base" % primitivesVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "mysql" % "mysql-connector-java" % "5.1.47",
-        "com.neovisionaries" % "nv-websocket-client" % "2.9",
+        "mysql" % "mysql-connector-java" % mysqlVersion,
+        "com.neovisionaries" % "nv-websocket-client" % nvWebSocketVersion,
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         "org.scala-stm" %% "scala-stm" % "0.9.1",
@@ -294,11 +296,12 @@ lazy val pimpPlaySettings =
         ),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(
-        lib => !lib.toFile.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")
+      libs := libs.value.filter(lib =>
+        !lib.toFile.getAbsolutePath
+          .endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       ),
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
-        !af.data.getAbsolutePath.endsWith("bundles\\nv-websocket-client-2.9.jar")
+        !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
       useTerminateProcess := true,
       msiMappings in Windows := (msiMappings in Windows).value.map {
@@ -440,7 +443,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   libraryDependencies ++= Seq(
     "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
     "org.eclipse.jetty" % "jetty-alpn-java-client" % "9.4.20.v20190813",
-    "com.typesafe.akka" %% "akka-http" % "10.1.10"
+    "com.typesafe.akka" %% "akka-http" % "10.1.11"
   )
 )
 
@@ -484,7 +487,7 @@ def libSettings = Seq(
 
 def defaultDeps = Seq(
   "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % Test,
+  "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % Test,
   PlayImport.specs2 % Test
 )
 

@@ -8,8 +8,10 @@ import com.malliina.musicpimp.models.TrackID
 import play.api.libs.json.Json.obj
 import play.api.libs.json.{Format, Reads, Writes}
 
+import scala.concurrent.duration.{Duration, FiniteDuration}
+
 object JsonHelpers {
-  implicit val durFormat = CrossFormats.duration
+  implicit val durFormat: Format[FiniteDuration] = CrossFormats.finiteDuration
   val reader: Reads[TrackMeta] = Track.jsonFormat.map[TrackMeta](identity)
 
   private val dummyHost = FullUrl("https", "example.com", "")

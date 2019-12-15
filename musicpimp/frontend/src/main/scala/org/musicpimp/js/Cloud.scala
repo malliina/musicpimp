@@ -90,7 +90,7 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
       connect()
     }
     elem(DisconnectId).click { _: JQueryEventObject =>
-      send(Disconnect)
+      send(Disconnect: CloudCommand)
     }
     elem(CloudIdentifier).keypress { e: JQueryEventObject =>
       val isEnter = e.which == 10 || e.which == 13
@@ -101,5 +101,5 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings {
   }
 
   def connect(): Unit =
-    send(Connect(CloudID(elem(CloudIdentifier).value().toString)))
+    send(Connect(CloudID(elem(CloudIdentifier).value().toString)): CloudCommand)
 }
