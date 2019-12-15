@@ -31,8 +31,8 @@ trait KeyStores {
     keyStoreType: String = defaultKeyStoreType
   ): Unit = {
     val ks = KeyStore.getInstance(keyStoreType)
-    Util.using(new FileInputStream(keyStore.toFile))(
-      keyStream => ks.load(keyStream, keyStorePassword.toCharArray)
+    Util.using(new FileInputStream(keyStore.toFile))(keyStream =>
+      ks.load(keyStream, keyStorePassword.toCharArray)
     )
   }
 

@@ -14,8 +14,8 @@ object FileVisitors {
   ) = {
     if (recursive) {
       if (sortByAge) {
-        ageLimitHours.fold(new FilteringFileVisitor with FileSorting)(
-          age => new AgeLimitFilteringFileVisitor(age) with FileSorting
+        ageLimitHours.fold(new FilteringFileVisitor with FileSorting)(age =>
+          new AgeLimitFilteringFileVisitor(age) with FileSorting
         )
       } else {
         ageLimitHours.fold(new FilteringFileVisitor)(age => new AgeLimitFilteringFileVisitor(age))
@@ -25,20 +25,18 @@ object FileVisitors {
       if (sortByAge) {
         ageLimitHours.fold(new FilteringFileVisitor with FileSorting with NonRecursiveSearch {
           val startDir = srcDir
-        })(
-          age =>
-            new AgeLimitFilteringFileVisitor(age) with FileSorting with NonRecursiveSearch {
-              val startDir = srcDir
-            }
+        })(age =>
+          new AgeLimitFilteringFileVisitor(age) with FileSorting with NonRecursiveSearch {
+            val startDir = srcDir
+          }
         )
       } else {
         ageLimitHours.fold(new FilteringFileVisitor with NonRecursiveSearch {
           val startDir = srcDir
-        })(
-          age =>
-            new AgeLimitFilteringFileVisitor(age) with NonRecursiveSearch {
-              val startDir = srcDir
-            }
+        })(age =>
+          new AgeLimitFilteringFileVisitor(age) with NonRecursiveSearch {
+            val startDir = srcDir
+          }
         )
       }
 

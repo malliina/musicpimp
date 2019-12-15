@@ -66,7 +66,7 @@ object CloudSocket {
       s,
       fullText,
       deps
-    ) (mat)
+    )(mat)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -292,12 +292,11 @@ class CloudSocket(
       case beamCommand: BeamCommand =>
         Rest
           .beam(beamCommand, lib)
-          .map(
-            e =>
-              e.fold(
-                err => log.warn(s"Unable to beam. $err"),
-                _ => log info "Beaming completed successfully."
-              )
+          .map(e =>
+            e.fold(
+              err => log.warn(s"Unable to beam. $err"),
+              _ => log info "Beaming completed successfully."
+            )
           )
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))

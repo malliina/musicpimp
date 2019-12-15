@@ -35,10 +35,9 @@ class SettingsController(
   indexer: Indexer,
   auth: AuthDeps
 ) extends HtmlController(auth) {
-  val dirConstraint = Constraint(
-    (dir: String) =>
-      if (validateDirectory(dir)) Valid
-      else Invalid(Seq(ValidationError(s"Invalid directory '$dir'.")))
+  val dirConstraint = Constraint((dir: String) =>
+    if (validateDirectory(dir)) Valid
+    else Invalid(Seq(ValidationError(s"Invalid directory '$dir'.")))
   )
 
   protected val newFolderForm = Form(

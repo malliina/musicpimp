@@ -25,13 +25,12 @@ object AlarmsHtml extends PimpBootstrap {
             Seq(th("Token"), th(`class` := "token-header-platform")("Platform"), th("Actions"))
           ),
           tbody(
-            tokens.map(
-              t =>
-                tr(
-                  td(t.token.token),
-                  td(t.platform.platform),
-                  td(`class` := "table-button")(removalForm(t))
-                )
+            tokens.map(t =>
+              tr(
+                td(t.token.token),
+                td(t.platform.platform),
+                td(`class` := "table-button")(removalForm(t))
+              )
             )
           )
         )

@@ -30,8 +30,8 @@ object LogsHtml extends PimpBootstrap with FrontStrings {
             name := levelField.name,
             onchange := "this.form.submit()"
           )(
-            levels.map(
-              level => option(if (level == currentLevel) selected else empty)(level.toString)
+            levels.map(level =>
+              option(if (level == currentLevel) selected else empty)(level.toString)
             )
           )
         )

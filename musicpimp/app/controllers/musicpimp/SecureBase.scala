@@ -61,15 +61,14 @@ class SecureBase(auth: AuthDeps)
   ) =
     pimpUploadAction { req =>
       req.files.headOption
-        .map(
-          firstFile =>
-            f(
-              new OneFileUploadRequest[MultipartFormData[TemporaryFile]](
-                firstFile,
-                req.user.name,
-                req
-              )
+        .map(firstFile =>
+          f(
+            new OneFileUploadRequest[MultipartFormData[TemporaryFile]](
+              firstFile,
+              req.user.name,
+              req
             )
+          )
         )
         .getOrElse(fut(badRequest(s"File missing")))
     }

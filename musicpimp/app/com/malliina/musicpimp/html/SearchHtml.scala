@@ -27,19 +27,18 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
       if (results.nonEmpty) {
         headeredTable(tables.stripedHover, Seq("Track", "Artist", "Album", "Actions"))(
           tbody(
-            results.map(
-              track =>
-                tr(
-                  Seq(
-                    td(track.title),
-                    td(track.artist),
-                    td(track.album),
-                    td(`class` := "table-button")(
-                      LibraryHtml
-                        .trackActions(track.id, trackExtra = btn.sm, extraClass = Option("flex"))()
-                    )
+            results.map(track =>
+              tr(
+                Seq(
+                  td(track.title),
+                  td(track.artist),
+                  td(track.album),
+                  td(`class` := "table-button")(
+                    LibraryHtml
+                      .trackActions(track.id, trackExtra = btn.sm, extraClass = Option("flex"))()
                   )
                 )
+              )
             )
           )
         )

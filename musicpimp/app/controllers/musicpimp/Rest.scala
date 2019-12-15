@@ -92,10 +92,9 @@ class Rest(
         .get(JsonStrings.TrackHeader)
         .map(Json.parse(_).validate[Track](Track.jsonFormat))
       val metaOrError = headerValue
-        .map(
-          jsonResult =>
-            jsonResult
-              .fold(invalid => Left(loggedJson(s"Invalid JSON: $invalid")), valid => Right(valid))
+        .map(jsonResult =>
+          jsonResult
+            .fold(invalid => Left(loggedJson(s"Invalid JSON: $invalid")), valid => Right(valid))
         )
         .getOrElse(Left(loggedJson("No Track header is defined.")))
       val authAction = metaOrError.fold(
@@ -286,8 +285,8 @@ class Rest(
         pathParameterOpt.flatMap(library.suggestAbsolute).filter(!Files.exists(_))
       absolutePathOpt.flatMap(p => Option(p.getParent).map(Files.createDirectories(_)))
       val requestFile = request.file
-      val file = absolutePathOpt.fold(requestFile)(
-        dest => Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING)
+      val file = absolutePathOpt.fold(requestFile)(dest =>
+        Files.move(requestFile, dest, StandardCopyOption.REPLACE_EXISTING)
       )
       // attempts to read metadata from file if it was moved to the library, falls back to parameters set in upload
       val trackId = Library.trackId(file)

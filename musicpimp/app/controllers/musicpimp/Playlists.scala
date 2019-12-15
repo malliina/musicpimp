@@ -63,11 +63,10 @@ class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extend
     val json = req.body
     (json \ PlaylistKey)
       .validate[PlaylistSubmission]
-      .map(
-        playlist =>
-          service
-            .saveOrUpdatePlaylistMeta(playlist, req.user)
-            .map(meta => Accepted(Json.toJson(meta)))
+      .map(playlist =>
+        service
+          .saveOrUpdatePlaylistMeta(playlist, req.user)
+          .map(meta => Accepted(Json.toJson(meta)))
       )
       .getOrElse(fut(badRequest(s"Invalid JSON: $json")))
   }

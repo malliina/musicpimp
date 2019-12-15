@@ -25,9 +25,8 @@ class TokensStore(tokensFile: Path, val ec: ExecutionContext) extends TokenStore
 
   override def removeAll(user: Username): Future[Unit] = removeWhere(_.user == user)
 
-  override def remove(user: Username, series: Long): Future[Unit] = removeWhere(
-    t => t.user == user && t.series == series
-  )
+  override def remove(user: Username, series: Long): Future[Unit] =
+    removeWhere(t => t.user == user && t.series == series)
 
   def removeWhere(p: Token => Boolean): Future[Unit] = fut(tokens.get() filter p foreach remove)
 

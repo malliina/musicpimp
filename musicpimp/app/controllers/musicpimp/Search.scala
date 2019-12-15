@@ -64,16 +64,14 @@ class SearchActor(indexer: Indexer, ctx: ActorMeta)(implicit mat: Materializer)
     val (killSwitch, fut) = indexer.ongoing
       .viaMat(KillSwitches.single)(Keep.right)
       .toMat(
-        Sink.foreach(
-          s =>
-            s.watchTermination()(
-                (_, d) =>
-                  d.onComplete { _ =>
-                    log.info("Indexing complete.")
-                    send("Indexing complete.")
-                  }
-              )
-              .runWith(socketSink)
+        Sink.foreach(s =>
+          s.watchTermination()((_, d) =>
+              d.onComplete { _ =>
+                log.info("Indexing complete.")
+                send("Indexing complete.")
+              }
+            )
+            .runWith(socketSink)
         )
       )(Keep.both)
       .run()
