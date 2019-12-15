@@ -7,6 +7,7 @@ import com.malliina.file.{FileUtilities, StorageFile}
 import com.malliina.util.{EnvUtils, Utils}
 
 object FileUtil {
+  val userHome = Paths.get(sys.props("user.home"))
   val ownerOnlyPermissions = PosixFilePermissions fromString "rw-------"
   val ownerOnlyAttributes = PosixFilePermissions asFileAttribute ownerOnlyPermissions
 
@@ -24,7 +25,7 @@ object FileUtil {
     ).map(_ / "MusicPimp")
       .filterNot(_ => EnvUtils.operatingSystem.isUnixLike)
 
-  protected def localDirDefault: Path = FileUtilities.tempDir / ".musicpimp"
+  protected def localDirDefault: Path = userHome.resolve(".musicpimp")
 
   private def findPath(dir: Option[String]): Option[Path] = dir.map(dir => Paths.get(dir))
 
