@@ -115,7 +115,7 @@ val shared = Project("pimp-shared", file("shared"))
       "io.getquill" %% "quill-jdbc" % "3.5.0",
       "org.flywaydb" % "flyway-core" % "6.0.3",
       "mysql" % "mysql-connector-java" % mysqlVersion,
-      malliinaGroup %% "mobile-push" % "1.22.1-SNAPSHOT",
+      malliinaGroup %% "mobile-push" % "1.22.0",
       utilPlayDep
     )
   )
