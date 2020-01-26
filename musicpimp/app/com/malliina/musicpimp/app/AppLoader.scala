@@ -19,6 +19,7 @@ import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
+import com.malliina.play.http.LogRequestFilter
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import com.typesafe.config.ConfigFactory
 import controllers._
@@ -146,7 +147,8 @@ class PimpComponents(
     }
   }
   val appConf: AppConf = init(configuration)
-  override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
+  override lazy val httpFilters: Seq[EssentialFilter] =
+    Seq(LogRequestFilter(executionContext), new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
     new DefaultHttpErrorHandler(
       environment,

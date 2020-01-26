@@ -1,6 +1,7 @@
 package com.malliina.pimpcloud.ws
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.model.HttpResponse
 import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, QueueOfferResult, StreamDetachedException}
@@ -90,11 +91,10 @@ class NoCacheByteStreams(
     // Watches completion and disposes of resources
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails
-    val src = source.watchTermination()(
-      (_, task) =>
-        task.onComplete { res =>
-          remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
-        }
+    val src = source.watchTermination()((_, task) =>
+      task.onComplete { res =>
+        remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
+      }
     )
     connectSource(request, src, track, range)
   }

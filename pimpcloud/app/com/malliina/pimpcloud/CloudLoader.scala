@@ -9,6 +9,7 @@ import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
+import com.malliina.play.http.LogRequestFilter
 import controllers.pimpcloud._
 import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
@@ -91,7 +92,8 @@ class CloudComponents(context: Context, conf: AppConf)
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   // Components
-  override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
+  override lazy val httpFilters: Seq[EssentialFilter] =
+    Seq(securityHeadersFilter, LogRequestFilter(executionContext), new GzipFilter())
 
   val adminAuth = new AdminOAuth(defaultActionBuilder, conf.conf(configuration))
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth, materializer)
@@ -112,10 +114,9 @@ class CloudComponents(context: Context, conf: AppConf)
     new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
   log info s"Started pimpcloud ${BuildInfo.version}"
 
-  applicationLifecycle.addStopHook(
-    () =>
-      Future.successful {
-        adminAuth.validator.http.close()
-      }
+  applicationLifecycle.addStopHook(() =>
+    Future.successful {
+      adminAuth.validator.http.close()
+    }
   )
 }

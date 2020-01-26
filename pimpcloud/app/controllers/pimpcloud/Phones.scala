@@ -127,10 +127,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
       // ranged request support
       val fileName = name(track, in)
       rangeTry.map { range =>
-        result.withHeaders(
-          CONTENT_RANGE -> range.contentRange,
-          CONTENT_TYPE -> fileMimeTypes.forFileName(fileName).getOrElse(ContentTypes.BINARY)
-        )
+        result.withHeaders(CONTENT_RANGE -> range.contentRange)
       }.getOrElse {
         result.withHeaders(trackHeaders(fileName): _*)
       }
@@ -165,7 +162,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
   def trackHeaders(fileName: String) = Seq(
     ACCEPT_RANGES -> Phones.Bytes,
     CACHE_CONTROL -> HttpConstants.NoCache,
-    CONTENT_DISPOSITION -> s"""attachment; filename="$fileName""""
+    CONTENT_DISPOSITION -> s"""inline; filename="$fileName""""
   )
 
   def playlists = proxiedGetAction(PlaylistsGet)
@@ -273,8 +270,8 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
   private def proxiedParsedAction[A](
     parser: BodyParser[A]
   )(f: (Request[A], PhoneConnection) => Future[Result]): EssentialAction =
-    phoneAuth.authenticatedLogged(
-      (socket: PhoneConnection) => Action.async(parser)(req => f(req, socket))
+    phoneAuth.authenticatedLogged((socket: PhoneConnection) =>
+      Action.async(parser)(req => f(req, socket))
     )
 
   private def onGatewayParseErrorResult(
