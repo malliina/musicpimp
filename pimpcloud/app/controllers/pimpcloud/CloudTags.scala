@@ -58,15 +58,16 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     )
 
   def login(error: Option[String], feedback: Option[String], motd: Option[String]) = {
+    val formWidth = s"${col.md.eight} ${col.lg.six}"
     basePage("Welcome")(
       divContainer(
-        divClass(s"${col.md.four} wrapper login-container")(
+        divClass("wrapper login-container")(
           row(
-            feedback.fold(empty)(f => leadPara(f))
+            feedback.fold(empty)(f => p(`class` := s"$formWidth $Lead")(f))
           ),
           row(
             form(
-              `class` := FormSignin,
+              `class` := s"$FormSignin $formWidth",
               name := "loginForm",
               action := routes.Web.formAuthenticate(),
               method := "POST"
@@ -84,12 +85,14 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
           ),
           error.fold(empty) { err =>
             row(
-              div(`class` := s"${alert.warning} $FormSignin", role := alert.Alert)(err)
+              divClass(s"$FormSignin $formWidth")(
+                div(`class` := alert.warning, role := alert.Alert)(err)
+              )
             )
           },
           motd.fold(empty) { message =>
             divClass(s"$Row $FormSignin")(
-              p(message)
+              p(`class` := col.lg.six, message)
             )
           }
         )

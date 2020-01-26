@@ -24,34 +24,36 @@ class NewDatabaseStats(val db: PimpMySQL) extends PlaybackStats {
   }
 
   override def played(track: TrackMeta, user: Username): Future[Unit] =
-    performAsync("Save played track") {
+    performAsync(s"Save played track ${track.title} (${track.id}) by user $user") {
       runIO(playsTable.insert(lift(PlaybackRecord(track.id, Instant.now(), user)))).map(_ => ())
     }
 
-  def mostRecent(request: DataRequest): Future[Seq[RecentEntry]] = performAsync("Most recent") {
-    runIO(
-      playbackHistory(lift(request.username))
-        .sortBy(_.record.started)(Ord.desc)
-        .drop(lift(request.from))
-        .take(lift(request.maxItems))
-    ).map { recs =>
-      recs.map { r =>
-        RecentEntry(r.track, r.record.started)
+  def mostRecent(request: DataRequest): Future[Seq[RecentEntry]] =
+    performAsync(s"Most recent tracks by ${request.username}") {
+      runIO(
+        playbackHistory(lift(request.username))
+          .sortBy(_.record.started)(Ord.desc)
+          .drop(lift(request.from))
+          .take(lift(request.maxItems))
+      ).map { recs =>
+        recs.map { r =>
+          RecentEntry(r.track, r.record.started)
+        }
       }
     }
-  }
 
-  def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] = performAsync("Most played") {
-    runIO(
-      playbackHistory(lift(request.username))
-        .groupBy(_.track)
-        .map { case (track, rs) => (track, rs.size, rs.map(_.record.started).min) }
-        .sortBy { case (_, count, date) => (count, date) }(Ord.desc)
-        .map { case (track, count, _) => (track, count) }
-        .drop(lift(request.from))
-        .take(lift(request.maxItems))
-    ).map { rows =>
-      rows.map { case (track, count) => PopularEntry(track, count.toInt) }
+  def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] =
+    performAsync(s"Most played tracks by ${request.username}") {
+      runIO(
+        playbackHistory(lift(request.username))
+          .groupBy(_.track)
+          .map { case (track, rs) => (track, rs.size, rs.map(_.record.started).min) }
+          .sortBy { case (_, count, date) => (count, date) }(Ord.desc)
+          .map { case (track, count, _) => (track, count) }
+          .drop(lift(request.from))
+          .take(lift(request.maxItems))
+      ).map { rows =>
+        rows.map { case (track, count) => PopularEntry(track, count.toInt) }
+      }
     }
-  }
 }

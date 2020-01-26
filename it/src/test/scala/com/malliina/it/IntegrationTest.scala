@@ -148,7 +148,6 @@ class IntegrationTest extends PimpcloudServerSuite {
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
-      //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains("11"))
       assert(r.bodyAsBytes.size.toLong === 11)
     }
   }

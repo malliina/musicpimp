@@ -520,6 +520,7 @@ def scalajsProject(name: String, path: File) =
       testFrameworks += new TestFramework("utest.runner.Framework"),
       version in webpack := "4.35.2",
       emitSourceMaps := false,
+      webpackEmitSourceMaps := false,
       scalaJSUseMainModuleInitializer := true,
       webpackBundlingMode := BundlingMode.LibraryOnly(),
       npmDependencies in Compile ++= Seq(
@@ -543,7 +544,7 @@ def scalajsProject(name: String, path: File) =
         "webpack-merge" -> "4.1.5"
       ),
       additionalNpmConfig in Compile := Map(
-        "engines" -> JSON.obj("node" -> JSON.str("8.x")),
+        "engines" -> JSON.obj("node" -> JSON.str("10.x")),
         "private" -> JSON.bool(true),
         "license" -> JSON.str("BSD")
       ),

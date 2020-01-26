@@ -49,9 +49,9 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     log info "Indexing if necessary..."
     val actualObs = calculateFileCount()
     val saved = loadSavedFileCount
-    val task = Source.fromFuture(actualObs) flatMapConcat { actual =>
+    val task = Source.future(actualObs) flatMapConcat { actual =>
       if (actual != saved) {
-        Source.fromFuture {
+        Source.future {
           saveFileCount(actual).map { _ =>
             log info s"Saved file count of $saved differs from actual file count of $actual, indexing..."
           }.recover {
