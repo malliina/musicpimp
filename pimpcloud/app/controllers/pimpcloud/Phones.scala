@@ -20,10 +20,9 @@ import com.malliina.play.controllers.{BaseSecurity, Caching}
 import com.malliina.play.http.HttpConstants
 import com.malliina.play.tags.TagPage
 import com.malliina.play.{ContentRange, ContentRanges}
-import com.malliina.storage.StorageSize
 import controllers.pimpcloud.Phones.log
 import play.api.Logger
-import play.api.http.{ContentTypes, Writeable}
+import play.api.http.Writeable
 import play.api.libs.json._
 import play.api.mvc._
 import play.mvc.Http.HeaderNames
@@ -96,8 +95,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
 
   def headTrack(t: TrackID): EssentialAction = withTrack(t) { (track, _, _) =>
     // .withHeaders does not work for Content-Length; akka http ignores it
-    PartialContent
-      .streamed[ByteString](
+    Ok.streamed[ByteString](
         Source.empty,
         Option(track.size.toBytes),
         Option(HttpConstants.AudioMpeg)
