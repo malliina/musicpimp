@@ -143,13 +143,16 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   test("serve ranged track") {
+    val bytesPromise = Promise[Int]()
     withCloudTrack("range-test") { (trackId, _, cloudId) =>
       // request track
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
       assert(r.status === 206)
       assert(r.bodyAsBytes.size.toLong === 11)
+      bytesPromise.success(r.bodyAsBytes.size)
     }
+    assert(await(bytesPromise.future) === 11)
   }
 
   test("get folders") {
@@ -198,7 +201,7 @@ class IntegrationTest extends PimpcloudServerSuite {
   }
 
   def withCloudTrack(desiredId: String)(code: (TrackID, StorageSize, CloudID) => Any) = {
-    // make sure musicpimp server has a track to serve
+    // makes sure musicpimp server has a track to serve
     val trackFile = TestUtils.makeTestMp3()
     val fileSize = Files.size(trackFile).bytes
     assert(fileSize.toBytes === 198658L)
@@ -221,8 +224,9 @@ class IntegrationTest extends PimpcloudServerSuite {
       val cloudId = CloudID(desiredId)
       val id = await(cloudClient.connect(Option(cloudId)))
       assert(id === cloudId)
+      code(id)
     } finally {
-      cloudClient.disconnectAndForget("")
+      cloudClient.disconnectAndForget("Test ended.")
     }
   }
 
