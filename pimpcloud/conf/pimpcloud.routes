@@ -15,6 +15,7 @@ GET         /player/recent                     controllers.pimpcloud.Phones.rece
 GET         /player/popular                    controllers.pimpcloud.Phones.popular
 HEAD        /tracks/*id                        controllers.pimpcloud.Phones.headTrack(id: TrackID)
 GET         /tracks/*id                        controllers.pimpcloud.Phones.track(id: TrackID)
+HEAD        /downloads/*id                     controllers.pimpcloud.Phones.headTrack(id: TrackID)
 GET         /downloads/*id                     controllers.pimpcloud.Phones.track(id: TrackID)
 GET         /search                            controllers.pimpcloud.Phones.search
 GET         /alarms                            controllers.pimpcloud.Phones.alarms
