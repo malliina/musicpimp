@@ -108,8 +108,10 @@ class CloudSocket(
   val messageParser = CloudMessageParser
   val httpProto = if (uri.proto == "ws") "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
+//  val cloudHost = FullUrl("http", "10.0.0.2:9000", "")
+  val uploadHost = cloudHost
   val lib = deps.lib
-  val uploader = ApacheTrackUploads(lib, cloudHost)
+  val uploader = ApacheTrackUploads(lib, uploadHost)
 //  val uploader = OkHttpTrackUploads(lib, cloudHost)
   val handler = deps.handler
   val stats = deps.stats

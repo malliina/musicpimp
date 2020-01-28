@@ -13,6 +13,7 @@ import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.{Util, Utils}
+import javax.net.ssl.SSLException
 import play.api.Logger
 
 import scala.collection.concurrent.TrieMap
@@ -91,6 +92,9 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
             // thrown when the upload is cancelled, see method cancel
             // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
             log info s"Aborted upload of $request"
+          case ssl: SSLException
+              if Option(ssl.getMessage) contains "Connection or outbound has been closed" =>
+            log.info(s"Cancelled upload of '$trackID' with request '$request'.")
           case e: Exception =>
             log.warn(
               s"Upload of track $trackID with request ID $request terminated exceptionally",
