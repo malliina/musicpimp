@@ -435,7 +435,10 @@ lazy val pimpcloudLinuxSettings = Seq(
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
       s"-Dlogger.resource=/etc/$linuxName/logback-prod.xml",
-      s"-Dconfig.file=/etc/$linuxName/production.conf"
+      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
+      s"-Dconfig.file=/etc/$linuxName/production.conf",
+      s"-Dpidfile.path=/var/run/$linuxName/$linuxName.pid",
+      s"-Dlog.dir=/var/log/$linuxName"
     )
   },
   packageSummary in Linux := "This is the pimpcloud summary.",
