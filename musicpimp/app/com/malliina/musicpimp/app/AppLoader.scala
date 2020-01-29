@@ -147,8 +147,7 @@ class PimpComponents(
     }
   }
   val appConf: AppConf = init(configuration)
-  override lazy val httpFilters: Seq[EssentialFilter] =
-    Seq(LogRequestFilter(executionContext), new GzipFilter())
+  override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
     new DefaultHttpErrorHandler(
       environment,

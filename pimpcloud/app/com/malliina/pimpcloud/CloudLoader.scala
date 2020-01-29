@@ -92,8 +92,7 @@ class CloudComponents(context: Context, conf: AppConf)
   implicit val ec: ExecutionContextExecutor = materializer.executionContext
 
   // Components
-  override lazy val httpFilters: Seq[EssentialFilter] =
-    Seq(securityHeadersFilter, LogRequestFilter(executionContext), new GzipFilter())
+  override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
 
   val adminAuth = new AdminOAuth(defaultActionBuilder, conf.conf(configuration))
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth, materializer)

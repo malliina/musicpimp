@@ -437,7 +437,7 @@ lazy val pimpcloudLinuxSettings = Seq(
       s"-Dlogger.resource=/etc/$linuxName/logback-prod.xml",
       s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
       s"-Dconfig.file=/etc/$linuxName/production.conf",
-      s"-Dpidfile.path=/var/run/$linuxName/$linuxName.pid",
+      s"-Dpidfile.path=/dev/null",
       s"-Dlog.dir=/var/log/$linuxName"
     )
   },
