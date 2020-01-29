@@ -431,7 +431,9 @@ lazy val pimpcloudLinuxSettings = Seq(
   mainClass := Some("com.malliina.pimpcloud.Starter"),
   javaOptions in Universal ++= {
     val linuxName = (name in Linux).value
+    // https://www.scala-sbt.org/sbt-native-packager/archetypes/java_app/customize.html
     Seq(
+      "-J-Xmx192m",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
       s"-Dlogger.resource=/etc/$linuxName/logback-prod.xml",
