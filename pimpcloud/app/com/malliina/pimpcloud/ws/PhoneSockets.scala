@@ -4,12 +4,12 @@ import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.pattern.pipe
 import com.malliina.musicpimp.audio.WelcomeMessage
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.{PimpPhone, PimpPhones}
 import com.malliina.pimpcloud.json.JsonStrings
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneMediator.PhoneJoined
+import com.malliina.pimpcloud.ws.ServerMediator.{Listen, ServerEvent}
+import com.malliina.pimpcloud.{PimpPhone, PimpPhones}
 import com.malliina.play.ws.{ActorConfig, JsonActor}
-import controllers.pimpcloud.ServerMediator.{Listen, ServerEvent}
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.mvc.RequestHeader

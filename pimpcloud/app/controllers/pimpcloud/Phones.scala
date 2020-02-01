@@ -13,6 +13,7 @@ import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Errors._
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.stats.ItemLimits
+import com.malliina.pimpcloud.SharedStrings.Ping
 import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.Authenticator

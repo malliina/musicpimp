@@ -16,7 +16,7 @@ import com.malliina.play.auth.{
 }
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.values.Email
+import com.malliina.values.{Email, ErrorMessage}
 import play.api.Logger
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
@@ -68,7 +68,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     lastIdKey = lastIdKey,
     email =>
       if (email == authorizedEmail) Right(email)
-      else Left(PermissionError(s"Unauthorized: '$email'.")),
+      else Left(PermissionError(ErrorMessage(s"Unauthorized: '$email'."))),
     sessionKey = sessionKey,
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
     returnUriKey = BasicAuthHandler.DefaultReturnUriKey

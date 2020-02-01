@@ -5,10 +5,9 @@ import akka.stream.Materializer
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.json.CommonMessages
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.pimpcloud.json.JsonStrings.{Body, Cmd, Id, Pong}
+import com.malliina.pimpcloud.json.JsonStrings.{Body, Cmd, Id}
 import com.malliina.pimpcloud.ws.ServerMediator.{ServerEvent, ServerJoined, StreamsUpdated}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.play.json.{JsonMessages, JsonStrings}
 import com.malliina.play.ws.{ActorConfig, JsonActor}
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.{JsValue, Json}
