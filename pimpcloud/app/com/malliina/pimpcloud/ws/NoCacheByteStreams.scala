@@ -1,7 +1,6 @@
 package com.malliina.pimpcloud.ws
 
 import akka.actor.ActorRef
-import akka.http.scaladsl.model.HttpResponse
 import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import akka.stream.scaladsl.Source
 import akka.stream.{Materializer, QueueOfferResult, StreamDetachedException}
@@ -53,7 +52,7 @@ class NoCacheByteStreams(
 ) extends Streamer {
 
   implicit val ec = mat.executionContext
-  private val iteratees = TrieMap.empty[RequestID, StreamEndpoint]
+  private val ongoing = TrieMap.empty[RequestID, StreamEndpoint]
 
   def parser(request: RequestID): Option[BodyParser[MultipartFormData[Long]]] =
     get(request) map { info =>
@@ -69,7 +68,7 @@ class NoCacheByteStreams(
       )(mat)
     }
 
-  def snapshot: Seq[PimpStream] = iteratees.map {
+  def snapshot: Seq[PimpStream] = ongoing.map {
     case (uuid, stream) => PimpStream(uuid.toId, id, stream.track, stream.range)
   }.toSeq
 
@@ -84,7 +83,7 @@ class NoCacheByteStreams(
       .map(ua => s"user agent $ua")
       .getOrElse("unknown user agent")
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, ByteStringBufferSize)
-    iteratees += (request -> new ChannelInfo(queue, id, track, range))
+    ongoing += (request -> new ChannelInfo(queue, id, track, range))
     streamChanged()
     val address = Proxies.realAddress(req)
     log info s"Created stream '$request' of track '${track.title}' with range '${range.description}' for '$userAgent' from '$address'."
@@ -99,7 +98,7 @@ class NoCacheByteStreams(
     connectSource(request, src, track, range)
   }
 
-  def exists(request: RequestID): Boolean = iteratees contains request
+  def exists(request: RequestID): Boolean = ongoing contains request
 
   override def remove(
     request: RequestID,
@@ -158,7 +157,7 @@ class NoCacheByteStreams(
     * @param request the transfer ID
     */
   private def disposeUUID(request: RequestID): Option[Future[QueueOfferResult]] = {
-    (iteratees remove request).map { e =>
+    (ongoing remove request).map { e =>
       streamChanged()
       e.close()
     }
@@ -175,7 +174,7 @@ class NoCacheByteStreams(
   protected def sendMessage[M: Writes](msg: M): Unit =
     jsonOut ! Json.toJson(msg)
 
-  protected def cancelMessage(request: RequestID) =
+  protected def cancelMessage(request: RequestID): UserRequest =
     UserRequest.simple(Cancel, request)
 
   protected def streamChanged(): Unit = onUpdate()
@@ -207,5 +206,5 @@ class NoCacheByteStreams(
       remove(request, shouldAbort = true, wasSuccess = false)
   }
 
-  private def get(request: RequestID): Option[StreamEndpoint] = iteratees get request
+  private def get(request: RequestID): Option[StreamEndpoint] = ongoing get request
 }

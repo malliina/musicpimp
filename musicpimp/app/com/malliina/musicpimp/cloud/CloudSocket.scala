@@ -133,13 +133,13 @@ class CloudSocket(
     * @return a future that completes when the connection has successfully been established
     */
   override def connect(): Future[Unit] = {
-    log info s"Connecting as '$username' to $uri..."
+    log.info(s"Connecting as '$username' to '$uri'...")
     Sources.timeoutAfter(10.seconds, registrationPromise)(s, Execution.cached)
     super.connect()
   }
 
   override def onMessage(json: JsValue): Unit = {
-    log debug s"Got message: '$json'."
+    log.debug(s"Got message: '$json'.")
     try {
       // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
       processRequest(json) orElse processEvent(json) recoverTotal (err => handleError(err, json))
@@ -324,6 +324,8 @@ class CloudSocket(
         handlePlayerMessage(payload, user)
       case PingMessage =>
         ()
+      case PongMessage =>
+        ()
       case other =>
         log.warn(s"Unknown event: '$other'.")
     }
@@ -342,14 +344,14 @@ class CloudSocket(
   def sendLogged[T: Writes](response: CloudResponse[T]): Try[Unit] = {
     val request = response.request
     send(Json.toJson(response))
-      .map(_ => log debug s"Responded to request $request with payload '$response'.")
+      .map(_ => log.debug(s"Responded to request $request with payload '$response'."))
       .recover {
         case t => log.error(s"Unable to respond to $request with payload '$response'.", t)
       }
   }
 
   def handleError(errors: JsError, json: JsValue): Unit =
-    log warn errorMessage(errors, json)
+    log.warn(errorMessage(errors, json))
 
   def errorMessage(errors: JsError, json: JsValue): String =
     s"JSON error: $errors. Message: $json"
@@ -357,12 +359,12 @@ class CloudSocket(
   def onRegistered(id: CloudID): Unit = {
     registrationPromise trySuccess id
     registrationsTarget ! id
-    log info s"Connected as '$username' to $uri."
+    log.info(s"Connected as '$username' to $uri.")
   }
 
   override def onClose(): Unit = {
     failSocket(CloudSocket.connectionClosed)
-    log info s"Disconnected as '$username' from $uri."
+    log.info(s"Disconnected as '$username' from $uri.")
   }
 
   override def onError(e: Exception): Unit = {

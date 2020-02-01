@@ -20,6 +20,5 @@ class JoinedSockets(pimpAuth: PimpAuth, ctx: ActorExecution, errorHandler: HttpE
   val us = new UsageStreaming(phoneMediator, servers.serverMediator, pimpAuth, ctx)
 
   def serverSocket = servers.serverSockets.newSocket
-
   def phoneSocket = phones.newSocket
 }

@@ -244,10 +244,18 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
   )(cmd: String, build: Request[A] => Either[String, W]) =
     executeProxied(parser)(cmd, build)((_, json) => Ok(json))
 
+  /** Parses a request from a phone, sends it to the server, and returns the server's response to the phone.
+    *
+    * Provides the server's JSON response to the phone as-is.
+    *
+    * @param toResult Server's JSON response -> phone's response. The server JSON is returned as-is.
+    * @tparam A request body
+    * @tparam W message to send to server
+    */
   private def executeProxied[A, W: Writes](parser: BodyParser[A])(
     cmd: String,
     build: Request[A] => Either[String, W]
-  )(toResult: (RequestHeader, JsValue) => Result) =
+  )(toResult: (RequestHeader, JsValue) => Result): EssentialAction =
     proxiedParsedAction(parser) { (req, phone) =>
       build(req).fold(
         errorMessage => fut(badRequest(errorMessage)),

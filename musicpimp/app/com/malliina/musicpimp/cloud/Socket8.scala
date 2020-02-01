@@ -25,7 +25,7 @@ abstract class Socket8[T](
   headers: (String, String)*
 ) extends WebSocketBase[T] {
 
-  protected val connectPromise = Promise[Unit]()
+  protected val connectPromise: Promise[Unit] = Promise[Unit]()
   // For some reason, onDisconnected() is called even when the socket has never been connected.
   // This variable is used to get rid of redundant "disconnected" events.
   private val hasBeenConnected = new AtomicBoolean(false)
@@ -88,24 +88,32 @@ abstract class Socket8[T](
   }
 
   protected def parse(raw: String): Option[T]
-
   protected def stringify(message: T): String
-
   def onMessage(message: T): Unit = ()
 
-  protected def onRawMessage(raw: String) = parse(raw).map(onMessage) getOrElse {
+  protected def onRawMessage(raw: String): Unit = parse(raw).map(onMessage).getOrElse {
     log.warn(s"Unable to parse message: $raw")
   }
 
   def onConnect(uri: URI): Unit = ()
-
   override def onError(t: Exception): Unit = ()
-
   override def onClose(): Unit = ()
-
   def close(): Unit = socket.disconnect()
-
   def isConnected = socket.isOpen
 
-  override def send(json: T): Try[Unit] = Try(socket.sendText(stringify(json)))
+  /** Sends a message to the server. Disconnects if it fails, since perhaps it means the connection is dead and a
+    * reconnect should be attempted.
+    */
+  override def send(json: T): Try[Unit] = {
+    val asString = stringify(json)
+    Try {
+      socket.sendText(asString)
+      ()
+    }.recover {
+      case t =>
+        log.error(s"Unable to send message '$asString' over '$uri'. Disconnecting...", t)
+        close()
+        ()
+    }
+  }
 }

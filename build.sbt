@@ -32,23 +32,24 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.21.0"
-val pimpcloudVersion = "1.26.0"
-val sharedVersion = "1.11.0"
-val crossVersion = "1.11.0"
+val musicpimpVersion = "4.22.0"
+val pimpcloudVersion = "1.27.0"
+val sharedVersion = "1.12.0"
+val crossVersion = "1.12.0"
+
 val utilAudioVersion = "2.7.0"
 val primitivesVersion = "1.13.0"
 val playJsonVersion = "2.8.1"
-val scalaTagsVersion = "0.7.0"
-val utilPlayVersion = "5.4.0"
-val httpVersion = "4.5.10"
+val scalaTagsVersion = "0.8.4"
+val utilPlayVersion = "5.4.1"
+val httpVersion = "4.5.11"
 val mysqlVersion = "5.1.48"
 val nvWebSocketVersion = "2.9"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.7.0"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.8.2"
 
 val httpGroup = "org.apache.httpcomponents"
 
@@ -559,3 +560,5 @@ def scalajsProject(name: String, path: File) =
 
 def gitHash: String =
   Try(Process("git rev-parse --short HEAD").lineStream.head).toOption.getOrElse("unknown")
+
+Global / onChangedBuildSource := ReloadOnSourceChanges

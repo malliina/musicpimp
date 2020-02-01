@@ -13,7 +13,6 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val Limit = "limit"
   val Meta = "meta"
   val PasswordKey = "password"
-  val Ping = "ping"
   val PingAuthKey = "ping_auth"
   val Player = "player"
   val Popular = "popular"

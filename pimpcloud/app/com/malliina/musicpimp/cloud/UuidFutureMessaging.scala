@@ -52,7 +52,7 @@ abstract class UuidFutureMessaging(scheduler: Scheduler)(implicit ec: ExecutionC
   }
 
   def complete(response: JsValue): Boolean =
-    extract(response) exists { pair =>
+    extract(response).exists { pair =>
       val uuid = pair.request
       val body = pair.body
       if (isSuccess(response)) succeed(uuid, body)

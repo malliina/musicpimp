@@ -10,6 +10,7 @@ import com.malliina.musicpimp.library.PlaylistSubmission
 import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
+import com.malliina.pimpcloud.SharedStrings.{Ping, Pong}
 import com.malliina.play.json.JsonStrings.Cmd
 import com.malliina.values.Username
 import play.api.libs.json._
@@ -74,6 +75,8 @@ trait CloudMessageParser {
         } yield PlaybackMessage(b, user)
       case Ping =>
         JsSuccess(PingMessage)
+      case Pong =>
+        JsSuccess(PongMessage)
       case other =>
         JsError(s"Unknown JSON event: '$other' in '$json'.")
     }

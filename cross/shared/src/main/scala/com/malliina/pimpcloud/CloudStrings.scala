@@ -4,7 +4,6 @@ object CloudStrings extends CloudStrings
 
 trait CloudStrings {
   val Body = "body"
-  val Event = "event"
   val Hidden = "hidden"
   val PhonesKey = "phones"
   val PhonesTableId = "phonesTable"

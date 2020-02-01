@@ -16,7 +16,6 @@ trait JsonMessages extends CommonMessages {
   val invalidCredentials = FailReason(InvalidCredentials)
   val invalidJson = FailReason(InvalidJson)
   val noFileInMultipart = FailReason(NoFileInMultipart)
-  val ping = event(Ping)
 
   def exception(e: Throwable) =
     FailReason(e.getMessage)

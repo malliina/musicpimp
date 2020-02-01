@@ -7,9 +7,8 @@ import play.api.libs.json.Json
 trait PimpMessage
 
 case object PingMessage extends PimpMessage
-
+case object PongMessage extends PimpMessage
 case object PingAuth extends PimpMessage
-
 case object RootFolder extends PimpMessage
 
 case class GetFolder(id: FolderID) extends PimpMessage

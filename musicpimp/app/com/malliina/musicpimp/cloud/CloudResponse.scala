@@ -4,6 +4,8 @@ import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.models.{FailReason, RequestID}
 import play.api.libs.json.{Json, Writes}
 
+/** A response to `request`, sent to pimplcoud.
+  */
 case class CloudResponse[T: Writes](request: RequestID, success: Boolean, body: T)
 
 object CloudResponse {

@@ -14,6 +14,7 @@ import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.cloud.Clouds.log
 import com.malliina.musicpimp.db.FullText
+import com.malliina.musicpimp.json.CommonMessages
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.util.FileUtil
@@ -99,17 +100,21 @@ class Clouds(
 
   def ensureConnectedIfEnabled(): Unit = Try {
     if (Clouds.isEnabled && !client.isConnected) {
-      log info s"Attempting to reconnect to the cloud..."
+      log.info(s"Attempting to reconnect to the cloud at '${client.uri}'...")
       connect(Clouds.loadID()).recoverAll { t =>
-        log.warn(s"Unable to connect to the cloud at ${client.uri}", t)
+        log.warn(s"Unable to connect to the cloud at '${client.uri}'.", t)
         successiveFailures += 1
         if (successiveFailures == MaxFailures) {
-          log info s"Connection attempts to the cloud have failed $MaxFailures times in a row, giving up"
+          log.info(
+            s"Connection attempts to the cloud at '${client.uri}' have failed $MaxFailures times in a row, giving up"
+          )
           successiveFailures = 0
           disconnect("Disconnected after sustained failures.")
         }
         "Recovered" // -Xlint won't accept returning Any
       }
+    } else {
+      client.sendMessage(CommonMessages.ping)
     }
   }
 
@@ -118,7 +123,7 @@ class Clouds(
     updateState(Connecting)
     val prep = async {
       val name = id.map(i => s"'$i'") getOrElse "a random client"
-      log debug s"Connecting as $name to ${client.uri}..."
+      log.debug(s"Connecting as $name to ${client.uri}...")
       val old = clientRef.getAndSet(newSocket(id))
       closeAnyConnection(old)
 
@@ -150,7 +155,7 @@ class Clouds(
   def onConnected(id: CloudID): Future[CloudID] = async {
     successiveFailures = 0
     Clouds.saveID(id)
-    log info s"Connected to ${client.uri}"
+    log.info(s"Connected to ${client.uri}")
     maintainConnectivity()
     id
   }
