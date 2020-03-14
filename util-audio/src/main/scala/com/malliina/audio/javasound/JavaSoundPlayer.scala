@@ -106,7 +106,12 @@ class JavaSoundPlayer(
   def connected[U]()(implicit mat: Materializer): (ActorRef, Source[U, NotUsed]) = {
     val publisherSink = Sink.asPublisher[U](fanout = true)
     val (processedActor, publisher) =
-      Source.actorRef[U](65536, OverflowStrategy.dropHead).toMat(publisherSink)(Keep.both).run()
+      Source
+        .actorRef({ case _ => CompletionStrategy.immediately }, {
+          case any         => new Exception(s"Connected stream failed. $any")
+        }, 65536, OverflowStrategy.dropHead)
+        .toMat(publisherSink)(Keep.both)
+        .run()
     (processedActor, Source.fromPublisher(publisher))
   }
 

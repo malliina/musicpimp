@@ -3,7 +3,7 @@ package com.malliina.rx
 import akka.NotUsed
 import akka.actor.{ActorRef, Scheduler}
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import akka.stream.{Materializer, OverflowStrategy}
+import akka.stream.{CompletionStrategy, Materializer, OverflowStrategy}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -15,7 +15,12 @@ object Sources {
   def connected[U]()(implicit mat: Materializer): (ActorRef, Source[U, NotUsed]) = {
     val publisherSink = Sink.asPublisher[U](fanout = true)
     val (processedActor, publisher) =
-      Source.actorRef[U](65536, OverflowStrategy.dropHead).toMat(publisherSink)(Keep.both).run()
+      Source
+        .actorRef({ case _ => CompletionStrategy.immediately }, {
+          case any         => new Exception(s"Connected stream failed. $any")
+        }, 65536, OverflowStrategy.dropHead)
+        .toMat(publisherSink)(Keep.both)
+        .run()
     (processedActor, Source.fromPublisher(publisher))
   }
 

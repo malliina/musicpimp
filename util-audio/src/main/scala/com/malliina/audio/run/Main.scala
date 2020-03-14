@@ -3,7 +3,6 @@ package com.malliina.audio.run
 import java.nio.file.{Files, Path, Paths}
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
 import com.malliina.util.Utils
@@ -17,7 +16,8 @@ object Main {
   def main(args: Array[String]): Unit = {
     val maybePath = args.headOption
       .fold[Either[ErrorMessage, Path]](Left(noTrack))(validate)
-    val maybeStorage = args.tail.headOption.map(parseSize).getOrElse(Right(JavaSoundPlayer.DefaultRwBufferSize))
+    val maybeStorage =
+      args.tail.headOption.map(parseSize).getOrElse(Right(JavaSoundPlayer.DefaultRwBufferSize))
     val maybeConf = for {
       path <- maybePath
       size <- maybeStorage
@@ -26,16 +26,18 @@ object Main {
   }
 
   def play(conf: Conf): Unit = {
-    val as = ActorSystem("run")
-    val mat = ActorMaterializer()(as)
+    implicit val as = ActorSystem("run")
     val size = conf.size
     println(s"Playing with buffer size: $size.")
-    val player = new FileJavaSoundPlayer(conf.path, conf.size)(mat)
+    val player = new FileJavaSoundPlayer(conf.path, conf.size)
     player.play()
   }
 
   def parseSize(input: String): Either[ErrorMessage, StorageSize] = {
-    Utils.optionally[StorageSize, NumberFormatException](input.toInt.bytes).left.map(_ => s"Not a number: $input")
+    Utils
+      .optionally[StorageSize, NumberFormatException](input.toInt.bytes)
+      .left
+      .map(_ => s"Not a number: $input")
   }
 
   def validate(input: String): Either[ErrorMessage, Path] = {

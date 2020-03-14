@@ -10,7 +10,7 @@ import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
 import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
-import com.typesafe.sbt.packager.Keys.{maintainer, packageName, packageSummary, rpmVendor}
+import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
 import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
@@ -70,12 +70,7 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "tritonus-share" % "0.3.7.4",
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
-      "com.typesafe.akka" %% "akka-stream" % "2.5.23"
-    ),
-    resolvers ++= Seq(
-      "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
-      "Typesafe Releases" at "https://repo.typesafe.com/typesafe/releases/",
-      Resolver.bintrayRepo("malliina", "maven")
+      "com.typesafe.akka" %% "akka-stream" % "2.6.1"
     )
   )
 
@@ -85,7 +80,6 @@ val cross = portableProject(JSPlatform, JVMPlatform)
   .settings(
     organization := "org.musicpimp",
     version := crossVersion,
-    resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
     libraryDependencies ++= Seq(
       "com.typesafe.play" %%% "play-json" % playJsonVersion,
       "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
@@ -109,9 +103,6 @@ val shared = Project("pimp-shared", file("shared"))
   .settings(baseSettings: _*)
   .settings(
     version := sharedVersion,
-    resolvers ++= Seq(
-      "GitHub packages" at "https://maven.pkg.github.com/malliina/mobile-push"
-    ),
     libraryDependencies ++= Seq(
       "io.getquill" %% "quill-jdbc" % "3.5.0",
       "org.flywaydb" % "flyway-core" % "6.0.3",
@@ -482,12 +473,10 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "gitHash" -> gitHash
   ),
   RoutesKeys.routesGenerator := InjectedRoutesGenerator,
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= defaultDeps
 )
 
 def libSettings = Seq(
-  resolvers += "Sonatype releases" at "https://oss.sonatype.org/content/repositories/releases/",
   libraryDependencies ++= defaultDeps
 )
 
@@ -498,7 +487,6 @@ def defaultDeps = Seq(
 )
 
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
-  resolvers += Resolver.bintrayRepo("malliina", "maven"),
   libraryDependencies ++= Seq(
     utilPlayDep,
     utilPlayDep % Test classifier "tests",
