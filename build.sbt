@@ -350,7 +350,6 @@ lazy val nativeMusicPimpSettings =
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
   // never change
   WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
-  WinKeys.minJavaVersion := Some(8),
   //  WinKeys.postInstallUrl := Some("http://localhost:8456"),
   WinKeys.forceStopOnUninstall := true,
   winSwExe in Windows := (pkgHome in Windows).value.resolve("WinSW.NET2.exe")
