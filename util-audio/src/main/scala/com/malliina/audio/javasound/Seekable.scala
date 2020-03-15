@@ -13,7 +13,6 @@ trait Seekable {
   var startedFromMicros = 0L
 
   def media: OneShotStream
-
   def duration = media.duration
 
   /** Inaccurate. VBR etc.

@@ -18,7 +18,6 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
   private var muteCache: Option[Boolean] = None
 
   def cachedVolume = volumeCache
-
   def cachedMute = muteCache
 
   /**
@@ -71,7 +70,7 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
 
   def volume_=(newVolume: Int): Unit = {
     if (hasVolumeControl) volumeControlValue(newVolume)
-    else if (hasGainControl) gainControlValue(1.0F * newVolume / 100)
+    else if (hasGainControl) gainControlValue(1.0f * newVolume / 100)
     else {
       log.info("Cannot set volume, because no volume control was found.")
       // should I throw an exception?
@@ -83,11 +82,8 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
   override def volume(newVolume: Int): Unit = volume = newVolume
 
   def gainControl = control[FloatControl](FloatControl.Type.MASTER_GAIN)
-
   def volumeControl = control[FloatControl](FloatControl.Type.VOLUME)
-
   def hasGainControl = hasControl(FloatControl.Type.MASTER_GAIN)
-
   def hasVolumeControl = hasControl(FloatControl.Type.VOLUME)
 
   /**
@@ -104,7 +100,7 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
   private def gainControlValue =
     gainControl.map(gainValue).getOrElse {
       log.info(s"Unable to find gain control; returning 0f as gain.")
-      0F
+      0f
     }
 
   /**
@@ -130,7 +126,7 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
     })
 
   def internalVolumeValue(newVolume: Int, min: Float, max: Float): Float =
-    min + 1.0F * newVolume / 100 * (max - min)
+    min + 1.0f * newVolume / 100 * (max - min)
 
   private def externalVolumeValue(volumeControl: FloatControl): Int =
     externalVolumeValue(volumeControl.getValue, volumeControl.getMinimum, volumeControl.getMaximum)

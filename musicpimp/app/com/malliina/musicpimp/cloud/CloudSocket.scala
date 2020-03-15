@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.cloud
 
 import akka.actor.Scheduler
-import akka.actor.Status.Failure
 import akka.stream.Materializer
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.concurrent.{Execution, FutureOps}
@@ -21,6 +20,7 @@ import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.rx.Sources
+import com.malliina.streams.StreamsUtil
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.{LibraryController, Rest}
@@ -119,8 +119,8 @@ class CloudSocket(
   val registration = registrationPromise.future
   val playlists = deps.playlists
 
-  private val (registrationsTarget, registrationsSource) = Sources.connected[CloudID]()
-  val registrations = registrationsSource
+  private val registrationsHub = StreamsUtil.connectedStream[CloudID]()
+  val registrations = registrationsHub.source
 
   def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
 
@@ -357,8 +357,8 @@ class CloudSocket(
     s"JSON error: $errors. Message: $json"
 
   def onRegistered(id: CloudID): Unit = {
-    registrationPromise trySuccess id
-    registrationsTarget ! id
+    registrationPromise.trySuccess(id)
+    registrationsHub.send(id)
     log.info(s"Connected as '$username' to $uri.")
   }
 
@@ -374,11 +374,12 @@ class CloudSocket(
   override def close(): Unit = {
     failSocket(CloudSocket.manuallyClosed)
     uploader.close()
+    registrationsHub.shutdown()
     super.close()
   }
 
   def failSocket(e: Exception): Unit = {
     registrationPromise tryFailure e
-    registrationsTarget ! Failure(e)
+    registrationsHub.shutdown()
   }
 }

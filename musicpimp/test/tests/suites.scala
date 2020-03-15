@@ -3,7 +3,6 @@ package tests
 import java.nio.file.Paths
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.app.EmbeddedMySQL
 import org.scalatest.{BeforeAndAfterAll, FunSuiteLike}
 

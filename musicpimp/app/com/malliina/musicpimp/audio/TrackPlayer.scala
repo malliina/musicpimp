@@ -2,11 +2,11 @@ package com.malliina.musicpimp.audio
 
 import java.io.IOException
 
-import akka.actor.ActorRef
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import com.malliina.musicpimp.audio.TrackPlayer.log
 import com.malliina.musicpimp.models.Volume
+import com.malliina.streams.EventSink
 import play.api.Logger
 
 import scala.concurrent.duration.Duration
@@ -16,7 +16,7 @@ object TrackPlayer {
   private val log = Logger(getClass)
 }
 
-class TrackPlayer(val player: PimpPlayer, serverMessageTarget: ActorRef)(
+class TrackPlayer(val player: PimpPlayer, serverMessageSink: EventSink[ServerMessage])(
   implicit mat: Materializer
 ) {
   val track = player.track
@@ -33,15 +33,10 @@ class TrackPlayer(val player: PimpPlayer, serverMessageTarget: ActorRef)(
     .run()
 
   def position = player.position
-
   def volume = Volume(player.volume)
-
   def state = player.state
-
   def volumeCarefully = Try(volume).toOption.orElse(player.cachedVolume.map(Volume.apply))
-
   def muteCarefully = Try(player.mute).toOption.orElse(player.cachedMute)
-
   def play(): Unit = player.play()
 
   def stop(): Unit = {
@@ -86,7 +81,7 @@ class TrackPlayer(val player: PimpPlayer, serverMessageTarget: ActorRef)(
     }
   }
 
-  def send(json: ServerMessage): Unit = serverMessageTarget ! json
+  def send(json: ServerMessage): Unit = serverMessageSink.send(json)
 
   def close(): Unit = {
     stateSubscription.shutdown()

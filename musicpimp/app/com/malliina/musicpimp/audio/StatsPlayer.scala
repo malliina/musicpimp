@@ -15,7 +15,7 @@ import scala.concurrent.stm.{Ref, atomic}
 class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable {
   implicit val mat = player.mat
   val latestUser = Ref[Username](NewUserManager.defaultUser)
-  val subscription = player.trackHistory
+  val subscription = player.trackHistoryHub.source
     .viaMat(KillSwitches.single)(Keep.right)
     .to(Sink.foreach { track =>
       val user = latestUser.single.get

@@ -9,7 +9,7 @@ import akka.stream.scaladsl.Source
 import com.malliina.audio._
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.models.Volume
-import com.malliina.rx.Sources
+import com.malliina.streams.StreamsUtil
 import javax.sound.sampled.LineUnavailableException
 import play.api.Logger
 
@@ -27,9 +27,9 @@ class MusicPlayer()(implicit val mat: Materializer)
   private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist = new PimpPlaylist
 
-  private val (eventsTarget, events) = Sources.connected[ServerMessage]
-  val allEvents: Source[ServerMessage, NotUsed] = events.merge(playlist.events)
-  val (trackHistoryTarget, trackHistory) = Sources.connected[TrackMeta]()
+  private val eventHub = StreamsUtil.connectedStream[ServerMessage]()
+  val allEvents: Source[ServerMessage, NotUsed] = eventHub.source.merge(playlist.events)
+  val trackHistoryHub = StreamsUtil.connectedStream[TrackMeta]()
   private val trackPlayer = new AtomicReference[Option[TrackPlayer]](None)
   // TODO: jesus fix this
   var errorOpt: Option[Throwable] = None
@@ -37,12 +37,12 @@ class MusicPlayer()(implicit val mat: Materializer)
   private def current: Option[TrackPlayer] = trackPlayer.get()
 
   def reset(track: PlayableTrack): Try[Unit] = {
-    playlist set track
+    playlist.set(track)
     play(_.current)
   }
 
   def setPlaylistAndPlay(track: PlayableTrack): Try[Unit] = {
-    playlist set track
+    playlist.set(track)
     playTrack(track)
   }
 
@@ -78,7 +78,7 @@ class MusicPlayer()(implicit val mat: Materializer)
       old.close()
     }
     send(TrackChangedMessage(track))
-    trackHistoryTarget ! track
+    trackHistoryHub.send(track)
   }
 
   def play(): Unit = {
@@ -92,7 +92,7 @@ class MusicPlayer()(implicit val mat: Materializer)
   }
 
   def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer = {
-    val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), eventsTarget)
+    val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), eventHub.sink)
     p.adjustVolume(initialVolume)
     p.mute(isMute)
     p
@@ -100,7 +100,7 @@ class MusicPlayer()(implicit val mat: Materializer)
 
   def stop(): Unit = current.foreach(_.stop())
 
-  def send(json: ServerMessage): Unit = eventsTarget ! json
+  def send(json: ServerMessage): Unit = eventHub.sink.send(json)
 
   def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
 
@@ -123,7 +123,12 @@ class MusicPlayer()(implicit val mat: Materializer)
 
   def toggleMute(): Unit = current.foreach(_.toggleMute())
 
-  def close(): Unit = current.foreach(_.close())
+  def close(): Unit = {
+    current.foreach(_.close())
+    eventHub.shutdown()
+    trackHistoryHub.shutdown()
+    playlist.close()
+  }
 
   def position =
     current.map(_.position).getOrElse {

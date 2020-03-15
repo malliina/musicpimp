@@ -18,7 +18,7 @@ import com.malliina.musicpimp.json.CommonMessages
 import com.malliina.musicpimp.models._
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.rx.Sources
+import com.malliina.streams.StreamsUtil
 import com.malliina.util.Utils
 import play.api.Logger
 import play.api.libs.json.JsValue
@@ -55,37 +55,34 @@ class Clouds(
   fullText: FullText,
   cloudEndpoint: FullUrl,
   scheduler: Scheduler
-)(implicit mat: Materializer) {
+)(implicit mat: Materializer)
+  extends AutoCloseable {
   private val clientRef: AtomicReference[CloudSocket] = new AtomicReference(newSocket(None))
   private val timer = Source.tick(3.seconds, 60.seconds, 0)
   private var poller: Option[Cancellable] = None
   private val MaxFailures = 720
   private var successiveFailures = 0
   private val notConnected = Disconnected("Not connected.")
-  private val (registrationsTarget, registrations) = Sources.connected[CloudEvent]()
+  private val eventHub = StreamsUtil.connectedStream[CloudEvent]()
   private var activeSubscription: Option[UniqueKillSwitch] = None
 
   private val currentState: AtomicReference[CloudEvent] =
     new AtomicReference[CloudEvent](notConnected)
-  val connection: Source[CloudEvent, NotUsed] = registrations
+  val connection: Source[CloudEvent, NotUsed] = eventHub.source
 
   def updateState(state: CloudEvent): Unit = {
     currentState.set(state)
-    registrationsTarget ! state
+    eventHub.send(state)
   }
 
-  def emitLatest(): Unit = registrationsTarget ! currentState.get()
-
+  def emitLatest(): Unit = eventHub.send(currentState.get())
   def client = clientRef.get()
-
   def cloudHost = client.cloudHost
-
   def uri = client.uri
-
   def isConnected = client.isConnected
 
   def init(): Unit = {
-    log info s"Initializing cloud connection..."
+    log.info("Initializing cloud connection...")
     ensureConnectedIfEnabled()
     maintainConnectivity()
   }
@@ -219,9 +216,11 @@ class Clouds(
     if (client.isConnected) client.registration
     else ifDisconnected
 
-  trait SendResult
-
-  case object MessageSent extends SendResult
-  case object NotConnected extends SendResult
-  case class SendFailure(t: Throwable) extends SendResult
+  def close(): Unit = eventHub.shutdown()
 }
+
+trait SendResult
+
+case object MessageSent extends SendResult
+case object NotConnected extends SendResult
+case class SendFailure(t: Throwable) extends SendResult

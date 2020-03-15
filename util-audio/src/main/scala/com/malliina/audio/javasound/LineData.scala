@@ -2,13 +2,12 @@ package com.malliina.audio.javasound
 
 import java.io.InputStream
 
-import akka.actor.ActorRef
-import javax.sound.sampled.DataLine.Info
-import javax.sound.sampled._
-import com.malliina.audio.AudioImplicits._
 import com.malliina.audio.PlayerStates
 import com.malliina.audio.PlayerStates.PlayerState
 import com.malliina.audio.javasound.LineData.log
+import com.malliina.streams.EventSink
+import javax.sound.sampled.DataLine.Info
+import javax.sound.sampled._
 import org.slf4j.LoggerFactory
 
 object LineData {
@@ -19,23 +18,22 @@ object LineData {
     *
     * Therefore you must not, in the same thread, call this before bytes are made available to the stream.
     */
-  def fromStream(stream: InputStream, target: ActorRef) =
-    new LineData(AudioSystem.getAudioInputStream(stream), target)
+  def fromStream(stream: InputStream, sink: EventSink[PlayerStates.PlayerState]) =
+    new LineData(AudioSystem.getAudioInputStream(stream), sink)
 }
 
-class LineData(inStream: AudioInputStream, target: ActorRef) {
+class LineData(inStream: AudioInputStream, sink: EventSink[PlayerStates.PlayerState]) {
   private val baseFormat = inStream.getFormat
   private val decodedFormat = toDecodedFormat(baseFormat)
   // this is read
   private val decodedIn = AudioSystem.getAudioInputStream(decodedFormat, inStream)
   // this is written to during playback
   val line = buildLine(decodedFormat)
-  line.addLineListener((lineEvent: LineEvent) => target ! toPlayerEvent(lineEvent))
-  line open decodedFormat
+  line.addLineListener((lineEvent: LineEvent) => sink.send(toPlayerEvent(lineEvent)))
+  line.open(decodedFormat)
 
   def toPlayerEvent(lineEvent: LineEvent): PlayerState = {
     import LineEvent.Type._
-
     import PlayerStates._
     val eventType = lineEvent.getType
     if (eventType == OPEN) Open

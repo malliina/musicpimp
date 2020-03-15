@@ -4,15 +4,14 @@ import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 import akka.NotUsed
-import akka.actor.ActorRef
-import akka.actor.Status.Success
-import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
 import akka.stream._
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import com.malliina.audio.PlaybackEvents.TimeUpdated
 import com.malliina.audio._
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
 import com.malliina.audio.meta.OneShotStream
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
+import com.malliina.streams.{EventSink, StreamsUtil}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
@@ -57,26 +56,25 @@ class JavaSoundPlayer(
     this(OneShotStream(stream, duration, size), readWriteBufferSize)
 
   val bufferSize = readWriteBufferSize.toBytes.toInt
-  protected var stream = media.stream
+  protected var stream: InputStream = media.stream
   tryMarkStream()
-  val (stateTarget, states) = connected[PlayerStates.PlayerState]()
+  val stateHub = StreamsUtil.connectedStream[PlayerStates.PlayerState]()
 
   /** I use a Subject because the audio line might change and it seems easier then to keep one subject
     * instead of reacting to each audio line change in each observable (in addition to its events).
     */
   private val pollingSource = Source.tick(500.millis, 500.millis, 0)
-  protected var lineData: LineData = newLine(stream, stateTarget)
+  protected var lineData: LineData = newLine(stream, stateHub.sink)
   private val active = new AtomicBoolean(false)
   private var playThread: Option[Future[Unit]] = None
 
-  private val (timeUpdatesTarget, moreTimeUpdates) = connected[PlaybackEvents.TimeUpdated]
-  val timeBroadcasts = moreTimeUpdates.toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
+  private val timeUpdateHub = StreamsUtil.connectedStream[PlaybackEvents.TimeUpdated]()
   private var latestPos: Duration = position
   val poller = pollingSource
     .to(Sink.foreach { _ =>
       if (latestPos != position) {
         latestPos = position
-        timeUpdatesTarget ! TimeUpdated(position)
+        timeUpdateHub.send(TimeUpdated(position))
       }
     })
     .run()
@@ -88,7 +86,7 @@ class JavaSoundPlayer(
     * @return time update events
     */
   def timeUpdates: Source[TimeUpdated, NotUsed] =
-    Source.single(TimeUpdated(position)).concat(timeBroadcasts)
+    Source.single(TimeUpdated(position)).concat(timeUpdateHub.source)
 
   def timeUpdatesKillable: Source[TimeUpdated, UniqueKillSwitch] =
     timeUpdates.viaMat(KillSwitches.single)(Keep.right)
@@ -98,29 +96,17 @@ class JavaSoundPlayer(
   /**
     * @return the current player state and any future states
     */
-  def events: Source[PlayerStates.PlayerState, NotUsed] = states
+  def events: Source[PlayerStates.PlayerState, NotUsed] = stateHub.source
 
   def eventsKillable: Source[PlayerStates.PlayerState, UniqueKillSwitch] =
-    states.viaMat(KillSwitches.single)(Keep.right)
-
-  def connected[U]()(implicit mat: Materializer): (ActorRef, Source[U, NotUsed]) = {
-    val publisherSink = Sink.asPublisher[U](fanout = true)
-    val (processedActor, publisher) =
-      Source
-        .actorRef({ case _ => CompletionStrategy.immediately }, {
-          case any         => new Exception(s"Connected stream failed. $any")
-        }, 65536, OverflowStrategy.dropHead)
-        .toMat(publisherSink)(Keep.both)
-        .run()
-    (processedActor, Source.fromPublisher(publisher))
-  }
+    events.viaMat(KillSwitches.single)(Keep.right)
 
   def audioLine = lineData.line
 
   def controlDescriptions = audioLine.getControls.map(_.toString)
 
-  def newLine(source: InputStream, target: ActorRef): LineData =
-    LineData.fromStream(source, target)
+  def newLine(source: InputStream, sink: EventSink[PlayerStates.PlayerState]): LineData =
+    LineData.fromStream(source, sink)
 
   def supportsSeek = stream.markSupported()
 
@@ -174,12 +160,13 @@ class JavaSoundPlayer(
 
   override def onEndOfMedia(): Unit = {
     super.onEndOfMedia()
-    stateTarget ! PlayerStates.EndOfMedia
+    stateHub.send(PlayerStates.EndOfMedia)
   }
 
   def close(): Unit = {
     closeLine()
-    stateTarget ! Success(CompletionStrategy.draining)
+    stateHub.shutdown()
+    timeUpdateHub.shutdown()
   }
 
   def onPlaybackException(e: Exception): Unit = onEndOfMedia()
@@ -187,7 +174,7 @@ class JavaSoundPlayer(
   def reset(): Unit = {
     closeLine()
     stream = resetStream(stream)
-    lineData = newLine(stream, stateTarget)
+    lineData = newLine(stream, stateHub.sink)
   }
 
   /** Returns a stream of the media reset to its initial read position. Helper method for seeking.

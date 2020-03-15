@@ -7,7 +7,7 @@ import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{appHome, ciBuild, httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
-import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe}
+import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe, minJavaVersion}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
@@ -32,7 +32,7 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.23.0"
+val musicpimpVersion = "4.23.1"
 val pimpcloudVersion = "1.28.0"
 val sharedVersion = "1.13.0"
 val crossVersion = "1.13.0"
@@ -45,6 +45,8 @@ val utilPlayVersion = "5.4.1"
 val httpVersion = "4.5.11"
 val mysqlVersion = "5.1.48"
 val nvWebSocketVersion = "2.9"
+val scalaTestVersion = "3.0.8"
+val akkaStreamsVersion = "2.6.1"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
@@ -70,7 +72,8 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "tritonus-share" % "0.3.7.4",
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
-      "com.typesafe.akka" %% "akka-stream" % "2.6.1"
+      "com.typesafe.akka" %% "akka-stream" % akkaStreamsVersion,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
     )
   )
 
@@ -257,10 +260,6 @@ lazy val pimpPlaySettings =
       version := musicpimpVersion,
       buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
       javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-      resolvers ++= Seq(
-        Resolver.jcenterRepo,
-        Resolver.bintrayRepo("malliina", "maven")
-      ),
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
@@ -288,10 +287,10 @@ lazy val pimpPlaySettings =
         ),
         DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
-      libs := libs.value.filter(lib =>
+      libs := libs.value.filter { lib =>
         !lib.toFile.getAbsolutePath
           .endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
-      ),
+      },
       fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
@@ -307,7 +306,11 @@ lazy val pimpPlaySettings =
                 .replace(',', '_')
             )
           )
-      }
+      },
+      minJavaVersion := None,
+      publishArtifact in (Compile, packageDoc) := false,
+      publishArtifact in packageDoc := false,
+      sources in (Compile, doc) := Seq.empty
     )
 
 lazy val pimpAssetSettings = assetSettings ++ Seq(
@@ -507,10 +510,10 @@ lazy val baseSettings = Seq(
 
 def scalajsProject(name: String, path: File) =
   Project(name, path)
-    .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+    .enablePlugins(ScalaJSBundlerPlugin)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % "3.0.8" % Test),
+      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % scalaTestVersion % Test),
       testFrameworks += new TestFramework("utest.runner.Framework"),
       version in webpack := "4.35.2",
       emitSourceMaps := false,

@@ -2,13 +2,25 @@ package tests
 
 import java.nio.file.{Files, Path, Paths}
 
+import akka.actor.ActorSystem
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import org.apache.commons.io.FileUtils
-import org.scalatest.FunSuite
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
-class TestBase extends FunSuite {
+class TestBase extends FunSuite with BeforeAndAfterAll {
+  implicit val as: ActorSystem = ActorSystem()
+  implicit val ec: ExecutionContext = as.dispatcher
+
+  override protected def afterAll(): Unit = {
+    await(as.terminate())
+    super.afterAll()
+  }
+
+  def await[T](f: Future[T], duration: FiniteDuration = 10.seconds) = Await.result(f, duration)
+
   val fileName = "mpthreetest.mp3"
   val tempFile = Paths.get(sys.props("java.io.tmpdir")) resolve fileName
 

@@ -19,7 +19,6 @@ import com.malliina.musicpimp.util.FileUtil
 import com.malliina.play.app.LoggingAppLoader
 import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
-import com.malliina.play.http.LogRequestFilter
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import com.typesafe.config.ConfigFactory
 import controllers._
@@ -119,6 +118,8 @@ class PimpComponents(
   with HttpFiltersComponents
   with AssetsComponents
   with I18nComponents {
+  import PimpComponents.log
+  log.info(s"Local conf is '${LocalConf.localConfFile.toAbsolutePath}'.")
   val combinedConf = LocalConf.localConf.withFallback(context.initialConfiguration)
   val appSecretKey = "play.http.secret.key"
   val isFirstStart = combinedConf.get[String](appSecretKey) == "changeme"
@@ -138,7 +139,7 @@ class PimpComponents(
           val secret = InitOptions.generateSecret()
           Option(dest.getParent).foreach(dir => Files.createDirectories(dir))
           Files.write(dest, secret.getBytes(charset))
-          PimpComponents.log.info(s"Generated random secret key and saved it to '$dest'...")
+          log.info(s"Generated random secret key and saved it to '$dest'...")
           secret
         }
       Configuration(appSecretKey -> secret).withFallback(initial)
@@ -177,7 +178,7 @@ class PimpComponents(
   lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
   lazy val handler = new PlaybackMessageHandler(player, library, lib, statsPlayer)
   lazy val deps = Deps(ps, userManager, handler, lib, stats, schedules)
-  lazy val clouds =
+  lazy val clouds: Clouds =
     new Clouds(player, alarmHandler, deps, fullText, options.cloudUri, actorSystem.scheduler)
   lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
   lazy val auths = new Auths(userManager, rememberMe)(ec)
@@ -232,13 +233,16 @@ class PimpComponents(
 
   applicationLifecycle.addStopHook(() =>
     Future.successful {
+      player.close()
       sws.subscription.shutdown()
       s.close()
       starter.stopServices(options, schedules, player)
       statsPlayer.close()
       Rest.close()
       clouds.disconnect("Stopping MusicPimp.")
+      clouds.close()
       appConf.close()
+      indexer.close()
     }
   )
 }

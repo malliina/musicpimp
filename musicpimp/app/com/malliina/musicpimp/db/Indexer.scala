@@ -1,16 +1,15 @@
 package com.malliina.musicpimp.db
 
 import akka.NotUsed
-import akka.actor.Status.{Failure, Success}
 import akka.actor.{Cancellable, Scheduler}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
-import akka.stream.{CompletionStrategy, Materializer}
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
 import com.malliina.musicpimp.library.FileLibrary
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.rx.Sources
+import com.malliina.streams.StreamsUtil
 import play.api.Logger
 
 import scala.concurrent.Future
@@ -26,13 +25,14 @@ object Indexer {
   * Indexes the music library if it changes. Runs when `init()` is first called and
   * every six hours from then on.
   */
-class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit mat: Materializer) {
+class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit mat: Materializer)
+  extends AutoCloseable {
   val indexFile = FileUtil.localPath("files7.cache")
   val indexInterval = 6.hours
 //  val indexInterval = 15.seconds
   private var timer: Option[Cancellable] = None
-  private val (indexingTarget, indexings) = Sources.connected[Source[Long, NotUsed]]()
-  val ongoing: Source[Source[Long, NotUsed], NotUsed] = indexings
+  private val indexingHub = StreamsUtil.connectedStream[Source[Long, NotUsed]]()
+  val ongoing: Source[Source[Long, NotUsed], NotUsed] = indexingHub.source
 
   def init(): Unit = {
     log.info("Init indexer...")
@@ -75,7 +75,7 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     */
   def index(): Source[Long, NotUsed] = {
     val task = refreshIndex().toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
-    indexingTarget ! task
+    indexingHub.send(task)
     task
   }
 
@@ -95,26 +95,26 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     * @return progress: total amount of files indexed
     */
   private def refreshIndex(): Source[Long, NotUsed] = {
-    val (target, source) = Sources.connected[Long]()
+    val hub = StreamsUtil.connectedStream[Long]()
     val start = System.currentTimeMillis()
     indexer
       .runIndexer(library) { fileCount =>
         log.info(s"File count at $fileCount...")
-        Future.successful(target ! fileCount)
+        Future.successful(hub.send(fileCount))
       }
       .map { result =>
         val end = System.currentTimeMillis()
         val duration = (end - start).millis
-        target ! Success(CompletionStrategy.draining)
+        hub.shutdown()
         log info s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
           s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
       }
       .recover {
         case e =>
           log.error(s"Indexing failed.", e)
-          target ! Failure(e)
+          hub.shutdown()
       }
-    source
+    hub.source
   }
 
   def indexAndSave(): Source[Long, NotUsed] = {
@@ -138,4 +138,6 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     log info s"Calculating file count..."
     library.trackFiles.size
   }
+
+  def close(): Unit = indexingHub.shutdown()
 }

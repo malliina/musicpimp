@@ -8,7 +8,7 @@ import com.malliina.audio.{ExecutionContexts, PlayerStates}
 import com.malliina.storage.StorageInt
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 class PlaybackTests extends TestBase {
   ignore("can play mp3 and can get duration, position") {
@@ -64,24 +64,25 @@ class PlaybackTests extends TestBase {
     }
   }
 
-  ignore("playing an empty PipedInputStream blocks, and throws 'IOException: mark/reset not supported' when its PipedOutputStream is closed") {
-    import ExecutionContexts.defaultPlaybackContext
+  ignore(
+    "playing an empty PipedInputStream blocks, and throws 'IOException: mark/reset not supported' when its PipedOutputStream is closed"
+  ) {
     val dur = 1.minute
     val size = 100.megs
     val out = new PipedOutputStream()
     val in = new PipedInputStream(out)
     val fut = Future {
       new JavaSoundPlayer(OneShotStream(in, dur, size))
-    }
+    }(ExecutionContexts.defaultPlaybackContext)
     Thread.sleep(1000)
     out.close()
     Thread.sleep(500)
     assert(fut.isCompleted)
     val booleanFuture = fut.map(_ => false).recover {
       case t: IOException if t.getMessage == "mark/reset not supported" => true
-      case t: Throwable => false
+      case t: Throwable                                                 => false
     }
-    val futureCompletesAsExpected = Await.result(booleanFuture, 1.second)
+    val futureCompletesAsExpected = await(booleanFuture, 1.second)
     assert(futureCompletesAsExpected)
     in.close()
   }
@@ -90,14 +91,12 @@ class PlaybackTests extends TestBase {
     withTestTrack { p =>
       p.play()
       sleep(100.millis)
-      p seek 9.seconds
+      p.seek(9.seconds)
       //      val s1 = p.events.subscribe(e => log.info(s"event: $e"))
       val promise = Promise[PlayerStates.PlayerState]()
-      val s = p.events.filter(_ == PlayerStates.EndOfMedia).subscribe(o => promise.trySuccess(o))
-      val maybeEom = Await.result(promise.future, 20.seconds)
+      p.events.filter(_ == PlayerStates.EndOfMedia).runForeach(o => promise.trySuccess(o))
+      val maybeEom = await(promise.future, 20.seconds)
       assert(maybeEom === PlayerStates.EndOfMedia)
-      s.unsubscribe()
-      //      s1.unsubscribe()
     }
   }
 }
