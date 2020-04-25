@@ -2,6 +2,8 @@ package tests
 
 import java.nio.file.{Files, Path, Paths}
 
+import akka.actor.ActorSystem
+import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink}
 import akka.util.ByteString
 import com.malliina.http.OkClient.MultiPartFile
@@ -19,7 +21,8 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future, Promise}
 
 class StreamingTests extends PimpcloudSuite with BaseSuite {
-  implicit val mat = app.materializer
+  implicit val as = ActorSystem("test")
+  implicit val mat = Materializer(as)
   implicit val ec = mat.executionContext
 
   val fileName = "01 Atb - Ecstacy (Intro Edit).mp3"
@@ -49,7 +52,7 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     }
     queue offer Option(1)
     watchedSource.runWith(Sink.cancelled[Int])
-    assert(await(p.future) === message)
+    assert(await(p.future) == message)
   }
 
   test("buffers") {
@@ -65,7 +68,7 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     await(handler)
   }
 
-  ignore("file to source") {
+  test("file to source".ignore) {
     val (queue, source) = Streaming.sourceQueue[ByteString](mat)
     val byteCalculator: Sink[ByteString, Future[Long]] =
       Sink.fold[Long, ByteString](0)((acc, bytes) => acc + bytes.length)
@@ -78,13 +81,13 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     println(bytes)
   }
 
-  ignore("upload") {
+  test("upload".ignore) {
     val client =
       OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
     // Register file listener
     val listenUri = FullUrl("http", "localhost:9000", "/testfile")
     val listenResponse = await(client.get(listenUri))
-    assert(listenResponse.code === 200)
+    assert(listenResponse.code == 200)
     Thread.sleep(200)
     // Upload file
     val uploadUri = FullUrl("http", "localhost:9000", "/testup")
@@ -94,7 +97,7 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
       files = Seq(MultiPartFile(MediaType.parse("audio/mpeg"), filePath))
     )
     val response = await(request)
-    assert(response.code === 200)
+    assert(response.code == 200)
     client.close()
   }
 
@@ -107,7 +110,7 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
       files = Seq(MultiPartFile(MediaType.parse("audio/mpeg"), file))
     )
     val response = await(request)
-    assert(response.code === 200)
+    assert(response.code == 200)
     client.close()
   }
 

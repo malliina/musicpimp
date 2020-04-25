@@ -1,8 +1,6 @@
 package tests
 
-import org.scalatest.FunSuite
-
-class LibraryTests extends FunSuite {
+class LibraryTests extends munit.FunSuite {
   test("load folder") {
     //    val (json, duration) = Utils.timed(Json.toJson(Library.folderFromFile(testFolder)))
     //    val (json, duration) = Utils.timed(Json.toJson(Library.rootFolderFromDatabase))

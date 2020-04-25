@@ -8,18 +8,17 @@ import com.malliina.musicpimp.cloud.{Constants, JsonSocket8}
 import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.security.SSLUtils
 import com.malliina.ws.HttpUtil
-import org.scalatest.FunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class WebSocketTests extends FunSuite {
-  ignore("can open socket") {
+class WebSocketTests extends munit.FunSuite {
+  test("can open socket".ignore) {
     val factory = CustomSSLSocketFactory.forHost("cloud.musicpimp.org")
     openSocket(factory)
   }
 
-  ignore("can open socket, without SNI") {
+  test("can open socket, without SNI".ignore) {
     openSocket(SSLUtils.trustAllSslContext().getSocketFactory)
   }
 

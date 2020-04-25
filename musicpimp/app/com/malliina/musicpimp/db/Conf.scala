@@ -10,10 +10,10 @@ case class Conf(url: String, user: String, pass: String, driver: String)
 object Conf {
   private val log = Logger(getClass)
 
-  val UrlKey = "boat.db.url"
-  val UserKey = "boat.db.user"
-  val PassKey = "boat.db.pass"
-  val DriverKey = "boat.db.driver"
+  val UrlKey = "musicpimp.db.url"
+  val UserKey = "musicpimp.db.user"
+  val PassKey = "musicpimp.db.pass"
+  val DriverKey = "musicpimp.db.driver"
   val MySQLDriver = "com.mysql.jdbc.Driver"
   val DefaultDriver = MySQLDriver
 

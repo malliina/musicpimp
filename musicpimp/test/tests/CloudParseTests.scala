@@ -1,10 +1,9 @@
 package tests
 
 import com.malliina.musicpimp.cloud.{CloudMessageParser, GetRecent}
-import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-class CloudParseTests extends FunSuite {
+class CloudParseTests extends munit.FunSuite {
   val testJsonString =
     """
       |{
@@ -26,7 +25,7 @@ class CloudParseTests extends FunSuite {
     val message = result.get.message
     assert(message.isInstanceOf[GetRecent])
     val meta = message.asInstanceOf[GetRecent].meta
-    assert(meta.from === 13)
-    assert(meta.until === 20)
+    assert(meta.from == 13)
+    assert(meta.until == 20)
   }
 }

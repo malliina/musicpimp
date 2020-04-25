@@ -2,9 +2,8 @@ package tests
 
 import com.malliina.musicpimp.messaging.cloud.{APNSPayload, PushTask}
 import com.malliina.push.apns.{APNSMessage, APNSToken}
-import org.scalatest.FunSuite
 
-class PushTests extends FunSuite {
+class PushTests extends munit.FunSuite {
   val testTask = PushTask(
     Seq(
       APNSPayload(
@@ -18,7 +17,7 @@ class PushTests extends FunSuite {
     Nil
   )
 
-  ignore("can push") {
+  test("can push".ignore) {
     //    val pusher = ProdPusher.fromConf
     //    val res = Await.result(pusher.push(testTask), 30.seconds)
     //    assert(res.apns.size === 1)

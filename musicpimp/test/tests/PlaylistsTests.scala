@@ -19,7 +19,7 @@ import play.api.test.Helpers._
 
 import scala.concurrent.duration.DurationInt
 
-class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
+class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
@@ -42,15 +42,15 @@ class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
       tracksInserted <- trackInserts
     } yield (foldersInserted, tracksInserted)
     val (fsi, tsi) = await(insertions)
-    assert(fsi === 1)
-    assert(tsi === 1)
+    assert(fsi == 1)
+    assert(tsi == 1)
     val maybeFolder = await(db.folder(folderId))
     assert(maybeFolder.isDefined)
   }
 
   test("GET /playlists") {
     fetchLists()
-    assert(1 === 1)
+    assert(1 == 1)
   }
 
   test("POST /playlists") {
@@ -60,21 +60,21 @@ class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
           FakeRequest("POST", "/playlists")
             .withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in)))
         )
-      assert(status(response) === 202)
+      assert(status(response) == 202)
       (contentAsJson(response) \ "id").as[PlaylistID]
     }
 
     val submission = PlaylistSubmission(None, "test playlist", testTracks)
     val newId = postPlaylist(submission)
-    assert(fetchLists().find(_.id == newId).get.tracks.map(_.id) === testTracks)
+    assert(fetchLists().find(_.id == newId).get.tracks.map(_.id) == testTracks)
     val updatedTracks = testTracks ++ testTracks
     val updatedPlaylist = submission.copy(id = Option(newId), tracks = updatedTracks)
     val updatedId = postPlaylist(updatedPlaylist)
-    assert(newId === updatedId)
-    assert(fetchLists().find(_.id == updatedId).get.tracks.map(_.id) === updatedTracks)
+    assert(newId == updatedId)
+    assert(fetchLists().find(_.id == updatedId).get.tracks.map(_.id) == updatedTracks)
 
     val response3 = fetch(FakeRequest(POST, s"/playlists/delete/$updatedId"))
-    assert(status(response3) === 202)
+    assert(status(response3) == 202)
 
     assert(fetchLists().isEmpty)
   }
@@ -82,11 +82,11 @@ class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
   def fetchLists() = {
     val response = fetch(FakeRequest(GET, "/playlists"))
     assert(contentType(response) contains JSON)
-    assert(status(response) === 200)
+    assert(status(response) == 200)
     (contentAsJson(response) \ "playlists").as[Seq[FullSavedPlaylist]]
   }
 
-  def fetch[T: Writeable](request: FakeRequest[T]) = {
+  def fetch[T: Writeable](request: FakeRequest[T]) =
     route(
       app,
       request.withHeaders(
@@ -97,5 +97,4 @@ class PlaylistsTests extends MusicPimpSuite(TestOptions.default) {
         ACCEPT -> JSON
       )
     ).get
-  }
 }

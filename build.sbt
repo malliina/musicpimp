@@ -32,20 +32,20 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.23.1"
-val pimpcloudVersion = "1.28.0"
-val sharedVersion = "1.13.0"
-val crossVersion = "1.13.0"
+val musicpimpVersion = "4.24.0"
+val pimpcloudVersion = "1.29.0"
+val sharedVersion = "1.14.0"
+val crossVersion = "1.14.0"
 
-val utilAudioVersion = "2.8.0"
-val primitivesVersion = "1.13.0"
+val utilAudioVersion = "2.9.0"
+val primitivesVersion = "1.15.0"
 val playJsonVersion = "2.8.1"
 val scalaTagsVersion = "0.8.4"
-val utilPlayVersion = "5.4.1"
-val httpVersion = "4.5.11"
+val utilPlayVersion = "5.8.0"
+val httpVersion = "4.5.12"
 val mysqlVersion = "5.1.48"
 val nvWebSocketVersion = "2.9"
-val scalaTestVersion = "3.0.8"
+val munitVersion = "0.7.3"
 val akkaStreamsVersion = "2.6.1"
 
 val malliinaGroup = "com.malliina"
@@ -55,7 +55,7 @@ val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.8.2"
 
 val httpGroup = "org.apache.httpcomponents"
 
-scalaVersion in ThisBuild := "2.13.1"
+scalaVersion in ThisBuild := "2.13.2"
 
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
@@ -73,8 +73,9 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
       "com.typesafe.akka" %% "akka-stream" % akkaStreamsVersion,
-      "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-    )
+      "org.scalameta" %% "munit" % munitVersion % Test
+    ),
+    testFrameworks += new TestFramework("munit.Framework")
   )
 
 val cross = portableProject(JSPlatform, JVMPlatform)
@@ -149,6 +150,11 @@ val it = project
   .in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
   .settings(baseSettings: _*)
+  .settings(
+    libraryDependencies ++= Seq(
+      PlayImport.ws % Test
+    )
+  )
 
 val metaCommonSettings = Seq(
   version := "1.12.0",
@@ -180,7 +186,7 @@ val musicmeta = project
     scalaJSProjects := Seq(musicmetaFrontend),
     pipelineStages in Assets := Seq(scalaJSPipeline),
     libraryDependencies ++= Seq(
-      "commons-codec" % "commons-codec" % "1.13",
+      "commons-codec" % "commons-codec" % "1.14",
       logstreamsDep,
       malliinaGroup %% "play-social" % utilPlayVersion,
       utilPlayDep,
@@ -403,7 +409,8 @@ lazy val pimpcloudSettings =
       version := pimpcloudVersion,
       libraryDependencies ++= Seq(
         malliinaGroup %% "play-social" % utilPlayVersion,
-        PlayImport.ehcache
+        PlayImport.ehcache,
+        PlayImport.ws % Test
       ),
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(
@@ -475,7 +482,10 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "gitHash" -> gitHash
   ),
   RoutesKeys.routesGenerator := InjectedRoutesGenerator,
-  libraryDependencies ++= defaultDeps
+  libraryDependencies ++= defaultDeps ++ Seq(
+    "org.scalameta" %% "munit" % munitVersion % Test
+  ),
+  testFrameworks += new TestFramework("munit.Framework")
 )
 
 def libSettings = Seq(
@@ -484,7 +494,6 @@ def libSettings = Seq(
 
 def defaultDeps = Seq(
   "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
-  "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % Test,
   PlayImport.specs2 % Test
 )
 
@@ -512,8 +521,11 @@ def scalajsProject(name: String, path: File) =
     .enablePlugins(ScalaJSBundlerPlugin)
     .settings(
       scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalatest" %%% "scalatest" % scalaTestVersion % Test),
-      testFrameworks += new TestFramework("utest.runner.Framework"),
+      libraryDependencies ++= Seq("org.scalameta" %%% "munit" % munitVersion % Test),
+      testFrameworks ++= Seq(
+        new TestFramework("utest.runner.Framework"),
+        new TestFramework("munit.Framework")
+      ),
       version in webpack := "4.35.2",
       emitSourceMaps := false,
       webpackEmitSourceMaps := false,

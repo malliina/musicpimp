@@ -9,13 +9,12 @@ import com.malliina.util.Util
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest
 import org.apache.commons.io.FileUtils
-import org.scalatest.FunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class UploadTests extends FunSuite {
-  ignore("server plays uploaded track") {
+class UploadTests extends munit.FunSuite {
+  test("server plays uploaded track".ignore) {
     multiPartUpload(FullUrl("http", "localhost:9000", "/playback/uploads"))
   }
 
@@ -27,7 +26,7 @@ class UploadTests extends FunSuite {
       headers,
       files = Seq(MultiPartFile(Rest.audioMpeg, file))
     )
-    assert(Await.result(req, 10.seconds).code === 200)
+    assert(Await.result(req, 10.seconds).code == 200)
   }
 }
 

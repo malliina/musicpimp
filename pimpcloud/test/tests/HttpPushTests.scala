@@ -57,14 +57,14 @@ class HttpPushTests extends PimpcloudSuite {
   )
 
   test("respond to health check") {
-    val response = route(app, FakeRequest(GET, "/health")).get
-    assert(status(response) === 200)
+    val response = route(testApp().application, FakeRequest(GET, "/health")).get
+    assert(status(response) == 200)
   }
 
-  ignore("push a notification") {
+  test("push a notification".ignore) {
     val body = Json.obj(Cmd -> PushValue, Body -> testTask)
-    val response = route(app, FakeRequest(POST, "/push").withJsonBody(body)).get
+    val response = route(testApp().application, FakeRequest(POST, "/push").withJsonBody(body)).get
     val result = contentAsJson(response).as[PushResponse]
-    assert(result.result.apns.size === 2)
+    assert(result.result.apns.size == 2)
   }
 }

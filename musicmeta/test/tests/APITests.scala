@@ -6,7 +6,6 @@ import com.malliina.musicmeta.MetaHtml
 import com.malliina.oauth.{DiscoGsOAuthCredentials, GoogleOAuthCredentials}
 import com.malliina.play.ActorExecution
 import controllers.{Covers, MetaOAuth, MetaOAuthControl}
-import org.scalatest.FunSuite
 import play.api.{Mode, http}
 import play.api.mvc._
 import play.api.test.FakeRequest
@@ -20,7 +19,7 @@ object APITests {
   val fakeGoogle = GoogleOAuthCredentials("client", "secret", "scope")
 }
 
-class APITests extends FunSuite {
+class APITests extends munit.FunSuite {
   implicit val timeout = 20.seconds
   implicit val actorSystem = ActorSystem("test")
   val mat = Materializer.matFromSystem(actorSystem)
@@ -39,7 +38,7 @@ class APITests extends FunSuite {
     verifyActionResponse(covers.ping, OK)
   }
 
-  ignore("proper cover search") {
+  test("proper cover search".ignore) {
     verifyActionResponse(
       covers.cover,
       OK,
@@ -47,7 +46,7 @@ class APITests extends FunSuite {
     )
   }
 
-  ignore("nonexistent cover return 404") {
+  test("nonexistent cover return 404".ignore) {
     verifyActionResponse(
       covers.cover,
       NOT_FOUND,
@@ -69,6 +68,6 @@ class APITests extends FunSuite {
 
   private def verifyResponse(result: Future[Result], expectedStatus: Int = http.Status.OK) = {
     val statusCode = Await.result(result, timeout).header.status
-    assert(statusCode === expectedStatus)
+    assert(statusCode == expectedStatus)
   }
 }

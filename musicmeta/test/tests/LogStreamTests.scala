@@ -2,13 +2,11 @@ package tests
 
 import java.net.URL
 
-import org.scalatest.FunSuite
-
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
-class LogStreamTests extends FunSuite {
-  ignore("conn") {
+class LogStreamTests extends munit.FunSuite {
+  test("conn".ignore) {
     new URL("https://letsencrypt.org/").openConnection.connect()
   }
 

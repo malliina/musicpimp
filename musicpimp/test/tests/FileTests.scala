@@ -3,14 +3,12 @@ package tests
 import java.nio.file.Path
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import com.malliina.musicpimp.library.Library
 import com.malliina.util.Utils
-import org.scalatest.FunSuite
 
 import scala.concurrent.duration.{DurationDouble, DurationInt}
 
-class FileTests extends FunSuite {
+class FileTests extends munit.FunSuite {
   val minPathsPerSecond = 400
   val testRootOpt: Option[Path] = None
   implicit val as = ActorSystem("test")

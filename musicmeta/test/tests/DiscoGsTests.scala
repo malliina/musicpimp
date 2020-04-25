@@ -6,15 +6,14 @@ import com.malliina.concurrent.Execution.cached
 import com.malliina.http.DiscoClient
 import com.malliina.oauth.DiscoGsOAuthCredentials
 import controllers.Covers
-import org.scalatest.FunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class DiscoGsTests extends FunSuite {
+class DiscoGsTests extends munit.FunSuite {
   val uri = "http://api.discogs.com/image/R-5245462-1388609959-3809.jpeg"
 
-  ignore("download cover") {
+  test("download cover".ignore) {
     val creds = DiscoGsOAuthCredentials("", "", "", "")
     using(new DiscoClient(creds, Covers.tempDir)) { client =>
       val result = client

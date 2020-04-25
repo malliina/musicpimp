@@ -3,33 +3,32 @@ package tests
 import java.nio.file.Paths
 
 import com.malliina.musicpimp.audio.PimpEnc.{normalize, makeIdentifier}
-import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-class Tests extends FunSuite {
+class Tests extends munit.FunSuite {
 
   test("encoding") {
     val input = "Svår (fålder)"
-    assert(normalize(input) === "Svar (falder)")
+    assert(normalize(input) == "Svar (falder)")
   }
 
   test("enc") {
     val input = "artist/Svår (fålder)!"
-    assert(makeIdentifier(input) === "artist%2FSvar%20(falder)!")
+    assert(makeIdentifier(input) == "artist%2FSvar%20(falder)!")
   }
 
   test("paths") {
     val root = Paths get "a/b/c"
     val rel = Paths get ""
     val combined = root resolve rel
-    assert(root.toAbsolutePath.toString === combined.toAbsolutePath.toString)
+    assert(root.toAbsolutePath.toString == combined.toAbsolutePath.toString)
   }
 
   test("deconstruct array") {
     val arr = "a:b".split(":")
     arr match {
-      case Array(a, b) => assert(a === "a")
-      case _           => assert(1 === 2)
+      case Array(a, b) => assert(a == "a")
+      case _           => assert(1 == 2)
     }
   }
 
@@ -41,8 +40,8 @@ class Tests extends FunSuite {
       for (actual <- maybeV if isA(actual)) yield actual
     }
 
-    assert(eval("a") === Some("a"))
-    assert(eval("b") === None)
+    assert(eval("a").contains("a"))
+    assert(eval("b").isEmpty)
   }
 
   test("json") {
@@ -51,14 +50,14 @@ class Tests extends FunSuite {
     val jsString = Json.stringify(jsV)
     val readV = Json.parse(jsString)
     val list = (readV \ "folders").as[Seq[String]]
-    assert(in === list)
+    assert(in == list)
   }
 
   test("serialize Option") {
     import play.api.libs.json.Json._
     val jsValue = stringify(toJson(Some(42)))
     val none = stringify(toJson(Option.empty[Int]))
-    assert(jsValue === "42")
-    assert(none === "null")
+    assert(jsValue == "42")
+    assert(none == "null")
   }
 }

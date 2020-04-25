@@ -1,28 +1,26 @@
 package tests
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
-import org.scalatest.FunSuite
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class HttpsTests extends FunSuite {
+class HttpsTests extends munit.FunSuite {
   val testTrustStorePassword = "???"
 
   implicit val as = ActorSystem("test")
   implicit val ec = as.dispatcher
 
-  ignore("can ping MusicBeamer over HTTP") {
+  test("can ping MusicBeamer over HTTP".ignore) {
     pingWithPlayAPI("https://beam.musicpimp.org/ping")
   }
 
-  ignore("ping MusicBeamer over HTTPS with Apache HttpClient") {
+  test("ping MusicBeamer over HTTPS with Apache HttpClient".ignore) {
     pingWithApacheHttpClient()
   }
 

@@ -1,18 +1,15 @@
 package tests
 
 import com.malliina.http.WebUtils
-import org.scalatest.FunSuite
 
-/**
-  */
-class OtherTests extends FunSuite {
+class OtherTests extends munit.FunSuite {
   test("WebUtils.encodeURIComponent") {
     val artist = WebUtils.encodeURIComponent("iron maiden")
     val album = WebUtils.encodeURIComponent("somewhere in time")
     val myUri = s"http://api.discogs.com/database/search?artist=$artist&release_title=$album"
     val expected =
       "http://api.discogs.com/database/search?artist=iron%20maiden&release_title=somewhere%20in%20time"
-    assert(myUri === expected)
+    assert(myUri == expected)
   }
   //  def extension(file: String) = Try(file.substring(file.lastIndexOf('.') + 1)).toOption
 

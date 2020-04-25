@@ -16,5 +16,5 @@ abstract class FileSet[T](file: String)(implicit format: Format[T])
 
   def withID(elemID: String): Option[T] = get().find(e => id(e) == elemID)
 
-  def removeID(id: String) = withID(id).foreach(remove)
+  def removeID(id: String): Unit = withID(id).foreach(remove)
 }

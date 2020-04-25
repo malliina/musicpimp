@@ -2,10 +2,9 @@ package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.json.PimpStrings
 import com.malliina.musicpimp.scheduler.json.{AddApnsDevice, AlarmCommand}
-import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-class JsonParseTests extends FunSuite {
+class JsonParseTests extends munit.FunSuite {
   val in =
     """{"cmd":"alarms_edit",
       |"body":{

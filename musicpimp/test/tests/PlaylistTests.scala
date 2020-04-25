@@ -1,29 +1,28 @@
 package tests
 
 import com.malliina.musicpimp.audio.BasePlaylist
-import org.scalatest.FunSuite
 
 import scala.concurrent.stm.Ref
 
-class PlaylistTests extends FunSuite {
+class PlaylistTests extends munit.FunSuite {
   test("Playlist index reacts to playlist reorganization") {
     val tracks = Seq("a", "b", "c", "d", "e")
     val playlist = new TestPlaylist
     playlist.reset(2, tracks)
     playlist.move(1, 2)
-    assert(playlist.index === 1)
+    assert(playlist.index == 1)
     playlist.move(3, 4)
-    assert(playlist.index === 1)
+    assert(playlist.index == 1)
     playlist.index = 0
     playlist.move(1, 2)
-    assert(playlist.index === 0)
+    assert(playlist.index == 0)
     playlist.move(0, 4)
-    assert(playlist.index === 4)
+    assert(playlist.index == 4)
     playlist.move(0, 1)
-    assert(playlist.index === 4)
+    assert(playlist.index == 4)
     playlist.index = 2
     playlist.move(3, 2)
-    assert(playlist.index === 3)
+    assert(playlist.index == 3)
   }
 
   class TestPlaylist extends BasePlaylist[String] {

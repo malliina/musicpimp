@@ -1,10 +1,8 @@
 package tests
 
-import com.malliina.musicpimp.app.{AppConf, InitOptions, PimpComponents}
+import com.malliina.musicpimp.app.{AppConf, EmbeddedMySQL, InitOptions, PimpComponents}
 import com.malliina.musicpimp.db.Conf
-import org.scalatest.FunSuiteLike
-import org.scalatestplus.play.{BaseOneAppPerSuite, FakeApplicationFactory}
-import play.api.{Application, ApplicationLoader}
+import play.api.Play
 
 object TestOptions {
   val default =
@@ -16,15 +14,28 @@ class TestAppConf(conf: Conf) extends AppConf {
   override def close(): Unit = ()
 }
 
-class MusicPimpSuite(options: InitOptions)
-  extends FunSuiteLike
-  with EmbeddedMySQLSuite
-  with BaseOneAppPerSuite
-  with FakeApplicationFactory {
-  lazy val components: PimpComponents = createComponents(TestAppLoader.createTestAppContext)
+trait MusicPimpSuite { self: munit.FunSuite =>
+  val testApp: Fixture[PimpComponents] = new Fixture[PimpComponents]("pimp-app") {
+    private var comps: PimpComponents = null
+    private var embedded: EmbeddedMySQL = null
+    override def apply() = comps
 
-  override def fakeApplication(): Application = components.application
+    override def beforeAll(): Unit = {
+      embedded = EmbeddedMySQL.temporary
+      comps = new PimpComponents(
+        TestAppLoader.createTestAppContext,
+        TestOptions.default,
+        _ => new TestAppConf(embedded.conf)
+      )
+      Play.start(comps.application)
+    }
 
-  def createComponents(context: ApplicationLoader.Context): PimpComponents =
-    new PimpComponents(context, options, _ => new TestAppConf(embedded.conf))
+    override def afterAll(): Unit = {
+      Play.stop(comps.application)
+      embedded.stop()
+    }
+  }
+  override def munitFixtures = Seq(testApp)
+  def components = testApp()
+  def app = components.application
 }

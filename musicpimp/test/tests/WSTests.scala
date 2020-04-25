@@ -1,10 +1,9 @@
 package tests
 
 import com.malliina.musicpimp.beam.BeamCommand
-import org.scalatest.FunSuite
 import play.api.libs.json._
 
-class WSTests extends FunSuite {
+class WSTests extends munit.FunSuite {
   test("json to case class") {
     val json = Json.obj(
       "action" -> "play",
@@ -15,6 +14,6 @@ class WSTests extends FunSuite {
     )
     implicit val commandFormat = Json.format[BeamCommand]
     val cmd = Json.fromJson[BeamCommand](json).get
-    assert(cmd.track.id === "123")
+    assert(cmd.track.id == "123")
   }
 }

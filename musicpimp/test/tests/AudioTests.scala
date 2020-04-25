@@ -3,10 +3,9 @@ package tests
 import javax.sound.sampled.AudioSystem
 
 import com.malliina.util.Util
-import org.scalatest.FunSuite
 
-class AudioTests extends FunSuite {
-  ignore("has audio device") {
+class AudioTests extends munit.FunSuite {
+  test("has audio device".ignore) {
     val status = AudioSystem.getMixerInfo.map(i =>
       s"Name: ${i.getName}, Description: ${i.getDescription}, Version: ${i.getVersion}"
     )

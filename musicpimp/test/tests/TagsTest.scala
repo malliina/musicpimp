@@ -1,10 +1,9 @@
 package tests
 
 import com.malliina.musicpimp.assets.AppAssets
-import org.scalatest.FunSuite
 import scalatags.Text.all._
 
-class TagsTest extends FunSuite {
+class TagsTest extends munit.FunSuite {
   test("seq") {
     val m = SeqFrag(Seq(p("a"), p("b")))
     assert(m.render startsWith "<p>")
@@ -13,6 +12,6 @@ class TagsTest extends FunSuite {
   }
 
   test("assets") {
-    assert(AppAssets.img.light.transport_ff_png.toString === "/assets/img/light/transport.ff.png")
+    assert(AppAssets.img.light.transport_ff_png.toString == "/assets/img/light/transport.ff.png")
   }
 }

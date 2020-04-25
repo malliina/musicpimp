@@ -31,7 +31,6 @@ import scala.concurrent.Promise
 abstract class PimpcloudServerSuite extends ServerSuite(new TestComponents(_))
 
 class IntegrationTest extends PimpcloudServerSuite {
-  val cloud = app
   val cloudPort = port
   implicit val mat = components.materializer
   val cloudHostPort = s"localhost:$cloudPort"
@@ -46,16 +45,18 @@ class IntegrationTest extends PimpcloudServerSuite {
   val phonePath = "/ws/playback"
   val testTrackTitle = "Test of MP3 File"
 
+  def cloud = testServer().app
+
   test("can do it") {
-    assert(statusCode("/ping", pimp) === 200)
-    assert(statusCode("/health", cloud) === 200)
+    assert(statusCode("/ping", pimp) == 200)
+    assert(statusCode("/health", testServer().app) == 200)
   }
 
   test("musicpimp can connect to pimpcloud") {
     try {
       val expectedId = CloudID("connect-test")
       val id = await(cloudClient.connect(Option(expectedId)))
-      assert(id === expectedId)
+      assert(id == expectedId)
     } finally {
       cloudClient.disconnectAndForget("")
     }
@@ -75,11 +76,11 @@ class IntegrationTest extends PimpcloudServerSuite {
       withPimpSocket(adminPath, onJson) { client =>
         assert(client.isConnected)
         val result = await(handler.all())
-        assert(result === 42)
+        assert(result == 42)
         val id = await(cloudClient.connect(Option(joinId)))
-        assert(id === joinId)
+        assert(id == joinId)
         val server = await(joinedPromise.future)
-        assert(server.id === id)
+        assert(server.id == id)
       }
     } finally {
       cloudClient.disconnectAndForget("")
@@ -90,7 +91,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     try {
       val expectedId = CloudID("phone-test")
       val id = await(cloudClient.connect(Option(expectedId)))
-      assert(id === expectedId)
+      assert(id == expectedId)
       val p = Promise[PimpPhone]()
 
       def onJson(json: JsValue): Unit = {
@@ -102,7 +103,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       withPimpSocket(adminPath, onJson) { adminSocket =>
         withPhoneSocket(phonePath, id, _ => ()) { phoneSocket =>
           val joinedPhone = await(p.future)
-          assert(joinedPhone.s === expectedId)
+          assert(joinedPhone.s == expectedId)
         }
       }
     } finally {
@@ -124,7 +125,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       withPimpSocket(adminPath, onJson) { _ =>
         val f = req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get()
         val title = await(p.future)
-        assert(title === testTrackTitle)
+        assert(title == testTrackTitle)
         await(f)
       }
     }
@@ -134,11 +135,11 @@ class IntegrationTest extends PimpcloudServerSuite {
     withCloudTrack("track-test") { (trackId, fileSize, cloudId) =>
       // request track
       val r = makeGet(s"/tracks/$trackId", cloudId)
-      assert(r.status === 200)
+      assert(r.status == 200)
       // It seems the content-length header is only set if the content is small enough for non-chunked encoding.
       // So, while this test passes also with this line uncommented, it's not representative.
       //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
-      assert(r.bodyAsBytes.size.toLong === fileSize.toBytes)
+      assert(r.bodyAsBytes.size.toLong == fileSize.toBytes)
     }
   }
 
@@ -148,37 +149,37 @@ class IntegrationTest extends PimpcloudServerSuite {
       // request track
       // the end of the range is inclusive
       val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
-      assert(r.status === 206)
-      assert(r.bodyAsBytes.size.toLong === 11)
+      assert(r.status == 206)
+      assert(r.bodyAsBytes.size.toLong == 11)
       bytesPromise.success(r.bodyAsBytes.size)
     }
-    assert(await(bytesPromise.future) === 11)
+    assert(await(bytesPromise.future) == 11)
   }
 
   test("get folders") {
     withCloudTrack("folder-test") { (_, _, cloudId) =>
       val r = makeGet("/folders?f=json", cloudId)
-      assert(r.status === 200)
+      assert(r.status == 200)
       await(musicpimp.components.indexer.index().runWith(Sink.seq))
       val _ = makeGet("/folders?f=json", cloudId)
       val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
-      assert(r3.status === 200)
+      assert(r3.status == 200)
     }
   }
 
   test("get alarms") {
     withCloud("alarms-test") { cloudId =>
       val r = makeGet("/alarms?f=json", cloudId)
-      assert(r.contentType === "application/json")
-      assert(r.status === 200)
+      assert(r.contentType == "application/json")
+      assert(r.status == 200)
     }
   }
 
   test("search") {
     withCloud("search-test") { cloudId =>
       val r = makeGet("/search?term=iron&f=json", cloudId)
-      assert(r.contentType === "application/json")
-      assert(r.status === 200)
+      assert(r.contentType == "application/json")
+      assert(r.status == 200)
     }
   }
 
@@ -204,7 +205,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     // makes sure musicpimp server has a track to serve
     val trackFile = TestUtils.makeTestMp3()
     val fileSize = Files.size(trackFile).bytes
-    assert(fileSize.toBytes === 198658L)
+    assert(fileSize.toBytes == 198658L)
     val trackFolder = trackFile.getParent
     val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
     Files.createTempFile(created, "temp", ".mp3")
@@ -223,7 +224,7 @@ class IntegrationTest extends PimpcloudServerSuite {
       // connect to pimpcloud
       val cloudId = CloudID(desiredId)
       val id = await(cloudClient.connect(Option(cloudId)))
-      assert(id === cloudId)
+      assert(id == cloudId)
       code(id)
     } finally {
       cloudClient.disconnectAndForget("Test ended.")

@@ -8,7 +8,7 @@ import com.malliina.values.ErrorMessage
 object PimpConf {
   val pimpConfFile = FileUtil.localPath("musicpimp.conf")
   val homeConf = Paths.get(sys.props("user.home"), ".musicpimp", "musicpimp.conf")
-  val fileProps: Map[String, String] = FileUtil.props(pimpConfFile) ++ FileUtil.props(homeConf)
+  val fileProps: Map[String, String] = FileUtil.props(pimpConfFile)
 
   def readConfFile(key: String): Option[String] = fileProps.get(key)
 

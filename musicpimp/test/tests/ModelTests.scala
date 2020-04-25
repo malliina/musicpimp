@@ -2,10 +2,9 @@ package tests
 
 import com.malliina.musicpimp.messaging.cloud.PushResponse
 import com.malliina.musicpimp.models.RequestID
-import org.scalatest.FunSuite
 import play.api.libs.json.Json
 
-class ModelTests extends FunSuite {
+class ModelTests extends munit.FunSuite {
   test("RequestID validation") {
     val bogus = RequestID.build("")
     assert(bogus.isEmpty)
@@ -16,7 +15,7 @@ class ModelTests extends FunSuite {
     //    RequestID("123")
     val id1 = RequestID.build("123").get
     val id2 = RequestID.build("123").get
-    assert(id1 === id2)
+    assert(id1 == id2)
 
   }
 

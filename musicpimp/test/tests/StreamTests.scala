@@ -8,32 +8,31 @@ import com.malliina.play.ContentRange
 import com.malliina.storage.StorageLong
 import com.malliina.util.Util
 import org.apache.commons.io.IOUtils
-import org.scalatest.FunSuite
 
-class StreamTests extends FunSuite {
+class StreamTests extends munit.FunSuite {
   val path = Paths.get("conf/guitar-32x32.png")
   val file = path.toFile
 
   test("InputStream to Array[Byte]") {
     Util.using(new FileInputStream(file)) { stream =>
       val bytes = IOUtils.toByteArray(stream)
-      assert(bytes.length === Files.size(path).toInt)
+      assert(bytes.length == Files.size(path).toInt)
     }
   }
 
   test("RangedInputStream to Array[Byte]") {
     val fiveTo14 = Util.using(RangedInputStream(path, 5, 10)) { stream =>
       val bytes = IOUtils.toByteArray(stream)
-      assert(bytes.length === 10)
+      assert(bytes.length == 10)
       bytes.toSeq
     }
 
     val tenTo19 = Util.using(RangedInputStream(path, 10, 10)) { stream =>
       val bytes = IOUtils.toByteArray(stream)
-      assert(bytes.length === 10)
+      assert(bytes.length == 10)
       bytes.toSeq
     }
-    assert(fiveTo14.drop(5) === tenTo19.take(5))
+    assert(fiveTo14.drop(5) == tenTo19.take(5))
   }
 
   test("Ranged for all") {
@@ -46,7 +45,7 @@ class StreamTests extends FunSuite {
     val fileRange = Util.using(new FileInputStream(file)) { stream =>
       IOUtils.toByteArray(stream)
     }
-    assert(allRange.length === fileRange.length)
-    assert(allRange === fileRange)
+    assertEquals(allRange.length, fileRange.length)
+    assertEquals(allRange, fileRange)
   }
 }
