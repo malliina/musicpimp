@@ -2,7 +2,6 @@ package controllers.pimpcloud
 
 import akka.stream.scaladsl.{Flow, Sink}
 import com.malliina.logback.akka.DefaultAkkaAppender
-import com.malliina.logbackrx.LogbackUtils
 import com.malliina.musicpimp.models.{Errors, JVMLogEntry}
 import com.malliina.play.ActorExecution
 import com.malliina.play.tags.TagPage
@@ -11,7 +10,7 @@ import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.Results.{Ok, Redirect}
 import play.api.mvc.{DefaultActionBuilder, WebSocket}
-
+import com.malliina.logback.LogbackUtils
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
 

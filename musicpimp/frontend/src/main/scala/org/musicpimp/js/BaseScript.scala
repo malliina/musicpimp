@@ -8,7 +8,7 @@ import scala.scalajs.js
 trait BaseScript {
   val DataId = "data-id"
 
-  def global = js.Dynamic.global
+//  def global = js.Dynamic.global
 
   def literal = js.Dynamic.literal
 
@@ -17,9 +17,7 @@ trait BaseScript {
 
   def withDataId[T](clazzSelector: String)(withId: String => T) =
     installClick(clazzSelector) { e =>
-      Option(e.delegateTarget.getAttribute(DataId)) foreach { id =>
-        withId(id)
-      }
+      Option(e.delegateTarget.getAttribute(DataId)) foreach { id => withId(id) }
     }
 
   def installClick(clazzSelector: String)(f: JQueryEventObject => Any) =

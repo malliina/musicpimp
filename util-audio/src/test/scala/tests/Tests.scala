@@ -1,7 +1,7 @@
 package tests
 
 import com.malliina.audio.AudioImplicits
-import org.scalatest.FunSuite
+import munit.FunSuite
 
 class Tests extends FunSuite {
   test("tests work") {}
@@ -11,7 +11,7 @@ class Tests extends FunSuite {
 
     import concurrent.duration._
     def assertSeconds(secs: Int, expected: String) =
-      assert(secs.seconds.readable === expected)
+      assertEquals(secs.seconds.readable, expected)
     assertSeconds(0, "00:00")
     assertSeconds(5, "00:05")
     assertSeconds(60, "01:00")

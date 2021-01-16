@@ -115,7 +115,7 @@ class CloudComponents(context: Context, conf: AppConf)
 
   applicationLifecycle.addStopHook(() =>
     Future.successful {
-      adminAuth.validator.http.close()
+//      adminAuth.validator.http.close()
     }
   )
 }

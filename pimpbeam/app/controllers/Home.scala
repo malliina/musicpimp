@@ -10,12 +10,11 @@ import com.malliina.play.BeamStrings._
 import com.malliina.play.auth.Authenticator.Outcome
 import com.malliina.play.auth.{Auth, AuthFailure, BasicCredentials, InvalidCredentials}
 import com.malliina.play.controllers.Caching
-import com.malliina.play.http.HttpConstants
-import com.malliina.play.http.HttpConstants.AudioMpeg
 import com.malliina.play.json.JsonMessages
 import com.malliina.play.streams.StreamParsers
 import com.malliina.storage.StorageInt
 import com.malliina.values.{Password, Username}
+import com.malliina.web.HttpConstants.{AudioMpeg, NoCache}
 import controllers.Home.log
 import net.glxn.qrgen.QRCode
 import play.api.Logger
@@ -150,9 +149,7 @@ class Home(
       log info s"Sending stream to player '${player.user}'..."
       Ok.chunked(player.stream)
         .as(AudioMpeg)
-        .withHeaders(
-          CACHE_CONTROL -> HttpConstants.NoCache
-        )
+        .withHeaders(CACHE_CONTROL -> NoCache)
     }
   }
 

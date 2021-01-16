@@ -1,9 +1,10 @@
 package controllers
 
-import com.malliina.http.OkClient
+import com.malliina.http.io.HttpClientIO
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{AuthConf, AuthError, AuthHandler, GoogleCodeValidator, OAuthConf}
+import com.malliina.play.auth.{AuthHandler, GoogleCodeValidator, OAuthConf}
 import com.malliina.values.Email
+import com.malliina.web.{AuthConf, AuthError, ClientId, ClientSecret}
 import play.api.libs.json.Json
 import play.api.mvc.Results.{Redirect, Unauthorized}
 import play.api.mvc._
@@ -12,7 +13,7 @@ class MetaOAuthControl(
   val actions: ActionBuilder[Request, AnyContent],
   creds: GoogleOAuthCredentials
 ) {
-  val http = OkClient.default
+  val http = HttpClientIO()
   val handler: AuthHandler = new AuthHandler {
     override def onAuthenticated(email: Email, req: RequestHeader): Result =
       if (email == Email("malliina123@gmail.com"))
@@ -29,16 +30,12 @@ class MetaOAuthControl(
   val authConf = OAuthConf(
     routes.MetaOAuthControl.googleCallback(),
     handler,
-    AuthConf(creds.clientId, creds.clientSecret),
+    AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret)),
     http
   )
   val validator = GoogleCodeValidator(authConf)
 
-  def googleStart = actions.async { req =>
-    validator.start(req)
-  }
+  def googleStart = actions.async { req => validator.start(req).unsafeToFuture() }
 
-  def googleCallback = actions.async { req =>
-    validator.validateCallback(req)
-  }
+  def googleCallback = actions.async { req => validator.validateCallback(req).unsafeToFuture() }
 }

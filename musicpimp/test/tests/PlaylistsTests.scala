@@ -2,6 +2,7 @@ package tests
 
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.FullUrl
+import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.json.JsonStrings
@@ -20,6 +21,8 @@ import play.api.test.Helpers._
 import scala.concurrent.duration.DurationInt
 
 class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
+  override def pimpOptions: InitOptions = TestOptions.default
+
   implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)

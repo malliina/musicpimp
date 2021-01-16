@@ -63,7 +63,7 @@ class SettingsController(
 
   def newFolder = pimpAction { request =>
     newFolderForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, formBinding)
       .fold(
         formWithErrors => {
           log warn s"Errors: ${formWithErrors.errors}"

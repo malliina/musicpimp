@@ -10,7 +10,7 @@ import com.malliina.play.http.Proxies
 import com.malliina.values.{Password, Username}
 import controllers.pimpcloud.Web.{cloudForm, forms, log}
 import play.api.Logger
-import play.api.data.Form
+import play.api.data.{Form, FormBinding}
 import play.api.data.Forms._
 import play.api.mvc._
 
@@ -41,15 +41,13 @@ class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthen
     Caching.NoCache(Ok(BuildMeta.default))
   }
 
-  def login = Action { req =>
-    Ok(loginPage(cloudForm, req.flash))
-  }
+  def login = Action { req => Ok(loginPage(cloudForm, req.flash)) }
 
   def formAuthenticate = Action.async { request =>
     val flash = request.flash
     val remoteAddress = Proxies.realAddress(request)
     cloudForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, FormBinding.Implicits.formBinding)
       .fold(
         formWithErrors => {
           val user = formWithErrors.data.getOrElse(forms.userFormKey, "")

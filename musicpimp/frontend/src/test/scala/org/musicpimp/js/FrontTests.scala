@@ -1,15 +1,14 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.models.{CloudCommand, CloudID, Connect, Disconnect}
-import org.scalatest.FunSuite
 import play.api.libs.json.{Json, Writes}
 
 import scala.concurrent.duration.DurationInt
 import scalatags.Text.all._
 
-class FrontTests extends FunSuite {
+class FrontTests extends munit.FunSuite {
   test("trivial") {
-    assert(2 - 1 == 1)
+    assertEquals(2 - 1, 1)
   }
 
   test("scalatags") {
@@ -19,15 +18,15 @@ class FrontTests extends FunSuite {
 
   test("formatting") {
     val formatted = Playback.toHHMMSS(123.seconds)
-    assert(formatted == "02:03")
+    assertEquals(formatted, "02:03")
     val formatted2 = Playback.toHHMMSS(4123.seconds)
-    assert(formatted2 == "01:08:43")
+    assertEquals(formatted2, "01:08:43")
   }
 
   test("JSON") {
-    val asString = stringify(Connect(CloudID("test")))
+    val asString = stringify(Connect(CloudID("test")): CloudCommand)
     assert(asString contains CloudCommand.CmdKey)
-    assert(stringify(Disconnect) contains CloudCommand.CmdKey)
+    assert(stringify(Disconnect: CloudCommand) contains CloudCommand.CmdKey)
   }
 
   def stringify[C: Writes](c: C) = Json.stringify(Json.toJson(c))

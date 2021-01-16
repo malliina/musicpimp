@@ -11,35 +11,59 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{CloudID, TrackID}
 import com.malliina.pimpcloud.{PimpPhone, PimpPhones, PimpServer, PimpServers, PimpStreams}
 import com.malliina.http.FullUrl
+import com.malliina.musicpimp.app.InitOptions
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Utils
 import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
+import munit.FunSuite
 import org.apache.commons.codec.binary.Base64
-import play.api.Application
+import play.api.{Application, BuiltInComponents}
+import play.api.ApplicationLoader.Context
 import play.api.http.HeaderNames
 import play.api.libs.json.{JsValue, Json, Writes}
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Result
-import play.api.test.FakeRequest
+import play.api.test.{DefaultTestServerFactory, FakeRequest, RunningServer}
 import play.api.test.Helpers._
 import tests._
 
 import scala.concurrent.Promise
 
-abstract class PimpcloudServerSuite extends ServerSuite(new TestComponents(_))
+trait ServerPerSuite2[T <: BuiltInComponents] { self: FunSuite =>
+  def createComponents(context: Context): T
+  lazy val serverComponents = createComponents(TestAppLoader.createTestAppContext)
+  val testServer: Fixture[RunningServer] = new Fixture[RunningServer]("test-server") {
+    private var runningServer: RunningServer = null
+    def apply() = runningServer
+    override def beforeAll(): Unit = {
+      runningServer = DefaultTestServerFactory.start(serverComponents.application)
+    }
+    override def afterAll(): Unit = {
+      runningServer.stopServer.close()
+    }
+  }
+  def port = testServer().endpoints.httpEndpoint.map(_.port).get
 
-class IntegrationTest extends PimpcloudServerSuite {
-  val cloudPort = port
+  override def munitFixtures: Seq[Fixture[_]] = Seq(testServer)
+}
+
+abstract class PimpcloudServerSuite extends FunSuite with ServerPerSuite2[TestComponents] {
+  override def createComponents(context: Context): TestComponents = new TestComponents(context)
+}
+
+class IntegrationTest extends PimpcloudServerSuite with MusicPimpSuite {
+  def cloudPort = port
   implicit val mat = components.materializer
-  val cloudHostPort = s"localhost:$cloudPort"
-  val pimpcloudUri = FullUrl("ws", cloudHostPort, CloudSocket.path)
-  val pimpOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
-  val musicpimp = new MusicPimpSuite(pimpOptions)
-  val cloudClient = musicpimp.components.clouds
-  val library = musicpimp.components.library
-  val pimp = musicpimp.app
+  def cloudHostPort = s"localhost:$cloudPort"
+  def pimpcloudUri = FullUrl("ws", cloudHostPort, CloudSocket.path)
+  def pimpOptions: InitOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
+//  val musicpimp = new MusicPimpSuite(pimpOptions)
+  def musicpimp = components
+  def cloudClient = musicpimp.clouds
+  def library = musicpimp.library
+  def pimp = musicpimp.application
   val httpClient = AhcWSClient()
   val adminPath = "/admin/usage"
   val phonePath = "/ws/playback"
@@ -116,8 +140,7 @@ class IntegrationTest extends PimpcloudServerSuite {
 
     def onJson(json: JsValue): Unit = {
       json.validate[PimpStreams].map(_.streams.map(_.track.title)).filter(_.nonEmpty).foreach {
-        titles =>
-          p success titles.head
+        titles => p success titles.head
       }
     }
 
@@ -160,7 +183,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     withCloudTrack("folder-test") { (_, _, cloudId) =>
       val r = makeGet("/folders?f=json", cloudId)
       assert(r.status == 200)
-      await(musicpimp.components.indexer.index().runWith(Sink.seq))
+      await(musicpimp.indexer.index().runWith(Sink.seq))
       val _ = makeGet("/folders?f=json", cloudId)
       val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
       assert(r3.status == 200)
@@ -182,6 +205,8 @@ class IntegrationTest extends PimpcloudServerSuite {
       assert(r.status == 200)
     }
   }
+
+  override def munitFixtures: Seq[Fixture[_]] = Seq(testServer, testApp)
 
   class TestHandler {
     val requests = Promise[JsValue]()
@@ -210,7 +235,7 @@ class IntegrationTest extends PimpcloudServerSuite {
     val created = Files.createDirectories(trackFolder.resolve("Svårt (är det)"))
     Files.createTempFile(created, "temp", ".mp3")
     library.setFolders(Seq(trackFolder))
-    val _ = await(musicpimp.components.indexer.index().runWith(Sink.seq))
+    val _ = await(musicpimp.indexer.index().runWith(Sink.seq))
     val file = library.findAbsoluteNew(UnixPath(trackFile.getFileName))
     assert(file.isDefined)
     withCloud(desiredId) { cloudId =>

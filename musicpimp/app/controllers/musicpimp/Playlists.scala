@@ -75,14 +75,12 @@ class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extend
     service.delete(id, req.user).map(_ => Accepted)
   }
 
-  def edit = parsedRecoveredAsync(parsers.json) { req =>
-    fut(Ok)
-  }
+  def edit = parsedRecoveredAsync(parsers.json) { req => fut(Ok) }
 
   def handleSubmission = recoveredAsync { req =>
     val user = req.user
     playlistForm
-      .bindFromRequest()(req)
+      .bindFromRequest()(req, formBinding)
       .fold(
         errors => {
           service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user)))

@@ -4,20 +4,20 @@ import java.nio.file.{Files, Path, Paths}
 
 import akka.actor.ActorSystem
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
+import munit.FunSuite
 import org.apache.commons.io.FileUtils
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class TestBase extends FunSuite with BeforeAndAfterAll {
+class TestBase extends FunSuite {
   implicit val as: ActorSystem = ActorSystem()
   implicit val ec: ExecutionContext = as.dispatcher
 
-  override protected def afterAll(): Unit = {
-    await(as.terminate())
-    super.afterAll()
-  }
+//  override protected def afterAll(): Unit = {
+//    await(as.terminate())
+//    super.afterAll()
+//  }
 
   def await[T](f: Future[T], duration: FiniteDuration = 10.seconds) = Await.result(f, duration)
 

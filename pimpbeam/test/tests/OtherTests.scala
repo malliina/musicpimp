@@ -1,11 +1,11 @@
 package tests
 
-import com.malliina.http.WebUtils
+import com.malliina.util.WebUtils.encodeURIComponent
 
 class OtherTests extends munit.FunSuite {
   test("WebUtils.encodeURIComponent") {
-    val artist = WebUtils.encodeURIComponent("iron maiden")
-    val album = WebUtils.encodeURIComponent("somewhere in time")
+    val artist = encodeURIComponent("iron maiden")
+    val album = encodeURIComponent("somewhere in time")
     val myUri = s"http://api.discogs.com/database/search?artist=$artist&release_title=$album"
     val expected =
       "http://api.discogs.com/database/search?artist=iron%20maiden&release_title=somewhere%20in%20time"

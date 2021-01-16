@@ -11,16 +11,16 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
 
 class PlaybackTests extends TestBase {
-  ignore("can play mp3 and can get duration, position") {
+  test("can play mp3 and can get duration, position".ignore) {
     withTestTrack { player =>
-      assert(player.duration.toSeconds === 12)
+      assertEquals(player.duration.toSeconds.toInt, 12)
       player.play()
       Thread.sleep(4000)
       assert(player.position.toSeconds > 2)
     }
   }
 
-  ignore("can seek and get position afterwards") {
+  test("can seek and get position afterwards".ignore) {
     withTestTrack { player =>
       player.play()
       sleep(100.millis)
@@ -30,7 +30,7 @@ class PlaybackTests extends TestBase {
     }
   }
 
-  ignore("can seek backwards") {
+  test("can seek backwards".ignore) {
     withTestTrack { player =>
       player.play()
       sleep(10.millis)
@@ -44,7 +44,7 @@ class PlaybackTests extends TestBase {
     }
   }
 
-  ignore("can stream") {
+  test("can stream".ignore) {
     val file = ensureTestMp3Exists()
     val stream = StreamSource.fromFile(file).toOneShot
     val player = new JavaSoundPlayer(stream)
@@ -64,8 +64,8 @@ class PlaybackTests extends TestBase {
     }
   }
 
-  ignore(
-    "playing an empty PipedInputStream blocks, and throws 'IOException: mark/reset not supported' when its PipedOutputStream is closed"
+  test(
+    "playing an empty PipedInputStream blocks, and throws 'IOException: mark/reset not supported' when its PipedOutputStream is closed".ignore
   ) {
     val dur = 1.minute
     val size = 100.megs
@@ -87,7 +87,7 @@ class PlaybackTests extends TestBase {
     in.close()
   }
 
-  ignore("onEndOfMedia fires when a track finishes playback") {
+  test("onEndOfMedia fires when a track finishes playback".ignore) {
     withTestTrack { p =>
       p.play()
       sleep(100.millis)
@@ -96,7 +96,7 @@ class PlaybackTests extends TestBase {
       val promise = Promise[PlayerStates.PlayerState]()
       p.events.filter(_ == PlayerStates.EndOfMedia).runForeach(o => promise.trySuccess(o))
       val maybeEom = await(promise.future, 20.seconds)
-      assert(maybeEom === PlayerStates.EndOfMedia)
+      assertEquals(maybeEom, PlayerStates.EndOfMedia)
     }
   }
 }

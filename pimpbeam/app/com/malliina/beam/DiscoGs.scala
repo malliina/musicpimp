@@ -1,6 +1,6 @@
 package com.malliina.beam
 
-import com.malliina.http.WebUtils
+import com.malliina.util.WebUtils.encodeURIComponent
 import play.api.libs.ws.{WSClient, WSRequest}
 
 class DiscoGs(http: WSClient) {
@@ -8,8 +8,8 @@ class DiscoGs(http: WSClient) {
     http.url(coverUrl(artist, album))
 
   def coverUrl(artist: String, album: String): String = {
-    val artistEnc = WebUtils.encodeURIComponent(artist)
-    val albumEnc = WebUtils.encodeURIComponent(album)
+    val artistEnc = encodeURIComponent(artist)
+    val albumEnc = encodeURIComponent(album)
     s"https://api.musicpimp.org/covers?artist=$artistEnc&album=$albumEnc"
   }
 

@@ -30,8 +30,9 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   val userManager = auth.userManager
   val rememberMe = auth.rememberMe
   val invalidCredentialsMessage = "Invalid credentials."
-  val defaultCredentialsMessage = s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
-    s"Consider changing the password under the Manage tab once you have logged in."
+  val defaultCredentialsMessage =
+    s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
+      s"Consider changing the password under the Manage tab once you have logged in."
   val passwordChangedMessage = "Password successfully changed."
   val logoutMessage = "You have now logged out."
   val incorrectPasswordMessage = "Incorrect password."
@@ -88,7 +89,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
 
   def formAddUser = pimpActionAsync { request =>
     addUserForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, formBinding)
       .fold(
         formWithErrors => {
           val user = formWithErrors.data.getOrElse(userFormKey, "")
@@ -120,7 +121,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
     val remoteAddress = request.realAddress
     val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
     rememberMeLoginForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, formBinding)
       .fold(
         formWithErrors => {
           val user = formWithErrors.data.getOrElse(userFormKey, "")
@@ -166,7 +167,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
     val remoteAddress = request.realAddress
     val user = request.user
     accs.changePasswordForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, formBinding)
       .fold(
         errors => {
           val feedback = UserFeedback.formed(errors)

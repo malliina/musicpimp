@@ -7,6 +7,7 @@ import com.malliina.concurrent.Execution
 import com.malliina.http.DiscoClient.{keys, log}
 import com.malliina.oauth.DiscoGsOAuthCredentials
 import com.malliina.storage._
+import com.malliina.util.WebUtils.encodeURIComponent
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 import play.api.http.HeaderNames.AUTHORIZATION
@@ -122,8 +123,8 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(
   }
 
   private def albumIdUrl(artist: String, album: String): FullUrl = {
-    val artistEnc = WebUtils.encodeURIComponent(artist)
-    val albumEnc = WebUtils.encodeURIComponent(album)
+    val artistEnc = encodeURIComponent(artist)
+    val albumEnc = encodeURIComponent(album)
     FullUrl.https("api.discogs.com", s"/database/search?artist=$artistEnc&release_title=$albumEnc")
   }
 

@@ -3,20 +3,21 @@ package controllers.pimpcloud
 import akka.stream.Materializer
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.OkClient
+import com.malliina.http.io.HttpClientIO
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.auth.{
-  AuthConf,
   AuthFailure,
   Authenticator,
   BasicAuthHandler,
   GoogleCodeValidator,
   OAuthConf,
-  PermissionError,
   UserAuthenticator
 }
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
-import com.malliina.play.http.AuthedRequest
+import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.values.{Email, ErrorMessage}
+import com.malliina.web.OAuthKeys.LoginHint
+import com.malliina.web.{AuthConf, ClientId, ClientSecret, PermissionError}
 import play.api.Logger
 import play.api.http.Writeable
 import play.api.mvc.Results.Ok
@@ -73,18 +74,19 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
     returnUriKey = BasicAuthHandler.DefaultReturnUriKey
   )
-  val conf = AuthConf(creds.clientId, creds.clientSecret)
-  val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback(), handler, conf, OkClient.default)
+  val conf = AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret))
+  val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback(), handler, conf, HttpClientIO())
   val validator = GoogleCodeValidator(oauthConf)
 
   def googleStart = actions.async { req =>
     val lastId = req.cookies.get(handler.lastIdKey).map(_.value)
     val described = lastId.fold("without login hint")(h => s"with login hint '$h'")
     log.info(s"Starting OAuth flow $described.")
-    validator.startHinted(req, lastId)
+    val redirUrl = FullUrls(oauthConf.redirCall, req)
+    validator
+      .start(req, lastId.map(id => Map(LoginHint -> id)).getOrElse(Map.empty))
+      .unsafeToFuture()
   }
 
-  def googleCallback = actions.async { req =>
-    validator.validateCallback(req)
-  }
+  def googleCallback = actions.async { req => validator.validateCallback(req).unsafeToFuture() }
 }

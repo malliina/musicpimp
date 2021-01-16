@@ -3,7 +3,7 @@ package controllers.musicpimp
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Sink}
 import com.malliina.logback.akka.DefaultAkkaAppender
-import com.malliina.logbackrx.LogbackUtils
+import com.malliina.logback.LogbackUtils
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.models.Errors
 import com.malliina.play.ActorExecution

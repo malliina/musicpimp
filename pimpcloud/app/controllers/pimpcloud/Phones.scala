@@ -18,7 +18,7 @@ import com.malliina.pimpcloud.json.JsonStrings._
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{BaseSecurity, Caching}
-import com.malliina.play.http.HttpConstants
+import com.malliina.web.HttpConstants
 import com.malliina.play.tags.TagPage
 import com.malliina.play.{ContentRange, ContentRanges}
 import controllers.pimpcloud.Phones.log
@@ -125,9 +125,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
       val result = sourceServer.requestTrack(track, rangeOrAll, req)
       // ranged request support
       val fileName = name(track, in)
-      rangeTry.map { range =>
-        result.withHeaders(CONTENT_RANGE -> range.contentRange)
-      }.getOrElse {
+      rangeTry.map { range => result.withHeaders(CONTENT_RANGE -> range.contentRange) }.getOrElse {
         result.withHeaders(trackHeaders(fileName): _*)
       }
     }
@@ -143,9 +141,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
         conn
           .meta(id)
           .map[Result] { res =>
-            res.map { track =>
-              code(track, conn, req)
-            }.getOrElse {
+            res.map { track => code(track, conn, req) }.getOrElse {
               log.error(s"Found no info about track '$id', failing request.")
               badGatewayDefault
             }
@@ -221,9 +217,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
 
   private def executeFolder[W: Writes](cmd: String, build: RequestHeader => Either[String, W]) =
     execute[W, TagPage](cmd, build) { json =>
-      json.validate[Directory].map { dir =>
-        tags.index(dir, None)
-      }
+      json.validate[Directory].map { dir => tags.index(dir, None) }
     }
 
   private def execute[W: Writes, C: Writeable](
@@ -263,9 +257,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
         parsedBody =>
           phone
             .makeRequest(cmd, parsedBody)
-            .map { response =>
-              toResult(req, response)
-            }
+            .map { response => toResult(req, response) }
             .recover {
               case t =>
                 log.error("Phone request failed.", t)

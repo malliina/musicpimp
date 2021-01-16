@@ -24,7 +24,7 @@ trait MusicPimpSuite { self: munit.FunSuite =>
       embedded = EmbeddedMySQL.temporary
       comps = new PimpComponents(
         TestAppLoader.createTestAppContext,
-        TestOptions.default,
+        pimpOptions,
         _ => new TestAppConf(embedded.conf)
       )
       Play.start(comps.application)
@@ -35,7 +35,8 @@ trait MusicPimpSuite { self: munit.FunSuite =>
       embedded.stop()
     }
   }
-  override def munitFixtures = Seq(testApp)
+  override def munitFixtures: Seq[Fixture[_]] = Seq(testApp)
   def components = testApp()
   def app = components.application
+  def pimpOptions: InitOptions
 }

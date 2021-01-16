@@ -9,6 +9,7 @@ import com.malliina.play.http._
 import com.malliina.values.Username
 import controllers.musicpimp.SecureBase.log
 import play.api.Logger
+import play.api.data.FormBinding
 import play.api.http.Writeable
 import play.api.libs.Files.TemporaryFile
 import play.api.libs.{Files => PlayFiles}
@@ -22,6 +23,7 @@ class SecureBase(auth: AuthDeps)
   val Action = comps.actionBuilder
   val parsers = comps.parsers
   val defaultParser = parsers.default
+  implicit val formBinding: FormBinding = play.api.data.FormBinding.Implicits.formBinding
 
   val uploads = PimpUploads
 

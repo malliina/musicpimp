@@ -39,7 +39,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
 
   def toggle = pimpParsedActionAsync(parsers.default) { request =>
     cloudForm
-      .bindFromRequest()(request)
+      .bindFromRequest()(request, formBinding)
       .fold(
         formErrors => {
           log debug s"Form errors: $formErrors"
@@ -57,13 +57,12 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
               .connect(maybeID)
               .map(_ => redir)
               .recover(
-                errorMessage andThen (
-                  msg =>
-                    redir.flashing(
-                      UserFeedback.Feedback -> msg,
-                      UserFeedback.Success -> UserFeedback.No
-                    )
+                errorMessage andThen (msg =>
+                  redir.flashing(
+                    UserFeedback.Feedback -> msg,
+                    UserFeedback.Success -> UserFeedback.No
                   )
+                )
               )
           }
         }

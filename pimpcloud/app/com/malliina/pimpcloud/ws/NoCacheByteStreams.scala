@@ -13,7 +13,8 @@ import com.malliina.musicpimp.models.{CloudID, RangedRequest, RequestID, Wrapped
 import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.{ByteStringBufferSize, DetachedMessage, log}
-import com.malliina.play.http.{HttpConstants, Proxies}
+import com.malliina.play.http.Proxies
+import com.malliina.web.HttpConstants.AudioMpeg
 import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
@@ -91,9 +92,7 @@ class NoCacheByteStreams(
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails
     val src = source.watchTermination()((_, task) =>
-      task.onComplete { res =>
-        remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
-      }
+      task.onComplete { res => remove(request, shouldAbort = true, wasSuccess = res.isSuccess) }
     )
     connectSource(request, src, track, range)
   }
@@ -108,9 +107,7 @@ class NoCacheByteStreams(
     val desc = if (wasSuccess) "successful" else "failed"
     val description = s"$desc request '$request'"
     val disposal = disposeUUID(request).map { fut =>
-      fut.map { _ =>
-        log info s"Removed $description"
-      }.recover {
+      fut.map { _ => log info s"Removed $description" }.recover {
         case ist: IllegalStateException if Option(ist.getMessage).contains(DetachedMessage) =>
           log info s"Removed $description after detachment"
         case sde: StreamDetachedException =>
@@ -140,7 +137,7 @@ class NoCacheByteStreams(
     val entity = HttpEntity.Streamed(
       source,
       Option(range.contentLength.toLong),
-      Option(HttpConstants.AudioMpeg)
+      Option(AudioMpeg)
     )
     val result = status.sendEntity(entity)
     connect(request, track, range)

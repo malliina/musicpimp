@@ -42,10 +42,8 @@ class StreamTests extends munit.FunSuite {
     val allRange = Util.using(RangedInputStream(path, range)) { stream =>
       IOUtils.toByteArray(stream)
     }
-    val fileRange = Util.using(new FileInputStream(file)) { stream =>
-      IOUtils.toByteArray(stream)
-    }
+    val fileRange = Util.using(new FileInputStream(file)) { stream => IOUtils.toByteArray(stream) }
     assertEquals(allRange.length, fileRange.length)
-    assertEquals(allRange, fileRange)
+    assert(allRange.sameElements(fileRange))
   }
 }

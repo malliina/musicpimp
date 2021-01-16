@@ -5,7 +5,7 @@ import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.values.Username
-
+import io.getquill._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
@@ -18,9 +18,7 @@ object NewPlaylist {
         val idx = acc.indexWhere(_.id == row.id)
         if (idx >= 0) {
           val old = acc(idx)
-          row.track.fold(acc) { l =>
-            acc.updated(idx, old.copy(tracks = old.tracks :+ l.track))
-          }
+          row.track.fold(acc) { l => acc.updated(idx, old.copy(tracks = old.tracks :+ l.track)) }
         } else {
           acc :+ SavedPlaylist(
             row.id,
@@ -91,8 +89,7 @@ class NewPlaylist(val db: PimpMySQL) extends PlaylistService {
   protected def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]] =
     performAsync(s"Load playlist $id by $user") {
       runIO(playlistQuery(playlistsTable.filter(pl => pl.user == lift(user) && pl.id == lift(id)))).map {
-        rows =>
-          collectPlaylists(rows).headOption
+        rows => collectPlaylists(rows).headOption
       }
     }
 
@@ -109,9 +106,8 @@ class NewPlaylist(val db: PimpMySQL) extends PlaylistService {
     }.getOrElse {
       IO.successful(true)
     }
-    val idTask: IO[PlaylistID, Effect.Write] = playlist.id.map { id =>
-      IO.successful(id)
-    }.getOrElse {
+    val idTask
+      : IO[PlaylistID, Effect.Write] = playlist.id.map { id => IO.successful(id) }.getOrElse {
       runIO(
         playlistsTable
           .insert(_.name -> lift(playlist.name), _.user -> lift(user))

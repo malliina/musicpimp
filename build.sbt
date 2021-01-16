@@ -38,20 +38,20 @@ val sharedVersion = "1.14.0"
 val crossVersion = "1.14.0"
 
 val utilAudioVersion = "2.9.0"
-val primitivesVersion = "1.15.0"
-val playJsonVersion = "2.8.1"
-val scalaTagsVersion = "0.8.4"
-val utilPlayVersion = "5.8.0"
-val httpVersion = "4.5.12"
-val mysqlVersion = "5.1.48"
-val nvWebSocketVersion = "2.9"
-val munitVersion = "0.7.3"
+val primitivesVersion = "1.18.0"
+val playJsonVersion = "2.9.2"
+val scalaTagsVersion = "0.9.2"
+val utilPlayVersion = "6.0.0"
+val httpVersion = "4.5.13"
+val mysqlVersion = "5.1.49"
+val nvWebSocketVersion = "2.10"
+val munitVersion = "0.7.20"
 val akkaStreamsVersion = "2.6.1"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.8.2"
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.10.1"
 
 val httpGroup = "org.apache.httpcomponents"
 
@@ -91,7 +91,7 @@ val cross = portableProject(JSPlatform, JVMPlatform)
       malliinaGroup %%% "util-html" % utilPlayVersion
     )
   )
-  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "0.9.5")
+  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "1.0.0")
 val crossJvm = cross.jvm
 val crossJs = cross.js
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
@@ -108,10 +108,10 @@ val shared = Project("pimp-shared", file("shared"))
   .settings(
     version := sharedVersion,
     libraryDependencies ++= Seq(
-      "io.getquill" %% "quill-jdbc" % "3.5.0",
-      "org.flywaydb" % "flyway-core" % "6.0.3",
+      "io.getquill" %% "quill-jdbc" % "3.6.0",
+      "org.flywaydb" % "flyway-core" % "7.5.0",
       "mysql" % "mysql-connector-java" % mysqlVersion,
-      malliinaGroup %% "mobile-push" % "1.22.0",
+      malliinaGroup %% "mobile-push" % "1.24.1",
       utilPlayDep
     )
   )
@@ -165,7 +165,7 @@ val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") /
   .settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-      "be.doeraene" %%% "scalajs-jquery" % "0.9.5",
+      "be.doeraene" %%% "scalajs-jquery" % "1.0.0",
       "com.typesafe.play" %%% "play-json" % playJsonVersion,
       "com.malliina" %%% "primitives" % primitivesVersion
     ),
@@ -186,7 +186,7 @@ val musicmeta = project
     scalaJSProjects := Seq(musicmetaFrontend),
     pipelineStages in Assets := Seq(scalaJSPipeline),
     libraryDependencies ++= Seq(
-      "commons-codec" % "commons-codec" % "1.14",
+      "commons-codec" % "commons-codec" % "1.15",
       logstreamsDep,
       malliinaGroup %% "play-social" % utilPlayVersion,
       utilPlayDep,
@@ -269,14 +269,14 @@ lazy val pimpPlaySettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "util-base" % primitivesVersion,
+        malliinaGroup %% "okclient-io" % primitivesVersion,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "mysql" % "mysql-connector-java" % mysqlVersion,
         "com.neovisionaries" % "nv-websocket-client" % nvWebSocketVersion,
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        "org.scala-stm" %% "scala-stm" % "0.9.1",
+        "org.scala-stm" %% "scala-stm" % "0.11.0",
         "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0"
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
@@ -447,9 +447,9 @@ lazy val pimpcloudLinuxSettings = Seq(
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
   libraryDependencies ++= Seq(
-    "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
-    "org.eclipse.jetty" % "jetty-alpn-java-client" % "9.4.20.v20190813",
-    "com.typesafe.akka" %% "akka-http" % "10.1.11"
+    "org.eclipse.jetty" % "jetty-alpn-java-server" % "11.0.0",
+    "org.eclipse.jetty" % "jetty-alpn-java-client" % "11.0.0",
+    "com.typesafe.akka" %% "akka-http" % "10.2.2"
   )
 )
 
@@ -527,7 +527,6 @@ def scalajsProject(name: String, path: File) =
         new TestFramework("munit.Framework")
       ),
       version in webpack := "4.35.2",
-      emitSourceMaps := false,
       webpackEmitSourceMaps := false,
       scalaJSUseMainModuleInitializer := true,
       webpackBundlingMode := BundlingMode.LibraryOnly(),

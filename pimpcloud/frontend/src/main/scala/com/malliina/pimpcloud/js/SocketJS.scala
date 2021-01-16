@@ -7,5 +7,5 @@ import scala.scalajs.js
 
 abstract class SocketJS(wsPath: String)
   extends BaseSocket(wsPath, CloudStrings.Hidden, BaseLogger.noop) {
-  def global = js.Dynamic.global
+//  def global = js.Dynamic.global
 }

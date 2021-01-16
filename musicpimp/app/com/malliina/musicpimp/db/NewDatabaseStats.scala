@@ -5,7 +5,7 @@ import java.time.Instant
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularEntry, RecentEntry}
 import com.malliina.values.Username
-
+import io.getquill._
 import scala.concurrent.Future
 
 object NewDatabaseStats {
@@ -35,11 +35,7 @@ class NewDatabaseStats(val db: PimpMySQL) extends PlaybackStats {
           .sortBy(_.record.started)(Ord.desc)
           .drop(lift(request.from))
           .take(lift(request.maxItems))
-      ).map { recs =>
-        recs.map { r =>
-          RecentEntry(r.track, r.record.started)
-        }
-      }
+      ).map { recs => recs.map { r => RecentEntry(r.track, r.record.started) } }
     }
 
   def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]] =
@@ -52,8 +48,6 @@ class NewDatabaseStats(val db: PimpMySQL) extends PlaybackStats {
           .map { case (track, count, _) => (track, count) }
           .drop(lift(request.from))
           .take(lift(request.maxItems))
-      ).map { rows =>
-        rows.map { case (track, count) => PopularEntry(track, count.toInt) }
-      }
+      ).map { rows => rows.map { case (track, count) => PopularEntry(track, count.toInt) } }
     }
 }

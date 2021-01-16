@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.db.FullText.log
+import io.getquill._
 import play.api.Logger
 
 import scala.concurrent.Future
