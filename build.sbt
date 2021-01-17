@@ -32,9 +32,9 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.25.0"
-val pimpcloudVersion = "1.30.0"
-val sharedVersion = "1.15.0"
+val musicpimpVersion = "4.25.1"
+val pimpcloudVersion = "1.30.1"
+val sharedVersion = "1.15.1"
 val crossVersion = "1.15.0"
 
 val utilAudioVersion = "2.9.0"
@@ -447,8 +447,8 @@ lazy val pimpcloudLinuxSettings = Seq(
   packageSummary in Linux := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
   libraryDependencies ++= Seq(
-    "org.eclipse.jetty" % "jetty-alpn-java-server" % "11.0.0",
-    "org.eclipse.jetty" % "jetty-alpn-java-client" % "11.0.0"
+    "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
+    "org.eclipse.jetty" % "jetty-alpn-java-client" % "9.4.20.v20190813"
   )
 )
 
@@ -480,8 +480,10 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     scalaVersion,
     "gitHash" -> gitHash
   ),
-  RoutesKeys.routesGenerator := InjectedRoutesGenerator,
   libraryDependencies ++= defaultDeps ++ Seq(
+    "org.slf4j" % "slf4j-api" % "1.7.30",
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "ch.qos.logback" % "logback-core" % "1.2.3",
     "com.typesafe.akka" %% "akka-http" % "10.1.13", // sbt dep error workaround
     "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.13",
     "org.scalameta" %% "munit" % munitVersion % Test

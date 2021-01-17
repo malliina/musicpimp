@@ -15,7 +15,15 @@ import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
 import play.api.http.HttpConfiguration
 import play.api.mvc.EssentialFilter
-import play.api.{BuiltInComponentsFromContext, Configuration, Logger, Mode}
+import play.api.{
+  Application,
+  ApplicationLoader,
+  BuiltInComponentsFromContext,
+  Configuration,
+  Logger,
+  LoggerConfigurator,
+  Mode
+}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
 import play.filters.headers.SecurityHeadersConfig
@@ -49,8 +57,14 @@ object AppConf {
     else prod
 }
 
-class CloudLoader
-  extends DefaultApp(ctx => new CloudComponents(ctx, AppConf.forMode(ctx.environment.mode)))
+class CloudLoader extends ApplicationLoader {
+  override def load(context: Context): Application = {
+    val environment = context.environment
+    LoggerConfigurator(environment.classLoader)
+      .foreach(_.configure(environment))
+    new CloudComponents(context, AppConf.forMode(environment.mode)).application
+  }
+}
 
 object NoPusher extends Pusher {
   override def push(pushTask: PushTask): Future[PushResult] =
@@ -111,7 +125,7 @@ class CloudComponents(context: Context, conf: AppConf)
   lazy val as = new Assets(httpErrorHandler, assetsMetadata)
   lazy val router =
     new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
-  log info s"Started pimpcloud ${BuildInfo.version}"
+  log.info(s"Started pimpcloud ${BuildInfo.version}")
 
   applicationLifecycle.addStopHook(() =>
     Future.successful {
