@@ -448,8 +448,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   rpmVendor := "Skogberg Labs",
   libraryDependencies ++= Seq(
     "org.eclipse.jetty" % "jetty-alpn-java-server" % "11.0.0",
-    "org.eclipse.jetty" % "jetty-alpn-java-client" % "11.0.0",
-    "com.typesafe.akka" %% "akka-http" % "10.1.12"
+    "org.eclipse.jetty" % "jetty-alpn-java-client" % "11.0.0"
   )
 )
 
@@ -483,6 +482,8 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
   ),
   RoutesKeys.routesGenerator := InjectedRoutesGenerator,
   libraryDependencies ++= defaultDeps ++ Seq(
+    "com.typesafe.akka" %% "akka-http" % "10.1.13", // sbt dep error workaround
+    "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.13",
     "org.scalameta" %% "munit" % munitVersion % Test
   ),
   testFrameworks += new TestFramework("munit.Framework")
