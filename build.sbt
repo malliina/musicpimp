@@ -449,7 +449,7 @@ lazy val pimpcloudLinuxSettings = Seq(
   libraryDependencies ++= Seq(
     "org.eclipse.jetty" % "jetty-alpn-java-server" % "11.0.0",
     "org.eclipse.jetty" % "jetty-alpn-java-client" % "11.0.0",
-    "com.typesafe.akka" %% "akka-http" % "10.2.2"
+    "com.typesafe.akka" %% "akka-http" % "10.1.12"
   )
 )
 
