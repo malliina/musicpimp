@@ -1,22 +1,30 @@
 package com.malliina.pimpcloud.js
 
 import java.util.UUID
-
 import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
+import com.malliina.pimpcloud.js.LogsJS.randomString
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.{JsValue, Json}
-
 import scalatags.Text.all._
 
-case class JVMLogEntry(level: String,
-                       message: String,
-                       loggerName: String,
-                       threadName: String,
-                       timeFormatted: String,
-                       stackTrace: Option[String] = None)
+case class JVMLogEntry(
+  level: String,
+  message: String,
+  loggerName: String,
+  threadName: String,
+  timeFormatted: String,
+  stackTrace: Option[String] = None
+)
 
 object JVMLogEntry {
   implicit val json = Json.format[JVMLogEntry]
+}
+
+object LogsJS {
+  private val chars = "abcdefghijklmnopqrstuvwxyz"
+
+  private def randomString(ofLength: Int): String =
+    (0 until ofLength).map { _ => chars.charAt(math.floor(math.random() * chars.length).toInt) }.mkString
 }
 
 class LogsJS extends SocketJS("/admin/ws?f=json") {
@@ -25,19 +33,17 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
   val tableContent = elem(LogTableBodyId)
 
   override def handlePayload(payload: JsValue): Unit = {
-    handleValidated[Seq[JVMLogEntry]](payload) { logs =>
-      logs foreach prepend
-    }
+    handleValidated[Seq[JVMLogEntry]](payload) { logs => logs foreach prepend }
   }
 
   def prepend(entry: JVMLogEntry) = {
     val rowClass = entry.level match {
       case "ERROR" => "danger"
-      case "WARN" => "warning"
-      case _ => ""
+      case "WARN"  => "warning"
+      case _       => ""
     }
     val level = entry.level
-    val entryId = UUID.randomUUID().toString take 5
+    val entryId = randomString(5)
     val rowId = s"row-$entryId"
     val linkId = s"link-$entryId"
     val msgCellId = s"msg-$entryId"

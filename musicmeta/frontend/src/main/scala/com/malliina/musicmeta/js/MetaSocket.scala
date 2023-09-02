@@ -61,7 +61,12 @@ class MetaSocket {
   def row(event: LogEvent) = {
     val opening = if (event.isError) tr(`class` := "danger") else tr
     val verboseClass = names("verbose", if (isVerbose) "" else "off")
-    opening(td(event.timeFormatted), td(event.message), td(`class` := verboseClass)(event.loggerName), td(event.level))
+    opening(
+      td(event.timeFormatted),
+      td(event.message),
+      td(`class` := verboseClass)(event.loggerName),
+      td(event.level)
+    )
   }
 
   def onConnected(e: Event): Unit = updateStatus("Connected.")

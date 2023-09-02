@@ -1,12 +1,18 @@
 package tests
 
-import com.malliina.musicpimp.app.{AppConf, EmbeddedMySQL, InitOptions, PimpComponents}
+import com.malliina.musicpimp.app.{AppConf, EmbeddedMySQL, InitOptions, LocalConf, PimpComponents}
 import com.malliina.musicpimp.db.Conf
-import play.api.Play
+import com.typesafe.config.ConfigFactory
+import play.api.{Configuration, Play}
 
 object TestOptions {
   val default =
     InitOptions(alarms = false, users = true, indexer = false, cloud = false)
+}
+
+object TestAppConf {
+  val testConfFile = LocalConf.userHome.resolve(".musicpimp/musicpimp-test.conf")
+  val testConf = Configuration(ConfigFactory.parseFile(testConfFile.toFile))
 }
 
 class TestAppConf(conf: Conf) extends AppConf {
@@ -17,22 +23,22 @@ class TestAppConf(conf: Conf) extends AppConf {
 trait MusicPimpSuite { self: munit.FunSuite =>
   val testApp: Fixture[PimpComponents] = new Fixture[PimpComponents]("pimp-app") {
     private var comps: PimpComponents = null
-    private var embedded: EmbeddedMySQL = null
     override def apply() = comps
 
     override def beforeAll(): Unit = {
-      embedded = EmbeddedMySQL.temporary
+      val dbConf =
+        Conf.fromConf(TestAppConf.testConf).fold(err => throw new Exception(err.message), identity)
       comps = new PimpComponents(
         TestAppLoader.createTestAppContext,
         pimpOptions,
-        _ => new TestAppConf(embedded.conf)
+        TestAppConf.testConf,
+        _ => new TestAppConf(dbConf)
       )
       Play.start(comps.application)
     }
 
     override def afterAll(): Unit = {
       Play.stop(comps.application)
-      embedded.stop()
     }
   }
   override def munitFixtures: Seq[Fixture[_]] = Seq(testApp)

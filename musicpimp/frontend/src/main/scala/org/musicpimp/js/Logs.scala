@@ -1,14 +1,19 @@
 package org.musicpimp.js
 
-import java.util.UUID
-
 import com.malliina.musicpimp.js.FrontStrings.{HiddenClass, LogTableBodyId}
 import com.malliina.musicpimp.models.{JVMLogEntry, Subscribe}
+import org.musicpimp.js.Logs.randomString
 import org.scalajs.dom.raw.Event
 import org.scalajs.jquery.JQueryEventObject
 import play.api.libs.json.JsValue
-
 import scalatags.Text.all._
+
+object Logs {
+  private val chars = "abcdefghijklmnopqrstuvwxyz"
+
+  private def randomString(ofLength: Int): String =
+    (0 until ofLength).map { _ => chars.charAt(math.floor(math.random() * chars.length).toInt) }.mkString
+}
 
 class Logs extends SocketJS("/ws/logs?f=json") {
   val CellContent = "cell-content"
@@ -23,19 +28,17 @@ class Logs extends SocketJS("/ws/logs?f=json") {
   }
 
   override def handlePayload(payload: JsValue): Unit =
-    handleValidated[Seq[JVMLogEntry]](payload) { entries =>
-      entries foreach prepend
-    }
+    handleValidated[Seq[JVMLogEntry]](payload) { entries => entries foreach prepend }
 
   def prepend(entry: JVMLogEntry) = {
     val rowClass = entry.level match {
       case "ERROR" => "danger"
-      case "WARN" => "warning"
-      case _ => ""
+      case "WARN"  => "warning"
+      case _       => ""
     }
 
     val level = entry.level
-    val entryId = UUID.randomUUID().toString take 5
+    val entryId = randomString(5)
     val rowId = s"row-$entryId"
     val linkId = s"link-$entryId"
     val msgCellId = s"msg-$entryId"

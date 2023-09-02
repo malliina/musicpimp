@@ -35,8 +35,8 @@ import play.filters.gzip.GzipFilter
 import scala.concurrent.{ExecutionContext, Future}
 
 object LocalConf {
-  val localConfFile =
-    Paths.get(sys.props("user.home")).resolve(".musicpimp/musicpimp.conf")
+  val userHome = Paths.get(sys.props("user.home"))
+  val localConfFile = userHome.resolve(".musicpimp/musicpimp.conf")
   val localConf = Configuration(ConfigFactory.parseFile(localConfFile.toFile))
 }
 
@@ -62,9 +62,7 @@ object InitOptions {
   // Ripped from Play's ApplicationSecretGenerator.scala
   def generateSecret(): String = {
     val random = new SecureRandom()
-    (1 to 64).map { _ =>
-      (random.nextInt(75) + 48).toChar
-    }.mkString.replaceAll("\\\\+", "/")
+    (1 to 64).map { _ => (random.nextInt(75) + 48).toChar }.mkString.replaceAll("\\\\+", "/")
   }
 }
 
@@ -75,7 +73,7 @@ class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] 
   override def createComponents(context: Context): PimpComponents = {
     val env = context.environment
     val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
-    new PimpComponents(context, opts, conf => new ProdAppConf(conf))
+    new PimpComponents(context, opts, LocalConf.localConf, conf => new ProdAppConf(conf))
   }
 }
 
@@ -89,7 +87,7 @@ class ProdAppConf(c: Configuration) extends AppConf {
 
   var embedded: Option[EmbeddedMySQL] = None
   override val databaseConf: Conf = Conf
-    .prod(c)
+    .fromConfOrLegacy(c)
     .fold(
       err => {
         val e = EmbeddedMySQL.permanent
@@ -113,6 +111,7 @@ object PimpComponents {
 class PimpComponents(
   context: Context,
   options: InitOptions,
+  localConf: Configuration,
   init: Configuration => AppConf
 ) extends BuiltInComponentsFromContext(context)
   with HttpFiltersComponents
@@ -120,7 +119,7 @@ class PimpComponents(
   with I18nComponents {
   import PimpComponents.log
   log.info(s"Local conf is '${LocalConf.localConfFile.toAbsolutePath}'.")
-  val combinedConf = LocalConf.localConf.withFallback(context.initialConfiguration)
+  val combinedConf = localConf.withFallback(context.initialConfiguration)
   val appSecretKey = "play.http.secret.key"
   val isFirstStart = combinedConf.get[String](appSecretKey) == "changeme"
 

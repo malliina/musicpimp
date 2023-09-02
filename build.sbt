@@ -184,7 +184,7 @@ val musicmeta = project
   .settings(serverSettings ++ metaCommonSettings)
   .settings(
     scalaJSProjects := Seq(musicmetaFrontend),
-    pipelineStages in Assets := Seq(scalaJSPipeline),
+    Assets / pipelineStages := Seq(scalaJSPipeline),
     libraryDependencies ++= Seq(
       "commons-codec" % "commons-codec" % "1.15",
       logstreamsDep,
@@ -192,8 +192,8 @@ val musicmeta = project
       utilPlayDep,
       utilPlayDep % Test classifier "tests"
     ),
-    httpPort in Linux := Option("disabled"),
-    httpsPort in Linux := Option("8460"),
+    Linux / httpPort := Option("disabled"),
+    Linux / httpsPort := Option("8460"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
     javaOptions in Universal ++= {
       val linuxName = (name in Linux).value
@@ -235,11 +235,11 @@ val pimpbeam = project
       PlayImport.ws
     ),
     resolvers += Resolver.bintrayRepo("malliina", "maven"),
-    httpPort in Linux := Option("8557"),
-    httpsPort in Linux := Option("disabled"),
+    Linux / httpPort := Option("8557"),
+    Linux / httpsPort := Option("disabled"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
-    javaOptions in Universal ++= {
-      val linuxName = (name in Linux).value
+    Universal / javaOptions ++= {
+      val linuxName = (Linux / name).value
       Seq(
         s"-Dconfig.file=/etc/$linuxName/production.conf",
         s"-Dlogger.file=/etc/$linuxName/logback-prod.xml"
@@ -253,7 +253,7 @@ val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimp
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
-scalacOptions in ThisBuild ++= Seq("-unchecked", "-deprecation")
+ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 // musicpimp settings
 
@@ -277,7 +277,8 @@ lazy val pimpPlaySettings =
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
         "org.scala-stm" %% "scala-stm" % "0.11.0",
-        "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0"
+        "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
+        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.0" % Test
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
@@ -529,37 +530,40 @@ def scalajsProject(name: String, path: File) =
         new TestFramework("utest.runner.Framework"),
         new TestFramework("munit.Framework")
       ),
-      version in webpack := "4.35.2",
+      webpack / version := "5.88.2",
+      webpackCliVersion := "5.1.4",
+      startWebpackDevServer / version := "4.15.1",
       webpackEmitSourceMaps := false,
       scalaJSUseMainModuleInitializer := true,
       webpackBundlingMode := BundlingMode.LibraryOnly(),
-      npmDependencies in Compile ++= Seq(
+      Compile / npmDependencies ++= Seq(
 //        "jquery" -> "3.3.1",
         "popper.js" -> "1.14.6",
         "bootstrap" -> "4.2.1"
       ),
-      npmDevDependencies in Compile ++= Seq(
+      Compile / npmDevDependencies ++= Seq(
         "autoprefixer" -> "9.4.3",
         "cssnano" -> "4.1.8",
-        "css-loader" -> "3.0.0",
-        "file-loader" -> "4.0.0",
+        "css-loader" -> "6.8.1",
+        "file-loader" -> "6.2.0",
         "less" -> "3.9.0",
-        "less-loader" -> "4.1.0",
-        "mini-css-extract-plugin" -> "0.7.0",
+        "less-loader" -> "11.1.3",
+        "mini-css-extract-plugin" -> "2.7.6",
         "postcss-import" -> "12.0.1",
         "postcss-loader" -> "3.0.0",
         "postcss-preset-env" -> "6.5.0",
-        "style-loader" -> "0.23.1",
-        "url-loader" -> "1.1.2",
+//        "source-map-loader" -> "4.0.1",
+        "style-loader" -> "3.3.3",
+        "url-loader" -> "4.1.1",
         "webpack-merge" -> "4.1.5"
       ),
-      additionalNpmConfig in Compile := Map(
-        "engines" -> JSON.obj("node" -> JSON.str("10.x")),
+      Compile / additionalNpmConfig := Map(
+//        "engines" -> JSON.obj("node" -> JSON.str("10.x")),
         "private" -> JSON.bool(true),
         "license" -> JSON.str("BSD")
       ),
-      webpackConfigFile in fastOptJS := Some(baseDirectory.value / "webpack.dev.config.js"),
-      webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
+      fastOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.dev.config.js"),
+      fullOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.prod.config.js")
     )
 
 def gitHash: String =

@@ -17,7 +17,7 @@ object Conf {
   val MySQLDriver = "com.mysql.jdbc.Driver"
   val DefaultDriver = MySQLDriver
 
-  def prod(conf: Configuration): Either[ErrorMessage, Conf] =
+  def fromConfOrLegacy(conf: Configuration): Either[ErrorMessage, Conf] =
     fromConf(conf).orElse(legacy())
 
   def fromConf(conf: Configuration) = from(key => conf.getOptional[String](key))
