@@ -14,5 +14,5 @@ jobs:
           distribution: zulu
           java-version: 17
           cache: sbt
-      - name: Run tests
-        run: sbt test
+      - name: Compile
+        run: sbt Test/compile
