@@ -17,7 +17,7 @@ object LoginHtml extends PimpBootstrap {
       ),
       rowColumn(col.md.four)(
         postableForm(
-          routes.Accounts.formAuthenticate(),
+          routes.Accounts.formAuthenticate,
           `class` := FormSignin,
           name := "loginForm"
         )(
@@ -54,9 +54,7 @@ object LoginHtml extends PimpBootstrap {
         )
       ),
       rowColumn(col.md.four)(
-        conf.formFeedback.fold(empty) { fb =>
-          alertDiv(s"${alert.danger} $FormSignin", fb.message)
-        }
+        conf.formFeedback.fold(empty) { fb => alertDiv(s"${alert.danger} $FormSignin", fb.message) }
       ),
       rowColumn(s"${col.md.four} $FormSignin")(
         conf.motd.fold(empty)(message => p(message))

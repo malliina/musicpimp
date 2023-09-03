@@ -70,9 +70,7 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
         tbody(id := "log-table-body")
       )
     ),
-    scripts.jsFiles.map { file =>
-      jsScript(versioned(file))
-    }
+    scripts.jsFiles.map { file => jsScript(versioned(file)) }
   )
 
   def eject(feedback: Option[UserFeedback]) =
@@ -80,7 +78,7 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
       divContainer(
         halfRow(
           feedback.fold(empty)(feedbackDiv),
-          p("Try to ", a(href := routes.MetaOAuth.logs())("sign in"), " again.")
+          p("Try to ", a(href := routes.MetaOAuth.logs)("sign in"), " again.")
         )
       )
     )
@@ -95,15 +93,15 @@ class MetaHtml(scripts: ScalaScripts) extends Bootstrap(HtmlTags) {
 
     basePage("MusicPimp")(
       navbar.basic(
-        routes.MetaOAuth.index(),
+        routes.MetaOAuth.index,
         "musicmeta",
         modifier(
           ulClass(s"${navbars.Nav} $MrAuto")(
-            navItem("Logs", "logs", routes.MetaOAuth.logs(), "list")
+            navItem("Logs", "logs", routes.MetaOAuth.logs, "list")
           ),
           ulClass(s"${navbars.Nav} ${navbars.Right}")(
             li(`class` := "nav-item")(
-              a(href := routes.MetaOAuth.logout(), `class` := "nav-link")("Logout")
+              a(href := routes.MetaOAuth.logout, `class` := "nav-link")("Logout")
             )
           )
         )

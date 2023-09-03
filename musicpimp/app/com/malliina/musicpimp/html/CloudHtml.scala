@@ -28,7 +28,7 @@ object CloudHtml extends PimpBootstrap with CloudStrings {
 
   def cloudForm(cloudId: Option[CloudID]) = {
     val title = cloudId.fold("Connect")(_ => "Disconnect")
-    postableForm(routes.Cloud.toggle(), name := "toggleForm")(
+    postableForm(routes.Cloud.toggle, name := "toggleForm")(
       if (cloudId.isEmpty) {
         formGroup(
           labelFor(Cloud.idFormKey)("Desired cloud ID (optional)"),

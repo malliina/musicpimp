@@ -169,7 +169,7 @@ val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") /
       "com.typesafe.play" %%% "play-json" % playJsonVersion,
       "com.malliina" %%% "primitives" % primitivesVersion
     ),
-    npmDependencies in Compile ++= Seq("jquery" -> "3.3.1")
+    Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
   )
 val musicmeta = project
   .in(file("musicmeta"))
@@ -264,7 +264,7 @@ lazy val pimpPlaySettings =
     artifactSettings ++
     Seq(
       version := musicpimpVersion,
-      buildInfoKeys += BuildInfoKey("frontName" -> (name in musicpimpFrontend).value),
+      buildInfoKeys += BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
       javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
@@ -288,21 +288,21 @@ lazy val pimpPlaySettings =
       ),
       fileTreeSources := Seq(
         DirMap(
-          (resourceDirectory in Assets).value,
+          (Assets / resourceDirectory).value,
           "com.malliina.musicpimp.assets.AppAssets",
           "com.malliina.musicpimp.html.PimpHtml.at"
         ),
-        DirMap((resourceDirectory in Compile).value, "com.malliina.musicpimp.licenses.LicenseFiles")
+        DirMap((Compile / resourceDirectory).value, "com.malliina.musicpimp.licenses.LicenseFiles")
       ),
       libs := libs.value.filter { lib =>
         !lib.toFile.getAbsolutePath
           .endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
-      fullClasspath in Compile := (fullClasspath in Compile).value.filter { af =>
+      Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
       useTerminateProcess := true,
-      msiMappings in Windows := (msiMappings in Windows).value.map {
+      Windows / msiMappings := (Windows / msiMappings).value.map {
         case (src, dest) =>
           (
             src,
@@ -315,19 +315,19 @@ lazy val pimpPlaySettings =
           )
       },
       minJavaVersion := None,
-      publishArtifact in (Compile, packageDoc) := false,
-      publishArtifact in packageDoc := false,
-      sources in (Compile, doc) := Seq.empty
+      Compile / packageDoc / publishArtifact := false,
+      packageDoc / publishArtifact := false,
+      Compile / doc / sources := Seq.empty
     )
 
 lazy val pimpAssetSettings = assetSettings ++ Seq(
   scalaJSProjects := Seq(musicpimpFrontend),
-  pipelineStages in Assets ++= Seq(scalaJSPipeline)
+  Assets / pipelineStages ++= Seq(scalaJSPipeline)
 )
 
 def assetSettings = Seq(
-  mappings in (Compile, packageBin) ++= {
-    (unmanagedResourceDirectories in Assets).value.flatMap { assetDir =>
+  Compile / packageBin / mappings ++= {
+    (Assets / unmanagedResourceDirectories).value.flatMap { assetDir =>
       assetDir.allPaths pair sbt.io.Path.relativeTo(baseDirectory.value)
     }
   }
@@ -338,17 +338,17 @@ lazy val nativeMusicPimpSettings =
     pimpMacSettings ++
     Seq(
       com.typesafe.sbt.packager.Keys.scriptClasspath := Seq("*"),
-      httpPort in Linux := Option("8456"),
-      httpsPort in Linux := Option("disabled"),
+      Linux / httpPort := Option("8456"),
+      Linux / httpsPort := Option("disabled"),
       maintainer := "Michael Skogberg <malliina123@gmail.com>",
       manufacturer := "Skogberg Labs",
       displayName := "MusicPimp",
-      javaOptions in Universal ++= Seq(
+      Universal / javaOptions ++= Seq(
         "-Dlogger.resource=prod-logger.xml"
       ),
       // Hack because I want to use log.dir on Linux but not Windows, and "javaOptions in Linux" seems not to work
       bashScriptExtraDefines += """addJava "-Dlog.dir=/var/log/musicpimp"""",
-      packageSummary in Linux := "MusicPimp summary here.",
+      Linux / packageSummary := "MusicPimp summary here.",
       rpmVendor := "Skogberg Labs",
       rpmLicense := Option("BSD License"),
       PlayKeys.externalizeResources := false // packages files in /conf to the app jar
@@ -359,7 +359,7 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
   WinKeys.upgradeGuid := "5EC7F255-24F9-4E1C-B19D-581626C50F02",
   //  WinKeys.postInstallUrl := Some("http://localhost:8456"),
   WinKeys.forceStopOnUninstall := true,
-  winSwExe in Windows := (pkgHome in Windows).value.resolve("WinSW.NET2.exe")
+  Windows / winSwExe := (Windows / pkgHome).value.resolve("WinSW.NET2.exe")
 )
 
 lazy val windowsConfSettings = inConfig(Windows)(
@@ -389,7 +389,7 @@ lazy val pimpMacSettings = macSettings ++ Seq(
   mainClass := Some("play.core.server.ProdServerStart"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
   launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
-  appIcon in Mac := Some((pkgHome in Mac).value.resolve("guitar.icns")),
+  Mac / appIcon := Some((pkgHome in Mac).value.resolve("guitar.icns")),
   pkgIcon := Some((pkgHome in Mac).value.resolve("guitar.png")),
   hideDock := true,
   extraDmgFiles := Seq(
@@ -406,7 +406,7 @@ lazy val pimpcloudSettings =
     pimpcloudScalaJSSettings ++
     artifactSettings ++
     Seq(
-      buildInfoKeys += BuildInfoKey("frontName" -> (name in pimpcloudFrontend).value),
+      buildInfoKeys += BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
       version := pimpcloudVersion,
       libraryDependencies ++= Seq(
         malliinaGroup %% "play-social" % utilPlayVersion,
@@ -416,7 +416,7 @@ lazy val pimpcloudSettings =
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(
         DirMap(
-          (resourceDirectory in Assets).value,
+          (Assets / resourceDirectory).value,
           "com.malliina.pimpcloud.assets.CloudAssets",
           "controllers.pimpcloud.CloudTags.at"
         )
@@ -426,13 +426,13 @@ lazy val pimpcloudSettings =
     )
 
 lazy val pimpcloudLinuxSettings = Seq(
-  httpPort in Linux := Option("disabled"),
-  httpsPort in Linux := Option("8458"),
+  Linux / httpPort := Option("disabled"),
+  Linux / httpsPort := Option("8458"),
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
   manufacturer := "Skogberg Labs",
   mainClass := Some("com.malliina.pimpcloud.Starter"),
-  javaOptions in Universal ++= {
-    val linuxName = (name in Linux).value
+  Universal / javaOptions ++= {
+    val linuxName = (Linux / name).value
     // https://www.scala-sbt.org/sbt-native-packager/archetypes/java_app/customize.html
     Seq(
       "-J-Xmx192m",
@@ -445,7 +445,7 @@ lazy val pimpcloudLinuxSettings = Seq(
       s"-Dlog.dir=/var/log/$linuxName"
     )
   },
-  packageSummary in Linux := "This is the pimpcloud summary.",
+  Linux / packageSummary := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
   libraryDependencies ++= Seq(
     "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
@@ -455,7 +455,7 @@ lazy val pimpcloudLinuxSettings = Seq(
 
 lazy val artifactSettings = Seq(
   libs ++= Seq(
-    (packageBin in Assets).value.toPath,
+    (Assets / packageBin).value.toPath,
     (packageBin in shared in Compile).value.toPath,
     (packageBin in crossJvm in Compile).value.toPath,
     (packageBin in utilAudio in Compile).value.toPath
@@ -464,13 +464,13 @@ lazy val artifactSettings = Seq(
 
 lazy val pimpcloudScalaJSSettings = Seq(
   scalaJSProjects := Seq(pimpcloudFrontend),
-  pipelineStages in Assets ++= Seq(scalaJSPipeline)
+  Assets / pipelineStages ++= Seq(scalaJSPipeline)
 )
 
 def serverSettings = LinusPlugin.playSettings ++ Seq(
   // https://github.com/sbt/sbt-release
   releaseProcess := Seq[ReleaseStep](
-    releaseStepTask(clean in Compile),
+    releaseStepTask(Compile / clean),
     checkSnapshotDependencies,
     runTest,
     releaseStepTask(ciBuild)
@@ -485,8 +485,8 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "org.slf4j" % "slf4j-api" % "1.7.30",
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "ch.qos.logback" % "logback-core" % "1.2.3",
-    "com.typesafe.akka" %% "akka-http" % "10.1.13", // sbt dep error workaround
-    "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.13",
+    "com.typesafe.akka" %% "akka-http" % "10.1.15", // sbt dep error workaround
+    "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.15",
     "org.scalameta" %% "munit" % munitVersion % Test
   ),
   testFrameworks += new TestFramework("munit.Framework")

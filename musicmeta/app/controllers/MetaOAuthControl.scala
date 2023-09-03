@@ -17,7 +17,7 @@ class MetaOAuthControl(
   val handler: AuthHandler = new AuthHandler {
     override def onAuthenticated(email: Email, req: RequestHeader): Result =
       if (email == Email("malliina123@gmail.com"))
-        Redirect(routes.MetaOAuth.logs()).withSession("username" -> email.email)
+        Redirect(routes.MetaOAuth.logs).withSession("username" -> email.email)
       else
         ejectWith(s"Not authorized: '$email'.")
 
@@ -25,10 +25,10 @@ class MetaOAuthControl(
       Unauthorized(Json.obj("message" -> "Authentication failed."))
 
     def ejectWith(message: String) =
-      Redirect(routes.MetaOAuth.eject()).flashing("message" -> message)
+      Redirect(routes.MetaOAuth.eject).flashing("message" -> message)
   }
   val authConf = OAuthConf(
-    routes.MetaOAuthControl.googleCallback(),
+    routes.MetaOAuthControl.googleCallback,
     handler,
     AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret)),
     http

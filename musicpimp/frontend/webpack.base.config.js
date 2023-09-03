@@ -8,15 +8,12 @@ const cssDir = path.resolve(rootDir, 'src/main/resources/css');
 const WebApp = Merge(ScalaJS, {
   entry: {
     styles: [path.resolve(cssDir, './musicpimp.js')]
-    // fonts: [path.resolve(cssDir, './fonts.js')]
   },
   module: {
     rules: [
       {
         test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-        use: [
-          { loader: 'url-loader', options: { limit: 8192 } }
-        ],
+        type: 'asset/inline'
       },
       {
         test: /\.less$/,

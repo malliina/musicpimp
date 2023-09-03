@@ -59,7 +59,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   }
 
   def delete(user: Username) = pimpActionAsync { request =>
-    val redir = Redirect(routes.Accounts.users())
+    val redir = Redirect(routes.Accounts.users)
     if (user != request.user) {
       (userManager deleteUser user) map { _ =>
         redir.flashing(UsersFeedback -> s"Deleted user '${user.name}'.")
@@ -82,7 +82,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
 
   def logout = authAction { _ =>
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
-    Redirect(routes.Accounts.loginPage()).withNewSession
+    Redirect(routes.Accounts.loginPage).withNewSession
       .discardingCookies(RememberMe.discardingCookie)
       .flashing(UserFeedback.success(logoutMessage).flash)
   }
@@ -102,7 +102,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
             val userFeedback = addError
               .map(e => UserFeedback.error(s"User '${e.user}' already exists."))
               .getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
-            Redirect(routes.Accounts.users()).flashing(userFeedback.flash)
+            Redirect(routes.Accounts.users).flashing(userFeedback.flash)
           }
         }
       )
@@ -161,7 +161,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
       )
   }
 
-  def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary()
+  def defaultLoginSuccessPage: Call = routes.LibraryController.rootLibrary
 
   def formChangePassword = pimpActionAsync { request =>
     val remoteAddress = request.realAddress
@@ -180,7 +180,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
             if (isValid) {
               userManager.updatePassword(user, pc.newPass) map { _ =>
                 log info s"Password changed for user '$user' from '$remoteAddress'."
-                Redirect(routes.Accounts.account())
+                Redirect(routes.Accounts.account)
                   .flashing(UserFeedback.success(passwordChangedMessage).flash)
               }
             } else {

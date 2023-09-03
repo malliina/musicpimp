@@ -44,5 +44,5 @@ class LogStreamer()(implicit ec: ExecutionContext) {
     }
   }
 
-  def openSocketCall: Call = routes.MetaOAuth.openSocket()
+  def openSocketCall: Call = routes.MetaOAuth.openSocket
 }

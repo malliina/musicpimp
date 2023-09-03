@@ -52,7 +52,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
           }
         ),
         rowColumn(col.md.six)(
-          leadPara("Try to ", a(href := routes.Logs.index())("sign in"), " again.")
+          leadPara("Try to ", a(href := routes.Logs.index)("sign in"), " again.")
         )
       )
     )
@@ -69,7 +69,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
             form(
               `class` := s"$FormSignin $formWidth",
               name := "loginForm",
-              action := routes.Web.formAuthenticate(),
+              action := routes.Web.formAuthenticate,
               method := "POST"
             )(
               h2(`class` := FormSigninHeading)("Please sign in"),
@@ -184,7 +184,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     )
 
   def searchForm(query: Option[String] = None, size: String = InputGroupLg) = {
-    form(action := routes.Phones.search())(
+    form(action := routes.Phones.search)(
       divClass(s"$InputGroup $size")(
         input(
           `type` := Text,
@@ -226,9 +226,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     table(`class` := tables.defaultClass)(
       thead(
         tr(
-          headers map { header =>
-            th(header)
-          }
+          headers map { header => th(header) }
         )
       ),
       tbody(id := bodyId)
@@ -244,16 +242,16 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
 
     basePage("pimpcloud")(
       navbar.basic(
-        routes.Logs.index(),
+        routes.Logs.index,
         "MusicPimp",
         modifier(
           ulClass(s"${navbars.Nav} $MrAuto")(
-            navItem("Home", "home", routes.Logs.index(), "home"),
-            navItem("Logs", "logs", routes.Logs.logs(), "list")
+            navItem("Home", "home", routes.Logs.index, "home"),
+            navItem("Logs", "logs", routes.Logs.logs, "list")
           ),
           ulClass(s"${navbars.Nav} ${navbars.Right}")(
             li(`class` := "nav-item")(
-              a(href := routes.Logs.logout(), `class` := "nav-link")("Logout")
+              a(href := routes.Logs.logout, `class` := "nav-link")("Logout")
             ),
             div(
               eye(OkStatus, "bolt green"),
@@ -283,9 +281,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
       body(
         section(
           inner,
-          scripts.scripts.map { file =>
-            HtmlTags.jsScript(versioned(file))
-          }
+          scripts.scripts.map { file => HtmlTags.jsScript(versioned(file)) }
         )
       )
     )

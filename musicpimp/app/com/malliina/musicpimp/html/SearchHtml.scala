@@ -43,15 +43,13 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
           )
         )
       } else {
-        query.fold(empty) { term =>
-          h4(`class` := "small-heading")(s"No results for '$term'.")
-        }
+        query.fold(empty) { term => h4(`class` := "small-heading")(s"No results for '$term'.") }
       }
     )
   )
 
   def searchForm(query: Option[String] = None) =
-    form(action := routes.SearchPage.search(), role := Search, `class` := "form")(
+    form(action := routes.SearchPage.search, role := Search, `class` := "form")(
       divClass("form-row")(
         divClass("col-8 col-md-8")(
           input(
@@ -70,7 +68,7 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
     )
 
   def navbarSearch(query: Option[String] = None) =
-    form(action := routes.SearchPage.search(), role := Search, `class` := "form-inline")(
+    form(action := routes.SearchPage.search, role := Search, `class` := "form-inline")(
       input(
         `type` := Search,
         `class` := s"$FormControl mr-sm-2",

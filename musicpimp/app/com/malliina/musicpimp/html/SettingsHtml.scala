@@ -15,7 +15,7 @@ object SettingsHtml extends PimpBootstrap {
         content.folders.map(renderFolder)
       ),
       postableForm(
-        routes.SettingsController.newFolder(),
+        routes.SettingsController.newFolder,
         `class` := FormHorizontal,
         name := "newFolderForm"
       )(

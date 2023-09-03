@@ -47,7 +47,7 @@ object UsersHtml extends PimpBootstrap {
   )
 
   def addUser(addFeedback: Option[UserFeedback]) =
-    postableForm(routes.Accounts.formAddUser())(
+    postableForm(routes.Accounts.formAddUser)(
       inGroup("username", "text", "Username"),
       passwordInputs(),
       blockSubmitButton()("Add User"),
@@ -55,7 +55,7 @@ object UsersHtml extends PimpBootstrap {
     )
 
   def changePassword(username: Username, feedback: Option[UserFeedback]) =
-    postableForm(routes.Accounts.formChangePassword())(
+    postableForm(routes.Accounts.formChangePassword)(
       formGroup(
         labelFor("user")("Username"),
         divClass("controls")(

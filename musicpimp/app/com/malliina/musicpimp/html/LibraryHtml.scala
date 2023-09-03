@@ -34,7 +34,7 @@ object LibraryHtml extends PimpBootstrap {
       if (items.isEmpty && relativePath.path.isEmpty) {
         leadPara(
           "The library is empty. To get started, add music folders under ",
-          a(href := routes.SettingsController.settings())("Music Folders"),
+          a(href := routes.SettingsController.settings)("Music Folders"),
           "."
         )
       } else {

@@ -150,24 +150,24 @@ class PimpHtml(scripts: ScalaScripts)
             "Folders",
             "folders",
             tab,
-            routes.LibraryController.rootLibrary(),
+            routes.LibraryController.rootLibrary,
             iClass("fa fa-folder-open")
           ),
           iconNavItem(
             "Most Played",
             "popular",
             tab,
-            routes.Website.popular(),
+            routes.Website.popular,
             iClass("fa fa-list")
           ),
           iconNavItem(
             "Most Recent",
             "recent",
             tab,
-            routes.Website.recent(),
+            routes.Website.recent,
             iClass("fa fa-clock-o")
           ),
-          iconNavItem("Search", "search", tab, routes.SearchPage.search(), iClass("fa fa-search"))
+          iconNavItem("Search", "search", tab, routes.SearchPage.search, iClass("fa fa-search"))
         )
       ),
       section(divClass(contentClass)(inner))
@@ -211,14 +211,14 @@ class PimpHtml(scripts: ScalaScripts)
             "Music Folders",
             "folders",
             tab,
-            routes.SettingsController.settings(),
+            routes.SettingsController.settings,
             fa("folder-open")
           ),
-          iconNavItem("Users", "users", tab, routes.Accounts.users(), fa("user")),
-          iconNavItem("Alarms", "alarms", tab, routes.Alarms.alarms(), fa("clock")),
-          iconNavItem("Tokens", "tokens", tab, routes.Alarms.tokens(), fa("key")),
-          iconNavItem("Cloud", "cloud", tab, routes.Cloud.cloud(), fa("cloud")),
-          iconNavItem("Logs", "logs", tab, routes.LogPage.logs(), fa("list"))
+          iconNavItem("Users", "users", tab, routes.Accounts.users, fa("user")),
+          iconNavItem("Alarms", "alarms", tab, routes.Alarms.alarms, fa("clock")),
+          iconNavItem("Tokens", "tokens", tab, routes.Alarms.tokens, fa("key")),
+          iconNavItem("Cloud", "cloud", tab, routes.Cloud.cloud, fa("cloud")),
+          iconNavItem("Logs", "logs", tab, routes.LogPage.logs, fa("list"))
         )
       ),
       section(divClass(contentClass)(inner))
@@ -247,12 +247,12 @@ class PimpHtml(scripts: ScalaScripts)
 
     basePage("MusicPimp")(
       navbar.basic(
-        routes.LibraryController.rootLibrary(),
+        routes.LibraryController.rootLibrary,
         "MusicPimp",
         modifier(
           ulClass(s"${navbars.Nav} $MrAuto")(
-            navItem("Library", routes.LibraryController.rootLibrary(), "list"),
-            navItem("Player", routes.Website.player(), "musical-note")
+            navItem("Library", routes.LibraryController.rootLibrary, "list"),
+            navItem("Player", routes.Website.player, "musical-note")
           ),
           ulClass(s"$Nav ${navbars.Nav} ${navbars.Right}")(
             divClass(s"$HiddenSmall")(
@@ -272,12 +272,12 @@ class PimpHtml(scripts: ScalaScripts)
                 spanClass(Caret)
               ),
               ulClass(DropdownMenu)(
-                navItem("Account", routes.Accounts.account(), "pencil"),
-                navItem("Manage", routes.SettingsController.manage(), "wrench"),
-                navItem("About", routes.Website.about(), "globe"),
+                navItem("Account", routes.Accounts.account, "pencil"),
+                navItem("Manage", routes.SettingsController.manage, "wrench"),
+                navItem("About", routes.Website.about, "globe"),
                 divClass("dropdown-divider"),
                 li(
-                  a(href := routes.Accounts.logout(), `class` := "nav-link")(
+                  a(href := routes.Accounts.logout, `class` := "nav-link")(
                     iconic("account-logout"),
                     " Sign Out"
                   )

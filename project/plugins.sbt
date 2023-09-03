@@ -2,7 +2,7 @@ scalaVersion := "2.12.12"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
 
 Seq(
-  "com.typesafe.play" % "sbt-plugin" % "2.8.7",
+  "com.typesafe.play" % "sbt-plugin" % "2.8.20",
   "com.malliina" % "sbt-utils-maven" % "1.0.0",
   "com.malliina" % "sbt-nodejs" % "1.0.0",
   "com.malliina" % "sbt-filetree" % "0.4.1",

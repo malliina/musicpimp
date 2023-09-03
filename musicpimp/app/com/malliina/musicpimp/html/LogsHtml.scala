@@ -22,7 +22,7 @@ object LogsHtml extends PimpBootstrap with FrontStrings {
     headerRow("Logs"),
     feedback.fold(empty)(fb => feedbackDiv(fb)),
     rowColumn(s"${col.sm.four} $PullRight $LogLevelClass")(
-      postableForm(routes.LogPage.changeLogLevel())(
+      postableForm(routes.LogPage.changeLogLevel)(
         formGroup(
           select(
             `class` := FormControl,

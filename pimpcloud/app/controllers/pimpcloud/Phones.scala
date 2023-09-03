@@ -43,7 +43,7 @@ object Phones {
     phonesAuth: Authenticator[PhoneConnection],
     mat: Materializer
   ): Phones = {
-    val bundle = PimpAuths.redirecting(routes.Web.login(), phonesAuth)
+    val bundle = PimpAuths.redirecting(routes.Web.login, phonesAuth)
     val phoneAuth = new BaseSecurity(comps.actionBuilder, bundle, mat)
     new Phones(comps, tags, phoneAuth)
   }

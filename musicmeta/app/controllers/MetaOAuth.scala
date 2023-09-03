@@ -19,7 +19,7 @@ object MetaOAuth {
   ) = {
     val bundle = AuthBundle.oauth(
       (r, u) => AuthedRequest(u, r),
-      routes.MetaOAuthControl.googleStart(),
+      routes.MetaOAuthControl.googleStart,
       sessionKey
     )
     new MetaOAuth(html, actions, bundle, ctx)
@@ -35,7 +35,7 @@ class MetaOAuth(
 
   val streamer = LogStreamer(ctx.executionContext)
 
-  def index = authAction(_ => Redirect(routes.MetaOAuth.logs()))
+  def index = authAction(_ => Redirect(routes.MetaOAuth.logs))
 
   def health = actions(Ok(Json.toJson(BuildMeta.default)))
 
@@ -44,13 +44,11 @@ class MetaOAuth(
   def openSocket = streamer.openSocket
 
   def eject = logged {
-    actions { req =>
-      Ok(html.eject(UserFeedback.flashed(req)))
-    }
+    actions { req => Ok(html.eject(UserFeedback.flashed(req))) }
   }
 
   def logout = authAction { _ =>
-    Redirect(routes.MetaOAuth.eject()).withNewSession
+    Redirect(routes.MetaOAuth.eject).withNewSession
       .flashing(UserFeedback.success("Logged out.").flash)
   }
 }

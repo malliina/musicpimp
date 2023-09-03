@@ -86,7 +86,7 @@ class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extend
           service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user)))
         },
         submission => {
-          fut(Redirect(routes.Playlists.playlists()))
+          fut(Redirect(routes.Playlists.playlists))
         }
       )
   }

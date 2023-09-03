@@ -99,7 +99,7 @@ class SettingsController(
     log info s"$successMessage"
     library.reloadFolders()
     indexer.indexAndSave()
-    Redirect(routes.SettingsController.settings())
+    Redirect(routes.SettingsController.settings)
       .flashing(UserFeedback.Feedback -> successMessage)
   }
 }

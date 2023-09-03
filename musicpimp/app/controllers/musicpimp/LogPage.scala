@@ -57,7 +57,7 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps) extends HtmlCon
         level => {
           Logging.level = level
           log warn s"Changed log level to $level"
-          Redirect(routes.LogPage.logs())
+          Redirect(routes.LogPage.logs)
         }
       )
   }

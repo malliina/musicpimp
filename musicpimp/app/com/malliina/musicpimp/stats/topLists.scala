@@ -25,7 +25,7 @@ abstract class ListLike[T <: TopEntry](val entries: Seq[T], baseCall: Call) {
 }
 
 case class PopularList(meta: DataRequest, populars: Seq[FullPopularEntry])
-  extends ListLike(populars, routes.Website.popular())
+  extends ListLike(populars, routes.Website.popular)
 
 object PopularList {
   implicit val json = Json.format[PopularList]
@@ -35,7 +35,7 @@ object PopularList {
 }
 
 case class RecentList(meta: DataRequest, recents: Seq[FullRecentEntry])
-  extends ListLike(recents, routes.Website.recent())
+  extends ListLike(recents, routes.Website.recent)
 
 object RecentList {
   implicit val json = Json.format[RecentList]

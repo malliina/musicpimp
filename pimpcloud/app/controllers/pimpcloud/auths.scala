@@ -54,7 +54,7 @@ object OAuthCtrl {
         .transform((req, user) => Right(AuthedRequest(user, req)))
 
     override def onUnauthorized(failure: AuthFailure): Result =
-      Results.Redirect(routes.AdminOAuth.googleStart())
+      Results.Redirect(routes.AdminOAuth.googleStart)
   }
 }
 
@@ -65,7 +65,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
   val lastIdKey = "cloudLastId"
   val authorizedEmail = Email("malliina123@gmail.com")
   val handler = new BasicAuthHandler(
-    routes.Logs.index(),
+    routes.Logs.index,
     lastIdKey = lastIdKey,
     email =>
       if (email == authorizedEmail) Right(email)
@@ -75,7 +75,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     returnUriKey = BasicAuthHandler.DefaultReturnUriKey
   )
   val conf = AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret))
-  val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback(), handler, conf, HttpClientIO())
+  val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback, handler, conf, HttpClientIO())
   val validator = GoogleCodeValidator(oauthConf)
 
   def googleStart = actions.async { req =>

@@ -23,5 +23,5 @@ object CloudAuth {
     UserAuthenticator.session().transform((req, user) => Right(AuthedRequest(user, req)))(ec)
 
   def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
-    PimpAuths.redirecting(routes.Web.login(), auth)
+    PimpAuths.redirecting(routes.Web.login, auth)
 }

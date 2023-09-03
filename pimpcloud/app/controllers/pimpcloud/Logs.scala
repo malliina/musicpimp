@@ -46,7 +46,7 @@ class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution, actions: Defaul
 
   // HTML
   def logout = auth.authAction { _ =>
-    Redirect(routes.Logs.eject())
+    Redirect(routes.Logs.eject)
       .flashing(logoutMessageKey -> "You have now logged out.")
       .withNewSession
   }

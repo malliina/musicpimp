@@ -42,7 +42,7 @@ object AlarmsHtml extends PimpBootstrap {
   }
 
   def removalForm(tokenInfo: TokenInfo) =
-    form(role := "form", action := routes.Alarms.remove(), method := "POST")(
+    form(role := "form", action := routes.Alarms.remove, method := "POST")(
       input(`type` := "hidden", name := "token", value := tokenInfo.token.token),
       input(`type` := "hidden", name := "platform", value := tokenInfo.platform.platform),
       button(`class` := s"${btn.danger} ${btn.sm}")(" Delete")
@@ -60,7 +60,7 @@ object AlarmsHtml extends PimpBootstrap {
     Seq(
       headerRow("Alarms"),
       fullRow(content),
-      fullRow(a(href := routes.Alarms.newAlarm())("Add alarm"))
+      fullRow(a(href := routes.Alarms.newAlarm)("Add alarm"))
     )
   }
 
@@ -107,7 +107,7 @@ object AlarmsHtml extends PimpBootstrap {
     Seq(
       headerRow("Edit alarm"),
       halfRow(
-        PimpHtml.postableForm(routes.Alarms.newClock())(
+        PimpHtml.postableForm(routes.Alarms.newClock)(
           divClass("hide")(
             formTextIn(form(Id), "ID", m)
           ),

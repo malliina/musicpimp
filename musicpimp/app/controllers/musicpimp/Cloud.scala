@@ -47,7 +47,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
           Future successful BadRequest(tags.cloud(None, feedback, request.user))
         },
         desiredID => {
-          val redir = Redirect(routes.Cloud.cloud())
+          val redir = Redirect(routes.Cloud.cloud)
           if (clouds.isConnected) {
             clouds.disconnectAndForget("Disconnected by request.")
             fut(redir)

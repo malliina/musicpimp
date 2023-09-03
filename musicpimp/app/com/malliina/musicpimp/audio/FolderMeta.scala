@@ -44,14 +44,14 @@ object FolderMeta {
 
   def urlFor(host: FullUrl, id: FolderID) = {
     val call: Call =
-      if (id == Library.RootId) libraryController.rootLibrary()
+      if (id == Library.RootId) libraryController.rootLibrary
       else libraryController.library(id)
     FullUrls.absolute(host, call)
   }
 
   def writer(host: FullUrl) = Writes[FolderMeta] { f =>
     val call: Call =
-      if (f.id == Library.RootId) libraryController.rootLibrary()
+      if (f.id == Library.RootId) libraryController.rootLibrary
       else libraryController.library(f.id)
     obj(
       Id -> f.id,

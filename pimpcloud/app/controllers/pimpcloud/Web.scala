@@ -86,7 +86,7 @@ class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthen
   def loginPage(form: Form[CloudCreds], flash: Flash) =
     tags.login(form.globalError.map(_.message), flash.get(forms.feedback), None)
 
-  def defaultLoginSuccessPage: Call = routes.Phones.rootFolder()
+  def defaultLoginSuccessPage: Call = routes.Phones.rootFolder
 
   def fut[T](body: => T) = Future successful body
 }

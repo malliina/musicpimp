@@ -18,5 +18,5 @@ object Secured {
   }
 
   def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
-    PimpAuths.redirecting(routes.Accounts.loginPage(), auth)
+    PimpAuths.redirecting(routes.Accounts.loginPage, auth)
 }

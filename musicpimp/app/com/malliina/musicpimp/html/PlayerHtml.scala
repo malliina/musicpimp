@@ -16,13 +16,11 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
     divClass(col.md.six)(
       headerDiv(h1("Player")),
       div(id := PlayerDivId, style := "display: none")(
-        feedback.fold(empty) { fb =>
-          div(id := FeedbackId)(PimpHtml.feedbackDiv(fb))
-        },
+        feedback.fold(empty) { fb => div(id := FeedbackId)(PimpHtml.feedbackDiv(fb)) },
         fullRow(
           pClass(Lead, id := NoTrackTextId)(
             "No track. Play one from the ",
-            a(href := routes.LibraryController.rootLibrary())("library"),
+            a(href := routes.LibraryController.rootLibrary)("library"),
             " or stream from a mobile device."
           )
         ),

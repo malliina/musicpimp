@@ -74,7 +74,7 @@ class Alarms(
           case Adm  => AmazonDevices.removeWhere(_.id.token == token)
         }
         .map { _ =>
-          Redirect(routes.Alarms.tokens()).flashing(UserFeedback.success("Removed.").flash)
+          Redirect(routes.Alarms.tokens).flashing(UserFeedback.success("Removed.").flash)
         }
         .getOrElse {
           BadRequest
