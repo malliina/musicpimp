@@ -28,18 +28,23 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
   val testTracks: Seq[TrackID] = Seq(trackId)
 
   test("add tracks") {
-    val db = components.lib
+    val lib = components.lib
+    val db = lib.db
     val folderId = FolderID("Testid")
+    import db._
 
     def trackInserts =
-      db.insertTracks(
+      lib.insertTracks(
         Seq(
           DataTrack(trackId, "Ti", "Ar", "Al", 10.seconds, 1.megs, UnixPath.Empty, folderId)
         )
       )
 
     val insertions = for {
-      foldersInserted <- db.insertFolders(
+      _ <- db.performAsync("Cleanup")(
+        db.runIO(db.tracksTable.delete) *> db.runIO(db.foldersTable.delete)
+      )
+      foldersInserted <- lib.insertFolders(
         Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId))
       )
       tracksInserted <- trackInserts
@@ -47,7 +52,7 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
     val (fsi, tsi) = await(insertions)
     assert(fsi == 1)
     assert(tsi == 1)
-    val maybeFolder = await(db.folder(folderId))
+    val maybeFolder = await(lib.folder(folderId))
     assert(maybeFolder.isDefined)
   }
 
