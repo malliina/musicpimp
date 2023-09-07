@@ -9,24 +9,24 @@ case class Connected(id: CloudID) extends CloudEvent
 
 object Connected {
   val Key = "connected"
-  implicit val json = evented(Key, Json.format[Connected])
+  implicit val json: OFormat[Connected] = evented(Key, Json.format[Connected])
 }
 
 case class Disconnected(reason: String) extends CloudEvent
 
 object Disconnected {
   val Key = "disconnected"
-  implicit val json = evented(Key, Json.format[Disconnected])
+  implicit val json: OFormat[Disconnected] = evented(Key, Json.format[Disconnected])
 }
 
 case object Connecting extends CloudEvent {
   val Key = "connecting"
-  implicit val json = singleEvent(Key, Connecting)
+  implicit val json: OFormat[Connecting.type] = singleEvent(Key, Connecting)
 }
 
 case object Disconnecting extends CloudEvent {
   val Key = "disconnecting"
-  implicit val json = singleEvent(Key, Disconnecting)
+  implicit val json: OFormat[Disconnecting.type] = singleEvent(Key, Disconnecting)
 }
 
 object CloudEvent {

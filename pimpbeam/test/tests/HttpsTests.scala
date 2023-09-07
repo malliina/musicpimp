@@ -7,14 +7,14 @@ import org.apache.http.util.EntityUtils
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, ExecutionContextExecutor}
 import scala.concurrent.duration._
 
 class HttpsTests extends munit.FunSuite {
   val testTrustStorePassword = "???"
 
-  implicit val as = ActorSystem("test")
-  implicit val ec = as.dispatcher
+  implicit val as: ActorSystem = ActorSystem("test")
+  implicit val ec: ExecutionContextExecutor = as.dispatcher
 
   test("can ping MusicBeamer over HTTP".ignore) {
     pingWithPlayAPI("https://beam.musicpimp.org/ping")

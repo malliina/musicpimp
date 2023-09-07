@@ -1,11 +1,11 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class FrontLogEvent(message: String, module: String, level: String)
 
 object FrontLogEvent {
-  implicit val json = Json.format[FrontLogEvent]
+  implicit val json: OFormat[FrontLogEvent] = Json.format[FrontLogEvent]
 
   val Info = "info"
   val Error = "error"
@@ -20,7 +20,7 @@ object FrontLogEvent {
 case class FrontLogEvents(events: Seq[FrontLogEvent])
 
 object FrontLogEvents {
-  implicit val json = Json.format[FrontLogEvents]
+  implicit val json: OFormat[FrontLogEvents] = Json.format[FrontLogEvents]
 
   def single(message: String, module: String) =
     FrontLogEvents(Seq(FrontLogEvent.simple(message, module)))
@@ -34,5 +34,5 @@ case class JVMLogEntry(level: String,
                        stackTrace: Option[String] = None)
 
 object JVMLogEntry {
-  implicit val json = Json.format[JVMLogEntry]
+  implicit val json: OFormat[JVMLogEntry] = Json.format[JVMLogEntry]
 }

@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.cloud
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 /**
   * @author Michael
@@ -8,5 +8,5 @@ import play.api.libs.json.Json
 case class ServerInfo(server: String, username: String, password: String)
 
 object ServerInfo {
-  implicit val json = Json.format[ServerInfo]
+  implicit val json: OFormat[ServerInfo] = Json.format[ServerInfo]
 }

@@ -11,7 +11,7 @@ import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 object APITests {
@@ -20,8 +20,8 @@ object APITests {
 }
 
 class APITests extends munit.FunSuite {
-  implicit val timeout = 20.seconds
-  implicit val actorSystem = ActorSystem("test")
+  implicit val timeout: FiniteDuration = 20.seconds
+  implicit val actorSystem: ActorSystem = ActorSystem("test")
   val mat = Materializer.matFromSystem(actorSystem)
   val oauthControl =
     new MetaOAuthControl(stubControllerComponents().actionBuilder, APITests.fakeGoogle)
@@ -62,11 +62,11 @@ class APITests extends munit.FunSuite {
     action: EssentialAction,
     expectedStatus: Int,
     req: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-  ) = {
-    verifyResponse(action.apply(req).run, expectedStatus)
+  ): Unit = {
+    verifyResponse(action(req).run(), expectedStatus)
   }
 
-  private def verifyResponse(result: Future[Result], expectedStatus: Int = http.Status.OK) = {
+  private def verifyResponse(result: Future[Result], expectedStatus: Int = http.Status.OK): Unit = {
     val statusCode = Await.result(result, timeout).header.status
     assert(statusCode == expectedStatus)
   }

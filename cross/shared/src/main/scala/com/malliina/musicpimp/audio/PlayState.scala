@@ -26,7 +26,7 @@ object PlayState {
   def withName(name: String): PlayState =
     all.find(_.name.toLowerCase == name.toLowerCase).getOrElse(Unknown)
 
-  implicit val json = Format[PlayState](
+  implicit val json: Format[PlayState] = Format[PlayState](
     Reads(_.validate[String].map(withName)),
     Writes(state => Json.toJson(state.name))
   )

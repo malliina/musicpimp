@@ -1,5 +1,6 @@
 package controllers.musicpimp
 
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Keep, Sink}
 import akka.stream.{KillSwitches, Materializer, UniqueKillSwitch}
 import com.malliina.musicpimp.cloud.Clouds
@@ -18,7 +19,7 @@ object CloudMediator {
 class CloudMediator(clouds: Clouds) extends ReplayMediator(1) {
   private val jsonEvents = clouds.connection.map(event => Json.toJson(event))
   private var subscription: Option[UniqueKillSwitch] = None
-  implicit val as = context.system
+  implicit val as: ActorSystem = context.system
 
   override def preStart(): Unit = {
     super.preStart()

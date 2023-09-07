@@ -1,9 +1,10 @@
 package com.malliina.it
 
+import akka.stream.Materializer
+
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-
 import akka.stream.scaladsl.Sink
 import com.malliina.concurrent.ExecutionContexts.cached
 import com.malliina.musicpimp.cloud.CloudSocket
@@ -55,7 +56,7 @@ abstract class PimpcloudServerSuite extends FunSuite with ServerPerSuite2[TestCo
 
 class IntegrationTest extends PimpcloudServerSuite with MusicPimpSuite {
   def cloudPort = port
-  implicit val mat = components.materializer
+  implicit val mat: Materializer = components.materializer
   def cloudHostPort = s"localhost:$cloudPort"
   def pimpcloudUri = FullUrl("ws", cloudHostPort, CloudSocket.path)
   def pimpOptions: InitOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)

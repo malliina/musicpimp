@@ -14,7 +14,7 @@ import play.api.data.{Form, FormBinding}
 import play.api.data.Forms._
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class CloudCreds(cloudID: CloudID, username: Username, pass: Password)
 
@@ -35,7 +35,7 @@ object Web {
 
 class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthentication)
   extends AbstractController(comps) {
-  implicit val ec = defaultExecutionContext
+  implicit val ec: ExecutionContext = defaultExecutionContext
 
   def ping = Action {
     Caching.NoCache(Ok(BuildMeta.default))

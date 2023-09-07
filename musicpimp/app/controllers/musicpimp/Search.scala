@@ -13,6 +13,8 @@ import controllers.musicpimp.Search.log
 import play.api.Logger
 import play.api.libs.json.JsValue
 
+import scala.concurrent.ExecutionContextExecutor
+
 object Search {
   private val log = Logger(getClass)
   val DefaultLimit = 1000
@@ -21,8 +23,8 @@ object Search {
 }
 
 class Search(indexer: Indexer, auth: Authenticator[AuthedRequest], ctx: ActorExecution) {
-  implicit val ec = ctx.executionContext
-  implicit val mat = ctx.materializer
+  implicit val ec: ExecutionContextExecutor = ctx.executionContext
+  implicit val mat: Materializer = ctx.materializer
   val loggingSink = Sink.foreach[Long] { fileCount =>
     log.info(s"Indexing... $fileCount files indexed...")
   }

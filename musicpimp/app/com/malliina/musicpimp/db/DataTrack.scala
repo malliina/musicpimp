@@ -6,7 +6,7 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
 import io.getquill.Embedded
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, OFormat}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -24,5 +24,5 @@ case class DataTrack(
 
 object DataTrack {
   implicit val fd: Format[FiniteDuration] = CrossFormats.finiteDuration
-  implicit val format = Json.format[DataTrack]
+  implicit val format: OFormat[DataTrack] = Json.format[DataTrack]
 }

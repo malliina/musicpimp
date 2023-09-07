@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.messaging.cloud
 
 import com.malliina.push.gcm.{GCMResponse, MappedGCMResponse}
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat, OWrites}
 
 case class PushResult(apns: Seq[APNSHttpResult],
                       gcm: Seq[MappedGCMResponse],
@@ -14,13 +14,13 @@ case class PushResult(apns: Seq[APNSHttpResult],
 object PushResult {
   val empty = PushResult(Nil, Nil, Nil, Nil, Nil)
   // TODO add these to mobile-push
-  implicit val gcmResponseJson = Json.writes[GCMResponse]
-  implicit val mappedGcmResponseJson = Json.writes[MappedGCMResponse]
-  implicit val json = Json.format[PushResult]
+  implicit val gcmResponseJson: OWrites[GCMResponse] = Json.writes[GCMResponse]
+  implicit val mappedGcmResponseJson: OWrites[MappedGCMResponse] = Json.writes[MappedGCMResponse]
+  implicit val json: OFormat[PushResult] = Json.format[PushResult]
 }
 
 case class PushResponse(result: PushResult)
 
 object PushResponse {
-  implicit val json = Json.format[PushResponse]
+  implicit val json: OFormat[PushResponse] = Json.format[PushResponse]
 }

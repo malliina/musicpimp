@@ -4,13 +4,13 @@ import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.db.DataFolder
 import com.malliina.http.FullUrl
 import com.malliina.play.http.FullUrls
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{Json, OFormat, Writes}
 import play.api.mvc.RequestHeader
 
 case class MusicFolderResult(folder: FullFolder, folders: Seq[FullFolder], tracks: Seq[FullTrack])
 
 object MusicFolderResult {
-  implicit val json = Json.format[MusicFolderResult]
+  implicit val json: OFormat[MusicFolderResult] = Json.format[MusicFolderResult]
 }
 
 case class MusicFolder(folder: FolderMeta, folders: Seq[FolderMeta], tracks: Seq[TrackMeta]) {

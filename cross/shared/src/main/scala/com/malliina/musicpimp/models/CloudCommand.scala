@@ -33,7 +33,7 @@ object CloudCommand {
     case Disconnect => simpleObj(DisconnectCmd)
     case Noop => simpleObj(SubscribeCmd)
   }
-  implicit val json = Format[CloudCommand](reader, writer)
+  implicit val json: Format[CloudCommand] = Format[CloudCommand](reader, writer)
 
   def simpleObj(cmd: String): JsObject = Json.obj(CmdKey -> cmd)
 }

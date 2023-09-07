@@ -1,7 +1,6 @@
 package controllers.musicpimp
 
 import java.net.NetworkInterface
-
 import akka.stream.scaladsl.FileIO
 import com.malliina.json.JsonFormats
 import com.malliina.play.http.CookiedRequest
@@ -9,7 +8,7 @@ import com.malliina.values.Username
 import controllers.musicpimp.ConnectController.{Protocols, log}
 import net.glxn.qrgen.QRCode
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 import play.api.libs.json.Json._
 import play.api.mvc.{AnyContent, RequestHeader}
 
@@ -59,5 +58,5 @@ object ConnectController {
 case class Coordinate(protocol: Protocols.Protocol, hosts: Seq[String], username: Username)
 
 object Coordinate {
-  implicit val json = Json.format[Coordinate]
+  implicit val json: OFormat[Coordinate] = Json.format[Coordinate]
 }

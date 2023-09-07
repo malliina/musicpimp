@@ -13,7 +13,7 @@ object CloudResponse {
   val BodyKey = "body"
   val SuccessKey = "success"
 
-  implicit def json[T: Writes] = Writes[CloudResponse[T]] { r =>
+  implicit def json[T: Writes]: Writes[CloudResponse[T]] = Writes[CloudResponse[T]] { r =>
     Json.obj(
       RequestKey -> r.request,
       SuccessKey -> r.success,

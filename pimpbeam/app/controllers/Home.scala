@@ -1,7 +1,6 @@
 package controllers
 
 import java.util.UUID
-
 import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import akka.stream.{Materializer, QueueOfferResult}
 import akka.util.ByteString
@@ -25,7 +24,7 @@ import play.api.libs.streams.Accumulator
 import play.api.libs.ws.WSRequest
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
 /**
@@ -57,8 +56,8 @@ class Home(
   errorHandler: HttpErrorHandler,
   comps: ControllerComponents
 ) extends AbstractController(comps) {
-  implicit val m = mat
-  implicit val ec = mat.executionContext
+  implicit val m: Materializer = mat
+  implicit val ec: ExecutionContextExecutor = mat.executionContext
   val sessionKey = "username"
   val maxSize = 1024.megs
 

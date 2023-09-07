@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class WNSResult(reason: String,
                      description: String,
@@ -8,5 +8,5 @@ case class WNSResult(reason: String,
                      isSuccess: Boolean)
 
 object WNSResult {
-  implicit val json = Json.format[WNSResult]
+  implicit val json: OFormat[WNSResult] = Json.format[WNSResult]
 }

@@ -1,7 +1,7 @@
 package controllers.musicpimp
 
 import akka.actor.Props
-import akka.stream.KillSwitches
+import akka.stream.{KillSwitches, Materializer}
 import akka.stream.scaladsl.{Keep, Sink}
 import com.malliina.musicpimp.audio._
 import com.malliina.musicpimp.cloud.Clouds
@@ -19,7 +19,7 @@ class ServerWS(
   handler: PlaybackMessageHandler,
   ctx: ActorExecution
 ) {
-  implicit val mat = ctx.materializer
+  implicit val mat: Materializer = ctx.materializer
   val serverMessages = player.allEvents
   val subscription = serverMessages
     .viaMat(KillSwitches.single)(Keep.right)

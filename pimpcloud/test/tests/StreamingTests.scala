@@ -1,7 +1,6 @@
 package tests
 
 import java.nio.file.{Files, Path, Paths}
-
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink}
@@ -18,12 +17,12 @@ import org.apache.commons.io.FileUtils
 import play.api.http.HeaderNames
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future, Promise}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
 
 class StreamingTests extends PimpcloudSuite with BaseSuite {
-  implicit val as = ActorSystem("test")
-  implicit val mat = Materializer(as)
-  implicit val ec = mat.executionContext
+  implicit val as: ActorSystem = ActorSystem("test")
+  implicit val mat: Materializer = Materializer(as)
+  implicit val ec: ExecutionContextExecutor = mat.executionContext
 
   val fileName = "01 Atb - Ecstacy (Intro Edit).mp3"
   val file = s"E:\\musik\\Elektroniskt\\A State Of Trance 600 Expedition\\CD 2 - ATB\\$fileName"

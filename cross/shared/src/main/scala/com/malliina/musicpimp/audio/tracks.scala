@@ -1,13 +1,12 @@
 package com.malliina.musicpimp.audio
 
 import java.nio.file.{Path, Paths}
-
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
-import play.api.libs.json.{Json, Reads}
+import play.api.libs.json.{Format, Json, OFormat, Reads}
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -34,9 +33,9 @@ object FullTrack {
     FullUrl("https", "www.musicpimp.org", "")
   )
 
-  implicit val dur = CrossFormats.finiteDuration
-  implicit val storage = CrossFormats.storageSize
-  implicit val json = Json.format[FullTrack]
+  implicit val dur: Format[FiniteDuration] = CrossFormats.finiteDuration
+  implicit val storage: Format[StorageSize] = CrossFormats.storageSize
+  implicit val json: OFormat[FullTrack] = Json.format[FullTrack]
 }
 
 trait TrackMeta extends MusicItem {
@@ -67,7 +66,7 @@ case class Track(
 ) extends TrackMeta
 
 object Track {
-  implicit val dur = CrossFormats.finiteDuration
-  implicit val storage = CrossFormats.storageSize
-  implicit val jsonFormat = Json.format[Track]
+  implicit val dur: Format[FiniteDuration] = CrossFormats.finiteDuration
+  implicit val storage: Format[StorageSize] = CrossFormats.storageSize
+  implicit val jsonFormat: OFormat[Track] = Json.format[Track]
 }

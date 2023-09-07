@@ -2,7 +2,7 @@ package com.malliina.musicpimp.messaging.cloud
 
 import com.malliina.push.WindowsMessage
 import com.malliina.push.mpns._
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class MPNSRequest(toast: Option[ToastMessage] = None,
                        tile: Option[TileData] = None,
@@ -14,10 +14,10 @@ case class MPNSRequest(toast: Option[ToastMessage] = None,
 }
 
 object MPNSRequest {
-  implicit val tile = Json.format[TileData]
-  implicit val toast = Json.format[ToastMessage]
-  implicit val flip = Json.format[FlipData]
-  implicit val iconic = Json.format[IconicData]
-  implicit val cycle = Json.format[CycleTile]
-  implicit val json = Json.format[MPNSRequest]
+  implicit val tile: OFormat[TileData] = Json.format[TileData]
+  implicit val toast: OFormat[ToastMessage] = Json.format[ToastMessage]
+  implicit val flip: OFormat[FlipData] = Json.format[FlipData]
+  implicit val iconic: OFormat[IconicData] = Json.format[IconicData]
+  implicit val cycle: OFormat[CycleTile] = Json.format[CycleTile]
+  implicit val json: OFormat[MPNSRequest] = Json.format[MPNSRequest]
 }

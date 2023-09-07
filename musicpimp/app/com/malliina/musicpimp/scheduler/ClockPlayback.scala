@@ -2,18 +2,18 @@ package com.malliina.musicpimp.scheduler
 
 import com.malliina.musicpimp.audio.FullTrack
 import com.malliina.musicpimp.models.TrackID
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class TrackJob(track: FullTrack)
 
 object TrackJob {
-  implicit val json = Json.format[TrackJob]
+  implicit val json: OFormat[TrackJob] = Json.format[TrackJob]
 }
 
 case class TrackWrapper(track: TrackID)
 
 object TrackWrapper {
-  implicit val json = Json.format[TrackWrapper]
+  implicit val json: OFormat[TrackWrapper] = Json.format[TrackWrapper]
 }
 
 case class FullClockPlayback(
@@ -26,7 +26,7 @@ case class FullClockPlayback(
 }
 
 object FullClockPlayback {
-  implicit val json = Json.format[FullClockPlayback]
+  implicit val json: OFormat[FullClockPlayback] = Json.format[FullClockPlayback]
 }
 
 case class ClockPlaybackConf(
@@ -37,7 +37,7 @@ case class ClockPlaybackConf(
 )
 
 object ClockPlaybackConf {
-  implicit val json = Json.format[ClockPlaybackConf]
+  implicit val json: OFormat[ClockPlaybackConf] = Json.format[ClockPlaybackConf]
 }
 
 case class ClockPlayback(
@@ -50,7 +50,7 @@ case class ClockPlayback(
 }
 
 object ClockPlayback {
-  implicit val json = Json.format[ClockPlayback]
+  implicit val json: OFormat[ClockPlayback] = Json.format[ClockPlayback]
 
   def fromConf(conf: ClockPlaybackConf, job: PlaybackJob) =
     apply(conf.id, TrackWrapper(job.trackId), conf.when, conf.enabled)

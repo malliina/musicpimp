@@ -16,7 +16,8 @@ trait Quotes[I <: Idiom, N <: NamingStrategy] { this: Context[I, N] =>
   val tracksTable = quote(querySchema[DataTrack]("TRACKS"))
   val tokensTable = quote(querySchema[Token]("TOKENS"))
 
-  implicit val instantDecoder = MappedEncoding[Date, Instant](d => d.toInstant)
+  implicit val instantDecoder: MappedEncoding[Date, Instant] =
+    MappedEncoding[Date, Instant](d => d.toInstant)
 
   implicit val numericDuration: Numeric[FiniteDuration] = new Numeric[FiniteDuration] {
     override def plus(x: FiniteDuration, y: FiniteDuration): FiniteDuration = x.plus(y)

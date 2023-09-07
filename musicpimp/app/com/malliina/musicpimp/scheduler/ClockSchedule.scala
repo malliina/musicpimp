@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.scheduler
 
 import it.sauronsoftware.cron4j.SchedulingPattern
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 /** Schedule for regularly executing something at a given time of day.
   *
@@ -28,6 +28,6 @@ case class ClockSchedule(hour: Int, minute: Int, days: Seq[WeekDay]) extends Day
 }
 
 object ClockSchedule {
-  implicit val days = WeekDays.jsonFormat
-  implicit val format = Json.format[ClockSchedule]
+  implicit val days: WeekDays.jsonFormat.type = WeekDays.jsonFormat
+  implicit val format: OFormat[ClockSchedule] = Json.format[ClockSchedule]
 }

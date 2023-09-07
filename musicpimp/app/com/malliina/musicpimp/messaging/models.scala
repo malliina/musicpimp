@@ -45,8 +45,8 @@ object TokenInfo {
       }
     }
   }
-  implicit val tokenFormat = Format[Token](tokenReader, Writes[Token](t => Json.toJson(t.token)))
-  implicit val json = Json.format[TokenInfo]
+  implicit val tokenFormat: Format[Token] = Format[Token](tokenReader, Writes[Token](t => Json.toJson(t.token)))
+  implicit val json: OFormat[TokenInfo] = Json.format[TokenInfo]
 
   def adm(token: ADMToken) = TokenInfo(token, Adm)
 
@@ -60,5 +60,5 @@ object TokenInfo {
 case class Tokens(tokens: Seq[TokenInfo])
 
 object Tokens {
-  implicit val json = Json.format[Tokens]
+  implicit val json: OFormat[Tokens] = Json.format[Tokens]
 }

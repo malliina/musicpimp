@@ -12,7 +12,7 @@ import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.{MPNSToken, ToastMessage}
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class MessagingTests extends munit.FunSuite {
   //  val testToken = APNSToken.build("6c9969eee832f6ed2a11d04d6daa404db13cc3d97f7298f0c042616fc2a5cc34").get
@@ -26,8 +26,8 @@ class MessagingTests extends munit.FunSuite {
     Nil,
     Nil
   )
-  implicit val as = ActorSystem("test")
-  implicit val ec = as.dispatcher
+  implicit val as: ActorSystem = ActorSystem("test")
+  implicit val ec: ExecutionContextExecutor = as.dispatcher
   val admClient = new ADMBuilder()
   val gcmClient = new GCMBuilder()
 

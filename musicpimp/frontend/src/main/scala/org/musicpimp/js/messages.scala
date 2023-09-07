@@ -1,12 +1,12 @@
 package org.musicpimp.js
 
 import com.malliina.musicpimp.json.PlaybackStrings._
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, Json, OFormat}
 
 case class IdCommand(cmd: String, id: String)
 
 object IdCommand {
-  implicit val json = Json.format[IdCommand]
+  implicit val json: OFormat[IdCommand] = Json.format[IdCommand]
 }
 
 case class ValuedCommand[T: Format](cmd: String, value: T)

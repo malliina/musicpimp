@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.scheduler
 
 import it.sauronsoftware.cron4j.SchedulingPattern
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 /** Schedule for executing something every `interval` `timeUnit`s.
   *
@@ -26,6 +26,6 @@ case class IntervalSchedule(interval: Int, timeUnit: TimeUnit, days: Seq[WeekDay
 }
 
 object IntervalSchedule {
-  implicit val days = WeekDays.jsonFormat
-  implicit val format = Json.format[IntervalSchedule]
+  implicit val days: WeekDays.jsonFormat.type = WeekDays.jsonFormat
+  implicit val format: OFormat[IntervalSchedule] = Json.format[IntervalSchedule]
 }

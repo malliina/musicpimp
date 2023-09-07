@@ -7,7 +7,7 @@ import com.malliina.musicpimp.models.{FolderID, MusicItem}
 import com.malliina.play.http.FullUrls
 import com.malliina.values.UnixPath
 import play.api.libs.json.Json.obj
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{Json, OFormat, Writes}
 import play.api.mvc.Call
 
 case class FullFolder(
@@ -20,7 +20,7 @@ case class FullFolder(
 )
 
 object FullFolder {
-  implicit val json = Json.format[FullFolder]
+  implicit val json: OFormat[FullFolder] = Json.format[FullFolder]
 }
 
 trait FolderMeta extends MusicItem {

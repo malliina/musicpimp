@@ -9,7 +9,7 @@ import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.http.{AuthedRequest, FullUrls}
 import com.malliina.play.ws.{ActorConfig, JsonActor}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Writes}
 
 import scala.concurrent.duration.DurationInt
 
@@ -25,7 +25,7 @@ class PlayerActor(
   val ticks = Source.tick(200.millis, 900.millis, 0)
   val messageWriter = ServerMessage.jsonWriter(TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
-  implicit val w = TrackJson.writer(rh)
+  implicit val w: Writes[TrackMeta] = TrackJson.writer(rh)
   val user = conf.user.user
   var allEventsSub: Option[UniqueKillSwitch] = None
   var timeSub: Option[Cancellable] = None

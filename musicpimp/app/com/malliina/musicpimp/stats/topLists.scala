@@ -2,7 +2,7 @@ package com.malliina.musicpimp.stats
 
 import com.malliina.http.FullUrl
 import controllers.musicpimp.routes
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 import play.api.mvc.Call
 
 abstract class ListLike[T <: TopEntry](val entries: Seq[T], baseCall: Call) {
@@ -28,7 +28,7 @@ case class PopularList(meta: DataRequest, populars: Seq[FullPopularEntry])
   extends ListLike(populars, routes.Website.popular)
 
 object PopularList {
-  implicit val json = Json.format[PopularList]
+  implicit val json: OFormat[PopularList] = Json.format[PopularList]
 
   def forEntries(meta: DataRequest, populars: Seq[PopularEntry], host: FullUrl): PopularList =
     PopularList(meta, populars.map(_.toFull(host)))
@@ -38,7 +38,7 @@ case class RecentList(meta: DataRequest, recents: Seq[FullRecentEntry])
   extends ListLike(recents, routes.Website.recent)
 
 object RecentList {
-  implicit val json = Json.format[RecentList]
+  implicit val json: OFormat[RecentList] = Json.format[RecentList]
 
   def forEntries(meta: DataRequest, recents: Seq[RecentEntry], host: FullUrl): RecentList =
     RecentList(meta, recents.map(_.toFull(host)))

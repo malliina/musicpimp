@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.audio
 
-import akka.stream.KillSwitches
+import akka.stream.{KillSwitches, Materializer}
 import akka.stream.scaladsl.{Keep, Sink}
 import com.malliina.musicpimp.db.NewUserManager
 import com.malliina.musicpimp.stats.PlaybackStats
@@ -13,7 +13,7 @@ import scala.concurrent.stm.{Ref, atomic}
   * @param stats stats database
   */
 class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable {
-  implicit val mat = player.mat
+  implicit val mat: Materializer = player.mat
   val latestUser = Ref[Username](NewUserManager.defaultUser)
   val subscription = player.trackHistoryHub.source
     .viaMat(KillSwitches.single)(Keep.right)

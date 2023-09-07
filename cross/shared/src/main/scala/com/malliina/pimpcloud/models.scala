@@ -23,37 +23,37 @@ case class PimpStream(request: RequestIdentifier,
                       range: ContentRange)
 
 object PimpStream {
-  implicit val format = Json.format[PimpStream]
+  implicit val format: OFormat[PimpStream] = Json.format[PimpStream]
 }
 
 case class PimpStreams(streams: Seq[PimpStream]) extends PimpList
 
 object PimpStreams {
-  implicit val json = format(RequestsKey, PimpStreams.apply)(_.streams)
+  implicit val json: Format[PimpStreams] = format(RequestsKey, PimpStreams.apply)(_.streams)
 }
 
 case class PimpPhone(s: CloudID, address: String)
 
 object PimpPhone {
-  implicit val json = Json.format[PimpPhone]
+  implicit val json: OFormat[PimpPhone] = Json.format[PimpPhone]
 }
 
 case class PimpPhones(phones: Seq[PimpPhone]) extends PimpList
 
 object PimpPhones {
-  implicit val json = format(PhonesKey, PimpPhones.apply)(_.phones)
+  implicit val json: Format[PimpPhones] = format(PhonesKey, PimpPhones.apply)(_.phones)
 }
 
 case class PimpServer(id: CloudID, address: String)
 
 object PimpServer {
-  implicit val json = Json.format[PimpServer]
+  implicit val json: OFormat[PimpServer] = Json.format[PimpServer]
 }
 
 case class PimpServers(servers: Seq[PimpServer]) extends PimpList
 
 object PimpServers {
-  implicit val json = format(ServersKey, PimpServers.apply)(_.servers)
+  implicit val json: Format[PimpServers] = format(ServersKey, PimpServers.apply)(_.servers)
 }
 
 object ListEvent {

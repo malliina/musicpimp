@@ -9,28 +9,28 @@ trait PlaylistCommand
 
 case object GetPlaylistsCommand extends PlaylistCommand {
   val Key = "playlists"
-  implicit val json = singleCmd(Key, GetPlaylistsCommand)
+  implicit val json: OFormat[GetPlaylistsCommand.type] = singleCmd(Key, GetPlaylistsCommand)
 }
 
 case class GetPlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
 object GetPlaylistCommand {
   val Key = "playlist"
-  implicit val json = cmd(Key, Json.format[GetPlaylistCommand])
+  implicit val json: OFormat[GetPlaylistCommand] = cmd(Key, Json.format[GetPlaylistCommand])
 }
 
 case class SavePlaylistCommand(playlist: PlaylistSubmission) extends PlaylistCommand
 
 object SavePlaylistCommand {
   val Key = "playlist_save"
-  implicit val json = cmd(Key, Json.format[SavePlaylistCommand])
+  implicit val json: OFormat[SavePlaylistCommand] = cmd(Key, Json.format[SavePlaylistCommand])
 }
 
 case class DeletePlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
 object DeletePlaylistCommand {
   val Key = "playlist_delete"
-  implicit val json = cmd(Key, Json.format[DeletePlaylistCommand])
+  implicit val json: OFormat[DeletePlaylistCommand] = cmd(Key, Json.format[DeletePlaylistCommand])
 }
 
 object PlaylistCommand {

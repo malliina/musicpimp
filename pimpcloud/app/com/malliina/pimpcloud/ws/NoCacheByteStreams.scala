@@ -25,7 +25,7 @@ import play.api.mvc._
 import play.mvc.Http.HeaderNames
 
 import scala.collection.concurrent.TrieMap
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object NoCacheByteStreams {
   private val log = Logger(getClass)
@@ -52,7 +52,7 @@ class NoCacheByteStreams(
   onUpdate: () => Unit
 ) extends Streamer {
 
-  implicit val ec = mat.executionContext
+  implicit val ec: ExecutionContextExecutor = mat.executionContext
   private val ongoing = TrieMap.empty[RequestID, StreamEndpoint]
 
   def parser(request: RequestID): Option[BodyParser[MultipartFormData[Long]]] =

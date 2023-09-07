@@ -11,7 +11,7 @@ import scala.concurrent.duration.{DurationDouble, DurationInt}
 class FileTests extends munit.FunSuite {
   val minPathsPerSecond = 400
   val testRootOpt: Option[Path] = None
-  implicit val as = ActorSystem("test")
+  implicit val as: ActorSystem = ActorSystem("test")
   val library = Library()
 
   test(s"lists at least $minPathsPerSecond files per second or completes within 3 seconds") {

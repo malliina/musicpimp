@@ -1,7 +1,6 @@
 package controllers.pimpcloud
 
 import java.util.UUID
-
 import akka.actor.{ActorRef, Props}
 import akka.util.Timeout
 import com.malliina.musicpimp.cloud.{Constants, PimpServerSocket}
@@ -19,7 +18,7 @@ import play.api.Logger
 import play.api.http.HttpErrorHandler
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.DurationInt
 
 object Servers {
@@ -31,7 +30,7 @@ object Servers {
   * Pushes player events sent by servers to any connected phones, and responds to requests.
   */
 class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: HttpErrorHandler) {
-  implicit val ec = ctx.executionContext
+  implicit val ec: ExecutionContextExecutor = ctx.executionContext
 
   /** The server must authenticate with Basic HTTP authentication. The username must either be an empty string for
     * new clients, or a previously used cloud ID for old clients.
@@ -82,7 +81,7 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
 
   import akka.pattern.ask
 
-  implicit val timeout = Timeout(5.seconds)
+  implicit val timeout: Timeout = Timeout(5.seconds)
 
   def isConnected(serverID: CloudID): Future[Boolean] =
     (serverMediator ? Exists(serverID)).mapTo[Boolean]

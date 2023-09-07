@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class PushTask(apns: Seq[APNSPayload] = Nil,
                     gcm: Seq[GCMPayload] = Nil,
@@ -17,5 +17,5 @@ case class PushTask(apns: Seq[APNSPayload] = Nil,
 }
 
 object PushTask {
-  implicit val json = Json.format[PushTask]
+  implicit val json: OFormat[PushTask] = Json.format[PushTask]
 }

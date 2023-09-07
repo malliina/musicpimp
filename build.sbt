@@ -1,5 +1,4 @@
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
-
 import com.malliina.appbundler.FileMapping
 import com.malliina.sbt.GenericKeys._
 import com.malliina.sbt.filetree.DirMap
@@ -7,13 +6,14 @@ import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{appHome, ciBuild, httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
-import com.malliina.sbt.win.WinKeys.{msiMappings, useTerminateProcess, winSwExe, minJavaVersion}
+import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
 import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
+import sbt.util
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 import sbtcrossproject.CrossPlugin.autoImport.{
@@ -45,7 +45,7 @@ val utilPlayVersion = "6.0.0"
 val httpVersion = "4.5.13"
 val mysqlVersion = "5.1.49"
 val nvWebSocketVersion = "2.10"
-val munitVersion = "0.7.20"
+val munitVersion = "0.7.29"
 val akkaStreamsVersion = "2.6.1"
 
 val malliinaGroup = "com.malliina"
@@ -55,7 +55,7 @@ val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.10.1"
 
 val httpGroup = "org.apache.httpcomponents"
 
-scalaVersion in ThisBuild := "2.13.2"
+ThisBuild / scalaVersion := "2.13.12"
 
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
@@ -96,7 +96,7 @@ val crossJvm = cross.jvm
 val crossJs = cross.js
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
   .settings(
-    npmDependencies in Compile ++= Seq(
+    Compile / npmDependencies ++= Seq(
       "jquery" -> "3.3.1",
       "jquery-ui" -> "1.12.1"
     )
@@ -195,9 +195,9 @@ val musicmeta = project
     Linux / httpPort := Option("disabled"),
     Linux / httpsPort := Option("8460"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
-    javaOptions in Universal ++= {
-      val linuxName = (name in Linux).value
-      val metaHome = (appHome in Linux).value
+    Universal / javaOptions ++= {
+      val linuxName = (Linux / name).value
+      val metaHome = (Linux / appHome).value
       Seq(
         s"-Ddiscogs.oauth=/etc/$linuxName/discogs-oauth.key",
         s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
@@ -210,7 +210,7 @@ val musicmeta = project
     },
     pipelineStages := Seq(digest, gzip),
     buildInfoKeys ++= Seq[BuildInfoKey](
-      "frontName" -> (name in musicmetaFrontend).value
+      "frontName" -> (musicmetaFrontend / name).value
     ),
     buildInfoPackage := "com.malliina.musicmeta",
     linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
@@ -389,12 +389,12 @@ lazy val pimpMacSettings = macSettings ++ Seq(
   mainClass := Some("play.core.server.ProdServerStart"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
   launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
-  Mac / appIcon := Some((pkgHome in Mac).value.resolve("guitar.icns")),
-  pkgIcon := Some((pkgHome in Mac).value.resolve("guitar.png")),
+  Mac / appIcon := Some((Mac / pkgHome).value.resolve("guitar.icns")),
+  pkgIcon := Some((Mac / pkgHome).value.resolve("guitar.png")),
   hideDock := true,
   extraDmgFiles := Seq(
-    FileMapping((pkgHome in Mac).value.resolve("guitar.png"), Paths get ".background/.bg.png"),
-    FileMapping((pkgHome in Mac).value.resolve("DS_Store"), Paths get ".DS_Store")
+    FileMapping((Mac / pkgHome).value.resolve("guitar.png"), Paths get ".background/.bg.png"),
+    FileMapping((Mac / pkgHome).value.resolve("DS_Store"), Paths get ".DS_Store")
   )
 )
 
@@ -456,9 +456,9 @@ lazy val pimpcloudLinuxSettings = Seq(
 lazy val artifactSettings = Seq(
   libs ++= Seq(
     (Assets / packageBin).value.toPath,
-    (packageBin in shared in Compile).value.toPath,
-    (packageBin in crossJvm in Compile).value.toPath,
-    (packageBin in utilAudio in Compile).value.toPath
+    (shared / Compile / packageBin).value.toPath,
+    (crossJvm / Compile / packageBin).value.toPath,
+    (utilAudio / Compile / packageBin).value.toPath
   )
 )
 
@@ -537,7 +537,6 @@ def scalajsProject(name: String, path: File) =
       scalaJSUseMainModuleInitializer := true,
       webpackBundlingMode := BundlingMode.LibraryOnly(),
       Compile / npmDependencies ++= Seq(
-//        "jquery" -> "3.3.1",
         "popper.js" -> "1.14.6",
         "bootstrap" -> "4.2.1"
       ),
@@ -552,13 +551,11 @@ def scalajsProject(name: String, path: File) =
         "postcss-import" -> "12.0.1",
         "postcss-loader" -> "3.0.0",
         "postcss-preset-env" -> "6.5.0",
-//        "source-map-loader" -> "4.0.1",
         "style-loader" -> "3.3.3",
         "url-loader" -> "4.1.1",
         "webpack-merge" -> "4.1.5"
       ),
       Compile / additionalNpmConfig := Map(
-//        "engines" -> JSON.obj("node" -> JSON.str("10.x")),
         "private" -> JSON.bool(true),
         "license" -> JSON.str("BSD")
       ),

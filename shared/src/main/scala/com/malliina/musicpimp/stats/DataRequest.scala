@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.values.Username
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, OFormat}
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 
@@ -16,7 +16,7 @@ case class DataRequest(username: Username, from: Int, until: Int) {
 }
 
 object DataRequest {
-  implicit val json = Json.format[DataRequest]
+  implicit val json: OFormat[DataRequest] = Json.format[DataRequest]
 
   val DefaultItemCount = ItemLimits.DefaultItemCount
   val From = "from"

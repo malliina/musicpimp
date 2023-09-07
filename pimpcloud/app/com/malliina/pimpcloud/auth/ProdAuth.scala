@@ -11,14 +11,14 @@ import controllers.pimpcloud.{ServerRequest, Servers}
 import play.api.http.HttpErrorHandler
 import play.api.mvc.RequestHeader
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object ProdAuth {
   val ServerKey = "s"
 }
 
 class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAuthentication {
-  implicit val ec = servers.ctx.executionContext
+  implicit val ec: ExecutionContextExecutor = servers.ctx.executionContext
 
   override def authServer(
     req: RequestHeader,

@@ -3,7 +3,7 @@ package com.malliina.musicpimp.models
 import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.json.PlaybackStrings.{Add, AddItemsKey, Play, PlayItemsKey}
 import com.malliina.values.IntValidator
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 /**
   * @param id the cloud ID of a connected MusicPimp server
@@ -44,20 +44,20 @@ case class PlayTrack(track: TrackID) extends TrackLike
 
 object PlayTrack {
   val json = Json.format[PlayTrack]
-  implicit val cmd = CrossFormats.cmd(Play, json)
+  implicit val cmd: OFormat[PlayTrack] = CrossFormats.cmd(Play, json)
 }
 
 case class AddTrack(track: TrackID) extends TrackLike
 
 object AddTrack {
   val json = Json.format[AddTrack]
-  implicit val cmd = CrossFormats.cmd(Add, json)
+  implicit val cmd: OFormat[AddTrack] = CrossFormats.cmd(Add, json)
 }
 
 case class PlayItems(tracks: Seq[TrackID], folders: Seq[FolderID])
 
 object PlayItems {
-  implicit val cmd = CrossFormats.cmd(PlayItemsKey, Json.format[PlayItems])
+  implicit val cmd: OFormat[PlayItems] = CrossFormats.cmd(PlayItemsKey, Json.format[PlayItems])
 
   def folder(id: FolderID) = PlayItems(Nil, Seq(id))
 }
@@ -65,7 +65,7 @@ object PlayItems {
 case class AddItems(tracks: Seq[TrackID], folders: Seq[FolderID])
 
 object AddItems {
-  implicit val cmd = CrossFormats.cmd(AddItemsKey, Json.format[AddItems])
+  implicit val cmd: OFormat[AddItems] = CrossFormats.cmd(AddItemsKey, Json.format[AddItems])
 
   def folder(id: FolderID) = AddItems(Nil, Seq(id))
 }

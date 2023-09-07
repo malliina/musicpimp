@@ -3,12 +3,12 @@ package org.musicpimp.js
 import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.musicpimp.models.Refresh
 import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, OFormat}
 
 case class SearchStatus(event: String, status: String)
 
 object SearchStatus {
-  implicit val json = Json.format[SearchStatus]
+  implicit val json: OFormat[SearchStatus] = Json.format[SearchStatus]
 }
 
 class Search(music: MusicItems)

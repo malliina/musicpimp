@@ -1,6 +1,6 @@
 package com.malliina.musicmeta.js
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 case class LogEvent(timestamp: Long,
                     timeFormatted: String,
@@ -12,11 +12,11 @@ case class LogEvent(timestamp: Long,
 }
 
 object LogEvent {
-  implicit val json = Json.format[LogEvent]
+  implicit val json: OFormat[LogEvent] = Json.format[LogEvent]
 }
 
 case class LogEvents(events: Seq[LogEvent])
 
 object LogEvents {
-  implicit val json = Json.format[LogEvents]
+  implicit val json: OFormat[LogEvents] = Json.format[LogEvents]
 }

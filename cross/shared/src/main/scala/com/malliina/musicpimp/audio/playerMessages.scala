@@ -9,12 +9,12 @@ import scala.concurrent.duration.FiniteDuration
 
 case object ToggleMuteMessage {
   val Key = "mute"
-  implicit val json = singleCmd(Key, ToggleMuteMessage)
+  implicit val json: OFormat[ToggleMuteMessage.type] = singleCmd(Key, ToggleMuteMessage)
 }
 
 case object GetStatusMsg extends PlayerMessage {
   val Key = "status"
-  implicit val json = singleCmd(Key, GetStatusMsg)
+  implicit val json: OFormat[GetStatusMsg.type] = singleCmd(Key, GetStatusMsg)
 }
 
 /** Web playback updates only.
@@ -24,49 +24,51 @@ case object GetStatusMsg extends PlayerMessage {
 case class TimeUpdatedMsg(value: FiniteDuration) extends PlayerMessage
 
 object TimeUpdatedMsg {
-  implicit val json = cmd(TimeUpdated, Json.format[TimeUpdatedMsg])
+  implicit val json: OFormat[TimeUpdatedMsg] = cmd(TimeUpdated, Json.format[TimeUpdatedMsg])
 }
 
 case class TrackChangedMsg(track: TrackID) extends PlayerMessage
 
 object TrackChangedMsg {
-  implicit val json = cmd(TrackChanged, Json.format[TrackChangedMsg])
+  implicit val json: OFormat[TrackChangedMsg] = cmd(TrackChanged, Json.format[TrackChangedMsg])
 }
 
 case class VolumeChangedMsg(value: Volume) extends PlayerMessage
 
 object VolumeChangedMsg {
-  implicit val json = cmd(VolumeChanged, Json.format[VolumeChangedMsg])
+  implicit val json: OFormat[VolumeChangedMsg] = cmd(VolumeChanged, Json.format[VolumeChangedMsg])
 }
 
 case class PlaylistIndexChangedMsg(value: Int) extends PlayerMessage
 
 object PlaylistIndexChangedMsg {
-  implicit val json = cmd(PlaylistIndexChanged, Json.format[PlaylistIndexChangedMsg])
+  implicit val json: OFormat[PlaylistIndexChangedMsg] =
+    cmd(PlaylistIndexChanged, Json.format[PlaylistIndexChangedMsg])
 }
 
 case class PlayStateChangedMsg(value: PlayState) extends PlayerMessage
 
 object PlayStateChangedMsg {
-  implicit val json = cmd(PlaystateChanged, Json.format[PlayStateChangedMsg])
+  implicit val json: OFormat[PlayStateChangedMsg] =
+    cmd(PlaystateChanged, Json.format[PlayStateChangedMsg])
 }
 
 case class MuteToggledMsg(value: Boolean) extends PlayerMessage
 
 object MuteToggledMsg {
-  implicit val json = cmd(MuteToggled, Json.format[MuteToggledMsg])
+  implicit val json: OFormat[MuteToggledMsg] = cmd(MuteToggled, Json.format[MuteToggledMsg])
 }
 
 case class PlayMsg(track: TrackID) extends PlayerMessage
 
 object PlayMsg {
-  implicit val json = cmd(Play, Json.format[PlayMsg])
+  implicit val json: OFormat[PlayMsg] = cmd(Play, Json.format[PlayMsg])
 }
 
 case class AddMsg(track: TrackID) extends PlayerMessage
 
 object AddMsg {
-  implicit val json = cmd(Add, Json.format[AddMsg])
+  implicit val json: OFormat[AddMsg] = cmd(Add, Json.format[AddMsg])
 }
 
 case class RemoveMsg(index: Int) extends PlayerMessage
@@ -76,62 +78,60 @@ object RemoveMsg {
   val reader = Reads[RemoveMsg] { json =>
     (json \ Value).validate[Int].orElse((json \ Index).validate[Int]).map(apply)
   }
-  val writer = OWrites[RemoveMsg] { r =>
-    Json.obj(Value -> r.index, Index -> r.index)
-  }
-  implicit val json = cmd(Remove, OFormat(reader, writer))
+  val writer = OWrites[RemoveMsg] { r => Json.obj(Value -> r.index, Index -> r.index) }
+  implicit val json: OFormat[RemoveMsg] = cmd(Remove, OFormat(reader, writer))
 }
 
 case object ResumeMsg extends PlayerMessage {
-  implicit val json = singleCmd(Resume, ResumeMsg)
+  implicit val json: OFormat[ResumeMsg.type] = singleCmd(Resume, ResumeMsg)
 }
 
 case object StopMsg extends PlayerMessage {
-  implicit val json = singleCmd(Stop, StopMsg)
+  implicit val json: OFormat[StopMsg.type] = singleCmd(Stop, StopMsg)
 }
 
 case object NextMsg extends PlayerMessage {
-  implicit val json = singleCmd(Next, NextMsg)
+  implicit val json: OFormat[NextMsg.type] = singleCmd(Next, NextMsg)
 }
 
 case object PrevMsg extends PlayerMessage {
-  implicit val json = singleCmd(Prev, PrevMsg)
+  implicit val json: OFormat[PrevMsg.type] = singleCmd(Prev, PrevMsg)
 }
 
 case class SkipMsg(value: Int) extends PlayerMessage
 
 object SkipMsg {
-  implicit val json = cmd(Skip, Json.format[SkipMsg])
+  implicit val json: OFormat[SkipMsg] = cmd(Skip, Json.format[SkipMsg])
 }
 
 case class SeekMsg(value: FiniteDuration) extends PlayerMessage
 
 object SeekMsg {
-  implicit val json = cmd(Seek, Json.format[SeekMsg])
+  implicit val json: OFormat[SeekMsg] = cmd(Seek, Json.format[SeekMsg])
 }
 
 case class MuteMsg(value: Boolean) extends PlayerMessage
 
 object MuteMsg {
-  implicit val json = cmd(Mute, Json.format[MuteMsg])
+  implicit val json: OFormat[MuteMsg] = cmd(Mute, Json.format[MuteMsg])
 }
 
 case class VolumeMsg(value: Volume) extends PlayerMessage
 
 object VolumeMsg {
-  implicit val json = cmd(VolumeKey, Json.format[VolumeMsg])
+  implicit val json: OFormat[VolumeMsg] = cmd(VolumeKey, Json.format[VolumeMsg])
 }
 
 case class InsertTrackMsg(index: Int, track: TrackID) extends PlayerMessage
 
 object InsertTrackMsg {
-  implicit val json = cmd(Insert, Json.format[InsertTrackMsg])
+  implicit val json: OFormat[InsertTrackMsg] = cmd(Insert, Json.format[InsertTrackMsg])
 }
 
 case class MoveTrackMsg(from: Int, to: Int) extends PlayerMessage
 
 object MoveTrackMsg {
-  implicit val json = cmd(Move, Json.format[MoveTrackMsg])
+  implicit val json: OFormat[MoveTrackMsg] = cmd(Move, Json.format[MoveTrackMsg])
 }
 
 case class ResetPlaylistMessage(index: Int, tracks: Seq[TrackID]) extends PlayerMessage
@@ -142,29 +142,34 @@ object ResetPlaylistMessage {
     val tracks = (json \ Tracks).validate[Seq[TrackID]].getOrElse(Nil)
     JsSuccess(ResetPlaylistMessage(idx, tracks))
   }
-  implicit val json = cmd(ResetPlaylist, OFormat(reader, Json.writes[ResetPlaylistMessage]))
+  implicit val json: OFormat[ResetPlaylistMessage] =
+    cmd(ResetPlaylist, OFormat(reader, Json.writes[ResetPlaylistMessage]))
 }
 
-case class Handover(index: Option[Int],
-                    tracks: Seq[TrackID],
-                    state: PlayState,
-                    position: FiniteDuration) extends PlayerMessage
+case class Handover(
+  index: Option[Int],
+  tracks: Seq[TrackID],
+  state: PlayState,
+  position: FiniteDuration
+) extends PlayerMessage
 
 object Handover {
   val Key = "handover"
-  implicit val json = cmd(Key, Json.format[Handover])
+  implicit val json: OFormat[Handover] = cmd(Key, Json.format[Handover])
 }
 
 case class PlayAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
 object PlayAllMsg {
-  implicit val json = cmd(PlayItemsKey, OFormat(ItemsLike.reader[PlayAllMsg](apply), Json.writes[PlayAllMsg]))
+  implicit val json: OFormat[PlayAllMsg] =
+    cmd(PlayItemsKey, OFormat(ItemsLike.reader[PlayAllMsg](apply), Json.writes[PlayAllMsg]))
 }
 
 case class AddAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
 object AddAllMsg {
-  implicit val json = cmd(AddItemsKey, OFormat(ItemsLike.reader[AddAllMsg](apply), Json.writes[AddAllMsg]))
+  implicit val json: OFormat[AddAllMsg] =
+    cmd(AddItemsKey, OFormat(ItemsLike.reader[AddAllMsg](apply), Json.writes[AddAllMsg]))
 }
 
 /** Two uses:
@@ -180,7 +185,8 @@ trait PlayerMessage
 
 object PlayerMessage {
   implicit val reader: Reads[PlayerMessage] = Reads { json =>
-    GetStatusMsg.json.reads(json)
+    GetStatusMsg.json
+      .reads(json)
       .orElse(TimeUpdatedMsg.json.reads(json))
       .orElse(TrackChangedMsg.json.reads(json))
       .orElse(json.validate[VolumeChangedMsg])
@@ -216,5 +222,5 @@ object ItemsLike {
 }
 
 case object StatusMsg {
-  implicit val json = singleCmd(Status, StatusMsg)
+  implicit val json: OFormat[StatusMsg.type] = singleCmd(Status, StatusMsg)
 }

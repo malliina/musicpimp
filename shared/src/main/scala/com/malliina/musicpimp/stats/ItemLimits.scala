@@ -1,12 +1,12 @@
 package com.malliina.musicpimp.stats
 
-import play.api.libs.json.{JsResult, JsValue, Json}
+import play.api.libs.json.{JsResult, JsValue, Json, OFormat}
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 
 case class ItemLimits(from: Int, until: Int)
 
 object ItemLimits {
-  implicit val json = Json.format[ItemLimits]
+  implicit val json: OFormat[ItemLimits] = Json.format[ItemLimits]
 
   val DefaultItemCount = 300
   val From = "from"

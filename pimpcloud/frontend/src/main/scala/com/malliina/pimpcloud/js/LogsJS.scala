@@ -1,10 +1,9 @@
 package com.malliina.pimpcloud.js
 
-import java.util.UUID
 import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
 import com.malliina.pimpcloud.js.LogsJS.randomString
 import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, OFormat}
 import scalatags.Text.all._
 
 case class JVMLogEntry(
@@ -17,7 +16,7 @@ case class JVMLogEntry(
 )
 
 object JVMLogEntry {
-  implicit val json = Json.format[JVMLogEntry]
+  implicit val json: OFormat[JVMLogEntry] = Json.format[JVMLogEntry]
 }
 
 object LogsJS {

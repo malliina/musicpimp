@@ -13,7 +13,7 @@ class PimpAuthenticator(
   val rememberMe: RememberMe,
   ec: ExecutionContext
 ) extends CookieAuthenticator {
-  implicit val exec = ec
+  implicit val exec: ExecutionContext = ec
   val cookie = PimpAuthenticator.cookie(rememberMe)
 
   override def authenticate(user: Username, pass: Password): Future[Boolean] =

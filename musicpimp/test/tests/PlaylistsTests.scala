@@ -3,7 +3,7 @@ package tests
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.app.InitOptions
-import com.malliina.musicpimp.audio.TrackJson
+import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
 import com.malliina.musicpimp.db._
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
@@ -14,7 +14,7 @@ import com.malliina.ws.HttpUtil
 import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
 import play.api.http.MimeTypes.JSON
 import play.api.http.Writeable
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
@@ -23,7 +23,7 @@ import scala.concurrent.duration.DurationInt
 class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
   override def pimpOptions: InitOptions = TestOptions.default
 
-  implicit val f = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
+  implicit val f: Format[TrackMeta] = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
