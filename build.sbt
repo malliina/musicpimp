@@ -13,7 +13,6 @@ import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
 import play.sbt.PlayImport
 import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
-import sbt.util
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 import sbtcrossproject.CrossPlugin.autoImport.{
@@ -38,10 +37,10 @@ val sharedVersion = "1.15.1"
 val crossVersion = "1.15.0"
 
 val utilAudioVersion = "2.9.0"
-val primitivesVersion = "1.18.0"
+val primitivesVersion = "1.19.0"
 val playJsonVersion = "2.9.2"
-val scalaTagsVersion = "0.9.2"
-val utilPlayVersion = "6.0.0"
+val scalaTagsVersion = "0.9.4"
+val utilPlayVersion = "6.0.1"
 val httpVersion = "4.5.13"
 val mysqlVersion = "5.1.49"
 val nvWebSocketVersion = "2.10"
@@ -481,12 +480,10 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     scalaVersion,
     "gitHash" -> gitHash
   ),
-  libraryDependencies ++= defaultDeps ++ Seq(
-    "org.slf4j" % "slf4j-api" % "1.7.30",
-    "ch.qos.logback" % "logback-classic" % "1.2.3",
-    "ch.qos.logback" % "logback-core" % "1.2.3",
-    "com.typesafe.akka" %% "akka-http" % "10.1.15", // sbt dep error workaround
-    "com.typesafe.akka" %% "akka-http-spray-json" % "10.1.15",
+  libraryDependencies ++= defaultDeps ++ Seq("classic", "core").map { m =>
+    "ch.qos.logback" % s"logback-$m" % "1.4.11"
+  } ++ Seq("http", "http-spray-json").map { m => "com.typesafe.akka" %% s"akka-$m" % "10.1.15" } ++ Seq(
+    "org.slf4j" % "slf4j-api" % "2.0.9",
     "org.scalameta" %% "munit" % munitVersion % Test
   ),
   testFrameworks += new TestFramework("munit.Framework")
