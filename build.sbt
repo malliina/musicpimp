@@ -31,8 +31,8 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.25.1"
-val pimpcloudVersion = "1.30.1"
+val musicpimpVersion = "4.26.0"
+val pimpcloudVersion = "1.31.0"
 val sharedVersion = "1.15.1"
 val crossVersion = "1.15.0"
 
@@ -481,9 +481,9 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "gitHash" -> gitHash
   ),
   libraryDependencies ++= defaultDeps ++ Seq("classic", "core").map { m =>
-    "ch.qos.logback" % s"logback-$m" % "1.4.11"
+    "ch.qos.logback" % s"logback-$m" % "1.2.12"
   } ++ Seq("http", "http-spray-json").map { m => "com.typesafe.akka" %% s"akka-$m" % "10.1.15" } ++ Seq(
-    "org.slf4j" % "slf4j-api" % "2.0.9",
+    "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scalameta" %% "munit" % munitVersion % Test
   ),
   testFrameworks += new TestFramework("munit.Framework")
