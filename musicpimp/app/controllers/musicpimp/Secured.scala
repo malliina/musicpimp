@@ -14,7 +14,7 @@ object Secured {
 
   def logUnauthorized(request: RequestHeader): Unit = {
     val remoteAddress = Proxies.realAddress(request)
-    log warn s"Unauthorized request '${request.path}' from '$remoteAddress'."
+    log.warn(s"Unauthorized request '${request.path}' from '$remoteAddress'.")
   }
 
   def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =

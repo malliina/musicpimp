@@ -90,7 +90,7 @@ class CloudComponents(context: Context, conf: AppConf)
   val allowedEntry = allowedCsp.mkString(" ")
 
   val csp =
-    s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
+    s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry data:; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(
     contentSecurityPolicy = Option(csp)
   )
