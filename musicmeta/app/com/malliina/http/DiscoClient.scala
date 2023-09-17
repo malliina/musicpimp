@@ -2,21 +2,31 @@ package com.malliina.http
 
 import java.io.Closeable
 import java.nio.file.{Files, Path}
-
 import com.malliina.concurrent.Execution
-import com.malliina.http.DiscoClient.{keys, log}
-import com.malliina.oauth.DiscoGsOAuthCredentials
+import com.malliina.http.DiscoClient.{DiscoGsCredentials, keys, log}
 import com.malliina.storage._
 import com.malliina.util.WebUtils.encodeURIComponent
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Logger
 import play.api.http.HeaderNames.AUTHORIZATION
 import play.api.libs.json.{JsValue, Json}
+import com.malliina.play.util.ConfOps
+import com.malliina.values.ErrorMessage
+import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object DiscoClient {
   private val log = Logger(getClass)
+
+  case class DiscoGsCredentials(token: String)
+
+  object DiscoGsCredentials {
+    def apply(conf: Configuration): Either[ErrorMessage, DiscoGsCredentials] =
+      for {
+        token <- conf.read("discogs.access.token")
+      } yield DiscoGsCredentials(token)
+  }
 
   object keys {
     val CoverImage = "cover_image"
@@ -26,17 +36,15 @@ object DiscoClient {
     val Uri = "uri"
   }
 
-  def apply(creds: DiscoGsOAuthCredentials, coverDir: Path): DiscoClient =
+  def apply(creds: DiscoGsCredentials, coverDir: Path): DiscoClient =
     new DiscoClient(creds, coverDir)(Execution.cached)
 }
 
-class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(
+class DiscoClient(credentials: DiscoGsCredentials, coverDir: Path)(
   implicit ec: ExecutionContext
 ) extends Closeable {
   Files.createDirectories(coverDir)
   val httpClient = OkClient.default
-  val consumerKey = credentials.consumerKey
-  val consumerSecret = credentials.consumerSecret
   val iLoveDiscoGsFakeCoverSize = 15378
 
   /** Returns the album cover. Optionally downloads and caches it if it doesn't already exist locally.
@@ -140,7 +148,7 @@ class DiscoClient(credentials: DiscoGsOAuthCredentials, coverDir: Path)(
     (json \ keys.Results \\ keys.CoverImage).headOption.flatMap(_.asOpt[FullUrl])
   }
 
-  private def authValue = s"Discogs key=$consumerKey, secret=$consumerSecret"
+  private def authValue = s"Discogs token=${credentials.token}"
 
   def close(): Unit = httpClient.close()
 }

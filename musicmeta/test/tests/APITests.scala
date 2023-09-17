@@ -2,8 +2,9 @@ package tests
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import com.malliina.http.DiscoClient.DiscoGsCredentials
 import com.malliina.musicmeta.MetaHtml
-import com.malliina.oauth.{DiscoGsOAuthCredentials, GoogleOAuthCredentials}
+import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.ActorExecution
 import controllers.{Covers, MetaOAuth, MetaOAuthControl}
 import play.api.{Mode, http}
@@ -15,7 +16,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 object APITests {
-  val fakeCreds = DiscoGsOAuthCredentials("key", "secret", "token", "secret")
+  val fakeCreds = DiscoGsCredentials("token")
   val fakeGoogle = GoogleOAuthCredentials("client", "secret", "scope")
 }
 

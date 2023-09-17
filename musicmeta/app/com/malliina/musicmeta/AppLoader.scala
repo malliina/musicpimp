@@ -1,8 +1,9 @@
 package com.malliina.musicmeta
 
-import java.nio.file.Paths
+import com.malliina.http.DiscoClient.DiscoGsCredentials
 
-import com.malliina.oauth.{DiscoGsOAuthCredentials, GoogleOAuthCredentials}
+import java.nio.file.Paths
+import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.ActorExecution
 import com.malliina.play.app.DefaultApp
 import com.typesafe.config.ConfigFactory
@@ -28,21 +29,21 @@ class AppLoader extends DefaultApp(AppComponents.prod)
 object AppComponents {
   def prod(ctx: Context) = new AppComponents(
     ctx,
-    c => DiscoGsOAuthCredentials(c).fold(err => throw new Exception(err.message), identity),
+    c => DiscoGsCredentials(c).fold(err => throw new Exception(err.message), identity),
     c => GoogleOAuthCredentials(c).fold(err => throw new Exception(err.message), identity)
   )
 }
 
 class AppComponents(
   context: Context,
-  disco: Configuration => DiscoGsOAuthCredentials,
+  disco: Configuration => DiscoGsCredentials,
   google: Configuration => GoogleOAuthCredentials
 ) extends BuiltInComponentsFromContext(context)
   with HttpFiltersComponents
   with AssetsComponents {
   override val configuration: Configuration =
     LocalConf.localConf.withFallback(context.initialConfiguration)
-  val allowedCsp = Seq(
+  private val allowedCsp = Seq(
     "*.musicpimp.org",
     "*.bootstrapcdn.com",
     "*.googleapis.com",
@@ -50,10 +51,10 @@ class AppComponents(
     "use.fontawesome.com",
     "cdnjs.cloudflare.com"
   )
-  val allowedEntry = allowedCsp.mkString(" ")
+  private val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp =
-    s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry; connect-src *; img-src 'self' data:;"
+  private val csp =
+    s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry data:; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(
     contentSecurityPolicy = Option(csp)
   )
@@ -80,7 +81,5 @@ class AppComponents(
   override val router: Router =
     new Routes(httpErrorHandler, oauth, oauthControl, covers, metaAssets)
 
-  applicationLifecycle.addStopHook { () =>
-    Future.successful(oauthControl.http.close())
-  }
+  applicationLifecycle.addStopHook { () => Future.successful(oauthControl.http.close()) }
 }

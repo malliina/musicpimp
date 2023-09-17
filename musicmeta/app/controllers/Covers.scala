@@ -2,8 +2,8 @@ package controllers
 
 import java.net.ConnectException
 import java.nio.file.Paths
-
 import com.malliina.concurrent.Execution.cached
+import com.malliina.http.DiscoClient.DiscoGsCredentials
 import com.malliina.http._
 import com.malliina.oauth.DiscoGsOAuthCredentials
 import com.malliina.play.http.Proxies
@@ -20,7 +20,7 @@ object Covers {
   val tempDir = Paths.get(sys.props("java.io.tmpdir"))
 }
 
-class Covers(oauth: MetaOAuth, creds: DiscoGsOAuthCredentials, comps: ControllerComponents)
+class Covers(oauth: MetaOAuth, creds: DiscoGsCredentials, comps: ControllerComponents)
   extends AbstractController(comps) {
   val fallbackCoverDir = Covers.tempDir.resolve("covers")
   val coverDir = sys.props.get("cover.dir").fold(fallbackCoverDir)(path => Paths.get(path))

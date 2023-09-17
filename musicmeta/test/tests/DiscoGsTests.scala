@@ -1,9 +1,9 @@
 package tests
 
 import java.io.Closeable
-
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.DiscoClient
+import com.malliina.http.DiscoClient.DiscoGsCredentials
 import com.malliina.oauth.DiscoGsOAuthCredentials
 import controllers.Covers
 
@@ -14,7 +14,7 @@ class DiscoGsTests extends munit.FunSuite {
   val uri = "http://api.discogs.com/image/R-5245462-1388609959-3809.jpeg"
 
   test("download cover".ignore) {
-    val creds = DiscoGsOAuthCredentials("", "", "", "")
+    val creds = DiscoGsCredentials("token")
     using(new DiscoClient(creds, Covers.tempDir)) { client =>
       val result = client
         .downloadCover("Iron Maiden", "Powerslave")
