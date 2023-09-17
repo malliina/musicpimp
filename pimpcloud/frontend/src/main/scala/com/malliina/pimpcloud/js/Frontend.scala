@@ -1,12 +1,13 @@
 package com.malliina.pimpcloud.js
 
+import org.musicpimp.js.ScriptHelpers
 import org.scalajs.dom
 import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
-object Frontend {
+object Frontend extends ScriptHelpers {
   var app: Option[SocketJS] = None
   private val jq = MyJQuery
   private val jqui = MyJQueryUI

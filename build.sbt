@@ -132,6 +132,9 @@ val musicpimp = project
 
 val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
+  .settings(
+    Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
+  )
 val pimpcloud = project
   .in(file("pimpcloud"))
   .enablePlugins(

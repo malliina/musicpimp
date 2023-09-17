@@ -82,7 +82,6 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     val lastId = req.cookies.get(handler.lastIdKey).map(_.value)
     val described = lastId.fold("without login hint")(h => s"with login hint '$h'")
     log.info(s"Starting OAuth flow $described.")
-    val redirUrl = FullUrls(oauthConf.redirCall, req)
     validator
       .start(req, lastId.map(id => Map(LoginHint -> id)).getOrElse(Map.empty))
       .unsafeToFuture()
