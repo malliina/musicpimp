@@ -16,3 +16,7 @@ jobs:
           cache: sbt
       - name: Compile
         run: sbt Test/compile
+      - name: Build deb package
+        run: |
+          sudo apt-get install -y lintian
+          sbt "set scalaJSStage in Global := FullOptStage" musicpimp/ciBuild musicmeta/ciBuild pimpcloud/ciBuild

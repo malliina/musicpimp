@@ -207,7 +207,8 @@ val musicmeta = project
         s"-Dconfig.file=/etc/$linuxName/production.conf",
         s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
         "-Dfile.encoding=UTF-8",
-        "-Dsun.jnu.encoding=UTF-8"
+        "-Dsun.jnu.encoding=UTF-8",
+        s"-Dpidfile.path=/dev/null",
       )
     },
     pipelineStages := Seq(digest, gzip),
