@@ -6,7 +6,6 @@ This is the MusicPimp server software for Windows/Linux desktops. Check [www.mus
 
 - [musicpimp](musicpimp) as a standalone app
 - [pimpbeam](pimpbeam) deployed to [beam.musicpimp.org](https://beam.musicpimp.org)
-- [musicmeta](musicmeta) deployed to [api.musicpimp.org](https://api.musicpimp.org)
 - [pimpcloud](pimpcloud) deployed to [cloud.musicpimp.org](https://cloud.musicpimp.org)
 
 ## Development

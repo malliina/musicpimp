@@ -1,4 +1,4 @@
-name: Test
+name: Package and release
 
 on: push
 
@@ -16,7 +16,13 @@ jobs:
           cache: sbt
       - name: Compile
         run: sbt Test/compile
-      - name: Build deb package
+      - name: Build deb packages
         run: |
           sudo apt-get install -y lintian
-          sbt "set scalaJSStage in Global := FullOptStage" musicpimp/ciBuild musicmeta/ciBuild pimpcloud/ciBuild
+          sbt "set scalaJSStage in Global := FullOptStage" musicpimp/Debian/packageBin pimpcloud/Debian/packageBin
+      - name: Release .deb packages
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            */*.deb

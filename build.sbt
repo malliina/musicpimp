@@ -1,10 +1,10 @@
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.sbt.GenericKeys._
-import com.malliina.sbt.filetree.DirMap
+import com.malliina.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
-import com.malliina.sbt.unix.LinuxKeys.{appHome, ciBuild, httpPort, httpsPort}
+import com.malliina.sbt.unix.LinuxKeys.{ciBuild, httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
 import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
@@ -158,67 +158,6 @@ val it = project
     )
   )
 
-val metaCommonSettings = Seq(
-  version := "1.12.0",
-  scalacOptions := Seq("-unchecked", "-deprecation")
-)
-val musicmetaFrontend = scalajsProject("musicmeta-frontend", file("musicmeta") / "frontend")
-  .settings(metaCommonSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-      "be.doeraene" %%% "scalajs-jquery" % "1.0.0",
-      "com.typesafe.play" %%% "play-json" % playJsonVersion,
-      "com.malliina" %%% "primitives" % primitivesVersion
-    ),
-    Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
-  )
-val musicmeta = project
-  .in(file("musicmeta"))
-  .enablePlugins(
-    PlayScala,
-    JavaServerAppPackaging,
-    SystemdPlugin,
-    BuildInfoPlugin,
-    FileTreePlugin,
-    WebScalaJSBundlerPlugin
-  )
-  .settings(serverSettings ++ metaCommonSettings)
-  .settings(
-    scalaJSProjects := Seq(musicmetaFrontend),
-    Assets / pipelineStages := Seq(scalaJSPipeline),
-    libraryDependencies ++= Seq(
-      "commons-codec" % "commons-codec" % "1.15",
-      logstreamsDep,
-      malliinaGroup %% "play-social" % utilPlayVersion,
-      utilPlayDep,
-      utilPlayDep % Test classifier "tests"
-    ),
-    Linux / httpPort := Option("disabled"),
-    Linux / httpsPort := Option("8460"),
-    maintainer := "Michael Skogberg <malliina123@gmail.com>",
-    Universal / javaOptions ++= {
-      val linuxName = (Linux / name).value
-      val metaHome = (Linux / appHome).value
-      Seq(
-        s"-Ddiscogs.oauth=/etc/$linuxName/discogs-oauth.key",
-        s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
-        s"-Dcover.dir=$metaHome/covers",
-        s"-Dconfig.file=/etc/$linuxName/production.conf",
-        s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
-        "-Dfile.encoding=UTF-8",
-        "-Dsun.jnu.encoding=UTF-8",
-        s"-Dpidfile.path=/dev/null",
-      )
-    },
-    pipelineStages := Seq(digest, gzip),
-    buildInfoKeys ++= Seq[BuildInfoKey](
-      "frontName" -> (musicmetaFrontend / name).value
-    ),
-    buildInfoPackage := "com.malliina.musicmeta",
-    linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
-  )
-
 val pimpbeam = project
   .in(file("pimpbeam"))
   .enablePlugins(
@@ -251,7 +190,7 @@ val pimpbeam = project
     buildInfoPackage := "com.malliina.beam"
   )
 
-val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, musicmeta, pimpbeam)
+val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, pimpbeam)
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -291,11 +230,14 @@ lazy val pimpPlaySettings =
       ),
       fileTreeSources := Seq(
         DirMap(
-          (Assets / resourceDirectory).value,
+          (Assets / resourceDirectory).value.toPath,
           "com.malliina.musicpimp.assets.AppAssets",
           "com.malliina.musicpimp.html.PimpHtml.at"
         ),
-        DirMap((Compile / resourceDirectory).value, "com.malliina.musicpimp.licenses.LicenseFiles")
+        DirMap(
+          (Compile / resourceDirectory).value.toPath,
+          "com.malliina.musicpimp.licenses.LicenseFiles"
+        )
       ),
       libs := libs.value.filter { lib =>
         !lib.toFile.getAbsolutePath
@@ -419,7 +361,7 @@ lazy val pimpcloudSettings =
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(
         DirMap(
-          (Assets / resourceDirectory).value,
+          (Assets / resourceDirectory).value.toPath,
           "com.malliina.pimpcloud.assets.CloudAssets",
           "controllers.pimpcloud.CloudTags.at"
         )
