@@ -25,4 +25,4 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/release')
         with:
           files: |
-            */*.deb
+            **/*.deb
