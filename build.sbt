@@ -31,12 +31,6 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val musicpimpVersion = "4.26.0"
-val pimpcloudVersion = "1.31.0"
-val sharedVersion = "1.15.1"
-val crossVersion = "1.15.0"
-
-val utilAudioVersion = "2.9.0"
 val primitivesVersion = "1.19.0"
 val playJsonVersion = "2.9.2"
 val scalaTagsVersion = "0.9.4"
@@ -59,7 +53,6 @@ ThisBuild / scalaVersion := "2.13.12"
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
   .settings(
-    version := utilAudioVersion,
     organization := malliinaGroup,
     gitUserName := "malliina",
     developerName := "Michael Skogberg",
@@ -82,7 +75,6 @@ val cross = portableProject(JSPlatform, JVMPlatform)
   .in(file("cross"))
   .settings(
     organization := "org.musicpimp",
-    version := crossVersion,
     libraryDependencies ++= Seq(
       "com.typesafe.play" %%% "play-json" % playJsonVersion,
       "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
@@ -105,7 +97,6 @@ val shared = Project("pimp-shared", file("shared"))
   .dependsOn(crossJvm)
   .settings(baseSettings: _*)
   .settings(
-    version := sharedVersion,
     libraryDependencies ++= Seq(
       "io.getquill" %% "quill-jdbc" % "3.6.0",
       "org.flywaydb" % "flyway-core" % "7.5.0",
@@ -169,7 +160,6 @@ val pimpbeam = project
   )
   .settings(serverSettings: _*)
   .settings(
-    version := "2.1.0",
     libraryDependencies ++= Seq(
       utilPlayDep,
       logstreamsDep,
@@ -190,7 +180,24 @@ val pimpbeam = project
     buildInfoPackage := "com.malliina.beam"
   )
 
-val pimp = project.in(file(".")).aggregate(musicpimp, pimpcloud, pimpbeam)
+import sbtrelease.ReleaseStateTransformations._
+
+val pimp = project
+  .in(file("."))
+  .aggregate(musicpimp, pimpcloud, pimpbeam)
+  .settings(
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      setNextVersion,
+      commitNextVersion,
+      pushChanges
+    )
+  )
 
 addCommandAlias("pimp", ";project musicpimp")
 addCommandAlias("cloud", ";project pimpcloud")
@@ -205,7 +212,6 @@ lazy val pimpPlaySettings =
     nativeMusicPimpSettings ++
     artifactSettings ++
     Seq(
-      version := musicpimpVersion,
       buildInfoKeys += BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
       javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
@@ -352,7 +358,6 @@ lazy val pimpcloudSettings =
     artifactSettings ++
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
-      version := pimpcloudVersion,
       libraryDependencies ++= Seq(
         malliinaGroup %% "play-social" % utilPlayVersion,
         PlayImport.ehcache,

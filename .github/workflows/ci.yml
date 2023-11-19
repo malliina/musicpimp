@@ -22,7 +22,7 @@ jobs:
           sbt "set scalaJSStage in Global := FullOptStage" musicpimp/Debian/packageBin pimpcloud/Debian/packageBin
       - name: Release .deb packages
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/release')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           files: |
             **/*.deb
