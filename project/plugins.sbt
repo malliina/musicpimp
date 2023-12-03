@@ -1,7 +1,7 @@
 scalaVersion := "2.12.18"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
 
-val utilsVersion = "1.6.29"
+val utilsVersion = "1.6.30"
 
 Seq(
   "com.typesafe.play" % "sbt-plugin" % "2.8.20",

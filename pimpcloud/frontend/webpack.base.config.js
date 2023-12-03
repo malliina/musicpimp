@@ -12,7 +12,7 @@ const WebApp = Merge(ScalaJS, {
   module: {
     rules: [
       {
-        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+        test: /\.(png|woff|woff2|eot|ttf|svg|otf)$/,
         type: 'asset/inline'
       },
       {
