@@ -252,6 +252,7 @@ lazy val pimpPlaySettings =
       Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
+      Runtime / managedClasspath += (Assets / packageBin).value,
       useTerminateProcess := true,
       Windows / msiMappings := (Windows / msiMappings).value.map {
         case (src, dest) =>
@@ -372,7 +373,8 @@ lazy val pimpcloudSettings =
         )
       ),
       buildInfoPackage := "com.malliina.pimpcloud",
-      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
+      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
+      Runtime / managedClasspath += (Assets / packageBin).value
     )
 
 lazy val pimpcloudLinuxSettings = Seq(
