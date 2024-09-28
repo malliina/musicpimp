@@ -48,7 +48,7 @@ val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.10.1"
 
 val httpGroup = "org.apache.httpcomponents"
 
-ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / scalaVersion := "2.13.15"
 
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
@@ -253,6 +253,9 @@ lazy val pimpPlaySettings =
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
       Runtime / managedClasspath += (Assets / packageBin).value,
+      Assets / mappings ++= Seq(
+        (musicpimpFrontend / Compile / npmUpdate / crossTarget).value / "styles.css" -> "styles.css"
+      ),
       useTerminateProcess := true,
       Windows / msiMappings := (Windows / msiMappings).value.map {
         case (src, dest) =>
@@ -422,10 +425,14 @@ lazy val pimpcloudScalaJSSettings = Seq(
 def serverSettings = LinusPlugin.playSettings ++ Seq(
   // https://github.com/sbt/sbt-release
   releaseProcess := Seq[ReleaseStep](
-    releaseStepTask(Compile / clean),
     checkSnapshotDependencies,
-    runTest,
-    releaseStepTask(ciBuild)
+    inquireVersions,
+    setReleaseVersion,
+    commitReleaseVersion,
+    tagRelease,
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
   ),
   buildInfoKeys := Seq[BuildInfoKey](
     name,

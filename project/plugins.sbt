@@ -1,7 +1,7 @@
 scalaVersion := "2.12.18"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversions")
 
-val utilsVersion = "1.6.30"
+val utilsVersion = "1.6.40"
 
 Seq(
   "com.typesafe.play" % "sbt-plugin" % "2.8.20",
@@ -9,7 +9,7 @@ Seq(
   "com.malliina" % "sbt-nodejs" % utilsVersion,
   "com.malliina" % "sbt-filetree" % utilsVersion,
   "com.malliina" % "sbt-packager" % "2.10.1",
-  "org.scala-js" % "sbt-scalajs" % "1.14.0",
+  "org.scala-js" % "sbt-scalajs" % "1.17.0",
   "org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2",
   "com.vmunier" % "sbt-web-scalajs" % "1.2.0",
   "com.typesafe.sbt" % "sbt-digest" % "1.1.4",
