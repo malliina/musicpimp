@@ -377,7 +377,10 @@ lazy val pimpcloudSettings =
       ),
       buildInfoPackage := "com.malliina.pimpcloud",
       linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
-      Runtime / managedClasspath += (Assets / packageBin).value
+      Runtime / managedClasspath += (Assets / packageBin).value,
+      Assets / mappings ++= Seq(
+        (pimpcloudFrontend / Compile / npmUpdate / crossTarget).value / "styles.css" -> "styles.css"
+      )
     )
 
 lazy val pimpcloudLinuxSettings = Seq(
@@ -393,8 +396,7 @@ lazy val pimpcloudLinuxSettings = Seq(
       "-J-Xmx192m",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      s"-Dlogger.resource=/etc/$linuxName/logback-prod.xml",
-      s"-Dlogger.file=/etc/$linuxName/logback-prod.xml",
+      s"-Dlogger.resource=logback-prod.xml",
       s"-Dconfig.file=/etc/$linuxName/production.conf",
       s"-Dpidfile.path=/dev/null",
       s"-Dlog.dir=/var/log/$linuxName"
@@ -402,10 +404,9 @@ lazy val pimpcloudLinuxSettings = Seq(
   },
   Linux / packageSummary := "This is the pimpcloud summary.",
   rpmVendor := "Skogberg Labs",
-  libraryDependencies ++= Seq(
-    "org.eclipse.jetty" % "jetty-alpn-java-server" % "9.4.20.v20190813",
-    "org.eclipse.jetty" % "jetty-alpn-java-client" % "9.4.20.v20190813"
-  )
+  libraryDependencies ++= Seq("server", "client").map { module =>
+    "org.eclipse.jetty" % s"jetty-alpn-java-$module" % "9.4.20.v20190813"
+  }
 )
 
 lazy val artifactSettings = Seq(
