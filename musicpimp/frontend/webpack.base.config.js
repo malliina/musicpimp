@@ -6,6 +6,7 @@ const rootDir = path.resolve(__dirname, '../../../..');
 const cssDir = path.resolve(rootDir, 'src/main/resources/css');
 
 const WebApp = Merge(ScalaJS, {
+  performance: { hints: false },
   entry: {
     styles: [path.resolve(cssDir, './musicpimp.js')]
   },
