@@ -1,0 +1,42 @@
+name: Deploy
+
+on: push
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: sbt
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/ga.key
+          chmod 600 ~/.ssh/ga.key
+          cat >>~/.ssh/config <<END
+          Host server
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/ga.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+      - name: Compile
+        run: sbt "set scalaJSStage in Global := FullOptStage" Test/compile
+      - name: Build deb packages
+        run: |
+          sudo apt-get install -y lintian
+          sbt "set scalaJSStage in Global := FullOptStage" musicpimp/Debian/packageAndCopy pimpcloud/Debian/packageAndCopy
+      - name: Deploy pimpcloud
+        run: |
+          scp pimpcloud/target/pimpcloud.deb server:/home/mle/pimpcloud.deb
+          ssh server 'sudo dpkg --force-confold -i /home/mle/pimpcloud.deb'

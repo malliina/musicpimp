@@ -50,6 +50,8 @@ val httpGroup = "org.apache.httpcomponents"
 
 ThisBuild / scalaVersion := "2.13.15"
 
+val packageAndCopy = taskKey[File]("Copies packaged file for convenience")
+
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
   .settings(
@@ -384,8 +386,8 @@ lazy val pimpcloudSettings =
     )
 
 lazy val pimpcloudLinuxSettings = Seq(
-  Linux / httpPort := Option("disabled"),
-  Linux / httpsPort := Option("8458"),
+  Linux / httpPort := Option("8458"),
+  Linux / httpsPort := Option("disabled"),
   maintainer := "Michael Skogberg <malliina123@gmail.com>",
   manufacturer := "Skogberg Labs",
   mainClass := Some("com.malliina.pimpcloud.Starter"),
@@ -447,7 +449,16 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "org.slf4j" % "slf4j-api" % "1.7.30",
     "org.scalameta" %% "munit" % munitVersion % Test
   ),
-  testFrameworks += new TestFramework("munit.Framework")
+  Debian / packageAndCopy := {
+    val deb = (Debian / packageBin).value
+    val artifact = (Debian / packageBin).value
+    val destName = (Linux / name).value
+    val dest = target.value / s"$destName.deb"
+    sbt.IO.copyFile(artifact, dest)
+    streams.value.log.info(s"Copied '$artifact' to '$dest'.")
+    dest
+  },
+  Debian / packageAndCopy := (Debian / packageAndCopy).dependsOn(Debian / packageBin).value
 )
 
 def libSettings = Seq(

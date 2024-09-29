@@ -15,7 +15,7 @@ jobs:
           java-version: 17
           cache: sbt
       - name: Compile
-        run: sbt Test/compile
+        run: sbt "set scalaJSStage in Global := FullOptStage" Test/compile
       - name: Build deb packages
         run: |
           sudo apt-get install -y lintian
