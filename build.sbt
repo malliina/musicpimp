@@ -254,10 +254,6 @@ lazy val pimpPlaySettings =
       Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
-      Runtime / managedClasspath += (Assets / packageBin).value,
-      Assets / mappings ++= Seq(
-        (musicpimpFrontend / Compile / npmUpdate / crossTarget).value / "styles.css" -> "styles.css"
-      ),
       useTerminateProcess := true,
       Windows / msiMappings := (Windows / msiMappings).value.map {
         case (src, dest) =>
