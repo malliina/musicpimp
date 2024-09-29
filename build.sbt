@@ -378,11 +378,7 @@ lazy val pimpcloudSettings =
         )
       ),
       buildInfoPackage := "com.malliina.pimpcloud",
-      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
-      Runtime / managedClasspath += (Assets / packageBin).value,
-      Assets / mappings ++= Seq(
-        (pimpcloudFrontend / Compile / npmUpdate / crossTarget).value / "styles.css" -> "styles.css"
-      )
+      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
     )
 
 lazy val pimpcloudLinuxSettings = Seq(
