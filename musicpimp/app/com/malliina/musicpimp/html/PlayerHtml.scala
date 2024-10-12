@@ -1,22 +1,22 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.assets.AppAssets
-import com.malliina.musicpimp.js.PlayerStrings
+import com.malliina.musicpimp.js.{FrontStrings, PlayerStrings}
 import controllers.musicpimp.{UserFeedback, routes}
+import scalatags.Text.all.*
 
-import scalatags.Text.all._
+object PlayerHtml extends PimpBootstrap with PlayerStrings:
 
-object PlayerHtml extends PimpBootstrap with PlayerStrings {
-
-  import tags._
+  import tags.*
 
   val playerWidth = col.md.width("12")
 
   def playerContent(feedback: Option[UserFeedback]) = row(
     divClass(col.md.six)(
       headerDiv(h1("Player")),
-      div(id := PlayerDivId, style := "display: none")(
-        feedback.fold(empty) { fb => div(id := FeedbackId)(PimpHtml.feedbackDiv(fb)) },
+      div(id := PlayerDivId, cls := FrontStrings.HiddenClass)(
+        feedback.fold(empty): fb =>
+          div(id := FeedbackId)(PimpHtml.feedbackDiv(fb)),
         fullRow(
           pClass(Lead, id := NoTrackTextId)(
             "No track. Play one from the ",
@@ -34,7 +34,7 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
     )
   )
 
-  def playerCtrl: Modifier = {
+  def playerCtrl: Modifier =
     val img = AppAssets.img
     val imgLight = img.light
     val centerAttr = `class` := "track-meta"
@@ -58,7 +58,11 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
         divClass(s"$Row mx-auto justify-content-center")(
           imageInput(img.transport_rew_png, id := PrevButton),
           imageInput(imgLight.transport_play_png, id := PlayButton),
-          imageInput(imgLight.transport_pause_png, id := PauseButton, style := "display: none"),
+          imageInput(
+            imgLight.transport_pause_png,
+            id := PauseButton,
+            cls := FrontStrings.HiddenClass
+          ),
           imageInput(imgLight.transport_ff_png, id := NextButton)
         ),
         div(`class` := Row, id := "volume-control")(
@@ -69,5 +73,3 @@ object PlayerHtml extends PimpBootstrap with PlayerStrings {
         )
       )
     )
-  }
-}

@@ -1,18 +1,17 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.audio._
+import com.malliina.musicpimp.audio.*
 import com.malliina.musicpimp.js.FooterStrings
 import com.malliina.musicpimp.js.FrontStrings.HiddenClass
 import com.malliina.musicpimp.models.Volume
-import org.scalajs.dom.raw.Event
-import org.scalajs.jquery.JQuery
+import org.scalajs.dom.{Element, Event}
 
 import scala.concurrent.duration.Duration
 
-class FooterSocket extends PlaybackSocket with FooterStrings {
+class FooterSocket extends PlaybackSocket with FooterStrings:
   // Why do these need to be lazy?
   lazy val footer = elem(FooterId)
-  lazy val playButton: JQuery = elem(FooterPlay)
+  lazy val playButton = elem(FooterPlay)
   lazy val pauseButton = elem(FooterPause)
   lazy val backwardButton = elem(FooterBackward)
   lazy val forwardButton = elem(FooterForward)
@@ -25,29 +24,26 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
 
   val NavbarFixedBottom = "navbar-fixed-bottom"
 
-  override def onConnected(e: Event): Unit = {
+  override def onConnected(e: Event): Unit =
     installHandlers()
     super.onConnected(e)
-  }
 
-  def installHandlers() = {
+  def installHandlers() =
     onClick(backwardButton, PrevMsg)
     onClick(playButton, ResumeMsg)
     onClick(pauseButton, StopMsg)
     onClick(forwardButton, NextMsg)
-  }
 
   override def updateTime(duration: Duration): Unit = ()
 
   override def updatePlayPauseButtons(state: PlayState): Unit =
     updatePlayPause(state)
 
-  override def updateTrack(track: TrackMeta): Unit = {
+  override def updateTrack(track: TrackMeta): Unit =
     hide(footerCredit)
     show(backwardButton, forwardButton)
-    title html track.title
-    artist html track.artist
-  }
+    title.html(track.title)
+    artist.html(track.artist)
 
   override def updatePlaylist(tracks: Seq[TrackMeta]): Unit = ()
 
@@ -55,39 +51,34 @@ class FooterSocket extends PlaybackSocket with FooterStrings {
 
   override def muteToggled(isMute: Boolean): Unit = ()
 
-  override def onStatus(status: StatusEvent): Unit = {
+  override def onStatus(status: StatusEvent): Unit =
     val track = status.track
-    if (track.title.nonEmpty) {
+    if track.title.nonEmpty then
       updateTrack(track)
       updatePlayPause(status.state)
       ensureClass(footer, FooterFixedClass)
-    } else {
+    else
       hidePlaybackFooterShowCredits()
       footer.removeClass(FooterFixedClass)
-    }
-  }
 
-  def hidePlaybackFooterShowCredits() = {
-    hide(playbackButtons: _*)
+  def hidePlaybackFooterShowCredits() =
+    hide(playbackButtons*)
     show(footerCredit)
-  }
 
   def updatePlayPause(state: PlayState): Unit =
-    state match {
+    state match
       case Started =>
         hide(playButton)
         show(pauseButton)
       case _ =>
         hide(pauseButton)
         show(playButton)
-    }
 
-  def hide(elems: JQuery*): Unit =
+  def hide(elems: Element*): Unit =
     elems foreach { elem => ensureClass(elem, HiddenClass) }
 
-  def ensureClass(elem: JQuery, clazz: String) =
-    if (!(elem hasClass clazz)) elem addClass clazz
+  private def ensureClass(elem: Element, clazz: String): Unit =
+    if !elem.hasClass(clazz) then elem.addClass(clazz)
 
-  def show(elems: JQuery*): Unit =
-    elems foreach (_ removeClass HiddenClass)
-}
+  def show(elems: Element*): Unit =
+    elems.foreach(_.removeClass(HiddenClass))

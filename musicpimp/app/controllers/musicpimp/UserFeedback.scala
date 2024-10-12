@@ -4,16 +4,15 @@ import controllers.musicpimp.UserFeedback.{Feedback, No, Success, Yes}
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 
-case class UserFeedback(message: String, isError: Boolean) {
+case class UserFeedback(message: String, isError: Boolean):
   def flash: Flash = Flash(
     Map(
       Feedback -> message,
-      Success -> (if (isError) No else Yes)
+      Success -> (if isError then No else Yes)
     )
   )
-}
 
-object UserFeedback {
+object UserFeedback:
   val Feedback = "feedback"
   val Success = "success"
   val Yes = "yes"
@@ -27,13 +26,12 @@ object UserFeedback {
     flashed(request.flash)
 
   def flashed(flash: Flash, textKey: String = Feedback): Option[UserFeedback] =
-    for {
+    for
       message <- flash get textKey
       isError = (flash get Success) contains No
-    } yield UserFeedback(message, isError)
+    yield UserFeedback(message, isError)
 
-  def formed(form: Form[_]) =
+  def formed(form: Form[?]) =
     form.globalError
       .orElse(form.errors.headOption)
       .map(formError => error(formError.message))
-}

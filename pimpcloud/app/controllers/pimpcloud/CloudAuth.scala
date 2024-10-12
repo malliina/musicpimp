@@ -1,6 +1,6 @@
 package controllers.pimpcloud
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.play.auth.{Authenticator, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}

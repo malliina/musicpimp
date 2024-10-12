@@ -1,20 +1,18 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.js.FrontStrings._
-import org.scalajs.jquery.{JQuery, JQueryEventObject}
-import play.api.libs.json.Writes
+import com.malliina.musicpimp.js.FrontStrings.*
+import io.circe.Encoder
+import org.scalajs.dom.Element
 
-abstract class SocketJS(wsPath: String, log: Logger)
+abstract class SocketJS(wsPath: String, log: BaseLogger)
   extends BaseSocket(wsPath, HiddenClass, log)
-    with BaseScript {
-  def this(wsPath: String) = this(wsPath, Logger.default)
+  with BaseScript:
+  def this(wsPath: String) = this(wsPath, BaseLogger.printer)
 
-  def onClick[C: Writes](element: JQuery, cmd: C) =
+  def onClick[C: Encoder](element: Element, cmd: C): Unit =
     install(element, send(cmd))
 
-  def install(element: JQuery, onClick: => Unit) =
-    element click { (e: JQueryEventObject) =>
+  private def install(element: Element, onClick: => Unit): Unit =
+    element.onClick: e =>
       onClick
       e.preventDefault()
-    }
-}

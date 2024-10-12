@@ -4,7 +4,7 @@ import java.io.InputStream
 import java.net.URI
 import java.nio.file.Path
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.audio.javasound.JavaSoundPlayer.DefaultRwBufferSize
 import com.malliina.audio.meta.StreamSource
 import com.malliina.storage.StorageSize
@@ -28,8 +28,8 @@ class BasicJavaSoundPlayer(
 
 object BasicJavaSoundPlayer {
   def fromFile(file: Path, mat: Materializer) =
-    new BasicJavaSoundPlayer(StreamSource.fromFile(file)) (mat)
+    new BasicJavaSoundPlayer(StreamSource.fromFile(file))(mat)
 
   def fromUri(uri: URI, duration: FiniteDuration, size: StorageSize, mat: Materializer) =
-    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size)) (mat)
+    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))(mat)
 }

@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.concurrent.ExecutionContexts.cached
+import com.malliina.concurrent.Execution.cached
 import com.malliina.concurrent.FutureOps
 import com.malliina.musicpimp.messaging.TokenService.log
 import com.malliina.musicpimp.messaging.adm.{AmazonDevices, ADMBuilder}

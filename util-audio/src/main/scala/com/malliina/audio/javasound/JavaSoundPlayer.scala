@@ -3,9 +3,9 @@ package com.malliina.audio.javasound
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
-import akka.NotUsed
-import akka.stream._
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream._
+import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source}
 import com.malliina.audio.PlaybackEvents.TimeUpdated
 import com.malliina.audio._
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
@@ -113,9 +113,9 @@ class JavaSoundPlayer(
   def play(): Unit = {
     lineData.state match {
       case PlayerStates.Started =>
-        log info "Start playback issued but playback already started: doing nothing"
+        log.info("Start playback issued but playback already started: doing nothing")
       case PlayerStates.Closed =>
-        log warn "Cannot start playback of a closed track."
+        log.warn("Cannot start playback of a closed track.")
       // After end of media, the InputStream is closed and cannot be reused. Therefore this player cannot be used.
       // It's incorrect to call methods on a closed player. In principle we should throw an exception here, but I try
       // to resist the path of the IllegalStateException.
@@ -207,7 +207,7 @@ class JavaSoundPlayer(
     val wasMute = mute
     // seeks
     reset()
-    val bytesSkipped = (lineData skip byteCount.toBytes).bytes
+    val bytesSkipped = lineData.skip(byteCount.toBytes).bytes
     // restores state
     if (wasPlaying) {
       play()
@@ -224,7 +224,7 @@ class JavaSoundPlayer(
       playThread = Some(Future(startPlayThread()).recover {
         // javazoom lib may throw at arbitrary playback moments
         case e: ArrayIndexOutOfBoundsException =>
-          log warn (e.getClass.getName, e)
+          log.warn(e.getClass.getName, e)
           closeLine()
           onPlaybackException(e)
       })
@@ -254,7 +254,7 @@ class JavaSoundPlayer(
   private def tryMarkStream(): Unit = {
     if (stream.markSupported()) {
       val markLimit = math.min(Integer.MAX_VALUE.toLong, 2 * media.size.toBytes).toInt
-      stream mark markLimit
+      stream.mark(markLimit)
       //      log.info(s"Mark limit is: $markLimit")
     }
   }

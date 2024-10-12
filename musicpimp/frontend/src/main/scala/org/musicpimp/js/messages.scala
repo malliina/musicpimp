@@ -1,20 +1,21 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.json.PlaybackStrings._
-import play.api.libs.json.{Format, Json, OFormat}
+import com.malliina.musicpimp.json.PlaybackStrings.*
+import io.circe.Codec
 
-case class IdCommand(cmd: String, id: String)
+case class IdCommand(cmd: String, id: String) derives Codec.AsObject
 
-object IdCommand {
-  implicit val json: OFormat[IdCommand] = Json.format[IdCommand]
-}
+trait ValuedCommand[T]:
+  def cmd: String
+  def value: T
 
-case class ValuedCommand[T: Format](cmd: String, value: T)
+case class IntCommand(cmd: String, value: Int) extends ValuedCommand[Int] derives Codec.AsObject
 
-object ValuedCommand {
-  implicit def json[T: Format]: Format[ValuedCommand[T]] =
-    Json.format[ValuedCommand[T]]
+case class BoolCommand(cmd: String, value: Boolean) extends ValuedCommand[Boolean]
+  derives Codec.AsObject
 
-  def mute(isMute: Boolean): ValuedCommand[Boolean] =
-    ValuedCommand(Mute, isMute)
-}
+object ValuedCommand:
+  def apply(cmd: String, value: Int) = IntCommand(cmd, value)
+
+  def mute(isMute: Boolean): BoolCommand =
+    BoolCommand(Mute, isMute)

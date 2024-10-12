@@ -3,44 +3,40 @@ package com.malliina.musicpimp.audio
 import com.malliina.musicpimp.json.CrossFormats.{cmd, singleCmd}
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.PlaylistID
-import play.api.libs.json._
+import io.circe.generic.semiauto.deriveCodec
+import io.circe.{Codec, Decoder}
 
 trait PlaylistCommand
 
-case object GetPlaylistsCommand extends PlaylistCommand {
+case object GetPlaylistsCommand extends PlaylistCommand:
   val Key = "playlists"
-  implicit val json: OFormat[GetPlaylistsCommand.type] = singleCmd(Key, GetPlaylistsCommand)
-}
+  implicit val json: Codec[GetPlaylistsCommand.type] = singleCmd(Key, GetPlaylistsCommand)
 
 case class GetPlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
-object GetPlaylistCommand {
+object GetPlaylistCommand:
   val Key = "playlist"
-  implicit val json: OFormat[GetPlaylistCommand] = cmd(Key, Json.format[GetPlaylistCommand])
-}
+  implicit val json: Codec[GetPlaylistCommand] = cmd(Key, deriveCodec[GetPlaylistCommand])
 
 case class SavePlaylistCommand(playlist: PlaylistSubmission) extends PlaylistCommand
 
-object SavePlaylistCommand {
+object SavePlaylistCommand:
   val Key = "playlist_save"
-  implicit val json: OFormat[SavePlaylistCommand] = cmd(Key, Json.format[SavePlaylistCommand])
-}
+  implicit val json: Codec[SavePlaylistCommand] = cmd(Key, deriveCodec[SavePlaylistCommand])
 
 case class DeletePlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
-object DeletePlaylistCommand {
+object DeletePlaylistCommand:
   val Key = "playlist_delete"
-  implicit val json: OFormat[DeletePlaylistCommand] = cmd(Key, Json.format[DeletePlaylistCommand])
-}
+  implicit val json: Codec[DeletePlaylistCommand] = cmd(Key, deriveCodec[DeletePlaylistCommand])
 
-object PlaylistCommand {
-  implicit val reader: Reads[PlaylistCommand] = Reads { json =>
+object PlaylistCommand:
+  implicit val reader: Decoder[PlaylistCommand] = Decoder: json =>
+    val v = json.value
     GetPlaylistsCommand.json
-      .reads(json)
-      .orElse(GetPlaylistCommand.json.reads(json))
-      .orElse(SavePlaylistCommand.json.reads(json))
-      .orElse(DeletePlaylistCommand.json.reads(json))
-  }
-}
+      .decodeJson(v)
+      .orElse(GetPlaylistCommand.json.decodeJson(v))
+      .orElse(SavePlaylistCommand.json.decodeJson(v))
+      .orElse(DeletePlaylistCommand.json.decodeJson(v))
 
 class PlaylistHandler(service: PlaylistService)

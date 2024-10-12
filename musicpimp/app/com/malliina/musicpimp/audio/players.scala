@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.audio
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.musicpimp.library.LocalTrack
 

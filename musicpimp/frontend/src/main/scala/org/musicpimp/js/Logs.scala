@@ -2,40 +2,40 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.FrontStrings.{HiddenClass, LogTableBodyId}
 import com.malliina.musicpimp.models.{JVMLogEntry, Subscribe}
+import io.circe.Json
 import org.musicpimp.js.Logs.randomString
-import org.scalajs.dom.raw.Event
-import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.JsValue
-import scalatags.Text.all._
+import org.scalajs.dom.{Event, document}
+import scalatags.JsDom.all.*
 
-object Logs {
+object Logs:
   private val chars = "abcdefghijklmnopqrstuvwxyz"
 
   private def randomString(ofLength: Int): String =
-    (0 until ofLength).map { _ => chars.charAt(math.floor(math.random() * chars.length).toInt) }.mkString
-}
+    (0 until ofLength)
+      .map: _ =>
+        chars.charAt(math.floor(math.random() * chars.length).toInt)
+      .mkString
 
-class Logs extends SocketJS("/ws/logs?f=json") {
+class Logs extends SocketJS("/ws/logs?f=json"):
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
   val LogRow = "log-row"
   val TimestampCell = "cell-timestamp"
   val tableContent = elem(LogTableBodyId)
 
-  override def onConnected(e: Event): Unit = {
+  override def onConnected(e: Event): Unit =
     send(Subscribe)
     super.onConnected(e)
-  }
 
-  override def handlePayload(payload: JsValue): Unit =
-    handleValidated[Seq[JVMLogEntry]](payload) { entries => entries foreach prepend }
+  override def handlePayload(payload: Json): Unit =
+    handleValidated[Seq[JVMLogEntry]](payload): entries =>
+      entries.foreach(prepend)
 
-  def prepend(entry: JVMLogEntry) = {
-    val rowClass = entry.level match {
+  private def prepend(entry: JVMLogEntry): Unit =
+    val rowClass = entry.level match
       case "ERROR" => "danger"
       case "WARN"  => "warning"
       case _       => ""
-    }
 
     val level = entry.level
     val entryId = randomString(5)
@@ -47,12 +47,11 @@ class Logs extends SocketJS("/ws/logs?f=json") {
       .getOrElse(level)
 
     // prepends a by default hidden stacktrace row
-    entry.stackTrace foreach { stackTrace =>
+    entry.stackTrace.foreach: stackTrace =>
       val errorRow = tr(`class` := HiddenClass, id := rowId)(
         td(colspan := "5")(pre(stackTrace))
       )
-      tableContent prepend errorRow.render
-    }
+      tableContent.prepend(errorRow.render)
     // prepends the main row
     val row = tr(`class` := s"$rowClass $LogRow")(
       cell(entry.timeFormatted),
@@ -61,27 +60,23 @@ class Logs extends SocketJS("/ws/logs?f=json") {
       cell(entry.threadName),
       cell(levelCell)
     )
-    tableContent prepend row.render
+    tableContent.prepend(row.render)
     // adds a toggle for stacktrace visibility
-    elem(linkId).click((_: JQueryEventObject) => toggle(rowId))
+    findElem(linkId).foreach: e =>
+      e.onClick(_ => toggle(rowId))
     // toggles text wrapping for long texts when clicked
-    elem(msgCellId) click { (_: JQueryEventObject) =>
-      elem(msgCellId) toggleClass CellContent
-      false
-    }
-  }
+    elem(msgCellId).onClick: _ =>
+      elem(msgCellId).toggleClass(CellContent)
+//      false
+    ()
 
   def cell = td(`class` := CellContent)
 
-  def lastName(path: String) = {
-    val lastDot = path lastIndexOf '.'
-    if (lastDot == -1) path
-    else path drop (lastDot + 1)
-  }
+  private def lastName(path: String): String =
+    val lastDot = path.lastIndexOf('.')
+    if lastDot == -1 then path
+    else path.drop(lastDot + 1)
 
-  def toggle(row: String) = {
-    val rowElem = MyJQuery(s"#$row")
-    rowElem.toggleClass(HiddenClass)
+  private def toggle(row: String) =
+    document.getElementById(row).toggleClass(HiddenClass)
     false
-  }
-}

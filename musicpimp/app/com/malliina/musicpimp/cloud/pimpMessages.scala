@@ -8,63 +8,33 @@ import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.play.ContentRange
 import com.malliina.values.Username
-import play.api.libs.json.{Json, OFormat, Reads}
+import io.circe.generic.semiauto.deriveDecoder
+import io.circe.{Codec, Decoder, Encoder}
 
-trait UserMessage extends PimpMessage {
+trait UserMessage extends PimpMessage:
   def username: Username
-}
 
-trait RequestMessage extends PimpMessage {
+trait RequestMessage extends PimpMessage:
   def request: RequestID
-}
 
-case class RegisteredMessage(id: CloudID) extends PimpMessage
+case class RegisteredMessage(id: CloudID) extends PimpMessage derives Codec.AsObject
 
-object RegisteredMessage {
-  implicit val json: OFormat[RegisteredMessage] = Json.format[RegisteredMessage]
-}
+case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage derives Codec.AsObject
 
-case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage
-
-object RangedTrack {
-  implicit val json: OFormat[RangedTrack] = Json.format[RangedTrack]
-}
-
-case class GetPlaylists(username: Username) extends UserMessage
-
-object GetPlaylists {
-  implicit val json: OFormat[GetPlaylists] = Json.format[GetPlaylists]
-}
+case class GetPlaylists(username: Username) extends UserMessage derives Codec.AsObject
 
 case class GetPlaylist(id: PlaylistID, username: Username) extends UserMessage
-
-object GetPlaylist {
-  implicit val json: OFormat[GetPlaylist] = Json.format[GetPlaylist]
-}
+  derives Codec.AsObject
 
 case class SavePlaylist(playlist: PlaylistSubmission, username: Username) extends UserMessage
-
-object SavePlaylist {
-  implicit val json: OFormat[SavePlaylist] = Json.format[SavePlaylist]
-}
+  derives Codec.AsObject
 
 case class DeletePlaylist(id: PlaylistID, username: Username) extends UserMessage
+  derives Codec.AsObject
 
-object DeletePlaylist {
-  implicit val json: OFormat[DeletePlaylist] = Json.format[DeletePlaylist]
-}
+case class GetPopular(meta: DataRequest) extends PimpMessage derives Codec.AsObject
 
-case class GetPopular(meta: DataRequest) extends PimpMessage
-
-object GetPopular {
-  implicit val json: OFormat[GetPopular] = Json.format[GetPopular]
-}
-
-case class GetRecent(meta: DataRequest) extends PimpMessage
-
-object GetRecent {
-  implicit val json: OFormat[GetRecent] = Json.format[GetRecent]
-}
+case class GetRecent(meta: DataRequest) extends PimpMessage derives Codec.AsObject
 
 case class CancelStream(request: RequestID) extends RequestMessage
 
@@ -74,16 +44,13 @@ case class AlarmAdd(body: AlarmCommand) extends PimpMessage
 
 case class PlaybackMessage(body: PlayerMessage, username: Username) extends UserMessage
 
-object PlaybackMessage {
-  implicit val reader: Reads[PlaybackMessage] = Json.reads[PlaybackMessage]
-}
+object PlaybackMessage:
+  given Decoder[PlaybackMessage] = deriveDecoder
 
-case object GetVersion extends PimpMessage {
+case object GetVersion extends PimpMessage:
   val Key = "version"
-  implicit val json: OFormat[GetVersion.type] = singleCmd(Key, GetVersion)
-}
+  implicit val json: Codec[GetVersion.type] = singleCmd(Key, GetVersion)
 
-case object GetStatus extends PimpMessage {
+case object GetStatus extends PimpMessage:
   val Key = "status"
-  implicit val json: OFormat[GetStatus.type] = singleCmd(Key, GetStatus)
-}
+  implicit val json: Codec[GetStatus.type] = singleCmd(Key, GetStatus)

@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import akka.actor.Props
+import org.apache.pekko.actor.Props
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.play.ActorExecution

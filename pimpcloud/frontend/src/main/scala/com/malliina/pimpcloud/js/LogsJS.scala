@@ -2,9 +2,9 @@ package com.malliina.pimpcloud.js
 
 import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
 import com.malliina.pimpcloud.js.LogsJS.randomString
-import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsValue, Json, OFormat}
-import scalatags.Text.all._
+import io.circe.{Codec, Json}
+import scalatags.Text.all.*
+import org.scalajs.dom.document
 
 case class JVMLogEntry(
   level: String,
@@ -13,34 +13,31 @@ case class JVMLogEntry(
   threadName: String,
   timeFormatted: String,
   stackTrace: Option[String] = None
-)
+) derives Codec.AsObject
 
-object JVMLogEntry {
-  implicit val json: OFormat[JVMLogEntry] = Json.format[JVMLogEntry]
-}
-
-object LogsJS {
+object LogsJS:
   private val chars = "abcdefghijklmnopqrstuvwxyz"
 
   private def randomString(ofLength: Int): String =
-    (0 until ofLength).map { _ => chars.charAt(math.floor(math.random() * chars.length).toInt) }.mkString
-}
+    (0 until ofLength)
+      .map: _ =>
+        chars.charAt(math.floor(math.random() * chars.length).toInt)
+      .mkString
 
-class LogsJS extends SocketJS("/admin/ws?f=json") {
+class LogsJS extends SocketJS("/admin/ws?f=json"):
   val CellContent = "cell-content"
   val CellWide = "cell-wide"
   val tableContent = elem(LogTableBodyId)
 
-  override def handlePayload(payload: JsValue): Unit = {
-    handleValidated[Seq[JVMLogEntry]](payload) { logs => logs foreach prepend }
-  }
+  override def handlePayload(payload: Json): Unit =
+    handleValidated[Seq[JVMLogEntry]](payload): logs =>
+      logs foreach prepend
 
-  def prepend(entry: JVMLogEntry) = {
-    val rowClass = entry.level match {
+  private def prepend(entry: JVMLogEntry) =
+    val rowClass = entry.level match
       case "ERROR" => "danger"
       case "WARN"  => "warning"
       case _       => ""
-    }
     val level = entry.level
     val entryId = randomString(5)
     val rowId = s"row-$entryId"
@@ -65,25 +62,20 @@ class LogsJS extends SocketJS("/admin/ws?f=json") {
       cell(levelCell)
     )
     tableContent prepend row.render
-    elem(linkId).click((_: JQueryEventObject) => toggle(rowId))
+    elem(linkId).onClick(_ => toggle(rowId))
     // toggles text wrapping for long texts when clicked
-    elem(msgCellId) click { (_: JQueryEventObject) =>
-      elem(msgCellId) toggleClass CellContent
-      false
-    }
-  }
+    elem(msgCellId).onClick: _ =>
+      elem(msgCellId).toggleClass(CellContent)
+//      false
 
   def cell = td(`class` := CellContent)
 
-  def lastName(path: String) = {
-    val lastDot = path lastIndexOf '.'
-    if (lastDot == -1) path
+  private def lastName(path: String) =
+    val lastDot = path.lastIndexOf('.')
+    if lastDot == -1 then path
     else path drop (lastDot + 1)
-  }
 
-  def toggle(row: String) = {
-    val rowElem = MyJQuery(s"#$row")
+  private def toggle(row: String) =
+    val rowElem = document.getElementById(row)
     rowElem.toggleClass(hideClass)
     false
-  }
-}

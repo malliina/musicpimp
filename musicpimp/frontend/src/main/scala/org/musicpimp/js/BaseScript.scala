@@ -1,38 +1,40 @@
 package org.musicpimp.js
 
-import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{Json, Writes}
+import io.circe.Encoder
+import io.circe.syntax.EncoderOps
+import org.musicpimp.js.ScriptHelpers.ElementOps
+import org.scalajs.dom.{Element, Event, document}
 
 import scala.scalajs.js
 
-trait BaseScript {
+trait BaseScript:
   val DataId = "data-id"
-
-//  def global = js.Dynamic.global
 
   def literal = js.Dynamic.literal
 
-  def postAjax[C: Writes](resource: String, payload: C) =
+  def postAjax[C: Encoder](resource: String, payload: C) =
     BaseScript.postAjax(resource, payload)
 
-  def withDataId[T](clazzSelector: String)(withId: String => T) =
-    installClick(clazzSelector) { e =>
-      Option(e.delegateTarget.getAttribute(DataId)) foreach { id => withId(id) }
-    }
+  // .currentTarget used to be .delegateTarget, check if that introduces a regression
+  def withDataId[T](cls: String, more: String*)(withId: String => T): Unit =
+    installClick(cls +: more): e =>
+      Option(e.currentTarget.asInstanceOf[Element].getAttribute(DataId)).foreach: id =>
+        withId(id)
 
-  def installClick(clazzSelector: String)(f: JQueryEventObject => Any) =
-    MyJQuery(clazzSelector).click(f)
-}
+  def installClick(classes: Seq[String])(f: Event => Any): Unit =
+    document
+      .getElementsByClassName(classes.mkString(" "))
+      .foreach: e =>
+        e.onClick: event =>
+          f(event)
 
-object BaseScript {
+object BaseScript:
   val ApplicationJson = "application/json"
 
-  def postAjax[C: Writes](resource: String, payload: C) = {
+  def postAjax[C: Encoder](resource: String, payload: C) =
     val settings = PimpQuery.postSettings(
       resource,
       ApplicationJson,
-      Json.stringify(Json.toJson(payload))
+      payload.asJson.noSpaces
     )
     MyJQuery.ajax(settings)
-  }
-}

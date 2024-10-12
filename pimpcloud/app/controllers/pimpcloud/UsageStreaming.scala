@@ -1,6 +1,6 @@
 package controllers.pimpcloud
 
-import akka.actor.{ActorRef, Props}
+import org.apache.pekko.actor.{ActorRef, Props}
 import com.malliina.pimpcloud.ws.ServerMediator.Listen
 import com.malliina.play.ActorExecution
 import com.malliina.play.http.AuthedRequest

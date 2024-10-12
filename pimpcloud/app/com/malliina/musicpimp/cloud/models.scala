@@ -1,12 +1,8 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.models.RequestID
-import play.api.libs.json.{JsValue, Json, OFormat}
+import io.circe.{Codec, Json}
 
-case class BodyAndId(body: JsValue, request: RequestID)
+case class BodyAndId(body: Json, request: RequestID) derives Codec.AsObject
 
-object BodyAndId {
-  implicit val json: OFormat[BodyAndId] = Json.format[BodyAndId]
-}
-
-class RequestFailure(val response: JsValue) extends Exception
+class RequestFailure(val response: Json) extends Exception

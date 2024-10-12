@@ -2,9 +2,9 @@ package com.malliina.play
 
 import java.nio.file.{Files, Path}
 
-import akka.stream.IOResult
-import akka.stream.scaladsl.{Source, StreamConverters}
-import akka.util.ByteString
+import org.apache.pekko.stream.IOResult
+import org.apache.pekko.stream.scaladsl.{Source, StreamConverters}
+import org.apache.pekko.util.ByteString
 import com.malliina.musicpimp.http.RangedInputStream
 import com.malliina.play.FileResults.log
 import com.malliina.play.http.RequestHeaderOps

@@ -1,6 +1,6 @@
 package tests
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
@@ -37,8 +37,9 @@ class HttpsTests extends munit.FunSuite {
     val client = HttpClientBuilder.create().build()
     val req = new HttpGet("https://beam.musicpimp.org/ping")
     val response = client.execute(req)
-    val responseContent = Option(response.getEntity) map EntityUtils.toString getOrElse "No response content"
-    assert(responseContent contains "version")
+    val responseContent =
+      Option(response.getEntity).map(EntityUtils.toString).getOrElse("No response content")
+    assert(responseContent.contains("version"))
   }
 
   private def pingWithPlayAPI(url: String): WSResponse = {

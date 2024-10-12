@@ -1,9 +1,8 @@
 package tests
 
 import com.malliina.musicpimp.cloud.{CloudMessageParser, GetRecent}
-import play.api.libs.json.Json
 
-class CloudParseTests extends munit.FunSuite {
+class CloudParseTests extends munit.FunSuite:
   val testJsonString =
     """
       |{
@@ -17,15 +16,13 @@ class CloudParseTests extends munit.FunSuite {
       |}
     """.stripMargin
 
-  val testJson = Json.parse(testJsonString)
+  val testJson = io.circe.parser.parse(testJsonString).toOption.get
 
-  test("can parse a most recent request payload") {
+  test("can parse a most recent request payload"):
     val result = CloudMessageParser.parseRequest(testJson)
-    assert(result.isSuccess)
-    val message = result.get.message
+    assert(result.isRight)
+    val message = result.toOption.get.message
     assert(message.isInstanceOf[GetRecent])
     val meta = message.asInstanceOf[GetRecent].meta
     assert(meta.from == 13)
     assert(meta.until == 20)
-  }
-}

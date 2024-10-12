@@ -7,7 +7,7 @@ import play.api.{Configuration, Logger}
 
 case class Conf(url: String, user: String, pass: String, driver: String)
 
-object Conf {
+object Conf:
   private val log = Logger(getClass)
 
   val UrlKey = "musicpimp.db.url"
@@ -22,27 +22,26 @@ object Conf {
 
   def fromConf(conf: Configuration) = from(key => conf.getOptional[String](key))
 
-  def from(readKey: String => Option[String]): Either[ErrorMessage, Conf] = {
+  def from(readKey: String => Option[String]): Either[ErrorMessage, Conf] =
     def read(key: String) = readKey(key).toRight(ErrorMessage(s"Key missing: '$key'."))
 
-    for {
+    for
       url <- read(UrlKey)
       user <- read(UserKey)
       pass <- read(PassKey)
-    } yield Conf(url, user, pass, read(DriverKey).getOrElse(DefaultDriver))
-  }
+    yield Conf(url, user, pass, read(DriverKey).getOrElse(DefaultDriver))
 
   def read(key: String) = PimpConf.read(key)
 
   // Legacy
   def legacy(): Either[ErrorMessage, Conf] =
-    for {
+    for
       url <- read("db_url")
       user <- read("db_user")
       pass <- read("db_pass")
-    } yield Conf(url, user, pass, read("db_driver").getOrElse(MySQLDriver))
+    yield Conf(url, user, pass, read("db_driver").getOrElse(MySQLDriver))
 
-  def dataSource(conf: Conf): HikariDataSource = {
+  def dataSource(conf: Conf): HikariDataSource =
     val hikari = new HikariConfig()
     hikari.setDriverClassName(conf.driver)
     hikari.setJdbcUrl(conf.url)
@@ -50,5 +49,3 @@ object Conf {
     hikari.setPassword(conf.pass)
     log info s"Connecting to '${conf.url}'..."
     new HikariDataSource(hikari)
-  }
-}

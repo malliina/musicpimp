@@ -1,118 +1,97 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.musicpimp.db.NewIndexer.log
 import com.malliina.musicpimp.library.FileStreams
+import io.getquill.*
 import play.api.Logger
 
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
-import NewIndexer.log
 
-import concurrent.duration.DurationInt
-import scala.concurrent.duration.FiniteDuration
-
-object NewIndexer {
+object NewIndexer:
   private val log = Logger(getClass)
 
   def apply(db: PimpMySQL): NewIndexer = new NewIndexer(db)
-}
 
-class NewIndexer(val db: PimpMySQL) {
+class NewIndexer(val db: PimpMySQL):
   implicit val ec: ExecutionContext = db.ec
-  import db._
+  import db.*
 
   val tempFoldersTable = quote(querySchema[TempFolder]("TEMP_FOLDERS"))
   val tempTracksTable = quote(querySchema[TempTrack]("TEMP_TRACKS"))
 
   def runIndexer(
     library: FileStreams
-  )(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] = {
-    log info "Indexing..."
+  )(onFileCountUpdate: Long => Future[Unit]): Future[IndexResult] =
+    wrapTask("Indexer"):
+      log.info("Indexing...")
 
-    var fileCount = 0L
+      var fileCount = 0L
 
-    val musicFolders = library.folderStream.toList
-    val updateFolders = for {
-      firstIdsDeletion <- runIO(tempFoldersTable.delete)
-      updateIO <- IO.traverse(musicFolders)(mf => upsertFolder(mf))
-      idInsertion <- runIO(
-        liftQuery(musicFolders.map(mf => TempFolder(mf.id)))
-          .foreach(tf => tempFoldersTable.insert(tf))
-      )
-      foldersDeletion <- runIO(
-        foldersTable.filter(f => !tempFoldersTable.map(_.id).contains(f.id)).delete
-      )
-      secondIdsDeletion <- runIO(tempFoldersTable.delete)
-    } yield foldersDeletion
+      val musicFolders = library.folderStream.toList
+      val firstIdsDeletion = run(tempFoldersTable.delete)
+      val updateIO = musicFolders.map(mf => upsertFolder(mf))
+      val idInsertion =
+        musicFolders
+          .map(mf => TempFolder(mf.id))
+          .map(tf => run(tempFoldersTable.insertValue(lift(tf))))
+      val tempIds = run(tempFoldersTable.map(_.id))
+      val foldersDeletion =
+        run(foldersTable.filter(f => !tempFoldersTable.map(_.id).contains(f.id)).delete)
+      val secondIdsDeletion = run(tempFoldersTable.delete)
+      val _ = run(tempTracksTable.delete)
 
-    def upsertTracks(): Unit =
-      upsertAll(library.dataTrackStream) { chunkSize =>
+      upsertAll(library.dataTrackStream): chunkSize =>
         fileCount += chunkSize
         onFileCountUpdate(fileCount)
-      }
 
-    val deleteNonExistentTracks = for {
-      tracksDeleted <- runIO(
+      val tracksDeleted = run(
         tracksTable.filter(t => !tempTracksTable.map(_.id).contains(t.id)).delete
       )
-      _ <- runIO(tempFoldersTable.delete)
-    } yield tracksDeleted
-
-    for {
-      fs <- performAsync("Update folders")(updateFolders)
-      deletion <- performAsync("Delete tracks")(runIO(tempTracksTable.delete))
-      ups = upsertTracks()
-      ts <- performAsync("Delete nonexistent tracks")(deleteNonExistentTracks)
-    } yield IndexResult(fileCount, fs.toInt, ts.toInt)
-  }
+      val _ = run(tempFoldersTable.delete)
+      IndexResult(fileCount, foldersDeletion.toInt, tracksDeleted.toInt)
 
   def upsertFolder(folder: DataFolder) =
-    for {
-      isEmpty <- runIO(foldersTable.filter(_.id == lift(folder.id)).isEmpty)
-      inOrUp <- if (isEmpty) runIO(foldersTable.insert(lift(folder)))
-      else
-        runIO(
-          foldersTable
-            .filter(_.id == lift(folder.id))
-            .update(
-              _.title -> lift(folder.title),
-              _.parent -> lift(folder.parent),
-              _.path -> lift(folder.path)
-            )
-        )
-    } yield inOrUp
+    val isEmpty = run(foldersTable.filter(_.id == lift(folder.id))).isEmpty
+    if isEmpty then run(foldersTable.insertValue(lift(folder)))
+    else
+      run(
+        foldersTable
+          .filter(_.id == lift(folder.id))
+          .update(
+            _.title -> lift(folder.title),
+            _.parent -> lift(folder.parent),
+            _.path -> lift(folder.path)
+          )
+      )
 
-  def upsertAll(tracks: LazyList[DataTrack])(progress: Int => Unit): Unit =
-    tracks.grouped(100).foreach { chunk =>
-      val ts = chunk.toList
-      val task = for {
-        upserts <- IO.traverse(ts)(tra => upsertTrack(tra))
-        in <- runIO(
-          liftQuery(ts.map(t => TempTrack(t.id))).foreach(t => tempTracksTable.insert(t))
-        )
-      } yield in
-      await(performAsync("Insert chunk")(task), 1.hour)
-      progress(chunk.size)
-    }
+  private def upsertAll(tracks: LazyList[DataTrack])(progress: Int => Unit): Unit =
+    tracks
+      .grouped(100)
+      .foreach: chunk =>
+        val ts = chunk.toList
+        val upserts = ts.map(tra => upsertTrack(tra))
+        val in = ts.map(t => TempTrack(t.id)).map(tt => run(tempTracksTable.insertValue(lift(tt))))
+//        await(performAsync("Insert chunk")(task), 1.hour)
+        progress(chunk.size)
 
-  def upsertTrack(track: DataTrack): IO[Long, Effect.Read with Effect.Write] =
-    for {
-      isEmpty <- runIO(tracksTable.filter(_.id == lift(track.id)).isEmpty)
-      inOrUp <- if (isEmpty) runIO(tracksTable.insert(lift(track)))
-      else
-        runIO(
-          tracksTable
-            .filter(_.id == lift(track.id))
-            .update(
-              _.title -> lift(track.title),
-              _.artist -> lift(track.artist),
-              _.album -> lift(track.album),
-              _.duration -> lift(track.duration),
-              _.size -> lift(track.size),
-              _.path -> lift(track.path),
-              _.folder -> lift(track.folder)
-            )
-        )
-    } yield inOrUp
+  private def upsertTrack(track: DataTrack): Long =
+    val isEmpty = run(tracksTable.filter(_.id == lift(track.id))).isEmpty
+    if isEmpty then run(tracksTable.insertValue(lift(track)))
+    else
+      run(
+        tracksTable
+          .filter(_.id == lift(track.id))
+          .update(
+            _.title -> lift(track.title),
+            _.artist -> lift(track.artist),
+            _.album -> lift(track.album),
+            _.duration -> lift(track.duration),
+            _.size -> lift(track.size),
+            _.path -> lift(track.path),
+            _.folder -> lift(track.folder)
+          )
+      )
 
   def await[T](f: Future[T], dur: FiniteDuration = 5.seconds): T =
     Await.result(f, dur)
-}

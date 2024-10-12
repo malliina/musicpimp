@@ -24,7 +24,7 @@ class PlaybackTests extends TestBase {
     withTestTrack { player =>
       player.play()
       sleep(100.millis)
-      player seek 3.seconds
+      player.seek(3.seconds)
       sleep(500.millis)
       assert(player.position.toSeconds >= 2)
     }
@@ -34,10 +34,10 @@ class PlaybackTests extends TestBase {
     withTestTrack { player =>
       player.play()
       sleep(10.millis)
-      player seek 8.seconds
+      player.seek(8.seconds)
       sleep(100.millis)
       assert(player.position.toSeconds >= 7)
-      player seek 3.seconds
+      player.seek(3.seconds)
       sleep(300.millis)
       val pos = player.position.toSeconds
       assert(pos >= 2 && pos <= 4)

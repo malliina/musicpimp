@@ -1,17 +1,18 @@
 package com.malliina.musicpimp.scheduler
 
-import com.malliina.util.Utils
 import it.sauronsoftware.cron4j.{Scheduler, SchedulingPattern}
 
-trait Cron4jScheduler extends IScheduler {
+trait Cron4jScheduler extends IScheduler:
   val s = new Scheduler
 
-  override def start() = s.start()
+  override def start(): Unit = s.start()
 
-  override def stop() = s.stop()
+  override def stop(): Unit = s.stop()
 
   override def schedule(cron: String)(job: => Any): TaskId =
-    s.schedule(cron, Utils.runnable(job))
+    val runnable = new Runnable:
+      override def run(): Unit = job
+    s.schedule(cron, runnable)
 
   def schedule(cronPattern: SchedulingPattern)(job: => Any): TaskId =
     schedule(cronPattern.toString)(job)
@@ -36,6 +37,5 @@ trait Cron4jScheduler extends IScheduler {
 
   override def cancel(id: TaskId): Unit =
     s.deschedule(id)
-}
 
 object Cron4jScheduler extends Cron4jScheduler

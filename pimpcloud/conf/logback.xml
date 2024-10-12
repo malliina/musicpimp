@@ -1,6 +1,6 @@
 <configuration>
     <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel"/>
-    <appender name="AKKA" class="com.malliina.logback.akka.DefaultAkkaAppender">
+    <appender name="AKKA" class="com.malliina.logback.PimpAppender">
         <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
     </appender>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

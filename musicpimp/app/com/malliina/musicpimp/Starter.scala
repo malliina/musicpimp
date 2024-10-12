@@ -2,7 +2,7 @@ package com.malliina.musicpimp
 
 import java.nio.file.Files
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import ch.qos.logback.classic.Level
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.app.InitOptions
@@ -19,7 +19,7 @@ import play.api.inject.ApplicationLifecycle
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.SetHasAsScala
 
-class Starter(as: ActorSystem) {
+class Starter(as: ActorSystem):
   private val log = LoggerFactory.getLogger(getClass)
   val tray = Tray(as)
 
@@ -29,53 +29,40 @@ class Starter(as: ActorSystem) {
     indexer: Indexer,
     schedules: ScheduledPlaybackService,
     lifecycle: ApplicationLifecycle
-  )(implicit ec: ExecutionContext): Unit = {
-    try {
+  )(implicit ec: ExecutionContext): Unit =
+    try
       Logging.level = Level.INFO
-      FileUtilities init "musicpimp"
+      FileUtilities.init("musicpimp")
       Files.createDirectories(FileUtil.pimpHomeDir)
-      if (options.alarms) {
-        schedules.init()
-      }
-      if (options.indexer) {
-        Future {
+      if options.alarms then schedules.init()
+      if options.indexer then
+        Future:
           indexer.init()
-        }.recover {
+        .recover:
           case e: Exception =>
             log.error(s"Unable to initialize indexer and search", e)
-        }
-      }
-      if (options.cloud) {
-        clouds.init()
-      }
-      if (options.useTray) {
-        tray.installTray(lifecycle)
-      }
+      if options.cloud then clouds.init()
+      if options.useTray then tray.installTray(lifecycle)
       val version = BuildInfo.version
-      log info s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
-    } catch {
+      log.info(
+        s"Started MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
+      )
+    catch
       case e: Exception =>
         log.error(s"Unable to initialize MusicPimp", e)
         throw e
-    }
-  }
 
   def stopServices(
     options: InitOptions,
     schedules: ScheduledPlaybackService,
     player: MusicPlayer
-  ): Unit = {
+  ): Unit =
     log.info("Stopping services...")
     player.close()
     schedules.stop()
-  }
 
-  def printThreads(): Unit = {
+  def printThreads(): Unit =
     val threads = Thread.getAllStackTraces.keySet().asScala
-    threads.foreach { thread =>
+    threads.foreach: thread =>
       println("T: " + thread.getName + ", state: " + thread.getState)
-    }
     println("Threads in total: " + threads.size)
-  }
-
-}

@@ -1,7 +1,7 @@
 package com.malliina.pimpcloud.auth
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.ws.{NoopActor, PhoneConnection}
@@ -14,7 +14,7 @@ import play.api.mvc.RequestHeader
 import scala.concurrent.Future
 
 class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandler)
-  extends CloudAuthentication {
+  extends CloudAuthentication:
   private var currentServer: Option[ServerRequest] = None
 
   override lazy val phone: Authenticator[PhoneConnection] =
@@ -37,24 +37,20 @@ class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandle
   override def authWebClient(creds: CloudCredentials): PhoneAuthResult =
     Future.successful(Left(InvalidCredentials(creds.rh)))
 
-  def getOrInit(req: RequestHeader, errorHandler: HttpErrorHandler) = {
+  def getOrInit(req: RequestHeader, errorHandler: HttpErrorHandler) =
     val s: ServerRequest = currentServer.getOrElse(
       ServerRequest(FakeAuth.FakeUuid, fakeServerSocket(req, errorHandler, mat))
     )
     currentServer = Option(s)
     s
-  }
 
   def fakeServerSocket(
     req: RequestHeader,
     errorHandler: HttpErrorHandler,
     mat: Materializer
-  ): PimpServerSocket = {
+  ): PimpServerSocket =
     val actor = as.actorOf(NoopActor.props())
     new PimpServerSocket(actor, CloudID("test"), req, mat, as.scheduler, errorHandler, () => ())
-  }
-}
 
-object FakeAuth {
-  val FakeUuid = RequestID.build("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7").get
-}
+object FakeAuth:
+  val FakeUuid = RequestID.build("d3ef33ab-5ba5-4a34-bf7c-9a182c882ab7").toOption.get

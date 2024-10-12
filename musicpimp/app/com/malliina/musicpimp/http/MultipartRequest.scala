@@ -14,19 +14,19 @@ import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
-import play.api.http.ContentTypes._
-import play.api.http.HeaderNames._
+import play.api.http.ContentTypes.*
+import play.api.http.HeaderNames.*
 
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
-/** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class provides it using
-  * Apache HttpClient.
+/** The Play WS API does not afaik support multipart/form-data file uploads, therefore this class
+  * provides it using Apache HttpClient.
   */
 class MultipartRequest(
   uri: String,
   buildInstructions: HttpClientBuilder => HttpClientBuilder = b => b
-) extends AutoCloseable {
+) extends AutoCloseable:
 
   private val timeout = 60.minutes
   private val config = RequestConfig
@@ -45,61 +45,53 @@ class MultipartRequest(
 
   @volatile private var streams: List[InputStream] = Nil
 
-  def setAuth(username: String, password: String): Unit = {
+  def setAuth(username: String, password: String): Unit =
     val creds = new UsernamePasswordCredentials(username, password)
-    request addHeader new BasicScheme().authenticate(creds, request, new BasicHttpContext())
-  }
+    request.addHeader(new BasicScheme().authenticate(creds, request, new BasicHttpContext()))
 
   def addHeaders(kvs: (String, String)*): Unit = kvs foreach (kv => request.addHeader(kv._1, kv._2))
 
-  def addFile(file: Path): Unit = {
+  def addFile(file: Path): Unit =
     def fileName = file.getFileName.toString
     reqContent.addPart(fileName, new FileBody(file.toFile))
-  }
 
-  def addRangedFile(file: Path, range: ContentRange): Unit = {
-    if (range.isAll) {
-      addFile(file)
-    } else {
+  def addRangedFile(file: Path, range: ContentRange): Unit =
+    if range.isAll then addFile(file)
+    else
       val fileName = file.getFileName.toString
       val rangedStream = RangedInputStream(file, range)
       streams = rangedStream :: streams
       val contentBody = new InputStreamBody(rangedStream, fileName)
       reqContent.addPart(fileName, contentBody)
-    }
-  }
 
   def addKeyValues(kvs: (String, String)*): Unit =
-    kvs.foreach { kv =>
+    kvs.foreach: kv =>
       val (key, value) = kv
       reqContent.addTextBody(key, value)
-    }
 
   /** Executes the request.
     *
-    * @return the response
+    * @return
+    *   the response
     */
-  def execute() = {
-    request setEntity reqContent.build()
-    client execute request
-  }
+  def execute() =
+    request.setEntity(reqContent.build())
+    client.execute(request)
 
   /** Executes the request.
     *
-    * @return the stringified response, if any
+    * @return
+    *   the stringified response, if any
     */
-  def executeToString() = Option(execute().getEntity) map EntityUtils.toString
+  def executeToString() = Option(execute().getEntity).map(EntityUtils.toString)
 
-  override def close(): Unit = {
+  override def close(): Unit =
     val isFirstClose = isCancelled.compareAndSet(false, true)
-    if (isFirstClose) {
+    if isFirstClose then
       Try(request.abort())
       Try(client.close())
       streams.foreach(stream => Try(stream.close()))
       streams = Nil
-    }
-  }
-}
 
 class TrustAllMultipartRequest(uri: String)
   extends MultipartRequest(

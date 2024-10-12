@@ -1,29 +1,22 @@
 package controllers.pimpcloud
 
-import akka.stream.Materializer
 import com.malliina.concurrent.Execution.cached
-import com.malliina.http.OkClient
 import com.malliina.http.io.HttpClientIO
 import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.play.auth.{
-  AuthFailure,
-  Authenticator,
-  BasicAuthHandler,
-  GoogleCodeValidator,
-  OAuthConf,
-  UserAuthenticator
-}
+import com.malliina.play.auth.{AuthFailure, Authenticator, BasicAuthHandler, GoogleCodeValidator, OAuthConf, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
-import com.malliina.play.http.{AuthedRequest, FullUrls}
+import com.malliina.play.http.AuthedRequest
 import com.malliina.values.{Email, ErrorMessage}
 import com.malliina.web.OAuthKeys.LoginHint
 import com.malliina.web.{AuthConf, ClientId, ClientSecret, PermissionError}
+import org.apache.pekko.stream.Materializer
 import play.api.Logger
 import play.api.http.Writeable
+import play.api.mvc.*
 import play.api.mvc.Results.Ok
-import play.api.mvc._
+import cats.effect.unsafe.implicits.global
 
-class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth {
+class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth:
   override def logged(action: EssentialAction) =
     ctrl.logged(action)
 
@@ -32,22 +25,20 @@ class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth {
 
   override def authAction(f: AuthedRequest => Result) =
     ctrl.authAction(f)
-}
 
-trait PimpAuth extends Authenticator[AuthedRequest] {
+trait PimpAuth extends Authenticator[AuthedRequest]:
   def logged(action: EssentialAction): EssentialAction
 
   def authAction(f: AuthedRequest => Result): EssentialAction
 
   def navigate[C: Writeable](f: AuthedRequest => C): EssentialAction =
     authAction(req => Ok(f(req)))
-}
 
 class OAuthCtrl(val oauth: AdminOAuth, mat: Materializer)
   extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth), mat)
 
-object OAuthCtrl {
-  def bundle(oauth: AdminOAuth) = new AuthBundle[AuthedRequest] {
+object OAuthCtrl:
+  def bundle(oauth: AdminOAuth) = new AuthBundle[AuthedRequest]:
     override def authenticator: Authenticator[AuthedRequest] =
       UserAuthenticator
         .session(oauth.sessionKey)
@@ -55,10 +46,8 @@ object OAuthCtrl {
 
     override def onUnauthorized(failure: AuthFailure): Result =
       Results.Redirect(routes.AdminOAuth.googleStart)
-  }
-}
 
-class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials) {
+class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials):
   private val log = Logger(getClass)
 
   val sessionKey = "cloudUser"
@@ -68,7 +57,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     routes.Logs.index,
     lastIdKey = lastIdKey,
     email =>
-      if (email == authorizedEmail) Right(email)
+      if email == authorizedEmail then Right(email)
       else Left(PermissionError(ErrorMessage(s"Unauthorized: '$email'."))),
     sessionKey = sessionKey,
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
@@ -78,14 +67,13 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
   val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback, handler, conf, HttpClientIO())
   val validator = GoogleCodeValidator(oauthConf)
 
-  def googleStart = actions.async { req =>
+  def googleStart = actions.async: req =>
     val lastId = req.cookies.get(handler.lastIdKey).map(_.value)
     val described = lastId.fold("without login hint")(h => s"with login hint '$h'")
     log.info(s"Starting OAuth flow $described.")
     validator
       .start(req, lastId.map(id => Map(LoginHint -> id)).getOrElse(Map.empty))
       .unsafeToFuture()
-  }
 
-  def googleCallback = actions.async { req => validator.validateCallback(req).unsafeToFuture() }
-}
+  def googleCallback = actions.async: req =>
+    validator.validateCallback(req).unsafeToFuture()

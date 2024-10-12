@@ -4,14 +4,9 @@ import java.nio.file.{Files, Path}
 
 import com.malliina.storage.{StorageLong, StorageSize}
 
-package object file {
+package object file:
 
-  implicit final class StorageFile(val file: Path) {
-    def size: StorageSize = (Files size file).bytes
-
-    def /(next: String): Path = file resolve next
-
-    def /(next: Path): Path = file resolve next
-  }
-
-}
+  implicit final class StorageFile(val file: Path):
+    def size: StorageSize = Files.size(file).bytes
+    def /(next: String): Path = file.resolve(next)
+    def /(next: Path): Path = file.resolve(next)

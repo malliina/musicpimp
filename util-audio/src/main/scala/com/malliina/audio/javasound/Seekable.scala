@@ -19,7 +19,9 @@ trait Seekable {
     */
   protected def timeToBytes(pos: Duration): StorageSize = {
     val ret = (1.0 * pos.toMicros / media.duration.toMicros * media.size.toBytes).toLong.bytes
-    log debug s"Seeking to position: ${pos.toSeconds} seconds which corresponds to $ret bytes out of ${media.size}"
+    log.debug(
+      s"Seeking to position: ${pos.toSeconds} seconds which corresponds to $ret bytes out of ${media.size}"
+    )
     ret
   }
 

@@ -4,15 +4,15 @@ import ch.qos.logback.classic.Level
 import com.malliina.html.{Bootstrap, HtmlTags}
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
-import com.malliina.musicpimp.html.PimpBootstrap._
-import com.malliina.musicpimp.html.PimpBootstrap.tags._
-import com.malliina.musicpimp.html.PimpHtml._
+import com.malliina.musicpimp.html.PimpBootstrap.*
+import com.malliina.musicpimp.html.PimpBootstrap.tags.*
+import com.malliina.musicpimp.html.PimpHtml.*
 import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.messaging.TokenInfo
-import com.malliina.musicpimp.models._
+import com.malliina.musicpimp.models.*
 import com.malliina.musicpimp.scheduler.FullClockPlayback
-import com.malliina.musicpimp.stats._
+import com.malliina.musicpimp.stats.*
 import com.malliina.play.tags.PlayTags.callAttr
 import com.malliina.play.tags.TagPage
 import com.malliina.values.Username
@@ -22,9 +22,9 @@ import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 import play.api.mvc.Call
 import scalatags.Text.TypedTag
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object PimpHtml {
+object PimpHtml:
   val FormSignin = "form-signin"
   val False = "false"
   val True = "true"
@@ -39,10 +39,9 @@ object PimpHtml {
 
   def versioned(file: Asset): Call = reverseAssets.versioned(file)
 
-  def forApp(isProd: Boolean): PimpHtml = {
+  def forApp(isProd: Boolean): PimpHtml =
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
     withJs(scripts)
-  }
 
   def withJs(jsFiles: ScalaScripts): PimpHtml =
     new PimpHtml(jsFiles)
@@ -50,11 +49,10 @@ object PimpHtml {
   def postableForm(onAction: Call, more: Modifier*) =
     form(role := FormRole, action := onAction, method := Post, more)
 
-  def feedbackDiv(feedback: UserFeedback) = {
+  def feedbackDiv(feedback: UserFeedback) =
     val message = feedback.message
-    if (feedback.isError) alertDanger(message)
+    if feedback.isError then alertDanger(message)
     else alertSuccess(message)
-  }
 
   def stripedHoverTableSmall(headers: Seq[Modifier])(tableBody: Modifier*) =
     stripedTable(tables.defaultClass, headers)(tableBody)
@@ -70,16 +68,14 @@ object PimpHtml {
     idAndName: String,
     placeHolder: Option[String],
     more: Modifier*
-  ) = {
+  ) =
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
     namedInput(idAndName, `type` := inType, placeholderAttr, more)
-  }
-}
 
 class PimpHtml(scripts: ScalaScripts)
   extends Bootstrap(HtmlTags)
   with FooterStrings
-  with FrontStrings {
+  with FrontStrings:
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -131,11 +127,10 @@ class PimpHtml(scripts: ScalaScripts)
       LoginHtml.loginContent(conf)
     )
 
-  def flexLibrary(items: MusicFolder, username: Username) = {
+  def flexLibrary(items: MusicFolder, username: Username) =
     libraryBase("folders", WideContent, username)(
       LibraryHtml.libraryContent(items)
     )
-  }
 
   def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username)(inner)
@@ -199,9 +194,9 @@ class PimpHtml(scripts: ScalaScripts)
     )
 
   def manage(tab: String, username: Username)(inner: Modifier*): TagPage =
-    manage(tab, Container, username)(inner: _*)
+    manage(tab, Container, username)(inner*)
 
-  def manage(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage = {
+  def manage(tab: String, contentClass: String, username: Username)(inner: Modifier*): TagPage =
     def fa(icon: String) = iClass(s"fa fa-$icon")
 
     indexMain("manage", username, None)(
@@ -223,7 +218,6 @@ class PimpHtml(scripts: ScalaScripts)
       ),
       section(divClass(contentClass)(inner))
     )
-  }
 
   def account(username: Username, feedback: Option[UserFeedback]) =
     indexMain("account", username)(
@@ -235,13 +229,13 @@ class PimpHtml(scripts: ScalaScripts)
   )
 
   def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
-    indexMain(tabName, user, Option(div(`class` := Container)))(inner: _*)
+    indexMain(tabName, user, Option(div(`class` := Container)))(inner*)
 
   def indexMain(
     tabName: String,
     user: Username,
     contentWrapper: Option[TypedTag[String]]
-  )(inner: Modifier*): TagPage = {
+  )(inner: Modifier*): TagPage =
     def navItem(thisTabName: String, url: Call, iconicName: String): TypedTag[String] =
       iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
@@ -293,7 +287,6 @@ class PimpHtml(scripts: ScalaScripts)
       ),
       section(contentWrapper.map(wrapper => wrapper(inner)).getOrElse(inner))
     )
-  }
 
   def iconicNavItem(
     thisTabName: String,
@@ -310,12 +303,11 @@ class PimpHtml(scripts: ScalaScripts)
     activeTab: String,
     url: Call,
     iconHtml: Modifier
-  ): TypedTag[String] = {
+  ): TypedTag[String] =
     val linkClass =
-      if (thisTabId == activeTab) "nav-link active"
+      if thisTabId == activeTab then "nav-link active"
       else "nav-link"
     li(`class` := "nav-item")(a(href := url, `class` := linkClass)(iconHtml, s" $thisTabName"))
-  }
 
   def eye(elemId: String, iconicName: String) =
     span(`class` := s"${navbars.Text} $HiddenClass", id := elemId)(iconic(iconicName))
@@ -375,4 +367,3 @@ class PimpHtml(scripts: ScalaScripts)
     li(id := elemId, `class` := s"nav-item")(
       a(href := "#", `class` := "nav-link")(iClass(s"fa fa-$faIcon"))
     )
-}

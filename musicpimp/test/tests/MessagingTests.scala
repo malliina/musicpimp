@@ -1,6 +1,6 @@
 package tests
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.malliina.http.{FullUrl, OkClient}
 import com.malliina.musicpimp.messaging.adm.ADMBuilder
 import com.malliina.musicpimp.messaging.cloud._
@@ -17,7 +17,7 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 class MessagingTests extends munit.FunSuite {
   //  val testToken = APNSToken.build("6c9969eee832f6ed2a11d04d6daa404db13cc3d97f7298f0c042616fc2a5cc34").get
   val testTokenStr = "e0d82212038b938c51dde9f49577ff1f70442fcfe93ec1ff26a2948e36821934"
-  val testToken = APNSToken.build(testTokenStr).get
+  val testToken = APNSToken.build(testTokenStr).toOption.get
   //  val testToken = APNSToken.build("193942675140b3d429311de140bd08ff423712ec9c3ea365b12e61b84609afa9").get
   val testTask = PushTask(
     Seq(APNSPayload(testToken, APNSMessage.badged("this is a test", badge = 43))),

@@ -1,13 +1,13 @@
 package com.malliina.musicpimp.audio
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.streams.StreamsUtil
 
 import scala.concurrent.stm.Ref
 
 class PimpPlaylist()(implicit mat: Materializer)
   extends BasePlaylist[PlayableTrack]
-  with AutoCloseable {
+  with AutoCloseable:
   val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)
   val songs: Ref[Seq[PlayableTrack]] = Ref[Seq[PlayableTrack]](Nil)
 
@@ -24,4 +24,3 @@ class PimpPlaylist()(implicit mat: Materializer)
     eventHub.send(json)
 
   def close(): Unit = eventHub.shutdown()
-}

@@ -1,47 +1,42 @@
 package com.malliina.musicpimp.models
 
 import com.malliina.musicpimp.json.CrossFormats.{cmd, evented, singleCmd}
+import io.circe.{Codec, Decoder}
+import io.circe.generic.semiauto.deriveCodec
 import play.api.libs.json.{Json, OFormat, Reads}
 
 case class SearchStatus(status: String)
 
-object SearchStatus {
+object SearchStatus:
   val Key = "search_status"
-  implicit val json: OFormat[SearchStatus] = evented(Key, Json.format[SearchStatus])
-}
+  implicit val json: Codec[SearchStatus] = evented(Key, deriveCodec[SearchStatus])
 
 sealed trait SearchMessage
 
-object SearchMessage {
-  implicit val reader: Reads[SearchMessage] =
-    Refresh.json.map[SearchMessage](identity).orElse(Subscribe.json.map(identity))
-}
+object SearchMessage:
+  implicit val reader: Decoder[SearchMessage] =
+    Refresh.json.map[SearchMessage](identity).or(Subscribe.json.map(identity))
 
-case object Refresh extends SearchMessage {
+case object Refresh extends SearchMessage:
   val Key = "refresh"
-  implicit val json: OFormat[Refresh.type] = singleCmd(Key, Refresh)
-}
+  implicit val json: Codec[Refresh.type] = singleCmd(Key, Refresh)
 
-case object Subscribe extends SearchMessage {
+case object Subscribe extends SearchMessage:
   val Key = "subscribe"
-  implicit val json: OFormat[Subscribe.type] = singleCmd(Key, Subscribe)
-}
+  implicit val json: Codec[Subscribe.type] = singleCmd(Key, Subscribe)
 
-case object Stop {
+case object Stop:
   val Key = "stop"
-  implicit val json: OFormat[Stop.type] = singleCmd(Key, Stop)
-}
+  implicit val json: Codec[Stop.type] = singleCmd(Key, Stop)
 
 case class Start(id: String)
 
-object Start {
+object Start:
   val Key = "start"
-  implicit val json: OFormat[Start] = cmd(Key, Json.format[Start])
-}
+  implicit val json: Codec[Start] = cmd(Key, deriveCodec[Start])
 
 case class Delete(id: String)
 
-object Delete {
+object Delete:
   val Key = "delete"
-  implicit val json: OFormat[Delete] = cmd(Key, Json.format[Delete])
-}
+  implicit val json: Codec[Delete] = cmd(Key, deriveCodec[Delete])

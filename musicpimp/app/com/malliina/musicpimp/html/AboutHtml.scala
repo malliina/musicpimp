@@ -3,9 +3,9 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.models.Licenses
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object AboutHtml extends PimpBootstrap {
+object AboutHtml extends PimpBootstrap:
 
   import tags.{False, divClass}
 
@@ -46,7 +46,7 @@ object AboutHtml extends PimpBootstrap {
       panelSummary(prefix, elemId, linkText)
     )
 
-  def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) = {
+  def thirdPartyPanel(elemId: String, innerContent: String)(toggleHtml: Modifier*) =
     val headingId = s"heading-$elemId"
     divClass("card")(
       divClass("card-header", id := headingId)(
@@ -64,7 +64,6 @@ object AboutHtml extends PimpBootstrap {
         )
       )
     )
-  }
 
   def panelSummary(prefix: String, elemId: String, linkText: String) =
     button(
@@ -74,4 +73,3 @@ object AboutHtml extends PimpBootstrap {
       dataParent := s"#$accordionId",
       aria.expanded := False
     )(linkText)
-}

@@ -1,12 +1,13 @@
 package com.malliina.musicpimp.audio
 
-import java.nio.file.{Path, Paths}
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
-import play.api.libs.json.{Format, Json, OFormat, Reads}
+
+import java.nio.file.{Path, Paths}
+import com.malliina.musicpimp.json.CrossFormats.finiteDuration
+import io.circe.{Codec, Decoder}
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
@@ -20,8 +21,9 @@ case class FullTrack(
   size: StorageSize,
   url: FullUrl
 ) extends TrackMeta
+  derives Codec.AsObject
 
-object FullTrack {
+object FullTrack:
   val empty = FullTrack(
     TrackID(""),
     "",
@@ -33,12 +35,7 @@ object FullTrack {
     FullUrl("https", "www.musicpimp.org", "")
   )
 
-  implicit val dur: Format[FiniteDuration] = CrossFormats.finiteDuration
-  implicit val storage: Format[StorageSize] = CrossFormats.storageSize
-  implicit val json: OFormat[FullTrack] = Json.format[FullTrack]
-}
-
-trait TrackMeta extends MusicItem {
+trait TrackMeta extends MusicItem:
   def id: TrackID
   def title: String
   def artist: String
@@ -49,11 +46,9 @@ trait TrackMeta extends MusicItem {
   def relativePath: Path = Paths.get(path.path)
   def toTrack = Track(id, title, artist, album, duration, size, path)
   def toFull(url: FullUrl) = FullTrack(id, title, artist, album, path, duration, size, url)
-}
 
-object TrackMeta {
-  implicit val reader: Reads[TrackMeta] = Track.jsonFormat.map[TrackMeta](identity)
-}
+object TrackMeta:
+  implicit val reader: Decoder[TrackMeta] = Decoder[Track].map(identity)
 
 case class Track(
   id: TrackID,
@@ -64,9 +59,4 @@ case class Track(
   size: StorageSize,
   path: UnixPath
 ) extends TrackMeta
-
-object Track {
-  implicit val dur: Format[FiniteDuration] = CrossFormats.finiteDuration
-  implicit val storage: Format[StorageSize] = CrossFormats.storageSize
-  implicit val jsonFormat: OFormat[Track] = Json.format[Track]
-}
+  derives Codec.AsObject

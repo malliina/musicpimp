@@ -2,28 +2,18 @@ package org.musicpimp.js
 
 import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.musicpimp.models.Refresh
-import org.scalajs.jquery.JQueryEventObject
-import play.api.libs.json.{JsValue, Json, OFormat}
+import io.circe.{Codec, Json}
 
-case class SearchStatus(event: String, status: String)
+case class SearchStatus(event: String, status: String) derives Codec.AsObject
 
-object SearchStatus {
-  implicit val json: OFormat[SearchStatus] = Json.format[SearchStatus]
-}
+class Search(music: MusicItems) extends SocketJS("/search/ws?f=json") with SearchStrings:
 
-class Search(music: MusicItems)
-  extends SocketJS("/search/ws?f=json")
-    with SearchStrings {
-
-  elem(RefreshButton).click { (_: JQueryEventObject) =>
+  elem(RefreshButton).onClick: _ =>
     send(Refresh)
-  }
 
-  override def handlePayload(payload: JsValue): Unit =
-    handleValidated[SearchStatus](payload) { event =>
+  override def handlePayload(payload: Json): Unit =
+    handleValidated[SearchStatus](payload): event =>
       onStatus(event.status)
-    }
 
-  def onStatus(status: String) =
+  def onStatus(status: String): Unit =
     elem(IndexInfo).html(s" $status")
-}

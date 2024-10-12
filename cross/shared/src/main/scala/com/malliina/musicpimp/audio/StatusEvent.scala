@@ -1,20 +1,22 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.musicpimp.json.CrossFormats
+import com.malliina.json.PrimitiveFormats
 import com.malliina.musicpimp.models.Volume
-import play.api.libs.json.{Json, OFormat}
+import io.circe.Codec
+import io.circe.generic.semiauto.deriveCodec
 
 import scala.concurrent.duration.Duration
 
-case class StatusEvent(track: FullTrack,
-                       state: PlayState,
-                       position: Duration,
-                       volume: Volume,
-                       mute: Boolean,
-                       playlist: Seq[FullTrack],
-                       index: Int)
+case class StatusEvent(
+  track: FullTrack,
+  state: PlayState,
+  position: Duration,
+  volume: Volume,
+  mute: Boolean,
+  playlist: Seq[FullTrack],
+  index: Int
+)
 
-object StatusEvent {
-  implicit val dur: CrossFormats.duration.type = CrossFormats.duration
-  implicit val json: OFormat[StatusEvent] = Json.format[StatusEvent]
-}
+object StatusEvent:
+  implicit val dur: Codec[Duration] = PrimitiveFormats.durationCodec
+  implicit val json: Codec[StatusEvent] = deriveCodec[StatusEvent]

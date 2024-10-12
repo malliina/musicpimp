@@ -14,42 +14,41 @@ import controllers.ReverseAssets
 import controllers.pimpcloud.CloudTags.versioned
 import play.api.mvc.Call
 import scalatags.Text.GenericAttr
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object CloudTags {
+object CloudTags:
   val reverseAssets = new ReverseAssets("")
 
   def at(file: String): Call = reverseAssets.versioned(file)
 
   implicit val callAttr: GenericAttr[Call] = new GenericAttr[Call]
 
-  /**
-    * @param appName typically the name of the Scala.js module
-    * @param isProd  true if the app runs in production, false otherwise
-    * @return HTML templates with either prod or dev javascripts
+  /** @param appName
+    *   typically the name of the Scala.js module
+    * @param isProd
+    *   true if the app runs in production, false otherwise
+    * @return
+    *   HTML templates with either prod or dev javascripts
     */
-  def forApp(appName: String, isProd: Boolean): CloudTags = {
+  def forApp(appName: String, isProd: Boolean): CloudTags =
     val scripts = ScalaScripts.forApp(appName, isProd)
     withLauncher(scripts)
-  }
 
   def withLauncher(scripts: ScalaScripts) = new CloudTags(scripts)
 
   def versioned(file: Asset) = reverseAssets.versioned(file)
-}
 
-class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
+class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
   val WideContent = "wide-content"
 
-  import tags._
+  import tags.*
 
   def eject(message: Option[String]) =
     basePage("Goodbye!")(
       divContainer(
         rowColumn(s"${col.md.six} top-padding")(
-          message.fold(empty) { msg =>
+          message.fold(empty): msg =>
             div(`class` := s"$Lead ${alert.success}", role := alert.Alert)(msg)
-          }
         ),
         rowColumn(col.md.six)(
           leadPara("Try to ", a(href := routes.Logs.index)("sign in"), " again.")
@@ -57,7 +56,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
       )
     )
 
-  def login(error: Option[String], feedback: Option[String], motd: Option[String]) = {
+  def login(error: Option[String], feedback: Option[String], motd: Option[String]) =
     val formWidth = s"${col.md.eight} ${col.lg.six}"
     basePage("Welcome")(
       divContainer(
@@ -83,22 +82,19 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
               )("Sign in")
             )
           ),
-          error.fold(empty) { err =>
+          error.fold(empty): err =>
             row(
               divClass(s"$FormSignin $formWidth")(
                 div(`class` := alert.warning, role := alert.Alert)(err)
               )
-            )
-          },
-          motd.fold(empty) { message =>
+            ),
+          motd.fold(empty): message =>
             divClass(s"$Row $FormSignin")(
               p(`class` := col.lg.six, message)
             )
-          }
         )
       )
     )
-  }
 
   def textInput(
     inType: String,
@@ -123,7 +119,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     )
   )
 
-  def index(dir: Directory, feedback: Option[String]) = {
+  def index(dir: Directory, feedback: Option[String]) =
     val feedbackHtml = feedback.fold(empty)(f => fullRow(leadPara(f)))
 
     def folderHtml(folder: Folder) =
@@ -154,7 +150,6 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
         )
       )
     )
-  }
 
   def trackActions(track: TrackID) =
     divClass(btn.group)(
@@ -183,7 +178,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
       )
     )
 
-  def searchForm(query: Option[String] = None, size: String = InputGroupLg) = {
+  def searchForm(query: Option[String] = None, size: String = InputGroupLg) =
     form(action := routes.Phones.search)(
       divClass(s"$InputGroup $size")(
         input(
@@ -198,7 +193,6 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
         )
       )
     )
-  }
 
   val admin = baseIndex("home")(
     headerRow("Admin"),
@@ -218,7 +212,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
   def tableContainer(header: String, bodyId: String, headers: String*): Modifier = Seq(
     h2(header),
     fullRow(
-      defaultTable(bodyId, headers: _*)
+      defaultTable(bodyId, headers*)
     )
   )
 
@@ -226,19 +220,19 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     table(`class` := tables.defaultClass)(
       thead(
         tr(
-          headers map { header => th(header) }
+          headers.map: header =>
+            th(header)
         )
       ),
       tbody(id := bodyId)
     )
 
-  def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) = {
-    def navItem(thisTabName: String, tabId: String, url: Call, iconicName: String) = {
-      val itemClass = if (tabId == tabName) "nav-item active" else "nav-item"
+  def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) =
+    def navItem(thisTabName: String, tabId: String, url: Call, iconicName: String) =
+      val itemClass = if tabId == tabName then "nav-item active" else "nav-item"
       li(`class` := itemClass)(
         a(href := url, `class` := "nav-link")(iconic(iconicName), s" $thisTabName")
       )
-    }
 
     basePage("pimpcloud")(
       navbar.basic(
@@ -262,7 +256,6 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
       ),
       divClass(contentClass)(inner)
     )
-  }
 
   def basePage(title: String)(inner: Modifier*) = TagPage(
     html(lang := En)(
@@ -281,7 +274,8 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
       body(
         section(
           inner,
-          scripts.scripts.map { file => HtmlTags.jsScript(versioned(file)) }
+          scripts.scripts.map: file =>
+            HtmlTags.jsScript(versioned(file))
         )
       )
     )
@@ -291,4 +285,3 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings {
     span(`class` := s"${navbars.Text} ${FrontStrings.HiddenClass}", id := elemId)(
       iconic(iconicName)
     )
-}

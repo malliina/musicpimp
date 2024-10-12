@@ -1,47 +1,46 @@
 package org.musicpimp.js
 
-import com.malliina.musicpimp.js.FrontStrings._
+import com.malliina.musicpimp.js.FrontStrings.*
+import io.circe.syntax.EncoderOps
+import io.circe.{Decoder, Encoder, Json}
 import org.scalajs.dom
-import org.scalajs.dom.CloseEvent
-import org.scalajs.dom.raw.{Event, MessageEvent}
-import play.api.libs.json._
+import org.scalajs.dom.{CloseEvent, Event, MessageEvent}
 
-import scala.util.Try
-
-class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) extends ScriptHelpers {
+class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) extends ScriptHelpers:
   val okStatus = elem(OkStatus)
   val failStatus = elem(FailStatus)
 
   val socket: dom.WebSocket = openSocket(wsPath)
 
-  def handlePayload(payload: JsValue): Unit = ()
+  def handlePayload(payload: Json): Unit = ()
 
-  def handleValidated[T: Reads](json: JsValue)(process: T => Unit): Unit =
-    json.validate[T].fold(err => onJsonFailure(JsError(err)), process)
+  def handleValidated[T: Decoder](json: Json)(process: T => Unit): Unit =
+    json.as[T].fold(err => onJsonFailure(err.message), process)
 
-  def showConnected(): Unit = {
-    okStatus removeClass hideClass
-    failStatus addClass hideClass
-  }
+  def showConnected(): Unit =
+    okStatus.removeClass(hideClass)
+    failStatus.addClass(hideClass)
 
-  def showDisconnected(): Unit = {
-    okStatus addClass hideClass
-    failStatus removeClass hideClass
-  }
+  def showDisconnected(): Unit =
+    okStatus.addClass(hideClass)
+    failStatus.removeClass(hideClass)
 
-  def send[T: Writes](payload: T): Unit = {
-    val asString = Json.stringify(Json.toJson(payload))
-    socket.send(asString)
-  }
+  def send[T: Encoder](payload: T): Unit =
+    socket.send(payload.asJson.noSpaces)
 
-  def onMessage(msg: MessageEvent): Unit = {
-    Try(Json.parse(msg.data.toString)).map { json =>
-      val isPing = (json \ EventKey).validate[String].filter(_ == Ping).isSuccess
-      if (!isPing) {
-        handlePayload(json)
-      }
-    }.recover { case e => onJsonException(e) }
-  }
+  private def onMessage(msg: MessageEvent): Unit =
+    try
+      io.circe.parser
+        .parse(msg.data.toString)
+        .map: json =>
+          val isPing = json.hcursor
+            .downField(EventKey)
+            .as[String]
+            .contains(Ping)
+          if !isPing then handlePayload(json)
+    catch
+      case e: Exception =>
+        onJsonException(e)
 
   // alternative with native JSON parsing
   //  def onMessage(msg: MessageEvent): Unit = {
@@ -58,7 +57,7 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
 
   def onError(e: Event): Unit = showDisconnected()
 
-  def openSocket(pathAndQuery: String) = {
+  def openSocket(pathAndQuery: String) =
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
     val socket = new dom.WebSocket(wsUrl)
     socket.onopen = (e: Event) => onConnected(e)
@@ -66,20 +65,15 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     socket.onclose = (e: CloseEvent) => onClosed(e)
     socket.onerror = (e: Event) => onError(e)
     socket
-  }
 
-  def wsBaseUrl = {
+  def wsBaseUrl =
     val location = dom.window.location
-    val wsProto = if (location.protocol == "http:") "ws" else "wss"
+    val wsProto = if location.protocol == "http:" then "ws" else "wss"
     s"$wsProto://${location.host}"
-  }
 
-  def onJsonException(t: Throwable): Unit = {
-    log error t
-  }
+  def onJsonException(t: Throwable): Unit =
+    log.error(t)
 
-  protected def onJsonFailure(result: JsError): Unit = {
+  protected def onJsonFailure(result: String): Unit =
     println(result)
-    log info s"JSON error $result"
-  }
-}
+    log.info(s"JSON error $result")

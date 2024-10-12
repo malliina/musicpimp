@@ -1,8 +1,8 @@
 package com.malliina.beam
 
-import akka.NotUsed
-import akka.stream.scaladsl.{Keep, Sink, Source, SourceQueue}
-import akka.stream.{Materializer, OverflowStrategy}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source, SourceQueue}
+import org.apache.pekko.stream.{Materializer, OverflowStrategy}
 
 object Streaming {
   val DefaultBufferSizeInElements = 10000000

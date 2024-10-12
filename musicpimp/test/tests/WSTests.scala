@@ -1,19 +1,17 @@
 package tests
 
 import com.malliina.musicpimp.beam.BeamCommand
-import play.api.libs.json._
+import io.circe.Json
+import io.circe.syntax.EncoderOps
 
-class WSTests extends munit.FunSuite {
-  test("json to case class") {
+class WSTests extends munit.FunSuite:
+  test("json to case class"):
     val json = Json.obj(
-      "action" -> "play",
-      "track" -> "123",
-      "uri" -> "http://www.musicpimp.org",
-      "username" -> "hm",
-      "password" -> "secret"
+      "action" -> "play".asJson,
+      "track" -> "123".asJson,
+      "uri" -> "http://www.musicpimp.org".asJson,
+      "username" -> "hm".asJson,
+      "password" -> "secret".asJson
     )
-    implicit val commandFormat = Json.format[BeamCommand]
-    val cmd = Json.fromJson[BeamCommand](json).get
+    val cmd = json.as[BeamCommand].toOption.get
     assert(cmd.track.id == "123")
-  }
-}

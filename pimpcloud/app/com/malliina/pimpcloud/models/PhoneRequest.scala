@@ -1,6 +1,6 @@
 package com.malliina.pimpcloud.models
 
 import com.malliina.values.Username
-import play.api.libs.json._
+import io.circe.Encoder
 
-case class PhoneRequest[W: Writes](cmd: String, user: Username, body: W)
+case class PhoneRequest[W: Encoder](cmd: String, user: Username, body: W)

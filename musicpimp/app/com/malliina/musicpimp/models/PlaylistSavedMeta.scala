@@ -1,9 +1,5 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json.{Json, OFormat}
+import io.circe.Codec
 
-case class PlaylistSavedMeta(id: PlaylistID)
-
-object PlaylistSavedMeta {
-  implicit val format: OFormat[PlaylistSavedMeta] = Json.format[PlaylistSavedMeta]
-}
+case class PlaylistSavedMeta(id: PlaylistID) derives Codec.AsObject

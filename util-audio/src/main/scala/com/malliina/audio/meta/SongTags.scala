@@ -8,7 +8,7 @@ case class SongTags(title: String, album: String, artist: String)
 
 object SongTags {
   def fromFilePath(path: Path, root: Path) = {
-    val relativePath = root relativize path
+    val relativePath = root.relativize(path)
     val maybeParent = Option(relativePath.getParent)
     val title = SongMeta.titleFromFileName(path)
     val album = maybeParent.flatMap(p => Option(p.getFileName).map(_.toString)).getOrElse("")
@@ -25,7 +25,7 @@ object SongTags {
     SongTags(title, artist, album)
   }
 
-  def fromTags(media: Path) = fromAudioFile(AudioFileIO read media.toFile)
+  def fromTags(media: Path) = fromAudioFile(AudioFileIO.read(media.toFile))
 
   /**
     *
@@ -34,7 +34,7 @@ object SongTags {
     */
   def fromAudioFile(audio: AudioFile) =
     Option(audio.getTag).map { tags =>
-      def field(key: FieldKey) = tags getFirst key
+      def field(key: FieldKey) = tags.getFirst(key)
       SongTags(field(FieldKey.TITLE), field(FieldKey.ALBUM), field(FieldKey.ARTIST))
     }.filter(_.title.nonEmpty)
 }

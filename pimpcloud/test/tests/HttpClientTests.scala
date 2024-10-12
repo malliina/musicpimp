@@ -1,6 +1,6 @@
 package tests
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import play.api.libs.ws.ahc.{AhcWSClientConfig, StandaloneAhcWSClient}
 
 class HttpClientTests extends munit.FunSuite with BaseSuite {

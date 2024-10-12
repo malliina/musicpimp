@@ -1,10 +1,10 @@
 package com.malliina.musicpimp.audio
 
-import play.api.libs.json.{Format, Json, Reads, Writes}
+import io.circe.{Codec, Decoder, Encoder}
 
 sealed abstract class PlayState(val name: String)
 
-object PlayState {
+object PlayState:
   val closed = Closed
   val all = Seq(
     Unrealized,
@@ -26,11 +26,10 @@ object PlayState {
   def withName(name: String): PlayState =
     all.find(_.name.toLowerCase == name.toLowerCase).getOrElse(Unknown)
 
-  implicit val json: Format[PlayState] = Format[PlayState](
-    Reads(_.validate[String].map(withName)),
-    Writes(state => Json.toJson(state.name))
+  implicit val json: Codec[PlayState] = Codec.from[PlayState](
+    Decoder.decodeString.map(withName),
+    Encoder.encodeString.contramap(_.name)
   )
-}
 
 case object Unrealized extends PlayState("Unrealized")
 case object Realizing extends PlayState("Realizing")

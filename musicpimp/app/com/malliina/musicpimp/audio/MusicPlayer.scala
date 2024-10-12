@@ -3,10 +3,10 @@ package com.malliina.musicpimp.audio
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 
-import akka.NotUsed
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import com.malliina.audio._
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import com.malliina.audio.*
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.models.Volume
 import com.malliina.streams.StreamsUtil
@@ -21,7 +21,7 @@ import scala.util.{Failure, Try}
 class MusicPlayer()(implicit val mat: Materializer)
   extends IPlayer
   with PlaylistSupport[PlayableTrack]
-  with ServerPlayer {
+  with ServerPlayer:
 
   private val log = Logger(getClass)
   private val defaultVolume = Volume(40)
@@ -36,40 +36,39 @@ class MusicPlayer()(implicit val mat: Materializer)
 
   private def current: Option[TrackPlayer] = trackPlayer.get()
 
-  def reset(track: PlayableTrack): Try[Unit] = {
+  def reset(track: PlayableTrack): Try[Unit] =
     playlist.set(track)
     play(_.current)
-  }
 
-  def setPlaylistAndPlay(track: PlayableTrack): Try[Unit] = {
+  def setPlaylistAndPlay(track: PlayableTrack): Try[Unit] =
     playlist.set(track)
     playTrack(track)
-  }
 
   override def playTrack(songMeta: PlayableTrack): Try[Unit] =
-    tryInitTrackWithFallback(songMeta).map(_ => play()).recoverWith {
-      case t =>
-        log.warn(s"Unable to play track: ${songMeta.id}", t)
-        errorOpt = Some(t)
-        Failure(t)
-    }
+    tryInitTrackWithFallback(songMeta)
+      .map(_ => play())
+      .recoverWith:
+        case t =>
+          log.warn(s"Unable to play track: ${songMeta.id}", t)
+          errorOpt = Some(t)
+          Failure(t)
 
-  def tryInitTrackWithFallback(track: PlayableTrack): Try[Unit] = {
+  def tryInitTrackWithFallback(track: PlayableTrack): Try[Unit] =
     errorOpt = None
-    Try(initTrack(track)).recoverWith {
+    Try(initTrack(track)).recoverWith:
       case ioe: IOException if Option(ioe.getMessage).exists(_.startsWith("Pipe closed")) =>
         val id = track.id
         log.warn(s"Unable to initialize track '$id'. The stream is closed.")
         Failure(ioe)
-    }
-  }
 
   /** Blocks until an [[javax.sound.sampled.AudioInputStream]] can be created of `track`.
     *
-    * @param track track to play
-    * @throws LineUnavailableException during track init
+    * @param track
+    *   track to play
+    * @throws LineUnavailableException
+    *   during track init
     */
-  def initTrack(track: PlayableTrack): Unit = {
+  def initTrack(track: PlayableTrack): Unit =
     val initialVolume = current.flatMap(_.volumeCarefully) getOrElse defaultVolume
     val initialMute = current.flatMap(_.muteCarefully) getOrElse false
     val newPlayer = initPlayer(track, initialVolume, initialMute)
@@ -79,24 +78,18 @@ class MusicPlayer()(implicit val mat: Materializer)
     }
     send(TrackChangedMessage(track))
     trackHistoryHub.send(track)
-  }
 
-  def play(): Unit = {
+  def play(): Unit =
     val mustReinitializePlayer = current.exists(_.state == PlayerStates.Closed)
-    if (mustReinitializePlayer) {
-      current.map(_.track).foreach(initTrack)
-    }
-    current.foreach { p =>
+    if mustReinitializePlayer then current.map(_.track).foreach(initTrack)
+    current.foreach: p =>
       p.play()
-    }
-  }
 
-  def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer = {
+  def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer =
     val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), eventHub.sink)
     p.adjustVolume(initialVolume)
     p.mute(isMute)
     p
-  }
 
   def stop(): Unit = current.foreach(_.stop())
 
@@ -112,10 +105,10 @@ class MusicPlayer()(implicit val mat: Materializer)
 
   def volume: Option[Volume] = current.map(_.volume)
 
-  /**
-    *
-    * @param level new volume
-    * @return true if the volume was changed, false otherwise
+  /** @param level
+    *   new volume
+    * @return
+    *   true if the volume was changed, false otherwise
     */
   def setVolume(level: Volume): Unit = current.foreach(_.adjustVolume(level))
 
@@ -123,20 +116,20 @@ class MusicPlayer()(implicit val mat: Materializer)
 
   def toggleMute(): Unit = current.foreach(_.toggleMute())
 
-  def close(): Unit = {
+  def close(): Unit =
     current.foreach(_.close())
     eventHub.shutdown()
     trackHistoryHub.shutdown()
     playlist.close()
-  }
 
   def position =
-    current.map(_.position).getOrElse {
-      log.debug(s"Unable to obtain position because no player is initialized, defaulting to 0.")
-      Duration.fromNanos(0)
-    }
+    current
+      .map(_.position)
+      .getOrElse:
+        log.debug(s"Unable to obtain position because no player is initialized, defaulting to 0.")
+        Duration.fromNanos(0)
 
-  def status(host: FullUrl): StatusEvent = current.fold(StatusEvents.empty) { c =>
+  def status(host: FullUrl): StatusEvent = current.fold(StatusEvents.empty): c =>
     val p = c.player
     StatusEvent(
       TrackJson.toFull(p.track, host),
@@ -147,10 +140,9 @@ class MusicPlayer()(implicit val mat: Materializer)
       playlist.songList.map(t => TrackJson.toFull(t, host)),
       playlist.index
     )
-  }
 
   def status17(host: FullUrl): StatusEvent17 =
-    current.fold(StatusEvent17.empty) { c =>
+    current.fold(StatusEvent17.empty): c =>
       val p = c.player
       val meta = p.track
       StatusEvent17(
@@ -166,5 +158,3 @@ class MusicPlayer()(implicit val mat: Materializer)
         playlist = playlist.songList.map(t => TrackJson.toFull(t, host)),
         index = playlist.index
       )
-    }
-}

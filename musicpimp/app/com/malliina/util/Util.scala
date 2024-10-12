@@ -2,35 +2,39 @@ package com.malliina.util
 
 import java.net.URL
 import java.nio.file.{Files, Path}
-
 import com.malliina.exception.ResourceNotFoundException
 import com.malliina.file.FileUtilities
 
+import scala.concurrent.duration.{DurationLong, FiniteDuration}
 import scala.io.{BufferedSource, Source}
 
 /** Utility methods.
   */
-object Util {
+object Util:
 
-  /**
-    * try-with-resources Scala style
+  def timed[T](task: => T): (T, FiniteDuration) =
+    val start = System.currentTimeMillis()
+    val t = task
+    val duration = (System.currentTimeMillis() - start).millis
+    (t, duration)
+
+  /** try-with-resources Scala style
     *
-    * @see [[com.malliina.util.Util]]#resource
+    * @see
+    *   [[com.malliina.util.Util]]#resource
     */
   def using[T <: AutoCloseable, U](resource: T)(op: T => U): U =
-    try {
+    try
       op(resource)
-    } finally {
+    finally
       resource.close()
-    }
 
-  def addShutdownHook(code: => Unit): Unit = {
-    Runtime.getRuntime.addShutdownHook(new Thread {
-      override def run(): Unit = {
-        code
-      }
-    })
-  }
+  def addShutdownHook(code: => Unit): Unit =
+    Runtime.getRuntime.addShutdownHook(
+      new Thread:
+        override def run(): Unit =
+          code
+    )
 
   def resource(resource: String): URL = obtainResource(resource, _.getResource)
 
@@ -49,10 +53,11 @@ object Util {
   def obtainResourceOpt[T](resource: String, getter: ClassLoader => String => T): Option[T] =
     Option(getter(getClass.getClassLoader)(resource))
 
-  /**
-    *
-    * @return the uri of the file at the given path, or classpath resource if no classpath resource is found
-    * @throws ResourceNotFoundException if neither a resource nor a file is found
+  /** @return
+    *   the uri of the file at the given path, or classpath resource if no classpath resource is
+    *   found
+    * @throws ResourceNotFoundException
+    *   if neither a resource nor a file is found
     */
   def uri(path: String) =
     fileUriOpt(path) getOrElse resourceUri(path)
@@ -62,27 +67,25 @@ object Util {
 
   def url(path: String) = uri(path).toURL
 
-  def fileUriOpt(path: String) = {
-    val maybeFile = FileUtilities pathTo path
-    if (Files exists maybeFile) {
-      Some(maybeFile.toUri)
-    } else {
-      None
-    }
-  }
+  def fileUriOpt(path: String) =
+    val maybeFile = FileUtilities.pathTo(path)
+    if Files.exists(maybeFile) then Some(maybeFile.toUri)
+    else None
 
-  /** Reads the properties of the classpath resource at the given path, or if none is found, of a file at the given path.
+  /** Reads the properties of the classpath resource at the given path, or if none is found, of a
+    * file at the given path.
     *
-    * @return the properties as a map
-    * @throws ResourceNotFoundException if neither a resource nor a file is found
+    * @return
+    *   the properties as a map
+    * @throws ResourceNotFoundException
+    *   if neither a resource nor a file is found
     */
-  def props(path: String) = Utils.resource(Source.fromURL(url(path)))(mappify)
+  def props(path: String) = Util.using(Source.fromURL(url(path)))(mappify)
 
-  def props(path: Path) = Utils.resource(Source.fromFile(path.toUri))(mappify)
+  def props(path: Path) = Util.using(Source.fromFile(path.toUri))(mappify)
 
-  def propsOpt(path: String) = {
-    uriOpt(path).map(r => Utils.resource(Source.fromURI(r))(mappify))
-  }
+  def propsOpt(path: String) =
+    uriOpt(path).map(r => Util.using(Source.fromURI(r))(mappify))
 
   private def mappify(src: BufferedSource) = src
     .getLines()
@@ -96,7 +99,5 @@ object Util {
     *
     * Use for SSL troubleshooting.
     */
-  def sslDebug(): Unit = {
+  def sslDebug(): Unit =
     sys.props("javax.net.debug") = "ssl"
-  }
-}

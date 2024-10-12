@@ -1,11 +1,12 @@
 package com.malliina.io
 
 import com.malliina.file.FileUtilities
+import io.circe.Codec
 import play.api.libs.json.Format
 
-abstract class FileSet[T](file: String)(implicit format: Format[T])
-  extends FileBackedSet[T](FileUtilities pathTo file)
-  with LoggingList[T] {
+abstract class FileSet[T](file: String)(implicit format: Codec[T])
+  extends FileBackedSet[T](FileUtilities.pathTo(file))
+  with LoggingList[T]:
   protected def id(elem: T): String
 
   def areSame(first: T, second: T) = id(first) == id(second)
@@ -17,4 +18,3 @@ abstract class FileSet[T](file: String)(implicit format: Format[T])
   def withID(elemID: String): Option[T] = get().find(e => id(e) == elemID)
 
   def removeID(id: String): Unit = withID(id).foreach(remove)
-}

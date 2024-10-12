@@ -1,13 +1,13 @@
 package com.malliina.musicpimp.json
 
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.models.{FailReason, Version}
-import play.api.libs.json.Json._
-import play.api.libs.json.{JsObject, JsValue, Json}
+import io.circe.Json
+import io.circe.syntax.EncoderOps
 
 object JsonMessages extends JsonMessages
 
-trait JsonMessages extends CommonMessages {
+trait JsonMessages extends CommonMessages:
   val version = Version(com.malliina.musicpimp.BuildInfo.version)
   val unAuthorized = FailReason(AccessDenied)
   val databaseFailure = FailReason(DatabaseError)
@@ -20,9 +20,8 @@ trait JsonMessages extends CommonMessages {
   def exception(e: Throwable) =
     FailReason(e.getMessage)
 
-  def withStatus(json: JsValue): JsValue =
-    event(StatusKey) ++ json.as[JsObject]
+  def withStatus(json: Json): Json =
+    event(StatusKey).deepMerge(json)
 
   def thanks =
-    Json.obj(Msg -> Json.toJson(ThankYou))
-}
+    Json.obj(Msg -> ThankYou.asJson)

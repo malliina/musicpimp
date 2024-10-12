@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.library
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.audio.meta.{SongMeta, StreamSource}
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
 import com.malliina.musicpimp.models.{MusicItem, TrackID}

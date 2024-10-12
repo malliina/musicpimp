@@ -122,7 +122,7 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable {
   private def volumeControlValue(newVolume: Int): Unit =
     volumeControl.foreach(ctrl => {
       val newValue = internalVolumeValue(newVolume, ctrl.getMinimum, ctrl.getMaximum)
-      ctrl setValue newValue
+      ctrl.setValue(newValue)
     })
 
   def internalVolumeValue(newVolume: Int, min: Float, max: Float): Float =

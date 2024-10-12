@@ -1,12 +1,11 @@
 package tests
 
-import java.nio.file.{Files, Path, Paths}
-
-import akka.actor.ActorSystem
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import munit.FunSuite
 import org.apache.commons.io.FileUtils
+import org.apache.pekko.actor.ActorSystem
 
+import java.nio.file.{Files, Path, Paths}
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -22,7 +21,7 @@ class TestBase extends FunSuite {
   def await[T](f: Future[T], duration: FiniteDuration = 10.seconds) = Await.result(f, duration)
 
   val fileName = "mpthreetest.mp3"
-  val tempFile = Paths.get(sys.props("java.io.tmpdir")) resolve fileName
+  val tempFile = Paths.get(sys.props("java.io.tmpdir")).resolve(fileName)
 
   def ensureTestMp3Exists(): Path = {
     if (!Files.exists(tempFile)) {

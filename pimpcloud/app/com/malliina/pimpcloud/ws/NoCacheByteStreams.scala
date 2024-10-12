@@ -1,10 +1,10 @@
 package com.malliina.pimpcloud.ws
 
-import akka.actor.ActorRef
-import akka.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
-import akka.stream.scaladsl.Source
-import akka.stream.{Materializer, QueueOfferResult, StreamDetachedException}
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.stream.{Materializer, QueueOfferResult, StreamDetachedException}
+import org.apache.pekko.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
 import com.malliina.musicpimp.json.PlaybackStrings.TrackKey
@@ -18,31 +18,31 @@ import com.malliina.web.HttpConstants.AudioMpeg
 import com.malliina.play.streams.StreamParsers
 import com.malliina.play.{ContentRange, Streaming}
 import com.malliina.ws.Streamer
+import io.circe.Encoder
+import io.circe.syntax.EncoderOps
 import play.api.Logger
 import play.api.http.{HttpEntity, HttpErrorHandler}
 import play.api.libs.json.{Json, Writes}
-import play.api.mvc._
+import play.api.mvc.*
 import play.mvc.Http.HeaderNames
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-object NoCacheByteStreams {
+object NoCacheByteStreams:
   private val log = Logger(getClass)
 
   // backpressures automatically, seems to work fine, and does not consume RAM
   val ByteStringBufferSize = 0
   val DetachedMessage = "Stream is terminated. SourceQueue is detached"
-}
 
 /** For each incoming request:
   *
-  * 1) Assign an ID to the request
-  * 2) Open a channel (or create a promise) onto which we push the eventual response
-  * 3) Forward the request along with its ID to the destination server
-  * 4) The destination server tags its response with the request ID
-  * 5) Read the request ID from the response and push the response to the channel (or complete the promise)
-  * 6) EOF and close the channel; this completes the request-response cycle
+  * 1) Assign an ID to the request 2) Open a channel (or create a promise) onto which we push the
+  * eventual response 3) Forward the request along with its ID to the destination server 4) The
+  * destination server tags its response with the request ID 5) Read the request ID from the
+  * response and push the response to the channel (or complete the promise) 6) EOF and close the
+  * channel; this completes the request-response cycle
   */
 class NoCacheByteStreams(
   id: CloudID,
@@ -50,7 +50,7 @@ class NoCacheByteStreams(
   val mat: Materializer,
   errorHandler: HttpErrorHandler,
   onUpdate: () => Unit
-) extends Streamer {
+) extends Streamer:
 
   implicit val ec: ExecutionContextExecutor = mat.executionContext
   private val ongoing = TrieMap.empty[RequestID, StreamEndpoint]
@@ -69,15 +69,17 @@ class NoCacheByteStreams(
       )(mat)
     }
 
-  def snapshot: Seq[PimpStream] = ongoing.map {
-    case (uuid, stream) => PimpStream(uuid.toId, id, stream.track, stream.range)
-  }.toSeq
+  def snapshot: Seq[PimpStream] = ongoing
+    .map:
+      case (uuid, stream) => PimpStream(uuid.toId, id, stream.track, stream.range)
+    .toSeq
 
-  /**
-    * @return a Result if the server received the upload request, None otherwise
-    * @see https://groups.google.com/forum/#!searchin/akka-user/source.queue/akka-user/zzGSuRG4YVA/NEjwAT76CAAJ
+  /** @return
+    *   a Result if the server received the upload request, None otherwise
+    * @see
+    *   https://groups.google.com/forum/#!searchin/akka-user/source.queue/akka-user/zzGSuRG4YVA/NEjwAT76CAAJ
     */
-  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result = {
+  def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result =
     val request = RequestID.random()
     val userAgent = req.headers
       .get(HeaderNames.USER_AGENT)
@@ -92,10 +94,10 @@ class NoCacheByteStreams(
     // AFAIK this is redundant, because we dispose the resources when:
     // a) the server completes its upload or b) offering data to the client fails
     val src = source.watchTermination()((_, task) =>
-      task.onComplete { res => remove(request, shouldAbort = true, wasSuccess = res.isSuccess) }
+      task.onComplete: res =>
+        remove(request, shouldAbort = true, wasSuccess = res.isSuccess)
     )
     connectSource(request, src, track, range)
-  }
 
   def exists(request: RequestID): Boolean = ongoing contains request
 
@@ -103,37 +105,37 @@ class NoCacheByteStreams(
     request: RequestID,
     shouldAbort: Boolean,
     wasSuccess: Boolean
-  ): Future[Boolean] = {
-    val desc = if (wasSuccess) "successful" else "failed"
+  ): Future[Boolean] =
+    val desc = if wasSuccess then "successful" else "failed"
     val description = s"$desc request '$request'"
-    val disposal = disposeUUID(request).map { fut =>
-      fut.map { _ => log info s"Removed $description" }.recover {
-        case ist: IllegalStateException if Option(ist.getMessage).contains(DetachedMessage) =>
-          log info s"Removed $description after detachment"
-        case sde: StreamDetachedException =>
-          val msg = s"Removed $description after exceptional detachment"
-          if (wasSuccess) log.debug(msg, sde) else log.warn(msg, sde)
-        case e: Exception =>
-          log.error(s"Removed but failed to close $description $e", e)
-      }.map(_ => true)
-    }.getOrElse {
-      // This method is fired multiple times in normal circumstances
-      log debug s"Unable to remove '$request'. Request ID not found."
-      Future.successful(false)
-    }
-    if (shouldAbort) {
-      sendMessage(cancelMessage(request))
-    }
+    val disposal = disposeUUID(request)
+      .map: fut =>
+        fut
+          .map: _ =>
+            log info s"Removed $description"
+          .recover:
+            case ist: IllegalStateException if Option(ist.getMessage).contains(DetachedMessage) =>
+              log info s"Removed $description after detachment"
+            case sde: StreamDetachedException =>
+              val msg = s"Removed $description after exceptional detachment"
+              if wasSuccess then log.debug(msg, sde) else log.warn(msg, sde)
+            case e: Exception =>
+              log.error(s"Removed but failed to close $description $e", e)
+          .map(_ => true)
+      .getOrElse:
+        // This method is fired multiple times in normal circumstances
+        log debug s"Unable to remove '$request'. Request ID not found."
+        Future.successful(false)
+    if shouldAbort then sendMessage(cancelMessage(request))
     disposal
-  }
 
   protected def connectSource(
     request: RequestID,
-    source: Source[ByteString, _],
+    source: Source[ByteString, ?],
     track: Track,
     range: ContentRange
-  ): Result = {
-    val status = if (range.isAll) Results.Ok else Results.PartialContent
+  ): Result =
+    val status = if range.isAll then Results.Ok else Results.PartialContent
     val entity = HttpEntity.Streamed(
       source,
       Option(range.contentLength.toLong),
@@ -142,34 +144,30 @@ class NoCacheByteStreams(
     val result = status.sendEntity(entity)
     connect(request, track, range)
     result
-  }
 
-  private def connect(request: RequestID, track: Track, range: ContentRange): Unit = {
+  private def connect(request: RequestID, track: Track, range: ContentRange): Unit =
     val req = buildTrackRequest(request, track, range)
     sendMessage(req)
-  }
 
   /** Transfer complete.
     *
-    * @param request the transfer ID
+    * @param request
+    *   the transfer ID
     */
-  private def disposeUUID(request: RequestID): Option[Future[QueueOfferResult]] = {
-    (ongoing remove request).map { e =>
+  private def disposeUUID(request: RequestID): Option[Future[QueueOfferResult]] =
+    (ongoing remove request).map: e =>
       streamChanged()
       e.close()
-    }
-  }
 
-  private def buildTrackRequest(request: RequestID, track: Track, range: ContentRange) = {
+  private def buildTrackRequest(request: RequestID, track: Track, range: ContentRange) =
     val requestJson =
-      if (range.isAll) Json.toJson(WrappedID.forId(track.id))
-      else Json.toJson(RangedRequest(track.id, range))
+      if range.isAll then WrappedID.forId(track.id).asJson
+      else RangedRequest(track.id, range).asJson
     UserRequest(TrackKey, requestJson, request, PimpServerSocket.nobody)
-  }
 
   // Sends `msg` to the MusicPimp server
-  protected def sendMessage[M: Writes](msg: M): Unit =
-    jsonOut ! Json.toJson(msg)
+  protected def sendMessage[M: Encoder](msg: M): Unit =
+    jsonOut ! msg.asJson
 
   protected def cancelMessage(request: RequestID): UserRequest =
     UserRequest.simple(Cancel, request)
@@ -180,15 +178,13 @@ class NoCacheByteStreams(
     dest: StreamEndpoint,
     bytes: ByteString,
     result: QueueOfferResult
-  ): Unit = {
+  ): Unit =
     val suffix = s" for ${bytes.length} bytes of ${dest.describe}"
-    result match {
+    result match
       case Enqueued    => ()
       case Dropped     => log.warn(s"Offer dropped$suffix")
       case Failure(t)  => log.error(s"Offer failed$suffix", t)
-      case QueueClosed => () //log.error(s"Queue closed$suffix")
-    }
-  }
+      case QueueClosed => () // log.error(s"Queue closed$suffix")
 
   protected def onOfferError(
     request: RequestID,
@@ -204,4 +200,3 @@ class NoCacheByteStreams(
   }
 
   private def get(request: RequestID): Option[StreamEndpoint] = ongoing get request
-}

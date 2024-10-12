@@ -4,7 +4,7 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-language:implicitConversio
 val utilsVersion = "1.6.40"
 
 Seq(
-  "com.typesafe.play" % "sbt-plugin" % "2.8.20",
+  "org.playframework" % "sbt-plugin" % "3.0.5",
   "com.malliina" % "sbt-utils-maven" % utilsVersion,
   "com.malliina" % "sbt-nodejs" % utilsVersion,
   "com.malliina" % "sbt-filetree" % utilsVersion,
@@ -20,4 +20,4 @@ Seq(
   "org.scalameta" % "sbt-scalafmt" % "2.5.2"
 ) map addSbtPlugin
 
-libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+//libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always

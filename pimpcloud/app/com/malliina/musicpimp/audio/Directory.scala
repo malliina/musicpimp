@@ -1,10 +1,8 @@
 package com.malliina.musicpimp.audio
 
-import play.api.libs.json.{Json, OFormat}
+import io.circe.Codec
 
-case class Directory(folders: Seq[Folder], tracks: Seq[Track])
+case class Directory(folders: Seq[Folder], tracks: Seq[Track]) derives Codec.AsObject
 
-object Directory {
-  implicit val json: OFormat[Directory] = Json.format[Directory]
+object Directory:
   val empty = Directory(Nil, Nil)
-}

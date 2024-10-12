@@ -1,11 +1,11 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.AudioImplicits._
+import com.malliina.audio.AudioImplicits.*
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.models.TrackID
-import play.api.libs.json.Json._
-import play.api.libs.json.{OWrites, Writes}
+import io.circe.{Encoder, Json}
+import io.circe.syntax.EncoderOps
 
 import scala.concurrent.duration.Duration
 
@@ -23,26 +23,25 @@ case class StatusEvent17(
   index: Int
 )
 
-object StatusEvent17 {
-  implicit def status17writer: OWrites[StatusEvent17] =
-    OWrites[StatusEvent17] { o =>
-      obj(
-        EventKey -> StatusKey,
-        Id -> TrackID.json.writes(o.id),
-        Title -> o.title,
-        Artist -> o.artist,
-        Album -> o.album,
-        State -> o.state.toString,
-        Pos -> toJson(o.position.readable),
-        PosSeconds -> toJson(o.position.toSeconds),
-        DurationKey -> toJson(o.duration.readable),
-        DurationSeconds -> toJson(o.duration.toSeconds),
-        Gain -> toJson((o.gain * 100).toInt),
-        Mute -> toJson(o.mute),
-        Playlist -> toJson(o.playlist),
-        PlaylistIndexv17v18 -> toJson(o.index)
+object StatusEvent17:
+  implicit def status17writer: Encoder[StatusEvent17] =
+    Encoder[StatusEvent17]: o =>
+      Json.obj(
+        EventKey -> StatusKey.asJson,
+        Id -> o.id.asJson,
+        Title -> o.title.asJson,
+        Artist -> o.artist.asJson,
+        Album -> o.album.asJson,
+        State -> o.state.toString.asJson,
+        Pos -> o.position.readable.asJson,
+        PosSeconds -> o.position.toSeconds.asJson,
+        DurationKey -> o.duration.readable.asJson,
+        DurationSeconds -> o.duration.toSeconds.asJson,
+        Gain -> (o.gain * 100).toInt.asJson,
+        Mute -> o.mute.asJson,
+        Playlist -> o.playlist.asJson,
+        PlaylistIndexv17v18 -> o.index.asJson
       )
-    }
 
   val empty = StatusEvent17(
     TrackID(""),
@@ -57,4 +56,3 @@ object StatusEvent17 {
     Seq.empty,
     0
   )
-}

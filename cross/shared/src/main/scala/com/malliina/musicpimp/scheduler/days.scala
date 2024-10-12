@@ -10,7 +10,7 @@ case object Friday extends WeekDay("fri", "Friday")
 case object Saturday extends WeekDay("sat", "Saturday")
 case object Sunday extends WeekDay("sun", "Sunday")
 
-object WeekDay {
+object WeekDay:
   def withShortName(name: String): Option[WeekDay] =
     EveryDay.find(_.shortName.toLowerCase == name.toLowerCase)
 
@@ -19,4 +19,3 @@ object WeekDay {
   val Weekend = Seq(Saturday, Sunday)
   val WeekendSet = Weekend.toSet
   val WorkDays = EveryDay diff Weekend
-}

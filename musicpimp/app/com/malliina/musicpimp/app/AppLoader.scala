@@ -3,14 +3,14 @@ package com.malliina.musicpimp.app
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import java.security.SecureRandom
-
 import _root_.musicpimp.Routes
 import com.malliina.http.FullUrl
+import com.malliina.logback.{LogbackUtils, PimpAppender}
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.Auths
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
-import com.malliina.musicpimp.db._
+import com.malliina.musicpimp.db.*
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
@@ -21,8 +21,8 @@ import com.malliina.play.auth.{Authenticator, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
 import com.typesafe.config.ConfigFactory
-import controllers._
-import controllers.musicpimp._
+import controllers.*
+import controllers.musicpimp.*
 import org.slf4j.LoggerFactory
 import play.api.ApplicationLoader.Context
 import play.api.http.{DefaultHttpErrorHandler, HttpErrorHandler}
@@ -34,11 +34,10 @@ import play.filters.gzip.GzipFilter
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object LocalConf {
+object LocalConf:
   val userHome = Paths.get(sys.props("user.home"))
   val localConfFile = userHome.resolve(".musicpimp/musicpimp.conf")
   val localConf = Configuration(ConfigFactory.parseFile(localConfFile.toFile))
-}
 
 case class InitOptions(
   alarms: Boolean = true,
@@ -49,7 +48,7 @@ case class InitOptions(
   useTray: Boolean = true
 )
 
-object InitOptions {
+object InitOptions:
   val prod = InitOptions()
   val dev = InitOptions(
     alarms = false,
@@ -60,53 +59,50 @@ object InitOptions {
   )
 
   // Ripped from Play's ApplicationSecretGenerator.scala
-  def generateSecret(): String = {
+  def generateSecret(): String =
     val random = new SecureRandom()
-    (1 to 64).map { _ => (random.nextInt(75) + 48).toChar }.mkString.replaceAll("\\\\+", "/")
-  }
-}
+    (1 to 64)
+      .map: _ =>
+        (random.nextInt(75) + 48).toChar
+      .mkString
+      .replaceAll("\\\\+", "/")
 
-class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents] {
+class PimpLoader(options: InitOptions) extends LoggingAppLoader[PimpComponents]:
   // Probably needed due to reference in application.conf to only the class name
   def this() = this(InitOptions.prod)
 
-  override def createComponents(context: Context): PimpComponents = {
+  override def createComponents(context: Context): PimpComponents =
     val env = context.environment
-    val opts = if (env.mode == Mode.Dev) InitOptions.dev else options
+    val opts = if env.mode == Mode.Dev then InitOptions.dev else options
+    PimpAppender.install()
     new PimpComponents(context, opts, LocalConf.localConf, conf => new ProdAppConf(conf))
-  }
-}
 
-trait AppConf {
+trait AppConf:
   def databaseConf: Conf
   def close(): Unit
-}
 
-class ProdAppConf(c: Configuration) extends AppConf {
+class ProdAppConf(c: Configuration) extends AppConf:
   private val log = Logger(getClass)
 
   var embedded: Option[EmbeddedMySQL] = None
   override val databaseConf: Conf = Conf
     .fromConfOrLegacy(c)
     .fold(
-      err => {
+      err =>
         val e = EmbeddedMySQL.permanent
         embedded = Option(e)
         log.warn(s"Failed to load custom MySQL conf. Proceeding with embedded MariaDB. $err")
         e.conf
-      },
+      ,
       identity
     )
 
-  override def close(): Unit = embedded.foreach { db =>
+  override def close(): Unit = embedded.foreach: db =>
     log.info(s"Closing embedded database...")
     db.stop()
-  }
-}
 
-object PimpComponents {
+object PimpComponents:
   private val log = LoggerFactory.getLogger(getClass)
-}
 
 class PimpComponents(
   context: Context,
@@ -116,36 +112,33 @@ class PimpComponents(
 ) extends BuiltInComponentsFromContext(context)
   with HttpFiltersComponents
   with AssetsComponents
-  with I18nComponents {
+  with I18nComponents:
   import PimpComponents.log
   log.info(s"Local conf is '${LocalConf.localConfFile.toAbsolutePath}'.")
   val combinedConf = localConf.withFallback(context.initialConfiguration)
   val appSecretKey = "play.http.secret.key"
   val isFirstStart = combinedConf.get[String](appSecretKey) == "changeme"
 
-  /** We distribute the same app package as a downloadable, but still want every user to have a unique app secret. So,
-    * we generate and persist locally a random secret for each user on-demand on app launch.
+  /** We distribute the same app package as a downloadable, but still want every user to have a
+    * unique app secret. So, we generate and persist locally a random secret for each user on-demand
+    * on app launch.
     */
-  override lazy val configuration: Configuration = {
+  override lazy val configuration: Configuration =
     val initial = combinedConf
     val charset = StandardCharsets.UTF_8
-    if (environment.mode == Mode.Prod && isFirstStart) {
+    if environment.mode == Mode.Prod && isFirstStart then
       val dest: Path = FileUtil.pimpHomeDir.resolve("play.secret.key")
       val secret =
-        if (Files.exists(dest) && Files.isReadable(dest)) {
+        if Files.exists(dest) && Files.isReadable(dest) then
           new String(Files.readAllBytes(dest), charset)
-        } else {
+        else
           val secret = InitOptions.generateSecret()
           Option(dest.getParent).foreach(dir => Files.createDirectories(dir))
           Files.write(dest, secret.getBytes(charset))
           log.info(s"Generated random secret key and saved it to '$dest'...")
           secret
-        }
       Configuration(appSecretKey -> secret).withFallback(initial)
-    } else {
-      initial
-    }
-  }
+    else initial
   val appConf: AppConf = init(configuration)
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(new GzipFilter())
   override lazy val httpErrorHandler: HttpErrorHandler =
@@ -231,7 +224,7 @@ class PimpComponents(
   )
 
   applicationLifecycle.addStopHook(() =>
-    Future.successful {
+    Future.successful:
       player.close()
       sws.subscription.shutdown()
       s.close()
@@ -242,6 +235,4 @@ class PimpComponents(
       clouds.close()
       appConf.close()
       indexer.close()
-    }
   )
-}

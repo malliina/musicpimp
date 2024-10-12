@@ -1,10 +1,10 @@
 package tests
 
 import java.nio.file.{Files, Path, Paths}
-import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, Materializer}
-import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink}
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.{ActorMaterializer, Materializer}
+import org.apache.pekko.stream.scaladsl.{FileIO, Flow, Keep, Sink}
+import org.apache.pekko.util.ByteString
 import com.malliina.http.OkClient.MultiPartFile
 import com.malliina.http.{FullUrl, OkClient}
 import com.malliina.logstreams.client.HttpUtil
@@ -19,42 +19,37 @@ import play.api.http.HeaderNames
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContextExecutor, Future, Promise}
 
-class StreamingTests extends PimpcloudSuite with BaseSuite {
+class StreamingTests extends PimpcloudSuite with BaseSuite:
   implicit val as: ActorSystem = ActorSystem("test")
   implicit val mat: Materializer = Materializer(as)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
 
   val fileName = "01 Atb - Ecstacy (Intro Edit).mp3"
   val file = s"E:\\musik\\Elektroniskt\\A State Of Trance 600 Expedition\\CD 2 - ATB\\$fileName"
-  val filePath = Paths get file
+  val filePath = Paths.get(file)
 
-  test("queue offer") {
+  test("queue offer"):
     val (queue, source) = Streaming.sourceQueue[Int](mat, 0)
-    val watchedSource = source.watchTermination() { (_, fut) =>
+    val watchedSource = source.watchTermination(): (_, fut) =>
       fut.onComplete(res => println(s"Done $res"))
-    }
 
     queue offer Option(1)
-    val f = queue offer None
-    intercept[IllegalStateException] {
+    val f = queue.offer(None)
+    intercept[IllegalStateException]:
       await(f)
-    }
-  }
 
-  test("downstream (sink) cancellation terminates upstream (source)") {
+  test("downstream (sink) cancellation terminates upstream (source)"):
     val message = "Completed"
     val p = Promise[String]()
     val (queue, source) = Streaming.sourceQueue[Int](mat, 0)
-    val watchedSource = source.watchTermination() { (_, fut) =>
+    val watchedSource = source.watchTermination(): (_, fut) =>
       fut.onComplete(_ => p.success(message))
       fut
-    }
-    queue offer Option(1)
+    queue.offer(Option(1))
     watchedSource.runWith(Sink.cancelled[Int])
     assert(await(p.future) == message)
-  }
 
-  test("buffers") {
+  test("buffers"):
     val (queue, source) = Streaming.sourceQueue[ByteString](mat, bufferSize = 0)
     // starts accepting events
     val handler = source.runWith(Sink.ignore)
@@ -65,9 +60,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     // closes queue: source terminates
     queue.offer(None)
     await(handler)
-  }
 
-  test("file to source".ignore) {
+  test("file to source".ignore):
     val (queue, source) = Streaming.sourceQueue[ByteString](mat)
     val byteCalculator: Sink[ByteString, Future[Long]] =
       Sink.fold[Long, ByteString](0)((acc, bytes) => acc + bytes.length)
@@ -78,9 +72,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     val bytes = FileIO.fromPath(filePath).runWith(asyncSink)
     Await.result(bytes, 10.seconds)
     println(bytes)
-  }
 
-  test("upload".ignore) {
+  test("upload".ignore):
     val client =
       OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, SSLUtils.trustAllTrustManager())
     // Register file listener
@@ -98,9 +91,8 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     val response = await(request)
     assert(response.code == 200)
     client.close()
-  }
 
-  def multiPartUpload(uri: FullUrl, tempFile: Path): Unit = {
+  def multiPartUpload(uri: FullUrl, tempFile: Path): Unit =
     val file = ensureTestMp3Exists(tempFile)
     val client = OkClient.default
     val request = client.multiPart(
@@ -111,21 +103,14 @@ class StreamingTests extends PimpcloudSuite with BaseSuite {
     val response = await(request)
     assert(response.code == 200)
     client.close()
-  }
 
-  def ensureTestMp3Exists(tempFile: Path): Path = {
-    if (!Files.exists(tempFile)) {
+  def ensureTestMp3Exists(tempFile: Path): Path =
+    if !Files.exists(tempFile) then
       val dest = Files.createTempFile(null, null)
       val resourceURL =
         Option(getClass.getClassLoader).flatMap(cl => Option(cl.getResource(fileName)))
       val url = resourceURL.getOrElse(throw new Exception(s"Resource not found: $fileName"))
       FileUtils.copyURLToFile(url, dest.toFile)
-      if (!Files.exists(dest)) {
-        throw new Exception(s"Unable to access $dest")
-      }
+      if !Files.exists(dest) then throw new Exception(s"Unable to access $dest")
       dest
-    } else {
-      tempFile
-    }
-  }
-}
+    else tempFile

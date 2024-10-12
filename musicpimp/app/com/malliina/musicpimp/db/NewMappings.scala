@@ -4,9 +4,9 @@ import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.values.UnixPath
 import io.getquill.MappedEncoding
 
-import scala.concurrent.duration.{DurationLong, FiniteDuration}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-trait NewMappings {
+trait NewMappings:
   implicit val durationDecoder: MappedEncoding[Int, FiniteDuration] =
     MappedEncoding[Int, FiniteDuration](_.seconds)
   implicit val durationEncoder: MappedEncoding[FiniteDuration, Int] =
@@ -21,4 +21,3 @@ trait NewMappings {
     MappedEncoding[String, UnixPath](UnixPath.apply)
   implicit val unixPathEncoder: MappedEncoding[UnixPath, String] =
     MappedEncoding[UnixPath, String](_.path)
-}

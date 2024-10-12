@@ -5,9 +5,9 @@ import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.musicpimp.library.{FileLibrary, LocalTrack, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, RemoteInfo, TrackID}
 import com.malliina.values.Username
+import io.circe.Json
+import io.circe.syntax.EncoderOps
 import play.api.Logger
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json.toJson
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -18,25 +18,23 @@ class PlaybackMessageHandler(
   lib: MusicLibrary,
   statsPlayer: StatsPlayer
 )(implicit ec: ExecutionContext)
-  extends JsonHandlerBase {
+  extends JsonHandlerBase:
 
   val playlist = player.playlist
 
   def updateUser(user: Username): Unit = statsPlayer.updateUser(user)
 
-  override def handleMessage(msg: JsValue, src: RemoteInfo): Unit = {
+  override def handleMessage(msg: Json, src: RemoteInfo): Unit =
     statsPlayer.updateUser(src.user)
     super.handleMessage(msg, src)
-  }
 
-  override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit = {
-    message match {
+  override def fulfillMessage(message: PlayerMessage, src: RemoteInfo): Unit =
+    message match
       case GetStatusMsg =>
-        val json = src.apiVersion match {
-          case JsonFormatVersions.JSONv17 => toJson(player.status17(src.host))
-          case _                          => toJson(player.status(src.host))
-        }
-        src.target send JsonMessages.withStatus(json)
+        val json = src.apiVersion match
+          case JsonFormatVersions.JSONv17 => player.status17(src.host).asJson
+          case _                          => player.status(src.host).asJson
+        src.target.send(JsonMessages.withStatus(json))
       case ResumeMsg =>
         player.play()
       case StopMsg =>
@@ -54,16 +52,14 @@ class PlaybackMessageHandler(
       case PlayMsg(track) =>
         withTrack(track)(player.reset)
       case SkipMsg(index) =>
-        Try(player skip index).recover {
+        Try(player.skip(index)).recover:
           case iae: IllegalArgumentException =>
             log.warn(s"Cannot skip to index $index. Reason: ${iae.getMessage}")
-        }
       case AddMsg(track) =>
         withTrack(track)(playlist.add)
       case InsertTrackMsg(index, track) =>
-        withTrack(track) { t =>
+        withTrack(track): t =>
           playlist.insert(index, t)
-        }
       case MoveTrackMsg(from, to) =>
         playlist.move(from, to)
       case RemoveMsg(index) =>
@@ -71,81 +67,64 @@ class PlaybackMessageHandler(
       case AddAllMsg(tracks, folders) =>
         resolveTracksOrEmpty(folders, tracks).map(_.foreach(playlist.add))
       case PlayAllMsg(tracks, folders) =>
-        resolveTracksOrEmpty(folders, tracks).map {
+        resolveTracksOrEmpty(folders, tracks).map:
           case head :: tail =>
             player.reset(head)
             tail.foreach(playlist.add)
           case Nil =>
             log warn s"No tracks were resolved"
-        }
       case ResetPlaylistMessage(index, tracks) =>
         lib
           .tracks(tracks)
-          .map { ts =>
+          .map: ts =>
             playlist.reset(index, ts)
-          }
-          .recover {
+          .recover:
             case e: Exception =>
               log.error("Unable to reset playlist.", e)
-          }
       case Handover(index, tracks, state, position) =>
         lib
           .tracks(tracks)
-          .map { ts =>
+          .map: ts =>
             playlist.reset(index.getOrElse(BasePlaylist.NoPosition), ts)
-            playlist.current.foreach { t =>
-              for {
+            playlist.current.foreach: t =>
+              for
                 _ <- player.tryInitTrackWithFallback(t)
                 _ <- player.trySeek(position)
-              } yield {
-                if (PlayState.isPlaying(state)) {
-                  player.play()
-                }
-              }
-            }
-          }
-          .recover {
+              yield if PlayState.isPlaying(state) then player.play()
+          .recover:
             case e: Exception =>
               log.error("Handover failed.", e)
-          }
       case other =>
         log.warn(s"Unsupported message: '$other'.")
-    }
-  }
 
   def withTrack(id: TrackID)(code: LocalTrack => Unit) =
     lib
       .meta(id)
-      .map { t =>
-        t.map { local =>
+      .map: t =>
+        t.map: local =>
           code(local)
-        }.getOrElse {
-          log.error(s"Track not found: '$id'.")
-        }
-      }
-      .recover {
+        .getOrElse:
+            log.error(s"Track not found: '$id'.")
+      .recover:
         case e: Exception =>
           log.error(s"Track search failed.", e)
-      }
 
   def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[List[LocalTrack]] =
-    resolveTracks(folders, tracks).map(_.toList).recover {
-      case t: Exception =>
-        log.error(
-          s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references",
-          t
-        )
-        Nil
-    }
+    resolveTracks(folders, tracks)
+      .map(_.toList)
+      .recover:
+        case t: Exception =>
+          log.error(
+            s"Unable to resolve tracks from ${folders.size} folder and ${tracks.size} track references",
+            t
+          )
+          Nil
 
-  def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] = {
+  def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
     Future
       .traverse(folders)(folder => lib.tracksIn(folder).map(_.getOrElse(Nil)).map(library.localize))
       .map(_.flatten)
       .flatMap(subTracks => lib.tracks(tracks).map(lts => lts ++ subTracks))
-  }
-}
 
-object PlaybackMessageHandler {
+object PlaybackMessageHandler:
   private val log = Logger(getClass)
-}

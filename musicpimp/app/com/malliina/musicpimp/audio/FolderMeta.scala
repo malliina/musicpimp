@@ -1,13 +1,13 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.json.JsonStrings._
+import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, MusicItem}
 import com.malliina.play.http.FullUrls
 import com.malliina.values.UnixPath
-import play.api.libs.json.Json.obj
-import play.api.libs.json.{Json, OFormat, Writes}
+import io.circe.syntax.EncoderOps
+import io.circe.{Codec, Encoder, Json}
 import play.api.mvc.Call
 
 case class FullFolder(
@@ -17,47 +17,39 @@ case class FullFolder(
   src: UnixPath,
   parent: FolderID,
   url: FullUrl
-)
+) derives Codec.AsObject
 
-object FullFolder {
-  implicit val json: OFormat[FullFolder] = Json.format[FullFolder]
-}
-
-trait FolderMeta extends MusicItem {
+trait FolderMeta extends MusicItem:
   def id: FolderID
 
   def title: String
 
   def path: UnixPath
 
-  /**
-    * @return the parent folder, but the root folder if this folder is the root folder
+  /** @return
+    *   the parent folder, but the root folder if this folder is the root folder
     */
   def parent: FolderID
 
   def toFull(host: FullUrl) =
     FullFolder(id, title, path, path, parent, FolderMeta.urlFor(host, id))
-}
 
-object FolderMeta {
+object FolderMeta:
   val libraryController = controllers.musicpimp.routes.LibraryController
 
-  def urlFor(host: FullUrl, id: FolderID) = {
+  def urlFor(host: FullUrl, id: FolderID) =
     val call: Call =
-      if (id == Library.RootId) libraryController.rootLibrary
+      if id == Library.RootId then libraryController.rootLibrary
       else libraryController.library(id)
     FullUrls.absolute(host, call)
-  }
 
-  def writer(host: FullUrl) = Writes[FolderMeta] { f =>
+  def writer(host: FullUrl) = Encoder[FolderMeta]: f =>
     val call: Call =
-      if (f.id == Library.RootId) libraryController.rootLibrary
+      if f.id == Library.RootId then libraryController.rootLibrary
       else libraryController.library(f.id)
-    obj(
-      Id -> f.id,
-      Title -> f.title,
-      PathKey -> UnixPath.json.writes(f.path),
-      Url -> FullUrls.absolute(host, call)
+    Json.obj(
+      Id -> f.id.asJson,
+      Title -> f.title.asJson,
+      PathKey -> UnixPath.json(f.path).asJson,
+      Url -> FullUrls.absolute(host, call).asJson
     )
-  }
-}

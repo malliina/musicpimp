@@ -2,15 +2,18 @@ package controllers.musicpimp
 
 import com.malliina.musicpimp.html.{AlarmContent, PimpHtml}
 import com.malliina.musicpimp.models.TrackID
-import com.malliina.musicpimp.scheduler._
+import com.malliina.musicpimp.scheduler.*
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import controllers.musicpimp.AlarmEditor.log
 import play.api.Logger
-import play.api.data.Forms._
+import play.api.data.Forms.*
 import play.api.data.{Form, Forms}
 import play.api.http.Writeable
 import play.api.i18n.Messages
 import play.api.mvc.Result
+
+object AlarmEditor:
+  private val log = Logger(getClass)
 
 class AlarmEditor(
   val schedules: ScheduledPlaybackService,
@@ -18,7 +21,7 @@ class AlarmEditor(
   auth: AuthDeps,
   messages: Messages
 ) extends Secured(auth)
-  with SchedulerStrings {
+  with SchedulerStrings:
 
   private val clockForm: Form[ClockPlaybackConf] = Form(
     mapping(
@@ -29,59 +32,54 @@ class AlarmEditor(
       TrackKey -> nonEmptyText,
       TrackId -> nonEmptyText,
       Enabled -> optional(text)
-    )((id, hours, minutes, ds, _, trackID, enabledOpt) => {
+    )((id, hours, minutes, ds, _, trackID, enabledOpt) =>
       // converts submitted form data to a case class
       val (days, enabled) = parseDaysEnabledAndJob(ds, enabledOpt)
       val s = ClockSchedule(hours, minutes, days)
       ClockPlaybackConf(id, TrackID(trackID), s, enabled)
-    })(ap => {
+    )(ap =>
       // decomposes a case class to an optional tuple of its constituent values
-      val i = ap.when
-      Some(
+      Option(
         (
           ap.id,
-          i.hour,
-          i.minute,
-          i.days.map(_.shortName),
+          ap.when.hour,
+          ap.when.minute,
+          ap.when.days.map(_.shortName),
           ap.track.id,
           ap.track.id,
           Some(
-            if (ap.enabled) On
+            if ap.enabled then On
             else OFF
           )
         )
       )
-    })
+    )
   )
 
   private def parseDaysEnabledAndJob(
     days: Seq[String],
     enabledOpt: Option[String]
-  ): (Seq[WeekDay], Boolean) = {
+  ): (Seq[WeekDay], Boolean) =
     val weekDays = days.flatMap(WeekDay.withShortName)
     val enabled = enabledOpt.contains(SchedulerStrings.On)
     (weekDays, enabled)
-  }
 
   def newAlarm = clockAction(clockForm)
 
-  def editAlarm(id: String, fb: Option[String] = None) = {
+  def editAlarm(id: String, fb: Option[String] = None) =
     schedules.find(id) map { clock =>
       val form = clockForm.fill(clock)
       clockAction(form, UserFeedback.formed(form))
     } getOrElse {
       pimpAction(notFound(s"Unknown ID '$id'."))
     }
-  }
 
   private def clockAction(form: Form[ClockPlaybackConf], feedback: Option[UserFeedback] = None) =
     pimpAction(req => Ok(tags.alarmEditor(AlarmContent(form, feedback, req.user, messages))))
 
-  def newClock() = formSubmission(clockForm)(
-    (req, err) => {
-      tags.alarmEditor(AlarmContent(err, None, req.user, messages))
-    },
-    (req, form, ap) => {
+  def newClock = formSubmission(clockForm)(
+    (req, err) => tags.alarmEditor(AlarmContent(err, None, req.user, messages)),
+    (req, form, ap) =>
       schedules.save(ap)
       log.info(s"User '${req.user}' from '${req.remoteAddress}' saved alarm '$ap'.")
       Ok(
@@ -89,7 +87,6 @@ class AlarmEditor(
           AlarmContent(form, Option(UserFeedback.success("Saved.")), req.user, messages)
         )
       )
-    }
   )
 
   private def formSubmission[T, C: Writeable](
@@ -100,15 +97,9 @@ class AlarmEditor(
   private def handle[T, C: Writeable](
     form: Form[T],
     request: PimpUserRequest
-  )(errorContent: (PimpUserRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) = {
+  )(errorContent: (PimpUserRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) =
     val filledForm = form.bindFromRequest()(request, formBinding)
     filledForm.fold(
       errors => BadRequest(errorContent(request, errors)),
       success => okRedir(filledForm, success)
     )
-  }
-}
-
-object AlarmEditor {
-  private val log = Logger(getClass)
-}

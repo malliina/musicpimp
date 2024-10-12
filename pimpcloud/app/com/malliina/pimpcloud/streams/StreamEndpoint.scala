@@ -1,13 +1,13 @@
 package com.malliina.pimpcloud.streams
 
-import akka.stream.QueueOfferResult
-import akka.util.ByteString
 import com.malliina.musicpimp.audio.Track
 import com.malliina.play.ContentRange
+import org.apache.pekko.stream.QueueOfferResult
+import org.apache.pekko.util.ByteString
 
 import scala.concurrent.Future
 
-trait StreamEndpoint {
+trait StreamEndpoint:
   def track: Track
 
   def range: ContentRange
@@ -17,4 +17,3 @@ trait StreamEndpoint {
   def close(): Future[QueueOfferResult]
 
   def describe: String = s"${track.title} with range $range"
-}

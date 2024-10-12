@@ -1,21 +1,20 @@
 package com.malliina.musicpimp.cloud
 
-import javax.net.ssl.SSLSocketFactory
-
 import com.malliina.http.FullUrl
-import play.api.libs.json.{JsValue, Json, Writes}
+import io.circe.syntax.EncoderOps
+import io.circe.{Encoder, Json}
 
+import javax.net.ssl.SSLSocketFactory
 import scala.util.Try
 
 class JsonSocket8(uri: FullUrl, socketFactory: SSLSocketFactory, headers: (String, String)*)
-  extends Socket8[JsValue](uri, socketFactory, headers: _*) {
+  extends Socket8[Json](uri, socketFactory, headers*):
 
-  def sendMessage[T: Writes](message: T): Try[Unit] =
-    send(Json toJson message)
+  def sendMessage[T: Encoder](message: T): Try[Unit] =
+    send(message.asJson)
 
-  override protected def parse(raw: String): Option[JsValue] =
-    Try(Json parse raw).toOption
+  override protected def parse(raw: String): Option[Json] =
+    io.circe.parser.parse(raw).toOption
 
-  override protected def stringify(message: JsValue): String =
-    Json stringify message
-}
+  override protected def stringify(message: Json): String =
+    message.noSpaces

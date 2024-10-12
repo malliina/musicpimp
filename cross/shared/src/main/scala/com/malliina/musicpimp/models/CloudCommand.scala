@@ -1,39 +1,35 @@
 package com.malliina.musicpimp.models
 
-import play.api.libs.json._
+import io.circe.syntax.EncoderOps
+import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 
 sealed trait CloudCommand
 
-case class Connect(id: CloudID) extends CloudCommand
-
-object Connect {
-  val json = Json.format[Connect]
-}
+case class Connect(id: CloudID) extends CloudCommand derives Codec.AsObject
 
 case object Disconnect extends CloudCommand
 
 case object Noop extends CloudCommand
 
-object CloudCommand {
+object CloudCommand:
   val CmdKey = "cmd"
   val ConnectCmd = "connect"
   val DisconnectCmd = "disconnect"
   val SubscribeCmd = "subscribe"
 
-  val reader = Reads[CloudCommand] { json =>
-    (json \ CmdKey).validate[String].flatMap {
-      case ConnectCmd => Connect.json.reads(json)
-      case DisconnectCmd => JsSuccess(Disconnect)
-      case SubscribeCmd => JsSuccess(Noop)
-      case other => JsError(s"Unknown '$CmdKey' value: '$other'.")
-    }
-  }
-  val writer = Writes[CloudCommand] {
-    case c: Connect => simpleObj(ConnectCmd) ++ Connect.json.writes(c)
+  val reader = Decoder[CloudCommand]: json =>
+    json
+      .downField(CmdKey)
+      .as[String]
+      .flatMap:
+        case ConnectCmd    => Decoder[Connect].decodeJson(json.value)
+        case DisconnectCmd => Right(Disconnect)
+        case SubscribeCmd  => Right(Noop)
+        case other         => Left(DecodingFailure(s"Unknown '$CmdKey' value: '$other'.", Nil))
+  val writer = Encoder[CloudCommand]:
+    case c: Connect => simpleObj(ConnectCmd).deepMerge(Encoder[Connect].apply(c))
     case Disconnect => simpleObj(DisconnectCmd)
-    case Noop => simpleObj(SubscribeCmd)
-  }
-  implicit val json: Format[CloudCommand] = Format[CloudCommand](reader, writer)
+    case Noop       => simpleObj(SubscribeCmd)
+  implicit val json: Codec[CloudCommand] = Codec.from[CloudCommand](reader, writer)
 
-  def simpleObj(cmd: String): JsObject = Json.obj(CmdKey -> cmd)
-}
+  private def simpleObj(cmd: String) = Json.obj(CmdKey -> cmd.asJson)

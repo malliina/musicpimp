@@ -46,8 +46,8 @@ class LineData(inStream: AudioInputStream, sink: EventSink[PlayerStates.PlayerSt
   def read(buffer: Array[Byte]): Int = decodedIn.read(buffer)
 
   def skip(bytes: Long): Long = {
-    val skipped = decodedIn skip bytes
-    log debug s"Attempted to skip $bytes bytes, skipped $skipped bytes"
+    val skipped = decodedIn.skip(bytes)
+    log.debug(s"Attempted to skip $bytes bytes, skipped $skipped bytes")
     skipped
   }
 
@@ -74,7 +74,7 @@ class LineData(inStream: AudioInputStream, sink: EventSink[PlayerStates.PlayerSt
     val info = new Info(classOf[SourceDataLine], format)
     val line = AudioSystem.getLine(info).asInstanceOf[SourceDataLine]
     // Add line listeners before opening the line.
-    line.addLineListener((e: LineEvent) => log debug s"Line event: $e")
+    line.addLineListener((e: LineEvent) => log.debug(s"Line event: $e"))
     line
   }
 

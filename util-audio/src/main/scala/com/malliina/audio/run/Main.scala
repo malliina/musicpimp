@@ -2,10 +2,9 @@ package com.malliina.audio.run
 
 import java.nio.file.{Files, Path, Paths}
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
-import com.malliina.util.Utils
 
 object Main {
   type ErrorMessage = String
@@ -34,14 +33,16 @@ object Main {
   }
 
   def parseSize(input: String): Either[ErrorMessage, StorageSize] = {
-    Utils
-      .optionally[StorageSize, NumberFormatException](input.toInt.bytes)
-      .left
-      .map(_ => s"Not a number: $input")
+    try {
+      Right(input.toInt.bytes)
+    } catch {
+      case _: NumberFormatException =>
+        Left(s"Not a number: $input")
+    }
   }
 
   def validate(input: String): Either[ErrorMessage, Path] = {
-    val path = Paths get input
+    val path = Paths.get(input)
     val absolute = path.toAbsolutePath
     if (!Files.exists(absolute)) Left(s"File does not exist: $absolute.")
     else if (!Files.isReadable(absolute)) Left(s"File is not readable: $absolute.")

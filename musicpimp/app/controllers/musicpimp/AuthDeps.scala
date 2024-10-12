@@ -1,6 +1,6 @@
 package controllers.musicpimp
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.play.controllers.AuthBundle
 import com.malliina.play.http.AuthedRequest
 import play.api.mvc.ControllerComponents

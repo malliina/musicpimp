@@ -4,7 +4,7 @@ import com.malliina.sbt.GenericKeys._
 import com.malliina.filetree.DirMap
 import com.malliina.sbt.mac.MacKeys._
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
-import com.malliina.sbt.unix.LinuxKeys.{ciBuild, httpPort, httpsPort}
+import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
 import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
@@ -15,10 +15,7 @@ import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtcrossproject.CrossPlugin.autoImport.{
-  CrossType => PortableType,
-  crossProject => portableProject
-}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
 import scalajsbundler.util.JSON
 
@@ -31,26 +28,100 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val primitivesVersion = "1.19.0"
-val playJsonVersion = "2.9.2"
-val scalaTagsVersion = "0.9.4"
-val utilPlayVersion = "6.0.1"
+val primitivesVersion = "3.7.3"
+val playJsonVersion = "3.0.4"
+val utilPlayVersion = "6.9.3"
 val httpVersion = "4.5.13"
 val mysqlVersion = "5.1.49"
-val nvWebSocketVersion = "2.10"
-val munitVersion = "0.7.29"
-val akkaStreamsVersion = "2.6.1"
+val nvWebSocketVersion = "2.14"
+val munitVersion = "1.0.2"
+val pekkoVersion = "1.0.3"
+val playVersion = play.core.PlayVersion.current
+val scalatagsVersion = "0.13.1"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
-val logstreamsDep = malliinaGroup %% "logstreams-client" % "1.10.1"
+//val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
+val logstreamsDep = malliinaGroup %% "logstreams-client" % "2.8.0"
 
 val httpGroup = "org.apache.httpcomponents"
 
-ThisBuild / scalaVersion := "2.13.15"
+inThisBuild(
+  Seq(
+    scalaVersion := "3.4.2"
+  )
+)
 
 val packageAndCopy = taskKey[File]("Copies packaged file for convenience")
+
+val cross = portableProject(JSPlatform, JVMPlatform)
+  .crossType(PortableType.Full)
+  .in(file("cross"))
+  .settings(
+    organization := "org.musicpimp",
+    libraryDependencies ++= Seq(
+      "org.playframework" %%% "play-json" % playJsonVersion,
+      malliinaGroup %%% "primitives" % primitivesVersion
+    )
+  )
+//  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "1.0.0")
+val crossJvm = cross.jvm
+val crossJs = cross.js
+  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
+    ),
+    Compile / npmDependencies ++= Seq(
+      "jquery" -> "3.3.1",
+      "jquery-ui" -> "1.12.1"
+    )
+  )
+
+val playCommon = Project("play-common", file("play-common"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.malliina" %% "web-auth" % "6.9.3",
+      "org.playframework" %% "play" % playVersion
+    )
+  )
+val playSocial = Project("play-social", file("play-social"))
+  .dependsOn(playCommon)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.malliina" %% "web-auth" % "6.9.3",
+      "org.scalameta" %% "munit" % munitVersion % Test
+    )
+  )
+
+val html = portableProject(JSPlatform, JVMPlatform)
+  .crossType(PortableType.Full)
+  .in(file("util-html"))
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "scalatags" % scalatagsVersion,
+      "org.playframework" %%% "play-json" % playJsonVersion,
+      malliinaGroup %%% "primitives" % primitivesVersion,
+      "org.scalameta" %%% "munit" % munitVersion % Test
+    )
+  )
+val htmlJvm = html.jvm
+val htmlJs = html.js
+
+val utilPlay = Project("util-play", file("util-play"))
+  .dependsOn(playCommon, htmlJvm)
+  .settings(
+    libraryDependencies ++= Seq("generic", "parser").map { m =>
+      "io.circe" %%% s"circe-$m" % "0.14.9"
+    } ++
+      Seq("actor", "stream").map { m =>
+        "org.apache.pekko" %% s"pekko-$m" % pekkoVersion
+      } ++ Seq(
+//      "com.lihaoyi" %% "scalatags" % scalatagsVersion,
+        "org.scalameta" %% "munit" % munitVersion % Test,
+        "org.playframework" %% "play-test" % playVersion % Test
+      )
+  )
 
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
@@ -59,57 +130,41 @@ val utilAudio = Project("util-audio", file("util-audio"))
     gitUserName := "malliina",
     developerName := "Michael Skogberg",
     libraryDependencies ++= Seq(
-      "commons-io" % "commons-io" % "2.6",
-      "org.slf4j" % "slf4j-api" % "1.7.25",
-      malliinaGroup %% "util-base" % primitivesVersion,
+      "commons-io" % "commons-io" % "2.17.0",
+      "org.slf4j" % "slf4j-api" % "2.0.16",
+      malliinaGroup %% "primitives" % primitivesVersion,
       "org" % "jaudiotagger" % "2.0.3",
       soundGroup % "tritonus-share" % "0.3.7.4",
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
-      "com.typesafe.akka" %% "akka-stream" % akkaStreamsVersion,
+      "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
       "org.scalameta" %% "munit" % munitVersion % Test
-    ),
-    testFrameworks += new TestFramework("munit.Framework")
-  )
-
-val cross = portableProject(JSPlatform, JVMPlatform)
-  .crossType(PortableType.Full)
-  .in(file("cross"))
-  .settings(
-    organization := "org.musicpimp",
-    libraryDependencies ++= Seq(
-      "com.typesafe.play" %%% "play-json" % playJsonVersion,
-      "com.lihaoyi" %%% "scalatags" % scalaTagsVersion,
-      malliinaGroup %%% "primitives" % primitivesVersion,
-      malliinaGroup %%% "util-html" % utilPlayVersion
-    )
-  )
-  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "1.0.0")
-val crossJvm = cross.jvm
-val crossJs = cross.js
-  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
-  .settings(
-    Compile / npmDependencies ++= Seq(
-      "jquery" -> "3.3.1",
-      "jquery-ui" -> "1.12.1"
     )
   )
 
-val shared = Project("pimp-shared", file("shared"))
-  .dependsOn(crossJvm)
+val shared = Project("pimp-shared", file("pimpshared"))
+  .dependsOn(crossJvm, utilPlay)
   .settings(baseSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "io.getquill" %% "quill-jdbc" % "3.6.0",
+      logstreamsDep,
+      "io.getquill" %% "quill-sql" % "4.8.4",
+      "io.getquill" %% "quill-jdbc" % "4.8.4",
       "org.flywaydb" % "flyway-core" % "7.5.0",
       "mysql" % "mysql-connector-java" % mysqlVersion,
-      malliinaGroup %% "mobile-push" % "1.24.1",
-      utilPlayDep
+      malliinaGroup %% "mobile-push" % "3.11.0",
+      "com.lihaoyi" %% "scalatags" % scalatagsVersion
     )
   )
 
 val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") / "frontend")
   .dependsOn(crossJs)
+  .settings(
+    libraryDependencies ++= Seq("generic", "parser")
+      .map(m => "io.circe" %%% s"circe-$m" % "0.14.9") ++ Seq(
+      malliinaGroup %%% "primitives" % primitivesVersion
+    )
+  )
 val musicpimp = project
   .in(file("musicpimp"))
   .enablePlugins(
@@ -120,12 +175,16 @@ val musicpimp = project
     FileTreePlugin,
     WebScalaJSBundlerPlugin
   )
-  .dependsOn(shared, crossJvm, utilAudio)
+  .dependsOn(shared, crossJvm, utilAudio, utilPlay, utilPlay % Test, utilPlay % "test->test")
   .settings(pimpPlaySettings: _*)
 
 val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
   .settings(
+    libraryDependencies ++= Seq("generic", "parser")
+      .map(m => "io.circe" %%% s"circe-$m" % "0.14.9") ++ Seq(
+      malliinaGroup %%% "primitives" % primitivesVersion
+    ),
     Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
   )
 val pimpcloud = project
@@ -138,7 +197,15 @@ val pimpcloud = project
     FileTreePlugin,
     WebScalaJSBundlerPlugin
   )
-  .dependsOn(shared, shared % Test, crossJvm)
+  .dependsOn(
+    shared,
+    shared % Test,
+    crossJvm,
+    utilPlay,
+    utilPlay % Test,
+    utilPlay % "test->test",
+    playSocial
+  )
   .settings(pimpcloudSettings: _*)
 
 val it = project
@@ -160,15 +227,14 @@ val pimpbeam = project
     SystemdPlugin,
     BuildInfoPlugin
   )
+  .dependsOn(utilPlay)
   .settings(serverSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      utilPlayDep,
       logstreamsDep,
       "net.glxn" % "qrgen" % "1.4",
       PlayImport.ws
     ),
-    resolvers += Resolver.bintrayRepo("malliina", "maven"),
     Linux / httpPort := Option("8557"),
     Linux / httpsPort := Option("disabled"),
     maintainer := "Michael Skogberg <malliina123@gmail.com>",
@@ -186,7 +252,17 @@ import sbtrelease.ReleaseStateTransformations._
 
 val pimp = project
   .in(file("."))
-  .aggregate(musicpimp, pimpcloud, pimpbeam)
+  .aggregate(
+    musicpimp,
+    pimpcloud,
+    pimpbeam,
+    utilAudio,
+    crossJvm,
+    shared,
+    utilPlay,
+    playSocial,
+    playCommon
+  )
   .settings(
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
@@ -226,9 +302,9 @@ lazy val pimpPlaySettings =
         "com.neovisionaries" % "nv-websocket-client" % nvWebSocketVersion,
         httpGroup % "httpclient" % httpVersion,
         httpGroup % "httpmime" % httpVersion,
-        "org.scala-stm" %% "scala-stm" % "0.11.0",
+        "org.scala-stm" %% "scala-stm" % "0.11.1",
         "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
-        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.0" % Test
+        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.4" % Test
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
       RoutesKeys.routesImport ++= Seq(
@@ -255,17 +331,16 @@ lazy val pimpPlaySettings =
         !af.data.getAbsolutePath.endsWith(s"bundles\\nv-websocket-client-$nvWebSocketVersion.jar")
       },
       useTerminateProcess := true,
-      Windows / msiMappings := (Windows / msiMappings).value.map {
-        case (src, dest) =>
-          (
-            src,
-            Paths.get(
-              dest.toString
-                .replace('[', '_')
-                .replace(']', '_')
-                .replace(',', '_')
-            )
+      Windows / msiMappings := (Windows / msiMappings).value.map { case (src, dest) =>
+        (
+          src,
+          Paths.get(
+            dest.toString
+              .replace('[', '_')
+              .replace(']', '_')
+              .replace(',', '_')
           )
+        )
       },
       minJavaVersion := None,
       Compile / packageDoc / publishArtifact := false,
@@ -318,8 +393,8 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
 lazy val windowsConfSettings = inConfig(Windows)(
   Seq(
     prettyMappings := {
-      val out: String = WinKeys.msiMappings.value.map {
-        case (src, dest) => s"$dest\t\t$src"
+      val out: String = WinKeys.msiMappings.value.map { case (src, dest) =>
+        s"$dest\t\t$src"
       }.sorted
         .mkString("\n")
       logger.value.log(Level.Info, out)
@@ -361,7 +436,7 @@ lazy val pimpcloudSettings =
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
       libraryDependencies ++= Seq(
-        malliinaGroup %% "play-social" % utilPlayVersion,
+//        malliinaGroup %% "play-social" % utilPlayVersion,
         PlayImport.ehcache,
         PlayImport.ws % Test
       ),
@@ -435,12 +510,14 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     scalaVersion,
     "gitHash" -> gitHash
   ),
-  libraryDependencies ++= defaultDeps ++ Seq("classic", "core").map { m =>
-    "ch.qos.logback" % s"logback-$m" % "1.2.12"
-  } ++ Seq("http", "http-spray-json").map { m => "com.typesafe.akka" %% s"akka-$m" % "10.1.15" } ++ Seq(
-    "org.slf4j" % "slf4j-api" % "1.7.30",
-    "org.scalameta" %% "munit" % munitVersion % Test
-  ),
+  libraryDependencies ++= Seq("classic", "core").map { m =>
+    "ch.qos.logback" % s"logback-$m" % "1.5.8"
+  } ++
+    Seq(
+      "org.slf4j" % "slf4j-api" % "2.0.16",
+      PlayImport.specs2 % Test,
+      "org.scalameta" %% "munit" % munitVersion % Test
+    ),
   Debian / packageAndCopy := {
     val deb = (Debian / packageBin).value
     val artifact = (Debian / packageBin).value
@@ -453,19 +530,10 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
   Debian / packageAndCopy := (Debian / packageAndCopy).dependsOn(Debian / packageBin).value
 )
 
-def libSettings = Seq(
-  libraryDependencies ++= defaultDeps
-)
-
-def defaultDeps = Seq(
-  "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
-  PlayImport.specs2 % Test
-)
-
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   libraryDependencies ++= Seq(
-    utilPlayDep,
-    utilPlayDep % Test classifier "tests",
+//    utilPlayDep,
+//    utilPlayDep % Test classifier "tests",
     logstreamsDep,
     PlayImport.filters
   ).map(dep => dep.withSources()),
@@ -484,13 +552,10 @@ lazy val baseSettings = Seq(
 def scalajsProject(name: String, path: File) =
   Project(name, path)
     .enablePlugins(ScalaJSBundlerPlugin)
+    .dependsOn(htmlJs)
     .settings(
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq("org.scalameta" %%% "munit" % munitVersion % Test),
-      testFrameworks ++= Seq(
-        new TestFramework("utest.runner.Framework"),
-        new TestFramework("munit.Framework")
-      ),
       webpack / version := "5.88.2",
       webpackCliVersion := "5.1.4",
       startWebpackDevServer / version := "4.15.1",
@@ -521,7 +586,11 @@ def scalajsProject(name: String, path: File) =
         "license" -> JSON.str("BSD")
       ),
       fastOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.dev.config.js"),
-      fullOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.prod.config.js")
+      fullOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.prod.config.js"),
+      libraryDependencies ++= Seq(
+        "org.scala-js" %%% "scalajs-dom" % "2.8.0",
+        "com.lihaoyi" %%% "scalatags" % scalatagsVersion
+      )
     )
 
 def gitHash: String =

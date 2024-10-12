@@ -1,150 +1,129 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.musicpimp.json.CrossFormats.{cmd, finiteDuration, singleCmd}
-import com.malliina.musicpimp.json.PlaybackStrings._
+import com.malliina.musicpimp.json.PlaybackStrings.*
 import com.malliina.musicpimp.models.{FolderID, TrackID, Volume}
-import play.api.libs.json._
-
+import io.circe.generic.semiauto.{deriveCodec, deriveEncoder}
+import io.circe.{Codec, Decoder, Encoder, Json}
+import io.circe.syntax.EncoderOps
 import scala.concurrent.duration.FiniteDuration
 
-case object ToggleMuteMessage {
+case object ToggleMuteMessage:
   val Key = "mute"
-  implicit val json: OFormat[ToggleMuteMessage.type] = singleCmd(Key, ToggleMuteMessage)
-}
+  implicit val json: Codec[ToggleMuteMessage.type] = singleCmd(Key, ToggleMuteMessage)
 
-case object GetStatusMsg extends PlayerMessage {
+case object GetStatusMsg extends PlayerMessage:
   val Key = "status"
-  implicit val json: OFormat[GetStatusMsg.type] = singleCmd(Key, GetStatusMsg)
-}
+  implicit val json: Codec[GetStatusMsg.type] = singleCmd(Key, GetStatusMsg)
 
 /** Web playback updates only.
   *
-  * @param value pos
+  * @param value
+  *   pos
   */
 case class TimeUpdatedMsg(value: FiniteDuration) extends PlayerMessage
 
-object TimeUpdatedMsg {
-  implicit val json: OFormat[TimeUpdatedMsg] = cmd(TimeUpdated, Json.format[TimeUpdatedMsg])
-}
+object TimeUpdatedMsg:
+  implicit val json: Codec[TimeUpdatedMsg] = cmd(TimeUpdated, deriveCodec[TimeUpdatedMsg])
 
 case class TrackChangedMsg(track: TrackID) extends PlayerMessage
 
-object TrackChangedMsg {
-  implicit val json: OFormat[TrackChangedMsg] = cmd(TrackChanged, Json.format[TrackChangedMsg])
-}
+object TrackChangedMsg:
+  implicit val json: Codec[TrackChangedMsg] = cmd(TrackChanged, deriveCodec[TrackChangedMsg])
 
 case class VolumeChangedMsg(value: Volume) extends PlayerMessage
 
-object VolumeChangedMsg {
-  implicit val json: OFormat[VolumeChangedMsg] = cmd(VolumeChanged, Json.format[VolumeChangedMsg])
-}
+object VolumeChangedMsg:
+  implicit val json: Codec[VolumeChangedMsg] = cmd(VolumeChanged, deriveCodec[VolumeChangedMsg])
 
 case class PlaylistIndexChangedMsg(value: Int) extends PlayerMessage
 
-object PlaylistIndexChangedMsg {
-  implicit val json: OFormat[PlaylistIndexChangedMsg] =
-    cmd(PlaylistIndexChanged, Json.format[PlaylistIndexChangedMsg])
-}
+object PlaylistIndexChangedMsg:
+  implicit val json: Codec[PlaylistIndexChangedMsg] =
+    cmd(PlaylistIndexChanged, deriveCodec[PlaylistIndexChangedMsg])
 
 case class PlayStateChangedMsg(value: PlayState) extends PlayerMessage
 
-object PlayStateChangedMsg {
-  implicit val json: OFormat[PlayStateChangedMsg] =
-    cmd(PlaystateChanged, Json.format[PlayStateChangedMsg])
-}
+object PlayStateChangedMsg:
+  implicit val json: Codec[PlayStateChangedMsg] =
+    cmd(PlaystateChanged, deriveCodec[PlayStateChangedMsg])
 
 case class MuteToggledMsg(value: Boolean) extends PlayerMessage
 
-object MuteToggledMsg {
-  implicit val json: OFormat[MuteToggledMsg] = cmd(MuteToggled, Json.format[MuteToggledMsg])
-}
+object MuteToggledMsg:
+  implicit val json: Codec[MuteToggledMsg] = cmd(MuteToggled, deriveCodec[MuteToggledMsg])
 
 case class PlayMsg(track: TrackID) extends PlayerMessage
 
-object PlayMsg {
-  implicit val json: OFormat[PlayMsg] = cmd(Play, Json.format[PlayMsg])
-}
+object PlayMsg:
+  implicit val json: Codec[PlayMsg] = cmd(Play, deriveCodec[PlayMsg])
 
 case class AddMsg(track: TrackID) extends PlayerMessage
 
-object AddMsg {
-  implicit val json: OFormat[AddMsg] = cmd(Add, Json.format[AddMsg])
-}
+object AddMsg:
+  implicit val json: Codec[AddMsg] = cmd(Add, deriveCodec[AddMsg])
 
 case class RemoveMsg(index: Int) extends PlayerMessage
 
-object RemoveMsg {
+object RemoveMsg:
   val Index = "index"
-  val reader = Reads[RemoveMsg] { json =>
-    (json \ Value).validate[Int].orElse((json \ Index).validate[Int]).map(apply)
-  }
-  val writer = OWrites[RemoveMsg] { r => Json.obj(Value -> r.index, Index -> r.index) }
-  implicit val json: OFormat[RemoveMsg] = cmd(Remove, OFormat(reader, writer))
-}
+  val reader = Decoder[RemoveMsg]: json =>
+    json.downField(Value).as[Int].orElse(json.downField(Index).as[Int]).map(apply)
+  val writer = Encoder[RemoveMsg]: r =>
+    Json.obj(Value -> r.index.asJson, Index -> r.index.asJson)
+  implicit val json: Codec[RemoveMsg] = cmd(Remove, Codec.from(reader, writer))
 
-case object ResumeMsg extends PlayerMessage {
-  implicit val json: OFormat[ResumeMsg.type] = singleCmd(Resume, ResumeMsg)
-}
+case object ResumeMsg extends PlayerMessage:
+  implicit val json: Codec[ResumeMsg.type] = singleCmd(Resume, ResumeMsg)
 
-case object StopMsg extends PlayerMessage {
-  implicit val json: OFormat[StopMsg.type] = singleCmd(Stop, StopMsg)
-}
+case object StopMsg extends PlayerMessage:
+  implicit val json: Codec[StopMsg.type] = singleCmd(Stop, StopMsg)
 
-case object NextMsg extends PlayerMessage {
-  implicit val json: OFormat[NextMsg.type] = singleCmd(Next, NextMsg)
-}
+case object NextMsg extends PlayerMessage:
+  implicit val json: Codec[NextMsg.type] = singleCmd(Next, NextMsg)
 
-case object PrevMsg extends PlayerMessage {
-  implicit val json: OFormat[PrevMsg.type] = singleCmd(Prev, PrevMsg)
-}
+case object PrevMsg extends PlayerMessage:
+  implicit val json: Codec[PrevMsg.type] = singleCmd(Prev, PrevMsg)
 
 case class SkipMsg(value: Int) extends PlayerMessage
 
-object SkipMsg {
-  implicit val json: OFormat[SkipMsg] = cmd(Skip, Json.format[SkipMsg])
-}
+object SkipMsg:
+  implicit val json: Codec[SkipMsg] = cmd(Skip, deriveCodec[SkipMsg])
 
 case class SeekMsg(value: FiniteDuration) extends PlayerMessage
 
-object SeekMsg {
-  implicit val json: OFormat[SeekMsg] = cmd(Seek, Json.format[SeekMsg])
-}
+object SeekMsg:
+  implicit val json: Codec[SeekMsg] = cmd(Seek, deriveCodec[SeekMsg])
 
 case class MuteMsg(value: Boolean) extends PlayerMessage
 
-object MuteMsg {
-  implicit val json: OFormat[MuteMsg] = cmd(Mute, Json.format[MuteMsg])
-}
+object MuteMsg:
+  implicit val json: Codec[MuteMsg] = cmd(Mute, deriveCodec[MuteMsg])
 
 case class VolumeMsg(value: Volume) extends PlayerMessage
 
-object VolumeMsg {
-  implicit val json: OFormat[VolumeMsg] = cmd(VolumeKey, Json.format[VolumeMsg])
-}
+object VolumeMsg:
+  implicit val json: Codec[VolumeMsg] = cmd(VolumeKey, deriveCodec[VolumeMsg])
 
 case class InsertTrackMsg(index: Int, track: TrackID) extends PlayerMessage
 
-object InsertTrackMsg {
-  implicit val json: OFormat[InsertTrackMsg] = cmd(Insert, Json.format[InsertTrackMsg])
-}
+object InsertTrackMsg:
+  implicit val json: Codec[InsertTrackMsg] = cmd(Insert, deriveCodec[InsertTrackMsg])
 
 case class MoveTrackMsg(from: Int, to: Int) extends PlayerMessage
 
-object MoveTrackMsg {
-  implicit val json: OFormat[MoveTrackMsg] = cmd(Move, Json.format[MoveTrackMsg])
-}
+object MoveTrackMsg:
+  implicit val json: Codec[MoveTrackMsg] = cmd(Move, deriveCodec[MoveTrackMsg])
 
 case class ResetPlaylistMessage(index: Int, tracks: Seq[TrackID]) extends PlayerMessage
 
-object ResetPlaylistMessage {
-  val reader = Reads[ResetPlaylistMessage] { json =>
-    val idx = (json \ Index).validate[Int].getOrElse(-1)
-    val tracks = (json \ Tracks).validate[Seq[TrackID]].getOrElse(Nil)
-    JsSuccess(ResetPlaylistMessage(idx, tracks))
-  }
-  implicit val json: OFormat[ResetPlaylistMessage] =
-    cmd(ResetPlaylist, OFormat(reader, Json.writes[ResetPlaylistMessage]))
-}
+object ResetPlaylistMessage:
+  val reader = Decoder[ResetPlaylistMessage]: json =>
+    val idx = json.downField(Index).as[Int].getOrElse(-1)
+    val tracks = json.downField(Tracks).as[Seq[TrackID]].getOrElse(Nil)
+    Right(ResetPlaylistMessage(idx, tracks))
+  implicit val json: Codec[ResetPlaylistMessage] =
+    cmd(ResetPlaylist, Codec.from(reader, deriveEncoder[ResetPlaylistMessage]))
 
 case class Handover(
   index: Option[Int],
@@ -153,24 +132,21 @@ case class Handover(
   position: FiniteDuration
 ) extends PlayerMessage
 
-object Handover {
+object Handover:
   val Key = "handover"
-  implicit val json: OFormat[Handover] = cmd(Key, Json.format[Handover])
-}
+  implicit val json: Codec[Handover] = cmd(Key, deriveCodec[Handover])
 
 case class PlayAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
-object PlayAllMsg {
-  implicit val json: OFormat[PlayAllMsg] =
-    cmd(PlayItemsKey, OFormat(ItemsLike.reader[PlayAllMsg](apply), Json.writes[PlayAllMsg]))
-}
+object PlayAllMsg:
+  implicit val json: Codec[PlayAllMsg] =
+    cmd(PlayItemsKey, Codec.from(ItemsLike.reader[PlayAllMsg](apply), deriveEncoder[PlayAllMsg]))
 
 case class AddAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
-object AddAllMsg {
-  implicit val json: OFormat[AddAllMsg] =
-    cmd(AddItemsKey, OFormat(ItemsLike.reader[AddAllMsg](apply), Json.writes[AddAllMsg]))
-}
+object AddAllMsg:
+  implicit val json: Codec[AddAllMsg] =
+    cmd(AddItemsKey, Codec.from(ItemsLike.reader[AddAllMsg](apply), deriveEncoder[AddAllMsg]))
 
 /** Two uses:
   *
@@ -178,49 +154,46 @@ object AddAllMsg {
   *
   * Messages sent from web players to MusicPimp to sync web player state with the server. (legacy)
   *
-  * @see PlaybackMessageHandler
-  * @see WebPlayerMessageHandler
+  * @see
+  *   PlaybackMessageHandler
+  * @see
+  *   WebPlayerMessageHandler
   */
 trait PlayerMessage
 
-object PlayerMessage {
-  implicit val reader: Reads[PlayerMessage] = Reads { json =>
+object PlayerMessage:
+  implicit val reader: Decoder[PlayerMessage] = Decoder[PlayerMessage]: json =>
     GetStatusMsg.json
-      .reads(json)
-      .orElse(TimeUpdatedMsg.json.reads(json))
-      .orElse(TrackChangedMsg.json.reads(json))
-      .orElse(json.validate[VolumeChangedMsg])
-      .orElse(json.validate[PlaylistIndexChangedMsg])
-      .orElse(json.validate[PlayStateChangedMsg])
-      .orElse(json.validate[MuteToggledMsg])
-      .orElse(json.validate[PlayMsg])
-      .orElse(json.validate[AddMsg])
-      .orElse(json.validate[RemoveMsg])
-      .orElse(ResumeMsg.json.reads(json))
-      .orElse(StopMsg.json.reads(json))
-      .orElse(NextMsg.json.reads(json))
-      .orElse(PrevMsg.json.reads(json))
-      .orElse(json.validate[SkipMsg])
-      .orElse(json.validate[SeekMsg])
-      .orElse(json.validate[MuteMsg])
-      .orElse(json.validate[VolumeMsg])
-      .orElse(json.validate[InsertTrackMsg])
-      .orElse(json.validate[MoveTrackMsg])
-      .orElse(json.validate[ResetPlaylistMessage])
-      .orElse(json.validate[PlayAllMsg])
-      .orElse(json.validate[AddAllMsg])
-      .orElse(json.validate[Handover])
-  }
-}
+      .decodeJson(json.value)
+      .orElse(TimeUpdatedMsg.json.decodeJson(json.value))
+      .orElse(TrackChangedMsg.json.decodeJson(json.value))
+      .orElse(json.as[VolumeChangedMsg])
+      .orElse(json.as[PlaylistIndexChangedMsg])
+      .orElse(json.as[PlayStateChangedMsg])
+      .orElse(json.as[MuteToggledMsg])
+      .orElse(json.as[PlayMsg])
+      .orElse(json.as[AddMsg])
+      .orElse(json.as[RemoveMsg])
+      .orElse(ResumeMsg.json.decodeJson(json.value))
+      .orElse(StopMsg.json.decodeJson(json.value))
+      .orElse(NextMsg.json.decodeJson(json.value))
+      .orElse(PrevMsg.json.decodeJson(json.value))
+      .orElse(json.as[SkipMsg])
+      .orElse(json.as[SeekMsg])
+      .orElse(json.as[MuteMsg])
+      .orElse(json.as[VolumeMsg])
+      .orElse(json.as[InsertTrackMsg])
+      .orElse(json.as[MoveTrackMsg])
+      .orElse(json.as[ResetPlaylistMessage])
+      .orElse(json.as[PlayAllMsg])
+      .orElse(json.as[AddAllMsg])
+      .orElse(json.as[Handover])
 
-object ItemsLike {
-  def reader[T](build: (Seq[TrackID], Seq[FolderID]) => T): Reads[T] = Reads[T] { json =>
-    val folders = (json \ Folders).validate[Seq[FolderID]].getOrElse(Nil)
-    val tracks = (json \ Tracks).validate[Seq[TrackID]].getOrElse(Nil)
-    JsSuccess(build(tracks, folders))
-  }
-}
+object ItemsLike:
+  def reader[T](build: (Seq[TrackID], Seq[FolderID]) => T): Decoder[T] = Decoder[T]: json =>
+    val folders = json.downField(Folders).as[Seq[FolderID]].getOrElse(Nil)
+    val tracks = json.downField(Tracks).as[Seq[TrackID]].getOrElse(Nil)
+    Right(build(tracks, folders))
 
-case object StatusMsg {
-  implicit val json: OFormat[StatusMsg.type] = singleCmd(Status, StatusMsg)
-}
+case object StatusMsg:
+  implicit val json: Codec[StatusMsg.type] = singleCmd(Status, StatusMsg)

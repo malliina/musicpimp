@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.audio
 
-import akka.NotUsed
-import akka.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.Source
 import com.malliina.http.FullUrl
 
 import scala.concurrent.duration.Duration

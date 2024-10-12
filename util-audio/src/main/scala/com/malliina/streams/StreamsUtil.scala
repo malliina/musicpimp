@@ -1,8 +1,8 @@
 package com.malliina.streams
 
-import akka.NotUsed
-import akka.stream.{KillSwitches, Materializer, UniqueKillSwitch}
-import akka.stream.scaladsl.{BroadcastHub, Keep, MergeHub, Sink, Source}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.{KillSwitches, Materializer, UniqueKillSwitch}
+import org.apache.pekko.stream.scaladsl.{BroadcastHub, Keep, MergeHub, Sink, Source}
 
 trait EventSink[U] {
   def send(event: U): Unit

@@ -12,11 +12,11 @@ class SeekTest extends TestBase {
       player.play()
       sleep(100.millis)
       val first = 200
-      player seek first.seconds
+      player.seek(first.seconds)
       sleep(3000.millis)
       assertPosition(player.position, first, first + 6)
       val second = 1
-      player seek second.seconds
+      player.seek(second.seconds)
       sleep(3000.millis)
       assertPosition(player.position, second + 1, second + 5)
     })

@@ -1,6 +1,6 @@
 package com.malliina.pimpcloud.ws
 
-import akka.actor.Props
+import org.apache.pekko.actor.Props
 import com.malliina.pimpcloud.auth.ProdAuth
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.Authenticator

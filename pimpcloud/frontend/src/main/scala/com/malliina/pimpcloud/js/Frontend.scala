@@ -1,8 +1,7 @@
 package com.malliina.pimpcloud.js
 
-import org.musicpimp.js.ScriptHelpers
+import org.musicpimp.js.{MyJQuery, ScriptHelpers}
 import org.scalajs.dom
-import org.scalajs.jquery.JQueryStatic
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -25,10 +24,6 @@ object Frontend extends ScriptHelpers {
     app = jsImpl.lift(path)
   }
 }
-
-@js.native
-@JSImport("jquery", JSImport.Namespace)
-object MyJQuery extends JQueryStatic
 
 @js.native
 @JSImport("jquery-ui", JSImport.Namespace)

@@ -27,7 +27,7 @@ object StreamSource {
     UriSource(uri, duration, size)
 
   def audioDuration(media: Path): FiniteDuration = {
-    val f = AudioFileIO read media.toFile
+    val f = AudioFileIO.read(media.toFile)
     f.getAudioHeader.getTrackLength.toDouble.seconds
   }
 }
@@ -40,7 +40,7 @@ case class UriSource(uri: URI, duration: FiniteDuration, size: StorageSize) exte
 }
 
 case class FileSource(file: Path, duration: FiniteDuration) extends StreamSource {
-  override val size: StorageSize = (Files size file).bytes
+  override val size: StorageSize = Files.size(file).bytes
 
   def openStream: InputStream = new BufferedInputStream(new FileInputStream(file.toFile))
 }

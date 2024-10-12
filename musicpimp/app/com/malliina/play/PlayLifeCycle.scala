@@ -12,52 +12,49 @@ import play.api.Logger
   *
   * An alternative to the official ways to start Play, this integrates better with my init scripts.
   */
-abstract class PlayLifeCycle(appName: String, registryPort: Int) {
-  def start(): Unit = {
+abstract class PlayLifeCycle(appName: String, registryPort: Int):
+  def start(): Unit =
     // Init conf
     sys.props += ("pidfile.path" -> "/dev/null")
-    FileUtilities.basePath = Paths get sys.props
-      .get(s"$appName.home")
-      .getOrElse(sys.props("user.dir"))
-    log info s"Starting $appName... app home: ${FileUtilities.basePath}"
+    FileUtilities.basePath = Paths.get(
+      sys.props
+        .get(s"$appName.home")
+        .getOrElse(sys.props("user.dir"))
+    )
+    log.info(s"Starting $appName... app home: ${FileUtilities.basePath}")
     sys.props ++= conformize(readConfFile(appName))
     validateKeyStoreIfSpecified()
-  }
 
   /** Reads a file named `confNameWithoutExtension`.conf if it exists.
     *
-    * @param confNameWithoutExtension name of conf, typically the name of the app
-    * @return the key-value pairs from the conf file; an empty map if the file doesn't exist
+    * @param confNameWithoutExtension
+    *   name of conf, typically the name of the app
+    * @return
+    *   the key-value pairs from the conf file; an empty map if the file doesn't exist
     */
-  def readConfFile(confNameWithoutExtension: String): Map[String, String] = {
+  def readConfFile(confNameWithoutExtension: String): Map[String, String] =
     // adds settings in app conf to system properties
     val confFile = FileUtilities.pathTo(s"$confNameWithoutExtension.conf")
-    if (Files.exists(confFile)) propsFromFile(confFile)
+    if Files.exists(confFile) then propsFromFile(confFile)
     else Map.empty[String, String]
-  }
 
-  /**
-    * @param params key-value pairs
-    * @return key-value pairs where key https.keyStore, if any, is an absolute path
+  /** @param params
+    *   key-value pairs
+    * @return
+    *   key-value pairs where key https.keyStore, if any, is an absolute path
     */
-  def conformize(params: Map[String, String]): Map[String, String] = {
+  def conformize(params: Map[String, String]): Map[String, String] =
     params
       .get(keyStoreKey)
-      .map { keyStorePath =>
+      .map: keyStorePath =>
         val absKeyStorePath = FileUtilities.pathTo(keyStorePath).toAbsolutePath
         params.updated(keyStoreKey, absKeyStorePath.toString)
-      }
-      .getOrElse {
+      .getOrElse:
         params
-      }
-  }
 
-  private def propsFromFile(file: Path): Map[String, String] = {
-    if (Files.exists(file)) Util.props(file)
+  private def propsFromFile(file: Path): Map[String, String] =
+    if Files.exists(file) then Util.props(file)
     else Map.empty[String, String]
-  }
-}
 
-object PlayLifeCycle {
+object PlayLifeCycle:
   private val log = Logger(getClass)
-}

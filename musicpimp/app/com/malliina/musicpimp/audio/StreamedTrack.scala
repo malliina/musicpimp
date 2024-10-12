@@ -2,7 +2,7 @@ package com.malliina.musicpimp.audio
 
 import java.io.InputStream
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath

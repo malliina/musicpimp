@@ -2,19 +2,19 @@ package com.malliina.beam
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-import akka.NotUsed
-import akka.stream.scaladsl.{Source, SourceQueue}
-import akka.stream.{Materializer, QueueOfferResult}
-import akka.util.ByteString
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.{Source, SourceQueue}
+import org.apache.pekko.stream.{Materializer, QueueOfferResult}
+import org.apache.pekko.util.ByteString
 
 import scala.concurrent.Future
 
 /**
   * @see http://greweb.me/2012/08/zound-a-playframework-2-audio-streaming-experiment-using-iteratees/
   */
-class StreamManager(val stream: Source[ByteString, _], val channel: SourceQueue[Option[ByteString]])
+class StreamManager(val stream: Source[ByteString, ?], val channel: SourceQueue[Option[ByteString]])
   extends StreamEndpoint {
-  val isClosed = new AtomicBoolean(false)
+  private val isClosed = new AtomicBoolean(false)
   @volatile
   var isReceivingStream: Boolean = false
 

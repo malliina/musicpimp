@@ -1,9 +1,9 @@
 package com.malliina.beam
 
-import akka.actor.ActorRef
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.actor.ActorRef
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.malliina.beam.PlayerClient.log
 import com.malliina.values.Username
 import play.api.Logger
@@ -19,7 +19,7 @@ class PlayerClient(user: Username, out: ActorRef, mat: Materializer) extends Bea
 
   log debug s"Created stream for user: $user"
 
-  def stream: Source[ByteString, _] = streamer.stream
+  def stream: Source[ByteString, ?] = streamer.stream
 
   /** Ends the current stream and replaces it with a new one, then sends a reset message to the client so that the client
     * will receive the newly created stream instead.

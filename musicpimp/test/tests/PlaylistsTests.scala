@@ -4,34 +4,36 @@ import com.malliina.concurrent.Execution.cached
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
-import com.malliina.musicpimp.db._
+import com.malliina.musicpimp.db.*
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
-import com.malliina.musicpimp.models._
+import com.malliina.musicpimp.models.*
 import com.malliina.storage.StorageInt
 import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
+import io.circe.Codec
 import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
 import play.api.http.MimeTypes.JSON
 import play.api.http.Writeable
-import play.api.libs.json.{Format, Json}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-
+import play.api.test.Helpers.*
+import play.api.libs.json.Json as PlayJson
+import io.getquill.*
 import scala.concurrent.duration.DurationInt
 
-class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
+class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
   override def pimpOptions: InitOptions = TestOptions.default
 
-  implicit val f: Format[TrackMeta] = TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
+  implicit val f: Codec[TrackMeta] =
+    TrackJson.format(FullUrl.build("http://www.google.com").toOption.get)
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
-  test("add tracks") {
+  test("add tracks"):
     val lib = components.lib
     val db = lib.db
     val folderId = FolderID("Testid")
-    import db._
+    import db.*
 
     def trackInserts =
       lib.insertTracks(
@@ -40,37 +42,38 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
         )
       )
 
-    val insertions = for {
-      _ <- db.performAsync("Cleanup")(
-        db.runIO(db.tracksTable.delete) *> db.runIO(db.foldersTable.delete)
-      )
+    val insertions = for
+      _ <- db.performAsync("Cleanup"):
+        db.run(db.tracksTable.delete)
+        db.run(db.foldersTable.delete)
       foldersInserted <- lib.insertFolders(
         Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId))
       )
       tracksInserted <- trackInserts
-    } yield (foldersInserted, tracksInserted)
+    yield (foldersInserted, tracksInserted)
     val (fsi, tsi) = await(insertions)
     assert(fsi == 1)
     assert(tsi == 1)
     val maybeFolder = await(lib.folder(folderId))
     assert(maybeFolder.isDefined)
-  }
 
-  test("GET /playlists") {
+  test("GET /playlists"):
     fetchLists()
     assert(1 == 1)
-  }
 
-  test("POST /playlists") {
-    def postPlaylist(in: PlaylistSubmission) = {
+  test("POST /playlists"):
+    import com.malliina.http.PlayCirce.writer
+    def postPlaylist(in: PlaylistSubmission) =
       val response =
         fetch(
           FakeRequest("POST", "/playlists")
-            .withJsonBody(Json.obj(JsonStrings.PlaylistKey -> Json.toJson(in)))
+            .withJsonBody(PlayJson.obj(JsonStrings.PlaylistKey -> PlayJson.toJson(in)))
         )
       assert(status(response) == 202)
-      (contentAsJson(response) \ "id").as[PlaylistID]
-    }
+      io.circe.parser
+        .parse(contentAsString(response))
+        .flatMap(_.hcursor.downField("id").as[PlaylistID])
+        .fold(err => throw Exception(err.getMessage), identity)
 
     val submission = PlaylistSubmission(None, "test playlist", testTracks)
     val newId = postPlaylist(submission)
@@ -85,14 +88,15 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
     assert(status(response3) == 202)
 
     assert(fetchLists().isEmpty)
-  }
 
-  def fetchLists() = {
+  def fetchLists() =
     val response = fetch(FakeRequest(GET, "/playlists"))
     assert(contentType(response) contains JSON)
     assert(status(response) == 200)
-    (contentAsJson(response) \ "playlists").as[Seq[FullSavedPlaylist]]
-  }
+    io.circe.parser
+      .parse(contentAsString(response))
+      .flatMap(_.hcursor.downField("playlists").as[Seq[FullSavedPlaylist]])
+      .fold(err => throw Exception(err.getMessage), identity)
 
   def fetch[T: Writeable](request: FakeRequest[T]) =
     route(
@@ -105,4 +109,3 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite {
         ACCEPT -> JSON
       )
     ).get
-}
