@@ -3,11 +3,11 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
 import controllers.musicpimp.{SettingsController, routes}
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object SettingsHtml extends PimpBootstrap {
+object SettingsHtml extends PimpBootstrap:
 
-  import tags._
+  import tags.*
 
   def editFolders(content: LibraryContent) =
     halfRow(
@@ -50,4 +50,3 @@ object SettingsHtml extends PimpBootstrap {
         )
       )
     )
-}

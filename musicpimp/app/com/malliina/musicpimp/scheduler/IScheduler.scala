@@ -2,14 +2,17 @@ package com.malliina.musicpimp.scheduler
 
 import it.sauronsoftware.cron4j.SchedulingPattern
 
-trait IScheduler {
+trait IScheduler:
   type TaskId = String
 
   /** Primitive.
     *
-    * @param cron cron string
-    * @param job  code to run
-    * @return the task id
+    * @param cron
+    *   cron string
+    * @param job
+    *   code to run
+    * @return
+    *   the task id
     */
   def schedule(cron: String)(job: => Any): TaskId
 
@@ -28,13 +31,11 @@ trait IScheduler {
   def start(): Unit
 
   def stop(): Unit
-}
 
-trait Schedule {
+trait Schedule:
   def cronPattern: SchedulingPattern
-}
 
-trait DaySchedule extends Schedule {
+trait DaySchedule extends Schedule:
   def days: Seq[WeekDay]
 
   def daysStringified = days.map(_.shortName).mkString(",")
@@ -42,15 +43,13 @@ trait DaySchedule extends Schedule {
   def daysReadable = days.map(_.longName).mkString(", ")
 
   def describe: String
-}
 
-trait Job {
+trait Job:
   def describe: String
 
   def run(): Unit
-}
 
-trait ActionPoint[J <: Job, S <: DaySchedule] {
+trait ActionPoint[J <: Job, S <: DaySchedule]:
   def id: Option[String]
 
   def enabled: Boolean
@@ -60,7 +59,6 @@ trait ActionPoint[J <: Job, S <: DaySchedule] {
   def when: S
 
   def describe = job.describe + " " + when.describe
-}
 
 trait PlaybackAP[S <: DaySchedule] extends ActionPoint[PlaybackJob, S]
 

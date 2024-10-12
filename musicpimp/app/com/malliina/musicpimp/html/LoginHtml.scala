@@ -3,13 +3,13 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
 import controllers.musicpimp.routes
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object LoginHtml extends PimpBootstrap {
+object LoginHtml extends PimpBootstrap:
 
-  import tags._
+  import tags.*
 
-  def loginContent(conf: LoginContent) = {
+  def loginContent(conf: LoginContent) =
     val accounts = conf.accounts
     divClass(s"$Container login-container")(
       rowColumn(s"${col.md.four} $FormSignin")(
@@ -54,11 +54,10 @@ object LoginHtml extends PimpBootstrap {
         )
       ),
       rowColumn(col.md.four)(
-        conf.formFeedback.fold(empty) { fb => alertDiv(s"${alert.danger} $FormSignin", fb.message) }
+        conf.formFeedback.fold(empty): fb =>
+          alertDiv(s"${alert.danger} $FormSignin", fb.message)
       ),
       rowColumn(s"${col.md.four} $FormSignin")(
         conf.motd.fold(empty)(message => p(message))
       )
     )
-  }
-}

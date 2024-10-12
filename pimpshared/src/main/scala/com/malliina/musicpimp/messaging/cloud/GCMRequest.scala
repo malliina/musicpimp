@@ -7,6 +7,5 @@ import play.api.libs.json.{Json, OFormat}
 case class GCMRequest(tokens: Seq[GCMToken], message: GCMMessage)
   extends PushRequest[GCMToken, GCMMessage]
 
-object GCMRequest {
+object GCMRequest:
   implicit val json: Codec[GCMRequest] = Codec.derived[GCMRequest]
-}

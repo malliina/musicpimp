@@ -1,6 +1,6 @@
 package tests
 
-class LibraryTests extends munit.FunSuite {
+class LibraryTests extends munit.FunSuite:
   test("load folder") {
     //    val (json, duration) = Utils.timed(Json.toJson(Library.folderFromFile(testFolder)))
     //    val (json, duration) = Utils.timed(Json.toJson(Library.rootFolderFromDatabase))
@@ -13,4 +13,3 @@ class LibraryTests extends munit.FunSuite {
     //    val (fileCount, fileDuration) = Utils.timed(Library.tracksStream.size)
     //    println(s"Got $fileCount files in $fileDuration")
   }
-}

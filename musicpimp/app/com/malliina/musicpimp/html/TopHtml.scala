@@ -1,12 +1,12 @@
 package com.malliina.musicpimp.html
 
-import com.malliina.musicpimp.html.PimpBootstrap._
-import com.malliina.musicpimp.html.PimpBootstrap.tags._
-import com.malliina.musicpimp.stats._
+import com.malliina.musicpimp.html.PimpBootstrap.*
+import com.malliina.musicpimp.html.PimpBootstrap.tags.*
+import com.malliina.musicpimp.stats.*
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-abstract class TableRenderer[T <: TopEntry](title: String) {
+abstract class TableRenderer[T <: TopEntry](title: String):
   def headers: Seq[Modifier]
 
   def cells(row: T): Seq[Modifier]
@@ -24,18 +24,17 @@ abstract class TableRenderer[T <: TopEntry](title: String) {
     ),
     nav(aria.label := "Popular and recent tracks")(
       ulClass("pagination")(
-        if (list.from > 0) pageLink(list.prev, "Previous") else empty,
+        if list.from > 0 then pageLink(list.prev, "Previous") else empty,
         " ",
-        if (list.entries.length >= list.meta.maxItems) pageLink(list.next, "Next") else empty
+        if list.entries.length >= list.meta.maxItems then pageLink(list.next, "Next") else empty
       )
     )
   )
 
   def pageLink[V: AttrValue](url: V, text: String) =
     li(`class` := "page-item")(a(href := url, `class` := "page-link")(text))
-}
 
-object TopHtml {
+object TopHtml:
   val TableClass = "top-table"
   val HiddenXxs = "hidden-xxs"
 
@@ -47,7 +46,7 @@ object TopHtml {
     td(LibraryHtml.trackActions(entry.track.id, extraClass = Option("flex"))())
   )
 
-  object popular extends TableRenderer[FullPopularEntry]("Most Played") {
+  object popular extends TableRenderer[FullPopularEntry]("Most Played"):
     override def headers: Seq[Modifier] = Seq(
       th("Title", `class` := "top-popular"),
       th("Artist", `class` := s"top-popular $HiddenXxs"),
@@ -58,9 +57,8 @@ object TopHtml {
 
     override def cells(row: FullPopularEntry): Seq[Modifier] =
       toRow[FullPopularEntry](row, _.playbackCount)
-  }
 
-  object recent extends TableRenderer[FullRecentEntry]("Most Recent") {
+  object recent extends TableRenderer[FullRecentEntry]("Most Recent"):
     override def headers = Seq(
       th("Title"),
       th("Artist", `class` := HiddenXxs),
@@ -71,9 +69,7 @@ object TopHtml {
 
     override def cells(row: FullRecentEntry) =
       toRow[FullRecentEntry](row, _.whenFormatted)
-  }
 
   def mostRecentContent(list: RecentList) = recent.render(list)
 
   def mostPopular(list: PopularList) = popular.render(list)
-}

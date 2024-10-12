@@ -6,12 +6,12 @@ import com.malliina.musicpimp.js.FrontStrings
 import controllers.musicpimp.{UserFeedback, routes}
 import play.api.data.Field
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object LogsHtml extends PimpBootstrap with FrontStrings {
+object LogsHtml extends PimpBootstrap with FrontStrings:
   val LogLevelClass = "log-level-select"
 
-  import tags._
+  import tags.*
 
   def logsContent(
     levelField: Field,
@@ -31,7 +31,7 @@ object LogsHtml extends PimpBootstrap with FrontStrings {
             onchange := "this.form.submit()"
           )(
             levels.map(level =>
-              option(if (level == currentLevel) selected else empty)(level.toString)
+              option(if level == currentLevel then selected else empty)(level.toString)
             )
           )
         )
@@ -43,4 +43,3 @@ object LogsHtml extends PimpBootstrap with FrontStrings {
       )
     )
   )
-}

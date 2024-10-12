@@ -11,44 +11,38 @@ import com.malliina.musicpimp.messaging.mpns.{MPNSBuilder, PushUrls}
 import com.malliina.push.apns.Unregistered
 import play.api.Logger
 
-object TokenService {
+object TokenService:
   private val log = Logger(getClass)
 
   val default = new TokenService
-}
 
-class TokenService {
+class TokenService:
   val apnsClient = new APNSBuilder()
   val mpns = new MPNSBuilder()
   val gcm = new GCMBuilder()
   val adm = new ADMBuilder()
 
-  def sendNotifications(): Unit = {
+  def sendNotifications(): Unit =
     val apns = APNSDevices.get().map(apnsClient.buildRequest)
     val toasts = PushUrls.get().map(mpns.buildRequest)
     val gcms = GoogleDevices.get().map(gcm.buildRequest)
     val adms = AmazonDevices.get().map(adm.buildRequest)
     val task = PushTask(apns, gcms, adms, toasts, Nil)
     val messages = apns ++ toasts ++ gcms ++ adms
-    if (messages.isEmpty) {
+    if messages.isEmpty then
       log.info(s"No push notification URLs are active, so no push notifications were sent.")
-    } else {
+    else
       CloudPushClient.default
         .push(task)
-        .map { response =>
+        .map: response =>
           log info s"Sent ${messages.size} notifications."
           removeUnregistered(response.apns)
-        }
-        .recoverAll { t =>
+        .recoverAll: t =>
           log.warn(s"Unable to send all notifications.", t)
-        }
-    }
-  }
 
-  def removeUnregistered(rs: Seq[APNSHttpResult]): Unit = {
+  def removeUnregistered(rs: Seq[APNSHttpResult]): Unit =
     val removable = rs.filter(_.error.contains(Unregistered)).map(_.token)
-    APNSDevices.removeAll(removable).foreach { d =>
-      log.info(s"Removed unregistered token '${d.id}'.")
-    }
-  }
-}
+    APNSDevices
+      .removeAll(removable)
+      .foreach: d =>
+        log.info(s"Removed unregistered token '${d.id}'.")

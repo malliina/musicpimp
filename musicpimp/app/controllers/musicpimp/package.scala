@@ -7,7 +7,7 @@ import play.api.mvc.AnyContent
 
 import scala.concurrent.Future
 
-package object musicpimp {
+package object musicpimp:
   type PimpUserRequest = CookiedRequest[AnyContent, Username]
 
   def accessDenied = Errors.accessDenied
@@ -21,4 +21,3 @@ package object musicpimp {
   def serverError(message: String) = Errors.internal(message)
 
   def fut[T](body: T) = Future.successful(body)
-}

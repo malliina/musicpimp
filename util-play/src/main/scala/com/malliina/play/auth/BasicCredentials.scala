@@ -2,11 +2,10 @@ package com.malliina.play.auth
 
 import com.malliina.values.{Password, Username}
 
-trait BasicCreds {
+trait BasicCreds:
   def username: Username
 
   def password: Password
-}
 
 case class BasicCredentials(username: Username, password: Password) extends BasicCreds
 

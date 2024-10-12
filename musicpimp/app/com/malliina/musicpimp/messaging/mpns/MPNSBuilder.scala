@@ -1,10 +1,10 @@
 package com.malliina.musicpimp.messaging.mpns
 
-import com.malliina.musicpimp.messaging.cloud._
+import com.malliina.musicpimp.messaging.cloud.*
 import com.malliina.push.mpns.{PushUrl, ToastMessage}
 
-class MPNSBuilder {
-  def buildRequest(dest: PushUrl) = {
+class MPNSBuilder:
+  def buildRequest(dest: PushUrl) =
     val message = ToastMessage(
       "MusicPimp",
       "Tap to stop",
@@ -12,5 +12,3 @@ class MPNSBuilder {
       silent = dest.silent
     )
     MPNSPayload(token = dest.url, MPNSRequest(toast = Option(message)))
-  }
-}

@@ -3,11 +3,11 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
 import com.malliina.values.Username
 import controllers.musicpimp.{UserFeedback, routes}
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object UsersHtml extends PimpBootstrap {
+object UsersHtml extends PimpBootstrap:
 
-  import tags._
+  import tags.*
 
   def usersContent(content: UsersContent) =
     row(
@@ -86,4 +86,3 @@ object UsersHtml extends PimpBootstrap {
         namedInput(elemId, `type` := inType, `class` := s"$FormControl $InputMd", required)
       )
     )
-}

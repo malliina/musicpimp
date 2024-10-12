@@ -5,11 +5,11 @@ import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudID
 import controllers.musicpimp.{Cloud, routes}
 
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object CloudHtml extends PimpBootstrap with CloudStrings {
+object CloudHtml extends PimpBootstrap with CloudStrings:
 
-  import tags._
+  import tags.*
 
   def cloudContent = Seq(
     headerRow("Cloud"),
@@ -26,20 +26,17 @@ object CloudHtml extends PimpBootstrap with CloudStrings {
     )
   )
 
-  def cloudForm(cloudId: Option[CloudID]) = {
+  def cloudForm(cloudId: Option[CloudID]) =
     val title = cloudId.fold("Connect")(_ => "Disconnect")
     postableForm(routes.Cloud.toggle, name := "toggleForm")(
-      if (cloudId.isEmpty) {
+      if cloudId.isEmpty then
         formGroup(
           labelFor(Cloud.idFormKey)("Desired cloud ID (optional)"),
           textInput("text", FormControl, Cloud.idFormKey, Option("Your desired ID or leave empty"))
         )
-      } else {
-        empty
-      },
+      else empty,
       blockSubmitButton(id := ToggleButton)(title)
     )
-  }
 
   def textInput(
     inType: String,
@@ -49,4 +46,3 @@ object CloudHtml extends PimpBootstrap with CloudStrings {
     more: Modifier*
   ) =
     PimpHtml.textInputBase(inType, idAndName, placeHolder, `class` := clazz, more)
-}

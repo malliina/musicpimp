@@ -1,5 +1,4 @@
 package com.malliina.musicpimp.audio
 
-object Enc {
+object Enc:
   val UTF8 = "UTF-8"
-}

@@ -35,6 +35,5 @@ case class UsersContent(
   addFeedback: Option[UserFeedback]
 ) extends UserLike
 
-trait UserLike {
+trait UserLike:
   def username: Username
-}

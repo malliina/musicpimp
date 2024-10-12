@@ -2,7 +2,7 @@ package com.malliina.musicpimp.js
 
 object FrontStrings extends FrontStrings
 
-trait FrontStrings {
+trait FrontStrings:
   val AddClass = "add"
   val EventKey = "event"
   val FailStatus = "failstatus"
@@ -13,4 +13,3 @@ trait FrontStrings {
   val Ping = "ping"
   val PlayClass = "play"
   val TrackClass = "track"
-}

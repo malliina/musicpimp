@@ -9,10 +9,9 @@ import play.api.mvc.RequestHeader
 
 case class RemoteInfo(user: Username, apiVersion: String, host: FullUrl, target: Target)
 
-object RemoteInfo {
+object RemoteInfo:
   def forRequest(user: Username, rh: RequestHeader) =
     RemoteInfo(user, PimpRequest.apiVersion(rh), FullUrls.hostOnly(rh), Target.noop)
 
   def cloud(user: Username, host: FullUrl) =
     RemoteInfo(user, JsonFormatVersions.JSONv18, host, Target.noop)
-}

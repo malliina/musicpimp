@@ -8,7 +8,7 @@ import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 
-trait CloudAuthentication {
+trait CloudAuthentication:
   type PhoneAuthResult = Future[Either[AuthFailure, PhoneConnection]]
 
   def authServer(
@@ -23,4 +23,3 @@ trait CloudAuthentication {
   def phone: Authenticator[PhoneConnection]
 
   def server: Authenticator[ServerRequest]
-}

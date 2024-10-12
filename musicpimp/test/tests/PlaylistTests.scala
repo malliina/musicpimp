@@ -4,8 +4,8 @@ import com.malliina.musicpimp.audio.BasePlaylist
 
 import scala.concurrent.stm.Ref
 
-class PlaylistTests extends munit.FunSuite {
-  test("Playlist index reacts to playlist reorganization") {
+class PlaylistTests extends munit.FunSuite:
+  test("Playlist index reacts to playlist reorganization"):
     val tracks = Seq("a", "b", "c", "d", "e")
     val playlist = new TestPlaylist
     playlist.reset(2, tracks)
@@ -23,11 +23,7 @@ class PlaylistTests extends munit.FunSuite {
     playlist.index = 2
     playlist.move(3, 2)
     assert(playlist.index == 3)
-  }
 
-  class TestPlaylist extends BasePlaylist[String] {
+  class TestPlaylist extends BasePlaylist[String]:
     override protected val pos: Ref[PlaylistIndex] = Ref[Int](0)
     override protected val songs: Ref[Seq[String]] = Ref[Seq[String]](Nil)
-  }
-
-}

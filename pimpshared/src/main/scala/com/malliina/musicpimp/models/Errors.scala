@@ -5,7 +5,7 @@ import play.api.mvc.Results.{BadGateway, BadRequest, InternalServerError, NotFou
 
 object Errors extends Errors
 
-trait Errors {
+trait Errors:
   val genericMessage = "Something went wrong."
   val accessDeniedMessage = "Access denied."
   val badGatewayMessage = "A dependent server failed."
@@ -25,4 +25,3 @@ trait Errors {
   def internal(message: String) = withStatus(InternalServerError, message)
 
   def withStatus(status: Results.Status, message: String): Result = status(FailReason(message))
-}

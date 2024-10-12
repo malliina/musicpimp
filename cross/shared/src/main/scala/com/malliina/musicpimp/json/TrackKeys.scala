@@ -2,7 +2,7 @@ package com.malliina.musicpimp.json
 
 object TrackKeys extends TrackKeys
 
-trait TrackKeys {
+trait TrackKeys:
   val Album = "album"
   val Artist = "artist"
   val DurationKey = "duration"
@@ -10,4 +10,3 @@ trait TrackKeys {
   val Size = "size"
   val Title = "title"
   val Url = "url"
-}

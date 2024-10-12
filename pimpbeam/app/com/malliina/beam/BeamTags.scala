@@ -3,11 +3,11 @@ package com.malliina.beam
 import com.malliina.html.Bootstrap
 import com.malliina.play.tags.{PlayTags, TagPage, Tags}
 import play.api.mvc.Call
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object BeamTags extends Bootstrap(Tags) with PlayTags {
+object BeamTags extends Bootstrap(Tags) with PlayTags:
 
-  import tags._
+  import tags.*
 
   val autoplay = attr("autoplay").empty
   val controls = attr("controls").empty
@@ -120,4 +120,3 @@ object BeamTags extends Bootstrap(Tags) with PlayTags {
       )
     )
   )
-}

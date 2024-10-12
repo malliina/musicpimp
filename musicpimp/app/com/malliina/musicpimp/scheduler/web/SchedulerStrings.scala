@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.scheduler.web
 
-trait SchedulerStrings extends AlarmStrings {
+trait SchedulerStrings extends AlarmStrings:
   val DESCRIPTION = "description"
   val Minutes = "minutes"
   val Hours = "hours"
@@ -11,6 +11,5 @@ trait SchedulerStrings extends AlarmStrings {
   val TrackKey = "track"
 
   val PATH = "path"
-}
 
 object SchedulerStrings extends SchedulerStrings

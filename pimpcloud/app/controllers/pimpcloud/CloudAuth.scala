@@ -15,7 +15,7 @@ class CloudAuth(
   mat: Materializer
 ) extends BaseSecurity(actions, CloudAuth.redirecting(auth), mat)
 
-object CloudAuth {
+object CloudAuth:
   def session(actions: ActionBuilder[Request, AnyContent], mat: Materializer): CloudAuth =
     new CloudAuth(actions, sessionAuth(mat.executionContext), mat)
 
@@ -24,4 +24,3 @@ object CloudAuth {
 
   def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
     PimpAuths.redirecting(routes.Web.login, auth)
-}

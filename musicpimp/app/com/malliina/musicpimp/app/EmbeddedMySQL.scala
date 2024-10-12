@@ -6,7 +6,7 @@ import ch.vorburger.mariadb4j.{DB, DBConfiguration, DBConfigurationBuilder}
 import com.malliina.musicpimp.db.Conf
 import com.malliina.musicpimp.util.FileUtil
 
-object EmbeddedMySQL {
+object EmbeddedMySQL:
   def temporary: EmbeddedMySQL =
     apply(Files.createTempDirectory("embedded"), temporary = true)
   def permanent: EmbeddedMySQL =
@@ -14,9 +14,8 @@ object EmbeddedMySQL {
 
   def apply(baseDir: Path, temporary: Boolean): EmbeddedMySQL =
     new EmbeddedMySQL(baseDir, temporary)
-}
 
-class EmbeddedMySQL(baseDir: Path, temporary: Boolean) {
+class EmbeddedMySQL(baseDir: Path, temporary: Boolean):
   private val dbConfig: DBConfiguration =
     DBConfigurationBuilder
       .newBuilder()
@@ -25,12 +24,10 @@ class EmbeddedMySQL(baseDir: Path, temporary: Boolean) {
       .setDeletingTemporaryBaseAndDataDirsOnShutdown(temporary)
       .build()
   lazy val db = DB.newEmbeddedDB(dbConfig)
-  lazy val conf: Conf = {
+  lazy val conf: Conf =
     db.start()
     val dbName = "pimptest"
     db.createDB(dbName)
     Conf(dbConfig.getURL(dbName), "root", "", Conf.MySQLDriver)
-  }
 
   def stop(): Unit = db.stop()
-}

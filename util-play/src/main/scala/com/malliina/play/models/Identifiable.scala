@@ -1,7 +1,6 @@
 package com.malliina.play.models
 
-trait Identifiable {
+trait Identifiable:
   def id: String
 
   override def toString: String = id
-}

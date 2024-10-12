@@ -2,7 +2,7 @@ package com.malliina.musicpimp.models
 
 import com.malliina.file.FileUtilities
 
-object Licenses {
+object Licenses:
   private val lineSep = sys.props("line.separator")
 
   val SCALA = fileToString("scala-license.txt")
@@ -13,4 +13,3 @@ object Licenses {
 
   private def fileToString(resource: String) =
     FileUtilities.readerFrom(s"licenses/$resource")(_.mkString(lineSep))
-}

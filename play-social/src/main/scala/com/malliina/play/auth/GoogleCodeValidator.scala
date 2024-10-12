@@ -4,7 +4,7 @@ import com.malliina.values.Email
 import com.malliina.web.{AuthError, GoogleAuthFlow, Verified}
 import play.api.mvc.RequestHeader
 
-object GoogleCodeValidator {
+object GoogleCodeValidator:
   def apply(oauth: OAuthConf[Email]): GoogleCodeValidator = apply(google(oauth))
 
   def apply(conf: CodeValidationConf[Email]): GoogleCodeValidator =
@@ -14,12 +14,10 @@ object GoogleCodeValidator {
     oauth,
     GoogleAuthFlow.conf(oauth.conf, oauth.http)
   )
-}
 
 class GoogleCodeValidator(conf: CodeValidationConf[Email])
   extends GoogleAuthFlow(conf.codeConf)
-  with PlayFlow[Verified] {
+  with PlayFlow[Verified]:
   override def redirCall = conf.redirCall
   override def onOutcome(outcome: Either[AuthError, Verified], req: RequestHeader) =
     conf.handler.resultFor(outcome.flatMap(parse), req)
-}

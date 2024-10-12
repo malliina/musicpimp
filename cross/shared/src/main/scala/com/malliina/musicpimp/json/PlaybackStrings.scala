@@ -2,7 +2,7 @@ package com.malliina.musicpimp.json
 
 object PlaybackStrings extends PlaybackStrings
 
-trait PlaybackStrings {
+trait PlaybackStrings:
   val Add = "add"
   val AddItemsKey = "add_items"
   val Mute = "mute"
@@ -43,4 +43,3 @@ trait PlaybackStrings {
   val Index = "index"
   val Tracks = "tracks"
   val Folders = "folders"
-}

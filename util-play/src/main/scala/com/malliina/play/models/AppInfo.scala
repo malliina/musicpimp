@@ -4,6 +4,5 @@ import play.api.libs.json.{Json, OFormat}
 
 case class AppInfo(name: String, version: String, hash: String)
 
-object AppInfo {
+object AppInfo:
   implicit val json: OFormat[AppInfo] = Json.format[AppInfo]
-}

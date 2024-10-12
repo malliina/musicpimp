@@ -2,7 +2,7 @@ package com.malliina.musicpimp.js
 
 object CloudStrings extends CloudStrings
 
-trait CloudStrings {
+trait CloudStrings:
   val CloudForm = "cloud-form"
   val ToggleButton = "toggleButton"
 
@@ -16,4 +16,3 @@ trait CloudStrings {
 
   val IdKey = "id"
   val Reason = "reason"
-}

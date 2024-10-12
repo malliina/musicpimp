@@ -2,7 +2,7 @@ package com.malliina.pimpcloud
 
 object CloudStrings extends CloudStrings
 
-trait CloudStrings {
+trait CloudStrings:
   val Body = "body"
   val Hidden = "hidden"
   val PhonesKey = "phones"
@@ -13,4 +13,3 @@ trait CloudStrings {
   val RequestsTableId = "requestsTable"
   val ServersKey = "servers"
   val ServersTableId = "serversTable"
-}

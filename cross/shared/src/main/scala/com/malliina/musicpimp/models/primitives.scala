@@ -7,13 +7,12 @@ case class RequestIdentifier(id: String) extends Identifier
 
 object RequestIdentifier extends IdentCompanion[RequestIdentifier]
 
-trait Identifier extends Any {
+trait Identifier extends Any:
   def id: String
 
   override def toString: String = id
-}
 
-abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T] {
+abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T]:
   override def write(t: T): String = t.id
 
   implicit val playJson: Format[T] = Format(
@@ -22,4 +21,3 @@ abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T] 
     ),
     Writes.StringWrites.contramap(write)
   )
-}

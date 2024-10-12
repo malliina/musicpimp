@@ -7,10 +7,10 @@ import org.apache.commons.codec.binary.Base64
 
 import scala.collection.concurrent.TrieMap
 
-class IDTests extends munit.FunSuite {
+class IDTests extends munit.FunSuite:
   val map = TrieMap.empty[UUID, Int]
 
-  test("UUID.equals") {
+  test("UUID.equals"):
     val uuid = UUID.randomUUID()
     val uuidString = uuid.toString
     val uuid2 = UUID.fromString(uuidString)
@@ -18,10 +18,7 @@ class IDTests extends munit.FunSuite {
     map += (uuid -> 1)
     val i = map get uuid2
     assert(i contains 1)
-  }
 
-  test("base64 encode") {
+  test("base64 encode"):
     val enc = Base64.encodeBase64String(s"a:b:c".getBytes(StandardCharsets.UTF_8))
     println(enc)
-  }
-}

@@ -4,7 +4,7 @@ import com.malliina.musicpimp.models.Volume
 
 import scala.concurrent.duration.Duration
 
-object StatusEvents {
+object StatusEvents:
   val empty = StatusEvent(
     FullTrack.empty,
     PlayState.closed,
@@ -14,4 +14,3 @@ object StatusEvents {
     playlist = Seq.empty,
     index = -1
   )
-}

@@ -5,7 +5,7 @@ import play.api.libs.json.{Format, JsError, JsSuccess, Json, OFormat, Reads, Wri
 
 case class IdTokenContent(iss: String, sub: String, email: Email, aud: String, iat: Long, exp: Long)
 
-object IdTokenContent {
+object IdTokenContent:
   implicit val emailJson: Format[Email] = from(Email)
   implicit val json: OFormat[IdTokenContent] = Json.format[IdTokenContent]
 
@@ -21,4 +21,3 @@ object IdTokenContent {
       ),
       Writes.StringWrites.contramap(write)
     )
-}

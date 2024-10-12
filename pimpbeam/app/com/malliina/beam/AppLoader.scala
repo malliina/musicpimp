@@ -21,7 +21,7 @@ class AppComponents(context: Context)
   extends BuiltInComponentsFromContext(context)
   with AssetsComponents
   with HttpFiltersComponents
-  with AhcWSComponents {
+  with AhcWSComponents:
 
   val allowedCsp = Seq(
     "netdna.bootstrapcdn.com",
@@ -51,14 +51,10 @@ class AppComponents(context: Context)
 
   log info s"Started MusicBeamer endpoint. Advertising address: ${conf.host}:${conf.port}/${conf.sslPort}."
 
-  applicationLifecycle.addStopHook(
-    () =>
-      Future.successful {
-        disco.close()
-      }
+  applicationLifecycle.addStopHook(() =>
+    Future.successful:
+      disco.close()
   )
-}
 
-object AppComponents {
+object AppComponents:
   private val log = Logger(getClass)
-}

@@ -9,11 +9,10 @@ import play.api.mvc.{BodyParser, MultipartFormData, RequestHeader, Result}
 
 import scala.concurrent.Future
 
-object Streamer {
+object Streamer:
   val DefaultMaxUploadSize = 1024.megs
-}
 
-trait Streamer {
+trait Streamer:
   val maxUploadSize = Streamer.DefaultMaxUploadSize
 
   def snapshot: Seq[PimpStream]
@@ -21,10 +20,11 @@ trait Streamer {
   def requestTrack(track: Track, range: ContentRange, req: RequestHeader): Result
   def parser(uuid: RequestID): Option[BodyParser[MultipartFormData[Long]]]
 
-  /**
-    * @param uuid        request ID
-    * @param shouldAbort if true, the server is informed that it should cancel the request
-    * @return true if `uuid` was found, false otherwise
+  /** @param uuid
+    *   request ID
+    * @param shouldAbort
+    *   if true, the server is informed that it should cancel the request
+    * @return
+    *   true if `uuid` was found, false otherwise
     */
   def remove(uuid: RequestID, shouldAbort: Boolean, wasSuccess: Boolean): Future[Boolean]
-}

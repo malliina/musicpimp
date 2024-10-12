@@ -2,7 +2,7 @@ package com.malliina.musicpimp.json
 
 object PimpStrings extends PimpStrings
 
-trait PimpStrings extends PlaylistKeys with TrackKeys {
+trait PimpStrings extends PlaylistKeys with TrackKeys:
   val AlarmsAdd = "alarms_add"
   val AlarmsEdit = "alarms_edit"
   val AlarmsKey = "alarms"
@@ -26,13 +26,11 @@ trait PimpStrings extends PlaylistKeys with TrackKeys {
   val UsernameKey = "username"
   val VersionKey = "version"
   val PushValue = "push"
-}
 
-trait PlaylistKeys {
+trait PlaylistKeys:
   val PlaylistDelete = "playlist_delete"
   val PlaylistGet = "playlist"
   val PlaylistKey = "playlist"
   val PlaylistSave = "playlist_save"
   val PlaylistsGet = "playlists"
   val PlaylistsKey = "playlists"
-}

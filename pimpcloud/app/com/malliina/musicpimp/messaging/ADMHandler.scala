@@ -6,7 +6,6 @@ import com.malliina.push.adm.ADMClient
 
 import scala.concurrent.Future
 
-class ADMHandler(client: ADMClient) extends PushRequestHandler[ADMPayload, BasicResult] {
+class ADMHandler(client: ADMClient) extends PushRequestHandler[ADMPayload, BasicResult]:
   override def pushOne(request: ADMPayload): Future[BasicResult] =
     client.push(request.token, request.message).map(BasicResult.fromResponse)
-}

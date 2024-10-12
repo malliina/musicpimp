@@ -19,12 +19,10 @@ case class StreamedTrack(
   size: StorageSize,
   stream: InputStream
 )(implicit mat: Materializer)
-  extends PlayableTrack {
+  extends PlayableTrack:
   override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
     new StreamPlayer(this, eom)
-}
 
-object StreamedTrack {
+object StreamedTrack:
   def fromTrack(t: TrackMeta, inStream: InputStream, mat: Materializer): StreamedTrack =
     StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)(mat)
-}

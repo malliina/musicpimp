@@ -7,10 +7,9 @@ import play.api.mvc.{Result, Results}
 
 object Caching extends Caching
 
-trait Caching {
+trait Caching:
   def NoCacheOk[C: Writeable](content: C): Result =
     NoCache(Results.Ok(content))
 
   def NoCache[T](result: => Result): Result =
     result.withHeaders(CACHE_CONTROL -> HttpConstants.NoCache)
-}

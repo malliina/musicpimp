@@ -12,7 +12,7 @@ class PimpAuthenticator(
   val userManager: UserManager[Username, Password],
   val rememberMe: RememberMe,
   ec: ExecutionContext
-) extends CookieAuthenticator {
+) extends CookieAuthenticator:
   implicit val exec: ExecutionContext = ec
   val cookie = PimpAuthenticator.cookie(rememberMe)
 
@@ -23,15 +23,12 @@ class PimpAuthenticator(
     rh: RequestHeader
   ): Future[Either[AuthFailure, AuthedRequest]] =
     cookie.authenticate(rh)
-}
 
-object PimpAuthenticator {
+object PimpAuthenticator:
   def cookie(rememberMe: RememberMe)(implicit ec: ExecutionContext): Authenticator[AuthedRequest] =
-    Authenticator[AuthedRequest] { rh =>
-      rememberMe.authenticate(rh).map { either =>
-        either.map { token =>
-          AuthedRequest(token.user, rh, Option(rememberMe.cookify(token)))
-        }
-      }
-    }
-}
+    Authenticator[AuthedRequest]: rh =>
+      rememberMe
+        .authenticate(rh)
+        .map: either =>
+          either.map: token =>
+            AuthedRequest(token.user, rh, Option(rememberMe.cookify(token)))

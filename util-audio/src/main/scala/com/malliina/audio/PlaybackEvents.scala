@@ -2,7 +2,7 @@ package com.malliina.audio
 
 import scala.concurrent.duration.Duration
 
-object PlaybackEvents {
+object PlaybackEvents:
 
   trait PlaybackEvent
 
@@ -11,4 +11,3 @@ object PlaybackEvents {
   case object Started extends PlaybackEvent
   case object Stopped extends PlaybackEvent
   case object Closed extends PlaybackEvent
-}

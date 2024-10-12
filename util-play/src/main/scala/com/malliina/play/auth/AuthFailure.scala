@@ -2,9 +2,8 @@ package com.malliina.play.auth
 
 import play.api.mvc.RequestHeader
 
-sealed trait AuthFailure {
+sealed trait AuthFailure:
   def rh: RequestHeader
-}
 
 case class InvalidCredentials(rh: RequestHeader) extends AuthFailure
 

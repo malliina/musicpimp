@@ -4,10 +4,8 @@ import play.api.mvc.RequestHeader
 
 import scala.util.Try
 
-object ServerUtils {
-  def portFromHost(req: RequestHeader): Option[Int] = {
+object ServerUtils:
+  def portFromHost(req: RequestHeader): Option[Int] =
     val maybeSuffix = req.host.dropWhile(_ != ':')
-    if (maybeSuffix.length > 1) Try(maybeSuffix.tail.toInt).toOption
+    if maybeSuffix.length > 1 then Try(maybeSuffix.tail.toInt).toOption
     else None
-  }
-}

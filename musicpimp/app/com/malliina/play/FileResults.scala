@@ -10,42 +10,38 @@ import com.malliina.play.FileResults.log
 import com.malliina.play.http.RequestHeaderOps
 import com.malliina.storage.StorageLong
 import play.api.Logger
-import play.api.http.HeaderNames._
+import play.api.http.HeaderNames.*
 import play.api.http.{ContentTypes, FileMimeTypes}
 import play.api.mvc.Results.{Ok, PartialContent}
 import play.api.mvc.{RequestHeader, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object FileResults extends FileResults {
+object FileResults extends FileResults:
   private val log = Logger(getClass)
-}
 
-trait FileResults {
-  def fileResult(path: Path, request: RequestHeader, fmts: FileMimeTypes)(
-    implicit ec: ExecutionContext
-  ): Result = {
+trait FileResults:
+  def fileResult(path: Path, request: RequestHeader, fmts: FileMimeTypes)(implicit
+    ec: ExecutionContext
+  ): Result =
     val size = Files.size(path).bytes
     ContentRanges
       .fromHeader(request, size)
       .toOption
-      .map { range =>
+      .map: range =>
         rangedResult(path, range, request, fmts)
-      }
-      .getOrElse {
+      .getOrElse:
         log.info(
           s"Serving all of '$path', $size, as response to ${request.describe}..."
         )
         Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
-      }
-  }
 
   def rangedResult(
     path: Path,
     range: ContentRange,
     request: RequestHeader,
     fmts: FileMimeTypes
-  )(implicit ec: ExecutionContext): Result = {
+  )(implicit ec: ExecutionContext): Result =
     val fileName = path.getFileName.toString
     val contentType = fmts.forFileName(fileName) getOrElse ContentTypes.BINARY
     val contentLength = range.contentLength.toLong
@@ -58,5 +54,3 @@ trait FileResults {
     PartialContent
       .streamed(source, Option(contentLength), Option(contentType))
       .withHeaders(CONTENT_RANGE -> range.contentRange)
-  }
-}

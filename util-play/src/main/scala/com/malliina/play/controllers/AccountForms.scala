@@ -4,11 +4,11 @@ import com.malliina.play.auth.{BasicCredentials, RememberMeCredentials}
 import com.malliina.play.forms.FormMappings.{password, username}
 import com.malliina.play.models.PasswordChange
 import play.api.data.Form
-import play.api.data.Forms._
+import play.api.data.Forms.*
 
 object AccountForms extends AccountForms
 
-class AccountForms {
+class AccountForms:
   val intendedUri = "intended_uri"
   val feedback = "feedback"
   val userFormKey = "username"
@@ -42,4 +42,3 @@ class AccountForms {
     )(PasswordChange.apply)(pc => Option((pc.oldPass, pc.newPass, pc.newPassAgain)))
       .verifying("The new password was incorrectly repeated.", pc => pc.newPass == pc.newPassAgain)
   )
-}

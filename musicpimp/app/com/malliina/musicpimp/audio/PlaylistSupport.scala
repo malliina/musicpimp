@@ -4,7 +4,7 @@ import com.malliina.audio.IPlaylist
 
 import scala.util.{Failure, Try}
 
-trait PlaylistSupport[T] {
+trait PlaylistSupport[T]:
   def playlist: IPlaylist[T]
 
   /** Initializes the player with the given track.
@@ -17,14 +17,16 @@ trait PlaylistSupport[T] {
 
   /** Skips to the track with the specified index; playback starts automatically.
     *
-    * @param index track index
-    * @return the track skipped to
-    * @throws IndexOutOfBoundsException if the index is out of bounds
+    * @param index
+    *   track index
+    * @return
+    *   the track skipped to
+    * @throws IndexOutOfBoundsException
+    *   if the index is out of bounds
     */
-  def skip(index: Int): Try[Unit] = {
+  def skip(index: Int): Try[Unit] =
     playlist.index = index
     play(_.current)
-  }
 
   def nextTrack() = play(_.next): Try[Unit]
 
@@ -32,4 +34,3 @@ trait PlaylistSupport[T] {
 
   protected def play(f: IPlaylist[T] => Option[T]): Try[Unit] =
     f(playlist).map(playTrack).getOrElse(Failure(new Exception("No track")))
-}

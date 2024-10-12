@@ -5,8 +5,7 @@ import com.malliina.musicpimp.messaging.ServerTag
 import com.malliina.musicpimp.messaging.cloud.GCMPayload
 import com.malliina.push.gcm.GCMMessage
 
-class GCMBuilder {
+class GCMBuilder:
   def message(tag: ServerTag) = GCMMessage(Map(Cmd -> Stop, Tag -> tag.tag))
 
   def buildRequest(dest: GCMDevice) = GCMPayload(dest.id, message(dest.tag))
-}

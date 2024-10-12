@@ -4,6 +4,5 @@ import play.api.libs.json.{Json, OFormat}
 
 case class PlaylistSnapshot(index: Int, tracks: Seq[String])
 
-object PlaylistSnapshot {
+object PlaylistSnapshot:
   implicit val json: OFormat[PlaylistSnapshot] = Json.format[PlaylistSnapshot]
-}

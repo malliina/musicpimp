@@ -5,7 +5,7 @@ import com.malliina.web.OAuthKeys.LoginHint
 import com.malliina.web.{FlowStart, LoginHint}
 import play.api.mvc.{RequestHeader, Result}
 
-trait AuthValidator extends FlowStart[IO] {
+trait AuthValidator extends FlowStart[IO]:
   def brandName: String
 
   /** The initial result that initiates sign-in.
@@ -15,9 +15,9 @@ trait AuthValidator extends FlowStart[IO] {
   /** The callback in the auth flow, i.e. the result for redirect URIs.
     */
   def validateCallback(req: RequestHeader): IO[Result]
-}
 
-trait LoginHintSupport extends LoginHint[IO] { self: AuthValidator =>
+trait LoginHintSupport extends LoginHint[IO]:
+  self: AuthValidator =>
   def startHinted(
     req: RequestHeader,
     loginHint: Option[String],
@@ -26,12 +26,10 @@ trait LoginHintSupport extends LoginHint[IO] { self: AuthValidator =>
     req,
     extraParams ++ loginHint.map(lh => Map(LoginHint -> lh)).getOrElse(Map.empty)
   )
-}
 
-trait OAuthValidator[U] {
+trait OAuthValidator[U]:
   def oauth: OAuthConf[U]
   def handler = oauth.handler
   def redirCall = oauth.redirCall
   def http = oauth.http
   def clientConf = oauth.conf
-}

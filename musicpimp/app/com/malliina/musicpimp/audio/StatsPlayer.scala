@@ -10,17 +10,18 @@ import scala.concurrent.stm.{Ref, atomic}
 
 /** Mediator that keeps track of who is controlling the player, for statistics.
   *
-  * @param stats stats database
+  * @param stats
+  *   stats database
   */
-class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable {
+class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable:
   implicit val mat: Materializer = player.mat
   val latestUser = Ref[Username](NewUserManager.defaultUser)
   val subscription = player.trackHistoryHub.source
     .viaMat(KillSwitches.single)(Keep.right)
-    .to(Sink.foreach { track =>
+    .to(Sink.foreach: track =>
       val user = latestUser.single.get
       stats.played(track, user)
-    })
+    )
     .run()
 
   def updateUser(user: Username): Unit =
@@ -28,4 +29,3 @@ class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseab
 
   def close(): Unit =
     subscription.shutdown()
-}

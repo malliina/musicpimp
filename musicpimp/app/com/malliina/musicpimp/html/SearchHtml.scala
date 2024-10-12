@@ -3,11 +3,11 @@ package com.malliina.musicpimp.html
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.js.SearchStrings
 import controllers.musicpimp.routes
-import scalatags.Text.all._
+import scalatags.Text.all.*
 
-object SearchHtml extends PimpBootstrap with SearchStrings {
+object SearchHtml extends PimpBootstrap with SearchStrings:
 
-  import tags._
+  import tags.*
 
   val verticalMargin = "mt-2 mb-4"
 
@@ -24,7 +24,7 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
       )
     ),
     fullRow(
-      if (results.nonEmpty) {
+      if results.nonEmpty then
         headeredTable(tables.stripedHover, Seq("Track", "Artist", "Album", "Actions"))(
           tbody(
             results.map(track =>
@@ -42,9 +42,9 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
             )
           )
         )
-      } else {
-        query.fold(empty) { term => h4(`class` := "small-heading")(s"No results for '$term'.") }
-      }
+      else
+        query.fold(empty): term =>
+          h4(`class` := "small-heading")(s"No results for '$term'.")
     )
   )
 
@@ -79,4 +79,3 @@ object SearchHtml extends PimpBootstrap with SearchStrings {
       ),
       button(`type` := Submit, `class` := s"${btnOutline.success} my-2 my-sm-0")("Search")
     )
-}

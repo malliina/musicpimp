@@ -3,14 +3,13 @@ package com.malliina.musicpimp.audio
 import com.malliina.audio.PlayerStates
 import com.malliina.audio.javasound.JavaSoundPlayer
 
-trait PimpPlayer extends JavaSoundPlayer {
+trait PimpPlayer extends JavaSoundPlayer:
   def playState = PimpPlayer.playState(state)
 
   def track: PlayableTrack
-}
 
-object PimpPlayer {
-  def playState(s: PlayerStates.PlayerState): PlayState = s match {
+object PimpPlayer:
+  def playState(s: PlayerStates.PlayerState): PlayState = s match
     case PlayerStates.Unrealized  => Unrealized
     case PlayerStates.Realizing   => Realizing
     case PlayerStates.Realized    => Realized
@@ -23,5 +22,3 @@ object PimpPlayer {
     case PlayerStates.Closed      => Closed
     case PlayerStates.EndOfMedia  => EndOfMedia
     case _                        => Unknown
-  }
-}

@@ -58,9 +58,11 @@ abstract class Socket8[T](
       if hasBeenConnected.get() then
         val uri = websocket.getURI
         val suffix = if closedByServer then " by the server" else ""
-        connectPromise.tryFailure(new NotConnectedException(
-          s"The websocket to $uri was closed$suffix."
-        ))
+        connectPromise.tryFailure(
+          new NotConnectedException(
+            s"The websocket to $uri was closed$suffix."
+          )
+        )
         Socket8.this.onClose()
 
     override def onError(websocket: WebSocket, cause: WebSocketException): Unit =

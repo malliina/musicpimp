@@ -2,7 +2,7 @@ package com.malliina.musicpimp.js
 
 object PlayerStrings extends PlayerStrings
 
-trait PlayerStrings {
+trait PlayerStrings:
   val AlbumId = "album"
   val ArtistId = "artist"
   val DurationId = "duration"
@@ -21,4 +21,3 @@ trait PlayerStrings {
   val TitleId = "title"
   val VolumeButton = "volumeButton"
   val VolumeId = "volume"
-}

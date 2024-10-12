@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.messaging
 
-object PushKeys {
+object PushKeys:
   val Cmd = "cmd"
   val Stop = "stop"
   val Tag = "tag"
-}

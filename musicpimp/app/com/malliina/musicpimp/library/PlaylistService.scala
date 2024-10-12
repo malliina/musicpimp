@@ -1,27 +1,29 @@
 package com.malliina.musicpimp.library
 
-import com.malliina.musicpimp.models._
+import com.malliina.musicpimp.models.*
 import com.malliina.values.Username
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait PlaylistService {
+trait PlaylistService:
   implicit def ec: ExecutionContext
 
-  /**
-    * @return the saved playlists of user
+  /** @return
+    *   the saved playlists of user
     */
   protected def playlists(user: Username): Future[Seq[SavedPlaylist]]
 
-  /**
-    * @param id playlist id
-    * @return the playlist with ID `id`, or None if no such playlist exists
+  /** @param id
+    *   playlist id
+    * @return
+    *   the playlist with ID `id`, or None if no such playlist exists
     */
   protected def playlist(id: PlaylistID, user: Username): Future[Option[SavedPlaylist]]
 
-  /**
-    * @param playlist playlist submission
-    * @return a Future that completes when saving is done
+  /** @param playlist
+    *   playlist submission
+    * @return
+    *   a Future that completes when saving is done
     */
   protected def saveOrUpdatePlaylist(
     playlist: PlaylistSubmission,
@@ -41,4 +43,3 @@ trait PlaylistService {
     user: Username
   ): Future[PlaylistSavedMeta] =
     saveOrUpdatePlaylist(playlist, user).map(PlaylistSavedMeta.apply)
-}

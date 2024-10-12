@@ -5,7 +5,7 @@ import com.malliina.values.Email
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait GoogleOAuthLike extends AutoCloseable {
+trait GoogleOAuthLike extends AutoCloseable:
   def ec: ExecutionContext
 
   def discover(): Future[GoogleOAuthConf]
@@ -13,4 +13,3 @@ trait GoogleOAuthLike extends AutoCloseable {
   def authRequestUri(authEndpoint: FullUrl, redirectUri: FullUrl, state: String): FullUrl
 
   def resolveEmail(tokenEndpoint: FullUrl, code: String, redirectUri: FullUrl): Future[Email]
-}

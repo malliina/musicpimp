@@ -8,7 +8,7 @@ package com.malliina.musicpimp.json
   */
 object JsonFormatVersions extends JsonFormatVersions
 
-trait JsonFormatVersions {
+trait JsonFormatVersions:
   val JSONv17 = versionString(Some(17))
   val JSONv18 = versionString(Some(18))
   //  /**
@@ -21,8 +21,6 @@ trait JsonFormatVersions {
   val anyJson = versionString(None)
   val latest = JSONv18
 
-  private def versionString(maybeVersion: Option[Int]) = {
+  private def versionString(maybeVersion: Option[Int]) =
     val versionPart = maybeVersion.fold("")(v => s".v$v")
     s"application/vnd.musicpimp$versionPart+json"
-  }
-}

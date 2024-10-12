@@ -2,15 +2,14 @@ package tests
 
 import com.malliina.audio.javasound.FileJavaSoundPlayer
 
-class ControlTests extends TestBase {
+class ControlTests extends TestBase:
 
-  test("supported controls".ignore) {
+  test("supported controls".ignore):
     val file = ensureTestMp3Exists()
     val player = new FileJavaSoundPlayer(file)
     assert(player.canAdjustVolume)
-  }
 
-  test("volume conversions".ignore) {
+  test("volume conversions".ignore):
     val file = ensureTestMp3Exists()
     val player = new FileJavaSoundPlayer(file)
     val e1 = player.externalVolumeValue(25000, 0, 65663)
@@ -23,5 +22,3 @@ class ControlTests extends TestBase {
     assertEquals(i1, 0f)
     val i2 = player.internalVolumeValue(40, 0, 65536)
     assertEquals(i2.toInt, (0.40 * 65536).toInt)
-  }
-}

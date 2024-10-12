@@ -2,6 +2,5 @@ package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.audio.TrackMeta
 
-trait TopEntry {
+trait TopEntry:
   def track: TrackMeta
-}

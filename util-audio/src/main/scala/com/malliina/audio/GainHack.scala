@@ -2,7 +2,7 @@ package com.malliina.audio
 
 import javax.sound.sampled.FloatControl
 
-trait GainHack extends RichPlayer {
+trait GainHack extends RichPlayer:
   def gainControl: FloatControl
 
   private lazy val maxDbGain = gainControl.getMaximum
@@ -12,20 +12,11 @@ trait GainHack extends RichPlayer {
   private lazy val posDbFactor = maxDbGain / (maxGain - zeroGain)
   private lazy val negDbFactor = zeroGain / -minDbGain
 
-  def dbValue(gainLevel: Float) = {
-    if (gainLevel >= zeroGain) {
-      (gainLevel - zeroGain) * posDbFactor
-    } else {
-      (zeroGain - gainLevel) * minDbGain / zeroGain
-    }
-  }
+  def dbValue(gainLevel: Float) =
+    if gainLevel >= zeroGain then (gainLevel - zeroGain) * posDbFactor
+    else (zeroGain - gainLevel) * minDbGain / zeroGain
 
-  def gainValue(dbLevel: Float) = {
-      if (dbLevel >= 0f) {
-        zeroGain + dbLevel / posDbFactor
-      } else {
-        (-minDbGain + dbLevel) * negDbFactor
-      }
-  }
+  def gainValue(dbLevel: Float) =
+    if dbLevel >= 0f then zeroGain + dbLevel / posDbFactor
+    else (-minDbGain + dbLevel) * negDbFactor
 //  abstract override def gain = gainValue(super.gain)
-}

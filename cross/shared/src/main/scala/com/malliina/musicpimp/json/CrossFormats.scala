@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.json
 
 import com.malliina.musicpimp.js.FrontStrings.EventKey
-import io.circe.{Codec, Decoder,Encoder}
+import io.circe.{Codec, Decoder, Encoder}
 
 import scala.concurrent.duration.{Duration, DurationDouble, DurationLong, FiniteDuration}
 

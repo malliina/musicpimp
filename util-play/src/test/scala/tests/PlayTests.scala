@@ -7,14 +7,13 @@ import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future, Promise}
 
-class PlayTests extends munit.FunSuite {
+class PlayTests extends munit.FunSuite:
   implicit val system: ActorSystem = ActorSystem("QuickStart")
 
-  test("can run test") {
+  test("can run test"):
     assert(1 + 1 == 2)
-  }
 
-  test("stream") {
+  test("stream"):
     val expected = 42
     val completion = Promise[Int]()
     val source = Source(1 to 10)
@@ -22,12 +21,9 @@ class PlayTests extends munit.FunSuite {
     source.runWith(sinkWithCleanup)
     val answer = await(completion.future)
     assert(answer == expected)
-  }
 
-  override def afterAll(): Unit = {
+  override def afterAll(): Unit =
     await(system.terminate())
     super.afterAll()
-  }
 
   def await[T](f: Future[T]) = Await.result(f, 10.seconds)
-}

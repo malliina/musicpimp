@@ -6,8 +6,7 @@ import play.api.libs.json.{Json, OFormat}
 
 case class BasicResult(statusCode: Int)
 
-object BasicResult {
+object BasicResult:
   implicit val json: Codec[BasicResult] = Codec.derived[BasicResult]
 
   def fromResponse(response: HttpResponse) = BasicResult(response.code)
-}

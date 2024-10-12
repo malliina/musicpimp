@@ -1,29 +1,23 @@
 package com.malliina.io
 
-trait PersistentList[T] {
+trait PersistentList[T]:
 
-  /**
-    *
-    * @return true if the collection was modified, false otherwise
+  /** @return
+    *   true if the collection was modified, false otherwise
     */
-  def add(item: T): Boolean = {
+  def add(item: T): Boolean =
     persist(load() :+ item)
     true
-  }
 
-  /**
-    *
-    * @return true if the collection was modified, false otherwise
+  /** @return
+    *   true if the collection was modified, false otherwise
     */
-  def remove(item: T): Boolean = {
+  def remove(item: T): Boolean =
     val saved = load()
     val remaining = filterNot(item, saved)
     val changed = saved != remaining
-    if (saved != remaining) {
-      persist(remaining)
-    }
+    if saved != remaining then persist(remaining)
     changed
-  }
 
   def filterNot(elem: T, others: Seq[T]) = others.filter(_ != elem)
 
@@ -32,4 +26,3 @@ trait PersistentList[T] {
   protected def persist(items: Seq[T]): Unit
 
   protected def load(): Seq[T]
-}

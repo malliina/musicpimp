@@ -6,7 +6,7 @@ import play.api.http.Writeable
 import play.api.mvc.{AnyContent, EssentialAction}
 import play.twirl.api.Html
 
-class HtmlController(auth: AuthDeps) extends Secured(auth) {
+class HtmlController(auth: AuthDeps) extends Secured(auth):
   protected def navigate(page: => Html): EssentialAction =
     navigate(_ => page)
 
@@ -14,4 +14,3 @@ class HtmlController(auth: AuthDeps) extends Secured(auth) {
     f: CookiedRequest[AnyContent, Username] => C
   ): EssentialAction =
     pimpAction(req => Ok(f(req)))
-}

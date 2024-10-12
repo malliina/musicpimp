@@ -1,6 +1,6 @@
 package com.malliina.play
 
-trait BeamStrings {
+trait BeamStrings:
   val STATUS = "status"
   val OK = "ok"
   val FAILURE = "failure"
@@ -20,6 +20,5 @@ trait BeamStrings {
   val COVER_AVAILABLE = "cover_available"
   val COVER_SOURCE = "source"
   val COVER_RESOURCE = "image"
-}
 
 object BeamStrings extends BeamStrings

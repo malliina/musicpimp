@@ -5,6 +5,5 @@ import play.api.libs.json.{Json, OFormat}
 
 case class RegistrationEvent(event: String, id: CloudID) extends PimpMessage
 
-object RegistrationEvent {
+object RegistrationEvent:
   implicit val format: OFormat[RegistrationEvent] = Json.format[RegistrationEvent]
-}

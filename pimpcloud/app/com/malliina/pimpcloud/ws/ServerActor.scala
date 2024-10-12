@@ -47,9 +47,8 @@ class ServerActor(
 
   override def onMessage(message: Json): Unit =
     if message == CommonMessages.ping then out ! CommonMessages.pong
-    else {
+    else
       val completed = server.complete(message)
       if !completed then
         // sendToPhone, i.e. send to phones connected to this server
         phoneMediator ! ServerEvent(message, server.id)
-    }

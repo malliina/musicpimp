@@ -16,20 +16,17 @@ class BasicJavaSoundPlayer(
   readWriteBufferSize: StorageSize = DefaultRwBufferSize
 )(implicit mat: Materializer)
   extends JavaSoundPlayer(media.toOneShot, readWriteBufferSize)
-  with SourceClosing {
+  with SourceClosing:
 
-  override def resetStream(oldStream: InputStream): InputStream = {
+  override def resetStream(oldStream: InputStream): InputStream =
     oldStream.close()
     media.openStream
-  }
 
   override def seekProblem: Option[String] = None
-}
 
-object BasicJavaSoundPlayer {
+object BasicJavaSoundPlayer:
   def fromFile(file: Path, mat: Materializer) =
     new BasicJavaSoundPlayer(StreamSource.fromFile(file))(mat)
 
   def fromUri(uri: URI, duration: FiniteDuration, size: StorageSize, mat: Materializer) =
     new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))(mat)
-}

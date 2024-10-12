@@ -11,12 +11,11 @@ case class DiscoGsOAuthCredentials(
   accessTokenSecret: String
 )
 
-object DiscoGsOAuthCredentials {
+object DiscoGsOAuthCredentials:
   def apply(conf: Configuration): Either[ErrorMessage, DiscoGsOAuthCredentials] =
-    for {
+    for
       consumerKey <- conf.read("discogs.consumer.key")
       consumerSecret <- conf.read("discogs.consumer.secret")
       accessToken <- conf.read("discogs.access.token")
       accessTokenSecret <- conf.read("discogs.access.secret")
-    } yield DiscoGsOAuthCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret)
-}
+    yield DiscoGsOAuthCredentials(consumerKey, consumerSecret, accessToken, accessTokenSecret)

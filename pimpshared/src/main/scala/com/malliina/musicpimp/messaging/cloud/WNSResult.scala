@@ -5,6 +5,5 @@ import play.api.libs.json.{Json, OFormat}
 
 case class WNSResult(reason: String, description: String, statusCode: Int, isSuccess: Boolean)
 
-object WNSResult {
+object WNSResult:
   implicit val json: Codec[WNSResult] = Codec.derived[WNSResult]
-}

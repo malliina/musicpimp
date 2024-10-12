@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.js
 
-trait FooterStrings {
+trait FooterStrings:
   val BottomNavbar = "bottom-navbar"
   val FooterId = "footer"
   val FooterArtist = "footer-artist"
@@ -12,4 +12,3 @@ trait FooterStrings {
   val FooterProgress = "footer-progress"
   val FooterTitle = "footer-title"
   val FooterFixedClass = "fixed"
-}

@@ -9,49 +9,45 @@ import com.malliina.musicpimp.html.PimpHtml
 import controllers.musicpimp.Cloud.log
 import play.api.Logger
 import play.api.data.Form
-import play.api.data.Forms._
+import play.api.data.Forms.*
 
 import scala.concurrent.Future
 
-object Cloud {
+object Cloud:
   private val log = Logger(getClass)
   val idFormKey = "id"
-}
 
-class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth) {
+class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth):
 
   val FEEDBACK = "feedback"
   val cloudForm = Form(Cloud.idFormKey -> optional(text))
 
-  def cloud = pimpActionAsync { request =>
+  def cloud = pimpActionAsync: request =>
     val id = clouds.registration
       .map[(Option[CloudID], Option[UserFeedback])](id => (Some(id), None))
-      .recoverAll { t =>
+      .recoverAll: t =>
         log.warn(s"Cloud connection failed.", t)
         (None, Option(UserFeedback.error(t.getMessage)))
-      }
-    id.map {
+    id.map:
       case (cloudId, errorMessage) =>
         val feedback = UserFeedback.flashed(request) orElse errorMessage
         Ok(tags.cloud(cloudId, feedback, request.user))
-    }
-  }
 
-  def toggle = pimpParsedActionAsync(parsers.default) { request =>
+  def toggle = pimpParsedActionAsync(parsers.default): request =>
     cloudForm
       .bindFromRequest()(request, formBinding)
       .fold(
-        formErrors => {
+        formErrors =>
           log debug s"Form errors: $formErrors"
           val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
           Future successful BadRequest(tags.cloud(None, feedback, request.user))
-        },
-        desiredID => {
+        ,
+        desiredID =>
           val redir = Redirect(routes.Cloud.cloud)
-          if (clouds.isConnected) {
+          if clouds.isConnected then
             clouds.disconnectAndForget("Disconnected by request.")
             fut(redir)
-          } else {
+          else {
             val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
             clouds
               .connect(maybeID)
@@ -65,9 +61,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
                 )
               )
           }
-        }
       )
-  }
 
   def errorMessage: PartialFunction[Throwable, String] = {
     case ce: ConnectException =>
@@ -78,4 +72,3 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
       log.error(msg, t)
       msg
   }
-}
