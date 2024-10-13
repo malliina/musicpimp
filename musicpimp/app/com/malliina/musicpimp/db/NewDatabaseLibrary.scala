@@ -9,25 +9,23 @@ import io.getquill.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object NewDatabaseLibrary:
-  def apply(db: PimpMySQL, local: Library): NewDatabaseLibrary = new NewDatabaseLibrary(db, local)
-
 class NewDatabaseLibrary(val db: PimpMySQL, local: Library) extends MusicLibrary:
   import db.*
   implicit val ec: ExecutionContext = db.ec
 
-  def foldersFor(id: FolderID, path: UnixPath) = quote:
+  private def foldersFor(id: FolderID, path: UnixPath) = quote:
     foldersTable.filter(f => f.id == lift(id) || f.path == lift(path))
-  def foldersQuery(id: FolderID, path: UnixPath) = quote:
+  private def foldersQuery(id: FolderID, path: UnixPath) = quote:
     (for
       f <- foldersTable.filter(_.id != lift(Library.RootId))
       parent <- foldersFor(id, path) if f.parent == parent.id
     yield f).sortBy(_.title)
-  def tracksQuery(id: FolderID, path: UnixPath) = quote:
+  private def tracksQuery(id: FolderID, path: UnixPath) = quote:
     for
       t <- tracksTable
       f <- foldersFor(id, path) if t.folder == f.id
     yield t
+
   def rootFolder: Future[MusicFolder] =
     folder(Library.RootId).map(_.getOrElse(MusicFolder.empty))
 
@@ -60,7 +58,7 @@ class NewDatabaseLibrary(val db: PimpMySQL, local: Library) extends MusicLibrary
   override def meta(id: TrackID): Future[Option[LocalTrack]] =
     track(id).map(_.map(local.toLocal))
 
-  def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] =
+  private def tracksFor(ids: Seq[TrackID]): Future[Seq[DataTrack]] =
     performAsync("Load tracks for IDs"):
       ids.flatMap: id =>
         run(quote(tracksTable.filter(t => t.id == lift(id) || t.path == lift(pathFromId(id)))))
@@ -73,9 +71,10 @@ class NewDatabaseLibrary(val db: PimpMySQL, local: Library) extends MusicLibrary
 
   def insertFolders(fs: Seq[DataFolder]): Future[Long] =
     performAsync(s"Insert ${fs.length} folders"):
-      fs.map(f => run(foldersTable.insertValue(f))).sum
+      fs.map(f => run(foldersTable.insertValue(lift(f)))).sum
 
-  def insertTracks(ts: Seq[DataTrack]): Future[Long] = performAsync(s"Insert ${ts.length} tracks"):
-    ts.map(t => run(tracksTable.insertValue(t))).sum
+  def insertTracks(ts: Seq[DataTrack]): Future[Long] =
+    performAsync(s"Insert ${ts.length} tracks"):
+      ts.map(t => run(tracksTable.insertValue(lift(t)))).sum
 
   private def pathFromId(id: Identifier): UnixPath = UnixPath.fromRaw(PimpEnc.decodeId(id))

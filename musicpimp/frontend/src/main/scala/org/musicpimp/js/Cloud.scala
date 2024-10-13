@@ -14,13 +14,13 @@ object Cloud extends Bootstrap(HtmlTags):
   val ConnectId = "button-connect"
   val DisconnectId = "button-disconnect"
   val CloudIdentifier = "cloud-id"
-  val inputId = "id"
+  private val inputId = "id"
 
-  def connectingContent: Frag = leadPara("Connecting...")
+  private def connectingContent: Frag = leadPara("Connecting...")
 
-  def disconnectingContent: Frag = leadPara("Disconnecting...")
+  private def disconnectingContent: Frag = leadPara("Disconnecting...")
 
-  def connectedContent(id: CloudID): Frag =
+  private def connectedContent(id: CloudID): Frag =
     val msg =
       s"Connected. You can now access this server using your credentials and this cloud ID: $id"
     SeqFrag(
@@ -30,7 +30,7 @@ object Cloud extends Bootstrap(HtmlTags):
       )
     )
 
-  def disconnectedContent(reason: String): Frag =
+  private def disconnectedContent(reason: String): Frag =
     SeqFrag(
       Seq(
         halfRow(disconnectedForm()),
@@ -62,7 +62,8 @@ object Cloud extends Bootstrap(HtmlTags):
     blockSubmitButton(id := buttonId)(title)
 
 class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings:
-  val formDiv = org.scalajs.dom.document.getElementById(CloudForm)
+  private val formDiv = elem(CloudForm)
+
   override def onConnected(e: Event): Unit =
     send(Subscribe)
     super.onConnected(e)
@@ -90,5 +91,5 @@ class Cloud extends SocketJS("/ws/cloud?f=json") with CloudStrings:
       )
     )
 
-  def connect(): Unit =
+  private def connect(): Unit =
     send(Connect(CloudID(elemAs[HTMLInputElement](CloudIdentifier).value)): CloudCommand)

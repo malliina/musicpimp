@@ -30,7 +30,7 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
   val testTracks: Seq[TrackID] = Seq(trackId)
 
   test("add tracks"):
-    val lib = components.lib
+    val lib: NewDatabaseLibrary = components.lib
     val db = lib.db
     val folderId = FolderID("Testid")
     import db.*
@@ -89,9 +89,9 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
 
     assert(fetchLists().isEmpty)
 
-  def fetchLists() =
+  def fetchLists(): Seq[FullSavedPlaylist] =
     val response = fetch(FakeRequest(GET, "/playlists"))
-    assert(contentType(response) contains JSON)
+    assert(contentType(response).contains(JSON))
     assert(status(response) == 200)
     io.circe.parser
       .parse(contentAsString(response))

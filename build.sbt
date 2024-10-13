@@ -1,8 +1,8 @@
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
-import com.malliina.sbt.GenericKeys._
+import com.malliina.sbt.GenericKeys.*
 import com.malliina.filetree.DirMap
-import com.malliina.sbt.mac.MacKeys._
+import com.malliina.sbt.mac.MacKeys.*
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
 import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
@@ -30,7 +30,6 @@ val bootClasspath = taskKey[String]("bootClasspath")
 
 val primitivesVersion = "3.7.3"
 val playJsonVersion = "3.0.4"
-val utilPlayVersion = "6.9.3"
 val httpVersion = "4.5.13"
 val mysqlVersion = "5.1.49"
 val nvWebSocketVersion = "2.14"
@@ -41,7 +40,6 @@ val scalatagsVersion = "0.13.1"
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-//val utilPlayDep = malliinaGroup %% "util-play" % utilPlayVersion
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "2.8.0"
 
 val httpGroup = "org.apache.httpcomponents"
@@ -64,7 +62,6 @@ val cross = portableProject(JSPlatform, JVMPlatform)
       malliinaGroup %%% "primitives" % primitivesVersion
     )
   )
-//  .jsSettings(libraryDependencies += "be.doeraene" %%% "scalajs-jquery" % "1.0.0")
 val crossJvm = cross.jvm
 val crossJs = cross.js
   .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
@@ -80,16 +77,17 @@ val crossJs = cross.js
 
 val playCommon = Project("play-common", file("play-common"))
   .settings(
-    libraryDependencies ++= Seq(
-      "com.malliina" %% "web-auth" % "6.9.3",
-      "org.playframework" %% "play" % playVersion
-    )
+    libraryDependencies ++= Seq("web-auth").map { m =>
+      "com.malliina" %% m % "6.9.3"
+    } ++
+      Seq(
+        "org.playframework" %% "play" % playVersion
+      )
   )
 val playSocial = Project("play-social", file("play-social"))
   .dependsOn(playCommon)
   .settings(
     libraryDependencies ++= Seq(
-      "com.malliina" %% "web-auth" % "6.9.3",
       "org.scalameta" %% "munit" % munitVersion % Test
     )
   )
@@ -117,7 +115,6 @@ val utilPlay = Project("util-play", file("util-play"))
       Seq("actor", "stream").map { m =>
         "org.apache.pekko" %% s"pekko-$m" % pekkoVersion
       } ++ Seq(
-//      "com.lihaoyi" %% "scalatags" % scalatagsVersion,
         "org.scalameta" %% "munit" % munitVersion % Test,
         "org.playframework" %% "play-test" % playVersion % Test
       )
@@ -144,11 +141,10 @@ val utilAudio = Project("util-audio", file("util-audio"))
 
 val shared = Project("pimp-shared", file("pimpshared"))
   .dependsOn(crossJvm, utilPlay)
-  .settings(baseSettings: _*)
+  .settings(baseSettings *)
   .settings(
     libraryDependencies ++= Seq(
       logstreamsDep,
-      "io.getquill" %% "quill-sql" % "4.8.4",
       "io.getquill" %% "quill-jdbc" % "4.8.4",
       "org.flywaydb" % "flyway-core" % "7.5.0",
       "mysql" % "mysql-connector-java" % mysqlVersion,
@@ -176,7 +172,7 @@ val musicpimp = project
     WebScalaJSBundlerPlugin
   )
   .dependsOn(shared, crossJvm, utilAudio, utilPlay, utilPlay % Test, utilPlay % "test->test")
-  .settings(pimpPlaySettings: _*)
+  .settings(pimpPlaySettings *)
 
 val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)
@@ -206,12 +202,12 @@ val pimpcloud = project
     utilPlay % "test->test",
     playSocial
   )
-  .settings(pimpcloudSettings: _*)
+  .settings(pimpcloudSettings *)
 
 val it = project
   .in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
-  .settings(baseSettings: _*)
+  .settings(baseSettings *)
   .settings(
     libraryDependencies ++= Seq(
       PlayImport.ws % Test
@@ -228,7 +224,7 @@ val pimpbeam = project
     BuildInfoPlugin
   )
   .dependsOn(utilPlay)
-  .settings(serverSettings: _*)
+  .settings(serverSettings *)
   .settings(
     libraryDependencies ++= Seq(
       logstreamsDep,
@@ -248,7 +244,7 @@ val pimpbeam = project
     buildInfoPackage := "com.malliina.beam"
   )
 
-import sbtrelease.ReleaseStateTransformations._
+import sbtrelease.ReleaseStateTransformations.*
 
 val pimp = project
   .in(file("."))
