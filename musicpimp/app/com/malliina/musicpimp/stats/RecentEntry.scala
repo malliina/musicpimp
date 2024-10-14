@@ -1,13 +1,15 @@
 package com.malliina.musicpimp.stats
 
+import com.malliina.http.FullUrl
+import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
+import com.malliina.musicpimp.db.DataTrack
+import io.circe.generic.semiauto.deriveCodec
+import io.circe.syntax.EncoderOps
+import io.circe.{Codec, Encoder, Json}
+
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date
-import com.malliina.http.FullUrl
-import com.malliina.musicpimp.audio.{FullTrack, TrackJson, TrackMeta}
-import io.circe.{Codec, Encoder, Json}
-import io.circe.generic.semiauto.deriveCodec
-import io.circe.syntax.EncoderOps
 
 trait RecentLike extends TopEntry:
   def timestamp: Instant
@@ -27,5 +29,5 @@ object FullRecentEntry:
       base(r).deepMerge(extras)
     Codec.from(base, writer)
 
-case class RecentEntry(track: TrackMeta, timestamp: Instant) extends RecentLike:
+case class RecentEntry(track: DataTrack, timestamp: Instant) extends RecentLike:
   def toFull(host: FullUrl) = FullRecentEntry(TrackJson.toFull(track, host), timestamp)

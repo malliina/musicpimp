@@ -1,5 +1,6 @@
 package com.malliina.play.ws
 
+import cats.effect.unsafe.implicits.global
 import com.malliina.play.ActorExecution
 import com.malliina.play.auth.{AuthFailure, Authenticator}
 import com.malliina.play.ws.Sockets.{DefaultActorBufferSize, DefaultOverflowStrategy, circeTransformer, log}
@@ -53,7 +54,7 @@ abstract class Sockets[User](
   def props(conf: ActorConfig[User]): Props
 
   def onUnauthorized(rh: RequestHeader, failure: AuthFailure): Result =
-    log warn s"Unauthorized request $rh"
+    log.warn(s"Unauthorized request $rh")
     Results.Unauthorized
 
   def newSocket = WebSocket.acceptOrResult[Json, Json]: rh =>
@@ -65,7 +66,7 @@ abstract class Sockets[User](
           user => Right(actorFlow(user, rh))
         )
 
-  def actorFlow(user: User, rh: RequestHeader): Flow[Json, Json, ?] =
+  private def actorFlow(user: User, rh: RequestHeader): Flow[Json, Json, ?] =
     ActorFlow.actorRef[Json, Json](
       out => props(DefaultActorConfig(out, rh, user)),
       actorBufferSize,

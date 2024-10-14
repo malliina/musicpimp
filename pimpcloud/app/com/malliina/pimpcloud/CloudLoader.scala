@@ -9,8 +9,6 @@ import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
-import com.malliina.play.app.DefaultApp
-import com.malliina.play.http.LogRequestFilter
 import controllers.pimpcloud.*
 import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
@@ -68,16 +66,16 @@ class CloudComponents(context: Context, conf: AppConf)
   with HttpFiltersComponents
   with AssetsComponents:
 
-  val allowedCsp = Seq(
+  private val allowedCsp = Seq(
     "*.bootstrapcdn.com",
     "*.googleapis.com",
     "code.jquery.com",
     "use.fontawesome.com",
     "cdnjs.cloudflare.com"
   )
-  val allowedEntry = allowedCsp.mkString(" ")
+  private val allowedEntry = allowedCsp.mkString(" ")
 
-  val csp =
+  private val csp =
     s"default-src 'self' 'unsafe-inline' 'unsafe-eval' $allowedEntry data:; connect-src *; img-src 'self' data:;"
   override lazy val securityHeadersConfig = SecurityHeadersConfig(
     contentSecurityPolicy = Option(csp)
@@ -96,8 +94,9 @@ class CloudComponents(context: Context, conf: AppConf)
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
 
-  val adminAuth = new AdminOAuth(defaultActionBuilder, conf.conf(configuration))
+  private val adminAuth = new AdminOAuth(defaultActionBuilder, conf.conf(configuration))
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth, materializer)
+  val http = OkClient.default
 
   lazy val tags = CloudTags.forApp(BuildInfo.frontName, environment.mode == Mode.Prod)
   lazy val ctx = ActorExecution(actorSystem, materializer)
@@ -105,7 +104,7 @@ class CloudComponents(context: Context, conf: AppConf)
   // Controllers
   lazy val joined = new JoinedSockets(pimpAuth, ctx, httpErrorHandler)
   lazy val cloudAuths = joined.auths
-  lazy val push = new Push(controllerComponents, conf.pusher(configuration, OkClient.default))
+  lazy val push = new Push(controllerComponents, conf.pusher(configuration, http))
   lazy val p = Phones.forAuth(controllerComponents, tags, cloudAuths.phone, materializer)
   lazy val sc = ServersController.forAuth(controllerComponents, cloudAuths.server, materializer)
   lazy val l = new Logs(tags, pimpAuth, ctx, defaultActionBuilder)
@@ -116,7 +115,7 @@ class CloudComponents(context: Context, conf: AppConf)
   log.info(s"Started pimpcloud ${BuildInfo.version}")
 
   applicationLifecycle.addStopHook(() =>
-    Future.successful {
-//      adminAuth.validator.http.close()
-    }
+    Future.successful:
+      http.close()
+      adminAuth.validator.http.close()
   )

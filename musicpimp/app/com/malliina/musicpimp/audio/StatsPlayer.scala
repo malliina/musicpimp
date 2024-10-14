@@ -1,10 +1,12 @@
 package com.malliina.musicpimp.audio
 
-import org.apache.pekko.stream.{KillSwitches, Materializer}
-import org.apache.pekko.stream.scaladsl.{Keep, Sink}
-import com.malliina.musicpimp.db.NewUserManager
+import cats.effect.IO
+import com.malliina.concurrent.Execution.runtime
+import com.malliina.musicpimp.db.DoobieUserManager
 import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.values.Username
+import org.apache.pekko.stream.scaladsl.{Keep, Sink}
+import org.apache.pekko.stream.{KillSwitches, Materializer}
 
 import scala.concurrent.stm.{Ref, atomic}
 
@@ -13,14 +15,14 @@ import scala.concurrent.stm.{Ref, atomic}
   * @param stats
   *   stats database
   */
-class StatsPlayer(player: MusicPlayer, stats: PlaybackStats) extends AutoCloseable:
+class StatsPlayer(player: MusicPlayer, stats: PlaybackStats[IO]) extends AutoCloseable:
   implicit val mat: Materializer = player.mat
-  val latestUser = Ref[Username](NewUserManager.defaultUser)
+  val latestUser = Ref[Username](DoobieUserManager.defaultUser)
   val subscription = player.trackHistoryHub.source
     .viaMat(KillSwitches.single)(Keep.right)
     .to(Sink.foreach: track =>
       val user = latestUser.single.get
-      stats.played(track, user)
+      stats.played(track, user).unsafeToFuture()
     )
     .run()
 

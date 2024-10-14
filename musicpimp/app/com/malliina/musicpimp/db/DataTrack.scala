@@ -1,12 +1,12 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.json.CrossFormats.finiteDuration
 import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
 import io.circe.Codec
 import io.getquill.Embedded
-import com.malliina.musicpimp.json.CrossFormats.finiteDuration
 import scala.concurrent.duration.FiniteDuration
 
 case class DataTrack(

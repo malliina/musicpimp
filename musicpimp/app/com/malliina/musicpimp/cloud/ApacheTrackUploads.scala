@@ -1,6 +1,8 @@
 package com.malliina.musicpimp.cloud
 
+import cats.effect.IO
 import com.malliina.audio.ExecutionContexts
+import com.malliina.concurrent.Execution.runtime
 
 import java.io.FileNotFoundException
 import java.net.SocketException
@@ -26,10 +28,10 @@ object ApacheTrackUploads:
 
   val uploadPath = "/track"
 
-  def apply(lib: MusicLibrary, host: FullUrl) =
+  def apply(lib: MusicLibrary[IO], host: FullUrl) =
     new ApacheTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
 
-class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext)
+class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: ExecutionContext)
   extends AutoCloseable:
   implicit val exec: ExecutionContext = ec
   val scheduler = Executors.newSingleThreadScheduledExecutor()
@@ -91,12 +93,13 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
   ): Future[Unit] =
     lib
       .findFile(trackID)
+      .unsafeToFuture()
       .flatMap: maybePath =>
         maybePath
           .map: path =>
-            Future {
+            Future:
               uploadMediaApache(uploadUri, trackID, path, request, sizeCalc, content)
-            } recover {
+            .recover:
               case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
                 // thrown when the upload is cancelled, see method cancel
                 // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
@@ -109,7 +112,6 @@ class ApacheTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
                   s"Upload of track $trackID with request ID $request terminated exceptionally",
                   e
                 )
-            }
           .getOrElse:
             val msg = s"Unable to find track: $trackID"
             log warn msg

@@ -1,10 +1,11 @@
 package com.malliina.musicpimp.cloud
 
+import cats.effect.IO
 import org.apache.pekko.actor.Scheduler
 import org.apache.pekko.stream.Materializer
 import com.malliina.concurrent.{Execution, FutureOps}
 import com.malliina.http.FullUrl
-import com.malliina.concurrent.Execution.cached
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.musicpimp.cloud.CustomSSLSocketFactory
 import com.malliina.musicpimp.audio.*
 import com.malliina.musicpimp.auth.UserManager
@@ -27,7 +28,6 @@ import controllers.musicpimp.{LibraryController, Rest}
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 import io.circe.syntax.EncoderOps
 import play.api.Logger
-import play.api.libs.json.*
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Future, Promise}
@@ -35,10 +35,10 @@ import scala.util.Try
 
 case class Deps(
   playlists: PlaylistService,
-  userManager: UserManager[Username, Password],
+  userManager: UserManager[IO, Username, Password],
   handler: PlaybackMessageHandler,
-  lib: MusicLibrary,
-  stats: PlaybackStats,
+  lib: MusicLibrary[IO],
+  stats: PlaybackStats[IO],
   schedules: ScheduledPlaybackService
 )
 
@@ -55,7 +55,7 @@ object CloudSocket:
     url: FullUrl,
     handler: JsonHandler,
     s: Scheduler,
-    fullText: FullText,
+    fullText: FullText[IO],
     deps: Deps,
     mat: Materializer
   ): CloudSocket =
@@ -92,7 +92,7 @@ class CloudSocket(
   password: Password,
   alarmHandler: JsonHandler,
   s: Scheduler,
-  fullText: FullText,
+  fullText: FullText[IO],
   deps: Deps
 )(implicit mat: Materializer)
   extends JsonSocket8(
@@ -186,28 +186,32 @@ class CloudSocket(
         uploader.cancelSoon(req)
       case RootFolder =>
         lib.rootFolder
+          .unsafeToFuture()
           .map: folder =>
             sendSuccess(request, folder.toFull(cloudHost))
           .recoverAll: t =>
             log.error(s"Root folder failure.", t)
             sendFailure(request, FailReason("Library failure."))
       case GetFolder(id) =>
-        lib.folder(id).map { maybeFolder =>
-          maybeFolder
-            .map: folder =>
-              sendSuccess(request, folder.toFull(cloudHost))
-            .getOrElse:
-              val msg = s"Folder not found: '$id'."
-              log.warn(msg)
-              sendFailure(request, FailReason(msg))
-        } recoverAll { t =>
-          val msg = s"Library failure for folder '$id'."
-          log.error(msg, t)
-          sendFailure(request, FailReason(msg))
-        }
+        lib
+          .folder(id)
+          .unsafeToFuture()
+          .map: maybeFolder =>
+            maybeFolder
+              .map: folder =>
+                sendSuccess(request, folder.toFull(cloudHost))
+              .getOrElse:
+                val msg = s"Folder not found: '$id'."
+                log.warn(msg)
+                sendFailure(request, FailReason(msg))
+          .recoverAll: t =>
+            val msg = s"Library failure for folder '$id'."
+            log.error(msg, t)
+            sendFailure(request, FailReason(msg))
       case Search(term, limit) =>
         val ts = fullText
           .fullText(term, limit)
+          .unsafeToFuture()
           .map: dataTracks =>
             dataTracks.map(t => TrackJson.toFull(t, cloudHost))
         databaseResponse(ts)
@@ -216,9 +220,13 @@ class CloudSocket(
       case PingMessage =>
         sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
-        databaseResponse(stats.mostPlayed(meta).map(PopularList.forEntries(meta, _, cloudHost)))
+        databaseResponse(
+          stats.mostPlayed(meta).unsafeToFuture().map(PopularList.forEntries(meta, _, cloudHost))
+        )
       case GetRecent(meta) =>
-        databaseResponse(stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost)))
+        databaseResponse(
+          stats.mostRecent(meta).unsafeToFuture().map(RecentList.forEntries(meta, _, cloudHost))
+        )
       case GetPlaylists(user) =>
         databaseResponse(
           playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost))

@@ -1,5 +1,6 @@
 package com.malliina.play
 
+import cats.effect.IO
 import com.malliina.play.auth.{AuthFailure, Authenticator, UserAuthenticator}
 import com.malliina.play.http.AuthedRequest
 import com.malliina.values.{Password, Username}
@@ -16,7 +17,7 @@ trait CookieAuthenticator:
     * @return
     *   true if the credentials are valid, false otherwise
     */
-  def authenticate(user: Username, pass: Password): Future[Boolean]
+  def authenticate(user: Username, pass: Password): IO[Boolean]
 
   def authenticateFromCookie(req: RequestHeader): Future[Either[AuthFailure, AuthedRequest]]
 

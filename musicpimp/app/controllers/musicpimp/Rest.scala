@@ -1,5 +1,7 @@
 package controllers.musicpimp
 
+import cats.effect.IO
+
 import java.io.*
 import java.net.UnknownHostException
 import java.nio.file.*
@@ -8,7 +10,7 @@ import java.util.concurrent.TimeUnit
 import org.apache.pekko.stream.scaladsl.Sink
 import org.apache.pekko.util.ByteString
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
-import com.malliina.concurrent.Execution.cached
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.http.OkClient.MultiPartFile
 import com.malliina.http.{HttpResponse, OkClient}
@@ -45,7 +47,7 @@ import scala.util.Try
 class Rest(
   player: MusicPlayer,
   library: FileLibrary,
-  lib: MusicLibrary,
+  lib: MusicLibrary[IO],
   auth: AuthDeps,
   handler: PlaybackMessageHandler,
   statsPlayer: StatsPlayer,
@@ -150,6 +152,7 @@ class Rest(
   private def localPlaybackAction(id: TrackID): Future[Option[EssentialAction]] =
     lib
       .meta(id)
+      .unsafeToFuture()
       .map: maybeTrack =>
         maybeTrack.map: track =>
           /** The MusicPlayer is intentionally modified outside of the PimpAction block. Here's why
@@ -180,7 +183,7 @@ class Rest(
     val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
     val msg =
       fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
-    log info msg
+    log.info(msg)
     // Runs on another thread because setPlaylistAndPlay blocks until the InputStream has
     // enough data. Data will only be made available after this call, when the body of
     // the request is parsed (by this same thread, I guess). This Future will complete
@@ -286,13 +289,15 @@ class Rest(
 
       val track = trackInfoFromFileOpt
         .map(_.map(_.getOrElse(trackInfoFromUpload)))
-        .getOrElse(fut(trackInfoFromUpload))
-      track.flatMap: t =>
-        val user = Username(request.user)
-        val mediaInfo = t.meta.media
-        val fileSize = mediaInfo.size
-        log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
-        f(new TrackUploadRequest(t, file, user, request))
+        .getOrElse(IO.pure(trackInfoFromUpload))
+      track
+        .unsafeToFuture()
+        .flatMap: t =>
+          val user = Username(request.user)
+          val mediaInfo = t.meta.media
+          val fileSize = mediaInfo.size
+          log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
+          f(new TrackUploadRequest(t, file, user, request))
     }
 
   class TrackUploadRequest[A](
@@ -334,15 +339,16 @@ object Rest:
     * @param cmd
     *   beam details
     */
-  def beam(cmd: BeamCommand, lib: MusicLibrary): Future[Either[ErrorMessage, HttpResponse]] =
+  def beam(cmd: BeamCommand, lib: MusicLibrary[IO]): Future[Either[ErrorMessage, HttpResponse]] =
     val url = cmd.uri
     lib
       .findFile(cmd.track)
+      .unsafeToFuture()
       .flatMap: maybeFile =>
         maybeFile
           .map: file =>
             val size = Files.size(file).bytes
-            log info s"Beaming: $file of size: $size to: $url..."
+            log.info(s"Beaming: $file of size: $size to: $url...")
             sslClient
               .multiPart(
                 url,

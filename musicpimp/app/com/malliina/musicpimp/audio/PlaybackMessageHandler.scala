@@ -1,5 +1,9 @@
 package com.malliina.musicpimp.audio
 
+import cats.data.NonEmptyList
+import cats.effect.IO
+import cats.implicits.toTraverseOps
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.json.{JsonFormatVersions, JsonMessages}
 import com.malliina.musicpimp.library.{FileLibrary, LocalTrack, MusicLibrary}
@@ -15,7 +19,7 @@ import scala.util.Try
 class PlaybackMessageHandler(
   player: MusicPlayer,
   library: FileLibrary,
-  lib: MusicLibrary,
+  lib: MusicLibrary[IO],
   statsPlayer: StatsPlayer
 )(implicit ec: ExecutionContext)
   extends JsonHandlerBase:
@@ -74,16 +78,24 @@ class PlaybackMessageHandler(
           case Nil =>
             log warn s"No tracks were resolved"
       case ResetPlaylistMessage(index, tracks) =>
-        lib
-          .tracks(tracks)
+        NonEmptyList
+          .fromList(tracks.toList)
+          .map: nel =>
+            lib.tracks(nel).unsafeToFuture()
+          .getOrElse:
+            Future.successful(Nil)
           .map: ts =>
             playlist.reset(index, ts)
           .recover:
             case e: Exception =>
               log.error("Unable to reset playlist.", e)
       case Handover(index, tracks, state, position) =>
-        lib
-          .tracks(tracks)
+        NonEmptyList
+          .fromList(tracks.toList)
+          .map: nel =>
+            lib.tracks(nel).unsafeToFuture()
+          .getOrElse:
+            Future.successful(Nil)
           .map: ts =>
             playlist.reset(index.getOrElse(BasePlaylist.NoPosition), ts)
             playlist.current.foreach: t =>
@@ -121,10 +133,18 @@ class PlaybackMessageHandler(
           Nil
 
   def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
-    Future
-      .traverse(folders)(folder => lib.tracksIn(folder).map(_.getOrElse(Nil)).map(library.localize))
+    folders.toList
+      .traverse: folder =>
+        lib.tracksIn(folder).map(_.getOrElse(Nil)).map(library.localize)
       .map(_.flatten)
-      .flatMap(subTracks => lib.tracks(tracks).map(lts => lts ++ subTracks))
+      .flatMap: subTracks =>
+        NonEmptyList
+          .fromList(tracks.toList)
+          .map(nel => lib.tracks(nel))
+          .getOrElse(IO.pure(Nil))
+          .map: lts =>
+            lts ++ subTracks
+      .unsafeToFuture()
 
 object PlaybackMessageHandler:
   private val log = Logger(getClass)

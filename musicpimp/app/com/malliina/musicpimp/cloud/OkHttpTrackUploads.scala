@@ -1,11 +1,13 @@
 package com.malliina.musicpimp.cloud
 
+import cats.effect.IO
+
 import java.io.FileNotFoundException
 import java.net.SocketException
 import java.nio.file.Files
 import java.util.concurrent.{Executors, TimeUnit}
-
 import com.malliina.concurrent.Execution
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.http.{FullUrl, OkHttpResponse}
 import com.malliina.musicpimp.cloud.OkHttpTrackUploads.log
 import com.malliina.musicpimp.http.MultipartRequests
@@ -25,10 +27,10 @@ object OkHttpTrackUploads:
 
   val uploadPath = "/track"
 
-  def apply(lib: MusicLibrary, host: FullUrl) =
+  def apply(lib: MusicLibrary[IO], host: FullUrl) =
     new OkHttpTrackUploads(lib, host + uploadPath, Execution.cached)
 
-class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionContext)
+class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: ExecutionContext)
   extends AutoCloseable:
   implicit val exec: ExecutionContext = ec
   val scheduler = Executors.newSingleThreadScheduledExecutor()
@@ -70,6 +72,7 @@ class OkHttpTrackUploads(lib: MusicLibrary, uploadUri: FullUrl, ec: ExecutionCon
   ): Future[Unit] =
     lib
       .findFile(trackID)
+      .unsafeToFuture()
       .flatMap: maybeAbsolute =>
         maybeAbsolute
           .map: file =>

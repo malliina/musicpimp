@@ -1,15 +1,14 @@
 package com.malliina.musicpimp.auth
 
+import cats.effect.IO
+
 import java.io.FileNotFoundException
 import java.nio.file.Files
-
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.{Password, Username}
 
-import scala.concurrent.Future
-
-class FileUserManager extends UserManager[Username, Password]:
+class FileUserManager extends UserManager[IO, Username, Password]:
   private val passFile = FileUtilities.pathTo("credentials.txt")
   val defaultUser = Username("admin")
   val defaultPass = Password("test")
@@ -35,24 +34,24 @@ class FileUserManager extends UserManager[Username, Password]:
     * @return
     *   true if the credentials are valid, false otherwise
     */
-  override def authenticate(user: Username, pass: Password): Future[Boolean] = fut:
+  override def authenticate(user: Username, pass: Password): IO[Boolean] = pure:
     savedPassHash.fold(ifEmpty = user == defaultUser && pass == defaultPass)(
       _ == Auth.hash(user, pass)
     )
 
-  override def deleteUser(user: Username): Future[Unit] = fut(())
+  override def deleteUser(user: Username): IO[Unit] = pure(())
 
-  override def users: Future[Seq[Username]] = fut(Seq(defaultUser))
+  override def users: IO[List[Username]] = IO.pure(List(defaultUser))
 
-  override def updatePassword(user: Username, newPass: Password): Future[Unit] = fut:
+  override def updatePassword(user: Username, newPass: Password): IO[Unit] = pure:
     FileUtilities.writerTo(passFile): passWriter =>
       passWriter.write(Auth.hash(user, newPass))
     FileUtil.trySetOwnerOnlyPermissions(passFile)
 
-  override def addUser(user: Username, pass: Password): Future[Option[AlreadyExists]] = fut(None)
+  override def addUser(user: Username, pass: Password): IO[Option[AlreadyExists]] = pure(None)
 
   def hasCredentials(): Boolean = Files.exists(passFile)
 
   def resetCredentials() = Files.deleteIfExists(passFile)
 
-  def fut[T](t: T) = Future.successful(t)
+  def pure[T](t: T) = IO.pure(t)

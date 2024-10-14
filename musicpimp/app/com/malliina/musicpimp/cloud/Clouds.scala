@@ -1,5 +1,7 @@
 package com.malliina.musicpimp.cloud
 
+import cats.effect.IO
+
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import org.apache.pekko.NotUsed
@@ -46,7 +48,7 @@ class Clouds(
   player: MusicPlayer,
   alarmHandler: JsonHandler,
   deps: Deps,
-  fullText: FullText,
+  fullText: FullText[IO],
   cloudEndpoint: FullUrl,
   scheduler: Scheduler
 )(implicit mat: Materializer)

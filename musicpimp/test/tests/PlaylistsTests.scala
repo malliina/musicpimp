@@ -1,6 +1,7 @@
 package tests
 
-import com.malliina.concurrent.Execution.cached
+import cats.effect.IO
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
@@ -19,6 +20,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import play.api.libs.json.Json as PlayJson
 import io.getquill.*
+
 import scala.concurrent.duration.DurationInt
 
 class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
@@ -30,10 +32,8 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
   val testTracks: Seq[TrackID] = Seq(trackId)
 
   test("add tracks"):
-    val lib: NewDatabaseLibrary = components.lib
-    val db = lib.db
+    val lib: DatabaseLibrary[IO] = components.lib
     val folderId = FolderID("Testid")
-    import db.*
 
     def trackInserts =
       lib.insertTracks(
@@ -43,18 +43,17 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
       )
 
     val insertions = for
-      _ <- db.performAsync("Cleanup"):
-        db.run(db.tracksTable.delete)
-        db.run(db.foldersTable.delete)
+      _ <- lib.deleteTracks
+      _ <- lib.deleteFolders
       foldersInserted <- lib.insertFolders(
         Seq(DataFolder(folderId, "Testfolder", UnixPath.Empty, folderId))
       )
       tracksInserted <- trackInserts
     yield (foldersInserted, tracksInserted)
-    val (fsi, tsi) = await(insertions)
+    val (fsi, tsi) = await(insertions.unsafeToFuture())
     assert(fsi == 1)
     assert(tsi == 1)
-    val maybeFolder = await(lib.folder(folderId))
+    val maybeFolder = await(lib.folder(folderId).unsafeToFuture())
     assert(maybeFolder.isDefined)
 
   test("GET /playlists"):
@@ -103,8 +102,8 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
       app,
       request.withHeaders(
         AUTHORIZATION -> HttpUtil.authorizationValue(
-          NewUserManager.defaultUser.name,
-          NewUserManager.defaultPass.pass
+          DoobieUserManager.defaultUser.name,
+          DoobieUserManager.defaultPass.pass
         ),
         ACCEPT -> JSON
       )

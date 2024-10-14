@@ -4,8 +4,11 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}
 import java.security.SecureRandom
 import _root_.musicpimp.Routes
+import cats.effect.IO
+import com.malliina.database.DoobieDatabase
 import com.malliina.http.FullUrl
-import com.malliina.logback.{LogbackUtils, PimpAppender}
+import com.malliina.concurrent.Execution.runtime
+import com.malliina.logback.PimpAppender
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.Auths
@@ -149,7 +152,7 @@ class PimpComponents(
       Some(router)
     ) with PimpErrorHandling
 
-  val player = new MusicPlayer()
+  val player = MusicPlayer()
   val library = Library()(materializer)
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
@@ -157,25 +160,37 @@ class PimpComponents(
   implicit val ec: ExecutionContext = materializer.executionContext
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
-  val newDb = PimpMySQLDatabase.withMigrations(actorSystem, appConf.databaseConf)
-  val fullText = FullText(newDb)
-  lazy val indexer = new Indexer(library, NewIndexer(newDb), actorSystem.scheduler)
+  val databaseConf = appConf.databaseConf
+  val newDb = PimpMySQLDatabase.withMigrations(actorSystem, databaseConf)
+  val doobieConf = com.malliina.database.Conf(
+    databaseConf.url,
+    databaseConf.user,
+    databaseConf.pass,
+    databaseConf.driver,
+    maxPoolSize = 5,
+    autoMigrate = false,
+    schemaTable = "flyway_schema_history"
+  )
+  val (doobieResource, doobieFinalizer) =
+    DoobieDatabase.default[IO](doobieConf).allocated.unsafeRunSync()
+  val fullText = FullText(doobieResource)
+  lazy val indexer = Indexer(library, DoobieIndexer(doobieResource), actorSystem.scheduler)
   val ps = NewPlaylist(newDb)
-  val lib = NewDatabaseLibrary(newDb, library)
-  val userManager = NewUserManager.withUser(newDb)
+  val lib = DatabaseLibrary[IO](doobieResource, library)
+  val userManager = DoobieUserManager.withUser(doobieResource).unsafeRunSync()
   lazy val rememberMe =
-    new RememberMe(NewTokenStore(newDb), cookieSigner, httpConfiguration.secret)
-  val stats = NewDatabaseStats(newDb)
-  lazy val statsPlayer = new StatsPlayer(player, stats)
-  lazy val auth = new PimpAuthenticator(userManager, rememberMe, ec)
-  lazy val handler = new PlaybackMessageHandler(player, library, lib, statsPlayer)
+    new RememberMe(DoobieTokenStore(doobieResource), cookieSigner, httpConfiguration.secret)
+  val stats = DatabaseStats[IO](doobieResource)
+  lazy val statsPlayer = StatsPlayer(player, stats)
+  lazy val auth = PimpAuthenticator(userManager, rememberMe, ec)
+  lazy val handler = PlaybackMessageHandler(player, library, lib, statsPlayer)
   lazy val deps = Deps(ps, userManager, handler, lib, stats, schedules)
   lazy val clouds: Clouds =
     new Clouds(player, alarmHandler, deps, fullText, options.cloudUri, actorSystem.scheduler)
   lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
-  lazy val auths = new Auths(userManager, rememberMe)(ec)
-  lazy val schedules = new ScheduledPlaybackService(player, lib)
-  lazy val alarmHandler = new JsonHandler(player, schedules)
+  lazy val auths = Auths(userManager, rememberMe)(ec)
+  lazy val schedules = ScheduledPlaybackService(player, lib)
+  lazy val alarmHandler = JsonHandler(player, schedules)
   lazy val compositeAuth = Authenticator.anyOne(
     CookieAuthenticator.default(auth)(ec),
     PimpAuthenticator.cookie(rememberMe)
@@ -183,23 +198,23 @@ class PimpComponents(
   lazy val webAuth = Secured.redirecting(compositeAuth)
   lazy val authDeps = AuthDeps(controllerComponents, webAuth, materializer)
   // Controllers
-  lazy val ls = new PimpLogs(ctx)
-  lazy val lp = new LogPage(tags, ls, authDeps)
-  lazy val sws = new ServerWS(player, clouds, auths.client, handler, ctx)
-  lazy val webCtrl = new Website(player, tags, sws, authDeps, stats)
-  lazy val s = new Search(indexer, auths.client, ctx)
-  lazy val sp = new SearchPage(tags, s, indexer, fullText, authDeps)
-  lazy val r = new Rest(player, library, lib, authDeps, handler, statsPlayer, httpErrorHandler)
-  lazy val pl = new Playlists(tags, ps, authDeps)
-  lazy val settingsCtrl = new SettingsController(tags, messages, library, indexer, authDeps)
-  lazy val libCtrl = new LibraryController(tags, lib, authDeps)
-  lazy val alarms = new Alarms(library, alarmHandler, tags, authDeps, messages)
-  lazy val accs = new AccountForms
-  lazy val accounts = new Accounts(tags, auth, authDeps, accs)
-  lazy val cloud = new Cloud(tags, clouds, authDeps)
-  lazy val connect = new ConnectController(authDeps)
-  lazy val cloudWS = new CloudWS(clouds, ctx)
-  val starter = new Starter(actorSystem)
+  lazy val ls = PimpLogs(ctx)
+  lazy val lp = LogPage(tags, ls, authDeps)
+  lazy val sws = ServerWS(player, clouds, auths.client, handler, ctx)
+  lazy val webCtrl = Website(player, tags, sws, authDeps, stats)
+  lazy val s = Search(indexer, auths.client, ctx)
+  lazy val sp = SearchPage(tags, s, indexer, fullText, authDeps)
+  lazy val r = Rest(player, library, lib, authDeps, handler, statsPlayer, httpErrorHandler)
+  lazy val pl = Playlists(tags, ps, authDeps)
+  lazy val settingsCtrl = SettingsController(tags, messages, library, indexer, authDeps)
+  lazy val libCtrl = LibraryController(tags, lib, authDeps)
+  lazy val alarms = Alarms(library, alarmHandler, tags, authDeps, messages)
+  lazy val accs = AccountForms
+  lazy val accounts = Accounts(tags, auth, authDeps, accs)
+  lazy val cloud = Cloud(tags, clouds, authDeps)
+  lazy val connect = ConnectController(authDeps)
+  lazy val cloudWS = CloudWS(clouds, ctx)
+  val starter = Starter(actorSystem)
   starter.startServices(options, clouds, indexer, schedules, applicationLifecycle)
   val dummyForInit = statsPlayer
 
@@ -235,4 +250,5 @@ class PimpComponents(
       clouds.close()
       appConf.close()
       indexer.close()
+      doobieFinalizer.unsafeRunSync()
   )

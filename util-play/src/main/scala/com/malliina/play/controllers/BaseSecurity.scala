@@ -1,5 +1,7 @@
 package com.malliina.play.controllers
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import org.apache.pekko.stream.Materializer
 import com.malliina.play.auth.*
 import com.malliina.play.controllers.BaseSecurity.log
@@ -48,8 +50,8 @@ class BaseSecurity[A <: AuthInfo](
   /** Retrieves the authenticated username from the request.
     *
     * Attempts to read the "username" session variable, but if no such thing exists, attempts to
-    * authenticate based on the the HTTP Authorization header, finally if that also fails,
-    * authenticates based on credentials in the query string.
+    * authenticate based on the HTTP Authorization header, finally if that also fails, authenticates
+    * based on credentials in the query string.
     *
     * @return
     *   the authentication result
@@ -85,7 +87,7 @@ class BaseSecurity[A <: AuthInfo](
       f(user).apply(rh)
 
   def logAuth(user: A, rh: RequestHeader): Unit =
-    log info s"User '${user.user}' from '${Proxies.realAddress(rh)}' requests '${rh.uri}'."
+    log.info(s"User '${user.user}' from '${Proxies.realAddress(rh)}' requests '${rh.uri}'.")
 
   def logged(action: EssentialAction): EssentialAction =
     BaseSecurity.logged(action)
@@ -106,10 +108,9 @@ class BaseSecurity[A <: AuthInfo](
     onUnauthorized: AuthFailure => Result
   )(action: A => EssentialAction): EssentialAction =
     EssentialAction: rh =>
-      val futureAccumulator = auth(rh) map { authResult =>
+      val futureAccumulator = auth(rh).map: authResult =>
         authResult.fold(
           failure => Accumulator.done(onUnauthorized(failure)),
           success => action(success).apply(rh)
         )
-      }
       Accumulator.flatten(futureAccumulator)(mat)

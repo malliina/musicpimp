@@ -1,5 +1,7 @@
 package controllers.musicpimp
 
+import cats.effect.IO
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.http.PlayCirce
 
 import java.nio.file.Path
@@ -94,6 +96,9 @@ class SecureBase(auth: AuthDeps)
   def pimpActionAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
     pimpParsedActionAsync(defaultParser)(f)
 
+  def pimpActionAsyncIO(f: CookiedRequest[AnyContent, Username] => IO[Result]) =
+    pimpParsedActionAsync(defaultParser)(r => f(r).unsafeToFuture())
+
   def pimpActionAsync2[R: Writeable](f: CookiedRequest[AnyContent, Username] => Future[R]) =
     okAsyncAction(defaultParser)(f)
 
@@ -105,6 +110,9 @@ class SecureBase(auth: AuthDeps)
   def actionAsync[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => Future[Result]) =
     pimpParsedActionAsync(parser)(req => f(req).recover(errorHandler))
 
+  def actionAsyncIO[T](parser: BodyParser[T])(f: CookiedRequest[T, Username] => IO[Result]) =
+    actionAsync[T](parser)(r => f(r).unsafeToFuture())
+
   def pimpParsedActionAsync[T](
     parser: BodyParser[T]
   )(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
@@ -112,6 +120,11 @@ class SecureBase(auth: AuthDeps)
       comps.actionBuilder.async(parser): req =>
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))
+
+  def pimpParsedActionAsyncIO[T](
+    parser: BodyParser[T]
+  )(f: CookiedRequest[T, Username] => IO[Result]): EssentialAction =
+    pimpParsedActionAsync[T](parser)(r => f(r).unsafeToFuture())
 
   def errorHandler: PartialFunction[Throwable, Result] = { case _ =>
     serverErrorGeneric

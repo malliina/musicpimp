@@ -6,11 +6,9 @@ import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.FolderID
 import com.malliina.values.UnixPath
 import io.circe.Codec
-import io.getquill.Embedded
 
 case class DataFolder(id: FolderID, title: String, path: UnixPath, parent: FolderID)
-  extends FolderMeta
-  with Embedded derives Codec.AsObject
+  extends FolderMeta derives Codec.AsObject
 
 object DataFolder:
   val root = DataFolder(Library.RootId, "", UnixPath.Empty, Library.RootId)

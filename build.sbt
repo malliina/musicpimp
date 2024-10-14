@@ -31,7 +31,7 @@ val bootClasspath = taskKey[String]("bootClasspath")
 val primitivesVersion = "3.7.3"
 val playJsonVersion = "3.0.4"
 val httpVersion = "4.5.13"
-val mysqlVersion = "5.1.49"
+val mysqlVersion = "8.0.33"
 val nvWebSocketVersion = "2.14"
 val munitVersion = "1.0.2"
 val pekkoVersion = "1.0.3"
@@ -77,11 +77,12 @@ val crossJs = cross.js
 
 val playCommon = Project("play-common", file("play-common"))
   .settings(
-    libraryDependencies ++= Seq("web-auth").map { m =>
+    libraryDependencies ++= Seq("web-auth", "database").map { m =>
       "com.malliina" %% m % "6.9.3"
     } ++
       Seq(
-        "org.playframework" %% "play" % playVersion
+        "org.playframework" %% "play" % playVersion,
+        "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.18.0"
       )
   )
 val playSocial = Project("play-social", file("play-social"))
@@ -146,7 +147,6 @@ val shared = Project("pimp-shared", file("pimpshared"))
     libraryDependencies ++= Seq(
       logstreamsDep,
       "io.getquill" %% "quill-jdbc" % "4.8.4",
-      "org.flywaydb" % "flyway-core" % "7.5.0",
       "mysql" % "mysql-connector-java" % mysqlVersion,
       malliinaGroup %% "mobile-push" % "3.11.0",
       "com.lihaoyi" %% "scalatags" % scalatagsVersion

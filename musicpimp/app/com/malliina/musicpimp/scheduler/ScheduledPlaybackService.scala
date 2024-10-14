@@ -1,8 +1,7 @@
 package com.malliina.musicpimp.scheduler
 
-import java.nio.file.{Files, Path}
-import java.util.UUID
-import com.malliina.concurrent.Execution.cached
+import cats.effect.IO
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
@@ -11,10 +10,12 @@ import com.malliina.musicpimp.util.FileUtil
 import io.circe.syntax.EncoderOps
 import play.api.Logger
 
+import java.nio.file.{Files, Path}
+import java.util.UUID
 import scala.concurrent.Future
 import scala.util.Try
 
-class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary):
+class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
   private val log = Logger(getClass)
 
   private val s: IScheduler = Cron4jScheduler
@@ -44,6 +45,7 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary):
   private def toFull(conf: ClockPlaybackConf, host: FullUrl): Future[Option[FullClockPlayback]] =
     lib
       .track(conf.track)
+      .unsafeToFuture()
       .map: maybeTrack =>
         maybeTrack.map: meta =>
           FullClockPlayback(

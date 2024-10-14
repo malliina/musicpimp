@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.auth
 
+import cats.effect.IO
 import com.malliina.play.auth.*
 import com.malliina.play.http.AuthedRequest
 import com.malliina.values.{Password, Username}
@@ -43,20 +44,21 @@ object Auths:
           else first(tail)(f)(p)
         }
 
-class Auths(userManager: UserManager[Username, Password], rememberMe: RememberMe)(implicit
+class Auths(userManager: UserManager[IO, Username, Password], rememberMe: RememberMe)(implicit
   ec: ExecutionContext
 ):
-  private val database = Authenticator[AuthedRequest]: rh =>
-    com.malliina.play.auth.Auth.basicCredentials(rh) map { creds =>
-      userManager.authenticate(creds.username, creds.password) map { isValid =>
-        if isValid then Right(AuthedRequest(creds.username, rh, None))
-        else Left(InvalidCredentials(rh))
-      }
-    } getOrElse {
-      fut(Left(MissingCredentials(rh)))
-    }
+  private val database = Authenticator.io[AuthedRequest]: rh =>
+    com.malliina.play.auth.Auth
+      .basicCredentials(rh)
+      .map: creds =>
+        userManager.authenticate(creds.username, creds.password) map { isValid =>
+          if isValid then Right(AuthedRequest(creds.username, rh, None))
+          else Left(InvalidCredentials(rh))
+        }
+      .getOrElse:
+        IO.pure(Left(MissingCredentials(rh)))
 
-  val cookie = Authenticator[AuthedRequest]: rh =>
+  val cookie = Authenticator.io[AuthedRequest]: rh =>
     rememberMe.authenticateFromCookie(rh).map(_.toRight(MissingCredentials(rh)))
 
   val client = Auths.anyOne(Auths.session, cookie, database)

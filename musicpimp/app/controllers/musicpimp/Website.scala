@@ -1,23 +1,23 @@
 package controllers.musicpimp
 
+import cats.effect.IO
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.play.tags.TagPage
 import com.malliina.values.Username
+
 import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
-
-import scala.concurrent.Future
 
 class Website(
   musicPlayer: MusicPlayer,
   tags: PimpHtml,
   serverWS: ServerWS,
   auth: AuthDeps,
-  stats: PlaybackStats
+  stats: PlaybackStats[IO]
 ) extends HtmlController(auth):
 
   def player = navigate[TagPage]: req =>
@@ -30,34 +30,36 @@ class Website(
     tags.basePlayer(userFeedback, req.user)
 
   def recent = metaAction: (meta, req) =>
-    stats.mostRecent(meta) map { entries =>
-      val list = RecentList.forEntries(meta, entries, TrackJson.host(req))
-      default.respond(req)(
-        html = tags.mostRecent(list),
-        json = list
-      )
-    }
+    stats
+      .mostRecent(meta)
+      .map: entries =>
+        val list = RecentList.forEntries(meta, entries, TrackJson.host(req))
+        default.respond(req)(
+          html = tags.mostRecent(list),
+          json = list
+        )
 
   def popular = metaAction: (meta, req) =>
-    stats.mostPlayed(meta) map { entries =>
-      val list = PopularList.forEntries(meta, entries, TrackJson.host(req))
-      default.respond(req)(
-        html = tags.mostPopular(list),
-        json = list
-      )
-    }
+    stats
+      .mostPlayed(meta)
+      .map: entries =>
+        val list = PopularList.forEntries(meta, entries, TrackJson.host(req))
+        default.respond(req)(
+          html = tags.mostPopular(list),
+          json = list
+        )
 
-  protected def metaAction(f: (DataRequest, RequestHeader) => Future[Result]) =
+  private def metaAction(f: (DataRequest, RequestHeader) => IO[Result]) =
     userAction: req =>
       DataRequest
         .fromRequest(req)
         .fold(
-          error => fut(badRequest(error)),
+          error => IO.pure(badRequest(error)),
           meta => f(meta, req)
         )
 
-  protected def userAction(f: AuthenticatedRequest[AnyContent, Username] => Future[Result]) =
-    actionAsync(comps.parsers.default): r =>
+  private def userAction(f: AuthenticatedRequest[AnyContent, Username] => IO[Result]) =
+    actionAsyncIO(comps.parsers.default): r =>
       f(new AuthenticatedRequest(r.user, r))
 
   def errorMsg(t: Throwable): String = t match

@@ -1,5 +1,7 @@
 package com.malliina.play.concurrent
 
+import cats.effect.IO
+
 import scala.concurrent.{ExecutionContext, Future}
 
 object FutureUtils:
@@ -23,5 +25,14 @@ object FutureUtils:
           if p(res) || tail.isEmpty then fut(res)
           else first(tail)(f)(p)
         }
+
+  def firstIO[T, R](ts: List[T])(f: T => IO[R])(p: R => Boolean): IO[R] =
+    ts match
+      case Nil =>
+        IO.raiseError(new NoSuchElementException)
+      case head :: tail =>
+        f(head).flatMap: res =>
+          if p(res) || tail.isEmpty then IO.pure(res)
+          else firstIO(tail)(f)(p)
 
   def fut[T](t: T): Future[T] = Future.successful(t)

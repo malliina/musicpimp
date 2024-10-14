@@ -47,5 +47,5 @@ object Conf:
     hikari.setJdbcUrl(conf.url)
     hikari.setUsername(conf.user)
     hikari.setPassword(conf.pass)
-    log info s"Connecting to '${conf.url}'..."
+    log.info(s"Connecting to '${conf.url}'...")
     new HikariDataSource(hikari)

@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.scheduler
 
-import com.malliina.concurrent.Execution.cached
+import cats.effect.IO
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.musicpimp.audio.MusicPlayer
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.messaging.TokenService
@@ -16,13 +17,14 @@ case class PlaybackJob(
   when: ClockSchedule,
   trackId: TrackID,
   player: MusicPlayer,
-  lib: MusicLibrary
+  lib: MusicLibrary[IO]
 ) extends Job:
   def describe: String = s"Plays $trackId"
 
   override def run(): Unit =
     lib
       .meta(trackId)
+      .unsafeToFuture()
       .map: maybeTrack =>
         maybeTrack
           .map: track =>
@@ -38,5 +40,5 @@ case class PlaybackJob(
 object PlaybackJob:
   private val log = Logger(getClass)
 
-  def apply(conf: ClockPlaybackConf, player: MusicPlayer, lib: MusicLibrary): PlaybackJob =
+  def apply(conf: ClockPlaybackConf, player: MusicPlayer, lib: MusicLibrary[IO]): PlaybackJob =
     PlaybackJob(conf.id, conf.when, conf.track, player, lib)

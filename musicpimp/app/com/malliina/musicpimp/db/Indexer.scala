@@ -1,10 +1,11 @@
 package com.malliina.musicpimp.db
 
+import cats.effect.IO
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.{Cancellable, Scheduler}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
-import com.malliina.concurrent.Execution.cached
+import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
 import com.malliina.musicpimp.library.FileLibrary
@@ -24,8 +25,9 @@ object Indexer:
   * Indexes the music library if it changes. Runs when `init()` is first called and every six hours
   * from then on.
   */
-class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit mat: Materializer)
-  extends AutoCloseable:
+class Indexer(library: FileLibrary, indexer: DoobieIndexer[IO], s: Scheduler)(implicit
+  mat: Materializer
+) extends AutoCloseable:
   val indexFile = FileUtil.localPath("files7.cache")
   val indexInterval = 6.hours
 //  val indexInterval = 15.seconds
@@ -47,26 +49,27 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     log.info("Indexing if necessary...")
     val actualObs = calculateFileCount()
     val saved = loadSavedFileCount
-    val task = Source.future(actualObs) flatMapConcat { actual =>
-      if actual != saved then
-        Source
-          .future:
-            saveFileCount(actual)
-              .map: _ =>
-                log.info(
-                  s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-                )
-              .recover:
-                case e: Exception =>
-                  log.error(s"Unable to save file count of $actual", e)
-          .flatMapConcat: _ =>
-            index()
-      else
-        log.info(
-          s"There are $actual files in the library. No change since last time, not indexing."
-        )
-        Source.empty
-    }
+    val task = Source
+      .future(actualObs)
+      .flatMapConcat: actual =>
+        if actual != saved then
+          Source
+            .future:
+              saveFileCount(actual)
+                .map: _ =>
+                  log.info(
+                    s"Saved file count of $saved differs from actual file count of $actual, indexing..."
+                  )
+                .recover:
+                  case e: Exception =>
+                    log.error(s"Unable to save file count of $actual", e)
+            .flatMapConcat: _ =>
+              index()
+        else
+          log.info(
+            s"There are $actual files in the library. No change since last time, not indexing."
+          )
+          Source.empty
     task.toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
 
   /** Indexes the music library.
@@ -100,7 +103,8 @@ class Indexer(library: FileLibrary, indexer: NewIndexer, s: Scheduler)(implicit 
     indexer
       .runIndexer(library): fileCount =>
         log.info(s"File count at $fileCount...")
-        Future.successful(hub.send(fileCount))
+        IO.pure(hub.send(fileCount))
+      .unsafeToFuture()
       .map: result =>
         val end = System.currentTimeMillis()
         val duration = (end - start).millis

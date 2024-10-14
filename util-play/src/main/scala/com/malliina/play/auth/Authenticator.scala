@@ -1,5 +1,7 @@
 package com.malliina.play.auth
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import com.malliina.play.auth.Authenticator.Outcome
 import com.malliina.play.concurrent.FutureUtils
 import com.malliina.play.models.AuthRequest
@@ -20,7 +22,7 @@ object UserAuthenticator:
         auth(rh)
 
   def default(
-    isValid: BasicCredentials => Future[Option[Username]]
+    isValid: BasicCredentials => IO[Option[Username]]
   )(implicit ec: ExecutionContext): Authenticator[Username] =
     Authenticator.anyOne(session(), header(isValid), query(isValid))
 
@@ -39,8 +41,8 @@ object UserAuthenticator:
     * @return
     *   the username wrapped in an Option if successfully authenticated, None otherwise
     */
-  def header(isValid: BasicCredentials => Future[Option[Username]])(implicit ec: ExecutionContext) =
-    basic(Auth.basicCredentials, isValid)
+  def header(isValid: BasicCredentials => IO[Option[Username]])(implicit ec: ExecutionContext) =
+    basic(Auth.basicCredentials, c => isValid(c).unsafeToFuture())
 
   /** Authenticates based on the "u" and "p" query string parameters.
     *
@@ -49,8 +51,8 @@ object UserAuthenticator:
     * @return
     *   the username, if successfully authenticated
     */
-  def query(isValid: BasicCredentials => Future[Option[Username]])(implicit ec: ExecutionContext) =
-    basic(rh => Auth.credentialsFromQuery(rh), isValid)
+  def query(isValid: BasicCredentials => IO[Option[Username]])(implicit ec: ExecutionContext) =
+    basic(rh => Auth.credentialsFromQuery(rh), c => isValid(c).unsafeToFuture())
 
   def basic(
     read: RequestHeader => Option[BasicCredentials],
@@ -95,6 +97,9 @@ trait Authenticator[+T]:
 
 object Authenticator:
   type Outcome[+T] = Either[AuthFailure, T]
+
+  def io[T](auth: RequestHeader => IO[Outcome[T]]): Authenticator[T] =
+    apply(rh => auth(rh).unsafeToFuture())
 
   def apply[T](auth: RequestHeader => Future[Outcome[T]]): Authenticator[T] =
     new Authenticator[T]:

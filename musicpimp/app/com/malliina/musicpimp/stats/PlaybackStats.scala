@@ -3,9 +3,7 @@ package com.malliina.musicpimp.stats
 import com.malliina.musicpimp.audio.TrackMeta
 import com.malliina.values.Username
 
-import scala.concurrent.Future
-
-trait PlaybackStats:
+trait PlaybackStats[F[_]]:
 
   /** Increments the playback count of `track` by one.
     *
@@ -16,7 +14,7 @@ trait PlaybackStats:
     * @return
     *   success on successful registration, failure otherwise
     */
-  def played(track: TrackMeta, user: Username): Future[Unit]
+  def played(track: TrackMeta, user: Username): F[Unit]
 
   /** Returns the most played tracks.
     *
@@ -30,11 +28,11 @@ trait PlaybackStats:
     * @return
     *   the most played tracks, ordered by playback count
     */
-  def mostPlayed(request: DataRequest): Future[Seq[PopularEntry]]
+  def mostPlayed(request: DataRequest): F[List[PopularEntry]]
 
   /** @param request
     *   request limits
     * @return
     *   the most recently played tracks
     */
-  def mostRecent(request: DataRequest): Future[Seq[RecentEntry]]
+  def mostRecent(request: DataRequest): F[List[RecentEntry]]

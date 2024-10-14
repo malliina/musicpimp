@@ -1,5 +1,7 @@
 package controllers.musicpimp
 
+import cats.effect.IO
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.musicpimp.audio.{PimpEnc, TrackJson, TrackMeta}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default
@@ -21,18 +23,19 @@ object LibraryController:
 
   def noTrackJson(id: TrackID) = FailReason(s"Track not found: $id")
 
-class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) extends Secured(auth):
+class LibraryController(tags: PimpHtml, lib: MusicLibrary[IO], auth: AuthDeps)
+  extends Secured(auth):
 
   def siteRoot = rootLibrary
 
-  def rootLibrary = pimpActionAsync: request =>
+  def rootLibrary = pimpActionAsyncIO: request =>
     lib.rootFolder.map: root =>
       folderResult(root, request)
 
   /** @return
     *   an action that provides the contents of the library with the supplied id
     */
-  def library(in: FolderID) = pimpActionAsync: request =>
+  def library(in: FolderID) = pimpActionAsyncIO: request =>
     val folderId = PimpEnc.folder(in)
     lib
       .folder(folderId)
@@ -44,9 +47,10 @@ class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) exten
             log.warn(s"Folder not found: '$folderId'.")
             folderNotFound(folderId, request)
 
-  def tracksIn(in: FolderID) = pimpActionAsync: request =>
+  def tracksIn(in: FolderID) = pimpActionAsyncIO: request =>
     val folderId = PimpEnc.folder(in)
-    implicit val writer: Encoder[TrackMeta] = TrackJson.writer(request)
+    given Encoder[TrackMeta] = TrackJson.writer(request)
+    given Encoder[List[TrackMeta]] = Encoder.encodeList[TrackMeta]
     lib
       .tracksIn(folderId)
       .map: maybeTracks =>
@@ -86,6 +90,7 @@ class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) exten
     customFailingPimpAction(onDownloadAuthFail): authReq =>
       lib
         .findFile(id)
+        .unsafeToFuture()
         .map: maybeTrack =>
           maybeTrack
             .map(path => FileResults.fileResult(path, authReq.rh, comps.fileMimeTypes))
@@ -99,7 +104,7 @@ class LibraryController(tags: PimpHtml, lib: MusicLibrary, auth: AuthDeps) exten
     Secured.logUnauthorized(failure.rh)
     Unauthorized
 
-  def meta(id: TrackID) = pimpActionAsync: request =>
+  def meta(id: TrackID) = pimpActionAsyncIO: request =>
     lib
       .track(id)
       .map: maybeTrack =>

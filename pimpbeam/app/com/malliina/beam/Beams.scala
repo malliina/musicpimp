@@ -60,7 +60,7 @@ class Beams(ctx: ActorExecution):
     */
   def validatePhoneCredentials(creds: BasicCredentials): Future[Option[Username]] =
     val user = creds.username
-    log debug s"Validating '$user'..."
+    log.debug(s"Validating '$user'...")
     if Home.validateCredentials(creds) then
       playerExists(user).map(exists => if exists then Option(user) else None)
     else Future.successful(None)

@@ -1,5 +1,6 @@
 package controllers.musicpimp
 
+import cats.effect.IO
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.db.{DataTrack, FullText, Indexer}
 import com.malliina.musicpimp.html.PimpHtml
@@ -14,17 +15,22 @@ object SearchPage:
   val PlaceHolder = "artist, album or track..."
   val TermKey = "term"
 
-class SearchPage(tags: PimpHtml, s: Search, indexer: Indexer, fullText: FullText, auth: AuthDeps)
-  extends HtmlController(auth):
+class SearchPage(
+  tags: PimpHtml,
+  s: Search,
+  indexer: Indexer,
+  fullText: FullText[IO],
+  auth: AuthDeps
+) extends HtmlController(auth):
 
-  def search = pimpActionAsync: req =>
+  def search = pimpActionAsyncIO: req =>
     def query(key: String) = (req getQueryString key) filter (_.nonEmpty)
 
     val term = query(TermKey)
     val limit = query(LimitKey)
       .filter(i => Try(i.toInt).isSuccess)
       .map(_.toInt) getOrElse Search.DefaultLimit
-    val results = term.fold(fut(Seq.empty[DataTrack]))(fullText.fullText(_, limit))
+    val results = term.fold(IO.pure(List.empty[DataTrack]))(fullText.fullText(_, limit))
     results.map: tracks =>
       PimpContentController.default.respond(req)(
         html = tags.search(term, tracks, req.user),
