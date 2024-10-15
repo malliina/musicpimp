@@ -34,7 +34,7 @@ import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
 case class Deps(
-  playlists: PlaylistService,
+  playlists: PlaylistService[IO],
   userManager: UserManager[IO, Username, Password],
   handler: PlaybackMessageHandler,
   lib: MusicLibrary[IO],
@@ -166,7 +166,7 @@ class CloudSocket(
     val request = cloudRequest.request
     val message = cloudRequest.message
 
-    def databaseResponse[T: Encoder](f: Future[T]): Future[Any] =
+    def databaseResponse[T: Encoder](f: IO[T]): Future[Any] =
       withDatabaseExcuse(request)(f.map(t => sendSuccess(request, t)))
 
     message match
@@ -211,7 +211,6 @@ class CloudSocket(
       case Search(term, limit) =>
         val ts = fullText
           .fullText(term, limit)
-          .unsafeToFuture()
           .map: dataTracks =>
             dataTracks.map(t => TrackJson.toFull(t, cloudHost))
         databaseResponse(ts)
@@ -221,11 +220,11 @@ class CloudSocket(
         sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
         databaseResponse(
-          stats.mostPlayed(meta).unsafeToFuture().map(PopularList.forEntries(meta, _, cloudHost))
+          stats.mostPlayed(meta).map(PopularList.forEntries(meta, _, cloudHost))
         )
       case GetRecent(meta) =>
         databaseResponse(
-          stats.mostRecent(meta).unsafeToFuture().map(RecentList.forEntries(meta, _, cloudHost))
+          stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost))
         )
       case GetPlaylists(user) =>
         databaseResponse(
@@ -310,10 +309,11 @@ class CloudSocket(
         sendFailure(request, FailReason(s"Unknown message in request '$request'."))
         log.warn(s"Unknown request: '$message'.")
 
-  def withDatabaseExcuse[T](request: RequestID)(f: Future[T]) =
-    f.recoverAll: t =>
-      log.error(s"Request $request error.", t)
-      sendFailure(request, JsonMessages.databaseFailure)
+  def withDatabaseExcuse[T](request: RequestID)(f: IO[T]) =
+    f.unsafeToFuture()
+      .recoverAll: t =>
+        log.error(s"Request $request error.", t)
+        sendFailure(request, JsonMessages.databaseFailure)
 
   def handleEvent(e: PimpMessage): Unit =
     e match

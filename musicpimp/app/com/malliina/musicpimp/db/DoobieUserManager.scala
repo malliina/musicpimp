@@ -27,8 +27,8 @@ class DoobieUserManager[F[_]](val db: DoobieDatabase[F])
   override val defaultPass: Password = DoobieUserManager.defaultPass
 
   def ensureAtLeastOneUserExists(): F[Unit] = db.run:
-    isNonEmptyQuery.flatMap: nonEmpty =>
-      if !nonEmpty then addUserIO(defaultUser, defaultPass).map(_ => ())
+    isEmptyQuery.flatMap: isEmpty =>
+      if isEmpty then addUserIO(defaultUser, defaultPass).map(_ => ())
       else pure(())
 
   override def users: F[List[Username]] = db.run:
@@ -43,8 +43,7 @@ class DoobieUserManager[F[_]](val db: DoobieDatabase[F])
         .unique
     for
       userExists <- existsQuery
-      isNonEmpty <- isNonEmptyQuery
-      noUsers = !isNonEmpty
+      noUsers <- isEmptyQuery
     yield userExists || (noUsers && isDefaultAuth)
 
   override def addUser(user: Username, pass: Password): F[Option[AlreadyExists]] = db.run:
@@ -60,7 +59,7 @@ class DoobieUserManager[F[_]](val db: DoobieDatabase[F])
     val newPassHash = hash(user, newPass)
     sql"""update USERS set PASS_HASH = $newPassHash where USER = $user""".update.run.map(_ => ())
 
-  private def isNonEmptyQuery = sql"select exists(select USER from USERS)".query[Boolean].unique
+  private def isEmptyQuery = sql"select not exists(select USER from USERS)".query[Boolean].unique
 
   private def addUserIO(user: Username, pass: Password) =
     sql"""select exists(select USER from USERS where USER = $user)"""

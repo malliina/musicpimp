@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.db
 
+import cats.effect.Async
 import cats.effect.implicits.concurrentParTraverseOps
-import cats.effect.{Async, IO}
 import cats.implicits.{toFlatMapOps, toFunctorOps, toTraverseOps}
 import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.library.FileStreams

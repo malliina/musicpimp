@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.values.{ErrorMessage, UnixPath, Username, ValidatingCompanion}
 import doobie.Meta
@@ -12,6 +12,7 @@ trait DoobieMappings:
   given Meta[Instant] = doobie.implicits.legacy.instant.JavaTimeInstantMeta
   given Meta[Username] = Meta[String].timap(Username.build(_).getUnsafe)(_.name)
   given Meta[TrackID] = meta(TrackID)
+  given Meta[PlaylistID] = meta(PlaylistID)
   given Meta[FolderID] = meta(FolderID)
   given Meta[UnixPath] = meta(UnixPath)
   given Meta[FiniteDuration] = Meta[Int].timap(_.seconds)(_.toSeconds.toInt)

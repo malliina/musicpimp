@@ -161,7 +161,6 @@ class PimpComponents(
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
   val databaseConf = appConf.databaseConf
-  val newDb = PimpMySQLDatabase.withMigrations(actorSystem, databaseConf)
   val doobieConf = com.malliina.database.Conf(
     databaseConf.url,
     databaseConf.user,
@@ -175,7 +174,7 @@ class PimpComponents(
     DoobieDatabase.default[IO](doobieConf).allocated.unsafeRunSync()
   val fullText = FullText(doobieResource)
   lazy val indexer = Indexer(library, DoobieIndexer(doobieResource), actorSystem.scheduler)
-  val ps = NewPlaylist(newDb)
+  val ps = DoobiePlaylists(doobieResource)
   val lib = DatabaseLibrary[IO](doobieResource, library)
   val userManager = DoobieUserManager.withUser(doobieResource).unsafeRunSync()
   lazy val rememberMe =

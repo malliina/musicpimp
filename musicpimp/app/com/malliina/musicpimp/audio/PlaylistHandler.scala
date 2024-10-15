@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.audio
 
+import cats.effect.IO
 import com.malliina.musicpimp.json.CrossFormats.{cmd, singleCmd}
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.PlaylistID
@@ -39,4 +40,4 @@ object PlaylistCommand:
       .orElse(SavePlaylistCommand.json.decodeJson(v))
       .orElse(DeletePlaylistCommand.json.decodeJson(v))
 
-class PlaylistHandler(service: PlaylistService)
+class PlaylistHandler(service: PlaylistService[IO])

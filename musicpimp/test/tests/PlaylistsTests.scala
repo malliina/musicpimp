@@ -1,7 +1,7 @@
 package tests
 
 import cats.effect.IO
-import com.malliina.concurrent.Execution.{cached, runtime}
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
@@ -19,7 +19,6 @@ import play.api.http.Writeable
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import play.api.libs.json.Json as PlayJson
-import io.getquill.*
 
 import scala.concurrent.duration.DurationInt
 

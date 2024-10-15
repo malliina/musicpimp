@@ -146,7 +146,6 @@ val shared = Project("pimp-shared", file("pimpshared"))
   .settings(
     libraryDependencies ++= Seq(
       logstreamsDep,
-      "io.getquill" %% "quill-jdbc" % "4.8.4",
       "mysql" % "mysql-connector-java" % mysqlVersion,
       malliinaGroup %% "mobile-push" % "3.11.0",
       "com.lihaoyi" %% "scalatags" % scalatagsVersion

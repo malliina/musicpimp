@@ -18,6 +18,15 @@ case class NewPlaylistInfo(
   duration: FiniteDuration,
   track: Option[IndexedPlaylistTrack]
 )
+
+case class PlaylistInfo(
+  id: PlaylistID,
+  name: String,
+  trackCount: Int,
+  duration: FiniteDuration,
+  track: Option[DataTrack],
+  idx: Option[Int]
+)
 case class PlaybackRecord(track: TrackID, started: Instant, who: Username)
 case class TrackRecord(record: PlaybackRecord, track: DataTrack)
 case class IndexedPlaylistTrack(playlist: PlaylistID, track: DataTrack, idx: Int)

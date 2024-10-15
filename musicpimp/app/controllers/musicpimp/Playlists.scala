@@ -1,5 +1,7 @@
 package controllers.musicpimp
 
+import cats.effect.IO
+import com.malliina.concurrent.Execution.runtime
 import com.malliina.musicpimp.audio.TrackJson
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.html.PimpHtml
@@ -23,7 +25,7 @@ object Playlists:
   val Name = "name"
   val Tracks = "tracks"
 
-class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extends Secured(auth):
+class Playlists(tags: PimpHtml, service: PlaylistService[IO], auth: AuthDeps) extends Secured(auth):
   val playlistIdField: Mapping[PlaylistID] = longNumber.transform(l => PlaylistID(l), id => id.id)
   val tracksMapping: Mapping[Seq[TrackID]] =
     seq(text).transform(ss => ss.map(TrackID.apply), ts => ts.map(_.id))
@@ -68,13 +70,13 @@ class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extend
           .saveOrUpdatePlaylistMeta(playlist, req.user)
           .map(meta => Accepted(meta))
       )
-      .getOrElse(fut(badRequest(s"Invalid JSON: $json")))
+      .getOrElse(IO.pure(badRequest(s"Invalid JSON: $json")))
 
   def deletePlaylist(id: PlaylistID) = recoveredAsync: req =>
     service.delete(id, req.user).map(_ => Accepted)
 
   def edit = parsedRecoveredAsync(parsers.json): req =>
-    fut(Ok)
+    IO.pure(Ok)
 
   def handleSubmission = recoveredAsync: req =>
     val user = req.user
@@ -83,16 +85,16 @@ class Playlists(tags: PimpHtml, service: PlaylistService, auth: AuthDeps) extend
       .fold(
         errors =>
           service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user))),
-        submission => fut(Redirect(routes.Playlists.playlists))
+        submission => IO.pure(Redirect(routes.Playlists.playlists))
       )
 
-  protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => Future[Result]) =
-    parsedRecoveredAsync(parsers.anyContent)(f)
+  protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => IO[Result]) =
+    parsedRecoveredAsync(parsers.anyContent)(req => f(req))
 
   protected def parsedRecoveredAsync[T](
     parser: BodyParser[T]
-  )(f: CookiedRequest[T, Username] => Future[Result]) =
-    pimpParsedActionAsync(parser)(auth => f(auth).recover(errorHandler))
+  )(f: CookiedRequest[T, Username] => IO[Result]) =
+    pimpParsedActionAsyncIO(parser)(auth => f(auth).recover(errorHandler))
 
   override def errorHandler: PartialFunction[Throwable, Result] = {
     case ue: UnauthorizedException =>

@@ -6,7 +6,6 @@ import com.malliina.musicpimp.models.{FolderID, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
 import io.circe.Codec
-import io.getquill.Embedded
 import scala.concurrent.duration.FiniteDuration
 
 case class DataTrack(
@@ -19,5 +18,4 @@ case class DataTrack(
   path: UnixPath,
   folder: FolderID
 ) extends TrackMeta
-  with Embedded
   derives Codec.AsObject
