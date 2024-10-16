@@ -11,6 +11,5 @@
     <logger name="play.core.server.netty.NettyModelConversion" level="ERROR"/>
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
-<!--        <appender-ref ref="AKKA"/>-->
     </root>
 </configuration>

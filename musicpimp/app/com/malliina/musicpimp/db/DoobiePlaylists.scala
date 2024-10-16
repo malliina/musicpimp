@@ -3,16 +3,19 @@ package com.malliina.musicpimp.db
 import cats.effect.Async
 import cats.implicits.{toFunctorOps, toTraverseOps}
 import com.malliina.database.DoobieDatabase
-import com.malliina.musicpimp.db.DoobiePlaylists.collect
+import com.malliina.musicpimp.db.DoobiePlaylists.{collect, log}
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
 import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
+import com.malliina.util.AppLogger
 import com.malliina.values.Username
 import doobie.free.connection.{pure, raiseError}
 import doobie.implicits.toSqlInterpolator
 import doobie.util.fragments
 
 object DoobiePlaylists:
+  private val log = AppLogger(getClass)
+
   def collect(rows: List[PlaylistInfo]): Seq[SavedPlaylist] =
     rows.foldLeft(Vector.empty[SavedPlaylist]): (acc, row) =>
       val idx = acc.indexWhere(_.id == row.id)
@@ -71,7 +74,10 @@ class DoobiePlaylists[F[_]: Async](db: DoobieDatabase[F])
         else raiseError(UnauthorizedException(s"User $user is unauthorized"))
 
   def delete(id: PlaylistID, user: Username): F[Unit] = db.run:
-    sql"""delete from PLAYLISTS where USER = $user and ID = $id""".update.run.map(_ => ())
+    sql"""delete from PLAYLISTS where USER = $user and ID = $id""".update.run.map: rowsDeleted =>
+      if rowsDeleted != 0 then
+        log.info(s"Deleted playlist $id by '$user'. $rowsDeleted affected rows.")
+      else log.info(s"Attempted to delete playlist $id by '$user', but no rows were affected.")
 
   private def loadPlaylists(user: Username, id: Option[PlaylistID]): F[Seq[SavedPlaylist]] = db.run:
     val idCondition = id.fold(fr"true")(pid => fr"P.ID = $pid")

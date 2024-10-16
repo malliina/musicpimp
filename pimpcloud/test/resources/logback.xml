@@ -5,11 +5,7 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <appender name="AKKA" class="com.malliina.logback.PimpAppender">
-        <timeFormat>yyyy-MM-dd HH:mm:ss</timeFormat>
-    </appender>
     <root level="WARN">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="AKKA"/>
     </root>
 </configuration>

@@ -86,8 +86,10 @@ class BaseSecurity[A <: AuthInfo](
       logAuth(user, rh)
       f(user).apply(rh)
 
-  def logAuth(user: A, rh: RequestHeader): Unit =
-    log.info(s"User '${user.user}' from '${Proxies.realAddress(rh)}' requests '${rh.uri}'.")
+  private def logAuth(user: A, rh: RequestHeader): Unit =
+    log.info(
+      s"User '${user.user}' from '${Proxies.realAddress(rh)}' requests ${rh.method} '${rh.uri}'."
+    )
 
   def logged(action: EssentialAction): EssentialAction =
     BaseSecurity.logged(action)

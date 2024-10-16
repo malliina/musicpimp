@@ -117,7 +117,9 @@ class SecureBase(auth: AuthDeps)
     parser: BodyParser[T]
   )(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
     authenticatedLogged: (auth: AuthedRequest) =>
+      log.info(s"authed $auth")
       comps.actionBuilder.async(parser): req =>
+        log.info(s"$req with body ${req.body}")
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))
 
@@ -143,5 +145,5 @@ class SecureBase(auth: AuthDeps)
     */
   private def maybeWithCookie(auth: AuthedRequest, result: Result): Result =
     auth.cookie.fold(result): c =>
-      log debug s"Sending updated cookie in response to user ${auth.user}..."
+      log.debug(s"Sending updated cookie in response to user ${auth.user}...")
       result withCookies c withSession (Auth.DefaultSessionKey -> auth.user.name)

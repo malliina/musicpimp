@@ -21,7 +21,7 @@ object PimpAuths:
       override def onUnauthorized(failure: AuthFailure): Result =
         val request = failure.rh
         val remoteAddress = Proxies.realAddress(request)
-        log warn s"Unauthorized request '${request.uri}' from '$remoteAddress'."
+        log.warn(s"Unauthorized request '${request.uri}' from '$remoteAddress'.")
         PimpContentController.pimpResult(request)(
           html = Results.Redirect(redir).withSession(IntendedUri -> request.uri),
           json = Errors.accessDenied

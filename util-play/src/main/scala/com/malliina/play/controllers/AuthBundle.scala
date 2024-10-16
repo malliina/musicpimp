@@ -25,7 +25,7 @@ object AuthBundle:
         val rh = failure.rh
         val ip = Proxies.realAddress(rh)
         val resource = rh.path
-        log warn s"Unauthorized request to '$resource' from '$ip'."
+        log.warn(s"Unauthorized request to '$resource' from '$ip'.")
         Unauthorized
 
   def oauthUser(initiateFlow: Call, sessionKey: String)(implicit
@@ -41,5 +41,6 @@ object AuthBundle:
         .session(sessionKey)
         .transform((r, u) => Right(map(r, u)))
 
-      override def onUnauthorized(failure: AuthFailure) =
+      override def onUnauthorized(failure: AuthFailure): Result =
+        log.info(s"Unauthorized oauth: '$failure'.")
         Results.Redirect(initiateFlow)

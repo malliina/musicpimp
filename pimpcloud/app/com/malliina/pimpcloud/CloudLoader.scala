@@ -2,6 +2,7 @@ package com.malliina.pimpcloud
 
 import _root_.pimpcloud.Routes
 import com.malliina.http.OkClient
+import com.malliina.logback.PimpAppender
 import org.apache.pekko.stream.Materializer
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
@@ -51,7 +52,8 @@ class CloudLoader extends ApplicationLoader:
   override def load(context: Context): Application =
     val environment = context.environment
     LoggerConfigurator(environment.classLoader)
-      .foreach(_.configure(environment))
+      .foreach(_.configure(environment, context.initialConfiguration, Map.empty))
+    PimpAppender.install()
     new CloudComponents(context, AppConf.forMode(environment.mode)).application
 
 object NoPusher extends Pusher:

@@ -88,15 +88,15 @@ class Playlists(tags: PimpHtml, service: PlaylistService[IO], auth: AuthDeps) ex
         submission => IO.pure(Redirect(routes.Playlists.playlists))
       )
 
-  protected def recoveredAsync(f: CookiedRequest[AnyContent, Username] => IO[Result]) =
-    parsedRecoveredAsync(parsers.anyContent)(req => f(req))
+  private def recoveredAsync(f: CookiedRequest[Unit, Username] => IO[Result]) =
+    parsedRecoveredAsync(parsers.ignore(()))(req => f(req))
 
-  protected def parsedRecoveredAsync[T](
+  private def parsedRecoveredAsync[T](
     parser: BodyParser[T]
   )(f: CookiedRequest[T, Username] => IO[Result]) =
     pimpParsedActionAsyncIO(parser)(auth => f(auth).recover(errorHandler))
 
-  override def errorHandler: PartialFunction[Throwable, Result] = {
+  override def errorHandler: PartialFunction[Throwable, Result] =
     case ue: UnauthorizedException =>
       log.error(s"Unauthorized", ue)
       Errors.withStatus(Results.Unauthorized, "Access denied")
@@ -106,4 +106,3 @@ class Playlists(tags: PimpHtml, service: PlaylistService[IO], auth: AuthDeps) ex
     case t: Throwable =>
       log.error(s"Server error", t)
       serverErrorGeneric
-  }

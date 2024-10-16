@@ -15,6 +15,7 @@ import play.api.http.Writeable
 import play.api.mvc.*
 import play.api.mvc.Results.Ok
 import cats.effect.unsafe.implicits.global
+import com.malliina.util.AppLogger
 
 class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth:
   override def logged(action: EssentialAction) =
@@ -38,6 +39,8 @@ class OAuthCtrl(val oauth: AdminOAuth, mat: Materializer)
   extends BaseSecurity(oauth.actions, OAuthCtrl.bundle(oauth), mat)
 
 object OAuthCtrl:
+  private val log = AppLogger(getClass)
+
   def bundle(oauth: AdminOAuth) = new AuthBundle[AuthedRequest]:
     override def authenticator: Authenticator[AuthedRequest] =
       UserAuthenticator
@@ -45,6 +48,7 @@ object OAuthCtrl:
         .transform((req, user) => Right(AuthedRequest(user, req)))
 
     override def onUnauthorized(failure: AuthFailure): Result =
+      log.info(s"Unauthorized $failure")
       Results.Redirect(routes.AdminOAuth.googleStart)
 
 class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleOAuthCredentials):
