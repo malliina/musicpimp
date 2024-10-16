@@ -59,7 +59,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
 
   def ping = proxiedGetAction(Ping)
 
-  def pingAuth = executeProxied(parse.anyContent)(VersionKey, _ => Right(Json.obj())): (_, json) =>
+  def pingAuth = executeProxied(parse.ignore(()))(VersionKey, _ => Right(Json.obj())): (_, json) =>
     json
       .as[Version]
       .fold(
@@ -226,7 +226,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
     cmd: String,
     build: RequestHeader => Either[String, W]
   )(toHtml: Json => Decoder.Result[C]) =
-    executeProxied(parse.anyContent)(cmd, build): (req, json) =>
+    executeProxied(parse.ignore(()))(cmd, build): (req, json) =>
       pimpResult(req)(
         html = toHtml(json).fold(
           err => onGatewayParseErrorResult(err),
