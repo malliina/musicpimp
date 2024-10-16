@@ -6,15 +6,15 @@ import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.db.DoobiePlaylists.collect
 import com.malliina.musicpimp.exception.UnauthorizedException
 import com.malliina.musicpimp.library.{PlaylistService, PlaylistSubmission}
-import com.malliina.musicpimp.models.{PlaylistID, PlaylistSavedMeta, SavedPlaylist}
+import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.values.Username
 import doobie.free.connection.{pure, raiseError}
 import doobie.implicits.toSqlInterpolator
 import doobie.util.fragments
 
 object DoobiePlaylists:
-  def collect(infos: List[PlaylistInfo]): Seq[SavedPlaylist] =
-    infos.foldLeft(Vector.empty[SavedPlaylist]): (acc, row) =>
+  def collect(rows: List[PlaylistInfo]): Seq[SavedPlaylist] =
+    rows.foldLeft(Vector.empty[SavedPlaylist]): (acc, row) =>
       val idx = acc.indexWhere(_.id == row.id)
       if idx >= 0 then
         val old = acc(idx)
@@ -26,7 +26,7 @@ object DoobiePlaylists:
           row.name,
           row.trackCount,
           row.duration,
-          Nil
+          row.track.toList
         )
 
 class DoobiePlaylists[F[_]: Async](db: DoobieDatabase[F])
@@ -50,11 +50,14 @@ class DoobiePlaylists[F[_]: Async](db: DoobieDatabase[F])
           val idxCondition =
             fragments.notInOpt(fr"IDX", indexedTracks.map(_._2)).getOrElse(fr"true")
           for
-            id <- sql"insert into PLAYLISTS(NAME, USER) values (${playlist.name}, $user})".update
-              .withUniqueGeneratedKeys[PlaylistID]("ID")
+            id <- playlist.id
+              .map(pid => pure(pid))
+              .getOrElse:
+                sql"insert into PLAYLISTS(NAME, USER) values (${playlist.name}, $user)".update
+                  .withUniqueGeneratedKeys[PlaylistID]("ID")
             _ <- sql"delete from PLAYLIST_TRACKS where PLAYLIST = $id and $idxCondition".update.run
             updateCount <- indexedTracks.toList.traverse: (t, idx) =>
-              sql"select not exists(select TRACK from PLAYLIST_TRACKS PT where PT.PLAYLIST = $id and PT.TRACK = ${t.id} and PT.IDX = $idx)"
+              sql"select not exists(select TRACK from PLAYLIST_TRACKS PT where PT.PLAYLIST = $id and PT.IDX = $idx)"
                 .query[Boolean]
                 .unique
                 .flatMap: isEmpty =>

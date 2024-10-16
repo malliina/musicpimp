@@ -13,6 +13,7 @@ import com.malliina.storage.StorageInt
 import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
 import io.circe.Codec
+import io.circe.parser
 import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
 import play.api.http.MimeTypes.JSON
 import play.api.http.Writeable
@@ -49,15 +50,15 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
       )
       tracksInserted <- trackInserts
     yield (foldersInserted, tracksInserted)
-    val (fsi, tsi) = await(insertions.unsafeToFuture())
-    assert(fsi == 1)
-    assert(tsi == 1)
-    val maybeFolder = await(lib.folder(folderId).unsafeToFuture())
+    val (fsi, tsi) = insertions.unsafeRunSync()
+    assertEquals(fsi, 1L)
+    assertEquals(tsi, 1L)
+    val maybeFolder = lib.folder(folderId).unsafeRunSync()
     assert(maybeFolder.isDefined)
 
   test("GET /playlists"):
     fetchLists()
-    assert(1 == 1)
+    assertEquals(1, 1)
 
   test("POST /playlists"):
     import com.malliina.http.PlayCirce.writer
@@ -68,22 +69,24 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
             .withJsonBody(PlayJson.obj(JsonStrings.PlaylistKey -> PlayJson.toJson(in)))
         )
       assert(status(response) == 202)
-      io.circe.parser
+      parser
         .parse(contentAsString(response))
         .flatMap(_.hcursor.downField("id").as[PlaylistID])
         .fold(err => throw Exception(err.getMessage), identity)
 
     val submission = PlaylistSubmission(None, "test playlist", testTracks)
     val newId = postPlaylist(submission)
-    assert(fetchLists().find(_.id == newId).get.tracks.map(_.id) == testTracks)
+    val list = fetchLists()
+    val added = list.find(_.id == newId)
+    assert(added.get.tracks.map(_.id) == testTracks)
     val updatedTracks = testTracks ++ testTracks
     val updatedPlaylist = submission.copy(id = Option(newId), tracks = updatedTracks)
     val updatedId = postPlaylist(updatedPlaylist)
-    assert(newId == updatedId)
+    assertEquals(newId, updatedId)
     assert(fetchLists().find(_.id == updatedId).get.tracks.map(_.id) == updatedTracks)
 
     val response3 = fetch(FakeRequest(POST, s"/playlists/delete/$updatedId"))
-    assert(status(response3) == 202)
+    assertEquals(status(response3), 202)
 
     assert(fetchLists().isEmpty)
 
@@ -91,7 +94,7 @@ class PlaylistsTests extends munit.FunSuite with MusicPimpSuite:
     val response = fetch(FakeRequest(GET, "/playlists"))
     assert(contentType(response).contains(JSON))
     assert(status(response) == 200)
-    io.circe.parser
+    parser
       .parse(contentAsString(response))
       .flatMap(_.hcursor.downField("playlists").as[Seq[FullSavedPlaylist]])
       .fold(err => throw Exception(err.getMessage), identity)

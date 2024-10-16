@@ -41,7 +41,8 @@ val scalatagsVersion = "0.13.1"
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val logstreamsDep = malliinaGroup %% "logstreams-client" % "2.8.0"
-
+val jacksonDep =
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.18.0" // Fixes some dep hell
 val httpGroup = "org.apache.httpcomponents"
 
 inThisBuild(
@@ -82,7 +83,7 @@ val playCommon = Project("play-common", file("play-common"))
     } ++
       Seq(
         "org.playframework" %% "play" % playVersion,
-        "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.18.0"
+        jacksonDep
       )
   )
 val playSocial = Project("play-social", file("play-social"))
@@ -228,6 +229,7 @@ val pimpbeam = project
     libraryDependencies ++= Seq(
       logstreamsDep,
       "net.glxn" % "qrgen" % "1.4",
+      jacksonDep,
       PlayImport.ws
     ),
     Linux / httpPort := Option("8557"),
