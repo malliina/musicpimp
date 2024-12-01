@@ -1,13 +1,18 @@
 package com.malliina.musicpimp.library
 
-import org.apache.pekko.stream.Materializer
 import com.malliina.audio.meta.{SongMeta, StreamSource}
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
+import com.malliina.musicpimp.library.LocalTrack.log
 import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
+import com.malliina.util.AppLogger
 import com.malliina.values.UnixPath
+import org.apache.pekko.stream.Materializer
 
 import scala.concurrent.duration.*
+
+object LocalTrack:
+  private val log = AppLogger(getClass)
 
 class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)(implicit
   mat: Materializer
@@ -23,4 +28,5 @@ class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)(implic
   override def toString = id.id
 
   override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
+    log.info(s"Preparing player with track $title by $artist using ${media.describe}...")
     new StoragePlayer(this, eom)
