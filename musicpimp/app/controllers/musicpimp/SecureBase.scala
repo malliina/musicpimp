@@ -117,9 +117,7 @@ class SecureBase(auth: AuthDeps)
     parser: BodyParser[T]
   )(f: CookiedRequest[T, Username] => Future[Result]): EssentialAction =
     authenticatedLogged: (auth: AuthedRequest) =>
-      log.info(s"authed $auth")
       comps.actionBuilder.async(parser): req =>
-        log.info(s"$req with body ${req.body}")
         val resultFuture = f(new CookiedRequest(auth.user, req, auth.cookie))
         resultFuture.map(r => maybeWithCookie(auth, r))
 

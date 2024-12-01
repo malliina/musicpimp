@@ -128,7 +128,7 @@ class Library()(implicit mat: Materializer) extends FileLibrary:
   private def meta(relative: Path): LocalTrack =
     localTrackFor(pathInfo(relative))
 
-  def localTrackFor(pi: PathInfo): LocalTrack =
+  private def localTrackFor(pi: PathInfo): LocalTrack =
     val meta = SongMeta.fromPath(pi.absolute, pi.root)
     val path = UnixPath(pi.relative)
     new LocalTrack(TrackID(idFor(path.path)), path, meta)

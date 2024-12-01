@@ -23,10 +23,10 @@ object StreamSource:
   def fromFile(file: Path) =
     FileSource(file, audioDuration(file))
 
-  def fromURI(uri: URI, duration: FiniteDuration, size: StorageSize) =
+  def fromURI(uri: URI, duration: FiniteDuration, size: StorageSize): UriSource =
     UriSource(uri, duration, size)
 
-  def audioDuration(media: Path): FiniteDuration =
+  private def audioDuration(media: Path): FiniteDuration =
     val f = AudioFileIO.read(media.toFile)
     f.getAudioHeader.getTrackLength.toDouble.seconds
 

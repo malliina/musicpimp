@@ -63,14 +63,14 @@ class JavaSoundPlayer(
   val bufferSize = readWriteBufferSize.toBytes.toInt
   protected var stream: InputStream = media.stream
   tryMarkStream()
-  val stateHub = StreamsUtil.connectedStream[PlayerStates.PlayerState]()
+  private val stateHub = StreamsUtil.connectedStream[PlayerStates.PlayerState]()
 
   /** I use a Subject because the audio line might change and it seems easier then to keep one
     * subject instead of reacting to each audio line change in each observable (in addition to its
     * events).
     */
   private val pollingSource = Source.tick(500.millis, 500.millis, 0)
-  protected var lineData: LineData = newLine(stream, stateHub.sink)
+  private var lineData: LineData = newLine(stream, stateHub.sink)
   private val active = new AtomicBoolean(false)
   private var playThread: Option[Future[Unit]] = None
 
@@ -238,12 +238,11 @@ class JavaSoundPlayer(
       // blocks until audio data is available
       bytesRead = lineData.read(data)
       if bytesRead != END_OF_STREAM then audioLine.write(data, 0, bytesRead)
-      else {
+      else
         // cleanup
         closeLine()
         // -1 bytes read means "end of stream has been reached"
         onEndOfMedia()
-      }
 
   def state = lineData.state
 

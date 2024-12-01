@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.audio
 
-import org.apache.pekko.stream.Materializer
 import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.musicpimp.library.LocalTrack
+import org.apache.pekko.stream.Materializer
 
 class StoragePlayer(val track: LocalTrack, eom: () => Unit)(implicit mat: Materializer)
   extends BasicJavaSoundPlayer(track.media)

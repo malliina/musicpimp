@@ -28,5 +28,5 @@ class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)(implic
   override def toString = id.id
 
   override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
-    log.info(s"Preparing player with track $title by $artist using ${media.describe}...")
+    log.info(s"Preparing local track '$title' by '$artist' using ${media.describe}...")
     new StoragePlayer(this, eom)

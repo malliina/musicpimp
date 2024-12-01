@@ -109,9 +109,10 @@ class PlaybackMessageHandler(
       case other =>
         log.warn(s"Unsupported message: '$other'.")
 
-  def withTrack(id: TrackID)(code: LocalTrack => Unit) =
+  private def withTrack(id: TrackID)(code: LocalTrack => Unit): Future[Unit] =
     lib
       .meta(id)
+      .unsafeToFuture()
       .map: t =>
         t.map: local =>
           code(local)
@@ -121,7 +122,10 @@ class PlaybackMessageHandler(
         case e: Exception =>
           log.error(s"Track search failed.", e)
 
-  def resolveTracksOrEmpty(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[List[LocalTrack]] =
+  private def resolveTracksOrEmpty(
+    folders: Seq[FolderID],
+    tracks: Seq[TrackID]
+  ): Future[List[LocalTrack]] =
     resolveTracks(folders, tracks)
       .map(_.toList)
       .recover:
@@ -132,7 +136,7 @@ class PlaybackMessageHandler(
           )
           Nil
 
-  def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
+  private def resolveTracks(folders: Seq[FolderID], tracks: Seq[TrackID]): Future[Seq[LocalTrack]] =
     folders.toList
       .traverse: folder =>
         lib.tracksIn(folder).map(_.getOrElse(Nil)).map(library.localize)

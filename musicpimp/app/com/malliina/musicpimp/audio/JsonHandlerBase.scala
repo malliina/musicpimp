@@ -22,7 +22,7 @@ trait JsonHandlerBase:
   /** Handles messages sent by web players.
     */
   def onJson(msg: Json, remote: RemoteInfo): Unit =
-    log info s"User '${remote.user}' said: '$msg'."
+    log.info(s"User '${remote.user}' said: '$msg'.")
     handleMessage(msg, remote)
 
   def handleMessage(msg: Json, request: RemoteInfo): Unit =

@@ -60,6 +60,9 @@ class MusicPlayer()(implicit val mat: Materializer)
         val id = track.id
         log.warn(s"Unable to initialize track '$id'. The stream is closed.")
         Failure(ioe)
+      case e: Exception =>
+        log.warn(s"Failed to initialize track '${track.title}' by '${track.artist}'.", e)
+        Failure(e)
 
   /** Blocks until an [[javax.sound.sampled.AudioInputStream]] can be created of `track`.
     *
@@ -68,7 +71,7 @@ class MusicPlayer()(implicit val mat: Materializer)
     * @throws LineUnavailableException
     *   during track init
     */
-  def initTrack(track: PlayableTrack): Unit =
+  private def initTrack(track: PlayableTrack): Unit =
     val initialVolume = current.flatMap(_.volumeCarefully) getOrElse defaultVolume
     val initialMute = current.flatMap(_.muteCarefully) getOrElse false
     val newPlayer = initPlayer(track, initialVolume, initialMute)
@@ -85,7 +88,11 @@ class MusicPlayer()(implicit val mat: Materializer)
     current.foreach: p =>
       p.play()
 
-  def initPlayer(track: PlayableTrack, initialVolume: Volume, isMute: Boolean): TrackPlayer =
+  private def initPlayer(
+    track: PlayableTrack,
+    initialVolume: Volume,
+    isMute: Boolean
+  ): TrackPlayer =
     val p = new TrackPlayer(track.buildPlayer(() => nextTrack()), eventHub.sink)
     p.adjustVolume(initialVolume)
     p.mute(isMute)

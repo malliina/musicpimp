@@ -1,14 +1,13 @@
 package com.malliina.audio.javasound
 
-import java.io.InputStream
-import java.net.URI
-import java.nio.file.Path
-
-import org.apache.pekko.stream.Materializer
 import com.malliina.audio.javasound.JavaSoundPlayer.DefaultRwBufferSize
 import com.malliina.audio.meta.StreamSource
 import com.malliina.storage.StorageSize
+import org.apache.pekko.stream.Materializer
 
+import java.io.InputStream
+import java.net.URI
+import java.nio.file.Path
 import scala.concurrent.duration.FiniteDuration
 
 class BasicJavaSoundPlayer(
