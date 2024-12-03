@@ -17,7 +17,8 @@ Seq(
   "com.typesafe.sbt" % "sbt-less" % "1.1.2",
   "com.eed3si9n" % "sbt-buildinfo" % "0.11.0",
   "ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.21.1",
-  "org.scalameta" % "sbt-scalafmt" % "2.5.2"
+  "org.scalameta" % "sbt-scalafmt" % "2.5.2",
+  "com.eed3si9n" % "sbt-assembly" % "1.2.0"
 ) map addSbtPlugin
 
 //libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always

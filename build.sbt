@@ -138,7 +138,13 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "mp3spi" % "1.9.5.4",
       "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
       "org.scalameta" %% "munit" % munitVersion % Test
-    )
+    ),
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", "versions", "9", "module-info.class") => MergeStrategy.last
+      case x =>
+        val oldStrategy = (ThisBuild / assemblyMergeStrategy).value
+        oldStrategy(x)
+    }
   )
 
 val shared = Project("pimp-shared", file("pimpshared"))

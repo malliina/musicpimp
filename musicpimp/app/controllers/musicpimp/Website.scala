@@ -26,7 +26,7 @@ class Website(
       if !hasAudioDevice then
         Some("Unable to access audio hardware. Playback on this machine is likely to fail.")
       else musicPlayer.errorOpt.map(errorMsg)
-    val userFeedback = feedback map UserFeedback.error
+    val userFeedback = feedback.map(UserFeedback.error)
     tags.basePlayer(userFeedback, req.user)
 
   def recent = metaAction: (meta, req) =>

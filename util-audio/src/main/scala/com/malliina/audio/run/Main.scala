@@ -1,21 +1,32 @@
 package com.malliina.audio.run
 
 import java.nio.file.{Files, Path, Paths}
-
 import org.apache.pekko.actor.ActorSystem
 import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
 
+import javax.sound.sampled.AudioSystem
+
 object Main:
   type ErrorMessage = String
-  val noTrack = "Please specify a path to an MP3 as a command line parameter."
+  private val noTrack = "Please specify a path to an MP3 as a command line parameter."
 
   case class Conf(path: Path, size: StorageSize)
 
   def main(args: Array[String]): Unit =
-    val maybePath = args.headOption
+    val v = Runtime.version().toString
+    println(s"Java $v")
+    val mixers = AudioSystem.getMixerInfo
+    val message =
+      if mixers.isEmpty then "Got no mixers, playback is likely to fail"
+      else
+        val describe =
+          mixers.map(m => s"${m.getName} (${m.getDescription})").mkString("\n", "\n", "\n")
+        s"Got ${mixers.size} mixers: $describe"
+    println(message)
+    def maybePath = args.headOption
       .fold[Either[ErrorMessage, Path]](Left(noTrack))(validate)
-    val maybeStorage =
+    def maybeStorage =
       args.tail.headOption.map(parseSize).getOrElse(Right(JavaSoundPlayer.DefaultRwBufferSize))
     val maybeConf = for
       path <- maybePath

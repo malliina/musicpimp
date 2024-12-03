@@ -35,6 +35,7 @@ import play.api.{BuiltInComponentsFromContext, Configuration, Logger, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.gzip.GzipFilter
 
+import javax.sound.sampled.AudioSystem
 import scala.concurrent.{ExecutionContext, Future}
 
 object LocalConf:
@@ -87,7 +88,7 @@ trait AppConf:
 class ProdAppConf(c: Configuration) extends AppConf:
   private val log = Logger(getClass)
 
-  var embedded: Option[EmbeddedMySQL] = None
+  private var embedded: Option[EmbeddedMySQL] = None
   override val databaseConf: Conf = Conf
     .fromConfOrLegacy(c)
     .fold(
@@ -117,6 +118,14 @@ class PimpComponents(
   with AssetsComponents
   with I18nComponents:
   import PimpComponents.log
+  val mixers = AudioSystem.getMixerInfo
+  val describeMixers =
+    if mixers.isEmpty then "Got no mixers. Playback is likely to fail."
+    else
+      val description =
+        mixers.map(m => s"${m.getName} (${m.getDescription})").mkString("\n", "\n", "\n")
+      s"Got ${mixers.size} mixers: $description"
+  log.info(s"Using Java ${Runtime.version()}. $describeMixers")
   log.info(s"Local conf is '${LocalConf.localConfFile.toAbsolutePath}'.")
   val combinedConf = localConf.withFallback(context.initialConfiguration)
   val appSecretKey = "play.http.secret.key"
