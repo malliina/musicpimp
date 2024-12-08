@@ -271,15 +271,17 @@ class CloudSocket(
             case t =>
               log.error(s"Database failure when authenticating '$user'.", t)
               false
-        authentication map { isValid =>
-          if isValid then sendSuccess(request, JsonMessages.version)
-          else sendFailure(request, JsonMessages.invalidCredentials)
-        }
+        authentication
+          .unsafeToFuture()
+          .map: isValid =>
+            if isValid then sendSuccess(request, JsonMessages.version)
+            else sendFailure(request, JsonMessages.invalidCredentials)
       case GetVersion =>
         sendSuccess(request, JsonMessages.version)
       case GetMeta(id) =>
         lib
           .meta(id)
+          .unsafeToFuture()
           .map: maybeTrack =>
             maybeTrack
               .map: track =>
