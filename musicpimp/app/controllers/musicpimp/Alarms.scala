@@ -42,7 +42,7 @@ class Alarms(
     )(RemoveToken.apply)(t => Option((t.token, t.platform)))
   )
 
-  def alarms = pimpActionAsync: request =>
+  def alarms = pimpActionAsyncIO: request =>
     schedules
       .clockList(TrackJson.host(request))
       .map: fcps =>

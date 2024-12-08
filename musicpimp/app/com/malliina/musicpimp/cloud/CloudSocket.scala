@@ -1,6 +1,8 @@
 package com.malliina.musicpimp.cloud
 
+import cats.Applicative
 import cats.effect.IO
+import cats.implicits.catsSyntaxApplicativeId
 import org.apache.pekko.actor.Scheduler
 import org.apache.pekko.stream.Materializer
 import com.malliina.concurrent.{Execution, FutureOps}
@@ -163,40 +165,41 @@ class CloudSocket(
     messageParser.parseEvent(json)
 
   def handleRequest(cloudRequest: CloudRequest): Unit =
+    handleRequestTask(cloudRequest).unsafeToFuture()
+
+  def handleRequestTask(cloudRequest: CloudRequest): IO[Any] =
     val request = cloudRequest.request
     val message = cloudRequest.message
 
-    def databaseResponse[T: Encoder](f: IO[T]): Future[Any] =
+    def databaseResponse[T: Encoder](f: IO[T]): IO[Any] =
       withDatabaseExcuse(request)(f.map(t => sendSuccess(request, t)))
 
     message match
       case GetStatus =>
-        sendSuccess(request, StatusMessage(player.status(cloudHost)))
+        sendSuccess(request, StatusMessage(player.status(cloudHost))).pure
       case GetTrack(id) =>
         uploader
           .upload(id, request)
-          .recoverAll: t =>
+          .handleError: t =>
             log.error(s"Upload failed for $request", t)
       case rt: RangedTrack =>
         uploader
           .rangedUpload(rt, request)
-          .recoverAll: t =>
+          .handleError: t =>
             log.error(s"Ranged upload failed for $request", t)
       case CancelStream(req) =>
         uploader.cancelSoon(req)
       case RootFolder =>
         lib.rootFolder
-          .unsafeToFuture()
-          .map: folder =>
+          .flatMap: folder =>
             sendSuccess(request, folder.toFull(cloudHost))
-          .recoverAll: t =>
+          .handleErrorWith: t =>
             log.error(s"Root folder failure.", t)
             sendFailure(request, FailReason("Library failure."))
       case GetFolder(id) =>
         lib
           .folder(id)
-          .unsafeToFuture()
-          .map: maybeFolder =>
+          .flatMap: maybeFolder =>
             maybeFolder
               .map: folder =>
                 sendSuccess(request, folder.toFull(cloudHost))
@@ -204,7 +207,7 @@ class CloudSocket(
                 val msg = s"Folder not found: '$id'."
                 log.warn(msg)
                 sendFailure(request, FailReason(msg))
-          .recoverAll: t =>
+          .handleErrorWith: t =>
             val msg = s"Library failure for folder '$id'."
             log.error(msg, t)
             sendFailure(request, FailReason(msg))
@@ -219,41 +222,39 @@ class CloudSocket(
       case PingMessage =>
         sendSuccess(request, PingEvent)
       case GetPopular(meta) =>
-        databaseResponse(
+        databaseResponse:
           stats.mostPlayed(meta).map(PopularList.forEntries(meta, _, cloudHost))
-        )
       case GetRecent(meta) =>
-        databaseResponse(
+        databaseResponse:
           stats.mostRecent(meta).map(RecentList.forEntries(meta, _, cloudHost))
-        )
       case GetPlaylists(user) =>
-        databaseResponse(
+        databaseResponse:
           playlists.playlistsMeta(user).map(TrackJson.toFullPlaylistsMeta(_, cloudHost))
-        )
       case GetPlaylist(id, user) =>
         withDatabaseExcuse(request):
           playlists
             .playlistMeta(id, user)
-            .map: maybePlaylist =>
+            .flatMap: maybePlaylist =>
               maybePlaylist
                 .map: playlist =>
                   sendSuccess(request, TrackJson.toFullMeta(playlist, cloudHost))
                 .getOrElse:
                   sendFailure(request, FailReason(s"Playlist not found: '$id'."))
       case SavePlaylist(playlist, user) =>
-        databaseResponse(playlists.saveOrUpdatePlaylistMeta(playlist, user))
+        databaseResponse:
+          playlists.saveOrUpdatePlaylistMeta(playlist, user)
       case DeletePlaylist(id, user) =>
         withDatabaseExcuse(request):
           playlists
             .delete(id, user)
-            .map: _ =>
+            .flatMap: _ =>
               sendLogged(CloudResponse.ack(request))
       case GetAlarms =>
         deps.schedules
           .clockList(cloudHost)
-          .map: list =>
+          .flatMap: list =>
             sendLogged(CloudResponse.success(request, list))
-          .recover:
+          .recoverWith:
             case e: Exception =>
               val msg = "Unable to load schedules."
               log.error(msg, e)
@@ -271,31 +272,30 @@ class CloudSocket(
             case t =>
               log.error(s"Database failure when authenticating '$user'.", t)
               false
-        authentication
-          .unsafeToFuture()
-          .map: isValid =>
-            if isValid then sendSuccess(request, JsonMessages.version)
-            else sendFailure(request, JsonMessages.invalidCredentials)
+        authentication.flatMap: isValid =>
+          if isValid then sendSuccess(request, JsonMessages.version)
+          else sendFailure(request, JsonMessages.invalidCredentials)
       case GetVersion =>
         sendSuccess(request, JsonMessages.version)
       case GetMeta(id) =>
         lib
           .meta(id)
-          .unsafeToFuture()
-          .map: maybeTrack =>
+          .flatMap: maybeTrack =>
             maybeTrack
               .map: track =>
                 sendSuccess(request, TrackJson.toFull(track, cloudHost))
               .getOrElse:
                 sendFailure(request, LibraryController.noTrackJson(id))
-          .recover:
+          .recoverWith:
             case e: Exception =>
               log.error(s"Unable to obtain meta of '$id'.", e)
               sendFailure(request, LibraryController.noTrackJson(id))
       case RegistrationEvent(_, id) =>
-        onRegistered(id)
+        IO.delay:
+          onRegistered(id)
       case PlaybackMessage(payload, user) =>
-        handlePlayerMessage(payload, user)
+        IO.delay:
+          handlePlayerMessage(payload, user)
       case beamCommand: BeamCommand =>
         Rest
           .beam(beamCommand, lib)
@@ -308,16 +308,15 @@ class CloudSocket(
           .recoverAll(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
       case _ =>
-        sendFailure(request, FailReason(s"Unknown message in request '$request'."))
         log.warn(s"Unknown request: '$message'.")
+        sendFailure(request, FailReason(s"Unknown message in request '$request'."))
 
-  def withDatabaseExcuse[T](request: RequestID)(f: IO[T]) =
-    f.unsafeToFuture()
-      .recoverAll: t =>
-        log.error(s"Request $request error.", t)
-        sendFailure(request, JsonMessages.databaseFailure)
+  private def withDatabaseExcuse[T](request: RequestID)(f: IO[T]): IO[Any] =
+    f.handleError: t =>
+      log.error(s"Request $request error.", t)
+      sendFailure(request, JsonMessages.databaseFailure)
 
-  def handleEvent(e: PimpMessage): Unit =
+  private def handleEvent(e: PimpMessage): Unit =
     e match
       case RegisteredMessage(id) =>
         onRegistered(id)
@@ -332,24 +331,25 @@ class CloudSocket(
       case other =>
         log.warn(s"Unknown event: '$other'.")
 
-  def handlePlayerMessage(message: PlayerMessage, user: Username): Unit =
+  private def handlePlayerMessage(message: PlayerMessage, user: Username): Unit =
     handler.updateUser(user)
     handler.fulfillMessage(message, RemoteInfo.cloud(user, cloudHost))
 
-  def sendSuccess[T: Encoder](request: RequestID, response: T) =
+  private def sendSuccess[T: Encoder](request: RequestID, response: T) =
     sendLogged(CloudResponse.success(request, response))
 
-  def sendFailure(request: RequestID, reason: FailReason) =
+  private def sendFailure(request: RequestID, reason: FailReason) =
     sendLogged(CloudResponse.failed(request, reason))
 
-  def sendLogged[T: Encoder](response: CloudResponse[T]): Try[Unit] =
+  private def sendLogged[T: Encoder](response: CloudResponse[T]): IO[Unit] =
     val request = response.request
-    send(response.asJson)
-      .map(_ => log.debug(s"Responded to request $request with payload '$response'."))
-      .recover:
-        case t => log.error(s"Unable to respond to $request with payload '$response'.", t)
+    IO.fromTry:
+      send(response.asJson)
+        .map(_ => log.debug(s"Responded to request $request with payload '$response'."))
+        .recover:
+          case t => log.error(s"Unable to respond to $request with payload '$response'.", t)
 
-  def handleError(errors: DecodingFailure, json: Json): Unit =
+  private def handleError(errors: DecodingFailure, json: Json): Unit =
     log.warn(errorMessage(errors, json))
 
   def errorMessage(errors: DecodingFailure, json: Json): String =

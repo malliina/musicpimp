@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.scheduler
 
 import cats.effect.IO
+import cats.implicits.toFunctorOps
 import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
@@ -39,13 +40,12 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
     s.stop()
     clockAPs.clear()
 
-  def clockList(host: FullUrl): Future[Seq[FullClockPlayback]] =
-    Future.traverse(status)(toFull(_, host)).map(_.flatten).map(_.sortBy(_.id))
+  def clockList(host: FullUrl): IO[Seq[FullClockPlayback]] =
+    IO.parTraverseN(4)(status)(s => toFull(s, host)).map(_.flatten).map(_.sortBy(_.id))
 
-  private def toFull(conf: ClockPlaybackConf, host: FullUrl): Future[Option[FullClockPlayback]] =
+  private def toFull(conf: ClockPlaybackConf, host: FullUrl): IO[Option[FullClockPlayback]] =
     lib
       .track(conf.track)
-      .unsafeToFuture()
       .map: maybeTrack =>
         maybeTrack.map: meta =>
           FullClockPlayback(

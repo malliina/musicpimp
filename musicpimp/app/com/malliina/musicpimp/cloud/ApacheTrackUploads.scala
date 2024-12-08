@@ -47,7 +47,7 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
     * @return
     *   a Future that completes when the upload completes
     */
-  def upload(track: TrackID, request: RequestID): Future[Unit] =
+  def upload(track: TrackID, request: RequestID): IO[Unit] =
     withUploadApache(
       track,
       request,
@@ -57,7 +57,7 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
         req.addFile(file)
     )
 
-  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] =
+  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): IO[Unit] =
     val range = rangedTrack.range
     withUploadApache(
       rangedTrack.id,
@@ -75,9 +75,9 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
   def cancelSoon(request: RequestID) = cancelIn(request, 5.seconds)
 
   def cancelIn(request: RequestID, after: FiniteDuration) =
-    val runnable = new Runnable:
-      override def run(): Unit = cancel(request)
-    scheduler.schedule(runnable, after.toSeconds, TimeUnit.SECONDS)
+    IO.blocking:
+      cancel(request)
+    .delayBy(after)
 
   def cancel(request: RequestID): Unit = ongoing.remove(request) foreach { httpRequest =>
     httpRequest.request.abort()
@@ -90,32 +90,31 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
     request: RequestID,
     sizeCalc: Path => StorageSize,
     content: (Path, MultipartRequest) => Unit
-  ): Future[Unit] =
+  ): IO[Unit] =
     lib
       .findFile(trackID)
-      .unsafeToFuture()
       .flatMap: maybePath =>
         maybePath
           .map: path =>
-            Future:
+            IO.blocking:
               uploadMediaApache(uploadUri, trackID, path, request, sizeCalc, content)
             .recover:
-              case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
-                // thrown when the upload is cancelled, see method cancel
-                // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
-                log info s"Aborted upload of $request"
-              case ssl: SSLException
-                  if Option(ssl.getMessage) contains "Connection or outbound has been closed" =>
-                log.info(s"Cancelled upload of '$trackID' with request '$request'.")
-              case e: Exception =>
-                log.warn(
-                  s"Upload of track $trackID with request ID $request terminated exceptionally",
-                  e
-                )
+                case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
+                  // thrown when the upload is cancelled, see method cancel
+                  // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
+                  log info s"Aborted upload of $request"
+                case ssl: SSLException
+                    if Option(ssl.getMessage) contains "Connection or outbound has been closed" =>
+                  log.info(s"Cancelled upload of '$trackID' with request '$request'.")
+                case e: Exception =>
+                  log.warn(
+                    s"Upload of track $trackID with request ID $request terminated exceptionally",
+                    e
+                  )
           .getOrElse:
             val msg = s"Unable to find track: $trackID"
             log warn msg
-            Future.failed(new FileNotFoundException(msg))
+            IO.raiseError(new FileNotFoundException(msg))
 
   /** Blocks until the upload completes.
     */
