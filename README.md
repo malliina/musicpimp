@@ -17,3 +17,9 @@ To run tests:
 If tests fail on Ubuntu, run
 
     sudo apt install libncurses5
+
+### Linux
+
+If audio doesn't work on Linux, make sure the `musicpimp` user belongs to the `audio` group:
+
+    sudo adduser musicpimp audio
