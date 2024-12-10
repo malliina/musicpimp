@@ -10,6 +10,7 @@ import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
+import com.typesafe.config.ConfigFactory
 import controllers.pimpcloud.*
 import controllers.{Assets, AssetsComponents}
 import play.api.ApplicationLoader.Context
@@ -21,7 +22,13 @@ import play.filters.gzip.GzipFilter
 import play.filters.headers.SecurityHeadersConfig
 import play.filters.hosts.AllowedHostsConfig
 
+import java.nio.file.Paths
 import scala.concurrent.{ExecutionContextExecutor, Future}
+
+object LocalConf:
+  val userHome = Paths.get(sys.props("user.home"))
+  val localConfFile = userHome.resolve(".pimpcloud/pimpcloud.conf")
+  val localConf = Configuration(ConfigFactory.parseFile(localConfFile.toFile))
 
 case class AppConf(
   pusher: (Configuration, OkClient) => Pusher,
@@ -84,9 +91,12 @@ class CloudComponents(context: Context, conf: AppConf)
   )
   override lazy val allowedHostsConfig = AllowedHostsConfig(Seq("cloud.musicpimp.org", "localhost"))
 
+  override lazy val configuration: Configuration =
+    LocalConf.localConf.withFallback(context.initialConfiguration)
+
   val defaultHttpConf = HttpConfiguration.fromConfiguration(configuration, environment)
   // Sets sameSite = None, otherwise the Google auth redirect will wipe out the session state
-  override lazy val httpConfiguration =
+  override lazy val httpConfiguration: HttpConfiguration =
     defaultHttpConf.copy(
       session = defaultHttpConf.session.copy(cookieName = "cloudSession", sameSite = None)
     )
@@ -96,7 +106,8 @@ class CloudComponents(context: Context, conf: AppConf)
   // Components
   override lazy val httpFilters: Seq[EssentialFilter] = Seq(securityHeadersFilter, new GzipFilter())
 
-  private val adminAuth = new AdminOAuth(defaultActionBuilder, conf.conf(configuration))
+  val google = conf.conf(configuration)
+  private val adminAuth = new AdminOAuth(defaultActionBuilder, google)
   val pimpAuth: PimpAuth = conf.pimpAuth(adminAuth, materializer)
   val http = OkClient.default
 
@@ -114,7 +125,7 @@ class CloudComponents(context: Context, conf: AppConf)
   lazy val as = new Assets(httpErrorHandler, assetsMetadata, environment)
   lazy val router =
     new Routes(httpErrorHandler, p, w, push, joined, sc, l, adminAuth, joined.us, as)
-  log.info(s"Started pimpcloud ${BuildInfo.version}")
+  log.info(s"Started pimpcloud ${BuildInfo.version} with Google client ID '${google.clientId}'.")
 
   applicationLifecycle.addStopHook(() =>
     Future.successful:

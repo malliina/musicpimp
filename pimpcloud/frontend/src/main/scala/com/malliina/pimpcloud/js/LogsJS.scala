@@ -3,7 +3,7 @@ package com.malliina.pimpcloud.js
 import com.malliina.musicpimp.js.FrontStrings.LogTableBodyId
 import com.malliina.pimpcloud.js.LogsJS.randomString
 import io.circe.{Codec, Json}
-import scalatags.Text.all.*
+import scalatags.JsDom.all.*
 import org.scalajs.dom.document
 
 case class JVMLogEntry(
@@ -25,15 +25,15 @@ object LogsJS:
       .mkString
 
 class LogsJS extends SocketJS("/admin/ws?f=json"):
-  val CellContent = "cell-content"
-  val CellWide = "cell-wide"
-  val tableContent = elem(LogTableBodyId)
+  private val CellContent = "cell-content"
+  private val CellWide = "cell-wide"
+  private val tableContent = elem(LogTableBodyId)
 
   override def handlePayload(payload: Json): Unit =
     handleValidated[Seq[JVMLogEntry]](payload): logs =>
-      logs foreach prepend
+      logs.foreach(prepend)
 
-  private def prepend(entry: JVMLogEntry) =
+  private def prepend(entry: JVMLogEntry): Unit =
     val rowClass = entry.level match
       case "ERROR" => "danger"
       case "WARN"  => "warning"
@@ -48,12 +48,11 @@ class LogsJS extends SocketJS("/admin/ws?f=json"):
       .map(_ => a(href := "#", id := linkId)(level))
       .getOrElse(level)
 
-    entry.stackTrace foreach { stackTrace =>
+    entry.stackTrace.foreach: stackTrace =>
       val errorRow = tr(`class` := hideClass, id := s"$rowId")(
         td(colspan := "5")(pre(stackTrace))
       )
-      tableContent prepend errorRow.render
-    }
+      tableContent.prepend(errorRow.render)
     val row = tr(`class` := rowClass)(
       cell(entry.timeFormatted),
       td(`class` := s"$CellContent $CellWide", id := msgCellId)(entry.message),
@@ -61,7 +60,7 @@ class LogsJS extends SocketJS("/admin/ws?f=json"):
       cell(entry.threadName),
       cell(levelCell)
     )
-    tableContent prepend row.render
+    tableContent.prepend(row.render)
     elem(linkId).onClick(_ => toggle(rowId))
     // toggles text wrapping for long texts when clicked
     elem(msgCellId).onClick: _ =>

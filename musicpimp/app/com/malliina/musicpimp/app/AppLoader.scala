@@ -48,7 +48,7 @@ case class InitOptions(
   users: Boolean = true,
   indexer: Boolean = true,
   cloud: Boolean = true,
-  cloudUri: FullUrl = CloudSocket.prodUri,
+  cloudUri: FullUrl = CloudSocket.devUri,
   useTray: Boolean = true
 )
 

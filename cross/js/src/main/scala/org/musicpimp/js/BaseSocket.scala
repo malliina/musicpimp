@@ -7,10 +7,10 @@ import org.scalajs.dom
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent}
 
 class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) extends ScriptHelpers:
-  val okStatus = elem(OkStatus)
-  val failStatus = elem(FailStatus)
+  private val okStatus = elem(OkStatus)
+  private val failStatus = elem(FailStatus)
 
-  val socket: dom.WebSocket = openSocket(wsPath)
+  private val socket: dom.WebSocket = openSocket(wsPath)
 
   def handlePayload(payload: Json): Unit = ()
 
@@ -53,11 +53,11 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
 
   def onConnected(e: Event): Unit = showConnected()
 
-  def onClosed(e: CloseEvent): Unit = showDisconnected()
+  private def onClosed(e: CloseEvent): Unit = showDisconnected()
 
-  def onError(e: Event): Unit = showDisconnected()
+  private def onError(e: Event): Unit = showDisconnected()
 
-  def openSocket(pathAndQuery: String) =
+  private def openSocket(pathAndQuery: String) =
     val wsUrl = s"$wsBaseUrl$pathAndQuery"
     val socket = new dom.WebSocket(wsUrl)
     socket.onopen = (e: Event) => onConnected(e)
@@ -66,12 +66,12 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     socket.onerror = (e: Event) => onError(e)
     socket
 
-  def wsBaseUrl =
+  private def wsBaseUrl =
     val location = dom.window.location
     val wsProto = if location.protocol == "http:" then "ws" else "wss"
     s"$wsProto://${location.host}"
 
-  def onJsonException(t: Throwable): Unit =
+  private def onJsonException(t: Throwable): Unit =
     log.error(t)
 
   protected def onJsonFailure(result: String): Unit =

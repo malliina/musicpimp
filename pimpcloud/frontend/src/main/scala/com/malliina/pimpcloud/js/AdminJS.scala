@@ -1,10 +1,11 @@
 package com.malliina.pimpcloud.js
 
-import com.malliina.pimpcloud.CloudStrings.*
 import com.malliina.pimpcloud.*
+import com.malliina.pimpcloud.CloudStrings.*
 import io.circe.Json
-import org.scalajs.dom.{Element, HTMLTableElement}
-import scalatags.Text.all.*
+import org.scalajs.dom.{HTMLTableElement, html}
+import scalatags.JsDom
+import scalatags.JsDom.all.*
 
 class AdminJS extends SocketJS("/admin/usage"):
   val phonesTable = elemAs[HTMLTableElement](PhonesTableId)
@@ -28,18 +29,23 @@ class AdminJS extends SocketJS("/admin/usage"):
 
     clearAndSet(requestsTable, requests, row)
 
-  def updatePhones(phones: Seq[PimpPhone]): Unit =
+  private def updatePhones(phones: Seq[PimpPhone]): Unit =
     def row(phone: PimpPhone) = tr(td(phone.s.id), td(phone.address))
 
     clearAndSet(phonesTable, phones, row)
 
-  def updateServers(servers: Seq[PimpServer]): Unit =
+  private def updateServers(servers: Seq[PimpServer]): Unit =
     def row(server: PimpServer) = tr(td(server.id.id), td(server.address))
 
     clearAndSet(serversTable, servers, row)
 
-  def clearAndSet[T](table: HTMLTableElement, es: Seq[T], toRow: T => Modifier): Unit =
+  private def clearAndSet[T](
+    table: HTMLTableElement,
+    es: Seq[T],
+    toRow: T => JsDom.TypedTag[html.TableRow]
+  ): Unit =
     val rows = table.rows.size
     (1 to rows).foreach: _ =>
       table.deleteRow(0)
-    es foreach { e => table.append(toRow(e).toString) }
+    es.foreach: e =>
+      table.append(toRow(e).render)

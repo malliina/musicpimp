@@ -40,23 +40,24 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
     *   auth failure or success
     */
   def authAsync(rh: RequestHeader): Future[Either[AuthFailure, AuthedRequest]] =
-    Auth.basicCredentials(rh) map { creds =>
-      if creds.password == Constants.pass then
-        val user = creds.username
-        val cloudId = if user.name.trim.nonEmpty then CloudID(user.name) else newID()
-        isConnected(cloudId) map { connected =>
-          if connected then
-            log warn s"Unable to register client: '$cloudId'. Another client with that ID is already connected."
-            Left(InvalidCredentials(rh))
-          else Right(AuthedRequest(Username(cloudId.id), rh))
-        }
-      else fut(Left(InvalidCredentials(rh)))
-    } getOrElse {
-      log warn s"No credentials for request from '${Proxies.realAddress(rh)}'."
-      fut(Left(MissingCredentials(rh)))
-    }
+    Auth
+      .basicCredentials(rh)
+      .map: creds =>
+        if creds.password == Constants.pass then
+          val user = creds.username
+          val cloudId = if user.name.trim.nonEmpty then CloudID(user.name) else newID()
+          isConnected(cloudId) map { connected =>
+            if connected then
+              log warn s"Unable to register client: '$cloudId'. Another client with that ID is already connected."
+              Left(InvalidCredentials(rh))
+            else Right(AuthedRequest(Username(cloudId.id), rh))
+          }
+        else fut(Left(InvalidCredentials(rh)))
+      .getOrElse:
+        log warn s"No credentials for request from '${Proxies.realAddress(rh)}'."
+        fut(Left(MissingCredentials(rh)))
 
-  def newID(): CloudID = CloudID(UUID.randomUUID().toString take 5)
+  private def newID(): CloudID = CloudID(UUID.randomUUID().toString take 5)
 
   def fut[T](t: T): Future[T] = Future.successful(t)
 
