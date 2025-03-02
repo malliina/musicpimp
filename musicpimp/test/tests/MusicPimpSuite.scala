@@ -1,7 +1,8 @@
 package tests
 
 import com.malliina.musicpimp.app.{AppConf, InitOptions, LocalConf, PimpComponents}
-import com.malliina.musicpimp.db.Conf
+import com.malliina.database.Conf
+import com.malliina.musicpimp.db.ConfBuilder
 import com.typesafe.config.ConfigFactory
 import play.api.{Configuration, Play}
 
@@ -25,7 +26,9 @@ trait MusicPimpSuite:
 
     override def beforeAll(): Unit =
       val dbConf =
-        Conf.fromConf(TestAppConf.testConf).fold(err => throw new Exception(err.message), identity)
+        ConfBuilder
+          .fromConf(TestAppConf.testConf)
+          .fold(err => throw Exception(err.message), identity)
       comps = new PimpComponents(
         TestAppLoader.createTestAppContext,
         pimpOptions,

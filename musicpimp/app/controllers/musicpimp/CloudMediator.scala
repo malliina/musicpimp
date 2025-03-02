@@ -27,8 +27,7 @@ class CloudMediator(clouds: Clouds) extends ReplayMediator(1):
       .viaMat(KillSwitches.single)(Keep.right)
       .to(Sink.foreach: json =>
         log.info(s"Broadcast $json")
-        self ! Broadcast(json)
-      )
+        self ! Broadcast(json))
       .run()
     subscription = Option(killSwitch)
     clouds.emitLatest()

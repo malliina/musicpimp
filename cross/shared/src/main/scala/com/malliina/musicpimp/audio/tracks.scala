@@ -20,8 +20,7 @@ case class FullTrack(
   duration: FiniteDuration,
   size: StorageSize,
   url: FullUrl
-) extends TrackMeta
-  derives Codec.AsObject
+) extends TrackMeta derives Codec.AsObject
 
 object FullTrack:
   val empty = FullTrack(
@@ -58,5 +57,4 @@ case class Track(
   duration: FiniteDuration,
   size: StorageSize,
   path: UnixPath
-) extends TrackMeta
-  derives Codec.AsObject
+) extends TrackMeta derives Codec.AsObject

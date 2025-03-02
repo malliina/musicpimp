@@ -43,7 +43,7 @@ class JsonActor(ctx: ActorMeta) extends Actor:
 
   override def postStop(): Unit =
     super.postStop()
-    pinger.foreach({ p => p.cancel() })
+    pinger.foreach(p => p.cancel())
 
 object JsonActor:
   private val log = Logger(getClass)

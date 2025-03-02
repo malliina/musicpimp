@@ -47,7 +47,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
           if clouds.isConnected then
             clouds.disconnectAndForget("Disconnected by request.")
             fut(redir)
-          else {
+          else
             val maybeID = desiredID.filter(_.nonEmpty).map(CloudID.apply)
             clouds
               .connect(maybeID)
@@ -60,7 +60,6 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
                   )
                 )
               )
-          }
       )
 
   def errorMessage: PartialFunction[Throwable, String] = {

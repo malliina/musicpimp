@@ -8,6 +8,7 @@ import cats.effect.IO
 import com.malliina.database.DoobieDatabase
 import com.malliina.http.FullUrl
 import com.malliina.concurrent.Execution.runtime
+import com.malliina.database.Conf
 import com.malliina.logback.PimpAppender
 import com.malliina.musicpimp.Starter
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
@@ -89,7 +90,7 @@ class ProdAppConf(c: Configuration) extends AppConf:
   private val log = Logger(getClass)
 
   private var embedded: Option[EmbeddedMySQL] = None
-  override val databaseConf: Conf = Conf
+  override val databaseConf: Conf = ConfBuilder
     .fromConfOrLegacy(c)
     .fold(
       err =>
@@ -169,18 +170,9 @@ class PimpComponents(
   implicit val ec: ExecutionContext = materializer.executionContext
   // Services
   lazy val ctx = ActorExecution(actorSystem, materializer)
-  val databaseConf = appConf.databaseConf
-  val doobieConf = com.malliina.database.Conf(
-    databaseConf.url,
-    databaseConf.user,
-    databaseConf.pass,
-    databaseConf.driver,
-    maxPoolSize = 5,
-    autoMigrate = false,
-    schemaTable = "flyway_schema_history"
-  )
-  val (doobieResource, doobieFinalizer) =
-    DoobieDatabase.default[IO](doobieConf).allocated.unsafeRunSync()
+  private val doobieConf = appConf.databaseConf
+  private val (doobieResource, doobieFinalizer) =
+    DoobieDatabase.init[IO](doobieConf).allocated.unsafeRunSync()
   val fullText = FullText(doobieResource)
   lazy val indexer = Indexer(library, DoobieIndexer(doobieResource), actorSystem.scheduler)
   val ps = DoobiePlaylists(doobieResource)

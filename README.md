@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/malliina/musicpimp/workflows/Test/badge.svg)](https://github.com/malliina/musicpimp/actions)
+[![Build Status](https://github.com/malliina/musicpimp/workflows/Deploy/badge.svg)](https://github.com/malliina/musicpimp/actions)
 
 This is the MusicPimp server software for Windows/Linux desktops. Check [www.musicpimp.org](https://www.musicpimp.org) for details.
 

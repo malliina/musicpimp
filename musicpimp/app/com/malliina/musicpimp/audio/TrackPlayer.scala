@@ -56,10 +56,9 @@ class TrackPlayer(val player: PimpPlayer, serverMessageSink: EventSink[ServerMes
       player.volume = level.volume
       send(VolumeChangedMessage(level))
       true
-    else {
+    else
       log debug s"Volume adjustment to '$level' refused, already at that volume."
       false
-    }
 
   def toggleMute(): Unit = mute(!player.mute)
 

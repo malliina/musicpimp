@@ -7,7 +7,7 @@ import play.api.http.{MimeTypes, Writeable}
 
 import scalatags.Text
 
-/** Helper that enables imports-free usage in Play's `Action`s such as: `Action(Ok(myTags))`.
+/** Helper that enables imports-free usage in Play's `Action` s such as: `Action(Ok(myTags))`.
   *
   * @param tags
   *   scalatags

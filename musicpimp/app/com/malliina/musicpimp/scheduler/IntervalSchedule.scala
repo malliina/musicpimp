@@ -3,7 +3,7 @@ package com.malliina.musicpimp.scheduler
 import io.circe.Codec
 import it.sauronsoftware.cron4j.SchedulingPattern
 
-/** Schedule for executing something every `interval` `timeUnit`s.
+/** Schedule for executing something every `interval` `timeUnit` s.
   *
   * @param interval
   *   time amount - TODO check which ranges are valid

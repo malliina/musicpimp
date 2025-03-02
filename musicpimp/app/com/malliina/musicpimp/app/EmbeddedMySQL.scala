@@ -1,10 +1,13 @@
 package com.malliina.musicpimp.app
 
 import java.nio.file.{Files, Path}
-
 import ch.vorburger.mariadb4j.{DB, DBConfiguration, DBConfigurationBuilder}
-import com.malliina.musicpimp.db.Conf
+import com.malliina.database.Conf
+import com.malliina.http.FullUrl
+import com.malliina.musicpimp.cloud.Constants.pass
+import com.malliina.musicpimp.db.ConfBuilder
 import com.malliina.musicpimp.util.FileUtil
+import com.malliina.values.Password
 
 object EmbeddedMySQL:
   def temporary: EmbeddedMySQL =
@@ -28,6 +31,13 @@ class EmbeddedMySQL(baseDir: Path, temporary: Boolean):
     db.start()
     val dbName = "pimptest"
     db.createDB(dbName)
-    Conf(dbConfig.getURL(dbName), "root", "", Conf.MySQLDriver)
+    ConfBuilder.makeConf(
+      FullUrl
+        .build(dbConfig.getURL(dbName))
+        .fold(err => throw IllegalArgumentException(err.message), identity),
+      "root",
+      Password(""),
+      Conf.MySQLDriver
+    )
 
   def stop(): Unit = db.stop()

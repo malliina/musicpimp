@@ -25,7 +25,7 @@ abstract class PlayLifeCycle(appName: String, registryPort: Int):
     sys.props ++= conformize(readConfFile(appName))
     validateKeyStoreIfSpecified()
 
-  /** Reads a file named `confNameWithoutExtension`.conf if it exists.
+  /** Reads a file named `confNameWithoutExtension`. conf if it exists.
     *
     * @param confNameWithoutExtension
     *   name of conf, typically the name of the app

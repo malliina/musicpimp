@@ -227,8 +227,7 @@ class JavaSoundPlayer(
         case e: ArrayIndexOutOfBoundsException =>
           log.warn(e.getClass.getName, e)
           closeLine()
-          onPlaybackException(e)
-      )
+          onPlaybackException(e))
 
   private def startPlayThread(): Unit =
     val data = new Array[Byte](bufferSize)

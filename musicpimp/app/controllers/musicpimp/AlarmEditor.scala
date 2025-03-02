@@ -70,9 +70,8 @@ class AlarmEditor(
     schedules.find(id) map { clock =>
       val form = clockForm.fill(clock)
       clockAction(form, UserFeedback.formed(form))
-    } getOrElse {
+    } getOrElse
       pimpAction(notFound(s"Unknown ID '$id'."))
-    }
 
   private def clockAction(form: Form[ClockPlaybackConf], feedback: Option[UserFeedback] = None) =
     pimpAction(req => Ok(tags.alarmEditor(AlarmContent(form, feedback, req.user, messages))))

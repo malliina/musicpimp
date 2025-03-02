@@ -28,7 +28,7 @@ object PimpAppender:
     appender.setTimeFormat("yyyy-MM-dd HH:mm:ss")
     LogbackUtils.installAppender(appender)
 
-  def comps[F[_]: Async: Concurrent]: Resource[F, LoggingComps[F]] =
+  def comps[F[_]: Async]: Resource[F, LoggingComps[F]] =
     for
       d <- Dispatcher.parallel[F]
       comps <- Resource.eval(FS2AppenderComps.io(d))
@@ -52,8 +52,7 @@ object PimpAppender:
           source =>
             import org.apache.pekko.stream.scaladsl.GraphDSL.Implicits.*
             builder.materializedValue ~> sink
-            SourceShape(source.out)
-      )
+            SourceShape(source.out))
       .mapMaterializedValue(_ => NotUsed)
 
   private def publisherStream[A](

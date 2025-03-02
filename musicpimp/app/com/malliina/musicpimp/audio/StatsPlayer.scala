@@ -22,8 +22,7 @@ class StatsPlayer(player: MusicPlayer, stats: PlaybackStats[IO]) extends AutoClo
     .viaMat(KillSwitches.single)(Keep.right)
     .to(Sink.foreach: track =>
       val user = latestUser.single.get
-      stats.played(track, user).unsafeToFuture()
-    )
+      stats.played(track, user).unsafeToFuture())
     .run()
 
   def updateUser(user: Username): Unit =

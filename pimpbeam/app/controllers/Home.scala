@@ -88,7 +88,7 @@ class Home(
     * cover.
     *
     * @return
-    *   an action that returns the cover of `artist`s `album`
+    *   an action that returns the cover of `artist` s `album`
     */
   def cover(artist: String, album: String) = PlayerSecureAction: player =>
     log info s"Searching for cover: $artist - $album"

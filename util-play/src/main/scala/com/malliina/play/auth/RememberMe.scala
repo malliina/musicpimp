@@ -57,8 +57,7 @@ class RememberMe(
         t <- data get TokenName
       yield UnAuthToken(Username(u), s.toLong, t.toLong)
     maybeToken getOrElse UnAuthToken.empty
-  catch
-    case _: NumberFormatException => UnAuthToken.empty
+  catch case _: NumberFormatException => UnAuthToken.empty
 
     /** @param req
       *   request

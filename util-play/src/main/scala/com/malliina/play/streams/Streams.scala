@@ -38,8 +38,7 @@ trait Streams:
     outStreams: OutputStream*
   )(implicit ec: ExecutionContext): Sink[ByteString, Future[Long]] =
     streamWriter(outStreams*).mapMaterializedValue(_.andThen:
-      case _ => outStreams.foreach(_.close())
-    )
+      case _ => outStreams.foreach(_.close()))
 
   /** @return
     *   a [[Sink]] that writes any consumed bytes to `os`

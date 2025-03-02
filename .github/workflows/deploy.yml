@@ -5,7 +5,7 @@ on: push
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
@@ -14,6 +14,7 @@ jobs:
           distribution: zulu
           java-version: 17
           cache: sbt
+      - uses: sbt/setup-sbt@v1
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/

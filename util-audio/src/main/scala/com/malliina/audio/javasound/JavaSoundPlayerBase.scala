@@ -62,11 +62,10 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable:
   def volume: Int =
     if hasVolumeControl then volumeControlValue
     else if hasGainControl then (gainControlValue * 100).toInt
-    else {
+    else
       val cached = cachedVolume.getOrElse(0)
       log.info(s"Unable to find volume/gain control. Returning volume $cached.")
       cached
-    }
 
   def volume_=(newVolume: Int): Unit =
     if hasVolumeControl then volumeControlValue(newVolume)

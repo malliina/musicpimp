@@ -17,5 +17,4 @@ case class DataTrack(
   size: StorageSize,
   path: UnixPath,
   folder: FolderID
-) extends TrackMeta
-  derives Codec.AsObject
+) extends TrackMeta derives Codec.AsObject

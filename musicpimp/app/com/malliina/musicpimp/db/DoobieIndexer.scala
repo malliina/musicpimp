@@ -49,7 +49,8 @@ class DoobieIndexer[F[_]: Async](db: DoobieDatabase[F]) extends DoobieMappings:
         .query[Boolean]
         .unique
       upsertSql =
-        if isNonEmpty then sql"""update FOLDERS
+        if isNonEmpty then
+          sql"""update FOLDERS
                                  set TITLE = ${folder.title}, PATH = ${folder.path}, PARENT = ${folder.parent}
                                  where ID = ${folder.id}"""
         else sql"""insert into FOLDERS(ID, TITLE, PATH, PARENT)
@@ -65,7 +66,8 @@ class DoobieIndexer[F[_]: Async](db: DoobieDatabase[F]) extends DoobieMappings:
       updateSql =
         if isNonEmpty then
           sql"""update TRACKS set TITLE = ${t.title}, ARTIST = ${t.artist}, ALBUM = ${t.album}, DURATION = ${t.duration}, SIZE = ${t.size}, PATH = ${t.path}, FOLDER = ${t.folder} where ID = ${t.id}"""
-        else sql"""insert into TRACKS(ID, TITLE, ARTIST, ALBUM, DURATION, SIZE, PATH, FOLDER)
+        else
+          sql"""insert into TRACKS(ID, TITLE, ARTIST, ALBUM, DURATION, SIZE, PATH, FOLDER)
                    values (${t.id}, ${t.title}, ${t.artist}, ${t.album}, ${t.duration}, ${t.size}, ${t.path}, ${t.folder})"""
       upsert <- updateSql.update.run
     yield upsert

@@ -10,7 +10,7 @@ import com.malliina.musicpimp.models.{PlaylistID, SavedPlaylist}
 import com.malliina.util.AppLogger
 import com.malliina.values.Username
 import doobie.free.connection.{pure, raiseError}
-import doobie.implicits.toSqlInterpolator
+import doobie.implicits.{deriveRead, toSqlInterpolator}
 import doobie.util.fragments
 
 object DoobiePlaylists:

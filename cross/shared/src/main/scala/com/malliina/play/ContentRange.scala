@@ -8,7 +8,7 @@ import io.circe.{Codec, Encoder, Json}
 import scala.util.Try
 
 case class ContentRange(start: Int, endInclusive: Int, size: StorageSize):
-  val totalSizeBytes = size.toBytes
+  private val totalSizeBytes: Long = size.toBytes
 
   def endExclusive = endInclusive + 1
   def contentLength = endExclusive - start
@@ -16,7 +16,7 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize):
   def contentRange = s"${ContentRange.BYTES} $start-$endInclusive/$totalSizeBytes"
   def isAll = start == 0 && endInclusive == totalSizeBytes.toInt - 1
 
-  def description =
+  def description: String =
     val total = s"${size.toBytes} bytes"
     if isAll then total
     else s"($start-$endInclusive)/$total"
