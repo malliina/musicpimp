@@ -104,7 +104,7 @@ class Rest(
           EssentialAction: rh =>
             val a =
               localPlaybackAction(meta.id).map(_.getOrElse(streamingAction(meta))).map(_.apply(rh))
-            Accumulator.flatten(a)(mat)
+            Accumulator.flatten(a)(using mat)
       )
       authAction(requestHeader)
 
@@ -193,7 +193,7 @@ class Rest(
     Future:
       val track = StreamedTrack.fromTrack(meta, inStream, mat)
       player.setPlaylistAndPlay(track)
-    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(mat)):
+    pimpParsedAction(StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(using mat)):
       _ =>
         log.info(s"Received stream of track: ${meta.id}")
         Ok
@@ -285,7 +285,7 @@ class Rest(
           StreamSource.fromFile(file),
           SongTags(title.getOrElse(file.getFileName.toString), album, artist)
         )
-        new LocalTrack(Library.trackId(file), UnixPath(file), meta)(mat)
+        new LocalTrack(Library.trackId(file), UnixPath(file), meta)(using mat)
 
       val track = trackInfoFromFileOpt
         .map(_.map(_.getOrElse(trackInfoFromUpload)))

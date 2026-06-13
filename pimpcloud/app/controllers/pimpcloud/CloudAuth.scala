@@ -20,7 +20,7 @@ object CloudAuth:
     new CloudAuth(actions, sessionAuth(mat.executionContext), mat)
 
   def sessionAuth(ec: ExecutionContext) =
-    UserAuthenticator.session().transform((req, user) => Right(AuthedRequest(user, req)))(ec)
+    UserAuthenticator.session().transform((req, user) => Right(AuthedRequest(user, req)))(using ec)
 
   def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
     PimpAuths.redirecting(routes.Web.login, auth)

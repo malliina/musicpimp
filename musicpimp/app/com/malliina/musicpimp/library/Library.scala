@@ -35,7 +35,7 @@ object Library:
   val RootId = FolderID(idFor(""))
   val EmptyPath = Paths.get("")
 
-  def apply()(implicit mat: Materializer): Library = new Library()(mat)
+  def apply()(implicit mat: Materializer): Library = new Library()(using mat)
   def idFor(in: String) = DigestUtils.md5Hex(in)
   def parent(p: Path) = folderId(Option(p.getParent).getOrElse(EmptyPath))
   def folderId(p: Path) = FolderID(idFor(UnixPath(p).path))
@@ -50,7 +50,7 @@ class Library()(implicit mat: Materializer) extends FileLibrary:
 
   def reloadFolders(): Unit = setFolders(Settings.read)
 
-  def setFolders(folders: Seq[Path]): Unit = atomic(txn => rootFolders.set(folders)(txn))
+  def setFolders(folders: Seq[Path]): Unit = atomic(txn => rootFolders.set(folders)(using txn))
 
   def localize(tracks: Seq[TrackMeta]): Seq[LocalTrack] =
     tracks.flatMap(track => findMeta(track.relativePath))

@@ -34,9 +34,9 @@ trait FileResults:
         log.info(
           s"Serving all of '$path', $size, as response to ${request.describe}..."
         )
-        Ok.sendFile(path.toFile)(ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
+        Ok.sendFile(path.toFile)(using ec, fmts).withHeaders(ACCEPT_RANGES -> ContentRange.BYTES)
 
-  def rangedResult(
+  private def rangedResult(
     path: Path,
     range: ContentRange,
     request: RequestHeader,

@@ -24,24 +24,23 @@ case class StatusEvent17(
 )
 
 object StatusEvent17:
-  implicit def status17writer: Encoder[StatusEvent17] =
-    Encoder[StatusEvent17]: o =>
-      Json.obj(
-        EventKey -> StatusKey.asJson,
-        Id -> o.id.asJson,
-        Title -> o.title.asJson,
-        Artist -> o.artist.asJson,
-        Album -> o.album.asJson,
-        State -> o.state.toString.asJson,
-        Pos -> o.position.readable.asJson,
-        PosSeconds -> o.position.toSeconds.asJson,
-        DurationKey -> o.duration.readable.asJson,
-        DurationSeconds -> o.duration.toSeconds.asJson,
-        Gain -> (o.gain * 100).toInt.asJson,
-        Mute -> o.mute.asJson,
-        Playlist -> o.playlist.asJson,
-        PlaylistIndexv17v18 -> o.index.asJson
-      )
+  implicit def status17writer: Encoder[StatusEvent17] = o =>
+    Json.obj(
+      EventKey -> StatusKey.asJson,
+      Id -> o.id.asJson,
+      Title -> o.title.asJson,
+      Artist -> o.artist.asJson,
+      Album -> o.album.asJson,
+      State -> o.state.toString.asJson,
+      Pos -> o.position.readable.asJson,
+      PosSeconds -> o.position.toSeconds.asJson,
+      DurationKey -> o.duration.readable.asJson,
+      DurationSeconds -> o.duration.toSeconds.asJson,
+      Gain -> (o.gain * 100).toInt.asJson,
+      Mute -> o.mute.asJson,
+      Playlist -> o.playlist.asJson,
+      PlaylistIndexv17v18 -> o.index.asJson
+    )
 
   val empty = StatusEvent17(
     TrackID(""),

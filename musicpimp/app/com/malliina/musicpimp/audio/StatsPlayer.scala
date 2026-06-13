@@ -26,7 +26,7 @@ class StatsPlayer(player: MusicPlayer, stats: PlaybackStats[IO]) extends AutoClo
     .run()
 
   def updateUser(user: Username): Unit =
-    atomic(txn => latestUser.update(user)(txn))
+    atomic(txn => latestUser.update(user)(using txn))
 
   def close(): Unit =
     subscription.shutdown()

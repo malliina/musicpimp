@@ -70,7 +70,7 @@ object CloudSocket:
       s,
       fullText,
       deps
-    )(mat)
+    )(using mat)
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -133,7 +133,7 @@ class CloudSocket(
     */
   override def connect(): Future[Unit] =
     log.info(s"Connecting as '$username' to '$uri'...")
-    Sources.timeoutAfter(10.seconds, registrationPromise)(s, Execution.cached)
+    Sources.timeoutAfter(10.seconds, registrationPromise)(using s, Execution.cached)
     super.connect()
 
   override def onMessage(json: Json): Unit =

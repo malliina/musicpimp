@@ -59,7 +59,7 @@ class SettingsController(
 
   def newFolder = pimpAction: request =>
     newFolderForm
-      .bindFromRequest()(request, formBinding)
+      .bindFromRequest()(using request, formBinding)
       .fold(
         formWithErrors =>
           log.warn(s"Errors: ${formWithErrors.errors}")
@@ -81,7 +81,7 @@ class SettingsController(
 
   private def foldersPage(form: Form[String], req: PimpUserRequest) =
     val errorMessage = form.errors.headOption.map: error =>
-      UserFeedback.error(Messages(error.message)(messages))
+      UserFeedback.error(Messages(error.message)(using messages))
     val flashMessage = UserFeedback.flashed(req.flash)
     val feedback = errorMessage.orElse(flashMessage)
     tags.musicFolders(LibraryContent(Settings.readFolders, folderPlaceHolder, req.user, feedback))

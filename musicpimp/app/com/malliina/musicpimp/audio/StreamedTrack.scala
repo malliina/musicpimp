@@ -25,4 +25,4 @@ case class StreamedTrack(
 
 object StreamedTrack:
   def fromTrack(t: TrackMeta, inStream: InputStream, mat: Materializer): StreamedTrack =
-    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)(mat)
+    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)(using mat)

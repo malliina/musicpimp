@@ -17,7 +17,7 @@ object CloudCommand:
   val DisconnectCmd = "disconnect"
   val SubscribeCmd = "subscribe"
 
-  val reader = Decoder[CloudCommand]: json =>
+  val reader: Decoder[CloudCommand] = json =>
     json
       .downField(CmdKey)
       .as[String]
@@ -26,10 +26,10 @@ object CloudCommand:
         case DisconnectCmd => Right(Disconnect)
         case SubscribeCmd  => Right(Noop)
         case other         => Left(DecodingFailure(s"Unknown '$CmdKey' value: '$other'.", Nil))
-  val writer = Encoder[CloudCommand]:
+  val writer: Encoder[CloudCommand] =
     case c: Connect => simpleObj(ConnectCmd).deepMerge(Encoder[Connect].apply(c))
     case Disconnect => simpleObj(DisconnectCmd)
     case Noop       => simpleObj(SubscribeCmd)
-  implicit val json: Codec[CloudCommand] = Codec.from[CloudCommand](reader, writer)
+  given json: Codec[CloudCommand] = Codec.from[CloudCommand](reader, writer)
 
   private def simpleObj(cmd: String) = Json.obj(CmdKey -> cmd.asJson)

@@ -43,7 +43,7 @@ object FolderMeta:
       else libraryController.library(id)
     FullUrls.absolute(host, call)
 
-  def writer(host: FullUrl) = Encoder[FolderMeta]: f =>
+  def writer(host: FullUrl): Encoder[FolderMeta] = f =>
     val call: Call =
       if f.id == Library.RootId then libraryController.rootLibrary
       else libraryController.library(f.id)

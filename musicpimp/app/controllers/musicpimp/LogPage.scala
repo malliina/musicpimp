@@ -45,7 +45,7 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps) extends HtmlCon
 
   def changeLogLevel = pimpAction: req =>
     levelForm
-      .bindFromRequest()(req, formBinding)
+      .bindFromRequest()(using req, formBinding)
       .fold(
         erroredForm =>
           log warn s"Log level change submission failed"

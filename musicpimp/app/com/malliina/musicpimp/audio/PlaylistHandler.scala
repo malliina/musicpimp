@@ -11,28 +11,28 @@ trait PlaylistCommand
 
 case object GetPlaylistsCommand extends PlaylistCommand:
   val Key = "playlists"
-  implicit val json: Codec[GetPlaylistsCommand.type] = singleCmd(Key, GetPlaylistsCommand)
+  given json: Codec[GetPlaylistsCommand.type] = singleCmd(Key, GetPlaylistsCommand)
 
 case class GetPlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
 object GetPlaylistCommand:
   val Key = "playlist"
-  implicit val json: Codec[GetPlaylistCommand] = cmd(Key, deriveCodec[GetPlaylistCommand])
+  given json: Codec[GetPlaylistCommand] = cmd(Key, deriveCodec[GetPlaylistCommand])
 
 case class SavePlaylistCommand(playlist: PlaylistSubmission) extends PlaylistCommand
 
 object SavePlaylistCommand:
   val Key = "playlist_save"
-  implicit val json: Codec[SavePlaylistCommand] = cmd(Key, deriveCodec[SavePlaylistCommand])
+  given json: Codec[SavePlaylistCommand] = cmd(Key, deriveCodec[SavePlaylistCommand])
 
 case class DeletePlaylistCommand(id: PlaylistID) extends PlaylistCommand
 
 object DeletePlaylistCommand:
   val Key = "playlist_delete"
-  implicit val json: Codec[DeletePlaylistCommand] = cmd(Key, deriveCodec[DeletePlaylistCommand])
+  given json: Codec[DeletePlaylistCommand] = cmd(Key, deriveCodec[DeletePlaylistCommand])
 
 object PlaylistCommand:
-  implicit val reader: Decoder[PlaylistCommand] = Decoder: json =>
+  given reader: Decoder[PlaylistCommand] = json =>
     val v = json.value
     GetPlaylistsCommand.json
       .decodeJson(v)

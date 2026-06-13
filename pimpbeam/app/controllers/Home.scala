@@ -297,6 +297,6 @@ class Home(
           success => action(success).apply(rh)
         )
       }
-      Accumulator.flatten(futureAccumulator)(mat)
+      Accumulator.flatten(futureAccumulator)(using mat)
 
   def onUnauthorized(failure: AuthFailure) = Unauthorized

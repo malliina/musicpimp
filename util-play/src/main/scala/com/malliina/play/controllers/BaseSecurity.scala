@@ -115,4 +115,4 @@ class BaseSecurity[A <: AuthInfo](
           failure => Accumulator.done(onUnauthorized(failure)),
           success => action(success).apply(rh)
         )
-      Accumulator.flatten(futureAccumulator)(mat)
+      Accumulator.flatten(futureAccumulator)(using mat)

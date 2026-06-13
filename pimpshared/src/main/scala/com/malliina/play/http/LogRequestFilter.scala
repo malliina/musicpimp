@@ -6,7 +6,7 @@ import play.api.mvc.{EssentialAction, EssentialFilter}
 import scala.concurrent.ExecutionContext
 
 object LogRequestFilter:
-  def apply(ec: ExecutionContext): LogRequestFilter = new LogRequestFilter()(ec)
+  def apply(ec: ExecutionContext): LogRequestFilter = new LogRequestFilter()(using ec)
 
 class LogRequestFilter()(implicit ec: ExecutionContext) extends EssentialFilter:
   private val log = Logger(getClass)

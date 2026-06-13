@@ -66,7 +66,7 @@ class NoCacheByteStreams(
             .recover(onOfferError(request, info, bytes)),
         maxUploadSize,
         errorHandler
-      )(mat)
+      )(using mat)
     }
 
   def snapshot: Seq[PimpStream] = ongoing

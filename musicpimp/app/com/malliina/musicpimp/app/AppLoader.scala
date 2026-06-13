@@ -163,7 +163,7 @@ class PimpComponents(
     ) with PimpErrorHandling
 
   val player = MusicPlayer()
-  val library = Library()(materializer)
+  val library = Library()(using materializer)
 
   lazy val language = langs.availables.headOption getOrElse Lang.defaultLang
   lazy val messages = messagesApi.preferred(Seq(language))
@@ -188,11 +188,11 @@ class PimpComponents(
   lazy val clouds: Clouds =
     new Clouds(player, alarmHandler, deps, fullText, options.cloudUri, actorSystem.scheduler)
   lazy val tags = PimpHtml.forApp(environment.mode == Mode.Prod)
-  lazy val auths = Auths(userManager, rememberMe)(ec)
+  lazy val auths = Auths(userManager, rememberMe)(using ec)
   lazy val schedules = ScheduledPlaybackService(player, lib)
   lazy val alarmHandler = JsonHandler(player, schedules)
   lazy val compositeAuth = Authenticator.anyOne(
-    CookieAuthenticator.default(auth)(ec),
+    CookieAuthenticator.default(auth)(using ec),
     PimpAuthenticator.cookie(rememberMe)
   )
   lazy val webAuth = Secured.redirecting(compositeAuth)

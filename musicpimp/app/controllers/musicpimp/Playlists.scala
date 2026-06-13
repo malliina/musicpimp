@@ -81,7 +81,7 @@ class Playlists(tags: PimpHtml, service: PlaylistService[IO], auth: AuthDeps) ex
   def handleSubmission = recoveredAsync: req =>
     val user = req.user
     playlistForm
-      .bindFromRequest()(req, formBinding)
+      .bindFromRequest()(using req, formBinding)
       .fold(
         errors =>
           service.playlistsMeta(user).map(pls => BadRequest(tags.playlists(pls.playlists, user))),

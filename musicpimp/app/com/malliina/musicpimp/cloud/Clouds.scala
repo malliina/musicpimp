@@ -153,7 +153,7 @@ class Clouds(
   def disconnectAndForgetAsync(): Future[Boolean] =
     async(disconnectAndForget("Disconnected by user."))
 
-  def async[T](code: => T) = Future(code)(cached)
+  def async[T](code: => T) = Future(code)(using cached)
 
   def disconnectAndForget(reason: String) =
     disconnect(reason)

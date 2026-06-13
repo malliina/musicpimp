@@ -22,9 +22,9 @@ object FullRecentEntry:
   val When = "when"
   val WhenFormatted = "whenFormatted"
 
-  implicit val json: Codec[FullRecentEntry] =
+  given json: Codec[FullRecentEntry] =
     val base = deriveCodec[FullRecentEntry]
-    val writer = Encoder[FullRecentEntry]: r =>
+    val writer: Encoder[FullRecentEntry] = r =>
       val extras = Json.obj(When -> r.whenMillis.asJson, WhenFormatted -> r.whenFormatted.asJson)
       base(r).deepMerge(extras)
     Codec.from(base, writer)

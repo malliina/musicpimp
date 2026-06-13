@@ -20,7 +20,7 @@ class TwitterValidator(val oauth: OAuthConf[Email]) extends TwitterAuthFlow(oaut
         err => handler.onUnauthorized(err, req),
         token =>
           Redirect(authTokenUrl(token).url)
-            .addingToSession(RequestToken.Key -> token.token)(req)
+            .addingToSession(RequestToken.Key -> token.token)(using req)
       )
 
   def validateCallback(req: RequestHeader): IO[Result] =

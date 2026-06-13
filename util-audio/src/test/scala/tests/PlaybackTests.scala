@@ -64,7 +64,7 @@ class PlaybackTests extends TestBase:
     val in = new PipedInputStream(out)
     val fut = Future {
       new JavaSoundPlayer(OneShotStream(in, dur, size))
-    }(ExecutionContexts.defaultPlaybackContext)
+    }(using ExecutionContexts.defaultPlaybackContext)
     Thread.sleep(1000)
     out.close()
     Thread.sleep(500)

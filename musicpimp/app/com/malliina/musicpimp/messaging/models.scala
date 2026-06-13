@@ -31,7 +31,7 @@ case class TokenInfo(token: Token, platform: TokenPlatform)
 object TokenInfo:
   val TokenKey = "token"
 
-  val tokenReader = Decoder[Token]: json =>
+  val tokenReader: Decoder[Token] = json =>
     json
       .downField(TokenPlatform.Key)
       .as[TokenPlatform]
@@ -42,9 +42,9 @@ object TokenInfo:
           case Gcm  => tokenJson.as[GCMToken]
           case Mpns => tokenJson.as[MPNSToken]
           case Apns => tokenJson.as[APNSToken]
-  implicit val tokenFormat: Codec[Token] =
-    Codec.from[Token](tokenReader, Encoder[Token](t => t.token.asJson))
-  implicit val json: Codec[TokenInfo] = deriveCodec[TokenInfo]
+  given tokenFormat: Codec[Token] =
+    Codec.from[Token](tokenReader, t => t.token.asJson)
+  given json: Codec[TokenInfo] = deriveCodec[TokenInfo]
 
   def adm(token: ADMToken) = TokenInfo(token, Adm)
 

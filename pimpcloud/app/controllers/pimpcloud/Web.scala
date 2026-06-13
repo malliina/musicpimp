@@ -46,7 +46,7 @@ class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthen
     val flash = request.flash
     val remoteAddress = Proxies.realAddress(request)
     cloudForm
-      .bindFromRequest()(request, FormBinding.Implicits.formBinding)
+      .bindFromRequest()(using request, FormBinding.Implicits.formBinding)
       .fold(
         formWithErrors =>
           val user = formWithErrors.data.getOrElse(forms.userFormKey, "")

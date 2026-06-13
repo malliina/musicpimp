@@ -28,28 +28,28 @@ case class PimpStream(
 case class PimpStreams(streams: Seq[PimpStream]) extends PimpList
 
 object PimpStreams:
-  implicit val json: Codec[PimpStreams] = format(RequestsKey, PimpStreams.apply)(_.streams)
+  given json: Codec[PimpStreams] = format(RequestsKey, PimpStreams.apply)(_.streams)
 
 case class PimpPhone(s: CloudID, address: String) derives Codec.AsObject
 
 case class PimpPhones(phones: Seq[PimpPhone]) extends PimpList
 
 object PimpPhones:
-  implicit val json: Codec[PimpPhones] = format(PhonesKey, PimpPhones.apply)(_.phones)
+  given json: Codec[PimpPhones] = format(PhonesKey, PimpPhones.apply)(_.phones)
 
 case class PimpServer(id: CloudID, address: String) derives Codec.AsObject
 
 case class PimpServers(servers: Seq[PimpServer]) extends PimpList
 
 object PimpServers:
-  implicit val json: Codec[PimpServers] = format(ServersKey, PimpServers.apply)(_.servers)
+  given json: Codec[PimpServers] = format(ServersKey, PimpServers.apply)(_.servers)
 
 object ListEvent:
   def format[T: Codec, U](eventValue: String, build: Seq[T] => U)(strip: U => Seq[T]) =
     Codec.from(reader(eventValue, build), writer(eventValue, strip))
 
   def reader[T: Decoder, U](eventValue: String, build: Seq[T] => U): Decoder[U] =
-    Decoder[U]: json =>
+    json =>
       json
         .downField(EventKey)
         .as[String]
@@ -65,4 +65,4 @@ object ListEvent:
             )
 
   def writer[T: Encoder, U](eventValue: String, strip: U => Seq[T]): Encoder[U] =
-    Encoder[U](u => Json.obj(EventKey -> eventValue.asJson, Body -> strip(u).asJson))
+    u => Json.obj(EventKey -> eventValue.asJson, Body -> strip(u).asJson)

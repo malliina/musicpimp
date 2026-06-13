@@ -28,7 +28,7 @@ object JsonFutureSocket:
   * can pair requests with responses.
   */
 abstract class JsonFutureSocket(val id: CloudID, scheduler: Scheduler)
-  extends UuidFutureMessaging(scheduler)(cached):
+  extends UuidFutureMessaging(scheduler)(using cached):
 
   val timeout = 20.seconds
 

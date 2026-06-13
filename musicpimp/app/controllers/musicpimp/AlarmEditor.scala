@@ -97,7 +97,7 @@ class AlarmEditor(
     form: Form[T],
     request: PimpUserRequest
   )(errorContent: (PimpUserRequest, Form[T]) => C, okRedir: (Form[T], T) => Result) =
-    val filledForm = form.bindFromRequest()(request, formBinding)
+    val filledForm = form.bindFromRequest()(using request, formBinding)
     filledForm.fold(
       errors => BadRequest(errorContent(request, errors)),
       success => okRedir(filledForm, success)

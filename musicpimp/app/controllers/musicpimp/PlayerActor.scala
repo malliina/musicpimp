@@ -23,7 +23,7 @@ class PlayerActor(
   val pings = Source.tick(1.seconds, 5.seconds, 0)
   // Playback updates
   val ticks = Source.tick(200.millis, 900.millis, 0)
-  val messageWriter = ServerMessage.jsonWriter(TrackJson.format(FullUrls.hostOnly(rh)))
+  val messageWriter = ServerMessage.jsonWriter(using TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
   implicit val w: Encoder[TrackMeta] = TrackJson.writer(rh)
   val user = conf.user.user

@@ -86,7 +86,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
 
   def formAddUser = pimpActionAsyncIO: request =>
     addUserForm
-      .bindFromRequest()(request, formBinding)
+      .bindFromRequest()(using request, formBinding)
       .fold(
         formWithErrors =>
           val user = formWithErrors.data.getOrElse(userFormKey, "")
@@ -116,7 +116,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
     val remoteAddress = request.realAddress
     val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
     rememberMeLoginForm
-      .bindFromRequest()(request, formBinding)
+      .bindFromRequest()(using request, formBinding)
       .fold(
         formWithErrors =>
           val user = formWithErrors.data.getOrElse(userFormKey, "")
@@ -159,7 +159,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
     val remoteAddress = request.realAddress
     val user = request.user
     accs.changePasswordForm
-      .bindFromRequest()(request, formBinding)
+      .bindFromRequest()(using request, formBinding)
       .fold(
         errors =>
           val feedback = UserFeedback.formed(errors)

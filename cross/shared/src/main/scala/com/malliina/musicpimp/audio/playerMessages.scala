@@ -67,62 +67,61 @@ case class RemoveMsg(index: Int) extends PlayerMessage
 
 object RemoveMsg:
   val Index = "index"
-  val reader = Decoder[RemoveMsg]: json =>
+  val reader: Decoder[RemoveMsg] = json =>
     json.downField(Value).as[Int].orElse(json.downField(Index).as[Int]).map(apply)
-  val writer = Encoder[RemoveMsg]: r =>
-    Json.obj(Value -> r.index.asJson, Index -> r.index.asJson)
-  implicit val json: Codec[RemoveMsg] = cmd(Remove, Codec.from(reader, writer))
+  val writer: Encoder[RemoveMsg] = r => Json.obj(Value -> r.index.asJson, Index -> r.index.asJson)
+  given json: Codec[RemoveMsg] = cmd(Remove, Codec.from(reader, writer))
 
 case object ResumeMsg extends PlayerMessage:
-  implicit val json: Codec[ResumeMsg.type] = singleCmd(Resume, ResumeMsg)
+  given json: Codec[ResumeMsg.type] = singleCmd(Resume, ResumeMsg)
 
 case object StopMsg extends PlayerMessage:
-  implicit val json: Codec[StopMsg.type] = singleCmd(Stop, StopMsg)
+  given json: Codec[StopMsg.type] = singleCmd(Stop, StopMsg)
 
 case object NextMsg extends PlayerMessage:
-  implicit val json: Codec[NextMsg.type] = singleCmd(Next, NextMsg)
+  given json: Codec[NextMsg.type] = singleCmd(Next, NextMsg)
 
 case object PrevMsg extends PlayerMessage:
-  implicit val json: Codec[PrevMsg.type] = singleCmd(Prev, PrevMsg)
+  given json: Codec[PrevMsg.type] = singleCmd(Prev, PrevMsg)
 
 case class SkipMsg(value: Int) extends PlayerMessage
 
 object SkipMsg:
-  implicit val json: Codec[SkipMsg] = cmd(Skip, deriveCodec[SkipMsg])
+  given json: Codec[SkipMsg] = cmd(Skip, deriveCodec[SkipMsg])
 
 case class SeekMsg(value: FiniteDuration) extends PlayerMessage
 
 object SeekMsg:
-  implicit val json: Codec[SeekMsg] = cmd(Seek, deriveCodec[SeekMsg])
+  given json: Codec[SeekMsg] = cmd(Seek, deriveCodec[SeekMsg])
 
 case class MuteMsg(value: Boolean) extends PlayerMessage
 
 object MuteMsg:
-  implicit val json: Codec[MuteMsg] = cmd(Mute, deriveCodec[MuteMsg])
+  given json: Codec[MuteMsg] = cmd(Mute, deriveCodec[MuteMsg])
 
 case class VolumeMsg(value: Volume) extends PlayerMessage
 
 object VolumeMsg:
-  implicit val json: Codec[VolumeMsg] = cmd(VolumeKey, deriveCodec[VolumeMsg])
+  given json: Codec[VolumeMsg] = cmd(VolumeKey, deriveCodec[VolumeMsg])
 
 case class InsertTrackMsg(index: Int, track: TrackID) extends PlayerMessage
 
 object InsertTrackMsg:
-  implicit val json: Codec[InsertTrackMsg] = cmd(Insert, deriveCodec[InsertTrackMsg])
+  given json: Codec[InsertTrackMsg] = cmd(Insert, deriveCodec[InsertTrackMsg])
 
 case class MoveTrackMsg(from: Int, to: Int) extends PlayerMessage
 
 object MoveTrackMsg:
-  implicit val json: Codec[MoveTrackMsg] = cmd(Move, deriveCodec[MoveTrackMsg])
+  given json: Codec[MoveTrackMsg] = cmd(Move, deriveCodec[MoveTrackMsg])
 
 case class ResetPlaylistMessage(index: Int, tracks: Seq[TrackID]) extends PlayerMessage
 
 object ResetPlaylistMessage:
-  val reader = Decoder[ResetPlaylistMessage]: json =>
+  val reader: Decoder[ResetPlaylistMessage] = json =>
     val idx = json.downField(Index).as[Int].getOrElse(-1)
     val tracks = json.downField(Tracks).as[Seq[TrackID]].getOrElse(Nil)
     Right(ResetPlaylistMessage(idx, tracks))
-  implicit val json: Codec[ResetPlaylistMessage] =
+  given json: Codec[ResetPlaylistMessage] =
     cmd(ResetPlaylist, Codec.from(reader, deriveEncoder[ResetPlaylistMessage]))
 
 case class Handover(
@@ -134,18 +133,18 @@ case class Handover(
 
 object Handover:
   val Key = "handover"
-  implicit val json: Codec[Handover] = cmd(Key, deriveCodec[Handover])
+  given json: Codec[Handover] = cmd(Key, deriveCodec[Handover])
 
 case class PlayAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
 object PlayAllMsg:
-  implicit val json: Codec[PlayAllMsg] =
+  given json: Codec[PlayAllMsg] =
     cmd(PlayItemsKey, Codec.from(ItemsLike.reader[PlayAllMsg](apply), deriveEncoder[PlayAllMsg]))
 
 case class AddAllMsg(tracks: Seq[TrackID], folders: Seq[FolderID]) extends PlayerMessage
 
 object AddAllMsg:
-  implicit val json: Codec[AddAllMsg] =
+  given json: Codec[AddAllMsg] =
     cmd(AddItemsKey, Codec.from(ItemsLike.reader[AddAllMsg](apply), deriveEncoder[AddAllMsg]))
 
 /** Two uses:
@@ -162,7 +161,7 @@ object AddAllMsg:
 trait PlayerMessage
 
 object PlayerMessage:
-  implicit val reader: Decoder[PlayerMessage] = Decoder[PlayerMessage]: json =>
+  implicit val reader: Decoder[PlayerMessage] = json =>
     GetStatusMsg.json
       .decodeJson(json.value)
       .orElse(TimeUpdatedMsg.json.decodeJson(json.value))
@@ -190,10 +189,10 @@ object PlayerMessage:
       .orElse(json.as[Handover])
 
 object ItemsLike:
-  def reader[T](build: (Seq[TrackID], Seq[FolderID]) => T): Decoder[T] = Decoder[T]: json =>
+  def reader[T](build: (Seq[TrackID], Seq[FolderID]) => T): Decoder[T] = json =>
     val folders = json.downField(Folders).as[Seq[FolderID]].getOrElse(Nil)
     val tracks = json.downField(Tracks).as[Seq[TrackID]].getOrElse(Nil)
     Right(build(tracks, folders))
 
 case object StatusMsg:
-  implicit val json: Codec[StatusMsg.type] = singleCmd(Status, StatusMsg)
+  given json: Codec[StatusMsg.type] = singleCmd(Status, StatusMsg)

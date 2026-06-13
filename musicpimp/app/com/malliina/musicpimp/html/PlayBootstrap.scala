@@ -10,6 +10,6 @@ object PlayBootstrap extends PlayBootstrap
 trait PlayBootstrap:
   def helpSpan(field: Field, m: Messages) =
     field.error
-      .map(error => Messages(error.message, error.args*)(m))
+      .map(error => Messages(error.message, error.args*)(using m))
       .fold(empty): formattedMessage =>
         spanClass("help-block")(formattedMessage)

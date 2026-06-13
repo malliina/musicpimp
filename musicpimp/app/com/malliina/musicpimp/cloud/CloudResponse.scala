@@ -14,7 +14,7 @@ object CloudResponse:
   val BodyKey = "body"
   val SuccessKey = "success"
 
-  implicit def json[T: Encoder]: Encoder[CloudResponse[T]] = Encoder[CloudResponse[T]]: r =>
+  implicit def json[T: Encoder]: Encoder[CloudResponse[T]] = r =>
     Json.obj(
       RequestKey -> r.request.asJson,
       SuccessKey -> r.success.asJson,

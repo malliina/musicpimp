@@ -25,7 +25,7 @@ class BasicJavaSoundPlayer(
 
 object BasicJavaSoundPlayer:
   def fromFile(file: Path, mat: Materializer) =
-    new BasicJavaSoundPlayer(StreamSource.fromFile(file))(mat)
+    new BasicJavaSoundPlayer(StreamSource.fromFile(file))(using mat)
 
   def fromUri(uri: URI, duration: FiniteDuration, size: StorageSize, mat: Materializer) =
-    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))(mat)
+    new BasicJavaSoundPlayer(StreamSource.fromURI(uri, duration, size))(using mat)

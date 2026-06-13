@@ -35,7 +35,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
 
   def toggle = pimpParsedActionAsync(parsers.default): request =>
     cloudForm
-      .bindFromRequest()(request, formBinding)
+      .bindFromRequest()(using request, formBinding)
       .fold(
         formErrors =>
           log debug s"Form errors: $formErrors"

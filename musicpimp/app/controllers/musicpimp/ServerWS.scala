@@ -29,7 +29,7 @@ class ServerWS(
     .run()
   implicit val tm: Codec[TrackMeta] = TrackJson.format(clouds.cloudHost)
   val cloudWriter: Encoder[ServerMessage] =
-    ServerMessage.jsonWriter(Encoder[TrackMeta])
+    ServerMessage.jsonWriter(using Encoder[TrackMeta])
   val sockets = new Sockets(auth, ctx):
     override def props(conf: ActorConfig[AuthedRequest]) =
       Props(new PlayerActor(player, handler, conf))
