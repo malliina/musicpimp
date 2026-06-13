@@ -54,7 +54,7 @@ val httpGroup = "org.apache.httpcomponents"
 
 inThisBuild(
   Seq(
-    scalaVersion := "3.6.2"
+    scalaVersion := "3.8.3"
   )
 )
 
