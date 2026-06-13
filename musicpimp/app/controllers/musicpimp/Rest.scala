@@ -293,7 +293,7 @@ class Rest(
       track
         .unsafeToFuture()
         .flatMap: t =>
-          val user = Username(request.user)
+          val user = Username.unsafe(request.user)
           val mediaInfo = t.meta.media
           val fileSize = mediaInfo.size
           log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"

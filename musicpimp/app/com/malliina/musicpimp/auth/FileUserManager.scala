@@ -6,12 +6,13 @@ import java.io.FileNotFoundException
 import java.nio.file.Files
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.util.FileUtil
+import com.malliina.values.Literals.{pass, user}
 import com.malliina.values.{Password, Username}
 
 class FileUserManager extends UserManager[IO, Username, Password]:
   private val passFile = FileUtilities.pathTo("credentials.txt")
-  val defaultUser = Username("admin")
-  val defaultPass = Password("test")
+  val defaultUser = user"admin"
+  val defaultPass = pass"test"
 
   def savedPassHash: Option[String] =
     try

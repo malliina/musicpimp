@@ -15,7 +15,7 @@ object Auths:
   val session = Authenticator[AuthedRequest]: rh =>
     val result = rh.session
       .get(com.malliina.play.auth.Auth.DefaultSessionKey)
-      .map(Username.apply)
+      .flatMap(Username.build(_).toOption)
       .map(user => Right(new AuthedRequest(user, rh)))
       .getOrElse(Left(InvalidCredentials(rh)))
     fut(result)

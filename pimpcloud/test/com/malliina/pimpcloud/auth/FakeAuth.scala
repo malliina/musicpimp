@@ -6,7 +6,7 @@ import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.ws.{NoopActor, PhoneConnection}
 import com.malliina.play.auth.{AuthFailure, Authenticator, InvalidCredentials}
-import com.malliina.values.Username
+import com.malliina.values.Literals.user
 import controllers.pimpcloud.ServerRequest
 import play.api.http.HttpErrorHandler
 import play.api.mvc.RequestHeader
@@ -31,7 +31,7 @@ class FakeAuth(as: ActorSystem, mat: Materializer, errorHandler: HttpErrorHandle
 
   override def authPhone(req: RequestHeader, errorHandler: HttpErrorHandler): PhoneAuthResult =
     Future.successful(
-      Right(PhoneConnection(Username("test"), req, getOrInit(req, errorHandler).socket))
+      Right(PhoneConnection(user"test", req, getOrInit(req, errorHandler).socket))
     )
 
   override def authWebClient(creds: CloudCredentials): PhoneAuthResult =

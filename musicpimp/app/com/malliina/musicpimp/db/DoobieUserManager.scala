@@ -4,13 +4,14 @@ import cats.Functor
 import cats.implicits.toFunctorOps
 import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.auth.{Auth, UserManager}
+import com.malliina.values.Literals.{pass, user}
 import com.malliina.values.{Password, Username}
 import doobie.implicits.toSqlInterpolator
 import doobie.free.connection.pure
 
 object DoobieUserManager:
-  val defaultUser = Username("admin")
-  val defaultPass = Password("test")
+  val defaultUser = user"admin"
+  val defaultPass = pass"test"
 
   def withUser[F[_]: Functor](db: DoobieDatabase[F]) =
     val users = DoobieUserManager(db)

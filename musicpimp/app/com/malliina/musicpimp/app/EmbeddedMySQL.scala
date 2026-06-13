@@ -36,7 +36,7 @@ class EmbeddedMySQL(baseDir: Path, temporary: Boolean):
         .build(dbConfig.getURL(dbName))
         .fold(err => throw IllegalArgumentException(err.message), identity),
       "root",
-      Password(""),
+      Password.build("pimptest").toOption.get,
       Conf.MySQLDriver
     )
 

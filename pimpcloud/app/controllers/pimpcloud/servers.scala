@@ -46,12 +46,16 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
         if creds.password == Constants.pass then
           val user = creds.username
           val cloudId = if user.name.trim.nonEmpty then CloudID(user.name) else newID()
-          isConnected(cloudId) map { connected =>
+          isConnected(cloudId).map: connected =>
             if connected then
               log warn s"Unable to register client: '$cloudId'. Another client with that ID is already connected."
               Left(InvalidCredentials(rh))
-            else Right(AuthedRequest(Username(cloudId.id), rh))
-          }
+            else
+              Username
+                .build(cloudId.id)
+                .map(user => AuthedRequest(user, rh))
+                .left
+                .map(err => InvalidCredentials(rh))
         else fut(Left(InvalidCredentials(rh)))
       .getOrElse:
         log warn s"No credentials for request from '${Proxies.realAddress(rh)}'."
@@ -87,5 +91,5 @@ class Servers(phoneMediator: ActorRef, val ctx: ActorExecution, errorHandler: Ht
     (serverMediator ? GetServers).mapTo[Set[PimpServerSocket]]
 
 case class ServerRequest(request: RequestID, socket: PimpServerSocket) extends AuthInfo:
-  override def user: Username = Username(socket.id.id)
+  override def user: Username = Username.unsafe(socket.id.id)
   override def rh: RequestHeader = socket.headers

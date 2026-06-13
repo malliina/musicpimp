@@ -35,4 +35,4 @@ object CloudPushClient:
 class PushJsonException(response: HttpResponse)
   extends PushException(s"Unexpected push response body: '${response.asString}'.")
 
-class OkPushException(val response: OkHttpResponse) extends PushException("Request failed")
+class OkPushException(val response: HttpResponse) extends PushException("Request failed")

@@ -29,7 +29,8 @@ object ConfBuilder:
       url <- read(UrlKey).flatMap(str => FullUrl.build(str))
       user <- read(UserKey)
       pass <- read(PassKey)
-    yield makeConf(url, user, Password(pass), read(DriverKey).getOrElse(DefaultDriver))
+      password <- Password.build(pass)
+    yield makeConf(url, user, password, read(DriverKey).getOrElse(DefaultDriver))
 
   private def read(key: String) = PimpConf.read(key)
 
@@ -39,7 +40,8 @@ object ConfBuilder:
       url <- read("db_url").flatMap(str => FullUrl.build(str))
       user <- read("db_user")
       pass <- read("db_pass")
-    yield makeConf(url, user, Password(pass), read("db_driver").getOrElse(MySQLDriver))
+      password <- Password.build(pass)
+    yield makeConf(url, user, password, read("db_driver").getOrElse(MySQLDriver))
 
   def makeConf(url: FullUrl, user: String, pass: Password, driver: String) =
     Conf(

@@ -3,7 +3,7 @@ package com.malliina.musicpimp.models
 import com.malliina.json.SharedPlayFormats
 import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.json.PlaybackStrings.{Add, AddItemsKey, Play, PlayItemsKey}
-import com.malliina.values.IntValidator
+import com.malliina.values.{ErrorMessage, IntValidator}
 import io.circe.generic.semiauto.deriveCodec
 import io.circe.{Codec, Decoder, Encoder}
 
@@ -12,13 +12,16 @@ import io.circe.{Codec, Decoder, Encoder}
   */
 case class CloudID(id: String) extends AnyVal with Identifier
 object CloudID extends IdentCompanion[CloudID]:
+  override def build(input: String): Either[ErrorMessage, CloudID] = Right(apply(input))
   val empty = CloudID("")
 
 case class TrackID(id: String) extends AnyVal with Identifier
-object TrackID extends IdentCompanion[TrackID]
+object TrackID extends IdentCompanion[TrackID]:
+  override def build(input: String): Either[ErrorMessage, TrackID] = Right(apply(input))
 
 case class FolderID(id: String) extends AnyVal with Identifier
-object FolderID extends IdentCompanion[FolderID]
+object FolderID extends IdentCompanion[FolderID]:
+  override def build(input: String): Either[ErrorMessage, FolderID] = Right(apply(input))
 
 trait MusicItem:
   def id: Identifier
