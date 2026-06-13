@@ -198,6 +198,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
     headerRow("Admin"),
     tableContainer(
       "Streams",
+      RequestsTableElemId,
       RequestsTableId,
       "Cloud ID",
       "Request ID",
@@ -205,19 +206,25 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       "Artist",
       "Bytes"
     ),
-    tableContainer("Phones", PhonesTableId, "Cloud ID", "Phone Address"),
-    tableContainer("Servers", ServersTableId, "Cloud ID", "Server Address")
+    tableContainer("Phones", PhonesTableElemId, PhonesTableId, "Cloud ID", "Phone Address"),
+    tableContainer("Servers", ServersTableElemId, ServersTableId, "Cloud ID", "Server Address")
   )
 
-  def tableContainer(header: String, bodyId: String, headers: String*): Modifier = Seq(
-    h2(header),
-    fullRow(
-      defaultTable(bodyId, headers*)
+  private def tableContainer(
+    header: String,
+    tableId: String,
+    bodyId: String,
+    headers: String*
+  ): Modifier =
+    Seq(
+      h2(header),
+      fullRow(
+        defaultTable(tableId, bodyId, headers*)
+      )
     )
-  )
 
-  def defaultTable(bodyId: String, headers: String*) =
-    table(`class` := tables.defaultClass)(
+  def defaultTable(tableId: String, bodyId: String, headers: String*) =
+    table(`class` := tables.defaultClass, id := tableId)(
       thead(
         tr(
           headers.map: header =>
