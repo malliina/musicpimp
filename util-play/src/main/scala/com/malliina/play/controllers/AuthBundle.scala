@@ -28,19 +28,19 @@ object AuthBundle:
         log.warn(s"Unauthorized request to '$resource' from '$ip'.")
         Unauthorized
 
-  def oauthUser(initiateFlow: Call, sessionKey: String)(implicit
-    ec: ExecutionContext
-  ): AuthBundle[Username] =
-    oauth[Username]((_, u) => u, initiateFlow, sessionKey)
-
-  def oauth[T](map: (RequestHeader, Username) => T, initiateFlow: Call, sessionKey: String)(implicit
-    ec: ExecutionContext
-  ): AuthBundle[T] =
-    new AuthBundle[T]:
-      override val authenticator: Authenticator[T] = UserAuthenticator
-        .session(sessionKey)
-        .transform((r, u) => Right(map(r, u)))
-
-      override def onUnauthorized(failure: AuthFailure): Result =
-        log.info(s"Unauthorized oauth: '$failure'.")
-        Results.Redirect(initiateFlow)
+//  def oauthUser(initiateFlow: Call, sessionKey: String)(implicit
+//    ec: ExecutionContext
+//  ): AuthBundle[Username] =
+//    oauth[Username]((_, u) => u, initiateFlow, sessionKey)
+//
+//  def oauth[T](map: (RequestHeader, Username) => T, initiateFlow: Call, sessionKey: String)(implicit
+//    ec: ExecutionContext
+//  ): AuthBundle[T] =
+//    new AuthBundle[T]:
+//      override val authenticator: Authenticator[T] = UserAuthenticator
+//        .session(sessionKey)
+//        .transform((r, u) => Right(map(r, u)))
+//
+//      override def onUnauthorized(failure: AuthFailure): Result =
+//        log.info(s"Unauthorized oauth: '$failure'.")
+//        Results.Redirect(initiateFlow)

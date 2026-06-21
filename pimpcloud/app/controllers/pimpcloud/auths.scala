@@ -68,7 +68,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
     returnUriKey = BasicAuthHandler.DefaultReturnUriKey
   )
-  val conf = AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret))
+  val conf = AuthConf(ClientId.unsafe(creds.clientId), ClientSecret.unsafe(creds.clientSecret))
   val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback, handler, conf, HttpClientIO())
   val validator = GoogleCodeValidator(oauthConf)
 

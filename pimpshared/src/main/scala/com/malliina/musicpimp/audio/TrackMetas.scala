@@ -5,14 +5,14 @@ import com.malliina.musicpimp.json.CrossFormats
 import com.malliina.musicpimp.models.*
 import com.malliina.play.http.FullUrls
 import io.circe.{Codec, Encoder}
-import play.api.mvc.Call
+import org.http4s.Uri
 
 import scala.concurrent.duration.Duration
 
 object TrackMetas:
   implicit val dur: Codec[Duration] = CrossFormats.duration
 
-  def writer(host: FullUrl, url: TrackID => Call): Encoder[TrackMeta] =
+  def writer(host: FullUrl, url: TrackID => Uri): Encoder[TrackMeta] =
     urlWriter(id => FullUrls.absolute(host, url(id)))
 
   def urlWriter(url: TrackID => FullUrl): Encoder[TrackMeta] =

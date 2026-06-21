@@ -3,7 +3,7 @@ package com.malliina.musicpimp.http
 import com.malliina.http.PlayCirce
 import com.malliina.musicpimp.http.PimpContentController.*
 import com.malliina.musicpimp.json.JsonFormatVersions
-import com.malliina.musicpimp.models.Errors
+import com.malliina.musicpimp.models.Reason
 import io.circe.{Encoder, Json}
 import play.api.Logger
 import play.api.http.{MimeTypes, Writeable}
@@ -72,7 +72,7 @@ object PimpContentController:
 
   def notAcceptableGeneric = notAcceptable("Please use the 'Accept' header.")
 
-  def notAcceptable(msg: String) = Errors.withStatus(Results.NotAcceptable, msg)
+  def notAcceptable(msg: String) = Reason.withStatus(Results.NotAcceptable, msg)
 
   def pimpResult(request: RequestHeader)(html: => Result, json: => Result): Result =
     PimpRequest.requestedResponseFormat(request) match

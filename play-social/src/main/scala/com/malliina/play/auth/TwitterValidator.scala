@@ -25,8 +25,8 @@ class TwitterValidator(val oauth: OAuthConf[Email]) extends TwitterAuthFlow(oaut
 
   def validateCallback(req: RequestHeader): IO[Result] =
     val maybe = for
-      token <- req.getQueryString(OauthTokenKey).map(AccessToken.apply)
-      requestToken <- req.session.get(RequestToken.Key).map(AccessToken.apply)
+      token <- req.getQueryString(OauthTokenKey).flatMap(AccessToken.build(_).toOption)
+      requestToken <- req.session.get(RequestToken.Key).flatMap(AccessToken.build(_).toOption)
       verifier <- req.getQueryString(OauthVerifierKey)
     yield validateTwitterCallback(token, requestToken, verifier).map: e =>
       e.fold(

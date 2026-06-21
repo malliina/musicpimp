@@ -1,7 +1,7 @@
 package controllers.pimpcloud
 
 import org.apache.pekko.stream.Materializer
-import com.malliina.musicpimp.models.Errors
+import com.malliina.musicpimp.models.Reason
 import com.malliina.play.auth.Authenticator
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import controllers.pimpcloud.ServersController.log
@@ -18,7 +18,7 @@ class ServersController(comps: ControllerComponents, auth: BaseSecurity[ServerRe
     log debug s"Processing '$requestID'..."
     val transfers = server.socket.fileTransfers
     val maybeParser = transfers.parser(requestID)
-    maybeParser.fold[EssentialAction](Action(Errors.notFound(s"Request not found '$requestID'."))):
+    maybeParser.fold[EssentialAction](Action(Reason.notFound(s"Request not found '$requestID'."))):
       parser => receiveStream(parser, transfers, requestID)
 
 object ServersController:

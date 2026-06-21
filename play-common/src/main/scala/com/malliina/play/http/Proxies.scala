@@ -6,9 +6,6 @@ import play.api.mvc.{Headers, RequestHeader}
 
 import scala.util.Try
 
-/** I got false negatives with the default implementation of `request.secure` in Play, so this
-  * object provides an alternative implementation in `Proxies.isSecure`.
-  */
 object Proxies:
   val Http = "http"
   val Https = "https"

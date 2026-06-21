@@ -10,7 +10,7 @@ import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
 import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
-import com.malliina.musicpimp.models.Errors.*
+import com.malliina.musicpimp.models.Reason.*
 import com.malliina.musicpimp.models.*
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.SharedStrings.Ping

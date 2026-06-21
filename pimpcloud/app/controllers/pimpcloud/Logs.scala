@@ -1,7 +1,7 @@
 package controllers.pimpcloud
 
 import com.malliina.logback.{LogbackUtils, PimpAppender}
-import com.malliina.musicpimp.models.{Errors, JVMLogEntry}
+import com.malliina.musicpimp.models.{Reason, JVMLogEntry}
 import com.malliina.play.ActorExecution
 import com.malliina.play.tags.TagPage
 import controllers.pimpcloud.Logs.log
@@ -64,4 +64,4 @@ class Logs(tags: CloudTags, auth: PimpAuth, ctx: ActorExecution, actions: Defaul
           .left
           .map: err =>
             log.error(s"Unauthorized request '$rh': '$err'.")
-            Errors.accessDenied
+            Reason.accessDenied

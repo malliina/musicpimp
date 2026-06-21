@@ -1,19 +1,13 @@
 package com.malliina.play.http
 
 import com.malliina.http.FullUrl
-import play.api.mvc.{Call, RequestHeader}
+import com.malliina.musicpimp.auth.Proxies2
+import org.http4s.{Request, Uri}
+import play.api.mvc.RequestHeader
 
 object FullUrls:
-  def absolute(url: FullUrl, call: Call): FullUrl =
-    val fragment = Option(call.fragment)
-      .filter(_.trim.nonEmpty)
-      .map(f => s"#$f")
-      .getOrElse("")
-    val callUri = s"${call.url}$fragment"
-    FullUrl(url.proto, url.hostAndPort, callUri)
-
-  def apply(call: Call, request: RequestHeader): FullUrl =
-    absolute(hostOnly(request), call)
+  def absolute(url: FullUrl, uri: Uri): FullUrl =
+    FullUrl(url.proto, url.hostAndPort, uri.renderString)
 
   /** Ignores the uri of `request`.
     *
@@ -25,3 +19,7 @@ object FullUrls:
   def hostOnly(rh: RequestHeader): FullUrl =
     val maybeS = if Proxies.isSecure(rh) then "s" else ""
     FullUrl(s"http$maybeS", rh.host, "")
+
+  def hostOnly2[F[_]](req: Request[F]): FullUrl =
+    val maybeS = if Proxies2.isSecure(req) then "s" else ""
+    FullUrl(s"http$maybeS", req.uri.host.map(_.value).getOrElse(""), "")

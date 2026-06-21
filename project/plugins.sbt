@@ -8,6 +8,7 @@ Seq(
   "com.malliina" % "sbt-utils-maven" % utilsVersion,
   "com.malliina" % "sbt-nodejs" % utilsVersion,
   "com.malliina" % "sbt-filetree" % utilsVersion,
+  "com.malliina" % "sbt-revolver-rollup" % utilsVersion,
   "com.malliina" % "sbt-packager" % "2.10.1",
   "org.scala-js" % "sbt-scalajs" % "1.21.0",
   "org.portable-scala" % "sbt-scalajs-crossproject" % "1.3.2",

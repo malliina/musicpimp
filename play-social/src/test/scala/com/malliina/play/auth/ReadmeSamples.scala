@@ -10,7 +10,8 @@ import scala.concurrent.Future
 
 class ReadmeSamples extends munit.FunSuite:
   val http = HttpClientIO()
-  val credentials = AuthConf(ClientId("client_id_here"), ClientSecret("client_secret_here"))
+  val credentials =
+    AuthConf(ClientId.unsafe("client_id_here"), ClientSecret.unsafe("client_secret_here"))
   lazy val callback: Call = ???
   val handler: AuthResults[Email] = new AuthResults[Email]:
     override def onAuthenticated(user: Email, req: RequestHeader): Result = ???

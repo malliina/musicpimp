@@ -2,6 +2,7 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.sbt.GenericKeys.*
 import com.malliina.filetree.DirMap
+import com.malliina.rollup.CommonKeys.isProd
 import com.malliina.sbt.mac.MacKeys.*
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
@@ -33,7 +34,7 @@ val versions = new {
   val http = "4.5.14"
   val logstreams = "6.14.3"
   val mobilePush = "3.17.1"
-  val munit = "1.1.0"
+  val munit = "1.3.3"
   val mysql = "8.0.33"
   val nvWebSocket = "2.14"
   val pekko = "1.0.3"
@@ -87,7 +88,7 @@ val crossJs = cross.js
 val playCommon = Project("play-common", file("play-common"))
   .settings(
     libraryDependencies ++= Seq("web-auth", "database").map { m =>
-      "com.malliina" %% m % "6.9.8"
+      "com.malliina" %% m % versions.primitives
     } ++
       Seq(
         "org.playframework" %% "play" % playVersion,
@@ -160,6 +161,7 @@ val shared = Project("pimp-shared", file("pimpshared"))
   .settings(baseSettings *)
   .settings(
     libraryDependencies ++= Seq(
+      "com.malliina" %% "util-http4s" % versions.primitives,
       logstreamsDep,
       "mysql" % "mysql-connector-java" % versions.mysql,
       malliinaGroup %% "mobile-push" % versions.mobilePush,
@@ -178,7 +180,7 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
 val musicpimp = project
   .in(file("musicpimp"))
   .enablePlugins(
-    PlayScala,
+//    PlayScala,
     JavaServerAppPackaging,
     SystemdPlugin,
     BuildInfoPlugin,
@@ -301,7 +303,11 @@ lazy val pimpPlaySettings =
     nativeMusicPimpSettings ++
     artifactSettings ++
     Seq(
-      buildInfoKeys += BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
+      isProd := scalaJSStage.value == FullOptStage,
+      buildInfoKeys ++= Seq[BuildInfoKey](
+        BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
+        "isProd" -> isProd.value
+      ),
       javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
@@ -318,11 +324,11 @@ lazy val pimpPlaySettings =
         "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test
       ).map(dep => dep withSources ()),
       buildInfoPackage := "com.malliina.musicpimp",
-      RoutesKeys.routesImport ++= Seq(
-        "com.malliina.musicpimp.http.PimpImports._",
-        "com.malliina.musicpimp.models._",
-        "com.malliina.values.Username"
-      ),
+//      RoutesKeys.routesImport ++= Seq(
+//        "com.malliina.musicpimp.http.PimpImports._",
+//        "com.malliina.musicpimp.models._",
+//        "com.malliina.values.Username"
+//      ),
       fileTreeSources := Seq(
         DirMap(
           (Assets / resourceDirectory).value.toPath,
@@ -451,6 +457,11 @@ lazy val pimpcloudSettings =
         PlayImport.ehcache,
         PlayImport.ws % Test
       ),
+      RoutesKeys.routesImport ++= Seq(
+        "com.malliina.musicpimp.http.PimpImports._",
+        "com.malliina.musicpimp.models._",
+        "com.malliina.values.Username"
+      ),
       PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(
         DirMap(
@@ -546,11 +557,6 @@ lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
     logstreamsDep,
     PlayImport.filters
   ).map(dep => dep.withSources()),
-  RoutesKeys.routesImport ++= Seq(
-    "com.malliina.musicpimp.http.PimpImports._",
-    "com.malliina.musicpimp.models._",
-    "com.malliina.values.Username"
-  ),
   pipelineStages ++= Seq(digest, gzip)
 )
 

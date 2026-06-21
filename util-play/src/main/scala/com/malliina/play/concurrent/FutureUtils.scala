@@ -1,6 +1,7 @@
 package com.malliina.play.concurrent
 
-import cats.effect.IO
+import cats.effect.{IO, Sync}
+import cats.implicits.toFlatMapOps
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,13 +27,13 @@ object FutureUtils:
           else first(tail)(f)(p)
         }
 
-  def firstIO[T, R](ts: List[T])(f: T => IO[R])(p: R => Boolean): IO[R] =
+  def firstIO[F[_]: Sync, T, R](ts: List[T])(f: T => F[R])(p: R => Boolean): F[R] =
     ts match
       case Nil =>
-        IO.raiseError(new NoSuchElementException)
+        Sync[F].raiseError(new NoSuchElementException)
       case head :: tail =>
         f(head).flatMap: res =>
-          if p(res) || tail.isEmpty then IO.pure(res)
+          if p(res) || tail.isEmpty then Sync[F].pure(res)
           else firstIO(tail)(f)(p)
 
   def fut[T](t: T): Future[T] = Future.successful(t)

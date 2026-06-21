@@ -8,7 +8,7 @@ import com.malliina.web.HttpConstants.NoCacheRevalidate
 import com.malliina.web.OAuthKeys.{CodeKey, Nonce, State}
 import com.malliina.web.Utils.{randomString, stringify, urlEncode}
 import com.malliina.web.WebHeaders.CacheControl
-import com.malliina.web.{AuthError, Callback, CallbackValidator, FlowStart}
+import com.malliina.web.{AuthError, Callback, CallbackValidator, Code, FlowStart}
 import play.api.libs.json.Json
 import play.api.mvc.Results.{BadGateway, Redirect}
 import play.api.mvc.{Call, RequestHeader, Result}
@@ -30,7 +30,7 @@ trait PlaySupport[U]:
         Callback(
           req.getQueryString(State),
           req.session.get(State),
-          req.getQueryString(CodeKey),
+          req.getQueryString(CodeKey).flatMap(s => Code.build(s).toOption),
           req.session.get(Nonce),
           FullUrls(redirCall, req)
         )

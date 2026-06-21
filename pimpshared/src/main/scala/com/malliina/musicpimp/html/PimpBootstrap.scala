@@ -10,7 +10,7 @@ import scalatags.Text.all.*
 object PimpBootstrap extends PimpBootstrap
 
 class PimpBootstrap extends Bootstrap(HtmlTags):
-  implicit val callAttr: Text.GenericAttr[Call] = com.malliina.play.tags.PlayTags.callAttr
+  given callAttr: Text.GenericAttr[Call] = com.malliina.play.tags.PlayTags.callAttr
 
   def iconic(iconicName: String) =
     spanClass(s"oi oi-$iconicName", title := iconicName, aria.hidden := True)
