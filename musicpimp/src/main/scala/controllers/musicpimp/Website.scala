@@ -1,6 +1,7 @@
 package controllers.musicpimp
 
 import cats.effect.IO
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.http.PimpContentController.default

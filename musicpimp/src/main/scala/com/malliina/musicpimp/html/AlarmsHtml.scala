@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.PimpHtml.feedbackDiv
 import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
 import com.malliina.musicpimp.http4s.Reverse
@@ -7,7 +8,6 @@ import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings.*
 import com.malliina.musicpimp.scheduler.{FullClockPlayback, WeekDay}
-import controllers.musicpimp.UserFeedback
 import play.api.data.Field
 import play.api.i18n.Messages
 import scalatags.Text.all.*

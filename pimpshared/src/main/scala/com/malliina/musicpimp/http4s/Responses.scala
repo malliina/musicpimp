@@ -2,14 +2,16 @@ package com.malliina.musicpimp.http4s
 
 import cats.Applicative
 import cats.data.NonEmptyList
+import cats.implicits.toFunctorOps
+import com.malliina.http.Errors
 import com.malliina.http4s.BasicService.noCache
 import com.malliina.musicpimp.auth.JsonInstances
 import com.malliina.musicpimp.json.MediaRanges
 import com.malliina.musicpimp.models.FailReason
 import io.circe.Encoder
-import org.http4s.{Challenge, Headers, MediaType, Request, Response, Status}
+import org.http4s.{Challenge, EntityEncoder, Headers, MediaType, Request, Response, Status, Uri}
 import org.http4s.dsl.Http4sDsl
-import org.http4s.headers.{Accept, `WWW-Authenticate`}
+import org.http4s.headers.{Accept, Location, `WWW-Authenticate`}
 
 trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
   val genericMessage = "Something went wrong."
@@ -18,21 +20,30 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
 
   val JsonKey = "json"
 
-  def badGatewayDefault = badGateway(badGatewayMessage)
+  def ok[A](a: A)(using EntityEncoder[F, A]) = Ok(a, noCache)
 
-  def badGateway(message: String) = BadGateway(FailReason(message))
+  def seeOther(uri: Uri): F[Response[F]] =
+    SeeOther(Location(uri)).map(_.putHeaders(noCache))
 
-  def accessDenied = unauthorizedNoCache(FailReason(accessDeniedMessage))
+  def badGatewayDefault: F[Response[F]] = badGateway(badGatewayMessage)
 
-  def badRequest(message: String) = BadRequest(FailReason(message))
+  def badGateway(message: String): F[Response[F]] = BadGateway(FailReason(message))
 
-  def notFound(message: String) = NotFound(FailReason(message))
+  def accessDenied: F[Response[F]] = unauthorizedNoCache(FailReason(accessDeniedMessage))
 
-  def internalGeneric = internal(genericMessage)
+  def badRequest(errors: Errors): F[Response[F]] = badRequest(errors.message.message)
 
-  def internal(message: String) = InternalServerError(FailReason(message))
+  def badRequest(message: String): F[Response[F]] = BadRequest(FailReason(message))
 
-  def notAcceptable(message: String) = NotAcceptable(FailReason(message))
+  def notFound(message: String): F[Response[F]] = NotFound(FailReason(message))
+
+  def internalGeneric: F[Response[F]] = internal(genericMessage)
+
+  def serverError: F[Response[F]] = internal("Server error.")
+
+  def internal(message: String): F[Response[F]] = InternalServerError(FailReason(message))
+
+  def notAcceptable(message: String): F[Response[F]] = NotAcceptable(FailReason(message))
 
   def unauthorizedNoCache[T: Encoder](errors: T): F[Response[F]] =
     Unauthorized(

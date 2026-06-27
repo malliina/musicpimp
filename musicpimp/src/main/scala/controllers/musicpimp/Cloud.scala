@@ -2,6 +2,7 @@ package controllers.musicpimp
 
 import java.net.ConnectException
 import com.malliina.concurrent.FutureOps
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.musicpimp.html.{PimpHtml, UriSyntax}
@@ -29,7 +30,7 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
         (None, Option(UserFeedback.error(t.getMessage)))
     id.map:
       case (cloudId, errorMessage) =>
-        val feedback = UserFeedback.flashed(request) orElse errorMessage
+        val feedback = UserFeedbackUtil.flashed(request) orElse errorMessage
         Ok(tags.cloud(cloudId, feedback, request.user))
 
   def toggle = pimpParsedActionAsync(parsers.default): request =>
@@ -38,7 +39,8 @@ class Cloud(tags: PimpHtml, clouds: Clouds, auth: AuthDeps) extends Secured(auth
       .fold(
         formErrors =>
           log debug s"Form errors: $formErrors"
-          val feedback = UserFeedback.formed(formErrors) orElse UserFeedback.flashed(request)
+          val feedback =
+            UserFeedbackUtil.formed(formErrors) orElse UserFeedbackUtil.flashed(request)
           Future successful BadRequest(tags.cloud(None, feedback, request.user))
         ,
         desiredID =>

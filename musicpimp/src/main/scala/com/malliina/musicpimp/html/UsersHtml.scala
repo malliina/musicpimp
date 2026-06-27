@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, stripedHoverTable}
 import com.malliina.values.Username
-import controllers.musicpimp.UserFeedback
 import scalatags.Text.all.*
 
 object UsersHtml extends HtmlSyntax:

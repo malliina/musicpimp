@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
-import com.malliina.html.{Bootstrap, HtmlTags}
+import com.malliina.html.{Bootstrap, HtmlTags, UserFeedback}
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap.*
@@ -17,7 +17,6 @@ import com.malliina.play.tags.PlayTags.callAttr
 import com.malliina.play.tags.TagPage
 import com.malliina.values.Username
 import controllers.Assets.Asset
-import controllers.musicpimp.UserFeedback
 import org.http4s.Uri
 import org.http4s.implicits.uri
 import play.api.data.Field
@@ -37,15 +36,13 @@ object PimpHtml extends UriSyntax:
 
 //  val reverseAssets = new ReverseAssets("")
 
-  def at(file: String): Uri = versioned(file)
-
-  def versioned(file: Asset): Uri = uri"/todo" // reverseAssets.versioned(file)
+  def at(file: String): Uri = uri"/assets".addPath(file)
 
   def forApp(isProd: Boolean): PimpHtml =
     val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
     withJs(scripts)
 
-  def withJs(jsFiles: ScalaScripts): PimpHtml =
+  private def withJs(jsFiles: ScalaScripts): PimpHtml =
     new PimpHtml(jsFiles)
 
   def postableForm(onAction: Uri, more: Modifier*) =
@@ -329,7 +326,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
       ),
       body(
         inner,
-        scripts.jsFiles.map(file => jsScript(versioned(file))),
+        scripts.jsFiles.map(file => jsScript(at(file))),
         footer(`class` := "footer", id := FooterId)(
           nav(
             `class` := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",

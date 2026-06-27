@@ -1,8 +1,8 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.assets.AppAssets
 import com.malliina.musicpimp.js.{FrontStrings, PlayerStrings}
-import controllers.musicpimp.UserFeedback
 import scalatags.Text.all.*
 
 object PlayerHtml extends HtmlSyntax with PlayerStrings:

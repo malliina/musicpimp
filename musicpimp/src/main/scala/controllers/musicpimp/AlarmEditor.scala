@@ -1,5 +1,6 @@
 package controllers.musicpimp
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.{AlarmContent, PimpHtml}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.scheduler.*
@@ -69,7 +70,7 @@ class AlarmEditor(
   def editAlarm(id: String, fb: Option[String] = None) =
     schedules.find(id) map { clock =>
       val form = clockForm.fill(clock)
-      clockAction(form, UserFeedback.formed(form))
+      clockAction(form, UserFeedbackUtil.formed(form))
     } getOrElse
       pimpAction(notFound(s"Unknown ID '$id'."))
 

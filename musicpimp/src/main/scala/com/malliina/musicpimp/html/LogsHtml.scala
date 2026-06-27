@@ -1,9 +1,9 @@
 package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm}
 import com.malliina.musicpimp.js.FrontStrings
-import controllers.musicpimp.UserFeedback
 import play.api.data.Field
 import scalatags.Text.all.*
 

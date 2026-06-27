@@ -1,5 +1,6 @@
 package controllers.musicpimp
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
 import com.malliina.musicpimp.html.{PimpHtml, UriSyntax}
 import com.malliina.musicpimp.http.PimpContentController.default
@@ -60,7 +61,7 @@ class Alarms(
         AmazonDevices.get().map(a => TokenInfo(a.id, Adm))
 
     default.respond(request)(
-      html = tags.tokens(ts, request.user, UserFeedback.flashed(request)),
+      html = tags.tokens(ts, request.user, UserFeedbackUtil.flashed(request)),
       json = Tokens(ts)
     )
 
@@ -77,7 +78,7 @@ class Alarms(
           case Adm  => AmazonDevices.removeWhere(_.id.token == token)
         .map: _ =>
           Redirect(reverse.manage.push.tokens.renderString)
-            .flashing(UserFeedback.success("Removed.").flash)
+            .flashing(UserFeedbackUtil.flash(UserFeedback.success("Removed.")))
         .getOrElse:
           BadRequest
 

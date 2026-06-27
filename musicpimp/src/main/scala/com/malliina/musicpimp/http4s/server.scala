@@ -18,6 +18,7 @@ import com.malliina.musicpimp.util.Sys
 import com.malliina.util.AppLogger
 import com.malliina.values.{ErrorMessage, Readable}
 import fs2.compression.Compression
+import fs2.io.file.Files
 import fs2.io.net.Network
 import org.http4s.{Http, HttpRoutes, Request, Response}
 import org.http4s.ember.server.EmberServerBuilder
@@ -35,7 +36,7 @@ trait ServerResources:
   private val serverPort: Port =
     Sys.env.readOpt[Port]("SERVER_PORT").getOrElse(port"9000")
 
-  private def appResource[F[+_]: { Async, Parallel, Compression }](
+  private def appResource[F[+_]: { Async, Files, Parallel, Compression }](
     conf: PimpConf
   ): Resource[F, Http[F, F]] =
     for
@@ -63,10 +64,11 @@ trait ServerResources:
         HSTS:
           orNotFound:
             Router(
-              "/" -> Service[F](webAuth, lib, html).routes
+              "/" -> Service[F](userManager, auth, webAuth, cookieManager, lib, html).routes,
+              "/assets" -> StaticService[F].routes
             )
 
-  def emberServer[F[+_]: { Async, Parallel, Compression, Network }](
+  def emberServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
     conf: PimpConf
   ): Resource[F, Server] =
     for
@@ -85,7 +87,8 @@ trait ServerResources:
     yield server
 
   private def orNotFound[F[_]: Monad](rs: HttpRoutes[F]): Kleisli[F, Request[F], Response[F]] =
-    Kleisli(req => rs.run(req).getOrElseF(BasicApiService[F].notFound(req)))
+    Kleisli: req =>
+      rs.run(req).getOrElseF(BasicApiService[F].notFound(s"Not found: ${req.method} ${req.uri}."))
 
 object AppServer extends IOApp with ServerResources:
   override def runtimeConfig =

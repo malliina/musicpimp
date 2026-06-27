@@ -2,11 +2,11 @@ import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.sbt.GenericKeys.*
 import com.malliina.filetree.DirMap
-import com.malliina.rollup.CommonKeys.isProd
+import com.malliina.rollup.CommonKeys.{assetsPrefix, isProd}
 import com.malliina.sbt.mac.MacKeys.*
 import com.malliina.sbt.mac.MacPlugin.{Mac, macSettings}
 import com.malliina.sbt.unix.LinuxKeys.{httpPort, httpsPort}
-import com.malliina.sbt.unix.{LinuxPlugin => LinusPlugin}
+import com.malliina.sbt.unix.LinuxPlugin as LinusPlugin
 import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
@@ -16,7 +16,7 @@ import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType => PortableType, crossProject => portableProject}
+import sbtcrossproject.CrossPlugin.autoImport.{CrossType as PortableType, crossProject as portableProject}
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
 import scalajsbundler.util.JSON
 
@@ -110,7 +110,7 @@ val html = portableProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % versions.scalatags,
       "org.playframework" %%% "play-json" % versions.playJson,
-      malliinaGroup %%% "primitives" % versions.primitives,
+      malliinaGroup %%% "util-html" % versions.primitives,
       "org.scalameta" %%% "munit" % versions.munit % Test
     )
   )
@@ -175,7 +175,10 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
     libraryDependencies ++= Seq("generic", "parser")
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
       malliinaGroup %%% "primitives" % versions.primitives
-    )
+    ),
+    assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
+//    assetsRoot := ((Compile / crossTarget).value / "stage").toPath.resolve("assets"),
+    assetsPrefix := "public"
   )
 val musicpimp = project
   .in(file("musicpimp"))
@@ -189,6 +192,13 @@ val musicpimp = project
   )
   .dependsOn(shared, crossJvm, utilAudio, utilPlay, utilPlay % Test, utilPlay % "test->test")
   .settings(pimpPlaySettings *)
+  .settings(
+    buildInfoKeys ++= Seq[BuildInfoKey](
+      "assetsDir" -> Def.settingDyn(musicpimpFrontend / assetsRoot).value.toFile,
+      "publicDir" -> (Compile / resourceDirectory).value.toPath.resolve("public"),
+      "publicFolder" -> Def.settingDyn(musicpimpFrontend / assetsPrefix).value,
+    ),
+  )
 
 val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
   .dependsOn(crossJs)

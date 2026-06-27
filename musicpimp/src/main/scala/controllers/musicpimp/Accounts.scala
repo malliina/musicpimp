@@ -2,6 +2,7 @@ package controllers.musicpimp
 
 import cats.effect.IO
 import com.malliina.concurrent.Execution.runtime
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.{LoginContent, PimpHtml, UsersContent}
 import com.malliina.musicpimp.models.NewUser
 import com.malliina.play.PimpAuthenticator
@@ -9,8 +10,8 @@ import com.malliina.play.auth.{Auth, RememberMe}
 import com.malliina.play.controllers.AccountForms
 import com.malliina.play.forms.FormMappings
 import com.malliina.play.http.RequestHeaderOps
-import com.malliina.values.Username
-import controllers.musicpimp.Accounts.{UsersFeedback, log}
+import com.malliina.values.{Password, Username}
+import controllers.musicpimp.Accounts.{UsersFeedback, cannotDeleteYourself, incorrectPasswordMessage, log, logoutMessage, passwordChangedMessage, repeatPassFailureMessage}
 import org.http4s.Uri
 import play.api.Logger
 import play.api.data.Form
@@ -22,6 +23,17 @@ object Accounts:
 
   val UsersFeedback = "usersFeedback"
 
+  val invalidCredentialsMessage = "Invalid credentials."
+  val passwordChangedMessage = "Password successfully changed."
+  val logoutMessage = "You have now logged out."
+  val incorrectPasswordMessage = "Incorrect password."
+  val repeatPassFailureMessage = "The password was incorrectly repeated."
+  val cannotDeleteYourself = "You cannot delete yourself."
+
+  def defaultCredentialsMessage(user: Username, pass: Password) =
+    s"Welcome! The default credentials of $user / ${pass.pass} have not been changed. " +
+      s"Consider changing the password under the Manage tab once you have logged in."
+
 class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs: AccountForms)
   extends HtmlController(pimpAuth):
 
@@ -31,15 +43,6 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   val feedback = accs.feedback
   val userManager = auth.userManager
   val rememberMe = auth.rememberMe
-  val invalidCredentialsMessage = "Invalid credentials."
-  val defaultCredentialsMessage =
-    s"Welcome! The default credentials of ${userManager.defaultUser} / ${userManager.defaultPass} have not been changed. " +
-      s"Consider changing the password under the Manage tab once you have logged in."
-  val passwordChangedMessage = "Password successfully changed."
-  val logoutMessage = "You have now logged out."
-  val incorrectPasswordMessage = "Incorrect password."
-  val repeatPassFailureMessage = "The password was incorrectly repeated."
-  val cannotDeleteYourself = "You cannot delete yourself."
 
   val rememberMeLoginForm = accs.rememberMeLoginForm
 
@@ -53,7 +56,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   )
 
   def account = pimpAction: request =>
-    Ok(tags.account(request.user, UserFeedback.flashed(request)))
+    Ok(tags.account(request.user, UserFeedbackUtil.flashed(request)))
 
   def users = pimpActionAsyncIO: request =>
     userManager.users.map(us => Ok(usersPage(us, addUserForm, request)))
@@ -74,8 +77,13 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
   def loginPage = Action.async: request =>
     userManager.isDefaultCredentials
       .map: isDefault =>
-        val motd = if isDefault then Option(defaultCredentialsMessage) else None
-        val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
+        val motd =
+          if isDefault then
+            Option(
+              Accounts.defaultCredentialsMessage(userManager.defaultUser, userManager.defaultPass)
+            )
+          else None
+        val flashFeedback = UserFeedbackUtil.flashed(request.flash, accs.feedback)
         Ok(tags.login(LoginContent(accs, motd, None, flashFeedback)))
       .unsafeToFuture()
 
@@ -83,7 +91,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
     // TODO remove the cookie token series, otherwise it will just remain in storage, unused
     Redirect(reverse.login.renderString).withNewSession
       .discardingCookies(RememberMe.discardingCookie)
-      .flashing(UserFeedback.success(logoutMessage).flash)
+      .flashing(UserFeedbackUtil.flash(UserFeedback.success(logoutMessage)))
 
   def formAddUser = pimpActionAsyncIO: request =>
     addUserForm
@@ -102,27 +110,27 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
             val userFeedback = addError
               .map(e => UserFeedback.error(s"User '${e.user}' already exists."))
               .getOrElse(UserFeedback.success(s"Created user '${newUser.username}'."))
-            Redirect(reverse.users.base.renderString).flashing(userFeedback.flash)
+            Redirect(reverse.users.base.renderString).flashing(UserFeedbackUtil.flash(userFeedback))
       )
 
   def usersPage(users: Seq[Username], form: Form[NewUser], req: PimpUserRequest) =
     val addFeedback =
       form.globalError
         .map(err => UserFeedback.error(err.message))
-        .orElse(UserFeedback.flashed(req))
-    val listFeedback = UserFeedback.flashed(req.flash, textKey = UsersFeedback)
+        .orElse(UserFeedbackUtil.flashed(req))
+    val listFeedback = UserFeedbackUtil.flashed(req.flash, textKey = UsersFeedback)
     tags.users(UsersContent(users, req.user, listFeedback, addFeedback))
 
   def formAuthenticate = Action.async { request =>
     val remoteAddress = request.realAddress
-    val flashFeedback = UserFeedback.flashed(request.flash, accs.feedback)
+    val flashFeedback = UserFeedbackUtil.flashed(request.flash, accs.feedback)
     rememberMeLoginForm
       .bindFromRequest()(using request, formBinding)
       .fold(
         formWithErrors =>
           val user = formWithErrors.data.getOrElse(userFormKey, "")
           log warn s"Authentication failed for user: '$user' from '$remoteAddress'."
-          val formFeedback = UserFeedback.formed(formWithErrors)
+          val formFeedback = UserFeedbackUtil.formed(formWithErrors)
           fut(BadRequest(tags.login(LoginContent(accs, None, formFeedback, flashFeedback))))
         ,
         credentials =>
@@ -165,7 +173,7 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
       .bindFromRequest()(using request, formBinding)
       .fold(
         errors =>
-          val feedback = UserFeedback.formed(errors)
+          val feedback = UserFeedbackUtil.formed(errors)
           val msg = feedback.fold("")(m => s" ${m.message}")
           log warn s"Unable to change password for user '$user' from '$remoteAddress'.$msg"
           IO.pure(BadRequest(tags.account(user, feedback)))
@@ -180,7 +188,9 @@ class Accounts(tags: PimpHtml, auth: PimpAuthenticator, pimpAuth: AuthDeps, accs
                   .map: _ =>
                     log info s"Password changed for user '$user' from '$remoteAddress'."
                     Redirect(reverse.account.renderString)
-                      .flashing(UserFeedback.success(passwordChangedMessage).flash)
+                      .flashing(
+                        UserFeedbackUtil.flash(UserFeedback.success(passwordChangedMessage))
+                      )
               else
                 IO.pure(
                   BadRequest(

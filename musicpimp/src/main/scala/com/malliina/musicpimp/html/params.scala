@@ -1,14 +1,14 @@
 package com.malliina.musicpimp.html
 
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.scheduler.ClockPlaybackConf
-import com.malliina.play.controllers.AccountForms
+import com.malliina.play.controllers.AccountKeys
 import com.malliina.values.Username
-import controllers.musicpimp.UserFeedback
 import play.api.data.Form
 import play.api.i18n.Messages
 
 case class LoginContent(
-  accounts: AccountForms,
+  accounts: AccountKeys,
   motd: Option[String],
   formFeedback: Option[UserFeedback],
   topFeedback: Option[UserFeedback]

@@ -6,9 +6,9 @@ import com.malliina.play.models.PasswordChange
 import play.api.data.Form
 import play.api.data.Forms.*
 
-object AccountForms extends AccountForms
+object AccountKeys extends AccountKeys
 
-class AccountForms:
+trait AccountKeys:
   val intendedUri = "intended_uri"
   val feedback = "feedback"
   val userFormKey = "username"
@@ -19,6 +19,9 @@ class AccountForms:
   val newPassKey = "newPassword"
   val newPassAgainKey = "newPasswordAgain"
 
+object AccountForms extends AccountForms
+
+class AccountForms extends AccountKeys:
   val loginForm = Form[BasicCredentials](
     mapping(
       userFormKey -> username,

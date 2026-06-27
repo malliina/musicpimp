@@ -10,4 +10,4 @@ object BasicApiService:
   val noCacheDirectives = NonEmptyList.of(`no-cache`(), `no-store`, `must-revalidate`)
   val noCache = `Cache-Control`(noCacheDirectives)
 
-class BasicApiService[F[_]: Applicative] extends BasicService[F] with MyScalatagsInstances
+class BasicApiService[F[_]: Applicative] extends Responses[F] with MyScalatagsInstances

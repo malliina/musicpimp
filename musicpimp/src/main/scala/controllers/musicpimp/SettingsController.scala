@@ -1,8 +1,9 @@
 package controllers.musicpimp
 
+import com.malliina.html.UserFeedback
+
 import java.net.URLDecoder
 import java.nio.file.{Files, Paths}
-
 import com.malliina.musicpimp.db.Indexer
 import com.malliina.musicpimp.html.{LibraryContent, PimpHtml}
 import com.malliina.musicpimp.library.{FileLibrary, Settings}
@@ -82,7 +83,7 @@ class SettingsController(
   private def foldersPage(form: Form[String], req: PimpUserRequest) =
     val errorMessage = form.errors.headOption.map: error =>
       UserFeedback.error(Messages(error.message)(using messages))
-    val flashMessage = UserFeedback.flashed(req.flash)
+    val flashMessage = UserFeedbackUtil.flashed(req.flash)
     val feedback = errorMessage.orElse(flashMessage)
     tags.musicFolders(LibraryContent(Settings.readFolders, folderPlaceHolder, req.user, feedback))
 

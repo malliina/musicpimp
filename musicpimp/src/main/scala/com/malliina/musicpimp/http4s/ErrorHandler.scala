@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.http4s
 
-import cats.effect.Async
+import cats.effect.{Async, Concurrent}
 import com.malliina.http.{HttpResponse, ResponseException}
 import com.malliina.musicpimp.http4s.ErrorHandler.log
 import com.malliina.util.AppLogger
@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
 object ErrorHandler:
   private val log = AppLogger(getClass)
 
-class ErrorHandler[F[_]: Async] extends BasicApiService[F] with AppImplicits[F]:
+class ErrorHandler[F[_]: { Async, Concurrent }] extends AppImplicits[F]:
   def handler: Request[F] => PartialFunction[Throwable, F[Response[F]]] =
     _ => partial
 

@@ -54,7 +54,7 @@ object PimpConf:
         true,
         "flyway_schema_history"
       )
-      PimpConf(secret, dbConf)
+      PimpConf(appSecret, dbConf)
 
 case class PimpConf(
   secret: SecretKey,

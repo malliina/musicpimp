@@ -34,6 +34,11 @@ class Http4sAuth[F[_]: Sync](
   def withUser[T: Encoder](t: T, isSecure: Boolean, res: Response[F]): res.Self =
     withJwt(cookieNames.user, t, isSecure, res)
 
+  def readIntendedUri(req: Request[F]): Option[Uri] =
+    req.cookies
+      .find(_.name == cookieNames.intendedUri)
+      .flatMap(c => Uri.fromString(c.content).toOption)
+
   def withIntendedUri(uri: Uri, res: Response[F]): res.Self =
     res.addCookie(responseCookie(cookieNames.intendedUri, uri.renderString))
 
