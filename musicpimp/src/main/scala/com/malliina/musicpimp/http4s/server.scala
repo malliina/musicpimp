@@ -11,7 +11,7 @@ import com.malliina.http.HttpClient
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.app.{AppMode, PimpConf}
 import com.malliina.musicpimp.auth.{AuthBundles, Authenticator, CookieAuthenticator, Http4sAuth, JWT, PimpAuthenticator, PimpAuths, RememberMe}
-import com.malliina.musicpimp.db.{DatabaseLibrary, DoobieTokenStore, DoobieUserManager, FullText}
+import com.malliina.musicpimp.db.{DatabaseLibrary, DatabaseStats, DoobieTokenStore, DoobieUserManager, FullText}
 import com.malliina.musicpimp.html.PimpHtml
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.util.Sys
@@ -60,11 +60,12 @@ trait ServerResources:
       val library = Library()
       val lib = DatabaseLibrary(db, library)
       val html = PimpHtml.forApp(AppMode.fromBuild.isProd)
+      val stats = DatabaseStats(db)
       GZip[F, F]:
         HSTS:
           orNotFound:
             Router(
-              "/" -> Service[F](userManager, auth, webAuth, cookieManager, lib, html).routes,
+              "/" -> Service[F](userManager, auth, webAuth, cookieManager, lib, stats, html).routes,
               "/assets" -> StaticService[F].routes
             )
 

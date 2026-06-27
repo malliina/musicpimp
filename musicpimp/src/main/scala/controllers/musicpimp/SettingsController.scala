@@ -13,7 +13,7 @@ import com.malliina.musicpimp.messaging.apns.APNSDevices
 import com.malliina.musicpimp.messaging.gcm.GoogleDevices
 import com.malliina.musicpimp.messaging.mpns.PushUrls
 import com.malliina.util.EnvUtils
-import controllers.musicpimp.SettingsController.log
+import controllers.musicpimp.SettingsController.{folderPlaceHolder, log}
 import play.api.Logger
 import play.api.data.Form
 import play.api.data.Forms.*
@@ -26,6 +26,11 @@ object SettingsController:
   private val log = Logger(getClass)
 
   val Path = "path"
+
+  val folderPlaceHolder = EnvUtils.operatingSystem match
+    case EnvUtils.Windows => "C:\\music\\"
+    case EnvUtils.Mac     => "/Users/me/music"
+    case _                => "/opt/music"
 
 class SettingsController(
   tags: PimpHtml,
@@ -42,10 +47,6 @@ class SettingsController(
   protected val newFolderForm = Form(
     SettingsController.Path -> nonEmptyText.verifying(dirConstraint)
   )
-  private val folderPlaceHolder = EnvUtils.operatingSystem match
-    case EnvUtils.Windows => "C:\\music\\"
-    case EnvUtils.Mac     => "/Users/me/music"
-    case _                => "/opt/music"
 
   def manage = settings
 

@@ -31,9 +31,11 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
 
   def accessDenied: F[Response[F]] = unauthorizedNoCache(FailReason(accessDeniedMessage))
 
-  def badRequest(errors: Errors): F[Response[F]] = badRequest(errors.message.message)
+  def badRequestWithErrors(errors: Errors): F[Response[F]] = badRequest(errors.message.message)
 
   def badRequest(message: String): F[Response[F]] = BadRequest(FailReason(message))
+
+  def badRequestEntity[A](a: A)(using EntityEncoder[F, A]) = BadRequest(a, noCache)
 
   def notFound(message: String): F[Response[F]] = NotFound(FailReason(message))
 

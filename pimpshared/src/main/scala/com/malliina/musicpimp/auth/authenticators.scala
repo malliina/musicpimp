@@ -8,7 +8,8 @@ import com.malliina.play.auth.{BasicCredentials, Token}
 import com.malliina.play.concurrent.FutureUtils
 import org.http4s.Request
 
-case class AuthedRequest[F[_]](user: UserPayload, request: Request[F], token: Option[Token] = None)
+case class AuthedRequest[F[_]](user: UserPayload, request: Request[F], token: Option[Token] = None):
+  def username = user.username
 
 type UserAuthenticator[F[_]] = Authenticator[F, UserPayload]
 

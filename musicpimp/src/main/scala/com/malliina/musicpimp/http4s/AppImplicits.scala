@@ -29,7 +29,7 @@ trait AppParsers[F[_]: Applicative] extends Responses[F]:
   protected def parsed[T](result: Either[Errors, T])(
     res: T => F[Response[F]]
   ): F[Response[F]] = result.fold(
-    errors => badRequest(errors),
+    errors => badRequestWithErrors(errors),
     ok => res(ok)
   )
 

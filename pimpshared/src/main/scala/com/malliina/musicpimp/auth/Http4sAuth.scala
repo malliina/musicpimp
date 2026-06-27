@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.auth
 
 import cats.effect.Sync
+import com.malliina.play.auth.RememberMe
 import com.malliina.values.IdToken
 import io.circe.*
 import org.http4s.Credentials.Token
@@ -30,6 +31,7 @@ class Http4sAuth[F[_]: Sync](
   def clearSession(res: Response[F]): res.Self =
     res
       .removeCookie(ResponseCookie(cookieNames.user, "", path = cookiePath))
+      .removeCookie(ResponseCookie(RememberMe.CookieName, "", path = cookiePath))
 
   def withUser[T: Encoder](t: T, isSecure: Boolean, res: Response[F]): res.Self =
     withJwt(cookieNames.user, t, isSecure, res)
