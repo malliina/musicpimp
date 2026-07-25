@@ -61,7 +61,9 @@ class MusicPlayer[F[_]: Async](
     .subscribe(100)
     .evalMap: time =>
       send(TimeUpdatedMessage(time.position))
-  val events: Stream[F, Unit] = stateUpdates.merge(timeUpdates)
+  val events: Stream[F, Unit] = stateUpdates
+    .merge(timeUpdates)
+    .handleErrorWith(t => Stream.eval(F.delay(log.error("Music player failed.", t))))
 
   private def current: Option[TrackPlayer[F]] = trackPlayer.get()
 

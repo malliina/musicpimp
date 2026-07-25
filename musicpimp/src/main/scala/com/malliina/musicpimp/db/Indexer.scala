@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.db
 
 import cats.effect.kernel.Async
-import cats.effect.std.Dispatcher
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
@@ -47,18 +46,18 @@ class Indexer[F[_]: Async](
   private val indexUpdates = indexingHub
     .subscribe(100)
     .flatMap: job =>
-      Stream(IndexEvent.Started)
-        .append(job.map(l => IndexEvent.Progress(l)))
-        .append(Stream(IndexEvent.Finished))
-        .handleError(t => IndexEvent.Errored(t))
+      Stream.eval(F.delay(log.info("Got indexing job."))) >>
+        Stream(IndexEvent.Started)
+          .append(job.map(l => IndexEvent.Progress(l)))
+          .append(Stream(IndexEvent.Finished))
+          .handleError(t => IndexEvent.Errored(t))
   val updates: Stream[F, IndexEvent] = updatesSink.subscribe(100)
   val events: Stream[F, Unit] = indexRegularly
     .concurrently(indexUpdates.map(upd => updatesSink.publish1(upd).void))
     .interruptWhen(halts.subscribe(100))
 
   private def indexRegularly: Stream[F, Unit] =
-    log.info("Init indexer...")
-    Stream.sleep(1.second) >> Stream
+    Stream.eval(F.delay(log.info("Init indexer..."))) >> Stream
       .awakeEvery(indexInterval)
       .evalMap: _ =>
         F.delay(log.info("Queueing indexing.")) >>
@@ -67,7 +66,6 @@ class Indexer[F[_]: Async](
         F.delay(log.error(s"Failed to index.", e))
 
   private def indexIfNecessary(): F[Unit] =
-    log.info("Indexing if necessary...")
     val saved = loadSavedFileCount
     calculateFileCount()
       .flatMap: actual =>
@@ -94,7 +92,11 @@ class Indexer[F[_]: Async](
     *   indexing progress
     */
   private def submitIndexing(): F[Unit] =
-    indexingHub.publish1(refreshIndex()).void
+    indexingHub
+      .publish1(refreshIndex())
+      .void
+      .flatTap: _ =>
+        F.delay(log.info("Submitted indexing request."))
 
   /** Starts indexing on a background thread and returns a [[Stream]] with progress updates.
     *
@@ -116,7 +118,7 @@ class Indexer[F[_]: Async](
       .eval(Topic[F, Long])
       .flatMap: hub =>
         val start = System.currentTimeMillis()
-        indexer
+        val task = indexer
           .runIndexer(library): fileCount =>
             log.info(s"File count at $fileCount...")
             hub.publish1(fileCount).void
@@ -129,7 +131,7 @@ class Indexer[F[_]: Async](
             )
           .handleError: e =>
             log.error(s"Indexing failed.", e)
-        hub.subscribe(100)
+        hub.subscribe(100).concurrently(Stream.eval(task))
 
   def submitIndexAndSave(): F[Unit] =
     submitIndexing().flatMap(_ => countAndSaveFiles().void)

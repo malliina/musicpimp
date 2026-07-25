@@ -202,7 +202,7 @@ val musicpimp = project
   .settings(
     buildInfoKeys ++= Seq[BuildInfoKey](
       "assetsDir" -> Def.settingDyn(musicpimpFrontend / assetsRoot).value.toFile,
-      "publicDir" -> (Compile / resourceDirectory).value.toPath.resolve("public"),
+      "publicDir" -> (Assets / resourceDirectory).value,
       "publicFolder" -> Def.settingDyn(musicpimpFrontend / assetsPrefix).value,
     ),
   )

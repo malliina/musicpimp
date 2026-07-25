@@ -35,7 +35,6 @@ class SearchSocketBuilder[F[_]: Async](indexer: Indexer[F]) extends SocketBuilde
           err => F.delay(log.error(s"Failed to decode message: '$message")),
           {
             case Refresh =>
-              log.info("Refresh indexing...")
               indexer.submitIndexAndSave()
             case Subscribe => F.unit
           }

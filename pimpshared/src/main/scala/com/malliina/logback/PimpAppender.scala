@@ -26,7 +26,7 @@ object PimpAppender:
 
   def install(): Unit = installAppender(PimpAppender())
 
-  def installAppender[F[_]: Async](appender: DefaultFS2IOAppender[F]): Unit =
+  private def installAppender[F[_]: Async](appender: DefaultFS2IOAppender[F]): Unit =
     appender.setContext(LogbackUtils.loggerContext)
     appender.setName(name)
     appender.setTimeFormat("yyyy-MM-dd HH:mm:ss")

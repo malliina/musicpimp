@@ -1,43 +1,12 @@
 package com.malliina.musicpimp.app
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
-import java.security.SecureRandom
-import cats.effect.IO
-import com.malliina.database.DoobieDatabase
-import com.malliina.http.FullUrl
-import com.malliina.concurrent.Execution.runtime
-import com.malliina.config.ConfigNode
 import com.malliina.database.Conf
-import com.malliina.logback.PimpAppender
-import com.malliina.musicpimp.Starter
-import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
-import com.malliina.musicpimp.auth.Auths
-import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
+import com.malliina.http.FullUrl
+import com.malliina.musicpimp.cloud.CloudSocket
 import com.malliina.musicpimp.db.*
-import com.malliina.musicpimp.html.PimpHtml
-import com.malliina.musicpimp.library.Library
-import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
-import com.malliina.musicpimp.scheduler.json.JsonHandler
-import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.app.LoggingAppLoader
-import com.malliina.play.auth.{Authenticator, RememberMe}
-import com.malliina.play.controllers.AccountForms
-import com.malliina.play.{ActorExecution, CookieAuthenticator, PimpAuthenticator}
-import com.typesafe.config.ConfigFactory
-import controllers.*
-import controllers.musicpimp.*
-import org.slf4j.LoggerFactory
-import play.api.ApplicationLoader.Context
-import play.api.i18n.{I18nComponents, Lang}
-import play.api.mvc.EssentialFilter
-import play.api.routing.Router
-import play.api.{BuiltInComponentsFromContext, Configuration, Logger, Mode}
-import play.filters.HttpFiltersComponents
-import play.filters.gzip.GzipFilter
+import play.api.{Configuration, Logger}
 
-import javax.sound.sampled.AudioSystem
-import scala.concurrent.{ExecutionContext, Future}
+import java.security.SecureRandom
 
 case class InitOptions(
   alarms: Boolean = true,

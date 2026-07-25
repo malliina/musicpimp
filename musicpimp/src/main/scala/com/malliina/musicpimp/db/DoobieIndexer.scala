@@ -4,8 +4,13 @@ import cats.effect.Async
 import cats.effect.implicits.concurrentParTraverseOps
 import cats.implicits.{toFlatMapOps, toFunctorOps, toTraverseOps}
 import com.malliina.database.DoobieDatabase
+import com.malliina.musicpimp.db.DoobieIndexer.log
 import com.malliina.musicpimp.library.FileStreams
+import com.malliina.util.AppLogger
 import doobie.implicits.toSqlInterpolator
+
+object DoobieIndexer:
+  private val log = AppLogger(getClass)
 
 class DoobieIndexer[F[_]: Async](db: DoobieDatabase[F]) extends DoobieMappings:
   def runIndexer(
@@ -15,7 +20,6 @@ class DoobieIndexer[F[_]: Async](db: DoobieDatabase[F]) extends DoobieMappings:
 
     val foldersPrep = db.run:
       val musicFolders = library.folderStream.toList
-
       for
         _ <- sql"delete from TEMP_FOLDERS".update.run
         _ <- musicFolders.traverse(f => upsertFolder(f))
@@ -27,9 +31,6 @@ class DoobieIndexer[F[_]: Async](db: DoobieDatabase[F]) extends DoobieMappings:
         _ <- sql"delete from TEMP_FOLDERS".update.run
         _ <- sql"delete from TEMP_TRACKS".update.run
       yield foldersDeletion
-    val trackInsertion = upsertAll(library.dataTrackStream): chunkSize =>
-      fileCount += chunkSize
-      onFileCountUpdate(fileCount)
     for
       foldersDeletion <- foldersPrep
       tracksInsertion <- upsertAll(library.dataTrackStream): chunkSize =>

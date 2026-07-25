@@ -3,7 +3,7 @@ package com.malliina.musicpimp.http4s
 import cats.data.Kleisli
 import cats.effect.kernel.Resource
 import cats.effect.std.Dispatcher
-import cats.effect.{Async, ExitCode, IO, IOApp}
+import cats.effect.{Async, Concurrent, ExitCode, IO, IOApp}
 import cats.{Monad, Parallel}
 import ch.qos.logback.classic.Level
 import com.comcast.ip4s.{Port, host, port}
@@ -12,7 +12,7 @@ import com.malliina.file.FileUtilities
 import com.malliina.http.io.HttpClientIO
 import com.malliina.logback.PimpAppender
 import com.malliina.musicpimp.{BuildInfo, Tray}
-import com.malliina.musicpimp.app.{AppMode, PimpConf}
+import com.malliina.musicpimp.app.{AppMode, InitOptions, PimpConf}
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.{AuthBundles, Authenticator, CookieAuthenticator, Http4sAuth, JWT, PimpAuthenticator, RememberMe}
 import com.malliina.musicpimp.cloud.{CloudSocket, Clouds, Deps}
@@ -49,14 +49,14 @@ trait ServerResources:
 
   private val tray = Tray.default()
 
-  private def initApp[F[_]: Async](useTray: Boolean) = Async[F].delay:
+  private def initApp[F[_]: Async](opts: InitOptions) = Async[F].delay:
     Logging.level = Level.INFO
     FileUtilities.init("musicpimp")
     java.nio.file.Files.createDirectories(FileUtil.pimpHomeDir)
-    if useTray then tray.installTray()
+    if opts.useTray then tray.installTray()
     val version = BuildInfo.version
     log.info(
-      s"Starting MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}"
+      s"Starting MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, indexing ${opts.indexer}"
     )
 
   def appResources[F[+_]: { Async, Files, Parallel, Compression }](
@@ -65,7 +65,7 @@ trait ServerResources:
     val F = Async[F]
     for
       appender <- PimpAppender.installF[F]
-      _ <- Resource.eval(initApp[F](conf.opts.useTray))
+      _ <- Resource.eval(initApp[F](conf.opts))
       http <- HttpClientIO.resource[F]
       dispatcher <- Dispatcher.parallel[F]
       db <- DoobieDatabase.init(conf.db)
@@ -87,19 +87,12 @@ trait ServerResources:
       clouds <- Resource.eval(
         Clouds.prod(player, alarmHandler, deps, fullText, CloudSocket.prodUri)
       )
-      _ <- Stream
-        .emit(())
-        .concurrently(if conf.opts.cloud then clouds.events else Stream.empty)
-        .concurrently(if conf.opts.indexer then indexer.events else Stream.empty)
-        .concurrently(
-          if conf.opts.alarms then Stream.eval(F.delay(scheduler.init())) else Stream.empty
-        )
-        .concurrently(statsPlayer.subscription)
-        .concurrently(player.events)
-        .concurrently(Clouds.playerEventsToPimpcloud(player, clouds))
-        .compile
-        .resource
-        .lastOrError
+      _ <- (if conf.opts.cloud then clouds.events else Stream.empty).runInBackground
+      _ <- (if conf.opts.indexer then indexer.events else Stream.empty).runInBackground
+      _ <- if conf.opts.alarms then Resource.eval(F.delay(scheduler.init())) else Resource.unit[F]
+      _ <- player.events.runInBackground
+      _ <- statsPlayer.subscription.runInBackground
+      _ <- Clouds.playerEventsToPimpcloud(player, clouds).runInBackground
     yield
       val jwt = JWT(conf.secret)
       val cookieManager = Http4sAuth[F](jwt)
@@ -135,6 +128,10 @@ trait ServerResources:
         dispatcher,
         html
       )
+
+  extension [F[_]: Concurrent, O](s: Stream[F, O])
+    def runInBackground: Resource[F, Unit] =
+      Stream.emit(()).concurrently(s).compile.resource.lastOrError
 
   private def appResource[F[+_]: { Async, Files, Parallel, Compression }](
     service: Service[F],
