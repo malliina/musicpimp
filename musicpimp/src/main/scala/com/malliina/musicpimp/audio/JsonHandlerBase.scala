@@ -2,18 +2,16 @@ package com.malliina.musicpimp.audio
 
 import cats.effect.Sync
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
-import com.malliina.musicpimp.auth.{AuthedRequest, JsonRequest}
-import com.malliina.musicpimp.http.PimpRequest
+import com.malliina.musicpimp.auth.JsonRequest
 import com.malliina.musicpimp.http4s.Responses
 import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models.RemoteInfo
-import com.malliina.play.http.{CookiedRequest, FullUrls}
-import com.malliina.values.Username
+import com.malliina.play.http.FullUrls2
+import com.malliina.util.AppLogger
 import io.circe.Json
-import play.api.Logger
 
 object JsonHandlerBase:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
 trait JsonHandlerBase[F[_]: Sync]:
   def fulfillMessage(message: PlayerMessage, request: RemoteInfo[F]): F[Unit]
@@ -24,7 +22,7 @@ trait JsonHandlerBase[F[_]: Sync]:
       RemoteInfo(
         req.username,
         Responses.apiVersion(req.request),
-        FullUrls.hostOnly2(req.request),
+        FullUrls2.hostOnly2(req.request),
         Target.noop
       )
     onJson(req.body, remoteInfo)

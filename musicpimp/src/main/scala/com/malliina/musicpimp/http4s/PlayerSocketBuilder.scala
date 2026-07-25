@@ -12,8 +12,7 @@ import PlayerSocketBuilder.log
 import cats.implicits.{toFlatMapOps, toFunctorOps}
 import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models.RemoteInfo
-import com.malliina.play.http.FullUrls
-import com.malliina.play.json.JsonMessages
+import com.malliina.play.http.FullUrls2
 import fs2.concurrent.Topic
 import io.circe.{Encoder, Json}
 import io.circe.syntax.EncoderOps
@@ -30,10 +29,10 @@ class PlayerSocketBuilder[F[_]: Async](player: ServerPlayer[F], messageHandler: 
   val F = Async[F]
 
   private val pings = Stream.awakeEvery[F](5.seconds).delayBy(1.second).map(_ => PingEvent.asJson)
-  private val ticks = Stream.awakeEvery(900.millis).delayBy(200.millis)
+//  private val ticks = Stream.awakeEvery(900.millis).delayBy(200.millis)
 
   def playback(req: AuthedRequest[F], builder: WebSocketBuilder2[F]): F[Response[F]] =
-    val host = FullUrls.hostOnly2(req.request)
+    val host = FullUrls2.hostOnly2(req.request)
     val messageWriter = ServerMessage.jsonWriter(using TrackJson.format(host))
     given w: Encoder[TrackMeta] = TrackJson.writer(host)
     var previousPos = -1L
@@ -46,14 +45,14 @@ class PlayerSocketBuilder[F[_]: Async](player: ServerPlayer[F], messageHandler: 
         .mergeHaltBoth(target.subscribe(100))
         .mergeHaltBoth(player.allEvents.map(msg => messageWriter(msg)))
         .mergeHaltL(welcome)
-        .mergeHaltBoth(ticks.evalMapFilter: _ =>
-          val pos = player.position
-          val posSeconds = pos.toSeconds
-          F.delay:
-            if posSeconds != previousPos then
-              previousPos = posSeconds
-              Some(TimeUpdatedMessage(pos).asJson)
-            else None)
+//        .mergeHaltBoth(ticks.evalMapFilter: _ =>
+//          val pos = player.position
+//          val posSeconds = pos.toSeconds
+//          F.delay:
+//            if posSeconds != previousPos then
+//              previousPos = posSeconds
+//              Some(TimeUpdatedMessage(pos).asJson)
+//            else None)
         .map: json =>
           Text(json.noSpaces)
       val fromClient: fs2.Pipe[F, WebSocketFrame, Unit] = _.evalMap:
@@ -66,7 +65,7 @@ class PlayerSocketBuilder[F[_]: Async](player: ServerPlayer[F], messageHandler: 
                 RemoteInfo(
                   req.username,
                   Responses.apiVersion(req.request),
-                  FullUrls.hostOnly2(req.request),
+                  FullUrls2.hostOnly2(req.request),
                   Target(json => target.publish1(json).void)
                 )
               )

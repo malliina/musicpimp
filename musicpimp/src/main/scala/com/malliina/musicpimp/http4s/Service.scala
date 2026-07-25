@@ -36,7 +36,7 @@ import com.malliina.musicpimp.{BuildInfo, BuildMeta}
 import com.malliina.play.ContentRange
 import com.malliina.play.auth.RememberMeCredentials
 import com.malliina.play.controllers.AccountKeys
-import com.malliina.play.http.FullUrls
+import com.malliina.play.http.{FullUrls, FullUrls2}
 import com.malliina.play.models.PasswordChange
 import com.malliina.storage.StorageLong
 import com.malliina.util.{AppLogger, Logging}
@@ -229,7 +229,7 @@ class Service[F[_]: { Async, Files }](
           .flatMap: maybeTrack =>
             maybeTrack
               .map: t =>
-                ok(TrackJson.toFull(t, FullUrls.hostOnly2(req)))
+                ok(TrackJson.toFull(t, FullUrls2.hostOnly2(req)))
               .getOrElse:
                 badRequest(s"Track not found: $id")
     case req @ GET -> Root / "tracks" / TrackID(id) =>
@@ -248,7 +248,7 @@ class Service[F[_]: { Async, Files }](
         stats
           .mostRecent(meta)
           .flatMap: entries =>
-            val list = RecentList.forEntries(meta, entries, FullUrls.hostOnly2(req))
+            val list = RecentList.forEntries(meta, entries, FullUrls2.hostOnly2(req))
             pimpResult(req)(
               html = ok(html.mostRecent(list)),
               json = ok(list)
@@ -258,7 +258,7 @@ class Service[F[_]: { Async, Files }](
         stats
           .mostPlayed(meta)
           .flatMap: entries =>
-            val list = PopularList.forEntries(meta, entries, FullUrls.hostOnly2(req))
+            val list = PopularList.forEntries(meta, entries, FullUrls2.hostOnly2(req))
             pimpResult(req)(
               html = ok(html.mostPopular(list)),
               json = ok(list)
@@ -270,7 +270,7 @@ class Service[F[_]: { Async, Files }](
           .flatMap: lists =>
             pimpResult(req)(
               html = ok(html.playlists(lists.playlists, user.username)),
-              json = ok(TrackJson.toFullPlaylistsMeta(lists, FullUrls.hostOnly2(req)))
+              json = ok(TrackJson.toFullPlaylistsMeta(lists, FullUrls2.hostOnly2(req)))
             )
     case req @ GET -> Root / "playlists" / PlaylistID(id) =>
       playlistAction(req): user =>
@@ -281,7 +281,7 @@ class Service[F[_]: { Async, Files }](
               .map: playlist =>
                 pimpResult(req)(
                   html = ok(html.playlist(playlist.playlist, user.username)),
-                  json = ok(TrackJson.toFullMeta(playlist, FullUrls.hostOnly2(req)))
+                  json = ok(TrackJson.toFullMeta(playlist, FullUrls2.hostOnly2(req)))
                 )
               .getOrElse:
                 notFound(s"Playlist not found: $id")
@@ -365,7 +365,7 @@ class Service[F[_]: { Async, Files }](
     case req @ GET -> Root / "alarms" =>
       authed(req): user =>
         schedules
-          .clockList(FullUrls.hostOnly2(req))
+          .clockList(FullUrls2.hostOnly2(req))
           .flatMap: fcps =>
             pimpResult(req)(
               html = ok(html.alarms(fcps, user.username)),
@@ -414,7 +414,7 @@ class Service[F[_]: { Async, Files }](
     case req @ GET -> Root / "tracks" =>
       authed(req): user =>
         val ts = files.tracksRecursive.map: t =>
-          TrackJson.toFull(t, FullUrls.hostOnly2(req))
+          TrackJson.toFull(t, FullUrls2.hostOnly2(req))
         ok(ts)
     case req @ GET -> Root / "pathsOnly" =>
       authed(req): user =>
@@ -472,7 +472,7 @@ class Service[F[_]: { Async, Files }](
             results.flatMap: tracks =>
               respond(req)(
                 html = html.search(term, tracks, user.username),
-                json = tracks.map(dt => TrackJson.toFull(dt, FullUrls.hostOnly2(req)))
+                json = tracks.map(dt => TrackJson.toFull(dt, FullUrls2.hostOnly2(req)))
               )
         )
     case req @ POST -> Root / "search" / "refresh" =>
@@ -482,7 +482,7 @@ class Service[F[_]: { Async, Files }](
           ok(SimpleMessage("Refreshing..."))
     case req @ GET -> Root / "playback" =>
       authed(req): user =>
-        val host = FullUrls.hostOnly2(req)
+        val host = FullUrls2.hostOnly2(req)
         response(req)(
           html = F.pure(Response(noContent)),
           json17 = player.status17(host).flatMap(s => ok(s)),
@@ -733,7 +733,7 @@ class Service[F[_]: { Async, Files }](
   private def tracksIn(id: FolderID, req: Request[F]) =
     authed(req): user =>
       val folderId = PimpEnc.folder(id)
-      given Encoder[TrackMeta] = TrackJson.writer(FullUrls.hostOnly2(req))
+      given Encoder[TrackMeta] = TrackJson.writer(FullUrls2.hostOnly2(req))
       given Encoder[List[TrackMeta]] = Encoder.encodeList[TrackMeta]
       lib
         .tracksIn(folderId)

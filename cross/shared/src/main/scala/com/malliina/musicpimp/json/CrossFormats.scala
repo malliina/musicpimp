@@ -32,7 +32,7 @@ object CrossFormats:
 
   /** A JSON format for objects of type T that contains a top-level key-value pair.
     */
-  def keyValued[T](key: String, value: String, payload: Codec[T]): Codec[T] =
+  private def keyValued[T](key: String, value: String, payload: Codec[T]): Codec[T] =
     val decoder: Decoder[T] = Decoder.decodeJson.emap: json =>
       json.hcursor
         .downField(key)

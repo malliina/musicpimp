@@ -75,5 +75,4 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     log.error(t)
 
   protected def onJsonFailure(result: String): Unit =
-    println(result)
     log.info(s"JSON error $result")

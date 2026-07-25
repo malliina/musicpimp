@@ -3,7 +3,7 @@ package com.malliina.musicpimp.library
 import com.malliina.musicpimp.audio.*
 import com.malliina.musicpimp.db.DataFolder
 import com.malliina.http.FullUrl
-import com.malliina.play.http.FullUrls
+import com.malliina.play.http.FullUrls2
 import io.circe.generic.semiauto.deriveEncoder
 import io.circe.{Codec, Encoder}
 import org.http4s.Request
@@ -26,10 +26,10 @@ object MusicFolder:
   val empty = MusicFolder(DataFolder.root, Nil, Nil)
 
   def writer(request: RequestHeader): Encoder[MusicFolder] =
-    writer(FullUrls.hostOnly(request))
+    writer(FullUrls2.hostOnly(request))
 
   def writer(request: Request[?]): Encoder[MusicFolder] =
-    writer(FullUrls.hostOnly2(request))
+    writer(FullUrls2.hostOnly2(request))
 
   def writer(host: FullUrl): Encoder[MusicFolder] =
     implicit val f: Encoder[FolderMeta] = FolderMeta.writer(host)

@@ -156,7 +156,7 @@ trait ServerResources:
         .withHost(host"0.0.0.0")
         .withPort(port)
         .withHttpWebSocketApp(b => appResource(service, b))
-        .withIdleTimeout(60.seconds)
+        .withIdleTimeout(60.hours)
         .withRequestHeaderReceiveTimeout(30.seconds)
         .withErrorHandler(ErrorHandler[F].partial)
         .withShutdownTimeout(1.millis)

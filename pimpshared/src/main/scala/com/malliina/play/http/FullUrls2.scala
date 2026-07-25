@@ -3,9 +3,10 @@ package com.malliina.play.http
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.auth.Proxies2
 import org.http4s.{Request, Uri}
+import org.typelevel.ci.CIStringSyntax
 import play.api.mvc.RequestHeader
 
-object FullUrls:
+object FullUrls2:
   def absolute(url: FullUrl, uri: Uri): FullUrl =
     FullUrl(url.proto, url.hostAndPort, uri.renderString)
 
@@ -22,4 +23,5 @@ object FullUrls:
 
   def hostOnly2[F[_]](req: Request[F]): FullUrl =
     val maybeS = if Proxies2.isSecure(req) then "s" else ""
-    FullUrl(s"http$maybeS", req.uri.host.map(_.value).getOrElse(""), "")
+    val hostFromHeader = req.headers.get(ci"Host").map(_.head.value)
+    FullUrl(s"http$maybeS", req.uri.host.map(_.value).orElse(hostFromHeader).getOrElse(""), "")

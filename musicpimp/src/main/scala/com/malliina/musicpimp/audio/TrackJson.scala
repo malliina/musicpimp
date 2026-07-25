@@ -4,7 +4,7 @@ import com.malliina.http.FullUrl
 import com.malliina.json.PrimitiveFormats
 import com.malliina.musicpimp.http4s.Reverse
 import com.malliina.musicpimp.models.*
-import com.malliina.play.http.FullUrls
+import com.malliina.play.http.FullUrls2
 import io.circe.{Codec, Encoder}
 import play.api.mvc.RequestHeader
 
@@ -15,10 +15,10 @@ object TrackJson:
   given dur: Codec[Duration] = PrimitiveFormats.durationCodec
 
   def urlFor(host: FullUrl, track: TrackID): FullUrl =
-    FullUrls.absolute(host, reverse.downloads(track))
+    FullUrls2.absolute(host, reverse.downloads(track))
 
   def writer(request: RequestHeader): Encoder[TrackMeta] =
-    writer(FullUrls.hostOnly(request))
+    writer(FullUrls2.hostOnly(request))
 
   def writer(host: FullUrl): Encoder[TrackMeta] = TrackMetas.writer(
     host,
@@ -28,7 +28,7 @@ object TrackJson:
   def format(request: RequestHeader): Codec[TrackMeta] =
     format(host(request))
 
-  def host(rh: RequestHeader) = FullUrls.hostOnly(rh)
+  def host(rh: RequestHeader) = FullUrls2.hostOnly(rh)
 
   def format(host: FullUrl): Codec[TrackMeta] =
     Codec.from(TrackMeta.reader, writer(host))

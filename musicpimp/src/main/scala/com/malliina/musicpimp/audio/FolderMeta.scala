@@ -5,7 +5,7 @@ import com.malliina.musicpimp.http4s.Reverse
 import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, MusicItem}
-import com.malliina.play.http.FullUrls
+import com.malliina.play.http.{FullUrls, FullUrls2}
 import com.malliina.values.UnixPath
 import io.circe.syntax.EncoderOps
 import io.circe.{Codec, Encoder, Json}
@@ -42,7 +42,7 @@ object FolderMeta:
     val call: Uri =
       if id == Library.RootId then reverse.base
       else reverse.folder(id)
-    FullUrls.absolute(host, call)
+    FullUrls2.absolute(host, call)
 
   def writer(host: FullUrl): Encoder[FolderMeta] = f =>
     val call: Uri =
@@ -52,5 +52,5 @@ object FolderMeta:
       Id -> f.id.asJson,
       Title -> f.title.asJson,
       PathKey -> UnixPath.json(f.path).asJson,
-      Url -> FullUrls.absolute(host, call).asJson
+      Url -> FullUrls2.absolute(host, call).asJson
     )

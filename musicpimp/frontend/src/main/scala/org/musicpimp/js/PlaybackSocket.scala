@@ -30,6 +30,7 @@ abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) with Playback
       .map(handleMessage)
       .left
       .map: error =>
+        log.info(s"Error for payload '$payload'.")
         onJsonFailure(error.message)
 
   private def handleMessage(message: ServerMessage): Unit =

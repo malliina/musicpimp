@@ -224,7 +224,7 @@ class JavaSoundPlayer[F[_]: Async](
   private def startPlayback(): F[Unit] =
     val changedToActive = active.compareAndSet(false, true)
     if changedToActive then
-      F.delay:
+      F.interruptible:
         audioLine.start()
         startPlayThread()
       .handleErrorWith:
