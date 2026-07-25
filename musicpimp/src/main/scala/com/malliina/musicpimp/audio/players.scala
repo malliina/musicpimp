@@ -10,7 +10,7 @@ import fs2.concurrent.Topic
 
 class StoragePlayer[F[_]: Async](
   val track: LocalTrack,
-  states: Topic[F, PlayerStates.PlayerState],
+  states: Topic[F, PlayerStates],
   timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
   d: Dispatcher[F],
   eom: () => F[Unit]
@@ -20,7 +20,7 @@ class StoragePlayer[F[_]: Async](
 
 class StreamPlayer[F[_]: Async](
   val track: StreamedTrack,
-  states: Topic[F, PlayerStates.PlayerState],
+  states: Topic[F, PlayerStates],
   timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
   d: Dispatcher[F],
   eom: () => F[Unit]

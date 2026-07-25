@@ -84,7 +84,7 @@ class PlaybackTests extends TestBase:
       sleep(100.millis)
       p.seek(9.seconds)
       //      val s1 = p.events.subscribe(e => log.info(s"event: $e"))
-      val promise = Promise[PlayerStates.PlayerState]()
+      val promise = Promise[PlayerStates]()
       p.events.filter(_ == PlayerStates.EndOfMedia).map(o => promise.trySuccess(o))
       val maybeEom = await(promise.future, 20.seconds)
       assertEquals(maybeEom, PlayerStates.EndOfMedia)

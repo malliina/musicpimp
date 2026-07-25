@@ -30,7 +30,7 @@ object MusicPlayer:
       pos <- Ref.of[F, PlaylistIndex](BasePlaylist.NoPosition)
       songs <- Ref.of[F, Seq[PlayableTrack]](Nil)
       trackHistory <- Topic[F, TrackMeta]
-      states <- Topic[F, PlayerStates.PlayerState]
+      states <- Topic[F, PlayerStates]
       timeUpdates <- Topic[F, PlaybackEvents.TimeUpdated]
     yield MusicPlayer(eventHub, pos, songs, trackHistory, states, timeUpdates, d)
 
@@ -39,7 +39,7 @@ class MusicPlayer[F[_]: Async](
   pos: Ref[F, PlaylistIndex],
   songs: Ref[F, Seq[PlayableTrack]],
   trackHistory: Topic[F, TrackMeta],
-  states: Topic[F, PlayerStates.PlayerState],
+  states: Topic[F, PlayerStates],
   timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
   d: Dispatcher[F]
 ) extends IPlayer[F]

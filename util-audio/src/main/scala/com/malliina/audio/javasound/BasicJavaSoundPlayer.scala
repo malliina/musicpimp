@@ -16,7 +16,7 @@ import scala.concurrent.duration.FiniteDuration
 
 class BasicJavaSoundPlayer[F[_]: Async](
   media: StreamSource,
-  states: Topic[F, PlayerStates.PlayerState],
+  states: Topic[F, PlayerStates],
   timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
   d: Dispatcher[F],
   readWriteBufferSize: StorageSize = DefaultRwBufferSize
@@ -36,7 +36,7 @@ object BasicJavaSoundPlayer:
     readWriteBufferSize: StorageSize = DefaultRwBufferSize
   ): F[BasicJavaSoundPlayer[F]] =
     for
-      states <- Topic[F, PlayerStates.PlayerState]
+      states <- Topic[F, PlayerStates]
       timeUpdates <- Topic[F, PlaybackEvents.TimeUpdated]
     yield BasicJavaSoundPlayer(media, states, timeUpdates, d, readWriteBufferSize)
 

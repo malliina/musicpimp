@@ -30,7 +30,7 @@ class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)
   override def toString = id.id
 
   override def buildPlayer[F[_]: Async](
-    states: Topic[F, PlayerStates.PlayerState],
+    states: Topic[F, PlayerStates],
     timeUpdates: Topic[F, PlaybackEvents.TimeUpdated],
     d: Dispatcher[F],
     eom: () => F[Unit]

@@ -7,7 +7,7 @@ import fs2.concurrent.Topic
 
 trait PlayableTrack extends TrackMeta:
   def buildPlayer[F[_]: Async](
-    states: Topic[F, PlayerStates.PlayerState],
+    states: Topic[F, PlayerStates],
     timeUpdates: Topic[F, PlaybackEvents.TimeUpdated],
     d: Dispatcher[F],
     eom: () => F[Unit]

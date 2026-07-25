@@ -10,7 +10,7 @@ trait PimpPlayer[F[_]: Async] extends JavaSoundPlayer[F]:
   def track: PlayableTrack
 
 object PimpPlayer:
-  def playState(s: PlayerStates.PlayerState): PlayState = s match
+  def playState(s: PlayerStates): PlayState = s match
     case PlayerStates.Unrealized  => Unrealized
     case PlayerStates.Realizing   => Realizing
     case PlayerStates.Realized    => Realized

@@ -22,7 +22,7 @@ case class StreamedTrack(
   stream: InputStream
 ) extends PlayableTrack:
   override def buildPlayer[F[_]: Async](
-    states: Topic[F, PlayerStates.PlayerState],
+    states: Topic[F, PlayerStates],
     timeUpdates: Topic[F, PlaybackEvents.TimeUpdated],
     d: Dispatcher[F],
     eom: () => F[Unit]

@@ -1,12 +1,11 @@
 package com.malliina.audio.javasound
 
+import cats.effect.Sync
 import cats.effect.kernel.Async
-import cats.effect.{Concurrent, Spawn, Sync, Temporal}
 import cats.effect.std.Dispatcher
-import cats.implicits.catsSyntaxApplicativeError
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps}
 import cats.syntax.all.{toFlatMapOps, toFunctorOps}
 import com.malliina.audio.*
-import com.malliina.audio.PlaybackEvents.TimeUpdated
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
 import com.malliina.audio.meta.OneShotStream
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
@@ -16,7 +15,7 @@ import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.Future
-import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import scala.concurrent.duration.Duration
 
 object JavaSoundPlayer:
   private val log = LoggerFactory.getLogger(getClass)
@@ -25,7 +24,7 @@ object JavaSoundPlayer:
 
   def default[F[_]: { Async }](media: OneShotStream, d: Dispatcher[F]) =
     for
-      states <- Topic[F, PlayerStates.PlayerState]
+      states <- Topic[F, PlayerStates]
       timeUpdates <- Topic[F, PlaybackEvents.TimeUpdated]
     yield JavaSoundPlayer(media, states, timeUpdates, d)
 
@@ -52,7 +51,7 @@ object JavaSoundPlayer:
   */
 class JavaSoundPlayer[F[_]: Async](
   val media: OneShotStream,
-  states: Topic[F, PlayerStates.PlayerState],
+  states: Topic[F, PlayerStates],
   timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
   d: Dispatcher[F],
   readWriteBufferSize: StorageSize = DefaultRwBufferSize
@@ -75,7 +74,6 @@ class JavaSoundPlayer[F[_]: Async](
 //  private var playThread: Option[Future[Unit]] = None
 
 //  private var latestPos: Duration = position
-//  // TODO subscribe
 //  val poller = pollingSource.evalMap: _ =>
 //    if latestPos != position then
 //      latestPos = position
@@ -99,7 +97,7 @@ class JavaSoundPlayer[F[_]: Async](
   /** @return
     *   the current player state and any future states
     */
-  def events: fs2.Stream[F, PlayerStates.PlayerState] = states.subscribe(100)
+  def events: fs2.Stream[F, PlayerStates] = states.subscribe(100)
 
   def audioLine = lineData.line
 
@@ -107,7 +105,7 @@ class JavaSoundPlayer[F[_]: Async](
 
   private def newLine(
     source: InputStream,
-    sink: Topic[F, PlayerStates.PlayerState],
+    sink: Topic[F, PlayerStates],
     d: Dispatcher[F]
   ): LineData[F] =
     LineData.fromStream(source, sink, d)
@@ -170,8 +168,8 @@ class JavaSoundPlayer[F[_]: Async](
     else None
 
   override def onEndOfMedia(): F[Unit] =
-    super.onEndOfMedia()
-    states.publish1(PlayerStates.EndOfMedia).void
+    super.onEndOfMedia() >>
+      states.publish1(PlayerStates.EndOfMedia).void
 
   def close(): Unit =
     closeLine()
@@ -246,7 +244,7 @@ class JavaSoundPlayer[F[_]: Async](
         // cleanup
         closeLine()
         // -1 bytes read means "end of stream has been reached"
-        onEndOfMedia()
+        d.unsafeRunAndForget(onEndOfMedia())
 
   def state = lineData.state
 

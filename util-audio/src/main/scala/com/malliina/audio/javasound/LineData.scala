@@ -2,7 +2,6 @@ package com.malliina.audio.javasound
 
 import cats.effect.std.Dispatcher
 import com.malliina.audio.PlayerStates
-import com.malliina.audio.PlayerStates.PlayerState
 import com.malliina.audio.javasound.LineData.log
 import fs2.concurrent.Topic
 import org.slf4j.LoggerFactory
@@ -22,14 +21,14 @@ object LineData:
     */
   def fromStream[F[_]](
     stream: InputStream,
-    sink: Topic[F, PlayerStates.PlayerState],
+    sink: Topic[F, PlayerStates],
     d: Dispatcher[F]
   ) =
     new LineData(AudioSystem.getAudioInputStream(stream), sink, d)
 
 class LineData[F[_]](
   inStream: AudioInputStream,
-  sink: Topic[F, PlayerStates.PlayerState],
+  sink: Topic[F, PlayerStates],
   d: Dispatcher[F]
 ):
   private val baseFormat = inStream.getFormat
@@ -43,7 +42,7 @@ class LineData[F[_]](
   )
   line.open(decodedFormat)
 
-  private def toPlayerEvent(lineEvent: LineEvent): PlayerState =
+  private def toPlayerEvent(lineEvent: LineEvent): PlayerStates =
     import PlayerStates.*
     import LineEvent.Type.*
     val eventType = lineEvent.getType
@@ -60,7 +59,7 @@ class LineData[F[_]](
     log.debug(s"Attempted to skip $bytes bytes, skipped $skipped bytes")
     skipped
 
-  def state: PlayerStates.Value =
+  def state: PlayerStates =
     import PlayerStates.*
     if line.isOpen then
       if line.isActive then Started
