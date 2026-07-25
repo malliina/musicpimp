@@ -3,7 +3,7 @@ package com.malliina.musicpimp
 import java.awt.*
 import java.awt.event.{ActionEvent, ActionListener}
 import java.net.URI
-import com.malliina.util.Util
+import com.malliina.util.{AppLogger, Util}
 import com.malliina.web.Utils
 import org.apache.pekko.actor.CoordinatedShutdown.JvmExitReason
 import org.apache.pekko.actor.{ActorSystem, CoordinatedShutdown}
@@ -17,13 +17,13 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 object Tray:
-  def apply(as: ActorSystem) = new Tray(as)
+  def default(): Tray = Tray()
 
 /** @see
   *   http://docs.oracle.com/javase/tutorial/uiswing/misc/systemtray.html
   */
-class Tray(as: ActorSystem):
-  private val log = Logger(getClass)
+class Tray:
+  private val log = AppLogger(getClass)
   val iconResource = "guitar-16x16.png"
   protected val (httpPortKey, httpsPortKey, httpAddressKey) =
     ("http.port", "https.port", "http.address")
@@ -33,12 +33,12 @@ class Tray(as: ActorSystem):
   /** Installs a system tray item with the MusicPimp logo which opens a popup menu allowing the user
     * to Open/Stop MusicPimp.
     */
-  def installTray(lifecycle: ApplicationLifecycle): Unit =
+  def installTray(): Unit =
     if SystemTray.isSupported then
       Try(UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName))
       val popup = new PopupMenu()
       popup.add(menuItem("Open", openWebInterface()))
-      popup.add(menuItem("Stop", stop(as)))
+      popup.add(menuItem("Stop", stop()))
       val trayIcon = new TrayIcon(icon(iconResource, "MusicPimp"), "Open MusicPimp", popup)
       trayIcon.setImageAutoSize(true)
       // commented because is triggered on all clicks on OSX, overriding the other listeners
@@ -68,8 +68,7 @@ class Tray(as: ActorSystem):
         (("http", 9000))
     Desktop.getDesktop.browse(new URI(s"$protocol://$address:$port"))
 
-  def stop(as: ActorSystem): Unit =
-    Await.result(CoordinatedShutdown(as).run(JvmExitReason), 5.seconds)
+  def stop(): Unit =
     System.exit(0)
 
   private def menuItem(label: String, onClick: => Unit) =

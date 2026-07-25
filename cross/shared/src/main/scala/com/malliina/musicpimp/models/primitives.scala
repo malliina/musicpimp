@@ -22,3 +22,5 @@ abstract class IdentCompanion[T <: Identifier] extends ValidatingCompanion[Strin
     ),
     Writes.StringWrites.contramap(write)
   )
+
+  def unapply(s: String): Option[T] = build(s).toOption

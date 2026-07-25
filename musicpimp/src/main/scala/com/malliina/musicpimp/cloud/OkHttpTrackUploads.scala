@@ -1,40 +1,40 @@
 package com.malliina.musicpimp.cloud
 
-import cats.effect.IO
-
-import java.io.FileNotFoundException
-import java.net.SocketException
-import java.nio.file.Files
-import java.util.concurrent.{Executors, TimeUnit}
-import com.malliina.concurrent.Execution
-import com.malliina.concurrent.Execution.runtime
-import com.malliina.http.{FullUrl, OkHttpResponse}
+import cats.effect.Async
+import cats.effect.implicits.genTemporalOps_
+import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
+import com.malliina.http.{FullUrl, HttpHeaders, HttpResponse, OkHttpResponse}
 import com.malliina.musicpimp.cloud.OkHttpTrackUploads.log
 import com.malliina.musicpimp.http.MultipartRequests
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
 import com.malliina.play.ContentRange
 import com.malliina.storage.{StorageLong, StorageSize}
+import com.malliina.util.AppLogger
 import com.malliina.ws.HttpUtil
-import play.api.Logger
 import play.api.http.HeaderNames
 
+import java.io.FileNotFoundException
+import java.net.SocketException
+import java.nio.file.Files
+import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{ExecutionContext, Future}
 
 object OkHttpTrackUploads:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val uploadPath = "/track"
 
-  def apply(lib: MusicLibrary[IO], host: FullUrl) =
-    new OkHttpTrackUploads(lib, host + uploadPath, Execution.cached)
+  def apply[F[_]: Async](lib: MusicLibrary[F], host: FullUrl) =
+    new OkHttpTrackUploads(lib, host + uploadPath)
 
-class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: ExecutionContext)
-  extends AutoCloseable:
-  implicit val exec: ExecutionContext = ec
-  val scheduler = Executors.newSingleThreadScheduledExecutor()
-  val uploader = new MultipartRequests(uploadUri.url.startsWith("https"))
+class OkHttpTrackUploads[F[_]: Async](
+  lib: MusicLibrary[F],
+  uploadUri: FullUrl
+) extends AutoCloseable:
+  val F = Async[F]
+  val uploader: MultipartRequests[F] =
+    ??? // = new MultipartRequests(uploadUri.url.startsWith("https"))
 
   /** Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's
     * ID as the username.
@@ -46,10 +46,10 @@ class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
     * @return
     *   a Future that completes when the upload completes
     */
-  def upload(track: TrackID, request: RequestID): Future[Unit] =
+  def upload(track: TrackID, request: RequestID): F[Unit] =
     performUpload(track, request, None)
 
-  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): Future[Unit] =
+  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): F[Unit] =
     val range = rangedTrack.range
     val requestRange = if range.isAll then None else Option(range)
     performUpload(rangedTrack.id, request, requestRange)
@@ -57,22 +57,20 @@ class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
   def cancelSoon(request: RequestID) = cancelIn(request, 5.seconds)
 
   def cancelIn(request: RequestID, after: FiniteDuration) =
-    val runnable = new Runnable:
-      override def run(): Unit = cancel(request)
-    scheduler.schedule(runnable, after.toSeconds, TimeUnit.SECONDS)
+    cancel(request).delayBy(after)
 
-  def cancel(request: RequestID): Unit =
-    val wasCancelled = uploader.cancel(request)
-    if wasCancelled then log.info(s"Cancelled $request")
+  def cancel(request: RequestID): F[Unit] =
+    F.delay(uploader.cancel(request))
+      .map: wasCancelled =>
+        if wasCancelled then log.info(s"Cancelled $request")
 
   private def performUpload(
     trackID: TrackID,
     request: RequestID,
     range: Option[ContentRange]
-  ): Future[Unit] =
+  ): F[Unit] =
     lib
       .findFile(trackID)
-      .unsafeToFuture()
       .flatMap: maybeAbsolute =>
         maybeAbsolute
           .map: file =>
@@ -91,22 +89,22 @@ class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
               .getOrElse:
                 log.info(s"Uploading entire $file, request $request to $uploadUri")
                 uploader.file(uploadUri, headers, file, request)
-            uploadRequest.onComplete: _ =>
-              log info s"Upload of $request complete."
+            uploadRequest.map: _ =>
+              log.info(s"Upload of $request complete.")
             logUpload(trackID, request, uploadRequest, totalSize)
           .getOrElse:
             val msg = s"Unable to find track: $trackID"
-            log warn msg
-            Future.failed(new FileNotFoundException(msg))
+            log.warn(msg)
+            F.raiseError(new FileNotFoundException(msg))
 
   /** Blocks until the upload completes.
     */
   private def logUpload(
     track: TrackID,
     request: RequestID,
-    task: Future[OkHttpResponse],
+    task: F[HttpResponse],
     totalSize: StorageSize
-  ): Future[Unit] =
+  ): F[Unit] =
     def appendMeta(message: String) = s"$message. URI: $uploadUri. Request: $request"
 
     task
@@ -115,15 +113,18 @@ class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
           val prefix = s"Uploaded $totalSize of $track"
           log.info(appendMeta(s"$prefix with response ${response.code}."))
         else
-          val len = response.inner.body().contentLength()
+          val len = response.body.length
           val contentType =
-            Option(response.inner.body().contentType()).map(_.toString).getOrElse("unknown")
+            response.headers
+              .get(HttpHeaders.`Content-Type`)
+              .flatMap(_.headOption)
+              .getOrElse("unknown")
           log.error(
             appendMeta(
               s"Non-success response code ${response.code} len $len type $contentType for track $track."
             )
           )
-      .recover:
+      .handleError:
         case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
           // thrown when the upload is cancelled, see method cancel
           // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
@@ -131,7 +132,7 @@ class OkHttpTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
         case e: Exception =>
           log.warn(s"Upload of track $track with request ID $request terminated exceptionally", e)
 
-  def close(): Unit =
-    scheduler.awaitTermination(3, TimeUnit.SECONDS)
-    scheduler.shutdown()
-    //    Try(uploader.close())
+  def close(): Unit = ()
+//    scheduler.awaitTermination(3, TimeUnit.SECONDS)
+//    scheduler.shutdown()
+//    Try(uploader.close())

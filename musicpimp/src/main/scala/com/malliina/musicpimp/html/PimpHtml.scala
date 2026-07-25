@@ -108,7 +108,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
     libraryBase(tab, username)(inner)
 
   def logs(
-    levelField: Field,
+    levelField: InField,
     levels: Seq[Level],
     currentLevel: Level,
     username: Username,

@@ -2,11 +2,11 @@ package com.malliina.musicpimp.db
 
 import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.db.FullText.log
+import com.malliina.util.AppLogger
 import doobie.implicits.*
-import play.api.Logger
 
 object FullText:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
 class FullText[F[_]](val db: DoobieDatabase[F]) extends DoobieMappings:
   def fullText(searchTerm: String, limit: Int = 1000): F[List[DataTrack]] = db.run:

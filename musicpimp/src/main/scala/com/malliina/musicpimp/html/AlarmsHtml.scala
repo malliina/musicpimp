@@ -2,14 +2,10 @@ package com.malliina.musicpimp.html
 
 import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.PimpHtml.feedbackDiv
-import com.malliina.musicpimp.html.PlayBootstrap.helpSpan
-import com.malliina.musicpimp.http4s.Reverse
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings
 import com.malliina.musicpimp.scheduler.web.SchedulerStrings.*
 import com.malliina.musicpimp.scheduler.{FullClockPlayback, WeekDay}
-import play.api.data.Field
-import play.api.i18n.Messages
 import scalatags.Text.all.*
 
 object AlarmsHtml extends HtmlSyntax:
@@ -95,27 +91,35 @@ object AlarmsHtml extends HtmlSyntax:
     )
 
   def alarmEditorContent(conf: AlarmContent) =
-    val m = conf.m
     val form = conf.form
     Seq(
       headerRow("Edit alarm"),
       halfRow(
         PimpHtml.postableForm(reverse.alarms.add)(
           divClass("hide")(
-            formTextIn(form(Id), "ID", m)
+            formTextIn(InField.id(Id).valued(form.flatMap(_.id)), "ID")
           ),
-          numberTextIn(form(Hours), "Hours", "hh", m),
-          numberTextIn(form(Minutes), "Minute", "mm", m),
-          weekdayCheckboxes(form(Days), m),
-          formTextIn(form(TrackId), "Track ID", m, formGroupClasses = Seq("hide")),
+          numberTextIn(InField.id(Hours).valued(form.map(f => s"${f.when.hour}")), "Hours", "hh"),
+          numberTextIn(
+            InField.id(Minutes).valued(form.map(f => s"${f.when.minute}")),
+            "Minute",
+            "mm"
+          ),
+          weekdayCheckboxes(InField.id(Days), form.map(_.when.days).getOrElse(Nil)),
           formTextIn(
-            form(TrackKey),
+            InField.id(TrackId).valued(form.map(_.track).map(_.id)),
+            "Track ID",
+            formGroupClasses = Seq("hide")
+          ),
+          formTextIn(
+            InField.id(TrackKey),
             "Track",
-            m,
             Option("Start typing the name of the track..."),
             inClasses = Seq(Selector)
           ),
-          divClass(FormGroup)(enabledCheck(form(Enabled), "Enabled")),
+          divClass(FormGroup)(
+            enabledCheck(InField.id(Enabled).valued(form.map(b => s"$b")), "Enabled")
+          ),
           saveButton(),
           conf.feedback.fold(empty)(fb => PimpHtml.feedbackDiv(fb))
         )
@@ -125,32 +129,31 @@ object AlarmsHtml extends HtmlSyntax:
   def saveButton(buttonText: String = "Save") =
     divClass(FormGroup)(submitButton(`class` := btn.primary)(buttonText))
 
-  def weekdayCheckboxes(field: Field, messages: Messages) =
+  def weekdayCheckboxes(field: InField, checked: Seq[WeekDay]) =
     val errorClass = if field.hasErrors then s" $HasError" else ""
     divClass(s"$FormGroup$errorClass")(
       labelFor(field.id)("Days"),
       div(id := field.id)(
         checkField(Every, Option("every"), false, "Every day", Every),
-        WeekDay.EveryDay.zipWithIndex.map:
-          case (k, v) => dayCheckbox(field, k, v)
-        ,
-        helpSpan(field, messages)
+        WeekDay.EveryDay.map: day =>
+          dayCheckbox(field, day, checked.contains(day)),
+        InField.helpSpan(field)
       )
     )
 
-  def dayCheckbox(field: Field, weekDay: WeekDay, index: Int) =
+  def dayCheckbox(field: InField, weekDay: WeekDay, isChecked: Boolean) =
     checkField(
-      s"${field.name}[$index]",
+      field.arrayName,
       field.value.orElse(Option(weekDay.shortName)),
-      field.indexes.flatMap(i => field(s"[$i]").value).contains(weekDay.shortName),
+      isChecked,
       weekDay.longName,
       weekDay.shortName
     )
 
-  def enabledCheck(field: Field, labelText: String) =
+  def enabledCheck(field: InField, labelText: String) =
     formCheckField(field, field.value.contains(SchedulerStrings.On), labelText, "enabled-check")
 
-  def formCheckField(field: Field, isChecked: Boolean, labelText: String, checkId: String) =
+  def formCheckField(field: InField, isChecked: Boolean, labelText: String, checkId: String) =
     checkField(field.name, field.value, isChecked, labelText, checkId)
 
   def checkField(
@@ -174,20 +177,18 @@ object AlarmsHtml extends HtmlSyntax:
       label(`class` := "form-check-label", `for` := checkId)(labelText)
     )
 
-  def numberTextIn(field: Field, label: String, placeholderValue: String, m: Messages) =
+  def numberTextIn(field: InField, label: String, placeholderValue: String) =
     formTextIn(
       field,
       label,
-      m,
       Option(placeholderValue),
       typeName = Number,
       inputWidth = col.sm.two
     )
 
   def formTextIn(
-    field: Field,
+    field: InField,
     labelText: String,
-    m: Messages,
     placeholder: Option[String] = None,
     typeName: String = Text,
     inputWidth: String = col.sm.width("10"),
@@ -205,11 +206,11 @@ object AlarmsHtml extends HtmlSyntax:
         placeholder,
         `class` := names(Seq(FormControl) ++ inClasses)
       ),
-      helpSpan(field, m)
+      InField.helpSpan(field)
     )
 
   def inputField(
-    field: Field,
+    field: InField,
     typeName: String,
     defaultValue: String,
     placeHolder: Option[String],

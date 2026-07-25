@@ -1,11 +1,11 @@
 package com.malliina.musicpimp.html
 
-import com.malliina.html.UserFeedback
+import ch.qos.logback.classic.Level
+import com.malliina.html.HtmlTags.spanClass
+import com.malliina.html.{HtmlTags, UserFeedback}
 import com.malliina.musicpimp.scheduler.ClockPlaybackConf
 import com.malliina.play.controllers.AccountKeys
-import com.malliina.values.Username
-import play.api.data.Form
-import play.api.i18n.Messages
+import com.malliina.values.{ErrorMessage, Username}
 
 case class LoginContent(
   accounts: AccountKeys,
@@ -15,10 +15,9 @@ case class LoginContent(
 )
 
 case class AlarmContent(
-  form: Form[ClockPlaybackConf],
+  form: Option[ClockPlaybackConf],
   feedback: Option[UserFeedback],
-  username: Username,
-  m: Messages
+  username: Username
 ) extends UserLike
 
 case class LibraryContent(
@@ -37,3 +36,23 @@ case class UsersContent(
 
 trait UserLike:
   def username: Username
+
+case class InField(id: String, name: String, value: Option[String], error: Option[ErrorMessage]):
+  def hasErrors = error.isDefined
+  def arrayName = s"$name[]"
+
+  def valued(v: Option[String]): InField = copy(value = v)
+
+object InField:
+  def id(id: String): InField = InField(id, id, None, None)
+
+  import scalatags.Text.all.*
+
+  def helpSpan(field: InField): Modifier =
+    field.error.fold(HtmlTags.empty): message =>
+      spanClass("help-block")(message.message)
+
+case class ChangeLogLevel(level: Level)
+
+object ChangeLogLevel:
+  val LevelKey = "level"

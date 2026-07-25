@@ -13,7 +13,7 @@ object LogsHtml extends HtmlSyntax with FrontStrings:
   import tags.*
 
   def logsContent(
-    levelField: Field,
+    levelField: InField,
     levels: Seq[Level],
     currentLevel: Level,
     feedback: Option[UserFeedback]

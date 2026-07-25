@@ -1,20 +1,35 @@
 package com.malliina.musicpimp.audio
 
+import cats.effect.Async
+import cats.effect.std.Dispatcher
 import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
+import com.malliina.audio.meta.OneShotStream
+import com.malliina.audio.{PlaybackEvents, PlayerStates}
 import com.malliina.musicpimp.library.LocalTrack
-import org.apache.pekko.stream.Materializer
+import fs2.concurrent.Topic
 
-class StoragePlayer(val track: LocalTrack, eom: () => Unit)(implicit mat: Materializer)
-  extends BasicJavaSoundPlayer(track.media)
-  with PimpPlayer:
-  override def onEndOfMedia(): Unit = eom()
+class StoragePlayer[F[_]: Async](
+  val track: LocalTrack,
+  states: Topic[F, PlayerStates.PlayerState],
+  timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
+  d: Dispatcher[F],
+  eom: () => F[Unit]
+) extends BasicJavaSoundPlayer[F](track.media, states, timeUpdatesTopic, d)
+  with PimpPlayer[F]:
+  override def onEndOfMedia(): F[Unit] = eom()
 
-class StreamPlayer(val track: StreamedTrack, eom: () => Unit)(implicit mat: Materializer)
-  extends JavaSoundPlayer(
-    track.stream,
-    track.duration,
-    track.size,
+class StreamPlayer[F[_]: Async](
+  val track: StreamedTrack,
+  states: Topic[F, PlayerStates.PlayerState],
+  timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
+  d: Dispatcher[F],
+  eom: () => F[Unit]
+) extends JavaSoundPlayer[F](
+    OneShotStream(track.stream, track.duration, track.size),
+    states,
+    timeUpdatesTopic,
+    d,
     JavaSoundPlayer.DefaultRwBufferSize
   )
-  with PimpPlayer:
-  override def onEndOfMedia(): Unit = eom()
+  with PimpPlayer[F]:
+  override def onEndOfMedia(): F[Unit] = eom()

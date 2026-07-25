@@ -24,7 +24,7 @@ class AuthBundles[F[_]: Sync](cookies: Http4sAuth[F]) extends Responses[F]:
         val ip = Proxies2.realAddress(req)
         val resource = req.uri
         log.warn(s"Unauthorized request to '$resource' from '$ip'.")
-        unauthorizedNoCache(Errors("Unauthorized."))
+        unauthorizedNoCacheWithErrors(Errors("Unauthorized."))
 
   def redirecting[T](redir: Uri, auth: Authenticator[F, T]): AuthBundle[F, T] =
     new AuthBundle[F, T]:

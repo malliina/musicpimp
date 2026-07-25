@@ -13,7 +13,7 @@ import play.api.Logger
 object JsonHandler:
   private val log = Logger(getClass)
 
-class JsonHandler(musicPlayer: MusicPlayer, val schedules: ScheduledPlaybackService):
+class JsonHandler[F[_]](musicPlayer: MusicPlayer[F], val schedules: ScheduledPlaybackService[F]):
   def handle(json: Json): Decoder.Result[Unit] =
     json
       .as[AlarmCommand]

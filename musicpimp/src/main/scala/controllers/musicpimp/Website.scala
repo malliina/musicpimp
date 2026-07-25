@@ -13,10 +13,20 @@ import javax.sound.sampled.{AudioSystem, LineUnavailableException}
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{AnyContent, RequestHeader, Result}
 
-class Website(
-  musicPlayer: MusicPlayer,
+object Website:
+  def errorMsg(t: Throwable): String = t match
+    case _: LineUnavailableException =>
+      "Playback could not be started. To troubleshoot this issue, you may wish to verify that audio " +
+        "playback is possible on the server and that the audio drivers are working. Check the sound " +
+        "properties of your Java Virtual Machine. If you use OpenJDK, you may want to try Oracle's JVM " +
+        "instead and vice versa. The playback exception is a LineUnavailableException."
+    case t: Throwable =>
+      val msg = Option(t.getMessage).getOrElse("")
+      s"Playback could not be started. $msg"
+
+class Website[F[_]](
+  musicPlayer: MusicPlayer[F],
   tags: PimpHtml,
-  serverWS: ServerWS,
   auth: AuthDeps,
   stats: PlaybackStats[IO]
 ) extends HtmlController(auth):
@@ -26,7 +36,7 @@ class Website(
     val feedback: Option[String] =
       if !hasAudioDevice then
         Some("Unable to access audio hardware. Playback on this machine is likely to fail.")
-      else musicPlayer.errorOpt.map(errorMsg)
+      else musicPlayer.errorOpt.map(Website.errorMsg)
     val userFeedback = feedback.map(UserFeedback.error)
     tags.basePlayer(userFeedback, req.user)
 
@@ -62,15 +72,5 @@ class Website(
   private def userAction(f: AuthenticatedRequest[AnyContent, Username] => IO[Result]) =
     actionAsyncIO(comps.parsers.default): r =>
       f(new AuthenticatedRequest(r.user, r))
-
-  def errorMsg(t: Throwable): String = t match
-    case _: LineUnavailableException =>
-      "Playback could not be started. To troubleshoot this issue, you may wish to verify that audio " +
-        "playback is possible on the server and that the audio drivers are working. Check the sound " +
-        "properties of your Java Virtual Machine. If you use OpenJDK, you may want to try Oracle's JVM " +
-        "instead and vice versa. The playback exception is a LineUnavailableException."
-    case t: Throwable =>
-      val msg = Option(t.getMessage) getOrElse ""
-      s"Playback could not be started. $msg"
 
   def about = navigate(req => tags.aboutBase(req.user))

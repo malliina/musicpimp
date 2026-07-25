@@ -1,14 +1,15 @@
 package com.malliina.audio.javasound
 
-import java.io.InputStream
-
+import cats.effect.std.Dispatcher
 import com.malliina.audio.PlayerStates
 import com.malliina.audio.PlayerStates.PlayerState
 import com.malliina.audio.javasound.LineData.log
-import com.malliina.streams.EventSink
-import javax.sound.sampled.DataLine.Info
-import javax.sound.sampled.*
+import fs2.concurrent.Topic
 import org.slf4j.LoggerFactory
+
+import java.io.InputStream
+import javax.sound.sampled.*
+import javax.sound.sampled.DataLine.Info
 
 object LineData:
   private val log = LoggerFactory.getLogger(getClass)
@@ -19,22 +20,32 @@ object LineData:
     * Therefore you must not, in the same thread, call this before bytes are made available to the
     * stream.
     */
-  def fromStream(stream: InputStream, sink: EventSink[PlayerStates.PlayerState]) =
-    new LineData(AudioSystem.getAudioInputStream(stream), sink)
+  def fromStream[F[_]](
+    stream: InputStream,
+    sink: Topic[F, PlayerStates.PlayerState],
+    d: Dispatcher[F]
+  ) =
+    new LineData(AudioSystem.getAudioInputStream(stream), sink, d)
 
-class LineData(inStream: AudioInputStream, sink: EventSink[PlayerStates.PlayerState]):
+class LineData[F[_]](
+  inStream: AudioInputStream,
+  sink: Topic[F, PlayerStates.PlayerState],
+  d: Dispatcher[F]
+):
   private val baseFormat = inStream.getFormat
   private val decodedFormat = toDecodedFormat(baseFormat)
   // this is read
   private val decodedIn = AudioSystem.getAudioInputStream(decodedFormat, inStream)
   // this is written to during playback
   val line = buildLine(decodedFormat)
-  line.addLineListener((lineEvent: LineEvent) => sink.send(toPlayerEvent(lineEvent)))
+  line.addLineListener((lineEvent: LineEvent) =>
+    d.unsafeRunAndForget(sink.publish1(toPlayerEvent(lineEvent)))
+  )
   line.open(decodedFormat)
 
-  def toPlayerEvent(lineEvent: LineEvent): PlayerState =
-    import LineEvent.Type.*
+  private def toPlayerEvent(lineEvent: LineEvent): PlayerState =
     import PlayerStates.*
+    import LineEvent.Type.*
     val eventType = lineEvent.getType
     if eventType == OPEN then Open
     else if eventType == CLOSE then Closed
@@ -68,7 +79,7 @@ class LineData(inStream: AudioInputStream, sink: EventSink[PlayerStates.PlayerSt
     line.addLineListener((e: LineEvent) => log.debug(s"Line event: $e"))
     line
 
-  protected def toDecodedFormat(audioFormat: AudioFormat) = new AudioFormat(
+  private def toDecodedFormat(audioFormat: AudioFormat) = new AudioFormat(
     AudioFormat.Encoding.PCM_SIGNED,
     audioFormat.getSampleRate,
     16,

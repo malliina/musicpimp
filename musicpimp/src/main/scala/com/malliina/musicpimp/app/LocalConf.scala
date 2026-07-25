@@ -13,9 +13,9 @@ object LocalConf:
   private val log = AppLogger(getClass)
 
   val userHome = Paths.get(sys.props("user.home"))
-  val localConfFile = userHome.resolve(".musicpimp/musicpimp.conf")
-  val localConfPlay = Configuration(ConfigFactory.parseFile(localConfFile.toFile))
-  val localConf = ConfigNode.default(localConfFile)
+  val appDir = userHome.resolve(".musicpimp")
+  def local(file: String) = ConfigNode.default(appDir.resolve(file))
+  val localConf = local("musicpimp.conf")
   val charset = StandardCharsets.UTF_8
   val secretPlaceholder = SecretKey("changeme")
 

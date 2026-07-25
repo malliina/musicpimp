@@ -1,5 +1,8 @@
 package com.malliina.musicpimp.library
 
+import cats.effect.Async
+import cats.effect.std.Dispatcher
+import com.malliina.audio.{PlaybackEvents, PlayerStates}
 import com.malliina.audio.meta.{SongMeta, StreamSource}
 import com.malliina.musicpimp.audio.{PimpPlayer, PlayableTrack, StoragePlayer}
 import com.malliina.musicpimp.library.LocalTrack.log
@@ -7,7 +10,7 @@ import com.malliina.musicpimp.models.{MusicItem, TrackID}
 import com.malliina.storage.StorageSize
 import com.malliina.util.AppLogger
 import com.malliina.values.UnixPath
-import org.apache.pekko.stream.Materializer
+import fs2.concurrent.Topic
 
 import scala.concurrent.duration.*
 
@@ -26,6 +29,11 @@ class LocalTrack(val id: TrackID, val path: UnixPath, val meta: SongMeta)
 
   override def toString = id.id
 
-  override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
+  override def buildPlayer[F[_]: Async](
+    states: Topic[F, PlayerStates.PlayerState],
+    timeUpdates: Topic[F, PlaybackEvents.TimeUpdated],
+    d: Dispatcher[F],
+    eom: () => F[Unit]
+  ): PimpPlayer[F] =
     log.info(s"Preparing local track '$title' by '$artist' using ${media.describe}...")
-    new StoragePlayer(this, eom)
+    StoragePlayer(this, states, timeUpdates, d, eom)

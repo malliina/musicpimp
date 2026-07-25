@@ -1,6 +1,5 @@
 package com.malliina.musicpimp.models
 
-import org.http4s.dsl.Http4sDsl
 import play.api.mvc.{Result, Results}
 import play.api.mvc.Results.{BadGateway, BadRequest, InternalServerError, NotFound, Unauthorized}
 
@@ -26,4 +25,3 @@ trait Reason:
   def internal(message: String) = withStatus(InternalServerError, message)
 
   def withStatus(status: Results.Status, message: String): Result = status(FailReason(message))
-

@@ -1,12 +1,14 @@
 package com.malliina.musicpimp.audio
 
-import java.io.InputStream
-
-import org.apache.pekko.stream.Materializer
+import cats.effect.Async
+import cats.effect.std.Dispatcher
+import com.malliina.audio.{PlaybackEvents, PlayerStates}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.storage.StorageSize
 import com.malliina.values.UnixPath
+import fs2.concurrent.Topic
 
+import java.io.InputStream
 import scala.concurrent.duration.FiniteDuration
 
 case class StreamedTrack(
@@ -18,11 +20,15 @@ case class StreamedTrack(
   duration: FiniteDuration,
   size: StorageSize,
   stream: InputStream
-)(implicit mat: Materializer)
-  extends PlayableTrack:
-  override def buildPlayer(eom: () => Unit)(implicit mat: Materializer): PimpPlayer =
-    new StreamPlayer(this, eom)
+) extends PlayableTrack:
+  override def buildPlayer[F[_]: Async](
+    states: Topic[F, PlayerStates.PlayerState],
+    timeUpdates: Topic[F, PlaybackEvents.TimeUpdated],
+    d: Dispatcher[F],
+    eom: () => F[Unit]
+  ): PimpPlayer[F] =
+    StreamPlayer(this, states, timeUpdates, d, eom)
 
 object StreamedTrack:
-  def fromTrack(t: TrackMeta, inStream: InputStream, mat: Materializer): StreamedTrack =
-    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)(using mat)
+  def fromTrack(t: TrackMeta, inStream: InputStream): StreamedTrack =
+    StreamedTrack(t.id, t.title, t.artist, t.album, t.path, t.duration, t.size, inStream)

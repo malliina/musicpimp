@@ -7,6 +7,9 @@ import cats.effect.std.Dispatcher
 import cats.effect.unsafe.implicits.global
 import cats.effect.{Async, Concurrent, IO}
 import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxOptionId}
+import cats.syntax.all.toFlatMapOps
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.Appender
 import com.malliina.logback.fs2.{DefaultFS2IOAppender, FS2AppenderComps, LoggingComps}
 import com.malliina.logstreams.client.FS2Appender
 import com.malliina.play.ws.Sockets
@@ -21,12 +24,20 @@ class PimpAppender extends DefaultFS2IOAppender[IO](FS2Appender.unsafe.comps)
 object PimpAppender:
   val name = "AKKA"
 
-  def install(): Unit =
-    val appender = PimpAppender()
+  def install(): Unit = installAppender(PimpAppender())
+
+  def installAppender[F[_]: Async](appender: DefaultFS2IOAppender[F]): Unit =
     appender.setContext(LogbackUtils.loggerContext)
     appender.setName(name)
     appender.setTimeFormat("yyyy-MM-dd HH:mm:ss")
     LogbackUtils.installAppender(appender)
+
+  def installF[F[_]: Async]: Resource[F, DefaultFS2IOAppender[F]] =
+    for
+      deps <- comps[F]
+      appender = DefaultFS2IOAppender[F](deps)
+      _ <- Resource.eval(Async[F].delay(installAppender(appender)))
+    yield appender
 
   def comps[F[_]: Async]: Resource[F, LoggingComps[F]] =
     for

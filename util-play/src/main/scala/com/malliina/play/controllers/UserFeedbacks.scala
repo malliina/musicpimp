@@ -1,7 +1,7 @@
 package com.malliina.play.controllers
 
 import com.malliina.html.UserFeedback
-import com.malliina.html.UserFeedback.{Feedback, No, Success}
+import com.malliina.html.UserFeedback.{Feedback, Success, No}
 import play.api.data.Form
 import play.api.mvc.{Flash, RequestHeader}
 

@@ -2,14 +2,14 @@ package com.malliina.audio
 
 import scala.concurrent.duration.Duration
 
-trait IPlayer extends AutoCloseable:
+trait IPlayer[F[_]] extends AutoCloseable:
   /** Starts or resumes playback, whichever makes sense.
     */
-  def play(): Unit
+  def play(): F[Unit]
 
   /** Pauses playback.
     */
-  def stop(): Unit
+  def stop(): F[Unit]
 
   /** Seeks to `pos`.
     *

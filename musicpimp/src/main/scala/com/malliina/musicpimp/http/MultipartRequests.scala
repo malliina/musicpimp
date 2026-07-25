@@ -1,21 +1,26 @@
 package com.malliina.musicpimp.http
 
-import java.nio.file.Path
-
-import com.malliina.http.{FullUrl, OkHttpResponse}
+import cats.effect.Async
+import com.malliina.http.io.HttpClientF2
+import com.malliina.http.{FullUrl, HttpResponse}
+import com.malliina.musicpimp.http.MultipartRequests.log
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.play.ContentRange
-import controllers.musicpimp.Rest
+import com.malliina.util.AppLogger
 import okhttp3.{MultipartBody, Request, RequestBody}
 import org.apache.commons.io.IOUtils
-import play.api.Logger
 
-import scala.concurrent.Future
+import java.nio.file.Path
 import scala.jdk.CollectionConverters.ListHasAsScala
 
-class MultipartRequests(isHttps: Boolean) extends AutoCloseable:
-  private val log = Logger(getClass)
-  val client = if isHttps then Rest.sslClient else Rest.defaultClient
+object MultipartRequests:
+  private val log = AppLogger(getClass)
+
+//  def apply(isHttps: Boolean) = new MultipartRequests(isHttps)
+
+class MultipartRequests[F[_]: Async](client: HttpClientF2[F]) extends AutoCloseable:
+  val F = Async[F]
+//  val client = if isHttps then Rest.sslClient else Rest.defaultClient
 
   def rangedFile(
     url: FullUrl,
@@ -23,7 +28,7 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable:
     file: Path,
     range: ContentRange,
     tag: RequestID
-  ): Future[OkHttpResponse] =
+  ): F[HttpResponse] =
     try
       val rangedStream = RangedInputStream(file, range)
       val bytes =
@@ -31,14 +36,14 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable:
         finally rangedStream.close()
       val body = RequestBody.create(bytes, null)
       withParts(url, headers, file.getFileName.toString, body, tag)
-    catch case e: Exception => Future.failed(e)
+    catch case e: Exception => F.raiseError(e)
 
   def file(
     url: FullUrl,
     headers: Map[String, String],
     file: Path,
     tag: RequestID
-  ): Future[OkHttpResponse] =
+  ): F[HttpResponse] =
     val filePart = RequestBody.create(file.toFile, null)
     withParts(url, headers, file.getFileName.toString, filePart, tag)
 
@@ -60,7 +65,7 @@ class MultipartRequests(isHttps: Boolean) extends AutoCloseable:
     filename: String,
     part: RequestBody,
     tag: RequestID
-  ): Future[OkHttpResponse] =
+  ): F[HttpResponse] =
     val bodyBuilder = new MultipartBody.Builder()
     val body = bodyBuilder.addFormDataPart("file", filename, part).build()
     log.info(s"Uploading to '$url'...")

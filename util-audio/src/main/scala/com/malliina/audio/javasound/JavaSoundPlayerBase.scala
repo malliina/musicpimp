@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.*
 
-trait JavaSoundPlayerBase extends RichPlayer with Seekable:
+trait JavaSoundPlayerBase[F[_]] extends RichPlayer[F] with Seekable:
   protected def audioLine: SourceDataLine
 
   private val zeroGain = 0.4f

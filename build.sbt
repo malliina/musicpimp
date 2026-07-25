@@ -30,17 +30,21 @@ val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
 val versions = new {
+  val catsEffect = "3.7.0"
   val circe = "0.14.9"
+  val fs2 = "3.13.0"
   val http = "4.5.14"
   val logstreams = "6.14.3"
   val mobilePush = "3.17.1"
   val munit = "1.3.3"
+  val munitCats = "2.2.0"
   val mysql = "8.0.33"
   val nvWebSocket = "2.14"
   val pekko = "1.0.3"
   val playJson = "3.0.4"
   val scalaJsDom = "2.8.1"
   val primitives = "6.14.3"
+  val scala3 = "3.8.3"
   val scalatags = "0.13.1"
   val slf4j = "2.0.17"
 }
@@ -55,7 +59,7 @@ val httpGroup = "org.apache.httpcomponents"
 
 inThisBuild(
   Seq(
-    scalaVersion := "3.8.3"
+    scalaVersion := versions.scala3
   )
 )
 
@@ -138,6 +142,7 @@ val utilAudio = Project("util-audio", file("util-audio"))
     gitUserName := "malliina",
     developerName := "Michael Skogberg",
     libraryDependencies ++= Seq(
+      "co.fs2" %% "fs2-core" % versions.fs2,
       "commons-io" % "commons-io" % "2.18.0",
       "org.slf4j" % "slf4j-api" % "2.0.17",
       malliinaGroup %% "primitives" % versions.primitives,
@@ -146,7 +151,9 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
       "org.apache.pekko" %% "pekko-stream" % versions.pekko,
-      "org.scalameta" %% "munit" % versions.munit % Test
+      "org.typelevel" %% "cats-effect" % versions.catsEffect,
+      "org.scalameta" %% "munit" % versions.munit % Test,
+      "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test,
     ),
     assembly / assemblyMergeStrategy := {
       case PathList("META-INF", "versions", "9", "module-info.class") => MergeStrategy.last
@@ -331,8 +338,10 @@ lazy val pimpPlaySettings =
         httpGroup % "httpmime" % versions.http,
         "org.scala-stm" %% "scala-stm" % "0.11.1",
         "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
-        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test
-      ).map(dep => dep withSources ()),
+        "co.fs2" %% "fs2-io" % versions.fs2,
+        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test,
+        "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
+      ).map(dep => dep.withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
 //      RoutesKeys.routesImport ++= Seq(
 //        "com.malliina.musicpimp.http.PimpImports._",

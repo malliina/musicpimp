@@ -1,13 +1,12 @@
 package com.malliina.musicpimp.audio
 
-import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.Source
+import com.malliina.audio.PlaylistState
 import com.malliina.http.FullUrl
 
 import scala.concurrent.duration.Duration
 
-trait ServerPlayer:
-  def allEvents: Source[ServerMessage, NotUsed]
+trait ServerPlayer[F[_]]:
+  def allEvents: fs2.Stream[F, ServerMessage]
   def position: Duration
-  def status(host: FullUrl): StatusEvent
-  def status17(host: FullUrl): StatusEvent17
+  def status(host: FullUrl, playlist: PlaylistState[PlayableTrack]): StatusEvent
+  def status17(host: FullUrl, playlist: PlaylistState[PlayableTrack]): StatusEvent17

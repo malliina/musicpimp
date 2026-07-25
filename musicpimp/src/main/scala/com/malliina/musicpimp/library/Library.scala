@@ -3,7 +3,6 @@ package com.malliina.musicpimp.library
 import java.io.FileNotFoundException
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
 
-import org.apache.pekko.stream.Materializer
 import com.malliina.audio.meta.SongMeta
 import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.db.*
@@ -21,6 +20,7 @@ trait FileStreams:
   def folderStream: LazyList[DataFolder]
 
 trait FileLibrary extends FileStreams:
+  def setFolders(folders: Seq[Path]): Unit
   def trackFiles: LazyList[Path]
   def reloadFolders(): Unit
   def findAbsoluteNew(trackPath: UnixPath): Option[Path]

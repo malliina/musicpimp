@@ -16,21 +16,21 @@ import play.api.mvc.RequestHeader
 object CloudMediator:
   private val log = Logger(getClass)
 
-class CloudMediator(clouds: Clouds) extends ReplayMediator(1):
+class CloudMediator[F[_]](clouds: Clouds[F]) extends ReplayMediator(1):
   private val jsonEvents = clouds.connection.map(event => event.asJson)
   private var subscription: Option[UniqueKillSwitch] = None
   implicit val as: ActorSystem = context.system
 
   override def preStart(): Unit =
     super.preStart()
-    val killSwitch = jsonEvents
-      .viaMat(KillSwitches.single)(Keep.right)
-      .to(Sink.foreach: json =>
-        log.info(s"Broadcast $json")
-        self ! Broadcast(json))
-      .run()
-    subscription = Option(killSwitch)
-    clouds.emitLatest()
+//    val killSwitch = jsonEvents
+//      .viaMat(KillSwitches.single)(Keep.right)
+//      .to(Sink.foreach: json =>
+//        log.info(s"Broadcast $json")
+//        self ! Broadcast(json))
+//      .run()
+//    subscription = Option(killSwitch)
+//    clouds.emitLatest()
 
   override def onClientMessage(message: Json, rh: RequestHeader): Unit =
     message

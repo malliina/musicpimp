@@ -12,7 +12,7 @@ object FileUtil:
   val ownerOnlyPermissions = PosixFilePermissions.fromString("rw-------")
   val ownerOnlyAttributes = PosixFilePermissions.asFileAttribute(ownerOnlyPermissions)
 
-  val pimpHomeDir = appHome orElse localDirWindows getOrElse localDirDefault
+  val pimpHomeDir = appHome.orElse(localDirWindows).getOrElse(localDirDefault)
 
   def localPath(name: String) = pimpHomeDir / name
 

@@ -6,18 +6,18 @@ import play.api.Logger
 object PlaybackScheduler:
   private val log = Logger(getClass)
 
-class PlaybackScheduler[S <: DaySchedule](s: IScheduler):
-  private var scheduled = Map.empty[String, PlaybackJob]
+class PlaybackScheduler[F[_], S <: DaySchedule](s: IScheduler):
+  private var scheduled = Map.empty[String, PlaybackJob[F]]
 
   def saved = scheduled.values.toSeq
 
-  def schedule(ap: PlaybackJob): String =
+  def schedule(ap: PlaybackJob[F]): String =
     val taskId = s.schedule(ap.when, ap)
     scheduled += (taskId -> ap)
     log.info(s"Scheduled task with task ID: $taskId. Description: ${ap.describe}")
     taskId
 
-  def deschedule(id: String): Option[PlaybackJob] =
+  def deschedule(id: String): Option[PlaybackJob[F]] =
     val pairOpt = scheduled.find(pair => pair._2.id.contains(id))
     pairOpt.foreach:
       case (taskId, ap) =>
@@ -28,4 +28,4 @@ class PlaybackScheduler[S <: DaySchedule](s: IScheduler):
 
   def clear(): Unit =
     scheduled.keys.foreach(deschedule)
-    scheduled = Map.empty[String, PlaybackJob]
+    scheduled = Map.empty[String, PlaybackJob[F]]

@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.scheduler
 
+import cats.effect.Sync
 import it.sauronsoftware.cron4j.SchedulingPattern
 
 trait IScheduler:
@@ -60,6 +61,6 @@ trait ActionPoint[J <: Job, S <: DaySchedule]:
 
   def describe = job.describe + " " + when.describe
 
-trait PlaybackAP[S <: DaySchedule] extends ActionPoint[PlaybackJob, S]
+trait PlaybackAP[F[_]: Sync, S <: DaySchedule] extends ActionPoint[PlaybackJob[F], S]
 
-trait AP extends PlaybackAP[DaySchedule]
+trait AP[F[_]: Sync] extends PlaybackAP[F, DaySchedule]

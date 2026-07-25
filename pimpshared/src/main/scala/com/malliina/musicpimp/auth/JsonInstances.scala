@@ -4,13 +4,17 @@ import cats.effect.Concurrent
 import com.malliina.http.Errors
 import io.circe.syntax.EncoderOps
 import io.circe.{Decoder, Encoder, Printer}
-import org.http4s.{DecodeResult, EntityDecoder, EntityEncoder}
 import org.http4s.circe.CirceInstances
+import org.http4s.{DecodeResult, EntityDecoder, EntityEncoder}
+
+import java.nio.file.Path
 
 object JsonInstances extends JsonInstances
 
 trait JsonInstances extends CirceInstances:
   override protected val defaultPrinter: Printer = Printer.noSpaces.copy(dropNullValues = true)
+
+  given Encoder[Path] = Encoder.encodeString.contramap(_.toString)
 
   given [F[_]]: EntityEncoder[F, Errors] = circeJsonEncoder[F, Errors]
 

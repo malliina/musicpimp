@@ -1,26 +1,27 @@
 package com.malliina.musicpimp.audio
 
-import org.apache.pekko.stream.Materializer
-import com.malliina.streams.StreamsUtil
+import cats.effect.{Async, Ref}
+import cats.implicits.toFunctorOps
+import com.malliina.audio.PlaylistIndex
+import fs2.Stream
+import fs2.concurrent.Topic
+import fs2.concurrent.Topic.Closed
 
-import scala.concurrent.stm.Ref
-
-class PimpPlaylist()(implicit mat: Materializer)
-  extends BasePlaylist[PlayableTrack]
+class PimpPlaylist[F[_]: Async](
+  eventHub: Topic[F, ServerMessage],
+  val pos: Ref[F, PlaylistIndex],
+  val songs: Ref[F, Seq[PlayableTrack]]
+) extends BasePlaylist[F, PlayableTrack]
   with AutoCloseable:
-  val pos: Ref[PlaylistIndex] = Ref[PlaylistIndex](NO_POSITION)
-  val songs: Ref[Seq[PlayableTrack]] = Ref[Seq[PlayableTrack]](Nil)
+  val events: Stream[F, ServerMessage] = eventHub.subscribe(100)
 
-  private val eventHub = StreamsUtil.connectedStream[ServerMessage]()
-  val events = eventHub.source
+  protected override def onPlaylistIndexChanged(idx: Int): F[Unit] =
+    send(PlaylistIndexChangedMessage(idx)).void
 
-  protected override def onPlaylistIndexChanged(idx: Int): Unit =
-    send(PlaylistIndexChangedMessage(idx))
+  protected override def onPlaylistModified(tracks: Seq[PlayableTrack]): F[Unit] =
+    send(PlaylistModifiedMessage(tracks)).void
 
-  protected override def onPlaylistModified(tracks: Seq[PlayableTrack]): Unit =
-    send(PlaylistModifiedMessage(tracks))
+  def send(json: ServerMessage): F[Either[Closed, Unit]] =
+    eventHub.publish1(json)
 
-  def send(json: ServerMessage): Unit =
-    eventHub.send(json)
-
-  def close(): Unit = eventHub.shutdown()
+  def close(): Unit = ()

@@ -47,7 +47,7 @@ trait TrackMeta extends MusicItem:
   def toFull(url: FullUrl) = FullTrack(id, title, artist, album, path, duration, size, url)
 
 object TrackMeta:
-  implicit val reader: Decoder[TrackMeta] = Decoder[Track].map(identity)
+  given reader: Decoder[TrackMeta] = Decoder[Track].map(identity)
 
 case class Track(
   id: TrackID,

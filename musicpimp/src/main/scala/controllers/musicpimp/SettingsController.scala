@@ -32,15 +32,17 @@ object SettingsController:
     case EnvUtils.Mac     => "/Users/me/music"
     case _                => "/opt/music"
 
-class SettingsController(
+  def validateDirectory(dir: String) = Try(Files.isDirectory(Paths.get(dir))) getOrElse false
+
+class SettingsController[F[_]](
   tags: PimpHtml,
   messages: Messages,
   library: FileLibrary,
-  indexer: Indexer,
+  indexer: Indexer[F],
   auth: AuthDeps
 ) extends HtmlController(auth):
   val dirConstraint = Constraint((dir: String) =>
-    if validateDirectory(dir) then Valid
+    if SettingsController.validateDirectory(dir) then Valid
     else Invalid(Seq(ValidationError(s"Invalid directory '$dir'.")))
   )
 
@@ -79,8 +81,6 @@ class SettingsController(
     Settings.delete(path)
     onFoldersChanged(s"Removed folder '$decoded'.")
 
-  def validateDirectory(dir: String) = Try(Files.isDirectory(Paths.get(dir))) getOrElse false
-
   private def foldersPage(form: Form[String], req: PimpUserRequest) =
     val errorMessage = form.errors.headOption.map: error =>
       UserFeedback.error(Messages(error.message)(using messages))
@@ -89,8 +89,8 @@ class SettingsController(
     tags.musicFolders(LibraryContent(Settings.readFolders, folderPlaceHolder, req.user, feedback))
 
   private def onFoldersChanged(successMessage: String) =
-    log info s"$successMessage"
+    log.info(s"$successMessage")
     library.reloadFolders()
-    indexer.indexAndSave()
+    indexer.submitIndexAndSave()
     Redirect(reverse.settings.renderString)
       .flashing(UserFeedback.Feedback -> successMessage)

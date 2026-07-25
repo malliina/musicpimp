@@ -3,14 +3,14 @@ package com.malliina.musicpimp.auth
 import cats.effect.IO
 import com.malliina.play.auth.*
 import com.malliina.play.http.AuthedRequest
+import com.malliina.util.AppLogger
 import com.malliina.values.{Password, Username}
 import controllers.musicpimp.fut
-import play.api.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object Auths:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val session = Authenticator[AuthedRequest]: rh =>
     val result = rh.session

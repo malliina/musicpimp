@@ -13,21 +13,16 @@ import io.circe.{Codec, Encoder}
 
 /** Emits playback events to and accepts commands from listening clients.
   */
-class ServerWS(
-  player: MusicPlayer,
-  val clouds: Clouds,
+class ServerWS[F[_]](
+  player: MusicPlayer[F],
+  val clouds: Clouds[F],
   auth: Authenticator[AuthedRequest],
-  handler: PlaybackMessageHandler,
+  handler: PlaybackMessageHandler[F],
   ctx: ActorExecution
 ):
-  implicit val mat: Materializer = ctx.materializer
   val serverMessages = player.allEvents
-  val subscription = serverMessages
-    .viaMat(KillSwitches.single)(Keep.right)
-    .to(Sink.foreach: e =>
-      sendToPimpcloud(e))
-    .run()
-  implicit val tm: Codec[TrackMeta] = TrackJson.format(clouds.cloudHost)
+  val subscription = serverMessages.map(e => sendToPimpcloud(e))
+  given tm: Codec[TrackMeta] = TrackJson.format(clouds.cloudHost)
   val cloudWriter: Encoder[ServerMessage] =
     ServerMessage.jsonWriter(using Encoder[TrackMeta])
   val sockets = new Sockets(auth, ctx):

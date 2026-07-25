@@ -13,3 +13,6 @@ object PlaylistID extends ValidatingCompanion[Long, PlaylistID]:
 
   implicit val bindable: PathBindable[PlaylistID] =
     PathBindable.bindableLong.transform(apply, write)
+
+  def unapply(in: String): Option[PlaylistID] =
+    in.toLongOption.flatMap(l => build(l).toOption)

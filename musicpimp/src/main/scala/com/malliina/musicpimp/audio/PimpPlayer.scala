@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.audio
 
+import cats.effect.Async
 import com.malliina.audio.PlayerStates
 import com.malliina.audio.javasound.JavaSoundPlayer
 
-trait PimpPlayer extends JavaSoundPlayer:
+trait PimpPlayer[F[_]: Async] extends JavaSoundPlayer[F]:
   def playState = PimpPlayer.playState(state)
 
   def track: PlayableTrack

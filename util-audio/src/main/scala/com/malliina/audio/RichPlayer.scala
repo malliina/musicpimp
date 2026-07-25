@@ -2,7 +2,7 @@ package com.malliina.audio
 
 import scala.concurrent.duration.Duration
 
-trait RichPlayer extends IPlayer:
+trait RichPlayer[F[_]] extends IPlayer[F]:
   def duration: Duration
   def position: Duration
   def volume: Int

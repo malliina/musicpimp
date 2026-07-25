@@ -13,50 +13,50 @@ import io.circe.{Encoder, Json}
 
 import scala.concurrent.duration.DurationInt
 
-class PlayerActor(
-  player: ServerPlayer,
-  messageHandler: JsonHandlerBase,
+class PlayerActor[F[_]](
+  player: ServerPlayer[F],
+  messageHandler: JsonHandlerBase[F],
   conf: ActorConfig[AuthedRequest]
-)(implicit mat: Materializer)
-  extends JsonActor(conf):
+) extends JsonActor(conf):
   // Keepalive for very old (Android) clients
   val pings = Source.tick(1.seconds, 5.seconds, 0)
   // Playback updates
   val ticks = Source.tick(200.millis, 900.millis, 0)
   val messageWriter = ServerMessage.jsonWriter(using TrackJson.format(FullUrls.hostOnly(rh)))
   val apiVersion = PimpRequest.apiVersion(rh)
-  implicit val w: Encoder[TrackMeta] = TrackJson.writer(rh)
+  given w: Encoder[TrackMeta] = TrackJson.writer(rh)
   val user = conf.user.user
   var allEventsSub: Option[UniqueKillSwitch] = None
   var timeSub: Option[Cancellable] = None
   var pingSub: Option[Cancellable] = None
   var previousPos = -1L
-  val remoteInfo = RemoteInfo(user, apiVersion, FullUrls.hostOnly(rh), Target(json => out ! json))
+//  val remoteInfo = RemoteInfo(user, apiVersion, FullUrls.hostOnly(rh), Target(json => out ! json))
 
   override def preStart(): Unit =
     super.preStart()
-    sendOut(WelcomeMessage)
-    val killSwitch = player.allEvents
-      .viaMat(KillSwitches.single)(Keep.right)
-      .to(Sink.foreach: e =>
-        out ! messageWriter(e))
-      .run()
-    allEventsSub = Option(killSwitch)
-    timeSub = Option(
-      ticks
-        .to(Sink.foreach: _ =>
-          onTick())
-        .run()
-    )
-    pingSub = Option(
-      pings
-        .to(Sink.foreach: _ =>
-          onPing())
-        .run()
-    )
+//    sendOut(WelcomeMessage)
+//    val killSwitch = player.allEvents
+//      .viaMat(KillSwitches.single)(Keep.right)
+//      .to(Sink.foreach: e =>
+//        out ! messageWriter(e))
+//      .run()
+//    allEventsSub = Option(killSwitch)
+//    timeSub = Option(
+//      ticks
+//        .to(Sink.foreach: _ =>
+//          onTick())
+//        .run()
+//    )
+//    pingSub = Option(
+//      pings
+//        .to(Sink.foreach: _ =>
+//          onPing())
+//        .run()
+//    )
 
   override def onMessage(msg: Json): Unit =
-    messageHandler.onJson(msg, remoteInfo)
+//    messageHandler.onJson(msg, remoteInfo)
+    ()
 
   def onTick(): Unit =
     val pos = player.position

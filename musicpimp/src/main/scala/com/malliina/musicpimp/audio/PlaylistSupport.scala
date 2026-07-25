@@ -1,19 +1,17 @@
 package com.malliina.musicpimp.audio
 
-import com.malliina.audio.IPlaylist
+import cats.effect.kernel.Async
+import cats.implicits.{catsSyntaxFlatMapOps, toFlatMapOps}
+import com.malliina.audio.{IPlaylist, PlaylistIndex}
 
-import scala.util.{Failure, Try}
-
-trait PlaylistSupport[T]:
-  def playlist: IPlaylist[T]
+trait PlaylistSupport[F[_]: Async, T]:
+  def playlist: IPlaylist[F, T]
 
   /** Initializes the player with the given track.
     *
     * Does not modify the playlist; it is assumed the supplied track is part of the playlist.
-    *
-    * @param song
     */
-  def playTrack(song: T): Try[Unit]
+  def playTrack(song: T): F[Unit]
 
   /** Skips to the track with the specified index; playback starts automatically.
     *
@@ -24,13 +22,13 @@ trait PlaylistSupport[T]:
     * @throws IndexOutOfBoundsException
     *   if the index is out of bounds
     */
-  def skip(index: Int): Try[Unit] =
-    playlist.index = index
-    play(_.current)
+  def skip(index: PlaylistIndex): F[Unit] =
+    playlist.setIndex(index) >> play(_.current)
 
-  def nextTrack() = play(_.next): Try[Unit]
+  def nextTrack() = play(_.next): F[Unit]
 
-  def previousTrack() = play(_.prev): Try[Unit]
+  def previousTrack() = play(_.prev): F[Unit]
 
-  protected def play(f: IPlaylist[T] => Option[T]): Try[Unit] =
-    f(playlist).map(playTrack).getOrElse(Failure(new Exception("No track")))
+  protected def play(f: IPlaylist[F, T] => F[Option[T]]): F[Unit] =
+    f(playlist).flatMap: opt =>
+      opt.map(playTrack).getOrElse(Async[F].raiseError(new Exception("No track")))

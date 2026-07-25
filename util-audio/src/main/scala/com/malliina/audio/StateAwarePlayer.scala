@@ -1,5 +1,7 @@
 package com.malliina.audio
 
-trait StateAwarePlayer extends IPlayer:
+import cats.Applicative
+
+trait StateAwarePlayer[F[_]: Applicative] extends IPlayer[F]:
   def state: PlayerStates.PlayerState
-  def onEndOfMedia(): Unit = ()
+  def onEndOfMedia(): F[Unit] = Applicative[F].unit

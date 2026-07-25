@@ -1,88 +1,102 @@
 package com.malliina.musicpimp.db
 
-import cats.effect.IO
-import org.apache.pekko.NotUsed
-import org.apache.pekko.actor.{Cancellable, Scheduler}
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.{BroadcastHub, Keep, Sink, Source}
-import com.malliina.concurrent.Execution.{cached, runtime}
+import cats.effect.kernel.Async
+import cats.effect.std.Dispatcher
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.file.FileUtilities
 import com.malliina.musicpimp.db.Indexer.log
 import com.malliina.musicpimp.library.FileLibrary
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.streams.StreamsUtil
-import play.api.Logger
+import com.malliina.util.AppLogger
+import fs2.Stream
+import fs2.concurrent.Topic
 
-import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, DurationLong}
 import scala.util.Try
 
+enum IndexEvent:
+  case Started, Finished
+  case Progress(files: Long)
+  case Errored(t: Throwable)
+
 object Indexer:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
+
+  def default[F[_]: Async](library: FileLibrary, indexer: DoobieIndexer[F]) =
+    for
+      indexingHub <- Topic[F, Stream[F, Long]]
+      updates <- Topic[F, IndexEvent]
+      halts <- Topic[F, Boolean]
+    yield Indexer(library, indexer, indexingHub, updates, halts)
 
 /** Keeps the music library index up-to-date with respect to the actual file system.
   *
   * Indexes the music library if it changes. Runs when `init()` is first called and every six hours
   * from then on.
   */
-class Indexer(library: FileLibrary, indexer: DoobieIndexer[IO], s: Scheduler)(implicit
-  mat: Materializer
-) extends AutoCloseable:
-  val indexFile = FileUtil.localPath("files7.cache")
-  val indexInterval = 6.hours
-//  val indexInterval = 15.seconds
-  private var timer: Option[Cancellable] = None
-  private val indexingHub = StreamsUtil.connectedStream[Source[Long, NotUsed]]()
-  val ongoing: Source[Source[Long, NotUsed], NotUsed] = indexingHub.source
+class Indexer[F[_]: Async](
+  library: FileLibrary,
+  indexer: DoobieIndexer[F],
+  indexingHub: Topic[F, Stream[F, Long]],
+  updatesSink: Topic[F, IndexEvent],
+  halts: Topic[F, Boolean]
+):
+  val F = Async[F]
+  private val indexFile = FileUtil.localPath("files7.cache")
+  private val indexInterval = 6.hours
+  private val indexUpdates = indexingHub
+    .subscribe(100)
+    .flatMap: job =>
+      Stream(IndexEvent.Started)
+        .append(job.map(l => IndexEvent.Progress(l)))
+        .append(Stream(IndexEvent.Finished))
+        .handleError(t => IndexEvent.Errored(t))
+  val updates: Stream[F, IndexEvent] = updatesSink.subscribe(100)
+  val events: Stream[F, Unit] = indexRegularly
+    .concurrently(indexUpdates.map(upd => updatesSink.publish1(upd).void))
+    .interruptWhen(halts.subscribe(100))
 
-  def init(): Unit =
+  private def indexRegularly: Stream[F, Unit] =
     log.info("Init indexer...")
-    val (cancellable, _) = Source
-      .tick(1.second, indexInterval, 0)
-      .map(_ => indexIfNecessary())
-      .toMat(Sink.foreach(_ => log.info("Queueing indexing.")))(Keep.both)
-      .run()
-    timer.foreach(_.cancel())
-    timer = Option(cancellable)
+    Stream.sleep(1.second) >> Stream
+      .awakeEvery(indexInterval)
+      .evalMap: _ =>
+        F.delay(log.info("Queueing indexing.")) >>
+          indexIfNecessary()
+      .handleError: e =>
+        F.delay(log.error(s"Failed to index.", e))
 
-  def indexIfNecessary(): Source[Long, NotUsed] =
+  private def indexIfNecessary(): F[Unit] =
     log.info("Indexing if necessary...")
-    val actualObs = calculateFileCount()
     val saved = loadSavedFileCount
-    val task = Source
-      .future(actualObs)
-      .flatMapConcat: actual =>
+    calculateFileCount()
+      .flatMap: actual =>
         if actual != saved then
-          Source
-            .future:
-              saveFileCount(actual)
-                .map: _ =>
-                  log.info(
-                    s"Saved file count of $saved differs from actual file count of $actual, indexing..."
-                  )
-                .recover:
-                  case e: Exception =>
-                    log.error(s"Unable to save file count of $actual", e)
-            .flatMapConcat: _ =>
-              index()
+          saveFileCount(actual)
+            .map: _ =>
+              log.info(
+                s"Saved file count of $saved differs from actual file count of $actual, indexing..."
+              )
+            .recover:
+              case e: Exception =>
+                log.error(s"Unable to save file count of $actual", e)
+            .flatMap: _ =>
+              submitIndexing()
         else
           log.info(
             s"There are $actual files in the library. No change since last time, not indexing."
           )
-          Source.empty
-    task.toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
+          F.unit
 
   /** Indexes the music library.
     *
     * @return
     *   indexing progress
     */
-  def index(): Source[Long, NotUsed] =
-    val task = refreshIndex().toMat(BroadcastHub.sink(bufferSize = 256))(Keep.right).run()
-    indexingHub.send(task)
-    task
+  private def submitIndexing(): F[Unit] =
+    indexingHub.publish1(refreshIndex()).void
 
-  /** Starts indexing on a background thread and returns a [[Source]] with progress updates.
+  /** Starts indexing on a background thread and returns a [[Stream]] with progress updates.
     *
     * This algorithm adds new tracks and folders to the index, and removes tracks and folders that
     * no longer exist in the library.
@@ -97,46 +111,42 @@ class Indexer(library: FileLibrary, indexer: DoobieIndexer[IO], s: Scheduler)(im
     * @return
     *   progress: total amount of files indexed
     */
-  private def refreshIndex(): Source[Long, NotUsed] =
-    val hub = StreamsUtil.connectedStream[Long]()
-    val start = System.currentTimeMillis()
-    indexer
-      .runIndexer(library): fileCount =>
-        log.info(s"File count at $fileCount...")
-        IO.pure(hub.send(fileCount))
-      .unsafeToFuture()
-      .map: result =>
-        val end = System.currentTimeMillis()
-        val duration = (end - start).millis
-        hub.shutdown()
-        log.info(
-          s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
-            s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
-        )
-      .recover:
-        case e =>
-          log.error(s"Indexing failed.", e)
-          hub.shutdown()
-    hub.source
+  private def refreshIndex(): Stream[F, Long] =
+    Stream
+      .eval(Topic[F, Long])
+      .flatMap: hub =>
+        val start = System.currentTimeMillis()
+        indexer
+          .runIndexer(library): fileCount =>
+            log.info(s"File count at $fileCount...")
+            hub.publish1(fileCount).void
+          .map: result =>
+            val end = System.currentTimeMillis()
+            val duration = (end - start).millis
+            log.info(
+              s"Indexing complete in $duration. Indexed ${result.totalFiles} files, " +
+                s"purged ${result.foldersPurged} folders and ${result.tracksPurged} files."
+            )
+          .handleError: e =>
+            log.error(s"Indexing failed.", e)
+        hub.subscribe(100)
 
-  def indexAndSave(): Source[Long, NotUsed] =
-    val ret = index()
-    countAndSaveFiles()
-    ret
+  def submitIndexAndSave(): F[Unit] =
+    submitIndexing().flatMap(_ => countAndSaveFiles().void)
 
-  private def countAndSaveFiles(): Future[Int] = for
-    count <- calculateFileCount()
-    _ <- saveFileCount(count)
-  yield count
+  private def countAndSaveFiles(): F[Int] =
+    for
+      count <- calculateFileCount()
+      _ <- saveFileCount(count)
+    yield count
 
-  private def saveFileCount(count: Int) = Future(
+  private def saveFileCount(count: Int) = F.delay:
     FileUtilities.stringToFile(count.toString, indexFile)
-  )
 
-  private def loadSavedFileCount = Try(FileUtilities.fileToString(indexFile).toInt) getOrElse 0
+  private def loadSavedFileCount = Try(FileUtilities.fileToString(indexFile).toInt).getOrElse(0)
 
-  private def calculateFileCount() = Future:
+  private def calculateFileCount() = F.delay:
     log.info(s"Calculating file count...")
     library.trackFiles.size
 
-  def close(): Unit = indexingHub.shutdown()
+  def close(): F[Unit] = halts.publish1(true).void

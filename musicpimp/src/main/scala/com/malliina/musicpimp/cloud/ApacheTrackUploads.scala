@@ -1,40 +1,34 @@
 package com.malliina.musicpimp.cloud
 
-import cats.effect.IO
-import com.malliina.audio.ExecutionContexts
-import com.malliina.concurrent.Execution.runtime
-
-import java.io.FileNotFoundException
-import java.net.SocketException
-import java.nio.file.{Files, Path}
-import java.util.concurrent.{Executors, TimeUnit}
+import cats.effect.Async
+import cats.effect.implicits.genTemporalOps_
+import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps}
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.cloud.ApacheTrackUploads.log
 import com.malliina.musicpimp.http.{MultipartRequest, TrustAllMultipartRequest}
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
 import com.malliina.storage.{StorageLong, StorageSize}
-import com.malliina.util.Util
+import com.malliina.util.{AppLogger, Util}
 
+import java.io.FileNotFoundException
+import java.net.SocketException
+import java.nio.file.{Files, Path}
 import javax.net.ssl.SSLException
-import play.api.Logger
-
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{ExecutionContext, Future}
 
 object ApacheTrackUploads:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val uploadPath = "/track"
 
-  def apply(lib: MusicLibrary[IO], host: FullUrl) =
-    new ApacheTrackUploads(lib, host + uploadPath, ExecutionContexts.cached)
+  def apply[F[_]: Async](lib: MusicLibrary[F], host: FullUrl) =
+    new ApacheTrackUploads(lib, host + uploadPath)
 
-class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: ExecutionContext)
+class ApacheTrackUploads[F[_]: Async](lib: MusicLibrary[F], uploadUri: FullUrl)
   extends AutoCloseable:
-  implicit val exec: ExecutionContext = ec
-  val scheduler = Executors.newSingleThreadScheduledExecutor()
+  val F = Async[F]
   private val ongoing = TrieMap.empty[RequestID, TrustAllMultipartRequest]
 
   /** Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's
@@ -47,17 +41,17 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
     * @return
     *   a Future that completes when the upload completes
     */
-  def upload(track: TrackID, request: RequestID): IO[Unit] =
+  def upload(track: TrackID, request: RequestID): F[Unit] =
     withUploadApache(
       track,
       request,
       file => Files.size(file).bytes,
       (file, req) =>
-        log info s"Uploading entire $file, request $request"
+        log.info(s"Uploading entire $file, request $request")
         req.addFile(file)
     )
 
-  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): IO[Unit] =
+  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): F[Unit] =
     val range = rangedTrack.range
     withUploadApache(
       rangedTrack.id,
@@ -65,44 +59,44 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
       _ => range.contentSize,
       (file, req) =>
         if range.isAll then
-          log info s"Uploading $file, request $request"
+          log.info(s"Uploading $file, request $request")
           req.addFile(file)
         else
-          log info s"Uploading $file, $range, request $request"
+          log.info(s"Uploading $file, $range, request $request")
           req.addRangedFile(file, range)
     )
 
   def cancelSoon(request: RequestID) = cancelIn(request, 5.seconds)
 
-  def cancelIn(request: RequestID, after: FiniteDuration) =
-    IO.blocking:
-      cancel(request)
-    .delayBy(after)
+  def cancelIn(request: RequestID, after: FiniteDuration): F[Unit] =
+    F.delay(cancel(request))
+      .delayBy(after)
 
-  def cancel(request: RequestID): Unit = ongoing.remove(request) foreach { httpRequest =>
-    httpRequest.request.abort()
-    httpRequest.close()
-    log.info(s"Cancelled '$request'.")
-  }
+  def cancel(request: RequestID): Unit = ongoing
+    .remove(request)
+    .foreach: httpRequest =>
+      httpRequest.request.abort()
+      httpRequest.close()
+      log.info(s"Cancelled '$request'.")
 
   private def withUploadApache(
     trackID: TrackID,
     request: RequestID,
     sizeCalc: Path => StorageSize,
     content: (Path, MultipartRequest) => Unit
-  ): IO[Unit] =
+  ): F[Unit] =
     lib
       .findFile(trackID)
       .flatMap: maybePath =>
         maybePath
           .map: path =>
-            IO.blocking:
+            F.delay:
               uploadMediaApache(uploadUri, trackID, path, request, sizeCalc, content)
-            .recover:
+            .handleError:
                 case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
                   // thrown when the upload is cancelled, see method cancel
                   // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
-                  log info s"Aborted upload of $request"
+                  log.info(s"Aborted upload of $request")
                 case ssl: SSLException
                     if Option(ssl.getMessage) contains "Connection or outbound has been closed" =>
                   log.info(s"Cancelled upload of '$trackID' with request '$request'.")
@@ -113,8 +107,8 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
                   )
           .getOrElse:
             val msg = s"Unable to find track: $trackID"
-            log warn msg
-            IO.raiseError(new FileNotFoundException(msg))
+            log.warn(msg)
+            F.raiseError(new FileNotFoundException(msg))
 
   /** Blocks until the upload completes.
     */
@@ -139,12 +133,14 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
         val entity = response.getEntity
         val len = entity.getContentLength
         val contentType = entity.getContentType.getValue
-        log error appendMeta(
-          s"Non-success response code $code len $len type $contentType for track $trackID"
+        log.error(
+          appendMeta(
+            s"Non-success response code $code len $len type $contentType for track $trackID"
+          )
         )
       else
         val prefix = s"Uploaded ${sizeCalc(path)} of $trackID"
-        log info appendMeta(s"$prefix with response $code")
+        log.info(appendMeta(s"$prefix with response $code"))
 
   private def stored[T](
     request: RequestID,
@@ -157,6 +153,4 @@ class ApacheTrackUploads(lib: MusicLibrary[IO], uploadUri: FullUrl, ec: Executio
     finally
       ongoing.remove(request)
 
-  def close(): Unit =
-    scheduler.awaitTermination(3, TimeUnit.SECONDS)
-    scheduler.shutdown()
+  def close(): Unit = ()

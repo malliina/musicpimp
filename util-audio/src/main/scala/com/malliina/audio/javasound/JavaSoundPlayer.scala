@@ -1,26 +1,33 @@
 package com.malliina.audio.javasound
 
-import java.io.InputStream
-import java.util.concurrent.atomic.AtomicBoolean
-
-import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.*
-import org.apache.pekko.stream.scaladsl.{Keep, Sink, Source}
-import com.malliina.audio.PlaybackEvents.TimeUpdated
+import cats.effect.kernel.Async
+import cats.effect.{Concurrent, Spawn, Sync, Temporal}
+import cats.effect.std.Dispatcher
+import cats.implicits.catsSyntaxApplicativeError
+import cats.syntax.all.{toFlatMapOps, toFunctorOps}
 import com.malliina.audio.*
+import com.malliina.audio.PlaybackEvents.TimeUpdated
 import com.malliina.audio.javasound.JavaSoundPlayer.{DefaultRwBufferSize, log}
 import com.malliina.audio.meta.OneShotStream
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
-import com.malliina.streams.{EventSink, StreamsUtil}
+import fs2.concurrent.Topic
 import org.slf4j.LoggerFactory
 
+import java.io.InputStream
+import java.util.concurrent.atomic.AtomicBoolean
+import scala.concurrent.Future
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
-import scala.concurrent.{ExecutionContext, Future}
 
 object JavaSoundPlayer:
   private val log = LoggerFactory.getLogger(getClass)
 
   val DefaultRwBufferSize: StorageSize = 4096.bytes
+
+  def default[F[_]: { Async }](media: OneShotStream, d: Dispatcher[F]) =
+    for
+      states <- Topic[F, PlayerStates.PlayerState]
+      timeUpdates <- Topic[F, PlaybackEvents.TimeUpdated]
+    yield JavaSoundPlayer(media, states, timeUpdates, d)
 
 /** A music player. Plays one media source. To change source, for example to change track, create a
   * new player.
@@ -43,45 +50,37 @@ object JavaSoundPlayer:
   * @param media
   *   media info to play
   */
-class JavaSoundPlayer(
+class JavaSoundPlayer[F[_]: Async](
   val media: OneShotStream,
+  states: Topic[F, PlayerStates.PlayerState],
+  timeUpdatesTopic: Topic[F, PlaybackEvents.TimeUpdated],
+  d: Dispatcher[F],
   readWriteBufferSize: StorageSize = DefaultRwBufferSize
-)(implicit mat: Materializer, val ec: ExecutionContext = ExecutionContexts.singleThreadContext)
-  extends IPlayer
-  with JavaSoundPlayerBase
-  with StateAwarePlayer
+) extends IPlayer[F]
+  with JavaSoundPlayerBase[F]
+  with StateAwarePlayer[F]
   with AutoCloseable:
-
-  def this(
-    stream: InputStream,
-    duration: FiniteDuration,
-    size: StorageSize,
-    readWriteBufferSize: StorageSize
-  )(implicit mat: Materializer) =
-    this(OneShotStream(stream, duration, size), readWriteBufferSize)
-
+  val F = Concurrent[F]
   val bufferSize = readWriteBufferSize.toBytes.toInt
   protected var stream: InputStream = media.stream
   tryMarkStream()
-  private val stateHub = StreamsUtil.connectedStream[PlayerStates.PlayerState]()
 
   /** I use a Subject because the audio line might change and it seems easier then to keep one
     * subject instead of reacting to each audio line change in each observable (in addition to its
     * events).
     */
-  private val pollingSource = Source.tick(500.millis, 500.millis, 0)
-  private var lineData: LineData = newLine(stream, stateHub.sink)
+  private val pollingSource: fs2.Stream[F, FiniteDuration] = fs2.Stream.awakeEvery[F](500.millis)
+  private var lineData: LineData[F] = newLine(stream, states, d)
   private val active = new AtomicBoolean(false)
   private var playThread: Option[Future[Unit]] = None
 
-  private val timeUpdateHub = StreamsUtil.connectedStream[PlaybackEvents.TimeUpdated]()
   private var latestPos: Duration = position
-  val poller = pollingSource
-    .to(Sink.foreach: _ =>
-      if latestPos != position then
-        latestPos = position
-        timeUpdateHub.send(TimeUpdated(position)))
-    .run()
+  // TODO subscribe
+  val poller = pollingSource.evalMap: _ =>
+    if latestPos != position then
+      latestPos = position
+      timeUpdatesTopic.publish1(TimeUpdated(position)).void
+    else F.unit
 
   /** A stream of time update events. Emits the current playback position, then emits at least one
     * event per second provided that the playback position changes. If there is no progress, for
@@ -90,44 +89,48 @@ class JavaSoundPlayer(
     * @return
     *   time update events
     */
-  def timeUpdates: Source[TimeUpdated, NotUsed] =
-    Source.single(TimeUpdated(position)).concat(timeUpdateHub.source)
-
-  def timeUpdatesKillable: Source[TimeUpdated, UniqueKillSwitch] =
-    timeUpdates.viaMat(KillSwitches.single)(Keep.right)
+  def timeUpdates: fs2.Stream[F, TimeUpdated] =
+    fs2.Stream(TimeUpdated(position)) ++ timeUpdatesTopic.subscribe(100)
 
   def isActive = active.get()
 
   /** @return
     *   the current player state and any future states
     */
-  def events: Source[PlayerStates.PlayerState, NotUsed] = stateHub.source
-
-  def eventsKillable: Source[PlayerStates.PlayerState, UniqueKillSwitch] =
-    events.viaMat(KillSwitches.single)(Keep.right)
+  def events: fs2.Stream[F, PlayerStates.PlayerState] = states.subscribe(100)
 
   def audioLine = lineData.line
 
   def controlDescriptions = audioLine.getControls.map(_.toString)
 
-  def newLine(source: InputStream, sink: EventSink[PlayerStates.PlayerState]): LineData =
-    LineData.fromStream(source, sink)
+  def newLine(
+    source: InputStream,
+    sink: Topic[F, PlayerStates.PlayerState],
+    d: Dispatcher[F]
+  ): LineData[F] =
+    LineData.fromStream(source, sink, d)
 
   def supportsSeek = stream.markSupported()
 
-  def play(): Unit =
+  def play(): F[Unit] =
+    d.unsafeRunAndForget(playTask())
+    F.unit
+
+  private def playTask(): F[Unit] =
     lineData.state match
       case PlayerStates.Started =>
         log.info("Start playback issued but playback already started: doing nothing")
+        F.unit
       case PlayerStates.Closed =>
         log.warn("Cannot start playback of a closed track.")
+        F.unit
       // After end of media, the InputStream is closed and cannot be reused. Therefore this player cannot be used.
       // It's incorrect to call methods on a closed player. In principle we should throw an exception here, but I try
       // to resist the path of the IllegalStateException.
       case _ =>
         startPlayback()
 
-  def stop(): Unit =
+  def stop(): F[Unit] = Sync[F].delay:
     active.set(false)
     audioLine.stop()
 
@@ -163,21 +166,19 @@ class JavaSoundPlayer(
       )
     else None
 
-  override def onEndOfMedia(): Unit =
+  override def onEndOfMedia(): F[Unit] =
     super.onEndOfMedia()
-    stateHub.send(PlayerStates.EndOfMedia)
+    states.publish1(PlayerStates.EndOfMedia).void
 
   def close(): Unit =
     closeLine()
-    stateHub.shutdown()
-    timeUpdateHub.shutdown()
 
-  def onPlaybackException(e: Exception): Unit = onEndOfMedia()
+  def onPlaybackException(e: Exception): F[Unit] = onEndOfMedia()
 
   def reset(): Unit =
     closeLine()
     stream = resetStream(stream)
-    lineData = newLine(stream, stateHub.sink)
+    lineData = newLine(stream, states, d)
 
   /** Returns a stream of the media reset to its initial read position. Helper method for seeking.
     *
@@ -217,17 +218,18 @@ class JavaSoundPlayer(
     mute(wasMute)
     bytesSkipped
 
-  private def startPlayback(): Unit =
+  private def startPlayback(): F[Unit] =
     val changedToActive = active.compareAndSet(false, true)
     if changedToActive then
-      audioLine.start()
-      //    log.info(s"Starting playback of ${media.uri}")
-      playThread = Some(Future(startPlayThread()).recover:
-        // javazoom lib may throw at arbitrary playback moments
-        case e: ArrayIndexOutOfBoundsException =>
-          log.warn(e.getClass.getName, e)
-          closeLine()
-          onPlaybackException(e))
+      F.delay:
+        audioLine.start()
+        startPlayThread()
+      .handleErrorWith:
+          case e: ArrayIndexOutOfBoundsException =>
+            log.warn(e.getClass.getName, e)
+            closeLine()
+            onPlaybackException(e)
+    else F.unit
 
   private def startPlayThread(): Unit =
     val data = new Array[Byte](bufferSize)

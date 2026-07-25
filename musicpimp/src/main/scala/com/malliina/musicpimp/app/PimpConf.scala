@@ -3,16 +3,15 @@ package com.malliina.musicpimp.app
 import cats.effect.Sync
 import com.malliina.config.{ConfigError, ConfigNode}
 import com.malliina.database.Conf
-import com.malliina.http.FullUrl
+import com.malliina.http.UrlSyntax.url
+import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.auth.SecretKey
-
-import java.nio.file.Paths
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.{ErrorMessage, Password}
 
 object PimpConf:
   val pimpConfFile = FileUtil.localPath("musicpimp.conf")
-  val homeConf = Paths.get(sys.props("user.home"), ".musicpimp", "musicpimp.conf")
+  val homeConf = LocalConf.appDir.resolve("musicpimp.conf")
   val fileProps: Map[String, String] = FileUtil.props(pimpConfFile)
 
   val MySQLDriver = "com.mysql.cj.jdbc.Driver"
@@ -27,15 +26,19 @@ object PimpConf:
       .orElse(readConfFile(key))
       .toRight(ErrorMessage(s"Key missing: '$key'."))
 
-  def parseF[F[_]: Sync]: F[PimpConf] = Sync[F].fromEither(parse())
+  def parseF[F[_]: Sync]: F[PimpConf] = Sync[F].fromEither(parse(pass => defaultDatabaseConf(pass)))
 
-  def parse() =
+  def parse(dbConf: Password => Conf) =
     for
       pimp <- LocalConf.localConf.parse[ConfigNode]("musicpimp")
-      conf <- parseConfig(pimp)
+      conf <- parseConfig(pimp, dbConf)
     yield conf
 
-  private def parseConfig(c: ConfigNode): Either[ConfigError, PimpConf] =
+  private def parseConfig(
+    c: ConfigNode,
+    dbConf: Password => Conf
+  ): Either[ConfigError, PimpConf] =
+    val opts = if AppMode.fromBuild.isProd then InitOptions.prod else InitOptions.dev
     for
       secret <- c.parse[SecretKey]("secret")
       db <- c.parse[ConfigNode]("db")
@@ -45,18 +48,20 @@ object PimpConf:
         if secret == LocalConf.secretPlaceholder then
           LocalConf.readOrGenerateSecret(FileUtil.pimpHomeDir.resolve("play.secret.key"))
         else secret
-      val dbConf = Conf(
-        FullUrl("jdbc:mysql", "127.0.0.1:3306", "/musicpimp"),
-        "musicpimp",
-        dbPass,
-        DefaultDriver,
-        5,
-        true,
-        "flyway_schema_history"
-      )
-      PimpConf(appSecret, dbConf)
+      PimpConf(appSecret, dbConf(dbPass), opts)
+
+  private def defaultDatabaseConf(password: Password): Conf =
+    Conf(
+      url"jdbc:mysql://127.0.0.1:3306/musicpimp",
+      "musicpimp",
+      password,
+      DefaultDriver,
+      5,
+      true
+    )
 
 case class PimpConf(
   secret: SecretKey,
-  db: Conf
+  db: Conf,
+  opts: InitOptions
 )

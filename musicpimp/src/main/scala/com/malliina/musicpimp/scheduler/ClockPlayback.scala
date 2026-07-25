@@ -1,5 +1,6 @@
 package com.malliina.musicpimp.scheduler
 
+import cats.effect.Sync
 import com.malliina.musicpimp.audio.FullTrack
 import com.malliina.musicpimp.models.TrackID
 import io.circe.Codec
@@ -32,5 +33,5 @@ case class ClockPlayback(
   def toConf = ClockPlaybackConf(id, job.track, when, enabled)
 
 object ClockPlayback:
-  def fromConf(conf: ClockPlaybackConf, job: PlaybackJob) =
+  def fromConf[F[_]: Sync](conf: ClockPlaybackConf, job: PlaybackJob[F]) =
     apply(conf.id, TrackWrapper(job.trackId), conf.when, conf.enabled)

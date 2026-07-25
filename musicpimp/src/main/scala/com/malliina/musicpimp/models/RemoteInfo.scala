@@ -1,17 +1,18 @@
 package com.malliina.musicpimp.models
 
+import cats.effect.Sync
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.http.PimpRequest
-import com.malliina.musicpimp.json.{JsonFormatVersions, Target}
+import com.malliina.musicpimp.http4s.Responses
+import com.malliina.musicpimp.json.{MediaRanges, Target}
 import com.malliina.play.http.FullUrls
 import com.malliina.values.Username
-import play.api.mvc.RequestHeader
+import org.http4s.{MediaType, Request}
 
-case class RemoteInfo(user: Username, apiVersion: String, host: FullUrl, target: Target)
+case class RemoteInfo[F[_]](user: Username, apiVersion: MediaType, host: FullUrl, target: Target[F])
 
 object RemoteInfo:
-  def forRequest(user: Username, rh: RequestHeader) =
-    RemoteInfo(user, PimpRequest.apiVersion(rh), FullUrls.hostOnly(rh), Target.noop)
+  def forRequest[F[_]: Sync](user: Username, req: Request[?]) =
+    RemoteInfo(user, Responses.apiVersion(req), FullUrls.hostOnly2(req), Target.noop)
 
-  def cloud(user: Username, host: FullUrl) =
-    RemoteInfo(user, JsonFormatVersions.JSONv18, host, Target.noop)
+  def cloud[F[_]: Sync](user: Username, host: FullUrl) =
+    RemoteInfo(user, MediaRanges.JSONv18, host, Target.noop)

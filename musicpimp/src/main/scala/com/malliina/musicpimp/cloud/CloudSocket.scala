@@ -1,14 +1,12 @@
 package com.malliina.musicpimp.cloud
 
-import cats.Applicative
-import cats.effect.IO
-import cats.implicits.catsSyntaxApplicativeId
-import org.apache.pekko.actor.Scheduler
-import org.apache.pekko.stream.Materializer
-import com.malliina.concurrent.{Execution, FutureOps}
+import cats.effect.Async
+import cats.effect.implicits.genTemporalOps_
+import cats.effect.kernel.Deferred
+import cats.effect.std.Dispatcher
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.http.FullUrl
-import com.malliina.concurrent.Execution.{cached, runtime}
-import com.malliina.musicpimp.cloud.CustomSSLSocketFactory
+import com.malliina.http.io.HttpClientF2
 import com.malliina.musicpimp.audio.*
 import com.malliina.musicpimp.auth.UserManager
 import com.malliina.musicpimp.beam.BeamCommand
@@ -22,55 +20,61 @@ import com.malliina.musicpimp.models.*
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
 import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
-import com.malliina.rx.Sources
-import com.malliina.streams.StreamsUtil
+import com.malliina.util.AppLogger
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.{LibraryController, Rest}
-import io.circe.{Decoder, DecodingFailure, Encoder, Json}
+import fs2.concurrent.Topic
 import io.circe.syntax.EncoderOps
-import play.api.Logger
+import io.circe.{Decoder, DecodingFailure, Encoder, Json}
 
+import java.util.concurrent.TimeoutException
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Future, Promise}
 import scala.util.Try
 
-case class Deps(
-  playlists: PlaylistService[IO],
-  userManager: UserManager[IO, Username, Password],
-  handler: PlaybackMessageHandler,
-  lib: MusicLibrary[IO],
-  stats: PlaybackStats[IO],
-  schedules: ScheduledPlaybackService
+case class Deps[F[_]](
+  playlists: PlaylistService[F],
+  userManager: UserManager[F, Username, Password],
+  handler: PlaybackMessageHandler[F],
+  lib: MusicLibrary[F],
+  stats: PlaybackStats[F],
+  schedules: ScheduledPlaybackService[F],
+  http: HttpClientF2[F],
+  d: Dispatcher[F]
 )
 
 object CloudSocket:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val path = "/servers/ws"
   val devUri = FullUrl("ws", "localhost:9000", path)
   val prodUri = FullUrl("wss", "cloud.musicpimp.org", path)
 
-  def build(
-    player: MusicPlayer,
+  def build[F[_]: Async](
+    player: MusicPlayer[F],
     id: Option[CloudID],
     url: FullUrl,
-    handler: JsonHandler,
-    s: Scheduler,
-    fullText: FullText[IO],
-    deps: Deps,
-    mat: Materializer
-  ): CloudSocket =
-    new CloudSocket(
+    handler: JsonHandler[F],
+    fullText: FullText[F],
+    deps: Deps[F]
+  ): F[CloudSocket[F]] =
+    for
+      connPromise <- Deferred[F, Option[Throwable]]
+      regPromise <- Deferred[F, Either[Exception, CloudID]]
+      eventHub <- Topic[F, CloudID]
+    yield CloudSocket(
+      connPromise,
+      regPromise,
+      eventHub,
+      deps.d,
       player,
       url,
-      id.filter(_.id.nonEmpty) getOrElse CloudID.empty,
+      id.filter(_.id.nonEmpty).getOrElse(CloudID.empty),
       Constants.pass,
       handler,
-      s,
       fullText,
       deps
-    )(using mat)
+    )
 
   val notConnected = new Exception("Not connected.")
   val connectionClosed = new Exception("Connection closed.")
@@ -87,18 +91,22 @@ object CloudSocket:
   * Key cmd or event must exist. Key request is defined if a response is desired. Key body may or
   * may not exist, depending on cmd.
   */
-class CloudSocket(
-  player: MusicPlayer,
+class CloudSocket[F[_]: Async](
+  connectPromise: Deferred[F, Option[Throwable]],
+  registrationPromise: Deferred[F, Either[Exception, CloudID]],
+  registrationsHub: Topic[F, CloudID],
+  d: Dispatcher[F],
+  player: MusicPlayer[F],
   uri: FullUrl,
   username: CloudID,
   password: Password,
-  alarmHandler: JsonHandler,
-  s: Scheduler,
-  fullText: FullText[IO],
-  deps: Deps
-)(implicit mat: Materializer)
-  extends JsonSocket8(
+  alarmHandler: JsonHandler[F],
+  fullText: FullText[F],
+  deps: Deps[F]
+) extends JsonSocket8[F](
     uri,
+    connectPromise,
+    d,
     CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
     HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)
   ):
@@ -112,14 +120,14 @@ class CloudSocket(
 //  val uploader = OkHttpTrackUploads(lib, cloudHost)
   val handler = deps.handler
   val stats = deps.stats
-  private val registrationPromise = Promise[CloudID]()
-  val registration = registrationPromise.future
   val playlists = deps.playlists
 
-  private val registrationsHub = StreamsUtil.connectedStream[CloudID]()
-  val registrations = registrationsHub.source
+  val registrations = registrationsHub.subscribe(100)
 
-  def connectID(): Future[CloudID] = connect().flatMap(_ => registration)
+  def registration: F[CloudID] = registrationPromise.get.flatMap: e =>
+    e.fold(e => F.raiseError(e), ok => F.pure(ok))
+
+  def connectID(): F[CloudID] = connect().flatMap(_ => registration)
 
   def unregister() = Try(sendMessage(SimpleCommand(Unregister)))
 
@@ -129,20 +137,26 @@ class CloudSocket(
     * connection result
     *
     * @return
-    *   a future that completes when the connection has successfully been established
+    *   a task that completes when the connection has successfully been established
     */
-  override def connect(): Future[Unit] =
+  override def connect(): F[Unit] =
     log.info(s"Connecting as '$username' to '$uri'...")
-    Sources.timeoutAfter(10.seconds, registrationPromise)(using s, Execution.cached)
+    val timeout = 10.seconds
+    val timeoutTask = F
+      .pure(())
+      .delayBy(timeout)
+      .flatMap: _ =>
+        registrationPromise.complete(Left(TimeoutException(s"Timed out after $timeout.")))
+    d.unsafeRunAndForget(timeoutTask)
     super.connect()
 
-  override def onMessage(json: Json): Unit =
+  override def onMessage(json: Json): F[Unit] =
     log.debug(s"Got message: '$json'.")
-    try
-      // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
-      processRequest(json).orElse(processEvent(json)).left.map(err => handleError(err, json))
-    catch
-      case e: Exception =>
+    // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
+    processRequest(json)
+      .orElse(processEvent(json))
+      .fold(err => handleError(err, json).pure, identity)
+      .handleErrorWith: e =>
         log.warn(s"Failed while handling JSON: '$json'.", e)
         json.hcursor
           .downField(CloudResponse.RequestKey)
@@ -151,32 +165,31 @@ class CloudSocket(
             val reason =
               FailReason(s"The MusicPimp server failed while dealing with the request: '$json'.")
             sendFailure(request, reason)
+          .getOrElse:
+            F.unit
 
-  protected def processRequest(json: Json): Decoder.Result[Unit] =
-    parseRequest(json).map(request => handleRequest(request))
+  private def processRequest(json: Json): Either[DecodingFailure, F[Unit]] =
+    messageParser.parseRequest(json).map(handleRequestTask)
 
-  protected def processEvent(json: Json): Decoder.Result[Unit] =
-    parseEvent(json).map(handleEvent)
+  private def processEvent(json: Json): Either[DecodingFailure, F[Unit]] =
+    messageParser.parseEvent(json).map(handleEvent)
 
-  protected def parseRequest(json: Json): Decoder.Result[CloudRequest] =
+  private def parseRequest(json: Json): Decoder.Result[CloudRequest] =
     messageParser.parseRequest(json)
 
-  protected def parseEvent(json: Json): Decoder.Result[PimpMessage] =
-    messageParser.parseEvent(json)
-
-  def handleRequest(cloudRequest: CloudRequest): Unit =
-    handleRequestTask(cloudRequest).unsafeToFuture()
-
-  def handleRequestTask(cloudRequest: CloudRequest): IO[Any] =
+  private def handleRequestTask(cloudRequest: CloudRequest): F[Unit] =
     val request = cloudRequest.request
     val message = cloudRequest.message
 
-    def databaseResponse[T: Encoder](f: IO[T]): IO[Any] =
-      withDatabaseExcuse(request)(f.map(t => sendSuccess(request, t)))
+    def databaseResponse[T: Encoder](f: F[T]): F[Unit] =
+      withDatabaseExcuse(request)(f.flatMap(t => sendSuccess(request, t)))
 
     message match
       case GetStatus =>
-        sendSuccess(request, StatusMessage(player.status(cloudHost))).pure
+        player
+          .status(cloudHost)
+          .flatMap: status =>
+            sendSuccess(request, StatusMessage(status))
       case GetTrack(id) =>
         uploader
           .upload(id, request)
@@ -216,7 +229,7 @@ class CloudSocket(
           .fullText(term, limit)
           .map: dataTracks =>
             dataTracks.map(t => TrackJson.toFull(t, cloudHost))
-        databaseResponse(ts)
+        databaseResponse(ts).void
       case PingAuth =>
         sendSuccess(request, JsonMessages.version)
       case PingMessage =>
@@ -291,32 +304,29 @@ class CloudSocket(
               log.error(s"Unable to obtain meta of '$id'.", e)
               sendFailure(request, LibraryController.noTrackJson(id))
       case RegistrationEvent(_, id) =>
-        IO.delay:
-          onRegistered(id)
+        onRegistered(id)
       case PlaybackMessage(payload, user) =>
-        IO.delay:
-          handlePlayerMessage(payload, user)
+        handlePlayerMessage(payload, user)
       case beamCommand: BeamCommand =>
         Rest
-          .beam(beamCommand, lib)
-          .map(e =>
+          .beam(beamCommand, lib, deps.http)
+          .map: e =>
             e.fold(
               err => log.warn(s"Unable to beam. $err"),
-              _ => log info "Beaming completed successfully."
+              _ => log.info("Beaming completed successfully.")
             )
-          )
-          .recoverAll(t => log.warn(s"Beaming failed.", t))
+          .handleError(t => log.warn(s"Beaming failed.", t))
         sendLogged(CloudResponse.ack(request))
       case _ =>
         log.warn(s"Unknown request: '$message'.")
         sendFailure(request, FailReason(s"Unknown message in request '$request'."))
 
-  private def withDatabaseExcuse[T](request: RequestID)(f: IO[T]): IO[Any] =
-    f.handleError: t =>
+  private def withDatabaseExcuse[T](request: RequestID)(f: F[T]): F[Unit] =
+    f.void.handleErrorWith: t =>
       log.error(s"Request $request error.", t)
       sendFailure(request, JsonMessages.databaseFailure)
 
-  private def handleEvent(e: PimpMessage): Unit =
+  private def handleEvent(e: PimpMessage): F[Unit] =
     e match
       case RegisteredMessage(id) =>
         onRegistered(id)
@@ -325,15 +335,15 @@ class CloudSocket(
       case PlaybackMessage(payload, user) =>
         handlePlayerMessage(payload, user)
       case PingMessage =>
-        ()
+        F.unit
       case PongMessage =>
-        ()
+        F.unit
       case other =>
-        log.warn(s"Unknown event: '$other'.")
+        F.delay(log.warn(s"Unknown event: '$other'."))
 
-  private def handlePlayerMessage(message: PlayerMessage, user: Username): Unit =
-    handler.updateUser(user)
-    handler.fulfillMessage(message, RemoteInfo.cloud(user, cloudHost))
+  private def handlePlayerMessage(message: PlayerMessage, user: Username): F[Unit] =
+    F.delay(handler.updateUser(user)) >>
+      handler.fulfillMessage(message, RemoteInfo.cloud(user, cloudHost))
 
   private def sendSuccess[T: Encoder](request: RequestID, response: T) =
     sendLogged(CloudResponse.success(request, response))
@@ -341,9 +351,9 @@ class CloudSocket(
   private def sendFailure(request: RequestID, reason: FailReason) =
     sendLogged(CloudResponse.failed(request, reason))
 
-  private def sendLogged[T: Encoder](response: CloudResponse[T]): IO[Unit] =
+  private def sendLogged[T: Encoder](response: CloudResponse[T]): F[Unit] =
     val request = response.request
-    IO.fromTry:
+    Async[F].fromTry:
       send(response.asJson)
         .map(_ => log.debug(s"Responded to request $request with payload '$response'."))
         .recover:
@@ -355,24 +365,26 @@ class CloudSocket(
   def errorMessage(errors: DecodingFailure, json: Json): String =
     s"JSON error: $errors. Message: $json"
 
-  def onRegistered(id: CloudID): Unit =
-    registrationPromise.trySuccess(id)
-    registrationsHub.send(id)
-    log.info(s"Connected as '$username' to $uri.")
+  private def onRegistered(id: CloudID): F[Unit] =
+    for
+      _ <- registrationPromise.complete(Right(id))
+      _ <- registrationsHub.publish1(id)
+    yield
+      log.info(s"Connected as '$username' to $uri.")
+      ()
 
-  override def onClose(): Unit =
-    failSocket(CloudSocket.connectionClosed)
-    log.info(s"Disconnected as '$username' from $uri.")
+  override def onClose(): F[Unit] =
+    failSocket(CloudSocket.connectionClosed) >> F.delay(
+      log.info(s"Disconnected as '$username' from $uri.")
+    )
 
-  override def onError(e: Exception): Unit =
+  override def onError(e: Exception): F[Unit] =
     failSocket(e)
 
   override def close(): Unit =
-    failSocket(CloudSocket.manuallyClosed)
+    d.unsafeRunAndForget(failSocket(CloudSocket.manuallyClosed))
     uploader.close()
-    registrationsHub.shutdown()
     super.close()
 
-  def failSocket(e: Exception): Unit =
-    registrationPromise tryFailure e
-    registrationsHub.shutdown()
+  private def failSocket(e: Exception): F[Unit] =
+    registrationPromise.complete(Left(e)).void

@@ -1,6 +1,7 @@
 package controllers.musicpimp
 
-import cats.effect.IO
+import cats.effect.{Async, IO}
+import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
 
 import java.io.*
 import java.net.UnknownHostException
@@ -13,6 +14,7 @@ import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
 import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.http.OkClient.MultiPartFile
+import com.malliina.http.io.HttpClientF2
 import com.malliina.http.{HttpResponse, OkClient}
 import com.malliina.musicpimp.BuildMeta
 import com.malliina.musicpimp.audio.*
@@ -27,6 +29,7 @@ import com.malliina.play.http.{AuthedRequest, CookiedRequest, FullUrls, OneFileU
 import com.malliina.play.streams.{StreamParsers, Streams}
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageInt, StorageLong}
+import com.malliina.util.AppLogger
 import com.malliina.values.{ErrorMessage, UnixPath, Username}
 import com.malliina.ws.HttpUtil
 import controllers.musicpimp.Rest.log
@@ -44,15 +47,16 @@ import play.api.mvc.*
 import scala.concurrent.Future
 import scala.util.Try
 
-class Rest(
-  player: MusicPlayer,
+class Rest[F[_]: Async](
+  player: MusicPlayer[F],
   library: FileLibrary,
   lib: MusicLibrary[IO],
   auth: AuthDeps,
-  handler: PlaybackMessageHandler,
-  statsPlayer: StatsPlayer,
+  handler: PlaybackMessageHandler[F],
+  statsPlayer: StatsPlayer[F],
   errorHandler: HttpErrorHandler
 ) extends Secured(auth):
+  val F = Async[F]
 
   def ping = Action(NoCache(Ok))
 
@@ -60,11 +64,11 @@ class Rest(
 
   /** Handles server playback commands POSTed as JSON.
     */
-  def playback = jsonAckAction(handler.onJson)
+//  def playback = jsonAckAction(handler.onJson)
 
   /** Alias for `playback`. Should be deprecated.
     */
-  def playlist = playback
+//  def playlist = playback
 
   def playUploadedFile = UploadedSongAction: track =>
     player.setPlaylistAndPlay(track)
@@ -113,41 +117,33 @@ class Rest(
     * TODO: if no root folder for the track is found this shit explodes, fix and return an erroneous
     * HTTP response instead
     */
-  def stream = pimpParsedActionAsync(circeJson): req =>
-    req.body
-      .as[BeamCommand]
-      .fold(
-        err => fut(BadRequest(JsonMessages.invalidJson)),
-        cmd =>
-          val response = Rest.beam(cmd, lib)
-          response
-            .map: e =>
-              e.fold(
-                errorMsg => badRequest(errorMsg.message),
-                httpResponse =>
-                  // relays MusicBeamer's response to the client
-                  val statusCode = httpResponse.code
-                  log info s"Completed track upload, relaying response: $statusCode"
-                  val result = new Results.Status(statusCode)
-                  if statusCode >= 200 && statusCode < 300 then result(JsonMessages.thanks)
-                  else result
-              )
-            .recover:
-              case uhe: UnknownHostException =>
-                notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
-              case e: Exception =>
-                val msg = "Stream failure."
-                log.error(msg, e)
-                serverError(msg)
-      )
-
-  def status = pimpAction: req =>
-    val host = FullUrls.hostOnly(req)
-    PimpContentController.default.pimpResponse(req)(
-      html = Results.NoContent,
-      json17 = player.status17(host).asJson,
-      latest = player.status(host).asJson
-    )
+//  def stream = pimpParsedActionAsync(circeJson): req =>
+//    req.body
+//      .as[BeamCommand]
+//      .fold(
+//        err => F.delay(BadRequest(JsonMessages.invalidJson)),
+//        cmd =>
+//          val response = Rest.beam(cmd, lib)
+//          response
+//            .map: e =>
+//              e.fold(
+//                errorMsg => badRequest(errorMsg.message),
+//                httpResponse =>
+//                  // relays MusicBeamer's response to the client
+//                  val statusCode = httpResponse.code
+//                  log info s"Completed track upload, relaying response: $statusCode"
+//                  val result = new Results.Status(statusCode)
+//                  if statusCode >= 200 && statusCode < 300 then result(JsonMessages.thanks)
+//                  else result
+//              )
+//            .recover:
+//              case uhe: UnknownHostException =>
+//                notFound(s"Unable to find MusicBeamer endpoint. ${uhe.getMessage}")
+//              case e: Exception =>
+//                val msg = "Stream failure."
+//                log.error(msg, e)
+//                serverError(msg)
+//      )
 
   private def localPlaybackAction(id: TrackID): Future[Option[EssentialAction]] =
     lib
@@ -167,7 +163,7 @@ class Rest(
             * already has a file before initiating long-running, possibly redundant, file uploads.
             */
           player.setPlaylistAndPlay(track)
-          log info s"Playing local file of: ${track.id}"
+          log.info(s"Playing local file of: ${track.id}")
           pimpAction(Ok)
 
   //  EssentialAction { req =>
@@ -178,8 +174,8 @@ class Rest(
   private def streamingAction(meta: Track): EssentialAction =
     val relative = meta.path
     // Saves the streamed media to file if possible
-    val fileOpt = library.findAbsoluteNew(relative).filter(canWriteNewFile) orElse
-      Option(FileUtilities.tempDir.resolve(meta.relativePath)).filter(canWriteNewFile)
+    val fileOpt = library.findAbsoluteNew(relative).filter(Rest.canWriteNewFile) orElse
+      Option(FileUtilities.tempDir.resolve(meta.relativePath)).filter(Rest.canWriteNewFile)
     val (inStream, iteratee) = fileOpt.fold(Streams.joinedStream())(streamingAndFileWritingIteratee)
     val msg =
       fileOpt.fold(s"Streaming: $relative")(path => s"Streaming: $relative and saving to: $path")
@@ -191,20 +187,13 @@ class Rest(
     // first. When the OutputStream onto which the InputStream is connected is closed,
     // the Future, if still not completed, will complete exceptionally with an IOException.
     Future:
-      val track = StreamedTrack.fromTrack(meta, inStream, mat)
+      val track = StreamedTrack.fromTrack(meta, inStream)
       player.setPlaylistAndPlay(track)
     pimpParsedAction(
       StreamParsers.multiPartBodyParser(iteratee, 1024.megs, errorHandler)(using mat)
     ): _ =>
       log.info(s"Received stream of track: ${meta.id}")
       Ok
-
-  private def canWriteNewFile(file: Path) =
-    try
-      val createdFile = Files.createFile(file)
-      Files.delete(createdFile)
-      true
-    catch case _: Exception => false
 
   private def loggedJson(errorMessage: String) =
     log.warn(errorMessage)
@@ -238,10 +227,10 @@ class Rest(
         default.AckResponse(request)
       catch
         case iae: IllegalArgumentException =>
-          log error ("Illegal argument", iae)
+          log.error("Illegal argument", iae)
           badRequest(iae.getMessage)
         case t: Throwable =>
-          log error ("Unable to execute action", t)
+          log.error("Unable to execute action", t)
           serverErrorGeneric
 
   private def jsonAckAction(
@@ -297,7 +286,7 @@ class Rest(
           val user = Username.unsafe(request.user)
           val mediaInfo = t.meta.media
           val fileSize = mediaInfo.size
-          log info s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize"
+          log.info(s"User: ${request.user} from: ${request.remoteAddress} uploaded $fileSize")
           f(new TrackUploadRequest(t, file, user, request))
     }
 
@@ -309,7 +298,14 @@ class Rest(
   ) extends OneFileUploadRequest(file, username.name, request)
 
 object Rest:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
+
+  def canWriteNewFile(file: Path) =
+    try
+      val createdFile = Files.createFile(file)
+      Files.delete(createdFile)
+      true
+    catch case _: Exception => false
 
   object trustAllTrustManager extends X509TrustManager:
     override def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String): Unit = ()
@@ -318,13 +314,16 @@ object Rest:
 
     override def getAcceptedIssuers: Array[X509Certificate] = Array.empty[X509Certificate]
 
-  val defaultClient = OkClient.default
-  val sslClient = OkClient.ssl(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
+//  val defaultClient = OkClient.default
+  val okSslClient =
+    OkClient.sslClient(SSLUtils.trustAllSslContext().getSocketFactory, trustAllTrustManager)
+//  val defaultClient = HttpClientF2[F](OkClient.okHttpClient)
+//  val sslClient = HttpClientF2(okSslClient)
   val audioMpeg = MediaType.parse("audio/mpeg")
 
-  def close(): Unit =
-    closeOk(defaultClient)
-    closeOk(sslClient)
+  def close(): Unit = ()
+//    closeOk(defaultClient)
+//    closeOk(sslClient)
 
   def closeOk(client: OkClient) = Try:
     client.close()
@@ -340,17 +339,20 @@ object Rest:
     * @param cmd
     *   beam details
     */
-  def beam(cmd: BeamCommand, lib: MusicLibrary[IO]): Future[Either[ErrorMessage, HttpResponse]] =
+  def beam[F[_]: Async](
+    cmd: BeamCommand,
+    lib: MusicLibrary[F],
+    client: HttpClientF2[F]
+  ): F[Either[ErrorMessage, HttpResponse]] =
     val url = cmd.uri
     lib
       .findFile(cmd.track)
-      .unsafeToFuture()
-      .flatMap: maybeFile =>
+      .flatMap[Either[ErrorMessage, HttpResponse]]: maybeFile =>
         maybeFile
           .map: file =>
             val size = Files.size(file).bytes
             log.info(s"Beaming: $file of size: $size to: $url...")
-            sslClient
+            client
               .multiPart(
                 url,
                 Map(
@@ -359,13 +361,15 @@ object Rest:
                 ),
                 files = Seq(MultiPartFile(audioMpeg, file))
               )
-              .map: r =>
-                if r.isSuccess then log info s"Beamed file: $file of size: $size to: $url"
-                else log error s"Beam failed of file: $file of size: $size to: $url"
+              .map[Either[ErrorMessage, HttpResponse]]: r =>
+                if r.isSuccess then log.info(s"Beamed file: $file of size: $size to: $url")
+                else log.error(s"Beam failed of file: $file of size: $size to: $url")
                 Right(r)
           .getOrElse:
-            fut(Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}")))
-      .recover:
+            Async[F].delay[Either[ErrorMessage, HttpResponse]](
+              Left(ErrorMessage(s"Unable to find track with id: ${cmd.track}"))
+            )
+      .handleError:
         case e: Exception =>
           log.error("Beaming failed.", e)
           Left(ErrorMessage("Beaming failed."))

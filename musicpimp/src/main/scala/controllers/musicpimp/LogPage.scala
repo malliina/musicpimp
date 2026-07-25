@@ -16,8 +16,8 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps) extends HtmlCon
     Form[Level](LevelKey -> Forms.nonEmptyText.transform(Level.toLevel, (l: Level) => l.toString))
   val frontLog = Logger("frontend")
 
-  def logs = navigate: req =>
-    logPage(levelForm, req)
+//  def logs = navigate: req =>
+//    logPage(levelForm, req)
 
   def frontendLog = pimpParsedAction(circeJson): req =>
     req.body
@@ -43,22 +43,22 @@ class LogPage(tags: PimpHtml, sockets: PimpLogs, auth: AuthDeps) extends HtmlCon
     else if level == Level.ERROR then logger.error(_)
     else logger.trace(_)
 
-  def changeLogLevel = pimpAction: req =>
-    levelForm
-      .bindFromRequest()(using req, formBinding)
-      .fold(
-        erroredForm =>
-          log warn s"Log level change submission failed"
-          BadRequest(logPage(erroredForm, req))
-        ,
-        level =>
-          Logging.level = level
-          log warn s"Changed log level to $level"
-          Redirect(reverse.logs.base.renderString)
-      )
+//  def changeLogLevel = pimpAction: req =>
+//    levelForm
+//      .bindFromRequest()(using req, formBinding)
+//      .fold(
+//        erroredForm =>
+//          log warn s"Log level change submission failed"
+//          BadRequest(logPage(erroredForm, req))
+//        ,
+//        level =>
+//          Logging.level = level
+//          log warn s"Changed log level to $level"
+//          Redirect(reverse.logs.base.renderString)
+//      )
 
-  private def logPage(form: Form[Level], req: PimpUserRequest) =
-    tags.logs(form(LevelKey), Logging.levels, Logging.level, req.user, None)
+//  private def logPage(form: Form[Level], req: PimpUserRequest) =
+//    tags.logs(form(LevelKey), Logging.levels, Logging.level, req.user, None)
 
 object LogPage:
   private val log = Logger(getClass)

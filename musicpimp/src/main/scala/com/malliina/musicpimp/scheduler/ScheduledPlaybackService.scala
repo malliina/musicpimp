@@ -1,28 +1,47 @@
 package com.malliina.musicpimp.scheduler
 
-import cats.effect.IO
+import cats.effect.std.Dispatcher
+import cats.effect.{Async, Resource}
 import cats.implicits.toFunctorOps
-import com.malliina.concurrent.Execution.{cached, runtime}
 import com.malliina.file.FileUtilities
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.{MusicPlayer, TrackJson}
 import com.malliina.musicpimp.library.MusicLibrary
+import com.malliina.musicpimp.messaging.TokenService
+import com.malliina.musicpimp.scheduler.ScheduledPlaybackService.log
 import com.malliina.musicpimp.util.FileUtil
+import com.malliina.util.AppLogger
 import io.circe.syntax.EncoderOps
-import play.api.Logger
 
 import java.nio.file.{Files, Path}
 import java.util.UUID
-import scala.concurrent.Future
 import scala.util.Try
 
-class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
-  private val log = Logger(getClass)
+object ScheduledPlaybackService:
+  private val log = AppLogger(getClass)
+
+  def resource[F[_]: Async](
+    player: MusicPlayer[F],
+    lib: MusicLibrary[F],
+    tokenService: TokenService[F],
+    d: Dispatcher[F]
+  ): Resource[F, ScheduledPlaybackService[F]] =
+    Resource.make(Async[F].delay(ScheduledPlaybackService(player, lib, tokenService, d)))(s =>
+      Async[F].delay(s.stop())
+    )
+
+class ScheduledPlaybackService[F[_]: Async](
+  player: MusicPlayer[F],
+  lib: MusicLibrary[F],
+  tokenService: TokenService[F],
+  val d: Dispatcher[F]
+):
+  val F = Async[F]
 
   private val s: IScheduler = Cron4jScheduler
-  private val clockAPs = new PlaybackScheduler[ClockSchedule](s)
+  private val clockAPs = new PlaybackScheduler[F, ClockSchedule](s)
 
-  val persistFile = FileUtil.localPath("schedules2.json")
+  private val persistFile = FileUtil.localPath("schedules2.json")
 
   /** Loads and initializes the saved schedules.
     *
@@ -34,16 +53,18 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
 
   private def start(): Unit =
     s.start()
-    readConf().filter(_.enabled).foreach(conf => clockAPs.schedule(PlaybackJob(conf, player, lib)))
+    readConf()
+      .filter(_.enabled)
+      .foreach(conf => clockAPs.schedule(PlaybackJob(conf, player, lib, tokenService, d)))
 
   def stop(): Unit =
     s.stop()
     clockAPs.clear()
 
-  def clockList(host: FullUrl): IO[Seq[FullClockPlayback]] =
-    IO.parTraverseN(4)(status)(s => toFull(s, host)).map(_.flatten).map(_.sortBy(_.id))
+  def clockList(host: FullUrl): F[Seq[FullClockPlayback]] =
+    F.parTraverseN(4)(status)(s => toFull(s, host)).map(_.flatten).map(_.sortBy(_.id))
 
-  private def toFull(conf: ClockPlaybackConf, host: FullUrl): IO[Option[FullClockPlayback]] =
+  private def toFull(conf: ClockPlaybackConf, host: FullUrl): F[Option[FullClockPlayback]] =
     lib
       .track(conf.track)
       .map: maybeTrack =>
@@ -60,7 +81,7 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
   def find(id: String) = readConf().find(_.id.contains(id))
 
   def findJob(id: String) = find(id).map: conf =>
-    PlaybackJob(conf, player, lib)
+    PlaybackJob(conf, player, lib, tokenService, d)
 
   /** Saves or updates action point ´ap´.
     *
@@ -77,8 +98,8 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
     val idOpt = withId.id
     idOpt.foreach(clockAPs.deschedule)
     save(readConf().filter(_.id != idOpt) ++ Seq(withId))
-    if withId.enabled then clockAPs.schedule(PlaybackJob(withId, player, lib))
-    log debug s"Saved scheduled playback: $ap"
+    if withId.enabled then clockAPs.schedule(PlaybackJob(withId, player, lib, tokenService, d))
+    log.debug(s"Saved scheduled playback: $ap")
 
   def remove(id: String): Unit =
     clockAPs.deschedule(id)
@@ -93,7 +114,7 @@ class ScheduledPlaybackService(player: MusicPlayer, lib: MusicLibrary[IO]):
       save(Nil)
       Seq.empty
 
-  def parseConf(json: String): Seq[ClockPlaybackConf] =
+  private def parseConf(json: String): Seq[ClockPlaybackConf] =
     io.circe.parser
       .decode[Seq[ClockPlaybackConf]](json)
       .left

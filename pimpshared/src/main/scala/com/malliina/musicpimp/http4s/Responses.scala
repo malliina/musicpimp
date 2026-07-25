@@ -8,10 +8,32 @@ import com.malliina.http4s.BasicService.noCache
 import com.malliina.musicpimp.auth.JsonInstances
 import com.malliina.musicpimp.json.MediaRanges
 import com.malliina.musicpimp.models.FailReason
-import io.circe.Encoder
-import org.http4s.{Challenge, EntityEncoder, Headers, MediaType, Request, Response, Status, Uri}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.{Accept, Location, `WWW-Authenticate`}
+import org.http4s.{Challenge, EntityEncoder, Headers, MediaType, Request, Response, Uri}
+
+object Responses:
+  def apiVersion(req: Request[?]): MediaType =
+    requestedResponseFormat(req).filter(_ != MediaType.text.html).getOrElse(MediaRanges.JSONv17)
+
+  def requestedResponseFormat(req: Request[?]): Option[MediaType] =
+    val rs = ranges(req.headers)
+    val qp = req.uri.query.params
+    val jsonByQuery = qp.get("f").contains("json")
+    if jsonByQuery then Some(MediaRanges.latest)
+    else if rs.exists(_.satisfies(MediaType.text.html)) then Option(MediaType.text.html)
+    else if rs.exists(_.satisfies(MediaRanges.anyJson)) then Option(MediaRanges.latest)
+    else if rs.exists(_.satisfies(MediaRanges.JSONv17)) then Option(MediaRanges.JSONv17)
+    else if rs.exists(r =>
+        r.satisfies(MediaRanges.JSONv18) || r.satisfies(MediaType.application.json)
+      )
+    then Option(MediaRanges.JSONv18)
+    else None
+
+  private def ranges(headers: Headers) = headers
+    .get[Accept]
+    .map(_.values.map(_.mediaRange).toList)
+    .getOrElse(Nil)
 
 trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
   val genericMessage = "Something went wrong."
@@ -20,7 +42,8 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
 
   val JsonKey = "json"
 
-  def ok[A](a: A)(using EntityEncoder[F, A]) = Ok(a, noCache)
+  def ok[A](a: A)(using EntityEncoder[F, A]) = Ok.apply(a, noCache)
+  def accepted[A](a: A)(using EntityEncoder[F, A]) = Accepted(a, noCache)
 
   def seeOther(uri: Uri): F[Response[F]] =
     SeeOther(Location(uri)).map(_.putHeaders(noCache))
@@ -47,10 +70,15 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
 
   def notAcceptable(message: String): F[Response[F]] = NotAcceptable(FailReason(message))
 
-  def unauthorizedNoCache[T: Encoder](errors: T): F[Response[F]] =
+  def noContent = NoContent
+
+  def unauthorizedNoCacheWithErrors(errors: Errors): F[Response[F]] =
+    unauthorizedNoCache(FailReason(errors.message.message))
+
+  def unauthorizedNoCache(reason: FailReason): F[Response[F]] =
     Unauthorized(
       `WWW-Authenticate`(NonEmptyList.of(Challenge("Bearer", "Log in"))),
-      errors,
+      reason,
       noCache
     )
 
@@ -62,21 +90,5 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
     else if mediaType.exists(_.subType.contains(JsonKey)) then json
     else notAcceptable("Please use the 'Accept' header.")
 
-  private def requestedResponseFormat(req: Request[?]): Option[MediaType] =
-    val rs = ranges(req.headers)
-    val qp = req.uri.query.params
-    val jsonByQuery = qp.get("f").contains("json")
-    if jsonByQuery then Some(MediaRanges.latest)
-    else if rs.exists(_.satisfies(MediaType.text.html)) then Option(MediaType.text.html)
-    else if rs.exists(_.satisfies(MediaRanges.anyJson)) then Option(MediaRanges.latest)
-    else if rs.exists(_.satisfies(MediaRanges.JSONv17)) then Option(MediaRanges.JSONv17)
-    else if rs.exists(r =>
-        r.satisfies(MediaRanges.JSONv18) || r.satisfies(MediaType.application.json)
-      )
-    then Option(MediaRanges.JSONv18)
-    else None
-
-  private def ranges(headers: Headers) = headers
-    .get[Accept]
-    .map(_.values.map(_.mediaRange).toList)
-    .getOrElse(Nil)
+  protected def requestedResponseFormat(req: Request[?]): Option[MediaType] =
+    Responses.requestedResponseFormat(req)

@@ -6,12 +6,11 @@ import com.malliina.pimpcloud.json.JsonStrings.{Body, Cmd, PushValue}
 import com.malliina.pimpcloud.{AppConf, CloudComponents, NoPusher}
 import com.malliina.play.auth.AuthFailure
 import com.malliina.play.http.AuthedRequest
-import com.malliina.values.Username
 import com.malliina.push.apns.{APNSMessage, APNSToken}
 import com.malliina.values.Literals.user
 import controllers.pimpcloud.PimpAuth
 import play.api.ApplicationLoader.Context
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.Json
 import play.api.mvc.*
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*

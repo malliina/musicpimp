@@ -1,8 +1,12 @@
 package com.malliina.audio.run
 
+import cats.effect.IO
+import cats.effect.std.Dispatcher
+import cats.effect.unsafe.implicits.global
+
 import java.nio.file.{Files, Path, Paths}
 import org.apache.pekko.actor.ActorSystem
-import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
+import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
 
 import javax.sound.sampled.AudioSystem
@@ -32,14 +36,13 @@ object Main:
       path <- maybePath
       size <- maybeStorage
     yield Conf(path, size)
-    maybeConf.fold(println, play)
+    val (d, finalizer) = Dispatcher.parallel[IO].allocated.unsafeRunSync()
+    maybeConf.fold(println, c => play(c, d))
 
-  def play(conf: Conf): Unit =
-    implicit val as = ActorSystem("run")
+  def play(conf: Conf, d: Dispatcher[IO]): IO[Unit] =
     val size = conf.size
     println(s"Playing with buffer size: $size.")
-    val player = new FileJavaSoundPlayer(conf.path, conf.size)
-    player.play()
+    BasicJavaSoundPlayer.fromFile[IO](conf.path, d, conf.size).map(_.play())
 
   def parseSize(input: String): Either[ErrorMessage, StorageSize] =
     try Right(input.toInt.bytes)

@@ -5,7 +5,10 @@ import cats.effect.Concurrent
 import com.malliina.http.Errors
 import com.malliina.http4s.FeedbackSupport
 import com.malliina.musicpimp.html.UriSyntax
+import com.malliina.musicpimp.json.MediaRanges
 import com.malliina.play.tags.TagPage
+import com.malliina.util.AppLogger
+import io.circe.Encoder
 import org.http4s.*
 import org.http4s.headers.`Content-Type`
 import scalatags.generic.Frag
@@ -38,4 +41,26 @@ trait AppImplicits[F[_]: Concurrent]
   with MyScalatagsInstances
   with PimpDecoders[F]
   with FeedbackSupport[F]
-  with UriSyntax
+  with UriSyntax:
+  private val log = AppLogger(getClass)
+
+  def respond[T: Encoder](req: Request[?])(html: => TagPage, json: => T) =
+    pimpResult(req)(ok(html), ok(json))
+
+  def response(
+    req: Request[?]
+  )(html: => F[Response[F]], json17: => F[Response[F]], latest: => F[Response[F]]): F[Response[F]] =
+    requestedResponseFormat(req)
+      .map:
+        case MediaType.text.html => html
+        case MediaRanges.JSONv17 => json17
+        case MediaRanges.JSONv18 => latest
+        case other =>
+          val msg = s"Unknown response format: '$other'."
+          log.warn(msg)
+          notAcceptable(msg)
+      .getOrElse:
+        val msg =
+          "No requested response format, unacceptable. Please provide a value in the 'Accept' header."
+        log.warn(msg)
+        notAcceptable(msg)

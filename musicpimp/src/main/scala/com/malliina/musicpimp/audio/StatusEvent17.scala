@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import com.malliina.audio.AudioImplicits.*
+import com.malliina.audio.PlaylistIndex
 import com.malliina.musicpimp.js.FrontStrings.EventKey
 import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.models.TrackID
@@ -20,7 +21,7 @@ case class StatusEvent17(
   gain: Float,
   mute: Boolean,
   playlist: Seq[FullTrack],
-  index: Int
+  index: PlaylistIndex
 )
 
 object StatusEvent17:

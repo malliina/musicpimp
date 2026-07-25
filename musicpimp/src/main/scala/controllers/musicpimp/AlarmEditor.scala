@@ -16,8 +16,16 @@ import play.api.mvc.Result
 object AlarmEditor:
   private val log = Logger(getClass)
 
-class AlarmEditor(
-  val schedules: ScheduledPlaybackService,
+  def parseDaysEnabledAndJob(
+    days: Seq[String],
+    enabledOpt: Option[String]
+  ): (Seq[WeekDay], Boolean) =
+    val weekDays = days.flatMap(WeekDay.withShortName)
+    val enabled = enabledOpt.contains(SchedulerStrings.On)
+    (weekDays, enabled)
+
+class AlarmEditor[F[_]](
+  val schedules: ScheduledPlaybackService[F],
   tags: PimpHtml,
   auth: AuthDeps,
   messages: Messages
@@ -35,7 +43,7 @@ class AlarmEditor(
       Enabled -> optional(text)
     )((id, hours, minutes, ds, _, trackID, enabledOpt) =>
       // converts submitted form data to a case class
-      val (days, enabled) = parseDaysEnabledAndJob(ds, enabledOpt)
+      val (days, enabled) = AlarmEditor.parseDaysEnabledAndJob(ds, enabledOpt)
       val s = ClockSchedule(hours, minutes, days)
       ClockPlaybackConf(id, TrackID(trackID), s, enabled)
     )(ap =>
@@ -57,37 +65,29 @@ class AlarmEditor(
     )
   )
 
-  private def parseDaysEnabledAndJob(
-    days: Seq[String],
-    enabledOpt: Option[String]
-  ): (Seq[WeekDay], Boolean) =
-    val weekDays = days.flatMap(WeekDay.withShortName)
-    val enabled = enabledOpt.contains(SchedulerStrings.On)
-    (weekDays, enabled)
+//  def newAlarm = clockAction(clockForm)
 
-  def newAlarm = clockAction(clockForm)
+//  def editAlarm(id: String, fb: Option[String] = None) =
+//    schedules.find(id) map { clock =>
+//      val form = clockForm.fill(clock)
+//      clockAction(form, UserFeedbackUtil.formed(form))
+//    } getOrElse
+//      pimpAction(notFound(s"Unknown ID '$id'."))
 
-  def editAlarm(id: String, fb: Option[String] = None) =
-    schedules.find(id) map { clock =>
-      val form = clockForm.fill(clock)
-      clockAction(form, UserFeedbackUtil.formed(form))
-    } getOrElse
-      pimpAction(notFound(s"Unknown ID '$id'."))
+//  private def clockAction(form: Form[ClockPlaybackConf], feedback: Option[UserFeedback] = None) =
+//    pimpAction(req => Ok(tags.alarmEditor(AlarmContent(form, feedback, req.user, messages))))
 
-  private def clockAction(form: Form[ClockPlaybackConf], feedback: Option[UserFeedback] = None) =
-    pimpAction(req => Ok(tags.alarmEditor(AlarmContent(form, feedback, req.user, messages))))
-
-  def newClock = formSubmission(clockForm)(
-    (req, err) => tags.alarmEditor(AlarmContent(err, None, req.user, messages)),
-    (req, form, ap) =>
-      schedules.save(ap)
-      log.info(s"User '${req.user}' from '${req.remoteAddress}' saved alarm '$ap'.")
-      Ok(
-        tags.alarmEditor(
-          AlarmContent(form, Option(UserFeedback.success("Saved.")), req.user, messages)
-        )
-      )
-  )
+//  def newClock = formSubmission(clockForm)(
+//    (req, err) => tags.alarmEditor(AlarmContent(err, None, req.user, messages)),
+//    (req, form, ap) =>
+//      schedules.save(ap)
+//      log.info(s"User '${req.user}' from '${req.remoteAddress}' saved alarm '$ap'.")
+//      Ok(
+//        tags.alarmEditor(
+//          AlarmContent(form, Option(UserFeedback.success("Saved.")), req.user, messages)
+//        )
+//      )
+//  )
 
   private def formSubmission[T, C: Writeable](
     form: Form[T]

@@ -27,9 +27,9 @@ import java.nio.file.Path
 
 case class RemoveToken(token: String, platform: String)
 
-class Alarms(
+class Alarms[F[_]](
   library: FileLibrary,
-  handler: JsonHandler,
+  handler: JsonHandler[F],
   tags: PimpHtml,
   auth: AuthDeps,
   messages: Messages
@@ -43,15 +43,6 @@ class Alarms(
       "platform" -> nonEmptyText
     )(RemoveToken.apply)(t => Option((t.token, t.platform)))
   )
-
-  def alarms = pimpActionAsyncIO: request =>
-    schedules
-      .clockList(TrackJson.host(request))
-      .map: fcps =>
-        default.respond(request)(
-          html = tags.alarms(fcps, request.user),
-          json = fcps
-        )
 
   def tokens = pimpAction: request =>
     def ts =
