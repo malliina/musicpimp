@@ -71,7 +71,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
       send(Playback.volume(ui.value))
     volumeElem.slider(volumeOptions)
 
-  private def toggleMute() =
+  private def toggleMute(): Unit =
     isMute = !isMute
     send(ValuedCommand.mute(isMute))
 
@@ -95,7 +95,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
   def updateVolume(vol: Volume): Unit =
     volumeElem.slider(OptionKey, Value, vol.volume)
 
-  private def updateTimeAndDuration(position: Duration, duration: Duration) =
+  private def updateTimeAndDuration(position: Duration, duration: Duration): Unit =
     updateDuration(duration)
     updateTime(position)
 
@@ -103,7 +103,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
     posElem.html(format(position))
     sliderElem.slider(OptionKey, Value, position.toSeconds)
 
-  private def updateDuration(duration: Duration) =
+  private def updateDuration(duration: Duration): Unit =
     durationElem.html(format(duration))
     sliderElem.slider(OptionKey, Max, duration.toSeconds)
 
@@ -133,7 +133,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
       elem(rowId).onClick(_ => send(Playback.skip(index)))
     }
 
-  def toRow(track: TrackMeta, rowId: String) =
+  private def toRow(track: TrackMeta, rowId: String) =
     li(`class` := SongClass)(
       a(href := "#", id := rowId)(track.title),
       " ",

@@ -759,9 +759,10 @@ class Service[F[_]: { Async, Files }](
             badRequest("Not JSON.")
           ,
           json =>
-            F.delay(messageHandler.onJson(JsonRequest[F](user.user, req, json, None)))
+            messageHandler
+              .onJson(JsonRequest[F](user.user, req, json, None))
               .flatMap: _ =>
-                Accepted(SimpleMessage("Thanks."))
+                accepted(SimpleMessage("Thanks."))
               .handleErrorWith:
                 case iae: IllegalArgumentException =>
                   log.error("Illegal argument", iae)

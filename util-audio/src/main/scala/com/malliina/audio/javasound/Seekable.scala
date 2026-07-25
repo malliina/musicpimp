@@ -5,7 +5,7 @@ import com.malliina.audio.meta.OneShotStream
 import com.malliina.storage.{StorageLong, StorageSize}
 import org.slf4j.LoggerFactory
 
-import scala.concurrent.duration.{Duration, DurationDouble}
+import scala.concurrent.duration.{Duration, DurationDouble, FiniteDuration}
 
 trait Seekable:
   // Helper variable for seeking, needed because java sound getters return the time since the line was opened,
@@ -13,7 +13,8 @@ trait Seekable:
   var startedFromMicros = 0L
 
   def media: OneShotStream
-  def duration = media.duration
+
+  def duration: FiniteDuration = media.duration
 
   /** Inaccurate. VBR etc.
     */

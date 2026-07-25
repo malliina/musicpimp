@@ -55,7 +55,7 @@ trait JavaSoundPlayerBase[F[_]] extends RichPlayer[F] with Seekable:
   private def framesToMicroseconds(frames: Long): Long =
     (frames / audioLine.getFormat.getSampleRate.toLong) * 1000000L
 
-  def position: Duration = (startedFromMicros + microsSinceLineOpened).micros
+  def position: FiniteDuration = (startedFromMicros + microsSinceLineOpened).micros
 
   def canAdjustVolume = hasVolumeControl || hasGainControl
 

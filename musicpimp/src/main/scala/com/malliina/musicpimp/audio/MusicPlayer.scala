@@ -12,10 +12,11 @@ import com.malliina.musicpimp.models.Volume
 import com.malliina.util.AppLogger
 import fs2.concurrent.Topic
 import fs2.Stream
+
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 import javax.sound.sampled.LineUnavailableException
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 
 object MusicPlayer:
   private val log = AppLogger(getClass)
@@ -57,10 +58,17 @@ class MusicPlayer[F[_]: Async](
     .evalMap: e =>
       val state = PimpPlayer.playState(e)
       send(PlayStateChangedMessage(state))
-  private val timeUpdates = timeUpdatesTopic
-    .subscribe(100)
+//  private val timeUpdates = timeUpdatesTopic
+//    .subscribe(100)
+//    .evalMap: time =>
+//      send(TimeUpdatedMessage(time.position))
+  private val timeUpdates: Stream[F, Unit] = Stream
+    .awakeEvery[F](500.millis)
+    .evalMapFilter(_ => F.delay(current.map(_.position)))
+    .changesBy(_.toMillis)
     .evalMap: time =>
-      send(TimeUpdatedMessage(time.position))
+      send(TimeUpdatedMessage(time))
+
   val events: Stream[F, Unit] = stateUpdates
     .merge(timeUpdates)
     .handleErrorWith(t => Stream.eval(F.delay(log.error("Music player failed.", t))))
@@ -102,8 +110,8 @@ class MusicPlayer[F[_]: Async](
     *   during track init
     */
   private def initTrack(track: PlayableTrack): F[Unit] =
-    val initialVolume = current.flatMap(_.volumeCarefully) getOrElse defaultVolume
-    val initialMute = current.flatMap(_.muteCarefully) getOrElse false
+    val initialVolume = current.flatMap(_.volumeCarefully).getOrElse(defaultVolume)
+    val initialMute = current.flatMap(_.muteCarefully).getOrElse(false)
     initPlayer(track, initialVolume, initialMute).flatMap: np =>
       val oldPlayer = trackPlayer.getAndSet(Option(np))
       oldPlayer.foreach: old =>
@@ -114,7 +122,7 @@ class MusicPlayer[F[_]: Async](
   def play(): F[Unit] =
     val mustReinitializePlayer = current.exists(_.state == PlayerStates.Closed)
     if mustReinitializePlayer then current.map(_.track).foreach(initTrack)
-    current.map(c => F.delay(c.play())).getOrElse(F.unit)
+    current.map(c => c.play()).getOrElse(F.unit)
 
   private def initPlayer(
     track: PlayableTrack,
@@ -155,8 +163,6 @@ class MusicPlayer[F[_]: Async](
 
   def close(): Unit =
     current.foreach(_.close())
-//    eventHub.shutdown()
-//    trackHistoryHub.shutdown()
     playlist.close()
 
   def position =

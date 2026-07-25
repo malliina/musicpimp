@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.http4s
 
 import cats.effect.Async
-import com.malliina.musicpimp.audio.{JsonHandlerBase, PingEvent, ServerMessage, ServerPlayer, TimeUpdatedMessage, TrackJson, TrackMeta}
+import com.malliina.musicpimp.audio.{JsonHandlerBase, PingEvent, ServerMessage, ServerPlayer, TimeUpdatedMessage, TrackJson, TrackMeta, WelcomeMessage}
 import com.malliina.musicpimp.auth.AuthedRequest
 import com.malliina.util.AppLogger
 import fs2.Stream
@@ -38,10 +38,14 @@ class PlayerSocketBuilder[F[_]: Async](player: ServerPlayer[F], messageHandler: 
     given w: Encoder[TrackMeta] = TrackJson.writer(host)
     var previousPos = -1L
     Topic[F, Json].flatMap: target =>
+      def welcome = Stream
+        .emit[F, Json](messageWriter(WelcomeMessage))
+        .delayBy(100.millis)
       val toClient = pings
         .mergeHaltBoth(healthChecks)
         .mergeHaltBoth(target.subscribe(100))
         .mergeHaltBoth(player.allEvents.map(msg => messageWriter(msg)))
+        .mergeHaltL(welcome)
         .mergeHaltBoth(ticks.evalMapFilter: _ =>
           val pos = player.position
           val posSeconds = pos.toSeconds

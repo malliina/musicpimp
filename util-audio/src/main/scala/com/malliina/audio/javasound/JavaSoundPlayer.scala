@@ -60,27 +60,29 @@ class JavaSoundPlayer[F[_]: Async](
   with JavaSoundPlayerBase[F]
   with StateAwarePlayer[F]
   with AutoCloseable:
-  val F = Concurrent[F]
+  val F = Async[F]
   val bufferSize = readWriteBufferSize.toBytes.toInt
   protected var stream: InputStream = media.stream
   tryMarkStream()
 
-  /** I use a Subject because the audio line might change and it seems easier then to keep one
-    * subject instead of reacting to each audio line change in each observable (in addition to its
-    * events).
-    */
-  private val pollingSource: fs2.Stream[F, FiniteDuration] = fs2.Stream.awakeEvery[F](500.millis)
+//  /** I use a Subject because the audio line might change and it seems easier then to keep one
+//    * subject instead of reacting to each audio line change in each observable (in addition to its
+//    * events).
+//    */
+//  private val pollingSource: fs2.Stream[F, FiniteDuration] = fs2.Stream.awakeEvery[F](500.millis)
   private var lineData: LineData[F] = newLine(stream, states, d)
   private val active = new AtomicBoolean(false)
-  private var playThread: Option[Future[Unit]] = None
+//  private var playThread: Option[Future[Unit]] = None
 
-  private var latestPos: Duration = position
-  // TODO subscribe
-  val poller = pollingSource.evalMap: _ =>
-    if latestPos != position then
-      latestPos = position
-      timeUpdatesTopic.publish1(TimeUpdated(position)).void
-    else F.unit
+//  private var latestPos: Duration = position
+//  // TODO subscribe
+//  val poller = pollingSource.evalMap: _ =>
+//    if latestPos != position then
+//      latestPos = position
+//      timeUpdatesTopic.publish1(TimeUpdated(position)).void
+//    else F.unit
+
+  private var cancelToken: () => Future[Unit] = () => Future.successful(())
 
   /** A stream of time update events. Emits the current playback position, then emits at least one
     * event per second provided that the playback position changes. If there is no progress, for
@@ -89,8 +91,8 @@ class JavaSoundPlayer[F[_]: Async](
     * @return
     *   time update events
     */
-  def timeUpdates: fs2.Stream[F, TimeUpdated] =
-    fs2.Stream(TimeUpdated(position)) ++ timeUpdatesTopic.subscribe(100)
+//  def timeUpdates: fs2.Stream[F, TimeUpdated] =
+//    fs2.Stream(TimeUpdated(position)) ++ timeUpdatesTopic.subscribe(100)
 
   def isActive = active.get()
 
@@ -103,7 +105,7 @@ class JavaSoundPlayer[F[_]: Async](
 
   def controlDescriptions = audioLine.getControls.map(_.toString)
 
-  def newLine(
+  private def newLine(
     source: InputStream,
     sink: Topic[F, PlayerStates.PlayerState],
     d: Dispatcher[F]
@@ -113,8 +115,8 @@ class JavaSoundPlayer[F[_]: Async](
   def supportsSeek = stream.markSupported()
 
   def play(): F[Unit] =
-    d.unsafeRunAndForget(playTask())
-    F.unit
+    F.delay:
+      cancelToken = d.unsafeRunCancelable(playTask())
 
   private def playTask(): F[Unit] =
     lineData.state match
@@ -133,6 +135,7 @@ class JavaSoundPlayer[F[_]: Async](
   def stop(): F[Unit] = Sync[F].delay:
     active.set(false)
     audioLine.stop()
+    cancelToken()
 
   /** Regardless of whether the user seeks backwards or forwards, here is what we do:
     *
@@ -173,7 +176,7 @@ class JavaSoundPlayer[F[_]: Async](
   def close(): Unit =
     closeLine()
 
-  def onPlaybackException(e: Exception): F[Unit] = onEndOfMedia()
+  private def onPlaybackException(e: Exception): F[Unit] = onEndOfMedia()
 
   def reset(): Unit =
     closeLine()

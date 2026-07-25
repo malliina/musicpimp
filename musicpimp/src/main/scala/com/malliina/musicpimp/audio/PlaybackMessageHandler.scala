@@ -36,7 +36,7 @@ class PlaybackMessageHandler[F[_]: Sync](
         val json = src.apiVersion match
           case MediaRanges.JSONv17 => player.status17(src.host).map(_.asJson)
           case _                   => player.status(src.host).map(_.asJson)
-        json.map: s =>
+        json.flatMap: s =>
           src.target.send(JsonMessages.withStatus(s))
       case ResumeMsg =>
         player.play()

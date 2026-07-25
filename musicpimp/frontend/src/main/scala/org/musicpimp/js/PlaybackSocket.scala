@@ -32,7 +32,7 @@ abstract class PlaybackSocket extends SocketJS(Playback.SocketUrl) with Playback
       .map: error =>
         onJsonFailure(error.message)
 
-  def handleMessage(message: ServerMessage): Unit =
+  private def handleMessage(message: ServerMessage): Unit =
     message match
       case WelcomeMessage                    => send(StatusMsg)
       case StatusMessage(status)             => onStatus(status)

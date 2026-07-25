@@ -33,7 +33,7 @@ class TrackPlayer[F[_]: Temporal](
   def state = player.state
   def volumeCarefully = Try(volume).toOption.orElse(player.cachedVolume.map(Volume.apply))
   def muteCarefully = Try(player.mute).toOption.orElse(player.cachedMute)
-  def play(): Unit = player.play()
+  def play(): F[Unit] = player.play()
 
   def stop(): F[Unit] =
     player.stop() >> send(PlayStateChangedMessage(Stopped))

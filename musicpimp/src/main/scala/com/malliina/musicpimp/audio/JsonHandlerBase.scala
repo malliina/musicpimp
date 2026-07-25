@@ -18,7 +18,7 @@ object JsonHandlerBase:
 trait JsonHandlerBase[F[_]: Sync]:
   def fulfillMessage(message: PlayerMessage, request: RemoteInfo[F]): F[Unit]
 
-  def onJson(req: JsonRequest[F]): Unit =
+  def onJson(req: JsonRequest[F]): F[Unit] =
     // Safe to use Target.noop because this method is called form POSTing which is write-only (in our case)
     val remoteInfo =
       RemoteInfo(
