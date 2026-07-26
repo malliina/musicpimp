@@ -274,11 +274,11 @@ class CloudSocket[F[_]: Async](
               log.error(msg, e)
               sendFailure(request, FailReason(msg))
       case AlarmEdit(payload) =>
-        alarmHandler.handleCommand(payload)
-        sendSuccess(request, Json.obj())
+        alarmHandler.handleCommand(payload) >>
+          sendSuccess(request, Json.obj())
       case AlarmAdd(payload) =>
-        alarmHandler.handleCommand(payload)
-        sendSuccess(request, Json.obj())
+        alarmHandler.handleCommand(payload) >>
+          sendSuccess(request, Json.obj())
       case Authenticate(user, pass) =>
         val authentication = deps.userManager
           .authenticate(user, pass)
@@ -317,7 +317,8 @@ class CloudSocket[F[_]: Async](
               _ => log.info("Beaming completed successfully.")
             )
           .handleError(t => log.warn(s"Beaming failed.", t))
-        sendLogged(CloudResponse.ack(request))
+          .flatMap(_ => sendLogged(CloudResponse.ack(request)))
+
       case _ =>
         log.warn(s"Unknown request: '$message'.")
         sendFailure(request, FailReason(s"Unknown message in request '$request'."))
