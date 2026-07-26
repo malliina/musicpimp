@@ -34,8 +34,8 @@ trait CloudMessageParser:
       meta <- DataRequest.fromJson(u, b)
     yield meta
 
-    request flatMap { req =>
-      val message: Decoder.Result[PimpMessage] = cmd flatMap {
+    request.flatMap: req =>
+      val message: Decoder.Result[PimpMessage] = cmd.flatMap:
         case VersionKey      => Right(GetVersion)
         case TrackKey        => body.as[RangedTrack] orElse body.as[GetTrack]
         case Cancel          => Right(CancelStream(req))
@@ -59,9 +59,7 @@ trait CloudMessageParser:
         case Recent     => readMeta.map(GetRecent.apply)
         case Popular    => readMeta.map(GetPopular.apply)
         case other      => Left(DecodingFailure(s"Unknown JSON command: '$other' in '$json'.", Nil))
-      }
       message.map(msg => CloudRequest(msg, req))
-    }
 
   def parseEvent(json: Json): Decoder.Result[PimpMessage] =
     val cursor = json.hcursor
