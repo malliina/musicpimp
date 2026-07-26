@@ -13,13 +13,16 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
   val Checked = "checked"
   val CheckedSelector = ":checked"
   // element IDs in HTML
-  val everyDay = WeekDay.EveryDay.map(_.shortName)
-  val trackIdElem = elemAs[HTMLInputElement](TrackId)
-  val everyElem = elemAs[HTMLInputElement](Every)
+  private val everyDay = WeekDay.EveryDay.map(_.shortName)
+  private val trackIdElem = elemAs[HTMLInputElement](TrackId)
+  private val everyElem = elemAs[HTMLInputElement](Every)
 
   everyElem.onClick(_ => onEveryDayClicked())
-  everyDay.map(elem) foreach { e => e.onClick(_ => updateEveryDayCheckbox()) }
-  val autoOptionsFuture = AutoOptions.fromAsync(
+  everyDay
+    .map(elem)
+    .foreach: e =>
+      e.onClick(_ => updateEveryDayCheckbox())
+  private val autoOptionsFuture = AutoOptions.fromAsync(
     req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
     item => trackIdElem.value = item.id
   )
@@ -28,15 +31,15 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
   ui.autocomplete(autoOptionsFuture)
   updateEveryDayCheckbox()
 
-  def onEveryDayClicked(): Unit =
+  private def onEveryDayClicked(): Unit =
     val newValue = everyElem.checked
     setAll(everyDay, newValue)
 
-  def updateEveryDayCheckbox(): Unit =
+  private def updateEveryDayCheckbox(): Unit =
     val isEveryDayClicked = everyDay.forall(isChecked)
     setAll(Seq(Every), isEveryDayClicked)
 
-  def searchFuture[T: Decoder](term: Request): Future[Seq[T]] =
+  private def searchFuture[T: Decoder](term: Request): Future[Seq[T]] =
     val p = Promise[Seq[T]]()
     search[T](term): ts =>
       p.success(ts)
@@ -50,7 +53,7 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
       response => io.circe.parser.decode[Seq[T]](response.body).foreach(onResults)
     )
 
-  def isChecked(id: String) = elemAs[HTMLInputElement](id).checked
+  private def isChecked(id: String) = elemAs[HTMLInputElement](id).checked
 
-  def setAll(ids: Seq[String], value: Boolean): Unit =
-    ids.foreach(id => elemAs[HTMLInputElement](id).checked = true)
+  private def setAll(ids: Seq[String], value: Boolean): Unit =
+    ids.foreach(id => elemAs[HTMLInputElement](id).checked = value)

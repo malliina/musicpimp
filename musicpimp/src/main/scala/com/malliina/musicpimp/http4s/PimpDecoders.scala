@@ -78,7 +78,7 @@ trait FormReaders:
         .flatMap: i =>
           if i >= 0 && i < 60 then Right(i) else Left(Errors.single(s"Out of range: '$i'."))
       days <- form
-        .read[Seq[NonBlank]](SchedulerStrings.Days)
+        .read[Seq[NonBlank]](s"${SchedulerStrings.Days}[]")
         .filterOrElse(_.nonEmpty, Errors.single("Must select at least one day."))
 //      track <- form.read[NonBlank](TrackKey)
       trackId <- form.read[TrackID](SchedulerStrings.TrackId)

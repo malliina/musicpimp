@@ -20,7 +20,7 @@ class TokenService[F[_]: Sync](client: CloudPushClient[F]):
   val gcm = new GCMBuilder()
   val adm = new ADMBuilder()
 
-  def sendNotifications(): Unit =
+  def sendNotifications(): F[Unit] =
     val apns = APNSDevices.get().map(apnsClient.buildRequest)
     val toasts = PushUrls.get().map(mpns.buildRequest)
     val gcms = GoogleDevices.get().map(gcm.buildRequest)
@@ -28,7 +28,8 @@ class TokenService[F[_]: Sync](client: CloudPushClient[F]):
     val task = PushTask(apns, gcms, adms, toasts, Nil)
     val messages = apns ++ toasts ++ gcms ++ adms
     if messages.isEmpty then
-      log.info(s"No push notification URLs are active, so no push notifications were sent.")
+      Sync[F].delay:
+        log.info(s"No push notification URLs are active, so no push notifications were sent.")
     else
       client
         .push(task)
@@ -38,7 +39,7 @@ class TokenService[F[_]: Sync](client: CloudPushClient[F]):
         .handleError: t =>
           log.warn(s"Unable to send all notifications.", t)
 
-  def removeUnregistered(rs: Seq[APNSHttpResult]): Unit =
+  private def removeUnregistered(rs: Seq[APNSHttpResult]): Unit =
     val removable = rs.filter(_.error.contains(Unregistered)).map(_.token)
     APNSDevices
       .removeAll(removable)

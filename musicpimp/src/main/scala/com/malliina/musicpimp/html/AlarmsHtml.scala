@@ -54,7 +54,7 @@ object AlarmsHtml extends HtmlSyntax:
       fullRow(a(href := reverse.alarms.editor)("Add alarm"))
     )
 
-  def alarmRow(ap: FullClockPlayback) =
+  private def alarmRow(ap: FullClockPlayback) =
     val (enabledText, enabledAttr) =
       if ap.enabled then ("Yes", empty)
       else ("No", `class` := "danger")
@@ -64,7 +64,7 @@ object AlarmsHtml extends HtmlSyntax:
       td(`class` := "table-button")(alarmActions(ap.id.getOrElse("nonexistent")))
     )
 
-  def alarmActions(id: String) =
+  private def alarmActions(id: String) =
     divClass(btn.group)(
       a(href := reverse.alarms.edit(id), `class` := s"${btn.secondary} ${btn.sm}")(
         iconic("edit"),
@@ -84,7 +84,7 @@ object AlarmsHtml extends HtmlSyntax:
       )
     )
 
-  def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
+  private def jsListElem(clazz: String, dataId: String, glyph: String, linkText: String) =
     a(href := "#", `class` := names(Seq("dropdown-item", clazz)), PimpHtml.dataIdAttr := dataId)(
       iconic(glyph),
       s" $linkText"
@@ -126,10 +126,10 @@ object AlarmsHtml extends HtmlSyntax:
       )
     )
 
-  def saveButton(buttonText: String = "Save") =
+  private def saveButton(buttonText: String = "Save") =
     divClass(FormGroup)(submitButton(`class` := btn.primary)(buttonText))
 
-  def weekdayCheckboxes(field: InField, checked: Seq[WeekDay]) =
+  private def weekdayCheckboxes(field: InField, checked: Seq[WeekDay]) =
     val errorClass = if field.hasErrors then s" $HasError" else ""
     divClass(s"$FormGroup$errorClass")(
       labelFor(field.id)("Days"),
@@ -141,7 +141,7 @@ object AlarmsHtml extends HtmlSyntax:
       )
     )
 
-  def dayCheckbox(field: InField, weekDay: WeekDay, isChecked: Boolean) =
+  private def dayCheckbox(field: InField, weekDay: WeekDay, isChecked: Boolean) =
     checkField(
       field.arrayName,
       field.value.orElse(Option(weekDay.shortName)),
@@ -150,13 +150,18 @@ object AlarmsHtml extends HtmlSyntax:
       weekDay.shortName
     )
 
-  def enabledCheck(field: InField, labelText: String) =
+  private def enabledCheck(field: InField, labelText: String) =
     formCheckField(field, field.value.contains(SchedulerStrings.On), labelText, "enabled-check")
 
-  def formCheckField(field: InField, isChecked: Boolean, labelText: String, checkId: String) =
+  private def formCheckField(
+    field: InField,
+    isChecked: Boolean,
+    labelText: String,
+    checkId: String
+  ) =
     checkField(field.name, field.value, isChecked, labelText, checkId)
 
-  def checkField(
+  private def checkField(
     checkName: String,
     checkValue: Option[String],
     isChecked: Boolean,
@@ -177,7 +182,7 @@ object AlarmsHtml extends HtmlSyntax:
       label(`class` := "form-check-label", `for` := checkId)(labelText)
     )
 
-  def numberTextIn(field: InField, label: String, placeholderValue: String) =
+  private def numberTextIn(field: InField, label: String, placeholderValue: String) =
     formTextIn(
       field,
       label,
@@ -186,7 +191,7 @@ object AlarmsHtml extends HtmlSyntax:
       inputWidth = col.sm.two
     )
 
-  def formTextIn(
+  private def formTextIn(
     field: InField,
     labelText: String,
     placeholder: Option[String] = None,
@@ -209,7 +214,7 @@ object AlarmsHtml extends HtmlSyntax:
       InField.helpSpan(field)
     )
 
-  def inputField(
+  private def inputField(
     field: InField,
     typeName: String,
     defaultValue: String,
@@ -226,4 +231,4 @@ object AlarmsHtml extends HtmlSyntax:
       more
     )
 
-  def names(ns: Seq[String]) = ns.mkString(" ")
+  private def names(ns: Seq[String]) = ns.mkString(" ")

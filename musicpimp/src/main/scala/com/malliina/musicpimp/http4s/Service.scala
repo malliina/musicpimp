@@ -376,16 +376,20 @@ class Service[F[_]: { Async, Files }](
         req
           .attemptAs[Json]
           .foldF(
-            err => badRequest("Not JSON."),
+            err =>
+              log.warn(s"Non-JSON body. $err")
+              badRequest("Not JSON.")
+            ,
             json =>
               val remoteAddress = Proxies2.realAddress(req.headers)
               log.debug(s"User '${user.username}' from '$remoteAddress' said '$json'.")
               alarmHandler
                 .handle(json)
-                .fold(
-                  errors => badRequest(s"Invalid JSON '$json'. Errors '$errors'."),
-                  _ => ok(SimpleMessage("Handled."))
-                )
+                .flatMap: _ =>
+                  ok(SimpleMessage("Handled."))
+                .handleErrorWith: t =>
+                  log.warn(s"Failed to handle alarms command.", t)
+                  badRequest("Failed to handle request.")
           )
     case req @ GET -> Root / "alarms" / "editor" =>
       authed(req): user =>
@@ -401,7 +405,10 @@ class Service[F[_]: { Async, Files }](
         req
           .attemptAs[ClockPlaybackConf]
           .foldF(
-            err => badRequestEntity(html.alarmEditor(AlarmContent(None, None, username))),
+            err =>
+              log.warn(s"Bad form input. $err")
+              badRequestEntity(html.alarmEditor(AlarmContent(None, None, username)))
+            ,
             form =>
               val task = F.delay:
                 schedules.save(form)

@@ -73,11 +73,11 @@ class Alarms[F[_]](
         .getOrElse:
           BadRequest
 
-  def handleJson = pimpParsedAction(circeJson): jsonRequest =>
-    val json = jsonRequest.body
-    val remoteAddress = Proxies.realAddress(jsonRequest)
-    log.debug(s"User '${jsonRequest.user}' from '$remoteAddress' said '$json'.")
-    onRequest(json)
+//  def handleJson = pimpParsedAction(circeJson): jsonRequest =>
+//    val json = jsonRequest.body
+//    val remoteAddress = Proxies.realAddress(jsonRequest)
+//    log.debug(s"User '${jsonRequest.user}' from '$remoteAddress' said '$json'.")
+//    onRequest(json)
 
   def tracks = pimpAction: request =>
     val tracks: Iterable[FullTrack] =
@@ -91,15 +91,15 @@ class Alarms[F[_]](
     val tracks: List[Path] = library.songPathsRecursive.toList
     Ok(tracks)
 
-  private def onRequest(json: Json): Result =
-    val jsResult = handler.handle(json)
-    simpleResult(json, jsResult)
-
-  private def simpleResult[T](json: Json, result: Decoder.Result[T]): Result =
-    result.fold(
-      errors => badRequest(s"Invalid JSON '$json'. Errors '$errors'."),
-      _ => Ok
-    )
+//  private def onRequest(json: Json): Result =
+//    val jsResult = handler.handle(json)
+//    simpleResult(json, jsResult)
+//
+//  private def simpleResult[T](json: Json, result: Decoder.Result[T]): Result =
+//    result.fold(
+//      errors => badRequest(s"Invalid JSON '$json'. Errors '$errors'."),
+//      _ => Ok
+//    )
 
 object Alarms:
   private val log = Logger(getClass)

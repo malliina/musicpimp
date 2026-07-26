@@ -38,7 +38,7 @@ class ScheduledPlaybackService[F[_]: Async](
 ):
   val F = Async[F]
 
-  private val s: IScheduler = Cron4jScheduler
+  private val s: IScheduler[F] = Cron4jScheduler[F](d)
   private val clockAPs = new PlaybackScheduler[F, ClockSchedule](s)
 
   private val persistFile = FileUtil.localPath("schedules2.json")
@@ -55,7 +55,7 @@ class ScheduledPlaybackService[F[_]: Async](
     s.start()
     readConf()
       .filter(_.enabled)
-      .foreach(conf => clockAPs.schedule(PlaybackJob(conf, player, lib, tokenService, d)))
+      .foreach(conf => clockAPs.schedule(PlaybackJob(conf, player, lib, tokenService)))
 
   def stop(): Unit =
     s.stop()
@@ -80,8 +80,8 @@ class ScheduledPlaybackService[F[_]: Async](
 
   def find(id: String) = readConf().find(_.id.contains(id))
 
-  def findJob(id: String) = find(id).map: conf =>
-    PlaybackJob(conf, player, lib, tokenService, d)
+  def findJob(id: String): Option[PlaybackJob[F]] = find(id).map: conf =>
+    PlaybackJob(conf, player, lib, tokenService)
 
   /** Saves or updates action point ´ap´.
     *
@@ -98,7 +98,7 @@ class ScheduledPlaybackService[F[_]: Async](
     val idOpt = withId.id
     idOpt.foreach(clockAPs.deschedule)
     save(readConf().filter(_.id != idOpt) ++ Seq(withId))
-    if withId.enabled then clockAPs.schedule(PlaybackJob(withId, player, lib, tokenService, d))
+    if withId.enabled then clockAPs.schedule(PlaybackJob(withId, player, lib, tokenService))
     log.debug(s"Saved scheduled playback: $ap")
 
   def remove(id: String): Unit =
