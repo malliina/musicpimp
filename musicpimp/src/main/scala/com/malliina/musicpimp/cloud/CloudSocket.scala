@@ -2,6 +2,7 @@ package com.malliina.musicpimp.cloud
 
 import cats.effect.Async
 import cats.effect.implicits.genTemporalOps_
+import cats.effect.implicits.genTemporalOps
 import cats.effect.kernel.Deferred
 import cats.effect.std.Dispatcher
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
@@ -110,11 +111,11 @@ class CloudSocket[F[_]: Async](
     CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
     HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)
   ):
-  val messageParser = CloudMessageParser
-  val httpProto = if uri.proto == "ws" then "http" else "https"
+  private val messageParser = CloudMessageParser
+  private val httpProto = if uri.proto == "ws" then "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
 //  val cloudHost = FullUrl("http", "10.0.0.2:9000", "")
-  val uploadHost = cloudHost
+  private val uploadHost = cloudHost
   val lib = deps.lib
   val uploader = ApacheTrackUploads(lib, uploadHost)
 //  val uploader = OkHttpTrackUploads(lib, cloudHost)
@@ -148,14 +149,14 @@ class CloudSocket[F[_]: Async](
       .flatMap: _ =>
         registrationPromise.complete(Left(TimeoutException(s"Timed out after $timeout.")))
     d.unsafeRunAndForget(timeoutTask)
-    super.connect()
+    super.connect().timeout(10.seconds)
 
   override def onMessage(json: Json): F[Unit] =
-    log.debug(s"Got message: '$json'.")
+    log.info(s"Got message: '$json'.")
     // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
     processRequest(json)
       .orElse(processEvent(json))
-      .fold(err => handleError(err, json).pure, identity)
+      .fold(err => handleError(err, json), identity)
       .handleErrorWith: e =>
         log.warn(s"Failed while handling JSON: '$json'.", e)
         json.hcursor
@@ -359,8 +360,8 @@ class CloudSocket[F[_]: Async](
         .recover:
           case t => log.error(s"Unable to respond to $request with payload '$response'.", t)
 
-  private def handleError(errors: DecodingFailure, json: Json): Unit =
-    log.warn(errorMessage(errors, json))
+  private def handleError(errors: DecodingFailure, json: Json): F[Unit] =
+    F.delay(log.warn(errorMessage(errors, json)))
 
   def errorMessage(errors: DecodingFailure, json: Json): String =
     s"JSON error: $errors. Message: $json"

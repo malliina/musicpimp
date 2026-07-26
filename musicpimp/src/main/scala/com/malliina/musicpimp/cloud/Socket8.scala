@@ -45,6 +45,7 @@ abstract class Socket8[F[_]: Async, T](
       websocket: WebSocket,
       headers: util.Map[String, util.List[String]]
     ): Unit =
+      log.info(s"Connected to $uri.")
       hasBeenConnected.set(true)
       d.unsafeRunSync(connectPromise.complete(None))
       Socket8.this.onConnect(websocket.getURI)
@@ -58,6 +59,7 @@ abstract class Socket8[F[_]: Async, T](
       clientCloseFrame: WebSocketFrame,
       closedByServer: Boolean
     ): Unit =
+      log.info(s"Disconnected from $uri.")
       if hasBeenConnected.get() then
         val uri = websocket.getURI
         val suffix = if closedByServer then " by the server" else ""
@@ -72,7 +74,7 @@ abstract class Socket8[F[_]: Async, T](
   socket.addListener(adapter)
 
   override def connect(): F[Unit] =
-    log.error(s"Attempting to connect to $uri")
+    log.info(s"Attempting to connect to $uri.")
     Try(socket.connectAsynchronously()) match
       case Success(_) =>
         getOrError(connectPromise)
@@ -88,8 +90,8 @@ abstract class Socket8[F[_]: Async, T](
   protected def stringify(message: T): String
   def onMessage(message: T): F[Unit] = F.unit
 
-  protected def onRawMessage(raw: String): Unit = parse(raw)
-    .map(onMessage)
+  private def onRawMessage(raw: String): Unit = parse(raw)
+    .map(msg => d.unsafeRunAndForget(onMessage(msg)))
     .getOrElse:
       log.warn(s"Unable to parse message: $raw")
 

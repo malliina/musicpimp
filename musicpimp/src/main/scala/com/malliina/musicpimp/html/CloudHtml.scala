@@ -37,7 +37,7 @@ object CloudHtml extends HtmlSyntax with CloudStrings:
       blockSubmitButton(id := ToggleButton)(title)
     )
 
-  def textInput(
+  private def textInput(
     inType: String,
     clazz: String,
     idAndName: String,

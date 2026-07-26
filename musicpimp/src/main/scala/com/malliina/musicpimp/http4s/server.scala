@@ -56,7 +56,7 @@ trait ServerResources:
     if opts.useTray then tray.installTray()
     val version = BuildInfo.version
     log.info(
-      s"Starting MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, indexing ${opts.indexer}"
+      s"Starting MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, indexing ${opts.indexer}, clouds ${opts.cloud}"
     )
 
   def appResources[F[+_]: { Async, Files, Parallel, Compression }](

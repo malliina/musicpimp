@@ -96,13 +96,14 @@ class Clouds[F[_]: Async](
 
   private val currentState: AtomicReference[CloudEvent] =
     new AtomicReference[CloudEvent](notConnected)
-  val connection: Stream[F, CloudEvent] = eventHub.subscribe(100)
+  def connection: Stream[F, CloudEvent] =
+    Stream.emit[F, CloudEvent](currentState.get()).merge(eventHub.subscribe(100))
 
   private def updateState(state: CloudEvent): F[Unit] =
     currentState.set(state)
     eventHub.publish1(state).void
 
-  def emitLatest(): F[Unit] = eventHub.publish1(currentState.get()).void
+//  def emitLatest(): F[Unit] = eventHub.publish1(currentState.get()).void
   def client: CloudSocket[F] = clientRef.get()
   def cloudHost = client.cloudHost
   def uri = client.uri
@@ -135,28 +136,55 @@ class Clouds[F[_]: Async](
     else F.fromTry(client.sendMessage(CommonMessages.ping))
 
   def connect(id: Option[CloudID]): F[CloudID] = reg:
-    updateState(Connecting).flatMap: _ =>
-      val name = id.map(i => s"'$i'").getOrElse("a random client")
-      log.debug(s"Connecting as $name to ${client.uri}...")
-      val regs = newSocket(id).flatMap: socket =>
-        val old = clientRef.getAndSet(socket)
-        closeAnyConnection(old)
-        val connectStream = client.registrations
-          .evalMap: id =>
-            updateState(Connected(id))
-          .handleErrorWith: t =>
-            val task = updateState(Disconnected("The connection failed."))
-            Stream.eval(task)
-          .interruptWhen(haltStream)
-        connectStream
-          .take(1)
-          .compile
-          .toList // This is most likely wrong; just wrote it to make it compile for now
-      for
-        _ <- regs
-        id <- client.connectID()
-        savedId <- onConnected(id)
-      yield savedId
+    val task = for
+      _ <- updateState(Connecting)
+      name = id.map(i => s"'$i'").getOrElse("a random client")
+      _ = log.info(s"Connecting as $name to ${client.uri}...")
+      socket <- newSocket(id)
+      old = clientRef.getAndSet(socket)
+      _ = closeAnyConnection(old)
+      newId <- socket.connectID()
+      _ = onConnected(newId)
+      _ <- updateState(Connected(newId))
+    yield newId
+    task.onError: t =>
+      log.warn(s"Failed to connect to ${client.uri}.", t)
+      updateState(Disconnected("The connection failed."))
+
+//    updateState(Connecting).flatMap: _ =>
+//      val name = id.map(i => s"'$i'").getOrElse("a random client")
+//      log.info(s"Connecting as $name to ${client.uri}...")
+//      val regs = newSocket(id).flatMap: socket =>
+//        log.info("Instantiated socket...")
+//        val old = clientRef.getAndSet(socket)
+//        closeAnyConnection(old)
+//        socket.connectID()
+//        val connectStream = client.registrations
+//          .map[CloudEvent]: id =>
+//            log.info(s"Connected with ID $id.")
+//            Connected(id)
+//          .handleError: t =>
+//            log.warn(s"Failed to connect to cloud.", t)
+//            Disconnected("The connection failed.")
+//          .interruptWhen(haltStream)
+//        connectStream
+//          .concurrently(Stream.eval(client.connectID()))
+//          .take(1)
+//          .compile
+//          .toList
+//      regs.flatMap: es =>
+//        es.headOption
+//          .map:
+//            case Connected(id)        => onConnected(id)
+//            case Disconnected(reason) => F.unit
+//            case Connecting           => F.unit
+//            case Disconnecting        => F.unit
+//          .getOrElse:
+//            F.unit
+//      for
+//        es <- regs
+//        savedId <- onConnected(id)
+//      yield savedId
 
   private def onConnected(id: CloudID): F[CloudID] = F.delay:
     successiveFailures = 0
