@@ -1,10 +1,9 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.postableForm
-import com.malliina.musicpimp.http4s.Reverse
+import com.malliina.musicpimp.http4s.{Cloud, Reverse}
 import com.malliina.musicpimp.js.CloudStrings
 import com.malliina.musicpimp.models.CloudID
-import controllers.musicpimp.Cloud
 import scalatags.Text.all.*
 
 object CloudHtml extends HtmlSyntax with CloudStrings:

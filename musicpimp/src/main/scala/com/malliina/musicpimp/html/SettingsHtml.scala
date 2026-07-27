@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.html
 
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm, textInputBase}
-import controllers.musicpimp.SettingsController
+import com.malliina.musicpimp.http4s.SettingsController
 
 import scalatags.Text.all.*
 

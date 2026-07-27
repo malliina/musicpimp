@@ -12,8 +12,7 @@ import com.malliina.play.auth.{BasicCredentials, RememberMeCredentials}
 import com.malliina.play.controllers.AccountKeys
 import com.malliina.play.models.PasswordChange
 import com.malliina.values.{ErrorMessage, NonBlank, Password, Readable, Username}
-import controllers.musicpimp.{Accounts, AlarmEditor, Cloud, RemoveToken}
-import controllers.musicpimp.Cloud.ToggleCloudId
+import Cloud.ToggleCloudId
 import org.http4s.UrlForm
 
 trait FormReaders:

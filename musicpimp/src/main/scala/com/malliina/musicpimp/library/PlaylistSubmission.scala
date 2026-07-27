@@ -2,9 +2,8 @@ package com.malliina.musicpimp.library
 
 import com.malliina.http.Errors
 import com.malliina.http4s.FormReadableT
-import com.malliina.musicpimp.http4s.FormReaders
+import com.malliina.musicpimp.http4s.{FormReaders, Playlists}
 import com.malliina.musicpimp.models.{PlaylistID, TrackID}
-import controllers.musicpimp.Playlists
 import io.circe.Codec
 
 case class PlaylistSubmission(id: Option[PlaylistID], name: String, tracks: Seq[TrackID])

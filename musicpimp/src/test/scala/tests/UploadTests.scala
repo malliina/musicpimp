@@ -3,10 +3,9 @@ package tests
 import com.malliina.http.FullUrl
 import com.malliina.http.OkClient.MultiPartFile
 import com.malliina.http.io.HttpClientIO
-import com.malliina.musicpimp.http.HttpConstants
+import com.malliina.musicpimp.http.{HttpConstants, Rest}
 import com.malliina.util.Util
 import com.malliina.ws.HttpUtil
-import controllers.musicpimp.Rest
 import org.apache.commons.io.FileUtils
 
 import java.nio.file.{Files, Path}

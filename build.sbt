@@ -190,15 +190,14 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
 val musicpimp = project
   .in(file("musicpimp"))
   .enablePlugins(
-//    PlayScala,
     JavaServerAppPackaging,
     SystemdPlugin,
     BuildInfoPlugin,
     FileTreePlugin,
     WebScalaJSBundlerPlugin
   )
-  .dependsOn(shared, crossJvm, utilAudio, utilPlay, utilPlay % Test, utilPlay % "test->test")
-  .settings(pimpPlaySettings *)
+  .dependsOn(shared, crossJvm, utilAudio)
+  .settings(musicpimpSettings *)
   .settings(
     buildInfoKeys ++= Seq[BuildInfoKey](
       "assetsDir" -> Def.settingDyn(musicpimpFrontend / assetsRoot).value.toFile,
@@ -314,8 +313,8 @@ ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 // musicpimp settings
 
-lazy val pimpPlaySettings =
-  commonServerSettings ++
+lazy val musicpimpSettings =
+  http4sServerSettings ++
     pimpAssetSettings ++
     nativeMusicPimpSettings ++
     artifactSettings ++
@@ -554,7 +553,6 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
   libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.5.17",
     "org.slf4j" % "slf4j-api" % "2.0.17",
-    PlayImport.specs2 % Test,
     "org.scalameta" %% "munit" % versions.munit % Test
   ),
   Debian / packageAndCopy := {
@@ -569,12 +567,17 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
   Debian / packageAndCopy := (Debian / packageAndCopy).dependsOn(Debian / packageBin).value
 )
 
+lazy val http4sServerSettings = serverSettings ++ baseSettings ++ Seq(
+  libraryDependencies ++= Seq(
+    logstreamsDep
+  ).map(dep => dep.withSources())
+)
+
 lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
   libraryDependencies ++= Seq(
-//    utilPlayDep,
-//    utilPlayDep % Test classifier "tests",
     logstreamsDep,
-    PlayImport.filters
+    PlayImport.filters,
+    PlayImport.specs2 % Test,
   ).map(dep => dep.withSources()),
   pipelineStages ++= Seq(digest, gzip)
 )

@@ -14,7 +14,8 @@ import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.CloudSocket.log
 import com.malliina.musicpimp.cloud.CloudStrings.Unregister
 import com.malliina.musicpimp.db.FullText
-import com.malliina.musicpimp.http.HttpConstants
+import com.malliina.musicpimp.http.{HttpConstants, Rest}
+import com.malliina.musicpimp.http4s.LibraryController
 import com.malliina.musicpimp.json.JsonMessages
 import com.malliina.musicpimp.library.*
 import com.malliina.musicpimp.models.*
@@ -24,7 +25,6 @@ import com.malliina.musicpimp.stats.{PlaybackStats, PopularList, RecentList}
 import com.malliina.util.AppLogger
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.HttpUtil
-import controllers.musicpimp.{LibraryController, Rest}
 import fs2.concurrent.Topic
 import io.circe.syntax.EncoderOps
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}

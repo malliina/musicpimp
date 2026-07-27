@@ -19,6 +19,7 @@ import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.db.{DataTrack, DatabaseLibrary, FullText, Indexer}
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
 import com.malliina.musicpimp.html.{AlarmContent, ChangeLogLevel, InField, LibraryContent, LoginContent, PimpHtml, UsersContent}
+import com.malliina.musicpimp.http.Rest
 import com.malliina.musicpimp.http4s.Service.log
 import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
@@ -42,8 +43,7 @@ import com.malliina.storage.StorageLong
 import com.malliina.util.{AppLogger, Logging}
 import com.malliina.values.{ErrorMessage, Password, UnixPath, Username}
 import com.malliina.web.Utils
-import controllers.musicpimp.Cloud.ToggleCloudId
-import controllers.musicpimp.{Accounts, Cloud, RemoveToken, Rest, Search, SettingsController, Website}
+import Cloud.ToggleCloudId
 import fs2.io.file.Files
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
