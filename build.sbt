@@ -150,7 +150,6 @@ val utilAudio = Project("util-audio", file("util-audio"))
       soundGroup % "tritonus-share" % "0.3.7.4",
       soundGroup % "jlayer" % "1.0.1.4",
       soundGroup % "mp3spi" % "1.9.5.4",
-      "org.apache.pekko" %% "pekko-stream" % versions.pekko,
       "org.typelevel" %% "cats-effect" % versions.catsEffect,
       "org.scalameta" %% "munit" % versions.munit % Test,
       "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test,
@@ -342,11 +341,6 @@ lazy val musicpimpSettings =
         "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
       ).map(dep => dep.withSources()),
       buildInfoPackage := "com.malliina.musicpimp",
-//      RoutesKeys.routesImport ++= Seq(
-//        "com.malliina.musicpimp.http.PimpImports._",
-//        "com.malliina.musicpimp.models._",
-//        "com.malliina.values.Username"
-//      ),
       fileTreeSources := Seq(
         DirMap(
           (Assets / resourceDirectory).value.toPath,
@@ -413,8 +407,7 @@ lazy val nativeMusicPimpSettings =
       bashScriptExtraDefines += """addJava "-Dlog.dir=/var/log/musicpimp"""",
       Linux / packageSummary := "MusicPimp summary here.",
       rpmVendor := "Skogberg Labs",
-      rpmLicense := Option("BSD License"),
-      PlayKeys.externalizeResources := false // packages files in /conf to the app jar
+      rpmLicense := Option("BSD License")
     )
 
 lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings ++ Seq(
@@ -449,7 +442,7 @@ lazy val windowsConfSettings = inConfig(Windows)(
 )
 
 lazy val pimpMacSettings = macSettings ++ Seq(
-  mainClass := Some("play.core.server.ProdServerStart"),
+  mainClass := Some("com.malliina.musicpimp.http4s.AppServer"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
   launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
   Mac / appIcon := Some((Mac / pkgHome).value.resolve("guitar.icns")),
@@ -471,7 +464,6 @@ lazy val pimpcloudSettings =
     Seq(
       buildInfoKeys += BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
       libraryDependencies ++= Seq(
-//        malliinaGroup %% "play-social" % utilPlayVersion,
         PlayImport.ehcache,
         PlayImport.ws % Test
       ),

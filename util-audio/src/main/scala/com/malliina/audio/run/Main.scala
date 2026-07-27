@@ -5,7 +5,6 @@ import cats.effect.std.Dispatcher
 import cats.effect.unsafe.implicits.global
 
 import java.nio.file.{Files, Path, Paths}
-import org.apache.pekko.actor.ActorSystem
 import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
 import com.malliina.storage.{StorageInt, StorageSize}
 
