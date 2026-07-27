@@ -2,15 +2,14 @@ package com.malliina.musicpimp.library
 
 import java.io.FileNotFoundException
 import java.nio.file.{AccessDeniedException, Files, Path, Paths}
-
 import com.malliina.audio.meta.SongMeta
 import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.db.*
 import com.malliina.musicpimp.library.Library.*
 import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.util.AppLogger
 import com.malliina.values.UnixPath
 import org.apache.commons.codec.digest.DigestUtils
-import play.api.Logger
 
 import scala.collection.immutable
 import scala.concurrent.stm.{Ref, atomic}
@@ -30,7 +29,7 @@ trait FileLibrary extends FileStreams:
   def tracksRecursive: Iterable[LocalTrack]
 
 object Library:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val RootId = FolderID(idFor(""))
   val EmptyPath = Paths.get("")

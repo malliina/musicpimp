@@ -3,8 +3,6 @@ package com.malliina.musicpimp.app
 import com.malliina.config.ConfigNode
 import com.malliina.musicpimp.auth.SecretKey
 import com.malliina.util.AppLogger
-import com.typesafe.config.ConfigFactory
-import play.api.Configuration
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path, Paths}

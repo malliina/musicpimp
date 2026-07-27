@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
-import com.malliina.html.{Bootstrap, HtmlTags, UserFeedback}
+import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap.*
@@ -13,17 +13,12 @@ import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models.*
 import com.malliina.musicpimp.scheduler.FullClockPlayback
 import com.malliina.musicpimp.stats.*
-import com.malliina.play.tags.PlayTags.callAttr
 import com.malliina.play.tags.TagPage
 import com.malliina.values.Username
-import controllers.Assets.Asset
 import org.http4s.Uri
 import org.http4s.implicits.uri
-import play.api.data.Field
-import play.api.mvc.Call
 import scalatags.Text.TypedTag
 import scalatags.Text.all.*
-import scalatags.text.Builder
 
 object PimpHtml extends UriSyntax:
   val FormSignin = "form-signin"
@@ -33,8 +28,6 @@ object PimpHtml extends UriSyntax:
   val HiddenSmall = "d-none d-sm-block"
 
   val dataIdAttr = data("id")
-
-//  val reverseAssets = new ReverseAssets("")
 
   def at(file: String): Uri = uri"/assets".addPath(file)
 

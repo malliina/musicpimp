@@ -1,10 +1,11 @@
 package com.malliina.musicpimp.scheduler
 
 import com.malliina.musicpimp.scheduler.PlaybackScheduler.log
+import com.malliina.util.AppLogger
 import play.api.Logger
 
 object PlaybackScheduler:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
 class PlaybackScheduler[F[_], S <: DaySchedule](s: IScheduler[F]):
   private var scheduled = Map.empty[String, PlaybackJob[F]]

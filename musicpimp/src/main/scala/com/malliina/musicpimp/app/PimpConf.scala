@@ -4,7 +4,6 @@ import cats.effect.Sync
 import com.malliina.config.{ConfigError, ConfigNode}
 import com.malliina.database.Conf
 import com.malliina.http.UrlSyntax.url
-import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.auth.SecretKey
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.{ErrorMessage, Password}

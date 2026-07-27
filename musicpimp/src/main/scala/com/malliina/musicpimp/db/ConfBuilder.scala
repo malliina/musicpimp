@@ -1,14 +1,15 @@
 package com.malliina.musicpimp.db
 
-import com.malliina.musicpimp.app.PimpConf
-import com.malliina.values.{ErrorMessage, Password}
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import play.api.{Configuration, Logger}
 import com.malliina.database.Conf
 import com.malliina.http.FullUrl
+import com.malliina.musicpimp.app.PimpConf
+import com.malliina.util.AppLogger
+import com.malliina.values.{ErrorMessage, Password}
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import play.api.Configuration
 
 object ConfBuilder:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
   val UrlKey = "musicpimp.db.url"
   val UserKey = "musicpimp.db.user"

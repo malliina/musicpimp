@@ -1,19 +1,11 @@
 package com.malliina.musicpimp
 
+import com.malliina.util.{AppLogger, Util}
+
 import java.awt.*
 import java.awt.event.{ActionEvent, ActionListener}
 import java.net.URI
-import com.malliina.util.{AppLogger, Util}
-import com.malliina.web.Utils
-import org.apache.pekko.actor.CoordinatedShutdown.JvmExitReason
-import org.apache.pekko.actor.{ActorSystem, CoordinatedShutdown}
-
 import javax.swing.{ImageIcon, UIManager}
-import play.api.Logger
-import play.api.inject.ApplicationLifecycle
-
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 object Tray:
