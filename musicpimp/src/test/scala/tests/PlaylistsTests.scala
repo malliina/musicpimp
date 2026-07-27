@@ -5,6 +5,7 @@ import com.malliina.http.UrlSyntax.url
 import com.malliina.http.io.HttpClientF
 import com.malliina.musicpimp.audio.{TrackJson, TrackMeta}
 import com.malliina.musicpimp.db.*
+import com.malliina.musicpimp.http.HttpConstants
 import com.malliina.musicpimp.http4s.{ServerTools, TestServerSuite}
 import com.malliina.musicpimp.json.JsonStrings
 import com.malliina.musicpimp.library.PlaylistSubmission
@@ -14,8 +15,6 @@ import com.malliina.values.UnixPath
 import com.malliina.ws.HttpUtil
 import io.circe.syntax.EncoderOps
 import io.circe.{Codec, Json}
-import play.api.http.HeaderNames.{ACCEPT, AUTHORIZATION}
-import play.api.http.MimeTypes.JSON
 
 import scala.concurrent.duration.DurationInt
 
@@ -96,9 +95,9 @@ class PlaylistsTests extends TestServerSuite:
       .map(_.playlists)
 
   private def testHeaders = Map(
-    AUTHORIZATION -> HttpUtil.authorizationValue(
+    HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(
       DoobieUserManager.defaultUser.name,
       DoobieUserManager.defaultPass.pass
     ),
-    ACCEPT -> JSON
+    HttpConstants.ACCEPT -> HttpConstants.JSON
   )

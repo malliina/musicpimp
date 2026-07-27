@@ -1,10 +1,9 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.audio.{FullTrack, TrackJson, TrackMeta}
+import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
 import com.malliina.musicpimp.db.DataTrack
 import io.circe.Codec
-import play.api.libs.json.{Json, OFormat}
 
 trait PopularLike extends TopEntry:
   def playbackCount: Int

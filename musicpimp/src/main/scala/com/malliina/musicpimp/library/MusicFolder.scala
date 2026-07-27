@@ -7,7 +7,6 @@ import com.malliina.play.http.FullUrls2
 import io.circe.generic.semiauto.deriveEncoder
 import io.circe.{Codec, Encoder}
 import org.http4s.Request
-import play.api.mvc.RequestHeader
 
 case class MusicFolderResult(folder: FullFolder, folders: Seq[FullFolder], tracks: Seq[FullTrack])
   derives Codec.AsObject
@@ -24,9 +23,6 @@ case class MusicFolder(folder: FolderMeta, folders: Seq[FolderMeta], tracks: Seq
 
 object MusicFolder:
   val empty = MusicFolder(DataFolder.root, Nil, Nil)
-
-  def writer(request: RequestHeader): Encoder[MusicFolder] =
-    writer(FullUrls2.hostOnly(request))
 
   def writer(request: Request[?]): Encoder[MusicFolder] =
     writer(FullUrls2.hostOnly2(request))

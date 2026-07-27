@@ -4,7 +4,6 @@ import java.nio.file.{Files, Path}
 import ch.vorburger.mariadb4j.{DB, DBConfiguration, DBConfigurationBuilder}
 import com.malliina.database.Conf
 import com.malliina.http.FullUrl
-import com.malliina.musicpimp.cloud.Constants.pass
 import com.malliina.musicpimp.db.ConfBuilder
 import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.Password

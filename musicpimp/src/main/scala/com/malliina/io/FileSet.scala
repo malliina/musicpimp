@@ -2,7 +2,6 @@ package com.malliina.io
 
 import com.malliina.file.FileUtilities
 import io.circe.Codec
-import play.api.libs.json.Format
 
 abstract class FileSet[T](file: String)(implicit format: Codec[T])
   extends FileBackedSet[T](FileUtilities.pathTo(file))

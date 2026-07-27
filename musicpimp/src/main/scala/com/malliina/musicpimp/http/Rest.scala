@@ -13,7 +13,6 @@ import com.malliina.util.AppLogger
 import com.malliina.values.ErrorMessage
 import com.malliina.ws.HttpUtil
 import okhttp3.MediaType
-import play.api.http.HeaderNames
 
 import java.nio.file.*
 import java.security.cert.X509Certificate
@@ -75,7 +74,7 @@ object Rest:
               .multiPart(
                 url,
                 Map(
-                  HeaderNames.AUTHORIZATION -> HttpUtil
+                  HttpConstants.AUTHORIZATION -> HttpUtil
                     .authorizationValue(cmd.username.name, cmd.password.pass)
                 ),
                 files = Seq(MultiPartFile(audioMpeg, file))

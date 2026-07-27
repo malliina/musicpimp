@@ -16,11 +16,8 @@ import scala.jdk.CollectionConverters.ListHasAsScala
 object MultipartRequests:
   private val log = AppLogger(getClass)
 
-//  def apply(isHttps: Boolean) = new MultipartRequests(isHttps)
-
 class MultipartRequests[F[_]: Async](client: HttpClientF2[F]) extends AutoCloseable:
   val F = Async[F]
-//  val client = if isHttps then Rest.sslClient else Rest.defaultClient
 
   def rangedFile(
     url: FullUrl,

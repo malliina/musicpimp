@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level
 import com.malliina.html.UserFeedback
 import com.malliina.musicpimp.html.PimpHtml.{feedbackDiv, postableForm}
 import com.malliina.musicpimp.js.FrontStrings
-import play.api.data.Field
 import scalatags.Text.all.*
 
 object LogsHtml extends HtmlSyntax with FrontStrings:

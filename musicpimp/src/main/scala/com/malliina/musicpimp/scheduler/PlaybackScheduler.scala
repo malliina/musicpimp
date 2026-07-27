@@ -2,7 +2,6 @@ package com.malliina.musicpimp.scheduler
 
 import com.malliina.musicpimp.scheduler.PlaybackScheduler.log
 import com.malliina.util.AppLogger
-import play.api.Logger
 
 object PlaybackScheduler:
   private val log = AppLogger(getClass)

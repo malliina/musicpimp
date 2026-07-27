@@ -1,31 +1,31 @@
 package tests
 
 import java.nio.file.Paths
-
-import com.malliina.musicpimp.audio.PimpEnc.{normalize, makeIdentifier}
-import play.api.libs.json.Json
+import com.malliina.musicpimp.audio.PimpEnc.{makeIdentifier, normalize}
+import io.circe.parser
+import io.circe.syntax.EncoderOps
 
 class Tests extends munit.FunSuite:
 
   test("encoding"):
     val input = "Svår (fålder)"
-    assert(normalize(input) == "Svar (falder)")
+    assertEquals(normalize(input), "Svar (falder)")
 
   test("enc"):
     val input = "artist/Svår (fålder)!"
-    assert(makeIdentifier(input) == "artist%2FSvar%20(falder)!")
+    assertEquals(makeIdentifier(input), "artist%2FSvar%20(falder)!")
 
   test("paths"):
     val root = Paths.get("a/b/c")
     val rel = Paths.get("")
     val combined = root.resolve(rel)
-    assert(root.toAbsolutePath.toString == combined.toAbsolutePath.toString)
+    assertEquals(root.toAbsolutePath.toString, combined.toAbsolutePath.toString)
 
   test("deconstruct array"):
     val arr = "a:b".split(":")
     arr match
-      case Array(a, b) => assert(a == "a")
-      case _           => assert(1 == 2)
+      case Array(a, b) => assertEquals(a, "a")
+      case _           => assertEquals(1, 2)
 
   test("for comp."):
     def eval(in: String) =
@@ -39,15 +39,14 @@ class Tests extends munit.FunSuite:
 
   test("json"):
     val in = Seq("a", "b", "c")
-    val jsV = Json.toJson(Map("folders" -> in))
-    val jsString = Json.stringify(jsV)
-    val readV = Json.parse(jsString)
-    val list = (readV \ "folders").as[Seq[String]]
-    assert(in == list)
+    val jsV = Map("folders" -> in).asJson
+    val jsString = jsV.noSpaces
+    val list =
+      parser.parse(jsString).flatMap(_.hcursor.downField("folders").as[Seq[String]]).getOrElse(Nil)
+    assertEquals(in, list)
 
   test("serialize Option"):
-    import play.api.libs.json.Json.*
-    val jsValue = stringify(toJson(Some(42)))
-    val none = stringify(toJson(Option.empty[Int]))
-    assert(jsValue == "42")
-    assert(none == "null")
+    val jsValue = Some(42).asJson.noSpaces
+    val none = Option.empty[Int].asJson.noSpaces
+    assertEquals(jsValue, "42")
+    assertEquals(none, "null")

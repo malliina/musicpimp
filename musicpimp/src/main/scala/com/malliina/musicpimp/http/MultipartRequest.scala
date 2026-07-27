@@ -14,8 +14,6 @@ import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
-import play.api.http.ContentTypes.*
-import play.api.http.HeaderNames.*
 
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
@@ -38,7 +36,7 @@ class MultipartRequest(
   private val client =
     buildInstructions(HttpClientBuilder.create().setDefaultRequestConfig(config)).build()
   val request = new HttpPost(uri)
-  request.addHeader(ACCEPT, JSON)
+  request.addHeader(HttpConstants.ACCEPT, HttpConstants.JSON)
   private val reqContent =
     MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
   private val isCancelled = new AtomicBoolean(false)

@@ -1,9 +1,6 @@
 package com.malliina.musicpimp.cloud
 
 import com.malliina.musicpimp.models.CloudID
-import play.api.libs.json.{Json, OFormat}
+import io.circe.Codec
 
-case class RegistrationEvent(event: String, id: CloudID) extends PimpMessage
-
-object RegistrationEvent:
-  implicit val format: OFormat[RegistrationEvent] = Json.format[RegistrationEvent]
+case class RegistrationEvent(event: String, id: CloudID) extends PimpMessage derives Codec.AsObject

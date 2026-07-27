@@ -13,7 +13,6 @@ import com.malliina.push.gcm.GCMToken
 import com.malliina.push.mpns.PushUrl
 import io.circe.generic.semiauto.deriveCodec
 import io.circe.{Codec, Decoder}
-import play.api.libs.json.*
 
 sealed trait AlarmCommand
 

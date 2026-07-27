@@ -3,21 +3,19 @@ package com.malliina.musicpimp.cloud
 import cats.effect.Async
 import cats.effect.implicits.genTemporalOps_
 import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
-import com.malliina.http.{FullUrl, HttpHeaders, HttpResponse, OkHttpResponse}
+import com.malliina.http.{FullUrl, HttpHeaders, HttpResponse}
 import com.malliina.musicpimp.cloud.OkHttpTrackUploads.log
-import com.malliina.musicpimp.http.MultipartRequests
+import com.malliina.musicpimp.http.{HttpConstants, MultipartRequests}
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
 import com.malliina.play.ContentRange
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.AppLogger
 import com.malliina.ws.HttpUtil
-import play.api.http.HeaderNames
 
 import java.io.FileNotFoundException
 import java.net.SocketException
 import java.nio.file.Files
-import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 object OkHttpTrackUploads:
@@ -78,7 +76,7 @@ class OkHttpTrackUploads[F[_]: Async](
             val authHeaders = Clouds
               .loadID()
               .map(id =>
-                Map(HeaderNames.AUTHORIZATION -> HttpUtil.authorizationValue(id.id, "pimp"))
+                Map(HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(id.id, "pimp"))
               )
               .getOrElse(Map.empty)
             val headers = authHeaders ++ Map(CloudResponse.RequestKey -> request.id)
