@@ -3,7 +3,7 @@ package com.malliina.musicpimp.audio
 import cats.effect.Resource
 import cats.effect.std.Dispatcher
 import cats.effect.{Async, Concurrent, Ref}
-import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps}
 import cats.syntax.all.{toFlatMapOps, toFunctorOps}
 import com.malliina.audio.*
 import com.malliina.http.FullUrl
@@ -58,10 +58,6 @@ class MusicPlayer[F[_]: Async](
     .evalMap: e =>
       val state = PimpPlayer.playState(e)
       send(PlayStateChangedMessage(state))
-//  private val timeUpdates = timeUpdatesTopic
-//    .subscribe(100)
-//    .evalMap: time =>
-//      send(TimeUpdatedMessage(time.position))
   private val timeUpdates: Stream[F, Unit] = Stream
     .awakeEvery[F](500.millis)
     .evalMapFilter(_ => F.delay(current.map(_.position)))
@@ -140,13 +136,13 @@ class MusicPlayer[F[_]: Async](
 
   def send(json: ServerMessage): F[Unit] = eventHub.publish1(json).void
 
-  def seek(pos: Duration): Unit = current.foreach(_.seek(pos))
+  def seek(pos: Duration): F[Unit] = current.map(_.seek(pos)).getOrElse(F.unit)
 
   def trySeek(pos: Duration): F[Unit] = current
     .map(_.trySeek(pos))
     .getOrElse(F.raiseError(new Exception(s"Cannot seek to '$pos', no player available.")))
 
-  def volume(level: Int): Unit = setVolume(Volume(level))
+  def volume(level: Int): F[Unit] = setVolume(Volume(level)).void
 
   def volume: Option[Volume] = current.map(_.volume)
 
@@ -155,11 +151,12 @@ class MusicPlayer[F[_]: Async](
     * @return
     *   true if the volume was changed, false otherwise
     */
-  def setVolume(level: Volume): Unit = current.foreach(_.adjustVolume(level))
+  private def setVolume(level: Volume): F[Boolean] =
+    current.map(_.adjustVolume(level)).getOrElse(false.pure)
 
-  def mute(mute: Boolean): Unit = current.foreach(_.mute(mute))
+  def mute(mute: Boolean): F[Unit] = current.map(_.mute(mute)).getOrElse(F.unit)
 
-  def toggleMute(): Unit = current.foreach(_.toggleMute())
+  def toggleMute(): F[Unit] = current.map(_.toggleMute()).getOrElse(F.unit)
 
   def close(): Unit =
     current.foreach(_.close())

@@ -231,8 +231,10 @@ class Clouds[F[_]: Async](
   def sendIfConnected(msg: Json): SendResult =
     if client.isConnected then
       client.send(msg) match
-        case Success(()) => MessageSent
-        case Failure(t)  => SendFailure(t)
+        case Success(()) =>
+          MessageSent
+        case Failure(t) =>
+          SendFailure(t)
     else NotConnected
 
   private def reg(ifDisconnected: => F[CloudID]) =

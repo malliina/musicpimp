@@ -59,7 +59,6 @@ class JavaSoundPlayer[F[_]: Async](
   with JavaSoundPlayerBase[F]
   with StateAwarePlayer[F]
   with AutoCloseable:
-  val F = Async[F]
   val bufferSize = readWriteBufferSize.toBytes.toInt
   protected var stream: InputStream = media.stream
   tryMarkStream()
@@ -151,7 +150,7 @@ class JavaSoundPlayer[F[_]: Async](
     * @param pos
     *   position to seek to
     */
-  def seek(pos: Duration): Unit =
+  def seek(pos: Duration): F[Unit] = F.delay:
     seekProblem
       .map(problem => log.warn(problem))
       .getOrElse:

@@ -3,7 +3,7 @@ package com.malliina.musicpimp.audio
 import cats.Applicative
 import cats.data.NonEmptyList
 import cats.effect.Sync
-import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps, toTraverseOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps, toTraverseOps}
 import com.malliina.musicpimp.audio.PlaybackMessageHandler.log
 import com.malliina.musicpimp.json.{JsonMessages, MediaRanges}
 import com.malliina.musicpimp.library.{FileLibrary, LocalTrack, MusicLibrary}
@@ -47,11 +47,11 @@ class PlaybackMessageHandler[F[_]: Sync](
       case PrevMsg =>
         player.previousTrack()
       case MuteMsg(isMute) =>
-        pure(player.mute(isMute))
+        player.mute(isMute)
       case VolumeMsg(vol) =>
-        pure(player.volume(vol.volume))
+        player.volume(vol.volume)
       case SeekMsg(pos) =>
-        pure(player.seek(pos))
+        player.seek(pos)
       case PlayMsg(track) =>
         withTrack(track)(player.reset)
       case SkipMsg(index) =>
@@ -70,14 +70,14 @@ class PlaybackMessageHandler[F[_]: Sync](
       case RemoveMsg(index) =>
         playlist.delete(index)
       case AddAllMsg(tracks, folders) =>
-        resolveTracksOrEmpty(folders, tracks).map(_.foreach(playlist.add))
+        resolveTracksOrEmpty(folders, tracks).flatMap: ts =>
+          ts.traverse(t => playlist.add(t)).void
       case PlayAllMsg(tracks, folders) =>
-        resolveTracksOrEmpty(folders, tracks).map:
+        resolveTracksOrEmpty(folders, tracks).flatMap:
           case head :: tail =>
-            player.reset(head)
-            tail.foreach(playlist.add)
+            player.reset(head) >> tail.traverse(t => playlist.add(t)).void
           case Nil =>
-            log.warn(s"No tracks were resolved")
+            F.delay(log.warn(s"No tracks were resolved"))
       case ResetPlaylistMessage(index, tracks) =>
         NonEmptyList
           .fromList(tracks.toList)
