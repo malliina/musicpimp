@@ -1,24 +1,31 @@
 package tests
 
-import com.malliina.audio.javasound.{FileJavaSoundPlayer, JavaSoundPlayer}
-import munit.FunSuite
+import cats.effect.IO
+import cats.effect.std.Dispatcher
+import com.malliina.audio.javasound.{BasicJavaSoundPlayer, JavaSoundPlayer}
+import com.malliina.audio.meta.OneShotStream
 import org.apache.commons.io.FileUtils
-import org.apache.pekko.actor.ActorSystem
 
 import java.nio.file.{Files, Path, Paths}
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
-class TestBase extends FunSuite:
-  implicit val as: ActorSystem = ActorSystem()
-  implicit val ec: ExecutionContext = as.dispatcher
+class TestBase extends munit.CatsEffectSuite:
+  def filePlayer(file: Path) =
+    Dispatcher
+      .parallel[IO]
+      .evalMap: d =>
+        BasicJavaSoundPlayer.fromFile(file, d)
 
-//  override protected def afterAll(): Unit = {
-//    await(as.terminate())
-//    super.afterAll()
-//  }
+  def soundPlayer(stream: OneShotStream) =
+    Dispatcher
+      .parallel[IO]
+      .evalMap: d =>
+        JavaSoundPlayer.default(stream, d)
 
   def await[T](f: Future[T], duration: FiniteDuration = 10.seconds) = Await.result(f, duration)
+
+  val unit = IO.unit
 
   val fileName = "mpthreetest.mp3"
   val tempFile = Paths.get(sys.props("java.io.tmpdir")).resolve(fileName)
@@ -31,13 +38,10 @@ class TestBase extends FunSuite:
       if !Files.exists(tempFile) then throw new Exception(s"Unable to access $tempFile")
     tempFile
 
-  def withTestTrack[T](f: JavaSoundPlayer => T): T =
+  def withTestTrack[T](f: JavaSoundPlayer[IO] => IO[T]): IO[T] =
     val file = ensureTestMp3Exists()
-    val player = new FileJavaSoundPlayer(file)
-    try
-      f(player)
-    finally
-      player.close()
+    filePlayer(file).use: player =>
+      f(player).attemptTap(_ => IO.delay(player.close()))
 
   def assertPosition(pos: Duration, min: Long, max: Long) =
     val seconds = pos.toSeconds

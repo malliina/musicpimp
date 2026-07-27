@@ -44,9 +44,11 @@ class AuthConfReader(readKey: String => Option[String]):
 
   def readConf(clientIdKey: String, clientSecretKey: String): AuthConf =
     val attempt = for
-      clientId <- read(clientIdKey).map(ClientId.apply)
-      clientSecret <- read(clientSecretKey).map(ClientSecret.apply)
-    yield AuthConf(clientId, clientSecret)
+      clientId <- read(clientIdKey)
+      id <- ClientId.build(clientId).left.map(_.message)
+      clientSecret <- read(clientSecretKey)
+      secret <- ClientSecret.build(clientSecret).left.map(_.message)
+    yield AuthConf(id, secret)
     orFail(attempt)
 
 case class OAuthConf[U](

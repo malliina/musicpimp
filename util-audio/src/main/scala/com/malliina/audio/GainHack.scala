@@ -2,7 +2,7 @@ package com.malliina.audio
 
 import javax.sound.sampled.FloatControl
 
-trait GainHack extends RichPlayer:
+trait GainHack[F[_]] extends RichPlayer[F]:
   def gainControl: FloatControl
 
   private lazy val maxDbGain = gainControl.getMaximum

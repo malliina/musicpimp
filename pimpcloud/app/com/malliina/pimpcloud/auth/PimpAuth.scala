@@ -1,7 +1,7 @@
 package com.malliina.pimpcloud.auth
 
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.play.auth.Auth
+import com.malliina.play.auth.{Auth, BasicCredentials}
 import com.malliina.values.{Password, Username}
 import play.api.mvc.RequestHeader
 
@@ -10,7 +10,11 @@ object PimpAuth:
     Auth.authHeaderParser(request): decoded =>
       decoded.split(":", 3) match
         case Array(cloudID, user, pass) =>
-          Some(CloudCredentials(CloudID(cloudID), Username(user), Password(pass), request))
+          val result = for
+            username <- Username.build(user)
+            password <- Password.build(pass)
+          yield CloudCredentials(CloudID(cloudID), username, password, request)
+          result.toOption
         case _ =>
           None
 

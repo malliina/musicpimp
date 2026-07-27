@@ -1,14 +1,16 @@
 package com.malliina.audio.javasound
 
-import javax.sound.sampled.{BooleanControl, Control, FloatControl, SourceDataLine}
+import cats.effect.Sync
 
+import javax.sound.sampled.{BooleanControl, Control, FloatControl, SourceDataLine}
 import com.malliina.audio.RichPlayer
 import com.malliina.audio.javasound.JavaSoundPlayerBase.log
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.*
 
-trait JavaSoundPlayerBase extends RichPlayer with Seekable:
+trait JavaSoundPlayerBase[F[_]: Sync] extends RichPlayer[F] with Seekable:
+  val F = Sync[F]
   protected def audioLine: SourceDataLine
 
   private val zeroGain = 0.4f
@@ -55,7 +57,7 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable:
   private def framesToMicroseconds(frames: Long): Long =
     (frames / audioLine.getFormat.getSampleRate.toLong) * 1000000L
 
-  def position: Duration = (startedFromMicros + microsSinceLineOpened).micros
+  def position: FiniteDuration = (startedFromMicros + microsSinceLineOpened).micros
 
   def canAdjustVolume = hasVolumeControl || hasGainControl
 
@@ -76,7 +78,8 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable:
     volumeCache = Some(newVolume)
 
   // implements trait
-  override def volume(newVolume: Int): Unit = volume = newVolume
+  override def volume(newVolume: Int): F[Unit] = F.delay:
+    volume = newVolume
 
   def gainControl = control[FloatControl](FloatControl.Type.MASTER_GAIN)
   def volumeControl = control[FloatControl](FloatControl.Type.VOLUME)
@@ -135,13 +138,13 @@ trait JavaSoundPlayerBase extends RichPlayer with Seekable:
 
   def muteControl = control[BooleanControl](BooleanControl.Type.MUTE)
 
-  def mute(shouldMute: Boolean): Unit =
+  def mute(shouldMute: Boolean): F[Unit] = F.delay:
     muteControl.foreach(c => c.setValue(shouldMute))
     muteCache = Some(shouldMute)
 
   def mute = muteControl.exists(_.getValue)
 
-  def toggleMute(): Unit = mute(!mute)
+  def toggleMute(): F[Unit] = mute(!mute)
 
   private def hasControl(ctrl: Control.Type) =
     Option(audioLine).exists(_.isControlSupported(ctrl))

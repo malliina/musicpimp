@@ -12,8 +12,13 @@ object Auth:
   def basicCredentials(request: RequestHeader): Option[BasicCredentials] =
     authHeaderParser(request): decoded =>
       decoded.split(":", 2) match
-        case Array(user, pass) => Some(BasicCredentials(Username(user), Password(pass)))
-        case _                 => None
+        case Array(user, pass) =>
+          val result = for
+            user <- Username.build(user)
+            pass <- Password.build(pass)
+          yield BasicCredentials(user, pass)
+          result.toOption
+        case _ => None
 
   def readAuthToken(rh: RequestHeader, scheme: String = DefaultScheme): Option[String] =
     rh.headers
@@ -47,15 +52,17 @@ object Auth:
     passKey: String = "p"
   ): Option[BasicCredentials] =
     val qString = request.queryString
-    for (
-      u <- qString get userKey;
-      p <- qString get passKey;
-      user <- u.headOption;
+    for
+      u <- qString get userKey
+      p <- qString get passKey
+      user <- u.headOption
       pass <- p.headOption
-    ) yield BasicCredentials(Username(user), Password(pass))
+      username <- Username.build(user).toOption
+      password <- Password.build(pass).toOption
+    yield BasicCredentials(username, password)
 
   def authenticateFromSession(
     rh: RequestHeader,
     sessionKey: String = DefaultSessionKey
   ): Option[Username] =
-    rh.session.get(sessionKey).map(Username.apply)
+    rh.session.get(sessionKey).flatMap(Username.build(_).toOption)

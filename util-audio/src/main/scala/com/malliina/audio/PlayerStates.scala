@@ -1,11 +1,11 @@
 package com.malliina.audio
 
-object PlayerStates extends Enumeration:
-  type PlayerState = Value
-  val Unrealized, Realizing, Realized, Prefetching, Prefetched, NoMedia, Open, Started, Stopped,
-    Closed, Unknown, EndOfMedia = Value
+enum PlayerStates:
+  case Unrealized, Realizing, Realized, Prefetching, Prefetched, NoMedia, Open, Started, Stopped,
+    Closed, Unknown, EndOfMedia
 
-  def fromInt(state: Int) = state match
+object PlayerStates:
+  def fromInt(state: Int): PlayerStates = state match
     case 100 => Unrealized
     case 200 => Realizing
     case 300 => Realized

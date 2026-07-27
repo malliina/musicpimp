@@ -36,7 +36,7 @@ class RememberMe(
   override val maxAge: Option[Int] = Some(365.days.toSeconds.toInt)
 
   override protected def serialize(cookie: UnAuthToken): Map[String, String] = Map(
-    UserIdName -> cookie.user.name,
+    UserIdName -> cookie.user,
     SeriesName -> cookie.series.toString,
     TokenName -> cookie.token.toString
   )
@@ -55,7 +55,8 @@ class RememberMe(
         u <- data get UserIdName
         s <- data get SeriesName
         t <- data get TokenName
-      yield UnAuthToken(Username(u), s.toLong, t.toLong)
+        user <- Username.build(u).toOption
+      yield UnAuthToken(user.name, s.toLong, t.toLong)
     maybeToken getOrElse UnAuthToken.empty
   catch case _: NumberFormatException => UnAuthToken.empty
 
@@ -106,31 +107,37 @@ class RememberMe(
   ): IO[Either[AuthFailure, Token]] =
     log.debug(s"Authenticating: $attempt")
     val user = attempt.user
-    store
-      .findToken(user, attempt.series)
-      .flatMap: maybeToken =>
-        maybeToken
-          .map: savedToken =>
-            if savedToken.token == attempt.token then
+    Username
+      .build(user)
+      .map: username =>
+        store
+          .findToken(username, attempt.series)
+          .flatMap: maybeToken =>
+            maybeToken
+              .map: savedToken =>
+                if savedToken.token == attempt.token then
 
-              /** I believe the intention is to ensure that a browser cannot reuse another browser's
-                * token.
-                *
-                * The token is replaced with a new one at each successful token authentication,
-                * while the series remains the same; this updated cookie is then sent to the
-                * browser. The series acts as a browser identifier. So, if there's a token mismatch,
-                * it suggests some other actor has authenticated using this browser's token, which
-                * is suspect.
-                */
-              log.info(s"Cookie authentication succeeded. Updating token.")
-              for
-                _ <- store.remove(savedToken)
-                newToken = Token(user, attempt.series, Random.nextLong())
-                _ <- store.persist(newToken)
-              yield Right(newToken)
-            else
-              log warn s"The saved token did not match the one from the request. Refusing access."
-              store.removeAll(user).map(_ => Left(InvalidCookie(rh)))
-          .getOrElse:
-            log.debug(s"Unable to authenticate token: $attempt")
-            IO.pure(Left(InvalidCredentials(rh)))
+                  /** I believe the intention is to ensure that a browser cannot reuse another
+                    * browser's token.
+                    *
+                    * The token is replaced with a new one at each successful token authentication,
+                    * while the series remains the same; this updated cookie is then sent to the
+                    * browser. The series acts as a browser identifier. So, if there's a token
+                    * mismatch, it suggests some other actor has authenticated using this browser's
+                    * token, which is suspect.
+                    */
+                  log.info(s"Cookie authentication succeeded. Updating token.")
+                  for
+                    _ <- store.remove(savedToken)
+                    newToken = Token(username, attempt.series, Random.nextLong())
+                    _ <- store.persist(newToken)
+                  yield Right(newToken)
+                else
+                  log warn s"The saved token did not match the one from the request. Refusing access."
+                  store.removeAll(username).map(_ => Left(InvalidCookie(rh)))
+              .getOrElse:
+                log.debug(s"Unable to authenticate token: $attempt")
+                IO.pure(Left(InvalidCredentials(rh)))
+      .getOrElse:
+        log.debug(s"Unable to authenticate token, username fails validation: $attempt")
+        IO.pure(Left(InvalidCredentials(rh)))

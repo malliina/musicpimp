@@ -80,7 +80,7 @@ class BasicAuthHandler(
         val returnUri = req.cookies.get(returnUriKey).map(_.value).getOrElse(successCall.path())
         log.info(s"Logging in '$email' through OAuth code flow, returning to '$returnUri'...")
         Redirect(returnUri)
-          .addingToSession(sessionKey -> email.email)(req)
+          .addingToSession(sessionKey -> email.email)(using req)
           .discardingCookies(DiscardingCookie(returnUriKey))
           .withCookies(Cookie(lastIdKey, email.email, lastIdMaxAge.map(_.toSeconds.toInt)))
           .withHeaders(CACHE_CONTROL -> NoCacheRevalidate)

@@ -40,7 +40,7 @@ trait TestParsers:
     mat: Materializer
   ): BodyParser[MultipartFormData[Long]] =
     multiPartByteStreaming(
-      bytes => (dest offer bytes).map(_ => ())(mat.executionContext),
+      bytes => (dest offer bytes).map(_ => ())(using mat.executionContext),
       maxLength
     )
 
@@ -62,7 +62,7 @@ trait TestParsers:
   def multiPartStreamPiping(
     maxLength: StorageSize
   )(implicit mat: Materializer): (InputStream, BodyParser[MultipartFormData[Long]]) =
-    val (inStream, iteratee) = Streams.joinedStream()(mat.executionContext)
+    val (inStream, iteratee) = Streams.joinedStream()(using mat.executionContext)
     val parser = multiPartBodyParser(iteratee, maxLength)
     (inStream, parser)
 
@@ -72,7 +72,7 @@ trait TestParsers:
     Multipart.multipartParser(
       maxLength.toBytes.toInt,
       false,
-      byteArrayPartHandler(sink)(mat.executionContext),
+      byteArrayPartHandler(sink)(using mat.executionContext),
       errorhandler
     )
 
@@ -90,9 +90,9 @@ trait TestParsers:
     val byteCalculator: Sink[ByteString, Future[Long]] =
       Sink.fold[Long, ByteString](0)((acc, bytes) => acc + bytes.length)
     val asyncSink = Flow[ByteString]
-      .mapAsync(1)(bytes => f(bytes).map(_ => bytes)(mat.executionContext))
+      .mapAsync(1)(bytes => f(bytes).map(_ => bytes)(using mat.executionContext))
       .toMat(byteCalculator)(Keep.right)
-    byteArrayPartHandler(asyncSink)(mat.executionContext)
+    byteArrayPartHandler(asyncSink)(using mat.executionContext)
 
   /** Builds a part handler that uses the supplied sink to handle the bytes as they are received.
     *

@@ -29,7 +29,7 @@ trait BaseScript:
           f(event)
 
 object BaseScript:
-  val ApplicationJson = "application/json"
+  private val ApplicationJson = "application/json"
 
   def postAjax[C: Encoder](resource: String, payload: C) =
     val settings = PimpQuery.postSettings(

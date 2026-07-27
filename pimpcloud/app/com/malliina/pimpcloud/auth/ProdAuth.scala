@@ -77,7 +77,7 @@ class ProdAuth(servers: Servers, errorHandler: HttpErrorHandler) extends CloudAu
   ): Either[AuthFailure, PhoneConnection] =
     req.session
       .get(Auth.DefaultSessionKey)
-      .map(Username.apply)
+      .flatMap(Username.build(_).toOption)
       .flatMap(user =>
         servers.find(_.id.id == user.name).map(server => PhoneConnection(user, req, server))
       )

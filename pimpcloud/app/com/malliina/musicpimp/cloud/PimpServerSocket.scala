@@ -9,6 +9,7 @@ import com.malliina.pimpcloud.json.JsonStrings.*
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.pimpcloud.ws.NoCacheByteStreams
 import com.malliina.play.ContentRange
+import com.malliina.values.Literals.user
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.{JsonFutureSocket, Streamer}
 import io.circe.{Decoder, Json}
@@ -19,7 +20,7 @@ import scala.concurrent.Future
 
 object PimpServerSocket:
   val DefaultSearchLimit = 100
-  val nobody = Username("nobody")
+  val nobody = user"nobody"
 
 /** @param jsonOut
   *   send messages to this actor to send messages to the server

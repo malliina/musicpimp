@@ -1,7 +1,9 @@
 package com.malliina.musicpimp.stats
 
+import com.malliina.http.Errors
 import com.malliina.values.Username
 import io.circe.{Codec, Json}
+import org.http4s.Request
 import play.api.mvc.Security.AuthenticatedRequest
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 
@@ -35,6 +37,12 @@ object DataRequest:
 
   def fromRequest(user: Username, request: RequestHeader): Either[String, DataRequest] =
     ItemLimits.fromRequest(request) map { limits => DataRequest(user, limits.from, limits.until) }
+
+  def fromReq(user: Username, request: Request[?]): Either[Errors, DataRequest] =
+    ItemLimits
+      .fromReq(request)
+      .map: limits =>
+        DataRequest(user, limits.from, limits.until)
 
   def fromJson(user: Username, body: Json) =
     ItemLimits.fromJson(body) map { limits => DataRequest(user, limits.from, limits.until) }

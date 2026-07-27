@@ -1,0 +1,21 @@
+package controllers.musicpimp
+
+import com.malliina.musicpimp.auth.PimpAuths
+import com.malliina.musicpimp.html.UriSyntax
+import com.malliina.play.auth.Authenticator
+import com.malliina.play.controllers.AuthBundle
+import com.malliina.play.http.{AuthedRequest, Proxies}
+import play.api.Logger
+import play.api.mvc.*
+
+class Secured(auth: AuthDeps) extends SecureBase(auth)
+
+object Secured extends UriSyntax:
+  private val log = Logger(getClass)
+
+  def logUnauthorized(request: RequestHeader): Unit =
+    val remoteAddress = Proxies.realAddress(request)
+    log.warn(s"Unauthorized request '${request.path}' from '$remoteAddress'.")
+
+  def redirecting(auth: Authenticator[AuthedRequest]): AuthBundle[AuthedRequest] =
+    PimpAuths.redirecting(reverse.login.renderString, auth)

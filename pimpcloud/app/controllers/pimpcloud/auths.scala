@@ -6,7 +6,7 @@ import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.auth.{AuthFailure, Authenticator, BasicAuthHandler, GoogleCodeValidator, OAuthConf, UserAuthenticator}
 import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
 import com.malliina.play.http.AuthedRequest
-import com.malliina.values.{Email, ErrorMessage}
+import com.malliina.values.ErrorMessage
 import com.malliina.web.OAuthKeys.LoginHint
 import com.malliina.web.{AuthConf, ClientId, ClientSecret, PermissionError}
 import org.apache.pekko.stream.Materializer
@@ -16,6 +16,7 @@ import play.api.mvc.*
 import play.api.mvc.Results.Ok
 import cats.effect.unsafe.implicits.global
 import com.malliina.util.AppLogger
+import com.malliina.values.Literals.email
 
 class ProdAuth(ctrl: OAuthCtrl) extends PimpAuth:
   override def logged(action: EssentialAction) =
@@ -56,7 +57,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
 
   val sessionKey = "cloudUser"
   val lastIdKey = "cloudLastId"
-  val authorizedEmail = Email("malliina123@gmail.com")
+  val authorizedEmail = email"malliina123@gmail.com"
   val handler = new BasicAuthHandler(
     routes.Logs.index,
     lastIdKey = lastIdKey,
@@ -67,7 +68,7 @@ class AdminOAuth(val actions: ActionBuilder[Request, AnyContent], creds: GoogleO
     lastIdMaxAge = Option(BasicAuthHandler.DefaultMaxAge),
     returnUriKey = BasicAuthHandler.DefaultReturnUriKey
   )
-  val conf = AuthConf(ClientId(creds.clientId), ClientSecret(creds.clientSecret))
+  val conf = AuthConf(ClientId.unsafe(creds.clientId), ClientSecret.unsafe(creds.clientSecret))
   val oauthConf = OAuthConf(routes.AdminOAuth.googleCallback, handler, conf, HttpClientIO())
   val validator = GoogleCodeValidator(oauthConf)
 

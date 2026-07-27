@@ -1,12 +1,13 @@
 package com.malliina.musicpimp.json
 
+import cats.effect.Sync
 import io.circe.Json
 
-trait Target:
-  def send(json: Json): Unit
+trait Target[F[_]]:
+  def send(json: Json): F[Unit]
 
 object Target:
-  val noop = Target(_ => ())
+  def noop[F[_]: Sync] = Target(_ => Sync[F].unit)
 
-  def apply(execute: Json => Unit): Target =
+  def apply[F[_]](execute: Json => F[Unit]): Target[F] =
     (json: Json) => execute(json)

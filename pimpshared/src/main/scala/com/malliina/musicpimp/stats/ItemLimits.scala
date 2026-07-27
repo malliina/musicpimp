@@ -1,6 +1,9 @@
 package com.malliina.musicpimp.stats
 
+import com.malliina.http.Errors
+import com.malliina.http4s.QueryParsers
 import io.circe.{Codec, Decoder, Json}
+import org.http4s.Request
 import play.api.mvc.{QueryStringBindable, RequestHeader}
 
 case class ItemLimits(from: Int, until: Int) derives Codec.AsObject
@@ -29,4 +32,11 @@ object ItemLimits:
     for
       from <- readInt(From, 0)
       until <- readInt(Until, from + DefaultItemCount)
+    yield ItemLimits(from, until)
+
+  def fromReq(request: Request[?]): Either[Errors, ItemLimits] =
+    val q = request.uri.query
+    for
+      from <- QueryParsers.parseOrDefault(q, From, 0)
+      until <- QueryParsers.parseOrDefault(q, Until, from + DefaultItemCount)
     yield ItemLimits(from, until)

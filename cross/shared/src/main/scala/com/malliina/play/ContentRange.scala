@@ -26,7 +26,7 @@ case class ContentRange(start: Int, endInclusive: Int, size: StorageSize):
 object ContentRange:
   val BYTES = "bytes"
 
-  val writer = Encoder[ContentRange]: range =>
+  val writer: Encoder[ContentRange] = range =>
     Json.obj(
       "start" -> range.start.asJson,
       "endInclusive" -> range.endInclusive.asJson,

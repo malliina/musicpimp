@@ -41,7 +41,7 @@ object Home:
   def validateCredentials(creds: BasicCredentials): Boolean =
     val user = creds.username
     // the password is not really a secret
-    val credsOk = user.name.nonEmpty && creds.password == Password("beam")
+    val credsOk = user.name.nonEmpty && Password.build("beam").exists(_ == creds.password)
     if !credsOk then log warn s"Invalid credentials provided as user '$user'."
     credsOk
 
@@ -297,6 +297,6 @@ class Home(
           success => action(success).apply(rh)
         )
       }
-      Accumulator.flatten(futureAccumulator)(mat)
+      Accumulator.flatten(futureAccumulator)(using mat)
 
   def onUnauthorized(failure: AuthFailure) = Unauthorized

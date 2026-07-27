@@ -1,18 +1,19 @@
 package com.malliina.musicpimp.models
 
-import com.malliina.values.JsonCompanion
+import com.malliina.values.{ErrorMessage, ValidatingCompanion}
 import play.api.libs.json.{Format, JsError, JsSuccess, Reads, Writes}
 
 case class RequestIdentifier(id: String) extends Identifier
 
-object RequestIdentifier extends IdentCompanion[RequestIdentifier]
+object RequestIdentifier extends IdentCompanion[RequestIdentifier]:
+  override def build(input: String): Either[ErrorMessage, RequestIdentifier] = Right(apply(input))
 
 trait Identifier extends Any:
   def id: String
 
   override def toString: String = id
 
-abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T]:
+abstract class IdentCompanion[T <: Identifier] extends ValidatingCompanion[String, T]:
   override def write(t: T): String = t.id
 
   implicit val playJson: Format[T] = Format(
@@ -21,3 +22,5 @@ abstract class IdentCompanion[T <: Identifier] extends JsonCompanion[String, T]:
     ),
     Writes.StringWrites.contramap(write)
   )
+
+  def unapply(s: String): Option[T] = build(s).toOption

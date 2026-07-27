@@ -13,7 +13,7 @@ trait FormMappings:
   val email: Mapping[Email] = stringMapping[Email](Email.build)
   val accessToken: Mapping[AccessToken] = stringMapping[AccessToken](AccessToken.build)
   val idToken: Mapping[IdToken] = stringMapping[IdToken](IdToken.build)
-  val userId: Mapping[UserId] = Forms.of[Long].transform(l => UserId(l), u => u.id)
+  val userId: Mapping[UserId] = Forms.of[Long].transform(l => UserId.unsafe(l), u => u.id)
 
   val c: Constraint[String] =
     Constraint[String]((s: String) => Email.build(s).fold(err => Invalid(err.message), _ => Valid))

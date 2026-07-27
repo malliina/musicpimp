@@ -27,6 +27,6 @@ object Streaming:
       .queue[Option[T]](bufferSize, OverflowStrategy.backpressure)
       .takeWhile(_.isDefined)
       .map(_.get)
-    val (queue, publisher) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(mat)
+    val (queue, publisher) = source.toMat(Sink.asPublisher(fanout = false))(Keep.both).run()(using mat)
     val src = Source.fromPublisher(publisher)
     (queue, src)
