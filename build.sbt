@@ -497,7 +497,6 @@ lazy val pimpcloudLinuxSettings = Seq(
       "-J-Xmx192m",
       s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
       s"-Dpush.conf=/etc/$linuxName/push.conf",
-      s"-Dlogger.resource=logback-prod.xml",
       s"-Dconfig.file=/etc/$linuxName/production.conf",
       s"-Dpidfile.path=/dev/null",
       s"-Dlog.dir=/var/log/$linuxName"
