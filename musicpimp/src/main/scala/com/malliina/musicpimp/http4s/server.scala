@@ -1,17 +1,16 @@
 package com.malliina.musicpimp.http4s
 
-import cats.data.Kleisli
+import cats.Parallel
 import cats.effect.kernel.Resource
 import cats.effect.std.Dispatcher
-import cats.effect.{Async, Concurrent, ExitCode, IO, IOApp}
-import cats.{Monad, Parallel}
+import cats.effect.{Async, IO}
 import ch.qos.logback.classic.Level
-import com.comcast.ip4s.{Port, host, port}
+import com.comcast.ip4s.Port
 import com.malliina.database.DoobieDatabase
 import com.malliina.file.FileUtilities
 import com.malliina.http.io.HttpClientIO
+import com.malliina.http4s.{AppServer, ServerResources}
 import com.malliina.logback.PimpAppender
-import com.malliina.musicpimp.{BuildInfo, Tray}
 import com.malliina.musicpimp.app.{AppMode, InitOptions, PimpConf}
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.{AuthBundles, Authenticator, CookieAuthenticator, Http4sAuth, JWT, PimpAuthenticator, RememberMe}
@@ -23,29 +22,17 @@ import com.malliina.musicpimp.log.PimpLog
 import com.malliina.musicpimp.messaging.{CloudPushClient, TokenService}
 import com.malliina.musicpimp.scheduler.ScheduledPlaybackService
 import com.malliina.musicpimp.scheduler.json.JsonHandler
-import com.malliina.musicpimp.util.{FileUtil, Sys}
+import com.malliina.musicpimp.util.FileUtil
+import com.malliina.musicpimp.{BuildInfo, Tray}
 import com.malliina.util.{AppLogger, Logging}
-import com.malliina.values.{ErrorMessage, Readable}
+import fs2.Stream
 import fs2.compression.Compression
 import fs2.io.file.Files
 import fs2.io.net.Network
-import fs2.Stream
-import org.http4s.ember.server.EmberServerBuilder
-import org.http4s.server.middleware.{GZip, HSTS}
-import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.server.{Router, Server}
-import org.http4s.{Http, HttpRoutes, Request, Response}
 
-import scala.concurrent.duration.{Duration, DurationInt}
-
-trait ServerResources:
+trait PimpServerResources extends ServerResources:
   private val log = AppLogger(getClass)
-
-  given Readable[Port] =
-    Readable.string.emap(s => Port.fromString(s).toRight(ErrorMessage(s"Not a port: '$s'.")))
-
-  private val serverPort: Port =
-    Sys.env.readOpt[Port]("SERVER_PORT").getOrElse(port"9000")
 
   private val tray = Tray.default()
 
@@ -129,53 +116,21 @@ trait ServerResources:
         html
       )
 
-  extension [F[_]: Concurrent, O](s: Stream[F, O])
-    def runInBackground: Resource[F, Unit] =
-      Stream.emit(()).concurrently(s).compile.resource.lastOrError
-
-  private def appResource[F[+_]: { Async, Files, Parallel, Compression }](
-    service: Service[F],
-    builder: WebSocketBuilder2[F]
-  ): Http[F, F] =
-    GZip[F, F]:
-      HSTS:
-        orNotFound:
-          Router(
-            "/" -> service.allRoutes(builder),
-            "/assets" -> StaticService[F].routes
-          )
-
-  def emberServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
+  def pimpServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
     service: Service[F],
     port: Port = serverPort
   ): Resource[F, Server] =
+    log.info(s"Binding on port $port using app version ${BuildInfo.gitHash}...")
+    emberServer[F](port): b =>
+      Router(
+        "/" -> service.allRoutes(b),
+        "/assets" -> StaticService[F].routes
+      )
+
+object PimpServer extends AppServer with PimpServerResources:
+  override def server: Resource[IO, Server] =
     for
-      _ = log.info(s"Binding on port $port using app version ${BuildInfo.gitHash}...")
-      server <- EmberServerBuilder
-        .default[F]
-        .withHost(host"0.0.0.0")
-        .withPort(port)
-        .withHttpWebSocketApp(b => appResource(service, b))
-        .withIdleTimeout(60.hours)
-        .withRequestHeaderReceiveTimeout(30.seconds)
-        .withErrorHandler(ErrorHandler[F].partial)
-        .withShutdownTimeout(1.millis)
-        .build
-    yield server
-
-  private def orNotFound[F[_]: Monad](rs: HttpRoutes[F]): Kleisli[F, Request[F], Response[F]] =
-    Kleisli: req =>
-      rs.run(req).getOrElseF(BasicApiService[F].notFound(s"Not found: ${req.method} ${req.uri}."))
-
-object AppServer extends IOApp with ServerResources:
-  override def runtimeConfig =
-    super.runtimeConfig.copy(cpuStarvationCheckInitialDelay = Duration.Inf)
-
-  override def run(args: List[String]): IO[ExitCode] =
-    val server =
-      for
-        conf <- Resource.eval(PimpConf.parseF[IO])
-        app <- appResources[IO](conf)
-        server <- emberServer[IO](app)
-      yield server
-    server.use(_ => IO.never).as(ExitCode.Success)
+      conf <- Resource.eval(PimpConf.parseF[IO])
+      app <- appResources[IO](conf)
+      s <- pimpServer[IO](app)
+    yield s

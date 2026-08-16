@@ -4,7 +4,7 @@ import com.malliina.concurrent.Execution.cached
 import com.malliina.http.io.HttpClientIO
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.play.auth.{AuthFailure, Authenticator, BasicAuthHandler, GoogleCodeValidator, OAuthConf, UserAuthenticator}
-import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
+import com.malliina.play.controllers.BaseSecurity
 import com.malliina.play.http.AuthedRequest
 import com.malliina.values.ErrorMessage
 import com.malliina.web.OAuthKeys.LoginHint

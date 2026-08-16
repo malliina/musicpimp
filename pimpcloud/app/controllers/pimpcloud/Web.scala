@@ -66,9 +66,9 @@ class Web(comps: ControllerComponents, tags: CloudTags, authActions: CloudAuthen
                   val server = creds.cloudID
                   val user = creds.username
                   val who = s"$user@$server"
-                  log info s"Authentication succeeded to '$who' from '$remoteAddress'."
+                  log.info(s"Authentication succeeded to '$who' from '$remoteAddress'.")
                   val intendedUrl = request.session
-                    .get(forms.intendedUri) getOrElse defaultLoginSuccessPage.url
+                    .get(forms.intendedUri).getOrElse(defaultLoginSuccessPage.url)
                   Redirect(intendedUrl).withSession(Auth.DefaultSessionKey -> server.id)
               )
             .recover:

@@ -12,7 +12,6 @@ import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
 import play.sbt.PlayImport
-import play.sbt.routes.RoutesKeys
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
@@ -130,6 +129,7 @@ val utilPlay = Project("util-play", file("util-play"))
       Seq("actor", "stream").map { m =>
         "org.apache.pekko" %% s"pekko-$m" % versions.pekko
       } ++ Seq(
+        "com.malliina" %% "util-http4s" % versions.primitives,
         "org.scalameta" %% "munit" % versions.munit % Test,
         "org.playframework" %% "play-test" % playVersion % Test
       )
@@ -212,12 +212,14 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
       malliinaGroup %%% "primitives" % versions.primitives
     ),
+    assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
+    assetsPrefix := "public",
     Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
   )
 val pimpcloud = project
   .in(file("pimpcloud"))
   .enablePlugins(
-    PlayScala,
+//    PlayScala,
     JavaServerAppPackaging,
     SystemdPlugin,
     BuildInfoPlugin,
@@ -248,13 +250,13 @@ val it = project
 val pimpbeam = project
   .in(file("pimpbeam"))
   .enablePlugins(
-    PlayScala,
+//    PlayScala,
     JavaServerAppPackaging,
     com.malliina.sbt.unix.LinuxPlugin,
     SystemdPlugin,
     BuildInfoPlugin
   )
-  .dependsOn(utilPlay)
+  .dependsOn(utilPlay, shared)
   .settings(serverSettings *)
   .settings(
     libraryDependencies ++= Seq(
@@ -442,7 +444,7 @@ lazy val windowsConfSettings = inConfig(Windows)(
 )
 
 lazy val pimpMacSettings = macSettings ++ Seq(
-  mainClass := Some("com.malliina.musicpimp.http4s.AppServer"),
+  mainClass := Some("com.malliina.musicpimp.http4s.PimpServer"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
   launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
   Mac / appIcon := Some((Mac / pkgHome).value.resolve("guitar.icns")),
@@ -457,27 +459,25 @@ lazy val pimpMacSettings = macSettings ++ Seq(
 // pimpcloud settings
 
 lazy val pimpcloudSettings =
-  commonServerSettings ++
+  http4sServerSettings ++
     pimpcloudLinuxSettings ++
-    pimpcloudScalaJSSettings ++
     artifactSettings ++
     Seq(
-      buildInfoKeys += BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
-      libraryDependencies ++= Seq(
-        PlayImport.ehcache,
-        PlayImport.ws % Test
+      scalaJSProjects := Seq(pimpcloudFrontend),
+      Assets / pipelineStages ++= Seq(scalaJSPipeline),
+      isProd := scalaJSStage.value == FullOptStage,
+      buildInfoKeys ++= Seq[BuildInfoKey](
+        BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
+        "isProd" -> isProd.value,
+        "assetsDir" -> Def.settingDyn(pimpcloudFrontend / assetsRoot).value.toFile,
+        "publicDir" -> (Assets / resourceDirectory).value,
+        "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
       ),
-      RoutesKeys.routesImport ++= Seq(
-        "com.malliina.musicpimp.http.PimpImports._",
-        "com.malliina.musicpimp.models._",
-        "com.malliina.values.Username"
-      ),
-      PlayKeys.externalizeResources := false,
       fileTreeSources := Seq(
         DirMap(
           (Assets / resourceDirectory).value.toPath,
           "com.malliina.pimpcloud.assets.CloudAssets",
-          "controllers.pimpcloud.CloudTags.at"
+          "com.malliina.pimpcloud.html.CloudTags.at"
         )
       ),
       buildInfoPackage := "com.malliina.pimpcloud",
@@ -519,11 +519,6 @@ lazy val artifactSettings = Seq(
   )
 )
 
-lazy val pimpcloudScalaJSSettings = Seq(
-  scalaJSProjects := Seq(pimpcloudFrontend),
-  Assets / pipelineStages ++= Seq(scalaJSPipeline)
-)
-
 def serverSettings = LinusPlugin.playSettings ++ Seq(
   // https://github.com/sbt/sbt-release
   releaseProcess := Seq[ReleaseStep](
@@ -561,7 +556,8 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
 
 lazy val http4sServerSettings = serverSettings ++ baseSettings ++ Seq(
   libraryDependencies ++= Seq(
-    logstreamsDep
+    logstreamsDep,
+    "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
   ).map(dep => dep.withSources())
 )
 

@@ -44,17 +44,17 @@ case class ServerTools(service: Service[IO], server: Server):
   def baseHttpUrl = FullUrl("http", s"localhost:$port", "")
   def baseWsUrl = FullUrl("ws", s"localhost:$port", "")
 
-trait Http4sServerSuite extends MUnitDatabaseSuite:
+trait PimpServerSuite extends MUnitDatabaseSuite:
   self: munit.CatsEffectSuite =>
-  object TestServer extends ServerResources
+  object TestServer extends PimpServerResources
   val http = ResourceFunFixture(HttpClientIO.resource[IO])
   val serverResource =
     for
       conf <- Resource.eval(IO.fromEither(PimpConf.parse(_ => db())))
       app <- TestServer.appResources[IO](conf)
-      server <- TestServer.emberServer[IO](app, port"0")
+      server <- TestServer.pimpServer[IO](app, port"0")
     yield ServerTools(app, server)
   val server = ResourceSuiteLocalFixture("server", serverResource)
   override def munitFixtures: Seq[AnyFixture[?]] = Seq(db, server)
 
-abstract class TestServerSuite extends munit.CatsEffectSuite with Http4sServerSuite
+abstract class TestServerSuite extends munit.CatsEffectSuite with PimpServerSuite

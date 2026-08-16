@@ -42,7 +42,7 @@ trait Responses[F[_]: Applicative] extends Http4sDsl[F] with JsonInstances:
 
   val JsonKey = "json"
 
-  def ok[A](a: A)(using EntityEncoder[F, A]) = Ok.apply(a, noCache)
+  def ok[A](a: A)(using EntityEncoder[F, A]) = Ok(a, noCache)
   def accepted[A](a: A)(using EntityEncoder[F, A]) = Accepted(a, noCache)
 
   def seeOther(uri: Uri): F[Response[F]] =

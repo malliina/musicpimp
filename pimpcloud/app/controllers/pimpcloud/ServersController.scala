@@ -3,7 +3,7 @@ package controllers.pimpcloud
 import org.apache.pekko.stream.Materializer
 import com.malliina.musicpimp.models.Reason
 import com.malliina.play.auth.Authenticator
-import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
+import com.malliina.play.controllers.BaseSecurity
 import controllers.pimpcloud.ServersController.log
 import play.api.Logger
 import play.api.mvc.*

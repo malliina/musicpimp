@@ -1,23 +1,24 @@
 package com.malliina.musicpimp.http4s
 
 import cats.effect.Async
-import com.malliina.musicpimp.audio.{JsonHandlerBase, PingEvent, ServerMessage, ServerPlayer, TimeUpdatedMessage, TrackJson, TrackMeta, WelcomeMessage}
-import com.malliina.musicpimp.auth.AuthedRequest
-import com.malliina.util.AppLogger
-import fs2.Stream
-import org.http4s.server.websocket.WebSocketBuilder2
-import org.http4s.websocket.WebSocketFrame
-import org.http4s.websocket.WebSocketFrame.Text
-import PlayerSocketBuilder.log
 import cats.implicits.{toFlatMapOps, toFunctorOps}
+import com.malliina.http4s.SocketBuilder
+import com.malliina.musicpimp.audio.{JsonHandlerBase, PingEvent, ServerMessage, ServerPlayer, TrackJson, TrackMeta, WelcomeMessage}
+import com.malliina.musicpimp.auth.AuthedRequest
+import com.malliina.musicpimp.http4s.PlayerSocketBuilder.log
 import com.malliina.musicpimp.json.Target
 import com.malliina.musicpimp.models.RemoteInfo
 import com.malliina.play.http.FullUrls2
+import com.malliina.util.AppLogger
+import fs2.Stream
 import fs2.concurrent.Topic
-import io.circe.{Encoder, Json}
-import io.circe.syntax.EncoderOps
 import io.circe.parser.parse
+import io.circe.syntax.EncoderOps
+import io.circe.{Encoder, Json}
 import org.http4s.Response
+import org.http4s.server.websocket.WebSocketBuilder2
+import org.http4s.websocket.WebSocketFrame
+import org.http4s.websocket.WebSocketFrame.Text
 
 import scala.concurrent.duration.DurationInt
 

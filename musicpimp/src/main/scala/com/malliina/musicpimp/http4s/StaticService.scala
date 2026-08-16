@@ -3,6 +3,7 @@ package com.malliina.musicpimp.http4s
 import cats.data.NonEmptyList
 import cats.effect.{Async, Sync}
 import cats.syntax.all.{catsSyntaxApplicativeId, toFlatMapOps}
+import com.malliina.http4s.BasicApiService
 import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.http4s.StaticService.log
 import com.malliina.util.AppLogger
@@ -23,8 +24,8 @@ class StaticService[F[_]: { Async, Files }] extends BasicApiService[F]:
   private val supportedStaticExtensions =
     List(".html", ".js", ".map", ".css", ".png", ".ico", ".svg", ".map", ".json") ++ fontExtensions
 
-  private val assetsDir = fs2.io.file.Path(BuildInfo.assetsDir.getAbsolutePath)
-  private val publicDir = fs2.io.file.Path(BuildInfo.publicDir.getAbsolutePath)
+  private val assetsDir = fs2.io.file.Path.fromNioPath(BuildInfo.assetsDir.toPath).absolute
+  private val publicDir = fs2.io.file.Path.fromNioPath(BuildInfo.publicDir.toPath).absolute
   private val allowAllOrigins = Header.Raw(ci"Access-Control-Allow-Origin", "*")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
@@ -35,7 +36,7 @@ class StaticService[F[_]: { Async, Files }] extends BasicApiService[F]:
           !file.value.endsWith(".map")
       val cacheHeaders =
         if isCacheable then NonEmptyList.of(`max-age`(365.days), `public`)
-        else NonEmptyList.of(`no-cache`(), `no-store`, `must-revalidate`)
+        else BasicApiService.noCacheDirectives
 
       val search =
         if BuildInfo.isProd then

@@ -12,11 +12,16 @@ import io.circe.{Codec, Decoder, DecodingFailure, Encoder, Json}
 sealed trait PimpList
 
 object PimpList:
-  implicit val reader: Decoder[PimpList] =
+  given reader: Decoder[PimpList] =
     Decoder[PimpStreams]
       .map[PimpList](identity)
       .or(Decoder[PimpPhones].map[PimpList](identity))
       .or(Decoder[PimpServers].map[PimpList](identity))
+
+  given Encoder[PimpList] =
+    case ps @ PimpStreams(streams) => ps.asJson
+    case pl @ PimpPhones(phones)   => pl.asJson
+    case ps @ PimpServers(servers) => ps.asJson
 
 case class PimpStream(
   request: RequestIdentifier,
@@ -30,7 +35,7 @@ case class PimpStreams(streams: Seq[PimpStream]) extends PimpList
 object PimpStreams:
   given json: Codec[PimpStreams] = format(RequestsKey, PimpStreams.apply)(_.streams)
 
-case class PimpPhone(s: CloudID, address: String) derives Codec.AsObject
+case class PimpPhone(id: String, s: CloudID, address: String) derives Codec.AsObject
 
 case class PimpPhones(phones: Seq[PimpPhone]) extends PimpList
 

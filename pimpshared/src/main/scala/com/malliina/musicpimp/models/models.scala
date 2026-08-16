@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.models
 
 import com.malliina.musicpimp.cloud.PimpMessage
+import com.malliina.musicpimp.json.PimpStrings
 import com.malliina.play.{ContentRange, Writeables}
 import com.malliina.values.Literals.err
 import com.malliina.values.{ErrorMessage, ValidatingCompanion}
@@ -44,3 +45,6 @@ object RequestID extends ValidatingCompanion[String, RequestID]:
   private case class Impl(id: String) extends RequestID
 
 case class SimpleCommand(cmd: String) derives Codec.AsObject
+
+object SimpleCommand:
+  val status = SimpleCommand(PimpStrings.StatusKey)

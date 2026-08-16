@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.http4s
 
 import cats.effect.Async
+import com.malliina.http4s.SocketBuilder
 import com.malliina.musicpimp.auth.AuthedRequest
 import com.malliina.musicpimp.db.{IndexEvent, Indexer}
 import com.malliina.musicpimp.http4s.SearchSocketBuilder.log

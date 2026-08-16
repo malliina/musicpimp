@@ -1,18 +1,14 @@
 package com.malliina.it
 
 import cats.effect.IO
-import org.apache.pekko.stream.Materializer
-
-import java.net.URI
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
+import com.malliina.http.{FullUrl, HttpClient, HttpHeaders}
+import com.malliina.musicpimp.app.InitOptions
 import com.malliina.musicpimp.cloud.CloudSocket
+import com.malliina.musicpimp.http4s.PimpServerSuite
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{CloudID, TrackID}
+import com.malliina.pimpcloud.http4s.CloudServerSuite
 import com.malliina.pimpcloud.{PimpPhone, PimpPhones, PimpServer, PimpServers, PimpStreams}
-import com.malliina.http.FullUrl
-import com.malliina.musicpimp.app.InitOptions
-import com.malliina.musicpimp.http4s.Http4sServerSuite
 import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Util
@@ -22,15 +18,17 @@ import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
 import munit.{AnyFixture, FunSuite}
 import org.apache.commons.codec.binary.Base64
-import play.api.{Application, BuiltInComponents}
 import play.api.ApplicationLoader.Context
 import play.api.http.HeaderNames
-import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Result
-import play.api.test.{DefaultTestServerFactory, FakeRequest, RunningServer}
 import play.api.test.Helpers.*
+import play.api.test.{DefaultTestServerFactory, FakeRequest, RunningServer}
+import play.api.{Application, BuiltInComponents}
 import tests.*
 
+import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 import scala.concurrent.Promise
 
 trait ServerPerSuite2[T <: BuiltInComponents]:
@@ -48,22 +46,19 @@ trait ServerPerSuite2[T <: BuiltInComponents]:
 
   override def munitFixtures: Seq[AnyFixture[?]] = Seq(testServer)
 
-abstract class PimpcloudServerSuite extends FunSuite with ServerPerSuite2[TestComponents]:
-  override def createComponents(context: Context): TestComponents = new TestComponents(context)
+//abstract class PimpcloudServerSuite extends FunSuite with ServerPerSuite2[TestComponents]:
+//  override def createComponents(context: Context): TestComponents = new TestComponents(context)
+//
+//trait PimpcloudServerSuiteTrait extends ServerPerSuite2[TestComponents]:
+//  self: FunSuite =>
+//  override def createComponents(context: Context): TestComponents = new TestComponents(context)
 
-trait PimpcloudServerSuiteTrait extends ServerPerSuite2[TestComponents]:
-  self: FunSuite =>
-  override def createComponents(context: Context): TestComponents = new TestComponents(context)
-
-class IntegrationTest
-  extends munit.CatsEffectSuite
-  with PimpcloudServerSuiteTrait
-  with Http4sServerSuite:
-  def cloudPort = port
-  def cloud = testServer().app
-  implicit def mat: Materializer = cloud.materializer
-  def cloudHostPort = s"localhost:$cloudPort"
-  def pimpcloudUri = FullUrl("ws", cloudHostPort, CloudSocket.path)
+class IntegrationTest extends munit.CatsEffectSuite with CloudServerSuite with PimpServerSuite:
+  def cloudPort: Int = ???
+  def cloud: Application = ??? // testServer().app
+  def pimpcloudHostPort = s"localhost:$cloudPort"
+  def cloudHostPort = FullUrl("http", pimpcloudHostPort, "")
+  def pimpcloudUri = FullUrl("ws", s"localhost:$cloudPort", CloudSocket.path)
   def pimpOptions: InitOptions = TestOptions.default.copy(cloudUri = pimpcloudUri)
 //  val musicpimp = new MusicPimpSuite(pimpOptions)
   def musicpimp = server().service
@@ -71,14 +66,13 @@ class IntegrationTest
   def cloudClient = musicpimp.clouds
   def library = musicpimp.files
 //  def pimp = musicpimp.application
-  val httpClient = AhcWSClient()
   val adminPath = "/admin/usage"
   val phonePath = "/ws/playback"
   val testTrackTitle = "Test of MP3 File"
 
   http.test("can do it"): client =>
     assertIO(client.get(server().baseHttpUrl.append("/ping")).map(_.status), 200)
-    assertEquals(statusCode("/health", testServer().app), 200)
+    assertEquals(statusCode("/health", cloud), 200)
 
   test("musicpimp can connect to pimpcloud"):
     val expectedId = CloudID("connect-test")
@@ -134,7 +128,7 @@ class IntegrationTest
               assertEquals(joinedPhone.s, expectedId)
     finally cloudClient.disconnectAndForget("")
 
-  test("stream events"):
+  http.test("stream events"): client =>
     val p = Promise[String]()
 
     def onJson(json: Json): Unit =
@@ -146,54 +140,61 @@ class IntegrationTest
 
     withCloudTrack("notification-test"): (trackId, _, cloudId) =>
       withPimpSocket(adminPath, onJson): _ =>
-        val f = req(s"http://$cloudHostPort/tracks/$trackId", cloudId).get()
-        val title = await(p.future)
-        assertEquals(title, testTrackTitle)
-        IO.fromFuture(IO.delay(f))
+        req(client, cloudHostPort.append(s"/tracks/$trackId"), cloudId).map: res =>
+          val title = await(p.future)
+          assertEquals(title, testTrackTitle)
+          IO.unit
 
-  test("serve entire track"):
+  http.test("serve entire track"): client =>
     withCloudTrack("track-test"): (trackId, fileSize, cloudId) =>
       // request track
-      val r = makeGet(s"/tracks/$trackId", cloudId)
-      assertEquals(r.status, 200)
-      // It seems the content-length header is only set if the content is small enough for non-chunked encoding.
-      // So, while this test passes also with this line uncommented, it's not representative.
-      //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
-      assertEquals(r.bodyAsBytes.size.toLong, fileSize.toBytes)
+      makeGet(client, s"/tracks/$trackId", cloudId).map: r =>
+        assertEquals(r.status, 200)
+        // It seems the content-length header is only set if the content is small enough for non-chunked encoding.
+        // So, while this test passes also with this line uncommented, it's not representative.
+        //      assert(r.header(HeaderNames.CONTENT_LENGTH).contains(fileSize.toBytes.toString))
+        assertEquals(r.body.length.toLong, fileSize.toBytes)
 
-  test("serve ranged track"):
+  http.test("serve ranged track"): client =>
     val bytesPromise = Promise[Int]()
-    withCloudTrack("range-test"): (trackId, _, cloudId) =>
+    val req = withCloudTrack("range-test"): (trackId, _, cloudId) =>
       // request track
       // the end of the range is inclusive
-      val r = makeGet(s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20")
-      assertEquals(r.status, 206)
-      assertEquals(r.bodyAsBytes.size.toLong, 11L)
-      bytesPromise.success(r.bodyAsBytes.size)
-    assertEquals(await(bytesPromise.future), 11)
+      makeGet(client, s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20").map: r =>
+        assertEquals(r.status, 206)
+        assertEquals(r.body.length.toLong, 11L)
+        bytesPromise.success(r.body.length)
+    req.flatMap(_ => IO.delay(assertEquals(await(bytesPromise.future), 11)))
 
-  test("get folders"):
+  http.test("get folders"): client =>
     withCloudTrack("folder-test"): (_, _, cloudId) =>
-      val r = makeGet("/folders?f=json", cloudId)
-      assertEquals(r.status, 200)
-      musicpimp.indexer.submitIndexAndSave().unsafeRunSync()
-      val _ = makeGet("/folders?f=json", cloudId)
-      val r3 = makeGet(s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
-      assertEquals(r3.status, 200)
+      for
+        r <- makeGet(client, "/folders?f=json", cloudId)
+        _ = assertEquals(r.status, 200)
+        _ <- musicpimp.indexer.submitIndexAndSave()
+        _ <- makeGet(client, "/folders?f=json", cloudId)
+        r3 <- makeGet(client, s"/folders/Sv%C3%A5rt+%28%C3%A4r+det%29?f=json", cloudId)
+      yield assertEquals(r3.status, 200)
 
-  test("get alarms"):
+  http.test("get alarms"): client =>
     withCloud("alarms-test"): cloudId =>
-      val r = makeGet("/alarms?f=json", cloudId)
-      assertEquals(r.contentType, "application/json")
-      assertEquals(r.status, 200)
+      makeGet(client, "/alarms?f=json", cloudId).map: r =>
+        assertEquals(
+          r.headers.get(HttpHeaders.`Content-Type`).flatMap(_.headOption).getOrElse(""),
+          "application/json"
+        )
+        assertEquals(r.status, 200)
 
-  test("search"):
+  http.test("search"): client =>
     withCloud("search-test"): cloudId =>
-      val r = makeGet("/search?term=iron&f=json", cloudId)
-      assertEquals(r.contentType, "application/json")
-      assertEquals(r.status, 200)
+      makeGet(client, "/search?term=iron&f=json", cloudId).map: r =>
+        assertEquals(
+          r.headers.get(HttpHeaders.`Content-Type`).flatMap(_.headOption).getOrElse(""),
+          "application/json"
+        )
+        assertEquals(r.status, 200)
 
-  override def munitFixtures: Seq[AnyFixture[?]] = Seq(testServer, db, server)
+  override def munitFixtures: Seq[AnyFixture[?]] = Seq(cloudServer, db, server)
 
   class TestHandler:
     val requests = Promise[Json]()
@@ -211,7 +212,7 @@ class IntegrationTest
       _ <- servers.future
     yield 42
 
-  def withCloudTrack(desiredId: String)(code: (TrackID, StorageSize, CloudID) => Any) =
+  def withCloudTrack(desiredId: String)(code: (TrackID, StorageSize, CloudID) => IO[Any]) =
     // makes sure musicpimp server has a track to serve
     val trackFile = TestUtils.makeTestMp3()
     val fileSize = Files.size(trackFile).bytes
@@ -227,7 +228,7 @@ class IntegrationTest
       val trackId = Library.trackId(trackFile.getFileName)
       code(trackId, fileSize, cloudId)
 
-  def withCloud(desiredId: String)(code: CloudID => Any): Any =
+  def withCloud(desiredId: String)(code: CloudID => IO[Any]): IO[Any] =
     try
       // connect to pimpcloud
       val cloudId = CloudID(desiredId)
@@ -236,13 +237,13 @@ class IntegrationTest
       code(id)
     finally cloudClient.disconnectAndForget("Test ended.")
 
-  def makeGet(url: String, cloudId: CloudID, headers: (String, String)*) =
-    await(req(s"http://$cloudHostPort$url", cloudId, headers*).get())
+  def makeGet(http: HttpClient[IO], path: String, cloudId: CloudID, headers: (String, String)*) =
+    req(http, cloudHostPort.append(path), cloudId, headers*)
 
-  def req(url: String, cloudId: CloudID, headers: (String, String)*) =
+  def req(http: HttpClient[IO], url: FullUrl, cloudId: CloudID, headers: (String, String)*) =
     val enc = cloudAuthorization(cloudId)
     val hs = headers :+ (HeaderNames.AUTHORIZATION -> s"Basic $enc")
-    httpClient.url(url).withHttpHeaders(hs*)
+    http.get(url, hs.toMap)
 
   def cloudAuthorization(cloudId: CloudID) =
     Base64.encodeBase64String(s"$cloudId:admin:test".getBytes(StandardCharsets.UTF_8))
@@ -266,7 +267,7 @@ class IntegrationTest
   def withCloudSocket[T](path: String, authValue: String, onMessage: Json => Any)(
     code: TestSocket => IO[T]
   ) =
-    val uri = new URI(s"ws://$cloudHostPort$path")
+    val uri = new URI(s"ws://$pimpcloudHostPort")
     Util.using(new TestSocket(uri, authValue, onMessage)): client =>
       await(client.initialConnection)
       code(client).unsafeRunSync()

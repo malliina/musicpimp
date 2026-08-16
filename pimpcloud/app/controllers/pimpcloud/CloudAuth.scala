@@ -1,9 +1,8 @@
 package controllers.pimpcloud
 
 import org.apache.pekko.stream.Materializer
-import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.play.auth.{Authenticator, UserAuthenticator}
-import com.malliina.play.controllers.{AuthBundle, BaseSecurity}
+import com.malliina.play.controllers.BaseSecurity
 import com.malliina.play.http.AuthedRequest
 import play.api.mvc.{ActionBuilder, AnyContent, Request}
 

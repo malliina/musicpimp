@@ -7,7 +7,6 @@ import org.apache.pekko.util.ByteString
 import com.malliina.concurrent.Execution.cached
 import com.malliina.http.PlayCirce
 import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
-import com.malliina.musicpimp.auth.PimpAuths
 import com.malliina.musicpimp.cloud.{PimpServerSocket, Search}
 import com.malliina.musicpimp.http.PimpContentController
 import com.malliina.musicpimp.models.Reason.*
@@ -113,7 +112,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
       val id = PimpEnc.track(in)
       val sourceServer: PimpServerSocket = conn.server
       val userAgent = req.headers.get(HeaderNames.USER_AGENT) getOrElse "undefined"
-      log info s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'."
+      log.info(s"Serving track '${track.title}' at '${track.path}' with ID '$id' to user agent '$userAgent'.")
       // proxies request
       val trackSize = track.size
       val rangeTry = ContentRanges.fromHeader(req, trackSize)
@@ -261,7 +260,7 @@ class Phones(comps: ControllerComponents, tags: CloudTags, phoneAuth: BaseSecuri
         errorMessage => fut(badRequest(errorMessage)),
         parsedBody =>
           phone
-            .makeRequest(cmd, parsedBody)
+            .jsonRequest(cmd, parsedBody)
             .map: response =>
               toResult(req, response)
             .recover:

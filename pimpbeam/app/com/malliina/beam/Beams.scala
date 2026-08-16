@@ -1,19 +1,24 @@
 package com.malliina.beam
 
+import cats.effect.Async
+import cats.implicits.{toFlatMapOps, toFunctorOps}
 import org.apache.pekko.actor.{Actor, ActorRef, Props, Terminated}
 import org.apache.pekko.pattern.ask
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.util.Timeout
 import com.malliina.beam.BeamMediator.*
 import com.malliina.beam.Beams.log
+import com.malliina.musicpimp.auth.{Authenticator, UserPayload}
+import com.malliina.musicpimp.auth.Authenticator.AuthOutcome
 import com.malliina.play.ActorExecution
-import com.malliina.play.auth.Authenticator.Outcome
-import com.malliina.play.auth.{Auth, BasicCredentials, InvalidCredentials, UserAuthenticator}
+import com.malliina.play.auth.{Auth, BasicCredentials, InvalidCredentials}
 import com.malliina.play.json.JsonMessages
 import com.malliina.play.ws.{ActorConfig, JsonActor, Sockets}
+import com.malliina.util.AppLogger
 import com.malliina.values.Username
 import controllers.Home
 import io.circe.Json
+import org.http4s.Request
 import play.api.Logger
 import play.api.mvc.RequestHeader
 
@@ -21,34 +26,32 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 object Beams:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
-  def apply(ctx: ActorExecution) = new Beams(ctx)
+class Beams[F[_]: Async]:
+  val F = Async[F]
+//  val mediator = ctx.actorSystem.actorOf(BeamMediator.props(ctx.materializer))
 
-class Beams(ctx: ActorExecution):
-  implicit val timeout: Timeout = Timeout(10.seconds)
-  implicit val ec: ExecutionContext = ctx.executionContext
-  val mediator = ctx.actorSystem.actorOf(BeamMediator.props(ctx.materializer))
+  val playerAuthenticator: Authenticator[F, UserPayload] = ??? // UserAuthenticator.session()
+  val phoneAuthenticator: Authenticator[F, UserPayload] =
+    ??? // = UserAuthenticator.basic(Auth.basicCredentials, validatePhoneCredentials)
 
-  val playerAuthenticator = UserAuthenticator.session()
-  val phoneAuthenticator = UserAuthenticator.basic(Auth.basicCredentials, validatePhoneCredentials)
+//  val playerSockets = new Sockets[Username](playerAuthenticator, ctx):
+//    override def props(conf: ActorConfig[Username]): Props =
+//      BeamClientActor.props(conf, mediator, isPhone = false)
+//  val phoneSockets = new Sockets[Username](phoneAuthenticator, ctx):
+//    override def props(conf: ActorConfig[Username]) =
+//      BeamClientActor.props(conf, mediator, isPhone = true)
 
-  val playerSockets = new Sockets[Username](playerAuthenticator, ctx):
-    override def props(conf: ActorConfig[Username]): Props =
-      BeamClientActor.props(conf, mediator, isPhone = false)
-  val phoneSockets = new Sockets[Username](phoneAuthenticator, ctx):
-    override def props(conf: ActorConfig[Username]) =
-      BeamClientActor.props(conf, mediator, isPhone = true)
-
-  def openPlayer = playerSockets.newSocket
-
-  def openPhone = phoneSockets.newSocket
+//  def openPlayer = playerSockets.newSocket
+//
+//  def openPhone = phoneSockets.newSocket
 
   def player(user: Username) = findPlayer(user).flatMap: maybe =>
-    maybe.map(Future.successful).getOrElse(Future.failed(new NoSuchElementException(user.name)))
+    maybe.map(F.pure).getOrElse(F.raiseError(new NoSuchElementException(user.name)))
 
-  def findPlayer(user: Username): Future[Option[PlayerClient]] =
-    (mediator ? FindPlayer(user)).mapTo[Option[PlayerClient]]
+  def findPlayer(user: Username): F[Option[PlayerClient]] = F.pure(None)
+//    (mediator ? FindPlayer(user)).mapTo[Option[PlayerClient]]
 
   /** Validates the supplied credentials, which are valid if:
     *
@@ -58,34 +61,32 @@ class Beams(ctx: ActorExecution):
     * @return
     *   true if the credentials are valid, false otherwise
     */
-  def validatePhoneCredentials(creds: BasicCredentials): Future[Option[Username]] =
+  def validatePhoneCredentials(creds: BasicCredentials): F[Option[Username]] =
     val user = creds.username
     log.debug(s"Validating '$user'...")
     if Home.validateCredentials(creds) then
       playerExists(user).map(exists => if exists then Option(user) else None)
-    else Future.successful(None)
+    else F.pure(None)
 
-  def playerExists(username: Username) =
-    (mediator ? FindPlayer(username)).mapTo[Option[ActorRef]].map(_.isDefined)
+  def playerExists(username: Username): F[Boolean] = F.pure(false)
+//    (mediator ? FindPlayer(username)).mapTo[Option[ActorRef]].map(_.isDefined)
 
   /** @return
     *   the player connected as the username specified in the session
     */
-  def authPlayer(rh: RequestHeader): Future[Outcome[PlayerClient]] =
+  def authPlayer(rh: Request[F]): F[AuthOutcome[PlayerClient]] =
     playerAuthenticator
       .authenticate(rh)
       .flatMap: outcome =>
         outcome.fold(
-          fail => Future.successful(Left(fail)),
-          user => findPlayer(user).map(_.toRight(InvalidCredentials(rh)))
+          fail => F.pure(Left(fail)),
+          user => findPlayer(user.username).map(_.toRight(???)) // InvalidCredentials(rh)))
         )
 
-  def authUser(rh: RequestHeader) =
+  def authUser(rh: Request[F]) =
     playerAuthenticator.authenticate(rh)
 
 object BeamMediator:
-  def props(mat: Materializer) = Props(new BeamMediator(mat))
-
   sealed trait BeamMediatorMessage
 
   case class PlayerJson(message: Json, user: Username) extends BeamMediatorMessage

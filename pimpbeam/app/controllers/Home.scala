@@ -1,13 +1,16 @@
 package controllers
 
+import cats.effect.Async
+import cats.implicits.toFunctorOps
+
 import java.util.UUID
 import org.apache.pekko.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import org.apache.pekko.stream.{Materializer, QueueOfferResult}
 import org.apache.pekko.util.ByteString
 import com.malliina.beam.*
 import com.malliina.http.PlayCirce
+import com.malliina.musicpimp.auth.Authenticator.AuthOutcome
 import com.malliina.play.BeamStrings.*
-import com.malliina.play.auth.Authenticator.Outcome
 import com.malliina.play.auth.{Auth, AuthFailure, BasicCredentials, InvalidCredentials}
 import com.malliina.play.controllers.Caching
 import com.malliina.play.json.JsonMessages
@@ -45,9 +48,9 @@ object Home:
     if !credsOk then log warn s"Invalid credentials provided as user '$user'."
     credsOk
 
-class Home(
+class Home[F[_]: Async](
   beamConf: BeamConf,
-  beams: Beams,
+  beams: Beams[F],
   disco: DiscoGs,
   mat: Materializer,
   errorHandler: HttpErrorHandler,
@@ -69,7 +72,7 @@ class Home(
   def index = Action: (request: Request[AnyContent]) =>
     val user = UUID.randomUUID().toString
     val remoteIP = request.remoteAddress
-    log info s"Created user '$user' from '$remoteIP'."
+    log.info(s"Created user '$user' from '$remoteIP'.")
     Ok(BeamTags.index).withSession(sessionKey -> user)
 
   /** Not sure if the websocket connection has been opened by the time the call to this resource is
@@ -153,16 +156,17 @@ class Home(
   // Phone actions
 
   def playerState = PhoneLimitedSecureAction: user =>
-    Action.async: _ =>
-      beams
-        .findPlayer(user)
-        .map: maybePlayer =>
-          val json = BeamMessages.playerExists(
-            user,
-            maybePlayer.isDefined,
-            maybePlayer.exists(p => !p.streamer.isReceivingStream)
-          )
-          Caching.NoCacheOk(json)
+    ???
+//    Action.async: _ =>
+//      beams
+//        .findPlayer(user)
+//        .map: maybePlayer =>
+//          val json = BeamMessages.playerExists(
+//            user,
+//            maybePlayer.isDefined,
+//            maybePlayer.exists(p => !p.streamer.isReceivingStream)
+//          )
+//          Caching.NoCacheOk(json)
 
   /** Replaces the playlist with the uploaded file.
     */
@@ -233,34 +237,35 @@ class Home(
     * Checks that credentials are set in the header and that a corresponding player is connected
     * with the same userid.
     */
-  private def PhoneSecureAction(f: PlayerClient => EssentialAction): EssentialAction =
-    authenticatedAsync(authenticatePhone, onUnauthorized)(f)
+  private def PhoneSecureAction(f: PlayerClient => EssentialAction): EssentialAction = ???
+//    authenticatedAsync(authenticatePhone, onUnauthorized)(f)
 
   /** Checks that credentials in the header exist, but does not check whether a corresponding player
     * is connected. So this validation is not sufficient to allow file uploads.
     */
-  def PhoneLimitedSecureAction(f: Username => EssentialAction) =
+  private def PhoneLimitedSecureAction(f: Username => EssentialAction) =
     authenticatedAsync(authHeader, onUnauthorized)(f)
 
   /** Authenticated action for connected players.
     *
     * Checks the session username and requires a previously open player connection.
     */
-  def PlayerSecureAction(f: PlayerClient => EssentialAction) =
-    authenticatedAsync(beams.authPlayer, onUnauthorized)(f)
+  def PlayerSecureAction(f: PlayerClient => EssentialAction): EssentialAction = ???
+//    authenticatedAsync(beams.authPlayer, onUnauthorized)(f)
 
   /** Checks that a username is set in the session.
     */
-  def PlayerLimitedSecureAction(f: Username => EssentialAction) =
-    authenticatedAsync(beams.authUser, onUnauthorized)(a => f(a))
+  def PlayerLimitedSecureAction(f: Username => EssentialAction): EssentialAction = ???
+//    authenticatedAsync(beams.authUser, onUnauthorized)(a => f(a))
 
-  private def authenticatePhone(request: RequestHeader): Future[Outcome[PlayerClient]] =
-    headerUsername(request)
-      .map: user =>
-        beams.findPlayer(user)
-      .getOrElse:
-        Future.successful(None)
-      .map(_.toRight(InvalidCredentials(request)))
+  private def authenticatePhone(request: RequestHeader): Future[AuthOutcome[PlayerClient]] =
+    ???
+//    headerUsername(request)
+//      .map: user =>
+//        beams.findPlayer(user)
+//      .getOrElse:
+//        Future.successful(None)
+//      .map(_.toRight(InvalidCredentials(request)))
 
   private def authHeader(rh: RequestHeader) =
     Future.successful(headerUsername(rh).toRight(InvalidCredentials(rh)))

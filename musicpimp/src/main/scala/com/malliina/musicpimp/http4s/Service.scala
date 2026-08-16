@@ -89,7 +89,7 @@ class Service[F[_]: { Async, Files }](
   appender: DefaultFS2IOAppender[F],
   d: Dispatcher[F],
   html: PimpHtml
-) extends AppImplicits[F]:
+) extends PimpImplicits[F]:
   val F = Async[F]
   private val accountKeys = AccountKeys
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
@@ -130,7 +130,7 @@ class Service[F[_]: { Async, Files }](
               .flatMap: isValid =>
                 if isValid then
                   log.info(s"Authentication succeeded for user '$username'.")
-                  val intendedUrl = cookies.readIntendedUri(req).getOrElse(reverse.folders.base)
+                  val intendedUrl = cookies.intendedUri(req).getOrElse(reverse.folders.base)
                   seeOther(intendedUrl).map: res =>
                     cookies.withUser(UserPayload(username), Proxies2.isSecure(req), res)
                 else
@@ -669,7 +669,7 @@ class Service[F[_]: { Async, Files }](
   def handleLog(event: FrontLogEvent): Unit =
     logFunc(LoggerFactory.getLogger(event.module), Level.toLevel(event.level))(event.message)
 
-  def logFunc(logger: Logger, level: Level): String => Unit =
+  private def logFunc(logger: Logger, level: Level): String => Unit =
     if level == Level.DEBUG then logger.debug
     else if level == Level.INFO then logger.info
     else if level == Level.WARN then logger.warn
@@ -891,13 +891,6 @@ class Service[F[_]: { Async, Files }](
       .authenticate(req)
       .flatMap: outcome =>
         outcome.fold(failure => webAuth.onUnauthorized(failure), user => code(user))
-
-  extension (req: Request[?])
-    def userFeedback(cookieName: String = feedbackCookieName) =
-      req.cookies
-        .find(_.name == cookieName)
-        .map(_.content)
-        .flatMap(f => io.circe.parser.decode[UserFeedback](f).toOption)
 
   private def playlistsErrorHandler: PartialFunction[Throwable, F[Response[F]]] =
     case ue: UnauthorizedException =>

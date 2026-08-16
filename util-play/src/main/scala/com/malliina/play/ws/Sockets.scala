@@ -1,8 +1,7 @@
 package com.malliina.play.ws
 
-import cats.effect.unsafe.implicits.global
 import com.malliina.play.ActorExecution
-import com.malliina.play.auth.{AuthFailure, Authenticator}
+import com.malliina.play.auth.AuthFailure
 import com.malliina.play.ws.Sockets.{DefaultActorBufferSize, DefaultOverflowStrategy, circeTransformer, log}
 import io.circe.{Json, ParsingFailure, parser}
 import org.apache.pekko.actor.{ActorSystem, Props}
@@ -35,7 +34,6 @@ object Sockets:
         TextMessage(json.noSpaces))
 
 abstract class Sockets[User](
-  auth: Authenticator[User],
   ctx: ActorExecution,
   actorBufferSize: Int = DefaultActorBufferSize,
   overflowStrategy: OverflowStrategy = DefaultOverflowStrategy
@@ -58,13 +56,14 @@ abstract class Sockets[User](
     Results.Unauthorized
 
   def newSocket = WebSocket.acceptOrResult[Json, Json]: rh =>
-    auth
-      .authenticate(rh)
-      .map: authResult =>
-        authResult.fold(
-          failure => Left(onUnauthorized(rh, failure)),
-          user => Right(actorFlow(user, rh))
-        )
+    ???
+//    auth
+//      .authenticate(rh)
+//      .map: authResult =>
+//        authResult.fold(
+//          failure => Left(onUnauthorized(rh, failure)),
+//          user => Right(actorFlow(user, rh))
+//        )
 
   private def actorFlow(user: User, rh: RequestHeader): Flow[Json, Json, ?] =
     ActorFlow.actorRef[Json, Json](

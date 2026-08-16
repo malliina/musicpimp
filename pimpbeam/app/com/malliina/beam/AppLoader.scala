@@ -43,11 +43,11 @@ class AppComponents(context: Context)
   implicit val ec: ExecutionContext = materializer.executionContext
   // Services
   val disco = new DiscoGs(wsClient)
-  val beams = Beams(ActorExecution(actorSystem, materializer))
+//  val beams = Beams(ActorExecution(actorSystem, materializer))
   val conf = BeamConf(configuration)
   // Controllers
-  val home = new Home(conf, beams, disco, materializer, httpErrorHandler, controllerComponents)
-  override val router: Router = new Routes(httpErrorHandler, home, beams, assets)
+//  val home = new Home(conf, beams, disco, materializer, httpErrorHandler, controllerComponents)
+  override val router: Router = ??? // new Routes(httpErrorHandler, home, beams, assets)
 
   log info s"Started MusicBeamer endpoint. Advertising address: ${conf.host}:${conf.port}/${conf.sslPort}."
 
