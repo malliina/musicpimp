@@ -35,7 +35,7 @@ val versions = new {
   val http = "4.5.14"
   val logstreams = "6.14.3"
   val mobilePush = "3.17.1"
-  val munit = "1.3.3"
+  val munit = "1.3.5"
   val munitCats = "2.2.0"
   val mysql = "8.0.33"
   val nvWebSocket = "2.14"
@@ -170,7 +170,7 @@ val shared = Project("pimp-shared", file("pimpshared"))
       "com.malliina" %% "util-http4s" % versions.primitives,
       logstreamsDep,
       "mysql" % "mysql-connector-java" % versions.mysql,
-      malliinaGroup %% "mobile-push" % versions.mobilePush,
+      malliinaGroup %% "mobile-push-io" % versions.mobilePush,
       "com.lihaoyi" %% "scalatags" % versions.scalatags
     )
   )

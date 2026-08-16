@@ -1,11 +1,10 @@
 package com.malliina.musicpimp.messaging
 
-import com.malliina.concurrent.Execution.cached
+import cats.Applicative
+import cats.implicits.toTraverseOps
 
-import scala.concurrent.Future
+trait PushRequestHandler[F[_]: Applicative, Req, Res]:
+  def push(requests: Seq[Req]): F[Seq[Res]] =
+    requests.traverse(pushOne)
 
-trait PushRequestHandler[Req, Res]:
-  def push(requests: Seq[Req]): Future[Seq[Res]] =
-    Future.traverse(requests)(pushOne)
-
-  def pushOne(request: Req): Future[Res]
+  def pushOne(request: Req): F[Res]

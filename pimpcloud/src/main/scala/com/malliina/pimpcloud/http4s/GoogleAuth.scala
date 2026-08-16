@@ -14,7 +14,7 @@ import com.malliina.values.Literals.email
 import com.malliina.values.{Email, Username}
 import com.malliina.web.{AuthError, Callback, Code, GoogleAuthFlow, LoginHint, OAuthKeys, Start, Utils}
 import io.circe.Codec
-import org.http4s.{Request, Response, Uri}
+import org.http4s.{Request, Response, ResponseCookie, Uri}
 
 object GoogleAuth:
   private val log = AppLogger(getClass)
@@ -102,7 +102,7 @@ class GoogleAuth[F[_]: Async](
     val returnUri: Uri = req.cookies
       .find(_.name == cookieNames.returnUri)
       .flatMap(c => Uri.fromString(c.content).toOption)
-      .getOrElse(reverse.root)
+      .getOrElse(reverse.returnUri)
     seeOther(returnUri).map: res =>
       auth.withJwt(
         cookieNames.user,
@@ -110,6 +110,9 @@ class GoogleAuth[F[_]: Async](
         FullUrls2.isSecure(req),
         res
       )
+
+  def logout(res: Response[F]) =
+    res.removeCookie(ResponseCookie(cookieNames.user, "", path = Option("/")))
 
   def startHinted(
     provider: AuthProvider,

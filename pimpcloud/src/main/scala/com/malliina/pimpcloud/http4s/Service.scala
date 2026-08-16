@@ -20,8 +20,6 @@ import com.malliina.play.ContentRange
 import com.malliina.play.controllers.AccountForms
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.AppLogger
-import com.malliina.values.Email
-import com.malliina.values.Literals.email
 import fs2.io.file.Files
 import io.circe.syntax.EncoderOps
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
@@ -63,6 +61,8 @@ class Service[F[_]: { Async, Files }](
       proxiedFolder[WrappedID](req, FolderKey, WrappedID.forId(PimpEnc.folder(id)))
     case req @ GET -> Root / "playback" =>
       proxiedCommand(req, StatusKey)
+    case req @ POST -> Root / "playback" / "stream" =>
+      ok(Json.obj("message" -> "Not supported yet.".asJson))
     case req @ GET -> Root / "player" / "recent" =>
       paginated(req, Recent)
     case req @ GET -> Root / "player" / "popular" =>
@@ -218,7 +218,9 @@ class Service[F[_]: { Async, Files }](
       google.authed(req): _ =>
         seeOther(reverse.admin.eject)
           .withFeedbackMessage("You have now logged out.")
-          .map(res => cookies.clearSession(res))
+          .map(res => google.logout(cookies.clearSession(res)))
+    case req @ POST -> Root / "push" =>
+      ok(Json.obj("message" -> "Not supported yet.".asJson))
 
   import cats.syntax.all.toSemigroupKOps
 

@@ -1,5 +1,6 @@
 package com.malliina.pimpcloud
 
+import cats.effect.Sync
 import com.malliina.config.ConfigNode
 import com.malliina.http.OkClient
 import com.malliina.logback.PimpAppender
@@ -8,6 +9,7 @@ import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
 import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
 import com.malliina.oauth.GoogleOAuthCredentials
 import com.malliina.pimpcloud.CloudComponents.log
+import com.malliina.util.AppLogger
 //import com.malliina.pimpcloud.ws.JoinedSockets
 import com.malliina.play.ActorExecution
 import com.typesafe.config.ConfigFactory
@@ -26,45 +28,12 @@ object LocalConf:
   def local(file: String) = ConfigNode.default(appDir.resolve(file))
   val localConf = local("pimpcloud.conf")
 
-case class AppConf(
-  pusher: (Configuration, OkClient) => Pusher,
-  conf: Configuration => GoogleOAuthCredentials
-//  pimpAuth: (AdminOAuth, Materializer) => PimpAuth
-)
-
-object AppConf:
-  def dev = AppConf(
-    (_, _) => NoPusher,
-    conf =>
-      GoogleOAuthCredentials(conf).toOption
-        .getOrElse(GoogleOAuthCredentials("id", "secret", "scope"))
-//    (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
-  )
-
-  def prod = AppConf(
-    (conf, http) => ProdPusher(conf, http),
-    conf => GoogleOAuthCredentials(conf).toOption.get
-//    (auth, mat) => new ProdAuth(new OAuthCtrl(auth, mat))
-  )
-
-  def forMode(mode: Mode) =
-    if mode == Mode.Dev then dev
-    else prod
-
-//class CloudLoader extends ApplicationLoader:
-//  override def load(context: Context): Application =
-//    val environment = context.environment
-//    LoggerConfigurator(environment.classLoader)
-//      .foreach(_.configure(environment, context.initialConfiguration, Map.empty))
-//    PimpAppender.install()
-//    new CloudComponents(context, AppConf.forMode(environment.mode)).application
-
-object NoPusher extends Pusher:
-  override def push(pushTask: PushTask): Future[PushResult] =
-    Future.successful(PushResult.empty)
+class NoPusher[F[_]: Sync] extends Pusher[F]:
+  override def push(pushTask: PushTask): F[PushResult] =
+    Sync[F].pure(PushResult.empty)
 
 object CloudComponents:
-  private val log = Logger(getClass)
+  private val log = AppLogger(getClass)
 
 //class CloudComponents(context: Context, conf: AppConf)
 //  extends BuiltInComponentsFromContext(context)

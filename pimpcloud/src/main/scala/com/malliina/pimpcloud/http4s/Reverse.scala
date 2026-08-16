@@ -8,10 +8,11 @@ class Segment(val base: Uri)
 
 object Reverse extends Reverse
 
-case class GoogleUris(root: Uri, oauth: Uri, callback: Uri)
+case class GoogleUris(returnUri: Uri, oauth: Uri, callback: Uri)
 
 object GoogleUris:
-  def apply(reverse: Reverse): GoogleUris = GoogleUris(reverse.root, reverse.oauth, reverse.oauthcb)
+  def apply(reverse: Reverse): GoogleUris =
+    GoogleUris(reverse.admin.base, reverse.oauth, reverse.oauthcb)
 
 trait Reverse:
   val root = uri"/"
