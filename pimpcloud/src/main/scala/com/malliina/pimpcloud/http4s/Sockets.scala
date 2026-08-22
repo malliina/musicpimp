@@ -103,11 +103,15 @@ class Sockets[F[_]: Async](
             outcome
               .map: conn =>
                 val id = Utils.randomString()
+                val phone = PimpPhone(id, conn.server.id, Proxies2.realAddress(req))
                 phones
-                  .updateAndGet(set =>
-                    set ++ Set(PimpPhone(id, conn.server.id, Proxies2.realAddress(req)))
-                  )
+                  .updateAndGet(set => set ++ Set(phone))
                   .flatMap(set => updates.publish1(PimpPhones(set.toList.sortBy(_.address))).void)
+                  .flatMap(_ =>
+                    F.delay(
+                      log.info(s"Client ${phone.id} from ${phone.address} connected to ${phone.s}.")
+                    )
+                  )
                   .flatMap: _ =>
                     Topic[F, Json].flatMap: target =>
                       val fromClient: Pipe[F, WebSocketFrame, Unit] = _.evalMap:
@@ -150,6 +154,13 @@ class Sockets[F[_]: Async](
                             .flatMap(set =>
                               updates.publish1(PimpPhones(set.toList.sortBy(_.address))).void
                             )
+                            .flatMap(_ =>
+                              F.delay(
+                                log.info(
+                                  s"Client ${phone.id} from ${phone.address} disconnected from ${phone.s}."
+                                )
+                              )
+                            )
                         )
                         .build(toClient, fromClient)
               .handleLeft: err =>
@@ -158,6 +169,7 @@ class Sockets[F[_]: Async](
         authServer(req).flatMap: outcome =>
           outcome
             .map: cloudId =>
+              val addr = Proxies2.realAddress(req)
               Topic[F, Json].flatMap: target =>
                 val server = PimpServerSocket[F](
                   Target(json => target.publish1(json).void),
@@ -178,6 +190,7 @@ class Sockets[F[_]: Async](
                       )
                       .void
                   )
+                  .flatMap(_ => F.delay(log.info(s"Server $cloudId from $addr connected.")))
                   .flatMap: _ =>
                     val registered = Stream
                       .emit[F, Json](
@@ -186,8 +199,9 @@ class Sockets[F[_]: Async](
                           Body -> Json.obj(Id -> cloudId.asJson)
                         )
                       )
+                      .delayBy(100.millis)
                     val toClient: Stream[F, WebSocketFrame] =
-                      registered.map(json => Text(json.noSpaces))
+                      healthChecks.mergeHaltL(registered).map(json => Text(json.noSpaces))
                     val fromClient: Pipe[F, WebSocketFrame, Unit] = _.evalMap:
                       case Text(message, _) =>
                         parser
@@ -220,6 +234,9 @@ class Sockets[F[_]: Async](
                                 )
                               )
                               .void
+                          )
+                          .flatMap(_ =>
+                            F.delay(log.info(s"Server $cloudId from $addr disconnected."))
                           )
                       )
                       .build(toClient, fromClient)

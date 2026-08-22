@@ -9,10 +9,11 @@ import com.malliina.ws.HttpUtil
 
 import javax.net.ssl.*
 
-class WebSocketTests extends munit.FunSuite:
+class WebSocketTests extends munit.CatsEffectSuite:
   test("can open socket".ignore):
     val factory = CustomSSLSocketFactory.forHost("cloud.musicpimp.org")
-    openSocket(factory)
+    openSocket(factory).map: _ =>
+      assertEquals(1, 1)
 
   test("can open socket, without SNI".ignore):
     openSocket(SSLUtils.trustAllSslContext().getSocketFactory)
