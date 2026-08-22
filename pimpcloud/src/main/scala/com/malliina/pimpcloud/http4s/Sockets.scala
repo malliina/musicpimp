@@ -201,7 +201,10 @@ class Sockets[F[_]: Async](
                       )
                       .delayBy(100.millis)
                     val toClient: Stream[F, WebSocketFrame] =
-                      healthChecks.mergeHaltL(registered).map(json => Text(json.noSpaces))
+                      healthChecks
+                        .mergeHaltBoth(target.subscribe(100))
+                        .mergeHaltL(registered)
+                        .map(json => Text(json.noSpaces))
                     val fromClient: Pipe[F, WebSocketFrame, Unit] = _.evalMap:
                       case Text(message, _) =>
                         parser
