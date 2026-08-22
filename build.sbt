@@ -482,7 +482,8 @@ lazy val pimpcloudSettings =
         )
       ),
       buildInfoPackage := "com.malliina.pimpcloud",
-      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter")
+      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
+      version := "4.26.9"
     )
 
 lazy val pimpcloudLinuxSettings = Seq(

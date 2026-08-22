@@ -139,7 +139,7 @@ class Service[F[_]: { Async, Files }](
                           .emits[F, Part[F]](parts.parts.filter(_.filename.isDefined))
                           .mapAsync(1): filePart =>
                             filePart.body
-                              .chunkN(128)
+                              .chunkN(4096, allowFewer = true)
                               .evalMapAccumulate(0.bytes): (acc, chunk) =>
                                 stream
                                   .send(chunk.toList)

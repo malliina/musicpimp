@@ -26,7 +26,7 @@ class ChannelInfo[F[_]: Async](
 
   def send(t: Seq[Byte]): F[Boolean] =
     if !isClosed.get() then
-      log.info(s"Offering ${t.length} bytes of $describe")
+//      log.info(s"Offering ${t.length} bytes of $describe")
       channel.publish1(Option(t)).map(_.isRight)
     else
       F.delay:
