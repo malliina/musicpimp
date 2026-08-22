@@ -47,7 +47,8 @@ import Cloud.ToggleCloudId
 import fs2.io.file.Files
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
-import org.http4s.headers.{`Content-Length`, `Content-Type`}
+import org.http4s.headers.Range.SubRange
+import org.http4s.headers.{`Content-Length`, `Content-Range`, `Content-Type`}
 import org.http4s.multipart.Multipart
 import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.{Header, Headers, HttpRoutes, MediaType, Request, Response, StaticFile, Status}
@@ -716,9 +717,12 @@ class Service[F[_]: { Async, Files }](
                   val r = Response(
                     Status.PartialContent,
                     headers = Headers(
-                      `Content-Length`.fromLong(range.size.bytes).toOption,
+                      `Content-Length`.fromLong(range.contentLength.toLong).toOption,
                       nameToContentType(fs2Path.fileName.toString),
-                      Header.Raw(CIString("Content-Range"), range.contentRange)
+                      `Content-Range`(
+                        SubRange(range.start, range.endInclusive),
+                        Option(range.size.toBytes)
+                      )
                     ),
                     body = Files[F].readRange(
                       fs2Path,

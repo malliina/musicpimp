@@ -21,7 +21,8 @@ import io.circe.Encoder
 import io.circe.syntax.EncoderOps
 import org.apache.pekko.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
 import org.apache.pekko.stream.{QueueOfferResult, StreamDetachedException}
-import org.http4s.headers.{`Content-Length`, `Content-Type`}
+import org.http4s.headers.Range.SubRange
+import org.http4s.headers.{`Content-Length`, `Content-Range`, `Content-Type`}
 import org.http4s.{MediaType, Request, Response, Status}
 import org.typelevel.ci.CIStringSyntax
 import play.api.mvc.*
@@ -67,7 +68,7 @@ class NoCacheByteStreams[F[_]: Async](
     val request = RequestID.random()
     val userAgent = req.headers
       .get(ci"User-Agent")
-      .map(ua => s"user agent $ua")
+      .map(ua => s"user agent ${ua.head.value}")
       .getOrElse("unknown user agent")
     Topic[F, Option[Seq[Byte]]].flatMap: topic =>
       val source: Stream[F, Byte] =
@@ -116,10 +117,18 @@ class NoCacheByteStreams[F[_]: Async](
     track: Track,
     range: ContentRange
   ): F[Response[F]] =
-    val status = if range.isAll then Status.Ok else Status.PartialContent
-    val result = Response(status, body = source)
-      .withContentType(`Content-Type`(MediaType.audio.mpeg))
-      .withHeaders(`Content-Length`(range.contentLength.toLong))
+    val result =
+      if range.isAll then
+        Response(Status.Ok, body = source)
+          .withContentType(`Content-Type`(MediaType.audio.mpeg))
+          .withHeaders(`Content-Length`(range.size.bytes))
+      else
+        Response(Status.PartialContent, body = source)
+          .withContentType(`Content-Type`(MediaType.audio.mpeg))
+          .withHeaders(
+            `Content-Length`(range.contentLength),
+            `Content-Range`(SubRange(range.start, range.endInclusive), Option(range.size.toBytes))
+          )
     connect(request, track, range).map: _ =>
       result
 
