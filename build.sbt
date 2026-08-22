@@ -473,7 +473,7 @@ lazy val pimpcloudSettings =
         "publicDir" -> (Assets / resourceDirectory).value,
         "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
       ),
-      Assets / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js") --- (pimpcloudFrontend / assetsRoot).value.toFile * ("webpack.*.js" || "postcss.config.js")).get,
+      Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js") --- (pimpcloudFrontend / assetsRoot).value.toFile * ("webpack.*.js" || "postcss.config.js")).get,
       fileTreeSources := Seq(
         DirMap(
           (Assets / resourceDirectory).value.toPath,
