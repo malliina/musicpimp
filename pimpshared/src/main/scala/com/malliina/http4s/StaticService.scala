@@ -56,7 +56,7 @@ class StaticService[F[_]: { Async, Files }](
 
       val search =
         if isProd then
-          val resourcePath = s"$publicFolder/${file.value}"
+          val resourcePath = s"$publicFolder${file.value}"
           log.debug(s"Searching for resource '$resourcePath'...")
           StaticFile.fromResource(resourcePath, Option(req))
         else

@@ -184,7 +184,7 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
     ),
     assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
 //    assetsRoot := ((Compile / crossTarget).value / "stage").toPath.resolve("assets"),
-    assetsPrefix := "public"
+    assetsPrefix := "public/"
   )
 val musicpimp = project
   .in(file("musicpimp"))
@@ -213,7 +213,7 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
       malliinaGroup %%% "primitives" % versions.primitives
     ),
     assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
-    assetsPrefix := "public",
+    assetsPrefix := "",
     Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
   )
 val pimpcloud = project
@@ -558,15 +558,6 @@ lazy val http4sServerSettings = serverSettings ++ baseSettings ++ Seq(
     logstreamsDep,
     "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
   ).map(dep => dep.withSources())
-)
-
-lazy val commonServerSettings = serverSettings ++ baseSettings ++ Seq(
-  libraryDependencies ++= Seq(
-    logstreamsDep,
-    PlayImport.filters,
-    PlayImport.specs2 % Test,
-  ).map(dep => dep.withSources()),
-  pipelineStages ++= Seq(digest, gzip)
 )
 
 lazy val baseSettings = Seq(

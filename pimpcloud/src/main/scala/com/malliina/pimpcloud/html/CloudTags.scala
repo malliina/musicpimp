@@ -33,7 +33,7 @@ object CloudTags:
     * @return
     *   HTML templates with either prod or dev javascripts
     */
-  def forApp(appName: String, isProd: Boolean): CloudTags =
+  private def forApp(appName: String, isProd: Boolean): CloudTags =
     val scripts = ScalaScripts.forApp(appName, isProd)
     withLauncher(scripts)
 
@@ -41,7 +41,7 @@ object CloudTags:
 
 class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
   val reverse = Reverse
-  val WideContent = "wide-content"
+  private val WideContent = "wide-content"
 
   import tags.*
 
