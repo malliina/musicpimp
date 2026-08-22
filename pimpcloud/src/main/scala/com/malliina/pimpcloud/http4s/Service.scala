@@ -6,6 +6,7 @@ import com.malliina.http.Errors
 import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
 import com.malliina.musicpimp.auth.{Http4sAuth, Http4sAuthFailure, Proxies2, UserPayload}
 import com.malliina.musicpimp.cloud.Search
+import com.malliina.musicpimp.json.PimpStrings
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID, Version, WrappedID, WrappedLong}
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
@@ -54,7 +55,7 @@ class Service[F[_]: { Async, Files }](
           .flatMap: json =>
             ok(json)
     case req @ GET -> Root / "pingauth" =>
-      proxiedJson[Json, Version](req, SharedStrings.Ping, Json.obj()): v =>
+      proxiedJson[Json, Version](req, PimpStrings.VersionKey, Json.obj()): v =>
         ok(v)
     case req @ (GET -> Root | GET -> Root / "folders") =>
       proxiedFolder[Json](req, RootFolderKey, Json.obj())
@@ -72,7 +73,7 @@ class Service[F[_]: { Async, Files }](
       withTrack(req, id): (_, track) =>
         val r = Response[F](Ok)
           .withContentType(`Content-Type`(MediaType.audio.mpeg))
-          .withHeaders(trackHeaders(Phones2.name(track, id), track.size)*)
+          .putHeaders(trackHeaders(Phones2.name(track, id), track.size)*)
         F.pure(r)
     case req @ GET -> Root / ("tracks" | "downloads") / TrackID(id) =>
       withTrack(req, id): (phone, track) =>
@@ -92,14 +93,14 @@ class Service[F[_]: { Async, Files }](
           .map: res =>
             rangeOpt
               .map: r =>
-                res.withHeaders(
+                res.putHeaders(
                   `Content-Range`(
                     SubRange(range.start, range.endInclusive),
                     Option(track.size.bytes)
                   )
                 )
               .getOrElse:
-                res.withHeaders(trackHeaders(name(track, id), track.size)*)
+                res.putHeaders(trackHeaders(name(track, id), track.size)*)
     case req @ GET -> Root / "search" =>
       Search(req.uri.query).fold(
         err => badRequestWithErrors(err),

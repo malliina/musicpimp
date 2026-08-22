@@ -121,11 +121,11 @@ class NoCacheByteStreams[F[_]: Async](
       if range.isAll then
         Response(Status.Ok, body = source)
           .withContentType(`Content-Type`(MediaType.audio.mpeg))
-          .withHeaders(`Content-Length`(range.size.bytes))
+          .putHeaders(`Content-Length`(range.size.bytes))
       else
         Response(Status.PartialContent, body = source)
           .withContentType(`Content-Type`(MediaType.audio.mpeg))
-          .withHeaders(
+          .putHeaders(
             `Content-Length`(range.contentLength),
             `Content-Range`(SubRange(range.start, range.endInclusive), Option(range.size.toBytes))
           )
