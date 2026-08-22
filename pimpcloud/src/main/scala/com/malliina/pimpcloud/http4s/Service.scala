@@ -4,7 +4,7 @@ import cats.effect.Async
 import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
 import com.malliina.http.Errors
 import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
-import com.malliina.musicpimp.auth.{Http4sAuth, Http4sAuthFailure, Proxies2}
+import com.malliina.musicpimp.auth.{Http4sAuth, Http4sAuthFailure, Proxies2, UserPayload}
 import com.malliina.musicpimp.cloud.Search
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID, Version, WrappedID, WrappedLong}
 import com.malliina.musicpimp.stats.ItemLimits
@@ -20,6 +20,7 @@ import com.malliina.play.ContentRange
 import com.malliina.play.controllers.AccountForms
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.AppLogger
+import com.malliina.values.Username
 import fs2.io.file.Files
 import io.circe.syntax.EncoderOps
 import io.circe.{Decoder, DecodingFailure, Encoder, Json}
@@ -198,7 +199,12 @@ class Service[F[_]: { Async, Files }](
                     val who = s"$user@$server"
                     log.info(s"Authentication succeeded to '$who' from '$remoteAddress'.")
                     val redirUri = cookies.intendedUri(req).getOrElse(reverse.root)
-                    seeOther(redirUri)
+                    seeOther(redirUri).map: res =>
+                      cookies.withUser[UserPayload](
+                        UserPayload(Username.unsafe(server.id)),
+                        Proxies2.isSecure(req),
+                        res
+                      )
                 )
         )
     case req @ GET -> Root / "oauth" =>

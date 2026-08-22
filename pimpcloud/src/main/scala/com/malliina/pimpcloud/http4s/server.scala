@@ -7,7 +7,7 @@ import cats.effect.{Async, IO, Resource}
 import com.malliina.http.io.HttpClientIO
 import com.malliina.http4s.{AppServer, ServerResources, StaticService}
 import com.malliina.logback.{AppLogging, PimpAppender}
-import com.malliina.musicpimp.auth.{CookieConf, Http4sAuth, JWT}
+import com.malliina.musicpimp.auth.{Http4sAuth, JWT}
 import com.malliina.pimpcloud.BuildInfo
 import com.malliina.pimpcloud.auth.ProdAuth
 import com.malliina.pimpcloud.html.CloudTags
@@ -22,8 +22,7 @@ trait CloudServerResources extends ServerResources:
 
   def app[F[_]: { Async, Files }](conf: CloudConf): Resource[F, Service[F]] =
     val jwt = JWT(conf.secret)
-    val cookiesConf = GoogleAuth.googleCookies
-    val cookies = Http4sAuth[F](jwt, CookieConf(cookiesConf.user, cookiesConf.returnUri))
+    val cookies = Http4sAuth[F](jwt)
     for
       dispatcher <- Dispatcher.parallel[F]
       appender <- PimpAppender.installF[F]
