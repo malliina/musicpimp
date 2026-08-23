@@ -1,15 +1,10 @@
 package com.malliina.pimpcloud.http4s
 
 import cats.effect.Concurrent
-import com.malliina.http4s.{AppImplicits, FormDecoders, FormReadableT}
+import com.malliina.http4s.{AppImplicits, FormDecoders, FormReadableT, PimpExt}
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.http4s.AccountKeys.{passFormKey, userFormKey}
 import com.malliina.values.{Password, Username}
-
-object PimpExt extends PimpExt
-
-trait PimpExt:
-  extension [L, R](e: Either[L, R]) def handleLeft[S >: R](code: L => S): S = e.fold(code, identity)
 
 trait CloudDecoders[F[_]: Concurrent] extends FormDecoders[F]:
   private val reader = FormReadableT.reader

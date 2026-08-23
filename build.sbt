@@ -11,7 +11,6 @@ import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminatePr
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
 import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
-import play.sbt.PlayImport
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
@@ -40,7 +39,6 @@ val versions = new {
   val mysql = "8.0.33"
   val nvWebSocket = "2.14"
   val pekko = "1.0.3"
-  val playJson = "3.0.4"
   val scalaJsDom = "2.8.1"
   val primitives = "6.14.3"
   val scala3 = "3.8.3"
@@ -48,7 +46,6 @@ val versions = new {
   val slf4j = "2.0.17"
 }
 
-val playVersion = play.core.PlayVersion.current
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.logstreams
@@ -71,7 +68,6 @@ val cross = portableProject(JSPlatform, JVMPlatform)
     organization := "org.musicpimp",
     libraryDependencies ++= Seq("generic", "parser")
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-//      "org.playframework" %%% "play-json" % versions.playJson,
       malliinaGroup %%% "primitives" % versions.primitives
     )
   )
@@ -88,52 +84,18 @@ val crossJs = cross.js
     )
   )
 
-val playCommon = Project("play-common", file("play-common"))
-  .settings(
-    libraryDependencies ++= Seq("web-auth", "database").map { m =>
-      "com.malliina" %% m % versions.primitives
-    } ++
-      Seq(
-        "org.playframework" %% "play" % playVersion,
-        jacksonDep
-      )
-  )
-val playSocial = Project("play-social", file("play-social"))
-  .dependsOn(playCommon)
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scalameta" %% "munit" % versions.munit % Test
-    )
-  )
-
 val html = portableProject(JSPlatform, JVMPlatform)
   .crossType(PortableType.Full)
   .in(file("util-html"))
   .settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "scalatags" % versions.scalatags,
-      "org.playframework" %%% "play-json" % versions.playJson,
       malliinaGroup %%% "util-html" % versions.primitives,
       "org.scalameta" %%% "munit" % versions.munit % Test
     )
   )
 val htmlJvm = html.jvm
 val htmlJs = html.js
-
-val utilPlay = Project("util-play", file("util-play"))
-  .dependsOn(playCommon, htmlJvm)
-  .settings(
-    libraryDependencies ++= Seq("generic", "parser").map { m =>
-      "io.circe" %%% s"circe-$m" % versions.circe
-    } ++
-      Seq("actor", "stream").map { m =>
-        "org.apache.pekko" %% s"pekko-$m" % versions.pekko
-      } ++ Seq(
-        "com.malliina" %% "util-http4s" % versions.primitives,
-        "org.scalameta" %% "munit" % versions.munit % Test,
-        "org.playframework" %% "play-test" % playVersion % Test
-      )
-  )
 
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
@@ -283,29 +245,22 @@ val it = project
   .in(file("it"))
   .dependsOn(pimpcloud % "test->test", musicpimp % "test->test")
   .settings(baseSettings *)
-  .settings(
-    libraryDependencies ++= Seq(
-      PlayImport.ws % Test
-    )
-  )
 
 val pimpbeam = project
   .in(file("pimpbeam"))
   .enablePlugins(
-//    PlayScala,
     JavaServerAppPackaging,
     com.malliina.sbt.unix.LinuxPlugin,
     SystemdPlugin,
     BuildInfoPlugin
   )
-  .dependsOn(utilPlay, shared)
-  .settings(serverSettings *)
+  .dependsOn(shared, crossJvm)
+  .settings((serverSettings ++ http4sServerSettings) *)
   .settings(
     libraryDependencies ++= Seq(
       logstreamsDep,
       "net.glxn" % "qrgen" % "1.4",
       jacksonDep,
-      PlayImport.ws
     ),
     Linux / httpPort := Option("8557"),
     Linux / httpsPort := Option("disabled"),
@@ -317,7 +272,10 @@ val pimpbeam = project
         s"-Dlogger.file=/etc/$linuxName/logback-prod.xml"
       )
     },
-    buildInfoPackage := "com.malliina.beam"
+    buildInfoPackage := "com.malliina.beam",
+    buildInfoKeys ++= Seq[BuildInfoKey](
+      "publicDir" -> (Compile / resourceDirectory).value,
+    )
   )
 
 import sbtrelease.ReleaseStateTransformations.*
@@ -330,10 +288,7 @@ val pimp = project
     pimpbeam,
     utilAudio,
     crossJvm,
-    shared,
-    utilPlay,
-    playSocial,
-    playCommon
+    shared
   )
   .settings(
     releaseProcess := Seq[ReleaseStep](

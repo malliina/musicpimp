@@ -4,6 +4,7 @@ import cats.effect.Async
 import cats.implicits.{toFlatMapOps, toFunctorOps}
 import com.malliina.http.Errors
 import com.malliina.http4s.BasicService.noCache
+import com.malliina.http4s.PimpExt.handleLeft
 import com.malliina.musicpimp.auth.{Http4sAuth, Http4sAuthFailure, UserPayload}
 import com.malliina.musicpimp.http4s.Responses
 import com.malliina.pimpcloud.http4s.AuthProvider.Google
@@ -44,8 +45,7 @@ class GoogleAuth[F[_]: Async](
   reverse: GoogleUris,
   cookieNames: GoogleAuth.CookieConf,
   auth: Http4sAuth[F]
-) extends Responses[F]
-  with PimpExt:
+) extends Responses[F]:
   val F = Async[F]
 
   val authorizedEmail: Email = email"malliina123@gmail.com"
