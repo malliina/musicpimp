@@ -46,8 +46,6 @@ class Service[F[_]: { Async, Files }](
   private val reverse = Reverse
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
-    case req @ GET -> Root / "temp" =>
-      ok(html.index(Directory.empty, None))
     case req @ GET -> Root / "health" =>
       ok(BuildMeta.default)
     case req @ GET -> Root / "ping" =>
