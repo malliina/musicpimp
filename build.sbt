@@ -33,6 +33,7 @@ val versions = new {
   val fs2 = "3.13.0"
   val http = "4.5.14"
   val logstreams = "6.14.3"
+  val mariadb = "3.5.7"
   val mobilePush = "3.17.1"
   val munit = "1.3.5"
   val munitCats = "2.2.0"
@@ -318,6 +319,7 @@ lazy val musicpimpSettings =
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
         "mysql" % "mysql-connector-java" % versions.mysql,
+        "org.mariadb.jdbc" % "mariadb-java-client" % versions.mariadb,
         "com.neovisionaries" % "nv-websocket-client" % versions.nvWebSocket,
         httpGroup % "httpclient" % versions.http,
         httpGroup % "httpmime" % versions.http,

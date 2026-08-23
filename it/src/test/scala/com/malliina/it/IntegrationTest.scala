@@ -167,7 +167,7 @@ class IntegrationTest extends munit.CatsEffectSuite with CloudServerSuite with P
         )
         assertEquals(r.status, 200)
 
-  override def munitFixtures: Seq[AnyFixture[?]] = Seq(cloudServer, db, server)
+  override def munitFixtures: Seq[AnyFixture[?]] = Seq(cloudServer, server)
 
   class TestHandler:
     val requests = Promise[Json]()

@@ -34,27 +34,30 @@ object DatabaseUtils:
       autoMigrate = true
     )
 
-trait MUnitDatabaseSuite:
-  self: munit.CatsEffectSuite =>
-  val db = ResourceSuiteLocalFixture("database", DatabaseUtils.testDatabase)
-  override def munitFixtures: Seq[AnyFixture[?]] = Seq(db)
-
 case class ServerTools(service: Service[IO], server: Server):
   def port = server.address.getPort
   def baseHttpUrl = FullUrl("http", s"localhost:$port", "")
   def baseWsUrl = FullUrl("ws", s"localhost:$port", "")
 
-trait PimpServerSuite extends MUnitDatabaseSuite:
+//trait MUnitDatabaseSuite:
+//  self: munit.CatsEffectSuite =>
+//
+//  val db = ResourceSuiteLocalFixture("database", DatabaseUtils.testDatabase)
+//  override def munitFixtures: Seq[AnyFixture[?]] = Seq(db)
+
+trait PimpServerSuite:
   self: munit.CatsEffectSuite =>
+
   object TestServer extends PimpServerResources
   val http = ResourceFunFixture(HttpClientIO.resource[IO])
   val serverResource =
     for
-      conf <- Resource.eval(IO.fromEither(PimpConf.parse(_ => db())))
+      testDbConf <- DatabaseUtils.testDatabase
+      conf <- Resource.eval(IO.fromEither(PimpConf.parse(_ => testDbConf)))
       app <- TestServer.appResources[IO](conf)
       server <- TestServer.pimpServer[IO](app, port"0")
     yield ServerTools(app, server)
   val server = ResourceSuiteLocalFixture("server", serverResource)
-  override def munitFixtures: Seq[AnyFixture[?]] = Seq(db, server)
+  override def munitFixtures: Seq[AnyFixture[?]] = Seq(server)
 
 abstract class TestServerSuite extends munit.CatsEffectSuite with PimpServerSuite

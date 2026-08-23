@@ -19,15 +19,12 @@ import io.circe.{Codec, Json}
 import scala.concurrent.duration.DurationInt
 
 class PlaylistsTests extends TestServerSuite:
-//  override def pimpOptions: InitOptions = TestOptions.default
-
   implicit val f: Codec[TrackMeta] =
     TrackJson.format(url"http://www.google.com")
   val trackId = TrackID("Test.mp3")
   val testTracks: Seq[TrackID] = Seq(trackId)
 
   test("add tracks"):
-//    val lib: DatabaseLibrary[IO] = components.lib
     val folderId = FolderID("Testid")
     def lib = server().service.lib
     def trackInserts =
@@ -77,13 +74,13 @@ class PlaylistsTests extends TestServerSuite:
       updatedList <- fetchLists(client, server())
       _ = assertEquals(updatedList.find(_.id == updatedId).get.tracks.map(_.id), updatedTracks)
       del <- client.postJson(
-        server().baseHttpUrl.append("/playlists/delete/$id"),
+        server().baseHttpUrl.append(s"/playlists/delete/$updatedId"),
         Json.obj(),
         testHeaders
       )
       _ = assertEquals(202, del.status)
       listAgain <- fetchLists(client, server())
-      _ = assert(listAgain.isEmpty)
+      _ = assert(listAgain.isEmpty, s"List not empty, got $listAgain")
     yield added
 
   def fetchLists(http: HttpClientF[IO], server: ServerTools): IO[Seq[FullSavedPlaylist]] =

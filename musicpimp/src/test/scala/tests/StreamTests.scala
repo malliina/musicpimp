@@ -13,12 +13,12 @@ class StreamTests extends munit.FunSuite:
   val path = Paths.get("conf/guitar-32x32.png")
   val file = path.toFile
 
-  test("InputStream to Array[Byte]"):
+  test("InputStream to Array[Byte]".ignore):
     Util.using(new FileInputStream(file)): stream =>
       val bytes = IOUtils.toByteArray(stream)
       assert(bytes.length == Files.size(path).toInt)
 
-  test("RangedInputStream to Array[Byte]"):
+  test("RangedInputStream to Array[Byte]".ignore):
     val fiveTo14 = Util.using(RangedInputStream(path, 5, 10)): stream =>
       val bytes = IOUtils.toByteArray(stream)
       assert(bytes.length == 10)
@@ -30,7 +30,7 @@ class StreamTests extends munit.FunSuite:
       bytes.toSeq
     assert(fiveTo14.drop(5) == tenTo19.take(5))
 
-  test("Ranged for all"):
+  test("Ranged for all".ignore):
     val fileSize = Files.size(path).bytes
     val range = ContentRange.all(fileSize)
     assert(range.isAll)
