@@ -48,7 +48,7 @@ class GoogleAuth[F[_]: Async](
 ) extends Responses[F]:
   val F = Async[F]
 
-  val authorizedEmail: Email = email"malliina123@gmail.com"
+  private val authorizedEmail: Email = email"malliina123@gmail.com"
 
   def authed(req: Request[F])(content: UserPayload => F[Response[F]]): F[Response[F]] =
     authenticate(req)
@@ -58,7 +58,8 @@ class GoogleAuth[F[_]: Async](
         else unauthorizedNoCacheWithErrors(Errors.single("Unauthorized."))
       .handleLeft: failure =>
         log.info(s"Unauthorized $failure")
-        seeOther(reverse.oauth)
+        seeOther(reverse.oauth).map: res =>
+          auth.withIntendedUri(req.uri, res)
 
   def authenticate(req: Request[F]): Either[Http4sAuthFailure, UserPayload] =
     auth.read[UserPayload](cookieNames.user, req)
@@ -99,10 +100,7 @@ class GoogleAuth[F[_]: Async](
     provider: AuthProvider,
     req: Request[F]
   ): F[Response[F]] =
-    val returnUri: Uri = req.cookies
-      .find(_.name == cookieNames.returnUri)
-      .flatMap(c => Uri.fromString(c.content).toOption)
-      .getOrElse(reverse.returnUri)
+    val returnUri: Uri = auth.intendedUri(req).getOrElse(reverse.returnUri)
     seeOther(returnUri).map: res =>
       auth.withJwt(
         cookieNames.user,
