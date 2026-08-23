@@ -7,7 +7,7 @@ import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap.*
 import com.malliina.musicpimp.html.PimpBootstrap.tags.*
 import com.malliina.musicpimp.html.PimpHtml.*
-import com.malliina.musicpimp.js.{FooterStrings, FrontStrings}
+import com.malliina.musicpimp.js.{Classes, FooterStrings, FrontStrings}
 import com.malliina.musicpimp.library.MusicFolder
 import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models.*
@@ -111,7 +111,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
     )
 
   def login(conf: LoginContent) =
-    basePage("Welcome")(
+    basePage("Welcome", "")(
       LoginHtml.loginContent(conf)
     )
 
@@ -120,10 +120,10 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
       LibraryHtml.libraryContent(items)
     )
 
-  def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
+  private def libraryBase(tab: String, username: Username)(inner: Modifier*): TagPage =
     libraryBase(tab, Container, username)(inner)
 
-  def libraryBase(tab: String, contentClass: String, username: Username)(
+  private def libraryBase(tab: String, contentClass: String, username: Username)(
     inner: Modifier*
   ): TagPage =
     indexMain("library", username, None)(
@@ -216,10 +216,10 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
     AboutHtml.aboutBaseContent
   )
 
-  def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
+  private def indexMain(tabName: String, user: Username)(inner: Modifier*): TagPage =
     indexMain(tabName, user, Option(div(`class` := Container)))(inner*)
 
-  def indexMain(
+  private def indexMain(
     tabName: String,
     user: Username,
     contentWrapper: Option[TypedTag[String]]
@@ -227,7 +227,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
     def navItem(thisTabName: String, url: Uri, iconicName: String): TypedTag[String] =
       iconicNavItem(thisTabName, thisTabName.toLowerCase, tabName, url, iconicName)
 
-    basePage("MusicPimp")(
+    basePage("MusicPimp", Classes.home)(
       navbar.basic(
         reverse.folders.base,
         "MusicPimp",
@@ -244,7 +244,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
               a(
                 href := "#",
                 `class` := s"nav-link $DropdownToggle",
-                dataToggle := Dropdown,
+                data("toggle") := Dropdown,
                 role := Button,
                 aria.haspopup := tags.True,
                 aria.expanded := tags.False
@@ -297,10 +297,12 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
       else "nav-link"
     li(`class` := "nav-item")(a(href := url, `class` := linkClass)(iconHtml, s" $thisTabName"))
 
-  def eye(elemId: String, iconicName: String) =
+  private def eye(elemId: String, iconicName: String) =
     span(`class` := s"${navbars.Text} $HiddenClass", id := elemId)(iconic(iconicName))
 
-  def basePage(title: String, extraHeader: Modifier*)(inner: Modifier*) = TagPage(
+  private def basePage(title: String, bodyClasses: String, extraHeader: Modifier*)(
+    inner: Modifier*
+  ) = TagPage(
     html(lang := En)(
       head(
         meta(charset := "UTF-8"),
@@ -316,7 +318,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
         cssLink(at("styles.css")),
         extraHeader
       ),
-      body(
+      body(cls := bodyClasses)(
         inner,
         scripts.jsFiles.map(file => jsScript(at(file))),
         footer(`class` := "footer", id := FooterId)(
