@@ -1,12 +1,10 @@
 package com.malliina.musicpimp.audio
 
 import java.net.{URLDecoder, URLEncoder}
-import java.nio.charset.StandardCharsets
 import java.text.Normalizer
 
 import com.malliina.musicpimp.models.{FolderID, Identifier, TrackID}
 import org.apache.commons.codec.digest.DigestUtils
-import play.utils.UriEncoding
 
 object PimpEnc:
   val UTF8 = "UTF-8"
@@ -14,9 +12,6 @@ object PimpEnc:
   def normalize(input: String) = Normalizer
     .normalize(input, Normalizer.Form.NFD)
     .replaceAll("[^\\p{ASCII}]", "")
-
-  def makeIdentifier(input: String) =
-    UriEncoding.encodePathSegment(normalize(input.replace('\\', '/')), StandardCharsets.UTF_8)
 
   def encode(in: String) = URLEncoder.encode(in, UTF8)
 

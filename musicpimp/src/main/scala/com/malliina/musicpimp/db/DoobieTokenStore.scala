@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.db
 
 import com.malliina.database.DoobieDatabase
-import com.malliina.play.auth.{Token, TokenStore}
+import com.malliina.auth.{Token, TokenStore}
 import com.malliina.values.Username
 import doobie.Fragment
 import doobie.implicits.{autoDerivedRead, toSqlInterpolator}

@@ -5,7 +5,7 @@ import com.malliina.http4s.AppImplicits
 import com.malliina.musicpimp.html.UriSyntax
 import com.malliina.musicpimp.http4s.PimpImplicits.log
 import com.malliina.musicpimp.json.MediaRanges
-import com.malliina.play.tags.TagPage
+import com.malliina.musicpimp.html.TagPage
 import com.malliina.util.AppLogger
 import io.circe.Encoder
 import org.http4s.*

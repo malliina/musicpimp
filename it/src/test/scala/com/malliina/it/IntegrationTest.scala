@@ -13,17 +13,12 @@ import com.malliina.security.SSLUtils
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.Util
 import com.malliina.values.UnixPath
+import com.malliina.web.HttpConstants
 import com.malliina.ws.HttpUtil
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
 import munit.{AnyFixture, FunSuite}
 import org.apache.commons.codec.binary.Base64
-import play.api.ApplicationLoader.Context
-import play.api.http.HeaderNames
-import play.api.mvc.Result
-import play.api.test.Helpers.*
-import play.api.test.{DefaultTestServerFactory, FakeRequest, RunningServer}
-import play.api.{Application, BuiltInComponents}
 import tests.*
 
 import java.net.URI
@@ -31,31 +26,9 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import scala.concurrent.Promise
 
-trait ServerPerSuite2[T <: BuiltInComponents]:
-  self: FunSuite =>
-  def createComponents(context: Context): T
-  lazy val serverComponents = createComponents(TestAppLoader.createTestAppContext)
-  val testServer: Fixture[RunningServer] = new Fixture[RunningServer]("test-server"):
-    private var runningServer: RunningServer = null
-    def apply() = runningServer
-    override def beforeAll(): Unit =
-      runningServer = DefaultTestServerFactory.start(serverComponents.application)
-    override def afterAll(): Unit =
-      runningServer.stopServer.close()
-  def port = testServer().endpoints.httpEndpoint.map(_.port).get
-
-  override def munitFixtures: Seq[AnyFixture[?]] = Seq(testServer)
-
-//abstract class PimpcloudServerSuite extends FunSuite with ServerPerSuite2[TestComponents]:
-//  override def createComponents(context: Context): TestComponents = new TestComponents(context)
-//
-//trait PimpcloudServerSuiteTrait extends ServerPerSuite2[TestComponents]:
-//  self: FunSuite =>
-//  override def createComponents(context: Context): TestComponents = new TestComponents(context)
-
 class IntegrationTest extends munit.CatsEffectSuite with CloudServerSuite with PimpServerSuite:
   def cloudPort: Int = ???
-  def cloud: Application = ??? // testServer().app
+  def cloud = ??? // testServer().app
   def pimpcloudHostPort = s"localhost:$cloudPort"
   def cloudHostPort = FullUrl("http", pimpcloudHostPort, "")
   def pimpcloudUri = FullUrl("ws", s"localhost:$cloudPort", CloudSocket.path)
@@ -160,7 +133,7 @@ class IntegrationTest extends munit.CatsEffectSuite with CloudServerSuite with P
     val req = withCloudTrack("range-test"): (trackId, _, cloudId) =>
       // request track
       // the end of the range is inclusive
-      makeGet(client, s"/tracks/$trackId", cloudId, HeaderNames.RANGE -> s"bytes=10-20").map: r =>
+      makeGet(client, s"/tracks/$trackId", cloudId, "Range" -> s"bytes=10-20").map: r =>
         assertEquals(r.status, 206)
         assertEquals(r.body.length.toLong, 11L)
         bytesPromise.success(r.body.length)
@@ -242,18 +215,15 @@ class IntegrationTest extends munit.CatsEffectSuite with CloudServerSuite with P
 
   def req(http: HttpClient[IO], url: FullUrl, cloudId: CloudID, headers: (String, String)*) =
     val enc = cloudAuthorization(cloudId)
-    val hs = headers :+ (HeaderNames.AUTHORIZATION -> s"Basic $enc")
+    val hs = headers :+ (HttpHeaders.Authorization -> s"Basic $enc")
     http.get(url, hs.toMap)
 
   def cloudAuthorization(cloudId: CloudID) =
     Base64.encodeBase64String(s"$cloudId:admin:test".getBytes(StandardCharsets.UTF_8))
 
-  def statusCode(uri: String, chosenApp: Application): Int =
-    request(uri, chosenApp).header.status
-
-  def request(uri: String, chosenApp: Application): Result =
-    val result = route(chosenApp, FakeRequest(GET, uri)).get
-    await(result)
+  def statusCode(uri: String, chosenApp: String): Int =
+    ???
+//    request(uri, chosenApp).header.status
 
   def withPhoneSocket[T](path: String, cloudId: CloudID, onMessage: Json => Any)(
     code: TestSocket => IO[T]

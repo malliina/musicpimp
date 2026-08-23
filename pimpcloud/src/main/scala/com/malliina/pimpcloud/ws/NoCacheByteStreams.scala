@@ -19,13 +19,10 @@ import fs2.Stream
 import fs2.concurrent.Topic
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
-import org.apache.pekko.stream.QueueOfferResult.{Dropped, Enqueued, Failure, QueueClosed}
-import org.apache.pekko.stream.{QueueOfferResult, StreamDetachedException}
 import org.http4s.headers.Range.SubRange
 import org.http4s.headers.{`Content-Length`, `Content-Range`, `Content-Type`}
 import org.http4s.{MediaType, Request, Response, Status}
 import org.typelevel.ci.CIStringSyntax
-import play.api.mvc.*
 
 import scala.collection.concurrent.TrieMap
 
@@ -158,18 +155,6 @@ class NoCacheByteStreams[F[_]: Async](
 
   private def cancelMessage(request: RequestID): UserRequest =
     UserRequest.simple(Cancel, request)
-
-  protected def analyzeResult(
-    dest: StreamEndpoint[F],
-    bytes: Array[Byte],
-    result: QueueOfferResult
-  ): Unit =
-    val suffix = s" for ${bytes.length} bytes of ${dest.describe}"
-    result match
-      case Enqueued    => ()
-      case Dropped     => log.warn(s"Offer dropped$suffix")
-      case Failure(t)  => log.error(s"Offer failed$suffix", t)
-      case QueueClosed => () // log.error(s"Queue closed$suffix")
 
   protected def onOfferError(
     t: Throwable,

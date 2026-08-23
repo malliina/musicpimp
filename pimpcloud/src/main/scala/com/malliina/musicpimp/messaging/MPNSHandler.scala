@@ -6,8 +6,6 @@ import com.malliina.musicpimp.messaging.cloud.{BasicResult, MPNSPayload}
 import com.malliina.push.PushException
 import com.malliina.push.mpns.MPNSClient
 
-import scala.concurrent.Future
-
 class MPNSHandler[F[_]: Async](client: MPNSClient)
   extends PushRequestHandler[F, MPNSPayload, BasicResult]:
   val F = Async[F]

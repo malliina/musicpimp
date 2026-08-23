@@ -1,8 +1,7 @@
 package com.malliina.musicpimp.messaging.cloud
 
-import com.malliina.push.gcm.{GCMResponse, MappedGCMResponse}
+import com.malliina.push.gcm.MappedGCMResponse
 import io.circe.Codec
-import play.api.libs.json.{Json, OFormat, OWrites}
 
 case class PushResult(
   apns: Seq[APNSHttpResult],

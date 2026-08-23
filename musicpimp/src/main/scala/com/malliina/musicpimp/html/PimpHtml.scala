@@ -13,7 +13,6 @@ import com.malliina.musicpimp.messaging.TokenInfo
 import com.malliina.musicpimp.models.*
 import com.malliina.musicpimp.scheduler.FullClockPlayback
 import com.malliina.musicpimp.stats.*
-import com.malliina.play.tags.TagPage
 import com.malliina.values.Username
 import org.http4s.Uri
 import org.http4s.implicits.uri

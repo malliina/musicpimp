@@ -3,7 +3,7 @@ package com.malliina.musicpimp.auth
 import cats.effect.Sync
 import cats.implicits.{toFlatMapOps, toFunctorOps}
 import com.malliina.musicpimp.auth.RememberMe.{CookieName, Unauth, log}
-import com.malliina.play.auth.{Token, TokenStore}
+import com.malliina.auth.{Token, TokenStore}
 import com.malliina.util.AppLogger
 import com.malliina.values.Username
 import io.circe.Codec

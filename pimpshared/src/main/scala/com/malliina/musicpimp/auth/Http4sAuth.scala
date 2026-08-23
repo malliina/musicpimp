@@ -1,7 +1,7 @@
 package com.malliina.musicpimp.auth
 
 import cats.effect.Sync
-import com.malliina.play.auth.RememberMe
+import com.malliina.auth.RememberMe
 import com.malliina.values.IdToken
 import io.circe.*
 import org.http4s.Credentials.Token

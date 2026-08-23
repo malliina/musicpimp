@@ -3,7 +3,7 @@ package com.malliina.pimpcloud.http4s
 import cats.effect.Concurrent
 import com.malliina.http4s.{AppImplicits, FormDecoders, FormReadableT}
 import com.malliina.musicpimp.models.CloudID
-import com.malliina.play.controllers.AccountKeys.{passFormKey, userFormKey}
+import com.malliina.pimpcloud.http4s.AccountKeys.{passFormKey, userFormKey}
 import com.malliina.values.{Password, Username}
 
 object PimpExt extends PimpExt

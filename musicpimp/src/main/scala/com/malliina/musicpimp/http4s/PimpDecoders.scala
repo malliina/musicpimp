@@ -5,14 +5,13 @@ import ch.qos.logback.classic.Level
 import com.malliina.http.Errors
 import com.malliina.http4s.{FormDecoders, FormReadable, FormReadableT}
 import com.malliina.musicpimp.html.ChangeLogLevel
+import com.malliina.musicpimp.http4s.Cloud.ToggleCloudId
 import com.malliina.musicpimp.models.{NewUser, TrackID}
-import com.malliina.musicpimp.scheduler.{ClockPlaybackConf, ClockSchedule, WeekDay}
 import com.malliina.musicpimp.scheduler.web.{AlarmStrings, SchedulerStrings}
-import com.malliina.play.auth.{BasicCredentials, RememberMeCredentials}
-import com.malliina.play.controllers.AccountKeys
-import com.malliina.play.models.PasswordChange
+import com.malliina.musicpimp.scheduler.{ClockPlaybackConf, ClockSchedule}
+import com.malliina.auth.{BasicCredentials, RememberMeCredentials}
+import com.malliina.auth.PasswordChange
 import com.malliina.values.{ErrorMessage, NonBlank, Password, Readable, Username}
-import Cloud.ToggleCloudId
 import org.http4s.UrlForm
 
 trait FormReaders:
@@ -24,7 +23,7 @@ trait FormReaders:
         .foldLeft[Either[ErrorMessage, Seq[T]]](Right(Nil)): (acc, s) =>
           r.read(s).fold(err => Left(err), ok => acc.map(oks => oks :+ ok))
 
-  import AccountKeys.*
+  import com.malliina.musicpimp.html.AccountKeys.*
 
   private val reader = FormReadableT.reader
 

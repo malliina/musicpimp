@@ -5,7 +5,7 @@ import cats.effect.IO
 import java.nio.file.Path
 import com.malliina.io.FileBackedList
 import com.malliina.musicpimp.util.FileUtil
-import com.malliina.play.auth.{Token, TokenStore}
+import com.malliina.auth.{Token, TokenStore}
 import com.malliina.values.Username
 
 import scala.util.Try

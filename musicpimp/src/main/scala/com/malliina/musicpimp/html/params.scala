@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level
 import com.malliina.html.HtmlTags.spanClass
 import com.malliina.html.{HtmlTags, UserFeedback}
 import com.malliina.musicpimp.scheduler.ClockPlaybackConf
-import com.malliina.play.controllers.AccountKeys
 import com.malliina.values.{ErrorMessage, Username}
 
 case class LoginContent(

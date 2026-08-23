@@ -4,7 +4,7 @@ import cats.effect.Async
 import com.malliina.musicpimp.cloud.PimpServerSocket
 import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.streams.StreamEndpoint
-import com.malliina.play.models.AuthInfo
+import com.malliina.play.http.AuthInfo
 import com.malliina.values.Username
 import org.http4s.Request
 

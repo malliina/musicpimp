@@ -18,7 +18,6 @@ import com.malliina.pimpcloud.json.JsonStrings.{AlarmsAdd, AlarmsEdit, AlarmsKey
 import com.malliina.pimpcloud.ws.PhoneConnection
 import com.malliina.pimpcloud.{BuildMeta, SharedStrings}
 import com.malliina.play.ContentRange
-import com.malliina.play.controllers.AccountForms
 import com.malliina.storage.{StorageInt, StorageLong}
 import com.malliina.util.AppLogger
 import com.malliina.values.Username
@@ -42,7 +41,6 @@ class Service[F[_]: { Async, Files }](
   google: GoogleAuth[F]
 ) extends CloudImplicits[F]:
   private val F = Async[F]
-  private val forms = new AccountForms
   private val reverse = Reverse
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
@@ -308,7 +306,7 @@ class Service[F[_]: { Async, Files }](
         )
 
   private def loginPage(formError: Option[String], req: Request[F]) =
-    html.login(formError, req.userFeedback(forms.feedback).map(_.message), None)
+    html.login(formError, req.userFeedback(AccountKeys.feedback).map(_.message), None)
 
   def onGatewayParseErrorResult(err: DecodingFailure): F[Response[F]] =
     log.error(s"Parse error. $err")

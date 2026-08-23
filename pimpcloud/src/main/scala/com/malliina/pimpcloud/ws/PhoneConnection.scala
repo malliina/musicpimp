@@ -6,7 +6,7 @@ import com.malliina.musicpimp.cloud.{GetMeta, PimpServerSocket}
 import com.malliina.musicpimp.models.TrackID
 import com.malliina.pimpcloud.json.JsonStrings.{Meta, StatusKey}
 import com.malliina.pimpcloud.models.PhoneRequest
-import com.malliina.play.models.AuthInfo
+import com.malliina.play.http.AuthInfo
 import com.malliina.values.Username
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.Request

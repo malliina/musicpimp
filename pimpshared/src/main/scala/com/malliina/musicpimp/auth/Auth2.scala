@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.play.auth.BasicCredentials
+import com.malliina.auth.BasicCredentials
 import com.malliina.values.{Password, Username}
 import org.apache.commons.codec.binary.Base64
 import org.http4s.{Headers, Uri}

@@ -35,10 +35,10 @@ import com.malliina.musicpimp.scheduler.{ClockPlaybackConf, ScheduledPlaybackSer
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.musicpimp.{BuildInfo, BuildMeta}
 import com.malliina.play.ContentRange
-import com.malliina.play.auth.RememberMeCredentials
-import com.malliina.play.controllers.AccountKeys
-import com.malliina.play.http.{FullUrls, FullUrls2}
-import com.malliina.play.models.PasswordChange
+import com.malliina.auth.RememberMeCredentials
+import com.malliina.musicpimp.html.AccountKeys
+import com.malliina.play.http.FullUrls2
+import com.malliina.auth.PasswordChange
 import com.malliina.storage.StorageLong
 import com.malliina.util.{AppLogger, Logging}
 import com.malliina.values.{ErrorMessage, Password, UnixPath, Username}

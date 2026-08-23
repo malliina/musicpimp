@@ -2,25 +2,10 @@ package com.malliina.pimpcloud
 
 import cats.effect.Sync
 import com.malliina.config.ConfigNode
-import com.malliina.http.OkClient
-import com.malliina.logback.PimpAppender
-import org.apache.pekko.stream.Materializer
+import com.malliina.musicpimp.messaging.Pusher
 import com.malliina.musicpimp.messaging.cloud.{PushResult, PushTask}
-import com.malliina.musicpimp.messaging.{ProdPusher, Pusher}
-import com.malliina.oauth.GoogleOAuthCredentials
-import com.malliina.pimpcloud.CloudComponents.log
 import com.malliina.util.AppLogger
-//import com.malliina.pimpcloud.ws.JoinedSockets
-import com.malliina.play.ActorExecution
-import com.typesafe.config.ConfigFactory
-import controllers.{Assets, AssetsComponents}
-import play.api.ApplicationLoader.Context
-import play.api.http.HttpConfiguration
-import play.api.mvc.EssentialFilter
-import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Configuration, Logger, LoggerConfigurator, Mode}
-
 import java.nio.file.Paths
-import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object LocalConf:
   val userHome = Paths.get(sys.props("user.home"))

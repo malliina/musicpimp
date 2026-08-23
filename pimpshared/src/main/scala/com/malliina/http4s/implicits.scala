@@ -4,11 +4,8 @@ import cats.Applicative
 import cats.effect.Concurrent
 import com.malliina.html.UserFeedback
 import com.malliina.http.Errors
+import com.malliina.musicpimp.html.TagPage
 import com.malliina.musicpimp.http4s.Responses
-import com.malliina.musicpimp.models.CloudID
-import com.malliina.play.controllers.AccountKeys.{passFormKey, userFormKey}
-import com.malliina.play.tags.TagPage
-import com.malliina.values.{Password, Username}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Charset, EntityEncoder, MediaType, Request, Response}
 import scalatags.generic.Frag

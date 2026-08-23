@@ -5,7 +5,7 @@ import com.malliina.musicpimp.http4s.Reverse
 import com.malliina.musicpimp.json.JsonStrings.*
 import com.malliina.musicpimp.library.Library
 import com.malliina.musicpimp.models.{FolderID, MusicItem}
-import com.malliina.play.http.{FullUrls, FullUrls2}
+import com.malliina.play.http.FullUrls2
 import com.malliina.values.UnixPath
 import io.circe.syntax.EncoderOps
 import io.circe.{Codec, Encoder, Json}

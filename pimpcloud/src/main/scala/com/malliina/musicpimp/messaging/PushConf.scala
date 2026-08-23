@@ -1,9 +1,10 @@
 package com.malliina.musicpimp.messaging
 
+import cats.data.NonEmptyList
+import com.malliina.config.{ConfigError, ConfigNode, InvalidValue}
 import com.malliina.push.apns.APNSTokenConf
 import com.malliina.push.wns.WNSCredentials
 import com.malliina.values.ErrorMessage
-import play.api.Configuration
 
 case class PushConf(
   apns: APNSTokenConf,
@@ -19,11 +20,11 @@ object PushConf:
   val WnsPackageSid = "push.wns.packageSid"
   val WnsClientSecret = "push.wns.clientSecret"
 
-  def orFail(conf: Configuration) =
-    apply(conf).fold(err => throw new Exception(err.message), identity)
+  def orFail(conf: ConfigNode) =
+    apply(conf).fold(err => throw new Exception(err.message.message), identity)
 
-  def apply(conf: Configuration): Either[ErrorMessage, PushConf] =
-    def get(key: String) = conf.getOptional[String](key).toRight(ErrorMessage(s"Missing: '$key'."))
+  def apply(conf: ConfigNode): Either[ConfigError, PushConf] =
+    def get(key: String) = conf.parse[String](key)
 
     for
       gcmApiKey <- get(GcmApiKey)
@@ -31,7 +32,10 @@ object PushConf:
       admClientSecret <- get(AdmClientSecret)
       wnsPackageSid <- get(WnsPackageSid)
       wnsClientSecret <- get(WnsClientSecret)
-      apns <- APNSTokenConf.parse(key => get(s"push.apns.$key"))
+      apns <- APNSTokenConf
+        .parse(key => get(s"push.apns.$key").left.map(_.message))
+        .left
+        .map(e => InvalidValue(e, NonEmptyList.of("apns"), None))
     yield
       val adm = ADMCredentials(admClientId, admClientSecret)
       val wns = WNSCredentials(wnsPackageSid, wnsClientSecret)

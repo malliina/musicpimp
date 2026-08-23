@@ -1,7 +1,7 @@
 package com.malliina.http4s
 
 import cats.effect.Temporal
-import com.malliina.play.json.JsonMessages
+import com.malliina.musicpimp.json.JsonMessages
 import fs2.Stream
 import io.circe.Json
 

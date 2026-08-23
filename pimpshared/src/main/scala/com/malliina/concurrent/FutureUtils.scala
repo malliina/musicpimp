@@ -1,9 +1,7 @@
-package com.malliina.play.concurrent
+package com.malliina.concurrent
 
-import cats.effect.{IO, Sync}
+import cats.effect.Sync
 import cats.implicits.toFlatMapOps
-
-import scala.concurrent.{ExecutionContext, Future}
 
 object FutureUtils:
 

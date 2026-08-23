@@ -10,7 +10,7 @@ import com.malliina.pimpcloud.{BuildInfo, CloudStrings}
 import com.malliina.pimpcloud.html.CloudTags.{at, given}
 import com.malliina.pimpcloud.http4s.{AccountKeys, Reverse, Web}
 import com.malliina.pimpcloud.tags.ScalaScripts
-import com.malliina.play.tags.TagPage
+import com.malliina.musicpimp.html.TagPage
 import org.http4s.Uri
 import org.http4s.implicits.uri
 import scalatags.Text.all.*
@@ -121,7 +121,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
     )
   )
 
-  def index(dir: Directory, feedback: Option[String]) =
+  def index(dir: Directory, feedback: Option[String]): TagPage =
     val feedbackHtml = feedback.fold(empty)(f => fullRow(leadPara(f)))
 
     def folderHtml(folder: Folder) =

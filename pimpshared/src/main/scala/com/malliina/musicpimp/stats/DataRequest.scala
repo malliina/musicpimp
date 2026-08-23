@@ -4,8 +4,6 @@ import com.malliina.http.Errors
 import com.malliina.values.Username
 import io.circe.{Codec, Json}
 import org.http4s.Request
-import play.api.mvc.Security.AuthenticatedRequest
-import play.api.mvc.{QueryStringBindable, RequestHeader}
 
 /** @param username
   *   relevant user
@@ -24,19 +22,11 @@ object DataRequest:
   val Page = "page"
   val PageSize = "pageSize"
 
-  val binder = QueryStringBindable.bindableInt
-
   def default(user: Username): DataRequest =
     apply(user, DefaultItemCount)
 
   def apply(user: Username, items: Int): DataRequest =
     apply(user, 0, items)
-
-  def fromRequest(request: AuthenticatedRequest[?, Username]): Either[String, DataRequest] =
-    fromRequest(request.user, request)
-
-  def fromRequest(user: Username, request: RequestHeader): Either[String, DataRequest] =
-    ItemLimits.fromRequest(request) map { limits => DataRequest(user, limits.from, limits.until) }
 
   def fromReq(user: Username, request: Request[?]): Either[Errors, DataRequest] =
     ItemLimits

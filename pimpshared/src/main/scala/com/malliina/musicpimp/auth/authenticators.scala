@@ -4,8 +4,8 @@ import cats.Functor
 import cats.effect.Sync
 import cats.syntax.all.toFunctorOps
 import com.malliina.musicpimp.auth.Authenticator.AuthOutcome
-import com.malliina.play.auth.{BasicCredentials, Token}
-import com.malliina.play.concurrent.FutureUtils
+import com.malliina.auth.{BasicCredentials, Token}
+import com.malliina.concurrent.FutureUtils
 import io.circe.Json
 import org.http4s.Request
 

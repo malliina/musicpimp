@@ -163,11 +163,13 @@ val utilAudio = Project("util-audio", file("util-audio"))
   )
 
 val shared = Project("pimp-shared", file("pimpshared"))
-  .dependsOn(crossJvm, utilPlay)
+  .dependsOn(crossJvm)
   .settings(baseSettings *)
   .settings(
     libraryDependencies ++= Seq(
       "com.malliina" %% "util-http4s" % versions.primitives,
+      "com.malliina" %% "web-auth" % versions.primitives,
+      "com.malliina" %% "config" % versions.primitives,
       logstreamsDep,
       "mysql" % "mysql-connector-java" % versions.mysql,
       malliinaGroup %% "mobile-push-io" % versions.mobilePush,
@@ -228,11 +230,7 @@ val pimpcloud = project
   .dependsOn(
     shared,
     shared % Test,
-    crossJvm,
-    utilPlay,
-    utilPlay % Test,
-    utilPlay % "test->test",
-    playSocial
+    crossJvm
   )
   .settings(pimpcloudSettings *)
   .settings(
@@ -373,6 +371,7 @@ lazy val musicpimpSettings =
       // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
       scalacOptions ++= Seq("-encoding", "UTF-8"),
       libraryDependencies ++= Seq(
+        malliinaGroup %% "database" % versions.primitives,
         malliinaGroup %% "okclient-io" % versions.primitives,
         "net.glxn" % "qrgen" % "1.4",
         "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",

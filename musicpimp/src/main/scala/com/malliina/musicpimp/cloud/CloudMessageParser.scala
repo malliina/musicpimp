@@ -11,7 +11,6 @@ import com.malliina.musicpimp.models.{PlaylistID, RequestID}
 import com.malliina.musicpimp.scheduler.json.AlarmCommand
 import com.malliina.musicpimp.stats.DataRequest
 import com.malliina.pimpcloud.SharedStrings.{Ping, Pong}
-import com.malliina.play.json.JsonStrings.Cmd
 import com.malliina.values.Username
 import io.circe.{Decoder, DecodingFailure, Json}
 

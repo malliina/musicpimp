@@ -6,7 +6,6 @@ import com.malliina.play.ContentRange
 import com.malliina.values.Literals.err
 import com.malliina.values.{ErrorMessage, ValidatingCompanion}
 import io.circe.Codec
-import play.api.http.Writeable
 
 import java.util.UUID
 
