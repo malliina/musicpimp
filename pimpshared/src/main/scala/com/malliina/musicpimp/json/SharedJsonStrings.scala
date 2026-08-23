@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.json
 
-trait JsonStrings:
+private trait SharedJsonStrings:
   val Event = "event"
   val Cmd = "cmd"
   val Welcome = "welcome"
@@ -8,4 +8,4 @@ trait JsonStrings:
   val Reason = "reason"
   val AccessDenied = "access denied"
 
-object JsonStrings extends JsonStrings
+object SharedJsonStrings extends SharedJsonStrings

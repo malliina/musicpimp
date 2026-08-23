@@ -10,7 +10,7 @@ import com.malliina.http.{Errors, HttpHeaders}
 import com.malliina.http4s.PimpExt.handleLeft
 import com.malliina.http4s.{AppImplicits, SocketBuilder}
 import com.malliina.musicpimp.auth.{Auth2, Http4sAuth, Proxies2, UserPayload}
-import com.malliina.musicpimp.json.{JsonMessages, Target}
+import com.malliina.musicpimp.json.{SharedJsonMessages, Target}
 import com.malliina.storage.{StorageInt, StorageLong, StorageSize}
 import com.malliina.util.AppLogger
 import com.malliina.values.{Password, Username}
@@ -120,7 +120,7 @@ class Service[F[_]: { Async, Files }](
         tryPushFile(player, req)
 
   private def welcome = Stream
-    .emit[F, Json](JsonMessages.welcome)
+    .emit[F, Json](SharedJsonMessages.welcome)
     .delayBy(100.millis)
 
   private def socketRoutes(builder: WebSocketBuilder2[F]) = HttpRoutes.of[F]:

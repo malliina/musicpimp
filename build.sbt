@@ -84,19 +84,6 @@ val crossJs = cross.js
     )
   )
 
-val html = portableProject(JSPlatform, JVMPlatform)
-  .crossType(PortableType.Full)
-  .in(file("util-html"))
-  .settings(
-    libraryDependencies ++= Seq(
-      "com.lihaoyi" %%% "scalatags" % versions.scalatags,
-      malliinaGroup %%% "util-html" % versions.primitives,
-      "org.scalameta" %%% "munit" % versions.munit % Test
-    )
-  )
-val htmlJvm = html.jvm
-val htmlJs = html.js
-
 val utilAudio = Project("util-audio", file("util-audio"))
   .enablePlugins(MavenCentralPlugin)
   .settings(
@@ -144,10 +131,10 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
   .settings(
     libraryDependencies ++= Seq("generic", "parser")
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-      malliinaGroup %%% "primitives" % versions.primitives
+      malliinaGroup %%% "primitives" % versions.primitives,
+      malliinaGroup %%% "util-html" % versions.primitives,
     ),
     assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
-//    assetsRoot := ((Compile / crossTarget).value / "stage").toPath.resolve("assets"),
     assetsPrefix := "public/"
   )
 val musicpimp = project
@@ -518,7 +505,6 @@ lazy val baseSettings = Seq(
 def scalajsProject(name: String, path: File) =
   Project(name, path)
     .enablePlugins(ScalaJSBundlerPlugin)
-    .dependsOn(htmlJs)
     .settings(
       scalaJSUseMainModuleInitializer := true,
       libraryDependencies ++= Seq("org.scalameta" %%% "munit" % versions.munit % Test),
