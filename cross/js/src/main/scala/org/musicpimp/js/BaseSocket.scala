@@ -9,7 +9,6 @@ import org.scalajs.dom.{CloseEvent, Event, MessageEvent}
 class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) extends ScriptHelpers:
   private val okStatus = elem(OkStatus)
   private val failStatus = elem(FailStatus)
-
   private val socket: dom.WebSocket = openSocket(wsPath)
 
   def handlePayload(payload: Json): Unit = ()
@@ -21,7 +20,7 @@ class BaseSocket(wsPath: String, val hideClass: String, val log: BaseLogger) ext
     okStatus.removeClass(hideClass)
     failStatus.addClass(hideClass)
 
-  def showDisconnected(): Unit =
+  private def showDisconnected(): Unit =
     okStatus.addClass(hideClass)
     failStatus.removeClass(hideClass)
 

@@ -13,4 +13,4 @@ class PimpBootstrap extends Bootstrap(HtmlTags):
   given callAttr: Text.GenericAttr[Call] = com.malliina.play.tags.PlayTags.callAttr
 
   def iconic(iconicName: String) =
-    spanClass(s"oi oi-$iconicName", title := iconicName, aria.hidden := True)
+    spanClass(s"fa fa-$iconicName", title := iconicName, aria.hidden := True)

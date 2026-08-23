@@ -106,8 +106,7 @@ class NoCacheByteStreams[F[_]: Async](
           .map(_ => true)
       .getOrElse:
         // This method is fired multiple times in normal circumstances
-        log.debug(s"Unable to remove '$request'. Request ID not found.")
-        F.pure(false)
+        F.delay(log.debug(s"Unable to remove '$request'. Request ID not found.")).as(false)
     val send = if shouldAbort then sendMessage(cancelMessage(request)) else F.unit
     send >> disposal
 

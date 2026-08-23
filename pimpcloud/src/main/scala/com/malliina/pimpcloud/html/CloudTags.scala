@@ -98,7 +98,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       )
     )
 
-  def textInput(
+  private def textInput(
     inType: String,
     clazz: String,
     idAndName: String,
@@ -153,7 +153,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       )
     )
 
-  def trackActions(track: TrackID) =
+  private def trackActions(track: TrackID) =
     divClass(btn.group)(
       a(`class` := s"${btn.default} ${btn.sm} $PlayLink", href := "#", id := s"play-$track")(
         iconic("media-play"),
@@ -180,7 +180,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       )
     )
 
-  def searchForm(query: Option[String] = None, size: String = InputGroupLg) =
+  private def searchForm(query: Option[String] = None, size: String = InputGroupLg) =
     form(action := reverse.search)(
       divClass(s"$InputGroup $size")(
         input(
@@ -190,9 +190,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
           name := "term",
           id := "term"
         ),
-        divClass(InputGroupBtn)(
-          button(`class` := btn.default, `type` := Submit)(iconic("search"))
-        )
+        button(`class` := btn.default, `type` := Submit)(iconic("search"))
       )
     )
 
@@ -225,7 +223,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       )
     )
 
-  def defaultTable(tableId: String, bodyId: String, headers: String*) =
+  private def defaultTable(tableId: String, bodyId: String, headers: String*) =
     table(`class` := tables.defaultClass, id := tableId)(
       thead(
         tr(
@@ -236,7 +234,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       tbody(id := bodyId)
     )
 
-  def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) =
+  private def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) =
     def navItem(thisTabName: String, tabId: String, url: Uri, iconicName: String) =
       val itemClass = if tabId == tabName then "nav-item active" else "nav-item"
       li(`class` := itemClass)(
@@ -266,7 +264,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       divClass(contentClass)(inner)
     )
 
-  def basePage(title: String)(inner: Modifier*) = TagPage(
+  private def basePage(title: String)(inner: Modifier*) = TagPage(
     html(lang := En)(
       head(
         titleTag(title),
@@ -284,13 +282,13 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
         section(
           inner,
           scripts.scripts.map: file =>
-            HtmlTags.jsScript(at(file))
+            HtmlTags.jsScript(at(file), defer)
         )
       )
     )
   )
 
-  def eye(elemId: String, iconicName: String) =
+  private def eye(elemId: String, iconicName: String) =
     span(`class` := s"${navbars.Text} ${FrontStrings.HiddenClass}", id := elemId)(
       iconic(iconicName)
     )
