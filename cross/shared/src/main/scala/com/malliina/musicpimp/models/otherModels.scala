@@ -3,7 +3,6 @@ package com.malliina.musicpimp.models
 import com.malliina.musicpimp.json.CrossFormats.{cmd, evented, singleCmd}
 import io.circe.{Codec, Decoder}
 import io.circe.generic.semiauto.deriveCodec
-import play.api.libs.json.{Json, OFormat, Reads}
 
 case class SearchStatus(status: String)
 

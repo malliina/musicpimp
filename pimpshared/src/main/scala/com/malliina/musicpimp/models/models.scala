@@ -2,7 +2,7 @@ package com.malliina.musicpimp.models
 
 import com.malliina.musicpimp.cloud.PimpMessage
 import com.malliina.musicpimp.json.PimpStrings
-import com.malliina.play.{ContentRange, Writeables}
+import com.malliina.play.ContentRange
 import com.malliina.values.Literals.err
 import com.malliina.values.{ErrorMessage, ValidatingCompanion}
 import io.circe.Codec
@@ -12,13 +12,7 @@ import java.util.UUID
 
 case class Version(version: String) extends PimpMessage derives Codec.AsObject
 
-object Version:
-  implicit val html: Writeable[Version] = Writeables.fromCirceJson[Version]
-
 case class FailReason(reason: String) extends PimpMessage derives Codec.AsObject
-
-object FailReason:
-  implicit val html: Writeable[FailReason] = Writeables.fromCirceJson[FailReason]
 
 case class WrappedID(id: String) derives Codec.AsObject
 

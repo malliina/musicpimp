@@ -1,7 +1,6 @@
 package com.malliina.musicpimp.models
 
 import com.malliina.values.{ErrorMessage, ValidatingCompanion}
-import play.api.libs.json.{Format, JsError, JsSuccess, Reads, Writes}
 
 case class RequestIdentifier(id: String) extends Identifier
 
@@ -15,12 +14,5 @@ trait Identifier extends Any:
 
 abstract class IdentCompanion[T <: Identifier] extends ValidatingCompanion[String, T]:
   override def write(t: T): String = t.id
-
-  implicit val playJson: Format[T] = Format(
-    Reads.StringReads.flatMapResult(s =>
-      build(s).fold(err => JsError(err.message), ok => JsSuccess(ok))
-    ),
-    Writes.StringWrites.contramap(write)
-  )
 
   def unapply(s: String): Option[T] = build(s).toOption

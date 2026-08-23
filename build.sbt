@@ -71,7 +71,7 @@ val cross = portableProject(JSPlatform, JVMPlatform)
     organization := "org.musicpimp",
     libraryDependencies ++= Seq("generic", "parser")
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-      "org.playframework" %%% "play-json" % versions.playJson,
+//      "org.playframework" %%% "play-json" % versions.playJson,
       malliinaGroup %%% "primitives" % versions.primitives
     )
   )
@@ -219,7 +219,6 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
 val pimpcloud = project
   .in(file("pimpcloud"))
   .enablePlugins(
-//    PlayScala,
     JavaServerAppPackaging,
     SystemdPlugin,
     BuildInfoPlugin,
@@ -236,6 +235,51 @@ val pimpcloud = project
     playSocial
   )
   .settings(pimpcloudSettings *)
+  .settings(
+    version := "4.26.9",
+    scalaJSProjects := Seq(pimpcloudFrontend),
+    Assets / pipelineStages ++= Seq(scalaJSPipeline),
+    isProd := scalaJSStage.value == FullOptStage,
+    buildInfoKeys ++= Seq[BuildInfoKey](
+      BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
+      "isProd" -> isProd.value,
+      "assetsDir" -> Def.settingDyn(pimpcloudFrontend / assetsRoot).value.toFile,
+      "publicDir" -> (Assets / resourceDirectory).value,
+      "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
+    ),
+    Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js") --- (pimpcloudFrontend / assetsRoot).value.toFile * ("webpack.*.js" || "postcss.config.js")).get,
+    fileTreeSources := Seq(
+      DirMap(
+        (Assets / resourceDirectory).value.toPath,
+        "com.malliina.pimpcloud.assets.CloudAssets",
+        "com.malliina.pimpcloud.html.CloudTags.at"
+      )
+    ),
+    buildInfoPackage := "com.malliina.pimpcloud",
+    linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
+    Linux / httpPort := Option("8458"),
+    Linux / httpsPort := Option("disabled"),
+    maintainer := "Michael Skogberg <malliina123@gmail.com>",
+    manufacturer := "Skogberg Labs",
+    mainClass := Some("com.malliina.pimpcloud.Starter"),
+    Universal / javaOptions ++= {
+      val linuxName = (Linux / name).value
+      // https://www.scala-sbt.org/sbt-native-packager/archetypes/java_app/customize.html
+      Seq(
+        "-J-Xmx192m",
+        s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
+        s"-Dpush.conf=/etc/$linuxName/push.conf",
+        s"-Dconfig.file=/etc/$linuxName/production.conf",
+        s"-Dpidfile.path=/dev/null",
+        s"-Dlog.dir=/var/log/$linuxName"
+      )
+    },
+    Linux / packageSummary := "This is the pimpcloud summary.",
+    rpmVendor := "Skogberg Labs",
+    libraryDependencies ++= Seq("server", "client").map { module =>
+      "org.eclipse.jetty" % s"jetty-alpn-java-$module" % "9.4.20.v20190813"
+    }
+  )
 
 val it = project
   .in(file("it"))
@@ -460,56 +504,7 @@ lazy val pimpMacSettings = macSettings ++ Seq(
 
 lazy val pimpcloudSettings =
   http4sServerSettings ++
-    pimpcloudLinuxSettings ++
-    artifactSettings ++
-    Seq(
-      scalaJSProjects := Seq(pimpcloudFrontend),
-      Assets / pipelineStages ++= Seq(scalaJSPipeline),
-      isProd := scalaJSStage.value == FullOptStage,
-      buildInfoKeys ++= Seq[BuildInfoKey](
-        BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
-        "isProd" -> isProd.value,
-        "assetsDir" -> Def.settingDyn(pimpcloudFrontend / assetsRoot).value.toFile,
-        "publicDir" -> (Assets / resourceDirectory).value,
-        "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
-      ),
-      Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js") --- (pimpcloudFrontend / assetsRoot).value.toFile * ("webpack.*.js" || "postcss.config.js")).get,
-      fileTreeSources := Seq(
-        DirMap(
-          (Assets / resourceDirectory).value.toPath,
-          "com.malliina.pimpcloud.assets.CloudAssets",
-          "com.malliina.pimpcloud.html.CloudTags.at"
-        )
-      ),
-      buildInfoPackage := "com.malliina.pimpcloud",
-      linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
-      version := "4.26.9"
-    )
-
-lazy val pimpcloudLinuxSettings = Seq(
-  Linux / httpPort := Option("8458"),
-  Linux / httpsPort := Option("disabled"),
-  maintainer := "Michael Skogberg <malliina123@gmail.com>",
-  manufacturer := "Skogberg Labs",
-  mainClass := Some("com.malliina.pimpcloud.Starter"),
-  Universal / javaOptions ++= {
-    val linuxName = (Linux / name).value
-    // https://www.scala-sbt.org/sbt-native-packager/archetypes/java_app/customize.html
-    Seq(
-      "-J-Xmx192m",
-      s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
-      s"-Dpush.conf=/etc/$linuxName/push.conf",
-      s"-Dconfig.file=/etc/$linuxName/production.conf",
-      s"-Dpidfile.path=/dev/null",
-      s"-Dlog.dir=/var/log/$linuxName"
-    )
-  },
-  Linux / packageSummary := "This is the pimpcloud summary.",
-  rpmVendor := "Skogberg Labs",
-  libraryDependencies ++= Seq("server", "client").map { module =>
-    "org.eclipse.jetty" % s"jetty-alpn-java-$module" % "9.4.20.v20190813"
-  }
-)
+    artifactSettings
 
 lazy val artifactSettings = Seq(
   libs ++= Seq(

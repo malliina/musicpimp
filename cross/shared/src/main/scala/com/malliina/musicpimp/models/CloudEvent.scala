@@ -3,7 +3,6 @@ package com.malliina.musicpimp.models
 import com.malliina.musicpimp.json.CrossFormats.{evented, singleEvent}
 import io.circe.{Codec, Decoder, Encoder}
 import io.circe.generic.semiauto.deriveCodec
-import play.api.libs.json.*
 
 sealed abstract class CloudEvent
 
