@@ -156,7 +156,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
   private def trackActions(track: TrackID) =
     divClass(btn.group)(
       a(`class` := s"${btn.default} ${btn.sm} $PlayLink", href := "#", id := s"play-$track")(
-        iconic("media-play"),
+        faIcon("play"),
         " Play"
       ),
       a(
@@ -167,13 +167,13 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
       ulClass(DropdownMenu)(
         li(
           a(href := "#", `class` := PlaylistLink, id := s"add-$track")(
-            iconic("plus"),
+            faIcon("plus"),
             " Add to playlist"
           )
         ),
         li(
           a(href := reverse.downloads.download(track), download)(
-            iconic("data-transfer-download"),
+            faIcon("download"),
             " Download"
           )
         )
@@ -190,7 +190,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
           name := "term",
           id := "term"
         ),
-        button(`class` := btn.default, `type` := Submit)(iconic("search"))
+        button(`class` := btn.default, `type` := Submit)(faIcon("search"))
       )
     )
 
@@ -235,10 +235,10 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
     )
 
   private def baseIndex(tabName: String, contentClass: String = Container)(inner: Modifier*) =
-    def navItem(thisTabName: String, tabId: String, url: Uri, iconicName: String) =
+    def navItem(thisTabName: String, tabId: String, url: Uri, faName: String) =
       val itemClass = if tabId == tabName then "nav-item active" else "nav-item"
       li(`class` := itemClass)(
-        a(href := url, `class` := "nav-link")(iconic(iconicName), s" $thisTabName")
+        a(href := url, `class` := "nav-link")(faIcon(faName), s" $thisTabName")
       )
 
     basePage("pimpcloud")(
@@ -255,8 +255,8 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
               a(href := reverse.admin.logout, `class` := "nav-link")("Logout")
             ),
             div(
-              eye(OkStatus, "bolt green"),
-              eye(FailStatus, "bolt red")
+              eye(OkStatus, "eye green"),
+              eye(FailStatus, "eye red")
             )
           )
         )
@@ -288,7 +288,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
     )
   )
 
-  private def eye(elemId: String, iconicName: String) =
+  private def eye(elemId: String, faName: String) =
     span(`class` := s"${navbars.Text} ${FrontStrings.HiddenClass}", id := elemId)(
-      iconic(iconicName)
+      faIcon(faName)
     )
