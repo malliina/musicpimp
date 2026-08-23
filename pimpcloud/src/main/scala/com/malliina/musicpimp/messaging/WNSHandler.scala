@@ -17,5 +17,5 @@ class WNSHandler[F[_]: Async](client: WNSClient)
       .getOrElse:
         F.raiseError(new PushException(s"No message in WNS payload for token '${request.token}'."))
 
-  def toResult(response: WNSResponse): WNSResult =
+  private def toResult(response: WNSResponse): WNSResult =
     WNSResult(response.reason, response.description, response.statusCode, response.isSuccess)

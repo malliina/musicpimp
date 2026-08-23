@@ -1,8 +1,8 @@
 package com.malliina.pimpcloud.streams
 
 import cats.effect.Async
+import cats.implicits.toFunctorOps
 import cats.syntax.all.toFlatMapOps
-import cats.implicits.{catsSyntaxFlatMapOps, toFunctorOps}
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.models.CloudID
 import com.malliina.pimpcloud.streams.ChannelInfo.log
