@@ -183,7 +183,6 @@ val pimpcloud = project
   )
   .settings(pimpcloudSettings *)
   .settings(
-    version := "4.26.9",
     scalaJSProjects := Seq(pimpcloudFrontend),
     Assets / pipelineStages ++= Seq(scalaJSPipeline),
     isProd := scalaJSStage.value == FullOptStage,
