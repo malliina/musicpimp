@@ -9,9 +9,9 @@ import com.malliina.musicpimp.util.FileUtil
 import com.malliina.values.{ErrorMessage, Password}
 
 object PimpConf:
-  val pimpConfFile = FileUtil.localPath("musicpimp.conf")
+  private val pimpConfFile = FileUtil.localPath("musicpimp.conf")
   val homeConf = LocalConf.appDir.resolve("musicpimp.conf")
-  val fileProps: Map[String, String] = FileUtil.props(pimpConfFile)
+  private val fileProps: Map[String, String] = FileUtil.props(pimpConfFile)
 
   val MySQLDriver = "com.mysql.cj.jdbc.Driver"
   val DefaultDriver = MySQLDriver
@@ -45,7 +45,7 @@ object PimpConf:
     yield
       val appSecret =
         if secret == LocalConf.secretPlaceholder then
-          LocalConf.readOrGenerateSecret(FileUtil.pimpHomeDir.resolve("play.secret.key"))
+          LocalConf.readOrGenerateSecret(FileUtil.pimpHomeDir.resolve("musicpimp.secret"))
         else secret
       PimpConf(appSecret, dbConf(dbPass), opts)
 

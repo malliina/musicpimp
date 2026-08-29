@@ -39,7 +39,6 @@ val versions = new {
   val munitCats = "2.2.0"
   val mysql = "8.0.33"
   val nvWebSocket = "2.14"
-  val pekko = "1.0.3"
   val scalaJsDom = "2.8.1"
   val primitives = "6.14.3"
   val scala3 = "3.8.3"

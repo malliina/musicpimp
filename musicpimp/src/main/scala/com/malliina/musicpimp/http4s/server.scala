@@ -10,7 +10,7 @@ import com.malliina.database.DoobieDatabase
 import com.malliina.file.FileUtilities
 import com.malliina.http.io.HttpClientIO
 import com.malliina.http4s.{AppServer, ServerResources}
-import com.malliina.logback.PimpAppender
+import com.malliina.logback.{LogbackUtils, PimpAppender}
 import com.malliina.musicpimp.app.{AppMode, InitOptions, PimpConf}
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.{AuthBundles, Authenticator, CookieAuthenticator, Http4sAuth, JWT, PimpAuthenticator, RememberMe}
@@ -128,6 +128,13 @@ trait PimpServerResources extends ServerResources:
       )
 
 object PimpServer extends AppServer with PimpServerResources:
+  LogbackUtils.init(
+    levelsByLogger = Map(
+      "org.http4s.ember.server.EmberServerBuilderCompanionPlatform" -> Level.OFF,
+      "org.jaudiotagger" -> Level.WARN
+    )
+  )
+
   override def server: Resource[IO, Server] =
     for
       conf <- Resource.eval(PimpConf.parseF[IO])

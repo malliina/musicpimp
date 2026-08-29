@@ -152,7 +152,7 @@ class CloudSocket[F[_]: Async](
     super.connect().timeout(10.seconds)
 
   override def onMessage(json: Json): F[Unit] =
-    log.info(s"Got message: '$json'.")
+    log.debug(s"Got message: '$json'.")
     // attempts to handle the message as a request, then if that fails as an event, if all fails handles the error
     processRequest(json)
       .orElse(processEvent(json))
