@@ -23,3 +23,9 @@ If tests fail on Ubuntu, run
 If audio doesn't work on Linux, make sure the `musicpimp` user belongs to the `audio` group:
 
     sudo adduser musicpimp audio
+
+## Releases
+
+To release a new .deb package of MusicPimp to GitHub Releases:
+
+    sbt release
