@@ -23,7 +23,7 @@ trait BeamServerResources extends ServerResources:
     for
       dispatcher <- Dispatcher.parallel[F]
       http <- HttpClientIO.resource[F]
-      _ <- AppLogging.resource("pimpcloud", userAgent, dispatcher, http)
+      _ <- AppLogging.resource("pimpbeam", userAgent, dispatcher, http)
       players <- Resource.eval(BeamState.default[F])
     yield
       val cookies = Http4sAuth[F](JWT(conf.secret))

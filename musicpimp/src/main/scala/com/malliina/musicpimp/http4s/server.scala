@@ -10,7 +10,7 @@ import com.malliina.database.DoobieDatabase
 import com.malliina.file.FileUtilities
 import com.malliina.http.io.HttpClientIO
 import com.malliina.http4s.{AppServer, ServerResources}
-import com.malliina.logback.{LogbackUtils, PimpAppender}
+import com.malliina.logback.{AppLogging, LogbackUtils, PimpAppender}
 import com.malliina.musicpimp.app.{AppMode, InitOptions, PimpConf}
 import com.malliina.musicpimp.audio.{MusicPlayer, PlaybackMessageHandler, StatsPlayer}
 import com.malliina.musicpimp.auth.{AuthBundles, Authenticator, CookieAuthenticator, Http4sAuth, JWT, PimpAuthenticator, RememberMe}
@@ -33,7 +33,7 @@ import org.http4s.server.{Router, Server}
 
 trait PimpServerResources extends ServerResources:
   private val log = AppLogger(getClass)
-
+  private val userAgent = s"musicpimp/${BuildInfo.version} (${BuildInfo.gitHash.take(7)})"
   private val tray = Tray.default()
 
   private def initApp[F[_]: Async](opts: InitOptions) = Async[F].delay:
@@ -51,10 +51,11 @@ trait PimpServerResources extends ServerResources:
   ): Resource[F, Service[F]] =
     val F = Async[F]
     for
+      dispatcher <- Dispatcher.parallel[F]
       appender <- PimpAppender.installF[F]
       _ <- Resource.eval(initApp[F](conf.opts))
       http <- HttpClientIO.resource[F]
-      dispatcher <- Dispatcher.parallel[F]
+      _ <- AppLogging.resource("musicpimp", userAgent, dispatcher, http)
       db <- DoobieDatabase.init(conf.db)
       userManager <- Resource.eval(DoobieUserManager.withUser(db))
       player <- MusicPlayer.default[F](dispatcher)
