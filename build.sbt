@@ -128,7 +128,7 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
       malliinaGroup %%% "primitives" % versions.primitives,
       malliinaGroup %%% "util-html" % versions.primitives,
     ),
-    assetsPrefix := "public/"
+    assetsPrefix := "assets/"
   )
 
 val musicpimp = project
@@ -146,8 +146,7 @@ val musicpimp = project
       BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
       "isProd" -> isProd.value,
       "assetsDir" -> Def.settingDyn(musicpimpFrontend / assetsRoot).value.toFile,
-//      "publicDir" -> (Assets / resourceDirectory).value,
-      "publicFolder" -> Def.settingDyn(musicpimpFrontend / assetsPrefix).value,
+      "assetsPrefix" -> Def.settingDyn(musicpimpFrontend / assetsPrefix).value,
     ),
     javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
     // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html

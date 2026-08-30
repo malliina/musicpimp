@@ -39,7 +39,7 @@ class StaticService[F[_]: { Async, Files }] extends BasicApiService[F]:
 
       val search =
         if BuildInfo.isProd then
-          val resourcePath = s"${BuildInfo.publicFolder}/${file.value}"
+          val resourcePath = s"${BuildInfo.assetsPrefix}${file.value}"
           log.debug(s"Searching for resource '$resourcePath'...")
           StaticFile.fromResource(resourcePath, Option(req))
         else
