@@ -43,3 +43,11 @@
 .playlist-list {
   padding: 0.6rem 0.6rem 0.6rem 18px;
 }
+
+.slider-container {
+  width: 100%;
+}
+
+.slider-standard {
+  width: 100%;
+}

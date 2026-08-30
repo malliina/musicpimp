@@ -47,6 +47,15 @@ object PlayerHtml extends HtmlSyntax with PlayerStrings:
         )
       ),
       fullRow(
+        divClass(s"$playerWidth slider-container")(
+          input(
+            id := SliderStandardId,
+            cls := "slider-standard",
+            tpe := "range",
+            min := "0",
+            max := "100"
+          )
+        ),
         divClass(playerWidth)(
           div(id := SliderId)
         ),
@@ -69,7 +78,15 @@ object PlayerHtml extends HtmlSyntax with PlayerStrings:
           divClass(col.md.width("3"))(
             imageInput(imgLight.appbar_sound_3_png, id := VolumeButton, `class` := PullRight)
           ),
-          divClass(col.md.width("9"), id := VolumeId)
+          divClass(col.md.width("9"))(
+            input(
+              id := VolumeId,
+              cls := "volume-standard",
+              tpe := "range",
+              min := "0",
+              max := "100"
+            )
+          )
         )
       )
     )

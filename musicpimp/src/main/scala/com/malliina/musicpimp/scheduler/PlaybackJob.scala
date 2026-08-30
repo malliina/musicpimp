@@ -21,7 +21,7 @@ case class PlaybackJob[F[_]: Sync](
   lib: MusicLibrary[F],
   tokenService: TokenService[F]
 ) extends Job[F]:
-  def describe: String = s"Plays $trackId"
+  def describe: String = s"Plays $trackId ${when.describe}."
 
   override def run(): F[Unit] =
     task

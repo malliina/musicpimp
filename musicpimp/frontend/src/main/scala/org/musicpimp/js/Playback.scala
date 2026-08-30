@@ -4,6 +4,7 @@ import com.malliina.musicpimp.audio.*
 import com.malliina.musicpimp.js.PlayerStrings
 import com.malliina.musicpimp.json.PlaybackStrings
 import com.malliina.musicpimp.models.Volume
+import org.scalajs.dom.HTMLInputElement
 import scalatags.JsDom.all.*
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -33,7 +34,6 @@ class Playback extends PlaybackSocket with PlayerStrings:
   val SongClass = "song"
   val playerDiv = elem(PlayerDivId)
   val durationElem = elem(DurationId)
-  val sliderElem = MyJQueryGlobal.jQueryUI(s"#$SliderId")
   val posElem = elem(PositionId)
   val playButton = elem(PlayButton)
   val pauseButton = elem(PauseButton)
@@ -46,16 +46,15 @@ class Playback extends PlaybackSocket with PlayerStrings:
   val artistElem = elem(ArtistId)
   val playlistElem = elem(PlaylistId)
   val playlistEmptyElem = elem(EmptyPlaylistText)
-  val volumeElem = MyJQueryGlobal.jQueryUI(s"#$VolumeId")
+  val sliderStandard = elemAs[HTMLInputElement](SliderStandardId)
+  val volumeStandard = elemAs[HTMLInputElement](VolumeId)
 
-  val zero = 0.seconds
+  private val zero = 0.seconds
 
   var currentPlaylist: Seq[TrackMeta] = Nil
   var isMute: Boolean = false
 
   installHandlers()
-
-  import JQueryUI.jQueryExtensions
 
   private def installHandlers(): Unit =
     prevButton.onClick(_ => send(PrevMsg))
@@ -63,13 +62,12 @@ class Playback extends PlaybackSocket with PlayerStrings:
     playButton.onClick(_ => send(ResumeMsg))
     pauseButton.onClick(_ => send(StopMsg))
     volumeButton.onClick(_ => toggleMute())
-    val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
-    MyJQueryGlobal.jQueryUI(s"#$SliderId").slider(seekOptions)
-//    sliderElem.slider(seekOptions)
-    val volumeOptions = SliderOptions.horizontal(Min, 0, 100): ui =>
-      send(Playback.volume(ui.value))
-
-    volumeElem.slider(volumeOptions)
+    volumeStandard.onchange = _ =>
+      volumeStandard.value.toIntOption.foreach: vol =>
+        send(Playback.volume(vol))
+    sliderStandard.onchange = _ =>
+      sliderStandard.value.toIntOption.foreach: seconds =>
+        send(Playback.seek(seconds))
 
   private def toggleMute(): Unit =
     isMute = !isMute
@@ -93,7 +91,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
     playerDiv.show()
 
   def updateVolume(vol: Volume): Unit =
-    volumeElem.slider(OptionKey, Value, vol.volume)
+    volumeStandard.value = s"${vol.volume}"
 
   private def updateTimeAndDuration(position: Duration, duration: Duration): Unit =
     updateDuration(duration)
@@ -101,11 +99,11 @@ class Playback extends PlaybackSocket with PlayerStrings:
 
   def updateTime(position: Duration): Unit =
     posElem.html(format(position))
-    sliderElem.slider(OptionKey, Value, position.toSeconds)
+    sliderStandard.value = s"${position.toSeconds}"
 
   private def updateDuration(duration: Duration): Unit =
     durationElem.html(format(duration))
-    sliderElem.slider(OptionKey, Max, duration.toSeconds)
+    sliderStandard.max = s"${duration.toSeconds}"
 
   def updatePlayPauseButtons(state: PlayState): Unit =
     if state == Started then

@@ -27,7 +27,7 @@ case class ClockSchedule(hour: Int, minute: Int, days: Seq[WeekDay]) extends Day
     */
   def describe: String = s"at $timeFormatted $daysDescribed"
 
-  def timeFormatted = maybePrependZero(hour) + ":" + maybePrependZero(minute)
+  private def timeFormatted = maybePrependZero(hour) + ":" + maybePrependZero(minute)
 
   private def maybePrependZero(i: Int) = if i < 10 then s"0$i" else s"$i"
 

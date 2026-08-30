@@ -18,6 +18,7 @@ trait PlayerStrings:
   val PrevButton = "prevButton"
   val ProgressId = "progress"
   val SliderId = "slider"
+  val SliderStandardId = "sliderStandard"
   val TitleId = "title"
   val VolumeButton = "volumeButton"
   val VolumeId = "volume"

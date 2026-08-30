@@ -2,6 +2,8 @@ package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
 import com.malliina.html.UserFeedback
+import com.malliina.http.FullUrl
+import com.malliina.live.LiveReload
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap.*
 import com.malliina.musicpimp.html.PimpBootstrap.tags.*
@@ -22,19 +24,15 @@ object PimpHtml extends UriSyntax:
   val FormSignin = "form-signin"
   val False = "false"
   val True = "true"
-  val WideContent = "wide-content"
-  val HiddenSmall = "d-none d-sm-block"
+  private val WideContent = "wide-content"
+  private val HiddenSmall = "d-none d-sm-block"
 
   val dataIdAttr = data("id")
 
   def at(file: String): Uri = uri"/assets".addPath(file)
 
   def forApp(isProd: Boolean): PimpHtml =
-    val scripts = ScalaScripts.default
-    withJs(scripts)
-
-  private def withJs(jsFiles: ScalaScripts): PimpHtml =
-    new PimpHtml(jsFiles)
+    PimpHtml(Seq("main.js"), if isProd then Nil else FullUrl.build(LiveReload.script).toSeq)
 
   def postableForm(onAction: Uri, more: Modifier*) =
     form(role := FormRole, action := onAction, method := Post, more)
@@ -62,7 +60,10 @@ object PimpHtml extends UriSyntax:
     val placeholderAttr = placeHolder.fold(empty)(placeholder := _)
     namedInput(idAndName, `type` := inType, placeholderAttr, more)
 
-class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with FrontStrings:
+class PimpHtml(scripts: Seq[String], externalScripts: Seq[FullUrl])
+  extends HtmlSyntax
+  with FooterStrings
+  with FrontStrings:
   def playlist(playlist: SavedPlaylist, username: Username) =
     manage("playlist", username)(
       PlaylistsHtml.playlistContent(playlist)
@@ -321,10 +322,11 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
         inner,
         script(src := "//code.jquery.com/jquery-3.3.1.min.js"),
         script(src := "//code.jquery.com/ui/1.12.1/jquery-ui.min.js"),
-        scripts.jsFiles.map(file => jsScript(at(file))),
-        footer(`class` := "footer", id := FooterId)(
+        scripts.map(file => jsScript(at(file))),
+        externalScripts.map(url => jsScript(url, attr("defer").empty)),
+        footer(cls := "footer", id := FooterId)(
           nav(
-            `class` := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",
+            cls := s"${navbars.Navbar} navbar-expand-sm ${navbars.Light} ${navbars.BgLight} $HiddenSmall",
             id := BottomNavbar
           )(
             divContainer(
@@ -337,7 +339,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
                 navbarPara(FooterTitle),
                 navbarPara(FooterArtist)
               ),
-              div(`class` := s"${navbars.Nav} ${navbars.Right}", id := FooterCredit)(
+              div(cls := s"${navbars.Nav} ${navbars.Right}", id := FooterCredit)(
                 spanClass(s"${text.muted} ${navbars.Text} float-right")(
                   "Developed by ",
                   a(href := "https://malliina.com")("Michael Skogberg"),
