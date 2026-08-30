@@ -243,7 +243,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
               a(
                 href := "#",
                 `class` := s"nav-link $DropdownToggle",
-                data("toggle") := Dropdown,
+                data("bs-toggle") := Dropdown,
                 role := Button,
                 aria.haspopup := tags.True,
                 aria.expanded := tags.False
