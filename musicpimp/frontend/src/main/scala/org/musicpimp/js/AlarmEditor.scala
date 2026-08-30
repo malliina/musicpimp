@@ -10,6 +10,7 @@ import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
+  println("Hello")
   val Checked = "checked"
   val CheckedSelector = ":checked"
   // element IDs in HTML
@@ -26,10 +27,8 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
     req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
     item => trackIdElem.value = item.id
   )
-//  val ui: JQueryUI = DefaultJQuery
   val ui: JQueryUI = MyJQueryGlobal.jQueryUI(s".$Selector")
-//  val ui: JQueryUI = document.getElementsByClassName(Selector)
-//  ui.autocomplete(autoOptionsFuture)
+  ui.autocomplete(autoOptionsFuture)
   updateEveryDayCheckbox()
 
   private def onEveryDayClicked(): Unit =

@@ -34,7 +34,7 @@ object AlarmsHtml extends HtmlSyntax:
       fullRow(modifier(feedback.fold(empty)(feedbackDiv), content))
     )
 
-  def removalForm(tokenInfo: TokenInfo) =
+  private def removalForm(tokenInfo: TokenInfo) =
     form(role := "form", action := reverse.manage.push.remove, method := "POST")(
       input(`type` := "hidden", name := "token", value := tokenInfo.token.token),
       input(`type` := "hidden", name := "platform", value := tokenInfo.platform.platform),

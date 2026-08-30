@@ -18,17 +18,16 @@ object Frontend:
     val _ = Popper
     val _ = Bootstrap
     val _ = AppCss
-
     val path = dom.window.location.pathname
     val front: PartialFunction[String, BaseScript] =
       case "/search"             => new Search(new MusicItems)
       case "/logs"               => new Logs
       case "/player"             => new Playback
       case "/alarms"             => new Alarms
-      case "/alarms/editor"      => new AlarmEditor
       case "/cloud"              => new Cloud
       case p if containsMusic(p) => new MusicItems
     app = front.lift(path)
+    if path.startsWith("/alarms/editor") then app = Option(new AlarmEditor)
     if !path.startsWith("/login") then footer = Option(new FooterSocket)
     if has(Classes.home) then ()
 
