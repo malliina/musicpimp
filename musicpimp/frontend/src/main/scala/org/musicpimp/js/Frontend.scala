@@ -12,9 +12,6 @@ object Frontend:
   var footer: Option[FooterSocket] = None
 
   def main(args: Array[String]): Unit =
-    val _ = jquery
-//    val _ = slider
-//    val _ = autocomplete
     val _ = Popper
     val _ = Bootstrap
     val _ = AppCss
@@ -44,18 +41,6 @@ object Popper extends js.Object
 @js.native
 @JSImport("bootstrap", JSImport.Namespace)
 object Bootstrap extends js.Object
-
-@js.native
-@JSImport("jquery", JSImport.Default, globalFallback = "$")
-object jquery extends JQuery
-
-//@JSImport("jquery-ui/ui/widgets/slider", JSImport.Default)
-//@js.native
-//object slider extends js.Object
-//
-//@JSImport("jquery-ui/ui/widgets/autocomplete", JSImport.Default)
-//@js.native
-//object autocomplete extends js.Object
 
 @js.native
 @JSImport("./css/app", JSImport.Namespace)

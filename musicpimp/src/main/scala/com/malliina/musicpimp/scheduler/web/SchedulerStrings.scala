@@ -8,7 +8,7 @@ trait SchedulerStrings extends AlarmStrings:
   val Enabled = "enabled"
   val On = "on"
   val OFF = "off"
-  val TrackKey = "track"
+  val TrackContainer = "track-container"
 
   val PATH = "path"
 

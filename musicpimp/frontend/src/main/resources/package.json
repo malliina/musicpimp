@@ -2,8 +2,6 @@
   "name": "musicpimp",
   "dependencies": {
     "@popperjs/core": "2.11.8",
-    "bootstrap": "5.2.3",
-    "jquery": "3.7.1",
-    "jquery-ui": "1.14.2"
+    "bootstrap": "5.2.3"
   }
 }

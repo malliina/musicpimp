@@ -3,8 +3,9 @@ package org.musicpimp.js
 import io.circe.Encoder
 import io.circe.syntax.EncoderOps
 import org.musicpimp.js.ScriptHelpers.ElementOps
-import org.scalajs.dom.{Element, Event, document}
+import org.scalajs.dom.{Element, Event, Headers, HttpMethod, RequestCredentials, RequestInit, document, fetch}
 
+import scala.concurrent.Future
 import scala.scalajs.js
 
 trait BaseScript:
@@ -31,10 +32,12 @@ trait BaseScript:
 object BaseScript:
   private val ApplicationJson = "application/json"
 
-  def postAjax[C: Encoder](resource: String, payload: C) =
-    val settings = PimpQuery.postSettings(
-      resource,
-      ApplicationJson,
-      payload.asJson.noSpaces
-    )
-    jquery.ajax(settings)
+  def postAjax[C: Encoder](resource: String, payload: C): Future[org.scalajs.dom.Response] =
+    val req = new RequestInit {}
+    req.method = HttpMethod.POST
+    req.body = payload.asJson.noSpaces
+    req.credentials = RequestCredentials.include
+    val hs = new Headers()
+    hs.append("Content-Type", ApplicationJson)
+    req.headers = hs
+    fetch(resource, req).toFuture

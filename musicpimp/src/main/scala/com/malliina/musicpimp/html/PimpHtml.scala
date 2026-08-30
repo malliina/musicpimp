@@ -314,14 +314,11 @@ class PimpHtml(scripts: Seq[String], externalScripts: Seq[FullUrl])
         ),
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
-        cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
         cssLink(at("main.css")),
         extraHeader
       ),
       body(cls := bodyClasses)(
         inner,
-        script(src := "//code.jquery.com/jquery-3.3.1.min.js"),
-        script(src := "//code.jquery.com/ui/1.12.1/jquery-ui.min.js"),
         scripts.map(file => jsScript(at(file))),
         externalScripts.map(url => jsScript(url, attr("defer").empty)),
         footer(cls := "footer", id := FooterId)(

@@ -9,6 +9,7 @@ trait AlarmStrings:
   val Every = "every"
   val Selector = "selector"
   val TrackId = "track_id"
+  val TrackKey = "track"
 
   val DeleteClass = "delete"
   val PlayClass = "play"

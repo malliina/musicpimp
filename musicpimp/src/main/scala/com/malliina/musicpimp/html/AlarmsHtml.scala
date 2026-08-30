@@ -95,7 +95,7 @@ object AlarmsHtml extends HtmlSyntax:
     Seq(
       headerRow("Edit alarm"),
       halfRow(
-        PimpHtml.postableForm(reverse.alarms.add)(
+        PimpHtml.postableForm(reverse.alarms.add, autocomplete := "off")(
           divClass("hide")(
             formTextIn(InField.id(Id).valued(form.flatMap(_.id)), "ID")
           ),
@@ -115,7 +115,8 @@ object AlarmsHtml extends HtmlSyntax:
             InField.id(TrackKey),
             "Track",
             Option("Start typing the name of the track..."),
-            inClasses = Seq(Selector)
+            inClasses = Seq(Selector),
+            formGroupClasses = Seq(TrackContainer)
           ),
           divClass(FormGroup)(
             enabledCheck(InField.id(Enabled).valued(form.map(b => s"$b")), "Enabled")
