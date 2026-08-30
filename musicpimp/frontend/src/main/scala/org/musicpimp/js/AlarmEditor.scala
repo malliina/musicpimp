@@ -30,7 +30,7 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
     (e: Event) =>
       closeLists(None)
       val term = trackElem.value
-      searchFuture[Track](Request(term)).map: results =>
+      searchFuture[Track](term).map: results =>
         val divs = results.map: track =>
           val display = s"${track.artist} - ${track.title}"
           div(id := track.id.id)(display)
@@ -62,14 +62,14 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
     val isEveryDayClicked = everyDay.forall(isChecked)
     setAll(Seq(Every), isEveryDayClicked)
 
-  private def searchFuture[T: Decoder](term: Request): Future[Seq[T]] =
+  private def searchFuture[T: Decoder](term: String): Future[Seq[T]] =
     val p = Promise[Seq[T]]()
     search[T](term): ts =>
       p.success(ts)
     p.future
 
-  private def search[T: Decoder](term: Request)(onResults: Seq[T] => Unit) =
-    fetch(s"/search?f=json&term=${URIUtils.encodeURIComponent(term.term)}").toFuture
+  private def search[T: Decoder](term: String)(onResults: Seq[T] => Unit) =
+    fetch(s"/search?f=json&term=${URIUtils.encodeURIComponent(term)}").toFuture
       .flatMap: res =>
         res.json().toFuture
       .map: json =>

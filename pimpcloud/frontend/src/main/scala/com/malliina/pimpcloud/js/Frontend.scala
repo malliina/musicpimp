@@ -9,8 +9,6 @@ import scala.scalajs.js.annotation.JSImport
 object Frontend extends ScriptHelpers:
   var app: Option[SocketJS] = None
   private val _ = AppCss
-//  private val jq = MyJQuery
-//  private val jqui = MyJQueryUI
   private val _ = Popper
   private val _ = Bootstrap
 
@@ -23,10 +21,6 @@ object Frontend extends ScriptHelpers:
     }
 
     app = jsImpl.lift(path)
-
-@js.native
-@JSImport("jquery-ui", JSImport.Namespace)
-object MyJQueryUI extends js.Object
 
 @js.native
 @JSImport("@popperjs/core", JSImport.Namespace)
