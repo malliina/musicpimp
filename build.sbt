@@ -213,7 +213,7 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
       malliinaGroup %%% "primitives" % versions.primitives
     ),
-    assetsPrefix := ""
+    assetsPrefix := "assets/"
   )
 
 val pimpcloud = project
@@ -233,17 +233,8 @@ val pimpcloud = project
       BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
       "isProd" -> isProd.value,
       "assetsDir" -> Def.settingDyn(pimpcloudFrontend / assetsRoot).value.toFile,
-//      "publicDir" -> (Assets / resourceDirectory).value,
-      "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
+      "assetsPrefix" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
     ),
-    Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js")).get,
-//    fileTreeSources := Seq(
-//      DirMap(
-//        (Assets / resourceDirectory).value.toPath,
-//        "com.malliina.pimpcloud.assets.CloudAssets",
-//        "com.malliina.pimpcloud.html.CloudTags.at"
-//      )
-//    ),
     buildInfoPackage := "com.malliina.pimpcloud",
     linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
     Linux / httpPort := Option("8458"),

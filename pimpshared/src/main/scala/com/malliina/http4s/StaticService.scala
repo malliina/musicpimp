@@ -19,18 +19,18 @@ object StaticService:
 
   def paths[F[_]: { Async, Files }](
     assetsDir: JPath,
-    publicFolder: String,
+    assetsPrefix: String,
     isProd: Boolean
   ): StaticService[F] =
     StaticService(
       Path.fromNioPath(assetsDir).absolute,
-      publicFolder,
+      assetsPrefix,
       isProd
     )
 
 class StaticService[F[_]: { Async, Files }](
   assetsDir: Path,
-  publicFolder: String,
+  assetsPrefix: String,
   isProd: Boolean
 ) extends BasicApiService[F]:
   private val fontExtensions = List(".woff", ".woff2", ".eot", ".ttf")
@@ -51,19 +51,13 @@ class StaticService[F[_]: { Async, Files }](
 
       val search =
         if isProd then
-          val resourcePath = s"$publicFolder${file.value}"
+          val resourcePath = s"$assetsPrefix${file.value}"
           log.debug(s"Searching for resource '$resourcePath'...")
           StaticFile.fromResource(resourcePath, Option(req))
         else
           val assetPath: fs2.io.file.Path = assetsDir.resolve(file.value)
-//          val publicPath = publicDir.resolve(file.value)
-          log.debug(
-            s"Searching for file '${assetPath.toNioPath.toAbsolutePath}'..."
-          )
-          StaticFile
-            .fromPath(assetPath, Option(req))
-//            .orElse(StaticFile.fromPath(publicPath, Option(req)))
-
+          log.debug(s"Searching for file '${assetPath.toNioPath.toAbsolutePath}'...")
+          StaticFile.fromPath(assetPath, Option(req))
       search
         .map(_.putHeaders(`Cache-Control`(cacheHeaders), allowAllOrigins))
         .fold(onNotFound(req))(_.pure[F])

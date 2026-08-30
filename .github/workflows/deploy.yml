@@ -9,6 +9,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      - name: Install lintian
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lintian
       - uses: actions/setup-java@v5
         with:
           distribution: zulu
@@ -35,8 +39,8 @@ jobs:
         run: sbt "set scalaJSStage in Global := FullOptStage" Test/compile
       - name: Build deb packages
         run: |
-          sudo apt-get install -y lintian
-          sbt "set scalaJSStage in Global := FullOptStage" musicpimp/Debian/packageAndCopy pimpcloud/Debian/packageAndCopy
+          sbt "mode prod" compile
+          sbt "mode prod" Deb/packageBin
       - name: Deploy pimpcloud
         run: |
           scp pimpcloud/target/pimpcloud.deb server:/home/mle/pimpcloud.deb
