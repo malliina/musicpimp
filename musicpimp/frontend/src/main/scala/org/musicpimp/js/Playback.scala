@@ -7,7 +7,6 @@ import com.malliina.musicpimp.models.Volume
 import scalatags.JsDom.all.*
 
 import scala.concurrent.duration.{Duration, DurationInt}
-import scala.scalajs.js
 
 object Playback extends PlaybackStrings:
   val SocketUrl = "/ws/playback?f=json"
@@ -34,7 +33,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
   val SongClass = "song"
   val playerDiv = elem(PlayerDivId)
   val durationElem = elem(DurationId)
-  val sliderElem = MyJQuery(s"#$SliderId")
+  val sliderElem = MyJQueryGlobal.jQueryUI(s"#$SliderId")
   val posElem = elem(PositionId)
   val playButton = elem(PlayButton)
   val pauseButton = elem(PauseButton)
@@ -47,7 +46,7 @@ class Playback extends PlaybackSocket with PlayerStrings:
   val artistElem = elem(ArtistId)
   val playlistElem = elem(PlaylistId)
   val playlistEmptyElem = elem(EmptyPlaylistText)
-  val volumeElem = MyJQuery(s"#$VolumeId")
+  val volumeElem = MyJQueryGlobal.jQueryUI(s"#$VolumeId")
 
   val zero = 0.seconds
 
@@ -65,10 +64,11 @@ class Playback extends PlaybackSocket with PlayerStrings:
     pauseButton.onClick(_ => send(StopMsg))
     volumeButton.onClick(_ => toggleMute())
     val seekOptions = StopOptions.default((_, ui) => send(Playback.seek(ui.value)))
-    MyJQuery(s"#$SliderId").slider(seekOptions)
+    MyJQueryGlobal.jQueryUI(s"#$SliderId").slider(seekOptions)
 //    sliderElem.slider(seekOptions)
     val volumeOptions = SliderOptions.horizontal(Min, 0, 100): ui =>
       send(Playback.volume(ui.value))
+
     volumeElem.slider(volumeOptions)
 
   private def toggleMute(): Unit =

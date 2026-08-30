@@ -1,4 +1,6 @@
-@footer-height: 60px;
+:root {
+    --footer-height: 60px;
+}
 
 html {
     position: relative;
@@ -6,7 +8,7 @@ html {
 }
 
 body {
-    margin-bottom: @footer-height;
+    margin-bottom: var(--footer-height);
 }
 
 code {

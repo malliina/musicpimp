@@ -12,20 +12,20 @@ class Alarms extends BaseScript with AlarmStrings:
   withDataId(DeleteClass)(deleteAP)
   withDataId(StopClass)(_ => stopPlayback())
 
-  def deleteAP(id: String) =
+  private def deleteAP(id: String) =
     postThenReload(Delete(id))
 
-  def runAP(id: String) =
+  private def runAP(id: String) =
     postAlarms(Start(id))
 
-  def stopPlayback(): Boolean =
+  private def stopPlayback(): Boolean =
     postAlarms(Stop)
     false
 
-  def postThenReload[C: Encoder](json: C) =
+  private def postThenReload[C: Encoder](json: C) =
     postAlarms(json).done: (_: Any) =>
       dom.window.location.reload()
       false
 
-  def postAlarms[C: Encoder](json: C): JQXHR =
+  private def postAlarms[C: Encoder](json: C): JQXHR =
     postAjax("/alarms", json)

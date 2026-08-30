@@ -25,7 +25,6 @@ class StaticService[F[_]: { Async, Files }] extends BasicApiService[F]:
     List(".html", ".js", ".map", ".css", ".png", ".ico", ".svg", ".map", ".json") ++ fontExtensions
 
   private val assetsDir = fs2.io.file.Path.fromNioPath(BuildInfo.assetsDir.toPath).absolute
-  private val publicDir = fs2.io.file.Path.fromNioPath(BuildInfo.publicDir.toPath).absolute
   private val allowAllOrigins = Header.Raw(ci"Access-Control-Allow-Origin", "*")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
@@ -45,13 +44,8 @@ class StaticService[F[_]: { Async, Files }] extends BasicApiService[F]:
           StaticFile.fromResource(resourcePath, Option(req))
         else
           val assetPath: fs2.io.file.Path = assetsDir.resolve(file.value)
-          val publicPath = publicDir.resolve(file.value)
-          log.debug(
-            s"Searching for file '${assetPath.toNioPath.toAbsolutePath}' or '${publicPath.toNioPath.toAbsolutePath}'..."
-          )
-          StaticFile
-            .fromPath(assetPath, Option(req))
-            .orElse(StaticFile.fromPath(publicPath, Option(req)))
+          log.debug(s"Searching for file '${assetPath.toNioPath.toAbsolutePath}'...")
+          StaticFile.fromPath(assetPath, Option(req))
 
       search
         .map(_.putHeaders(`Cache-Control`(cacheHeaders), allowAllOrigins))

@@ -5,6 +5,7 @@ import cats.implicits.{catsSyntaxFlatMapOps, toFlatMapOps}
 import com.malliina.audio.{IPlaylist, PlaylistIndex}
 
 trait PlaylistSupport[F[_]: Async, T]:
+  val F = Async[F]
   def playlist: IPlaylist[F, T]
 
   /** Initializes the player with the given track.
@@ -31,4 +32,8 @@ trait PlaylistSupport[F[_]: Async, T]:
 
   protected def play(f: IPlaylist[F, T] => F[Option[T]]): F[Unit] =
     f(playlist).flatMap: opt =>
-      opt.map(playTrack).getOrElse(Async[F].raiseError(new Exception("No track")))
+      opt
+        .map(playTrack)
+        .getOrElse:
+          F.delay(println("pam")) >>
+            F.raiseError(new Exception("No track"))

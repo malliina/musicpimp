@@ -8,7 +8,7 @@ import scala.language.implicitConversions
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSGlobalScope, JSName}
 
 @js.native
 trait AutoItem extends js.Object:
@@ -94,10 +94,10 @@ object PimpQuery:
       .asInstanceOf[AjaxSettings]
 
   def ajax(settings: AjaxSettings) =
-    MyJQuery.ajax(settings)
+    jquery.ajax(settings)
 
   def getJSON(url: String, data: Request, success: JsonResponse => Any): Any =
-    MyJQuery.getJSON(
+    jquery.getJSON(
       url,
       data,
       (response, status, xhr) =>

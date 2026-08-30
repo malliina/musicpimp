@@ -2,7 +2,6 @@ package com.malliina.musicpimp.html
 
 import ch.qos.logback.classic.Level
 import com.malliina.html.UserFeedback
-import com.malliina.musicpimp.BuildInfo
 import com.malliina.musicpimp.db.DataTrack
 import com.malliina.musicpimp.html.PimpBootstrap.*
 import com.malliina.musicpimp.html.PimpBootstrap.tags.*
@@ -31,7 +30,7 @@ object PimpHtml extends UriSyntax:
   def at(file: String): Uri = uri"/assets".addPath(file)
 
   def forApp(isProd: Boolean): PimpHtml =
-    val scripts = ScalaScripts.forApp(BuildInfo.frontName, isProd)
+    val scripts = ScalaScripts.default
     withJs(scripts)
 
   private def withJs(jsFiles: ScalaScripts): PimpHtml =
@@ -51,7 +50,7 @@ object PimpHtml extends UriSyntax:
   def stripedHoverTable(headers: Seq[Modifier])(tableBody: Modifier*) =
     stripedTable(tables.stripedHover, headers)(tableBody)
 
-  def stripedTable(tableClass: String, headers: Seq[Modifier])(tableBody: Modifier*) =
+  private def stripedTable(tableClass: String, headers: Seq[Modifier])(tableBody: Modifier*) =
     headeredTable(tableClass, headers)(tableBody)
 
   def textInputBase(
@@ -276,7 +275,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
       section(contentWrapper.map(wrapper => wrapper(inner)).getOrElse(inner))
     )
 
-  def iconicNavItem(
+  private def iconicNavItem(
     thisTabName: String,
     thisTabId: String,
     activeTab: String,
@@ -285,7 +284,7 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
   ): TypedTag[String] =
     iconNavItem(thisTabName, thisTabId, activeTab, url, iconic(iconicName))
 
-  def iconNavItem(
+  private def iconNavItem(
     thisTabName: String,
     thisTabId: String,
     activeTab: String,
@@ -315,11 +314,13 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
-        cssLink(at("styles.css")),
+        cssLink(at("main.css")),
         extraHeader
       ),
       body(cls := bodyClasses)(
         inner,
+        script(src := "//code.jquery.com/jquery-3.3.1.min.js"),
+        script(src := "//code.jquery.com/ui/1.12.1/jquery-ui.min.js"),
         scripts.jsFiles.map(file => jsScript(at(file))),
         footer(`class` := "footer", id := FooterId)(
           nav(
@@ -350,10 +351,10 @@ class PimpHtml(scripts: ScalaScripts) extends HtmlSyntax with FooterStrings with
     )
   )
 
-  def navbarPara(elemId: String) =
+  private def navbarPara(elemId: String) =
     span(`class` := s"${navbars.Text} footer-text", id := elemId)("")
 
-  def footerIcon(elemId: String, faIcon: String) =
+  private def footerIcon(elemId: String, faIcon: String) =
     li(id := elemId, `class` := s"nav-item")(
       a(href := "#", `class` := "nav-link")(iClass(s"fa fa-$faIcon"))
     )

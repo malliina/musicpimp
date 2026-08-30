@@ -34,7 +34,7 @@ object CloudTags:
     *   HTML templates with either prod or dev javascripts
     */
   private def forApp(appName: String, isProd: Boolean): CloudTags =
-    val scripts = ScalaScripts.forApp(appName, isProd)
+    val scripts = ScalaScripts.default
     withLauncher(scripts)
 
   private def withLauncher(scripts: ScalaScripts) = new CloudTags(scripts)
@@ -276,7 +276,7 @@ class CloudTags(scripts: ScalaScripts) extends PimpBootstrap with CloudStrings:
         cssLink("https://use.fontawesome.com/releases/v5.0.6/css/all.css"),
         cssLink("//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"),
         cssLink("https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"),
-        cssLink(at("styles.css"))
+        cssLink(at("main.css"))
       ),
       body(
         section(

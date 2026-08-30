@@ -26,9 +26,10 @@ class AlarmEditor extends BaseScript with AlarmStrings with ScriptHelpers:
     req => searchFuture[Track](req).map(ts => ts.map(AutoItem.from)),
     item => trackIdElem.value = item.id
   )
-  val ui: JQueryUI = MyJQuery(s".$Selector")
+//  val ui: JQueryUI = DefaultJQuery
+  val ui: JQueryUI = MyJQueryGlobal.jQueryUI(s".$Selector")
 //  val ui: JQueryUI = document.getElementsByClassName(Selector)
-  ui.autocomplete(autoOptionsFuture)
+//  ui.autocomplete(autoOptionsFuture)
   updateEveryDayCheckbox()
 
   private def onEveryDayClicked(): Unit =

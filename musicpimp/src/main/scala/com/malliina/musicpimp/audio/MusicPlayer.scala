@@ -45,7 +45,7 @@ class MusicPlayer[F[_]: Async](
 ) extends IPlayer[F]
   with PlaylistSupport[F, PlayableTrack]
   with ServerPlayer[F]:
-  val F = Concurrent[F]
+  val C = Concurrent[F]
   private val defaultVolume = Volume(40)
   val playlist: PimpPlaylist[F] = PimpPlaylist[F](eventHub, pos, songs)
   val allEvents: Stream[F, ServerMessage] = eventHub.subscribe(100)

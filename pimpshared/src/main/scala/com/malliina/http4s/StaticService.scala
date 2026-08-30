@@ -19,20 +19,17 @@ object StaticService:
 
   def paths[F[_]: { Async, Files }](
     assetsDir: JPath,
-    publicDir: JPath,
     publicFolder: String,
     isProd: Boolean
   ): StaticService[F] =
     StaticService(
       Path.fromNioPath(assetsDir).absolute,
-      Path.fromNioPath(publicDir).absolute,
       publicFolder,
       isProd
     )
 
 class StaticService[F[_]: { Async, Files }](
   assetsDir: Path,
-  publicDir: Path,
   publicFolder: String,
   isProd: Boolean
 ) extends BasicApiService[F]:
@@ -40,8 +37,6 @@ class StaticService[F[_]: { Async, Files }](
   private val supportedStaticExtensions =
     List(".html", ".js", ".map", ".css", ".png", ".ico", ".svg", ".map", ".json") ++ fontExtensions
 
-//  private val assetsDir = fs2.io.file.Path(BuildInfo.assetsDir.getAbsolutePath)
-//  private val publicDir = fs2.io.file.Path(BuildInfo.publicDir.getAbsolutePath)
   private val allowAllOrigins = Header.Raw(ci"Access-Control-Allow-Origin", "*")
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F]:
@@ -61,13 +56,13 @@ class StaticService[F[_]: { Async, Files }](
           StaticFile.fromResource(resourcePath, Option(req))
         else
           val assetPath: fs2.io.file.Path = assetsDir.resolve(file.value)
-          val publicPath = publicDir.resolve(file.value)
+//          val publicPath = publicDir.resolve(file.value)
           log.debug(
-            s"Searching for file '${assetPath.toNioPath.toAbsolutePath}' or '${publicPath.toNioPath.toAbsolutePath}'..."
+            s"Searching for file '${assetPath.toNioPath.toAbsolutePath}'..."
           )
           StaticFile
             .fromPath(assetPath, Option(req))
-            .orElse(StaticFile.fromPath(publicPath, Option(req)))
+//            .orElse(StaticFile.fromPath(publicPath, Option(req)))
 
       search
         .map(_.putHeaders(`Cache-Control`(cacheHeaders), allowAllOrigins))

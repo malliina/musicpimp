@@ -21,7 +21,7 @@ trait BaseScript:
       Option(e.currentTarget.asInstanceOf[Element].getAttribute(DataId)).foreach: id =>
         withId(id)
 
-  def installClick(classes: Seq[String])(f: Event => Any): Unit =
+  private def installClick(classes: Seq[String])(f: Event => Any): Unit =
     document
       .getElementsByClassName(classes.mkString(" "))
       .foreach: e =>
@@ -37,4 +37,4 @@ object BaseScript:
       ApplicationJson,
       payload.asJson.noSpaces
     )
-    MyJQuery.ajax(settings)
+    jquery.ajax(settings)

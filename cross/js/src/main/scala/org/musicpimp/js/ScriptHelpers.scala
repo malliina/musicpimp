@@ -4,7 +4,7 @@ import com.malliina.musicpimp.js.FrontStrings
 import org.scalajs.dom.{Element, Event, document}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSGlobalScope, JSImport, JSName}
 
 object ScriptHelpers extends ScriptHelpers
 
@@ -48,11 +48,7 @@ trait JQXHR extends js.Object:
   def done(callback: js.Any => Boolean): js.Any = js.native
 
 @js.native
-trait JQuery extends js.Object
-
-@js.native
-@JSImport("jquery", JSImport.Namespace)
-object MyJQuery extends js.Object:
+trait JQuery extends js.Object:
   def apply(): JQuery = js.native
   def apply(selector: String): JQuery = js.native
   def apply(selector: String, context: Element | JQuery): JQuery = js.native
@@ -63,15 +59,12 @@ object MyJQuery extends js.Object:
     success: js.Function3[js.Object, String, JQXHR, Any]
   ): JQXHR =
     js.native
+  def html(htmlString: String): JQuery = js.native
 
 @js.native
-@JSImport("jquery-ui", JSImport.Namespace)
-object MyJQueryUI extends js.Object
+@JSGlobalScope
+object MyJQueryGlobal extends js.Object:
+  def jQuery: JQuery = js.native
+  @JSName("$")
+  def jQueryUI(s: String): JQuery = js.native
 
-@JSImport("jquery-ui/ui/widgets/slider", JSImport.Namespace)
-@js.native
-object slider extends js.Object
-
-@JSImport("jquery-ui/ui/widgets/autocomplete", JSImport.Namespace)
-@js.native
-object autocomplete extends js.Object

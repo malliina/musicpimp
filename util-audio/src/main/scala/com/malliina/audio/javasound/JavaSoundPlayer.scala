@@ -150,13 +150,16 @@ class JavaSoundPlayer[F[_]: Async](
     * @param pos
     *   position to seek to
     */
-  def seek(pos: Duration): F[Unit] = F.delay:
+  def seek(pos: Duration): F[Unit] =
     seekProblem
-      .map(problem => log.warn(problem))
-      .getOrElse:
-        val bytes = timeToBytes(pos)
-        val skippedBytes = seekBytes(bytes)
-        startedFromMicros = bytesToTime(skippedBytes).toMicros
+      .toRight(timeToBytes(pos))
+      .swap
+      .fold(
+        err => F.delay(log.warn(err)),
+        bytes =>
+          seekBytes(bytes)
+            .map(skippedBytes => startedFromMicros = bytesToTime(skippedBytes).toMicros)
+      )
 
   def seekProblem: Option[String] =
     if lineData.state == PlayerStates.Closed then Some(s"Cannot seek a stream of a closed track.")
@@ -206,7 +209,7 @@ class JavaSoundPlayer[F[_]: Async](
     * @return
     *   actual bytes skipped from the beginning of the media
     */
-  private def seekBytes(byteCount: StorageSize): StorageSize =
+  private def seekBytes(byteCount: StorageSize): F[StorageSize] =
     // saves state
     val wasPlaying = lineData.state == PlayerStates.Started
     val wasMute = mute
@@ -214,9 +217,8 @@ class JavaSoundPlayer[F[_]: Async](
     reset()
     val bytesSkipped = lineData.skip(byteCount.toBytes).bytes
     // restores state
-    if wasPlaying then play()
-    mute(wasMute)
-    bytesSkipped
+    val restore = if wasPlaying then play() else F.unit
+    (restore >> mute(wasMute)).as(bytesSkipped)
 
   private def startPlayback(): F[Unit] =
     val changedToActive = active.compareAndSet(false, true)

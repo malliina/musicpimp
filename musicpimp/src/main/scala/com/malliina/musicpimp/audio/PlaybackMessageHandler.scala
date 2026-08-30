@@ -18,8 +18,7 @@ class PlaybackMessageHandler[F[_]: Sync](
   library: FileLibrary,
   lib: MusicLibrary[F],
   statsPlayer: StatsPlayer[F]
-) extends JsonHandlerBase:
-  val F = Sync[F]
+) extends JsonHandlerBase[F]:
   def pure[T](t: T) = F.pure(t)
 
   val playlist = player.playlist

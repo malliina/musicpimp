@@ -31,7 +31,6 @@ trait BeamServerResources extends ServerResources:
 
   private def staticAssets[F[_]: { Async, Files }] = StaticService.paths[F](
     Paths.get("assets"),
-    Paths.get("public"),
     "public",
     false
   )

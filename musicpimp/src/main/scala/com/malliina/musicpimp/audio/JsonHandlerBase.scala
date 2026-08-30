@@ -1,6 +1,7 @@
 package com.malliina.musicpimp.audio
 
 import cats.effect.Sync
+import cats.implicits.catsSyntaxApplicativeError
 import com.malliina.musicpimp.audio.JsonHandlerBase.log
 import com.malliina.musicpimp.auth.JsonRequest
 import com.malliina.musicpimp.http4s.Responses
@@ -14,6 +15,7 @@ object JsonHandlerBase:
   private val log = AppLogger(getClass)
 
 trait JsonHandlerBase[F[_]: Sync]:
+  val F = Sync[F]
   def fulfillMessage(message: PlayerMessage, request: RemoteInfo[F]): F[Unit]
 
   def onJson(req: JsonRequest[F]): F[Unit] =
@@ -30,8 +32,9 @@ trait JsonHandlerBase[F[_]: Sync]:
   /** Handles messages sent by web players.
     */
   def onJson(msg: Json, remote: RemoteInfo[F]): F[Unit] =
-    log.info(s"User '${remote.user}' said: '$msg'.")
-    handleMessage(msg, remote)
+    log.info(s"User '${remote.user}' said: '${msg.noSpaces}'.")
+    handleMessage(msg, remote).handleErrorWith: t =>
+      F.delay(log.warn(s"Failed to handle message '${msg.noSpaces}' from '${remote.user}'.", t))
 
   def handleMessage(msg: Json, request: RemoteInfo[F]): F[Unit] =
     msg
@@ -39,7 +42,7 @@ trait JsonHandlerBase[F[_]: Sync]:
       .fold(
         err =>
           log.error(s"Invalid JSON: '$msg', error: $err.")
-          Sync[F].raiseError(err)
+          F.raiseError(err)
         ,
         ok => fulfillMessage(ok, request)
       )

@@ -5,19 +5,17 @@ import com.malliina.pimpcloud.CloudStrings.{PlayLink, PlaylistLink}
 import org.scalajs.dom.document
 import org.scalajs.dom.Event
 
-class PlayerJS extends SocketJS("/mobile/ws") {
+class PlayerJS extends SocketJS("/mobile/ws"):
   installHandlers(PlayLink, "play-", play)
   installHandlers(PlaylistLink, "add-", add)
 
-  def play(id: TrackID): Unit = send(PlayTrack(id))
+  private def play(id: TrackID): Unit = send(PlayTrack(id))
 
   def add(id: TrackID): Unit = send(AddTrack(id))
 
-  private def installHandlers(className: String, prefix: String, onClick: TrackID => Unit) =
-    elems(className) foreach { elem =>
+  private def installHandlers(className: String, prefix: String, onClick: TrackID => Unit): Unit =
+    elems(className).foreach: elem =>
       val trackId = TrackID(elem.attributes.getNamedItem("id").value.drop(prefix.length))
       elem.addEventListener("click", (_: Event) => onClick(trackId), useCapture = false)
-    }
 
-  def elems(className: String) = document getElementsByClassName className
-}
+  def elems(className: String) = document.getElementsByClassName(className)

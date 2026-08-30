@@ -16,7 +16,6 @@ import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType as PortableType, crossProject as portableProject}
 import sbtrelease.ReleaseStateTransformations.{checkSnapshotDependencies, runTest}
-import scalajsbundler.util.JSON
 
 import scala.sys.process.Process
 import scala.util.Try
@@ -73,14 +72,9 @@ val cross = portableProject(JSPlatform, JVMPlatform)
   )
 val crossJvm = cross.jvm
 val crossJs = cross.js
-  .enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
   .settings(
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % versions.scalaJsDom
-    ),
-    Compile / npmDependencies ++= Seq(
-      "jquery" -> "3.3.1",
-      "jquery-ui" -> "1.12.1"
     )
   )
 
@@ -134,26 +128,82 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
       malliinaGroup %%% "primitives" % versions.primitives,
       malliinaGroup %%% "util-html" % versions.primitives,
     ),
-    assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
     assetsPrefix := "public/"
   )
+
 val musicpimp = project
   .in(file("musicpimp"))
-  .enablePlugins(
-    JavaServerAppPackaging,
-    SystemdPlugin,
-    BuildInfoPlugin,
-    FileTreePlugin,
-    WebScalaJSBundlerPlugin
-  )
+  .enablePlugins(ServerPlugin, DebPlugin)
   .dependsOn(shared, crossJvm, utilAudio)
-  .settings(musicpimpSettings *)
+  .settings((http4sServerSettings ++
+    nativeMusicPimpSettings ++
+    artifactSettings) *)
   .settings(
+    clientProject := musicpimpFrontend,
+    dependentModule := crossJvm,
+    isProd := scalaJSStage.value == FullOptStage,
     buildInfoKeys ++= Seq[BuildInfoKey](
+      BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
+      "isProd" -> isProd.value,
       "assetsDir" -> Def.settingDyn(musicpimpFrontend / assetsRoot).value.toFile,
-      "publicDir" -> (Assets / resourceDirectory).value,
+//      "publicDir" -> (Assets / resourceDirectory).value,
       "publicFolder" -> Def.settingDyn(musicpimpFrontend / assetsPrefix).value,
     ),
+    javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
+    // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
+    scalacOptions ++= Seq("-encoding", "UTF-8"),
+    libraryDependencies ++= Seq(
+      malliinaGroup %% "database" % versions.primitives,
+      malliinaGroup %% "okclient-io" % versions.primitives,
+      "net.glxn" % "qrgen" % "1.4",
+      "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
+      "mysql" % "mysql-connector-java" % versions.mysql,
+      "org.mariadb.jdbc" % "mariadb-java-client" % versions.mariadb,
+      "com.neovisionaries" % "nv-websocket-client" % versions.nvWebSocket,
+      httpGroup % "httpclient" % versions.http,
+      httpGroup % "httpmime" % versions.http,
+      "org.scala-stm" %% "scala-stm" % "0.11.1",
+      "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
+      "co.fs2" %% "fs2-io" % versions.fs2,
+      "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test,
+      "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
+    ).map(dep => dep.withSources()),
+    buildInfoPackage := "com.malliina.musicpimp",
+    fileTreeSources := Seq(
+      DirMap(
+        ((Compile / resourceDirectory).value / "public").toPath,
+        "com.malliina.musicpimp.assets.AppAssets",
+        "com.malliina.musicpimp.html.PimpHtml.at"
+      ),
+      DirMap(
+        (Compile / resourceDirectory).value.toPath,
+        "com.malliina.musicpimp.licenses.LicenseFiles"
+      )
+    ),
+    libs := libs.value.filter { lib =>
+      !lib.toFile.getAbsolutePath
+        .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
+    },
+    Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
+      !af.data.getAbsolutePath
+        .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
+    },
+    useTerminateProcess := true,
+    Windows / msiMappings := (Windows / msiMappings).value.map { case (src, dest) =>
+      (
+        src,
+        Paths.get(
+          dest.toString
+            .replace('[', '_')
+            .replace(']', '_')
+            .replace(',', '_')
+        )
+      )
+    },
+    minJavaVersion := None,
+    Compile / packageDoc / publishArtifact := false,
+    packageDoc / publishArtifact := false,
+    Compile / doc / sources := Seq.empty,
   )
 
 val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") / "frontend")
@@ -163,44 +213,37 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
       .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
       malliinaGroup %%% "primitives" % versions.primitives
     ),
-    assetsRoot := (Compile / npmUpdate / crossTarget).value.toPath,
-    assetsPrefix := "",
-    Compile / npmDependencies ++= Seq("jquery" -> "3.3.1")
+    assetsPrefix := ""
   )
+
 val pimpcloud = project
   .in(file("pimpcloud"))
-  .enablePlugins(
-    JavaServerAppPackaging,
-    SystemdPlugin,
-    BuildInfoPlugin,
-    FileTreePlugin,
-    WebScalaJSBundlerPlugin
-  )
+  .enablePlugins(ServerPlugin, DebPlugin)
   .dependsOn(
     shared,
     shared % Test,
     crossJvm
   )
-  .settings(pimpcloudSettings *)
+  .settings((http4sServerSettings ++ artifactSettings) *)
   .settings(
-    scalaJSProjects := Seq(pimpcloudFrontend),
-    Assets / pipelineStages ++= Seq(scalaJSPipeline),
+    clientProject := pimpcloudFrontend,
+    dependentModule := crossJvm,
     isProd := scalaJSStage.value == FullOptStage,
     buildInfoKeys ++= Seq[BuildInfoKey](
       BuildInfoKey("frontName" -> (pimpcloudFrontend / name).value),
       "isProd" -> isProd.value,
       "assetsDir" -> Def.settingDyn(pimpcloudFrontend / assetsRoot).value.toFile,
-      "publicDir" -> (Assets / resourceDirectory).value,
+//      "publicDir" -> (Assets / resourceDirectory).value,
       "publicFolder" -> Def.settingDyn(pimpcloudFrontend / assetsPrefix).value,
     ),
-    Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js") --- (pimpcloudFrontend / assetsRoot).value.toFile * ("webpack.*.js" || "postcss.config.js")).get,
-    fileTreeSources := Seq(
-      DirMap(
-        (Assets / resourceDirectory).value.toPath,
-        "com.malliina.pimpcloud.assets.CloudAssets",
-        "com.malliina.pimpcloud.html.CloudTags.at"
-      )
-    ),
+    Compile / unmanagedResources ++= ((pimpcloudFrontend / assetsRoot).value.toFile * ("*.css" || "*.js")).get,
+//    fileTreeSources := Seq(
+//      DirMap(
+//        (Assets / resourceDirectory).value.toPath,
+//        "com.malliina.pimpcloud.assets.CloudAssets",
+//        "com.malliina.pimpcloud.html.CloudTags.at"
+//      )
+//    ),
     buildInfoPackage := "com.malliina.pimpcloud",
     linuxPackageSymlinks := linuxPackageSymlinks.value.filterNot(_.link == "/usr/bin/starter"),
     Linux / httpPort := Option("8458"),
@@ -216,7 +259,6 @@ val pimpcloud = project
         s"-Dgoogle.oauth=/etc/$linuxName/google-oauth.key",
         s"-Dpush.conf=/etc/$linuxName/push.conf",
         s"-Dconfig.file=/etc/$linuxName/production.conf",
-        s"-Dpidfile.path=/dev/null",
         s"-Dlog.dir=/var/log/$linuxName"
       )
     },
@@ -295,88 +337,6 @@ addCommandAlias("cloud", ";project pimpcloud")
 addCommandAlias("it", ";project it")
 ThisBuild / scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-// musicpimp settings
-
-lazy val musicpimpSettings =
-  http4sServerSettings ++
-    pimpAssetSettings ++
-    nativeMusicPimpSettings ++
-    artifactSettings ++
-    Seq(
-      isProd := scalaJSStage.value == FullOptStage,
-      buildInfoKeys ++= Seq[BuildInfoKey](
-        BuildInfoKey("frontName" -> (musicpimpFrontend / name).value),
-        "isProd" -> isProd.value
-      ),
-      javaOptions ++= Seq("-Dorg.slf4j.simpleLogger.defaultLogLevel=error"),
-      // for background, see: http://tpolecat.github.io/2014/04/11/scalac-flags.html
-      scalacOptions ++= Seq("-encoding", "UTF-8"),
-      libraryDependencies ++= Seq(
-        malliinaGroup %% "database" % versions.primitives,
-        malliinaGroup %% "okclient-io" % versions.primitives,
-        "net.glxn" % "qrgen" % "1.4",
-        "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
-        "mysql" % "mysql-connector-java" % versions.mysql,
-        "org.mariadb.jdbc" % "mariadb-java-client" % versions.mariadb,
-        "com.neovisionaries" % "nv-websocket-client" % versions.nvWebSocket,
-        httpGroup % "httpclient" % versions.http,
-        httpGroup % "httpmime" % versions.http,
-        "org.scala-stm" %% "scala-stm" % "0.11.1",
-        "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
-        "co.fs2" %% "fs2-io" % versions.fs2,
-        "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test,
-        "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
-      ).map(dep => dep.withSources()),
-      buildInfoPackage := "com.malliina.musicpimp",
-      fileTreeSources := Seq(
-        DirMap(
-          (Assets / resourceDirectory).value.toPath,
-          "com.malliina.musicpimp.assets.AppAssets",
-          "com.malliina.musicpimp.html.PimpHtml.at"
-        ),
-        DirMap(
-          (Compile / resourceDirectory).value.toPath,
-          "com.malliina.musicpimp.licenses.LicenseFiles"
-        )
-      ),
-      libs := libs.value.filter { lib =>
-        !lib.toFile.getAbsolutePath
-          .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
-      },
-      Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
-        !af.data.getAbsolutePath
-          .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
-      },
-      useTerminateProcess := true,
-      Windows / msiMappings := (Windows / msiMappings).value.map { case (src, dest) =>
-        (
-          src,
-          Paths.get(
-            dest.toString
-              .replace('[', '_')
-              .replace(']', '_')
-              .replace(',', '_')
-          )
-        )
-      },
-      minJavaVersion := None,
-      Compile / packageDoc / publishArtifact := false,
-      packageDoc / publishArtifact := false,
-      Compile / doc / sources := Seq.empty
-    )
-
-lazy val pimpAssetSettings = assetSettings ++ Seq(
-  scalaJSProjects := Seq(musicpimpFrontend),
-  Assets / pipelineStages ++= Seq(scalaJSPipeline)
-)
-
-def assetSettings = Seq(
-  Compile / packageBin / mappings ++=
-    (Assets / unmanagedResourceDirectories).value.flatMap { assetDir =>
-      assetDir.allPaths pair sbt.io.Path.relativeTo(baseDirectory.value)
-    }
-)
-
 lazy val nativeMusicPimpSettings =
   pimpWindowsSettings ++
     pimpMacSettings ++
@@ -441,15 +401,9 @@ lazy val pimpMacSettings = macSettings ++ Seq(
   )
 )
 
-// pimpcloud settings
-
-lazy val pimpcloudSettings =
-  http4sServerSettings ++
-    artifactSettings
-
 lazy val artifactSettings = Seq(
   libs ++= Seq(
-    (Assets / packageBin).value.toPath,
+//    (Assets / packageBin).value.toPath,
     (shared / Compile / packageBin).value.toPath,
     (crossJvm / Compile / packageBin).value.toPath,
     (utilAudio / Compile / packageBin).value.toPath
@@ -504,44 +458,13 @@ lazy val baseSettings = Seq(
 
 def scalajsProject(name: String, path: File) =
   Project(name, path)
-    .enablePlugins(ScalaJSBundlerPlugin)
+    .enablePlugins(EsbuildPlugin, BuildInfoPlugin)
+    .disablePlugins(RevolverPlugin)
     .settings(
-      scalaJSUseMainModuleInitializer := true,
-      libraryDependencies ++= Seq("org.scalameta" %%% "munit" % versions.munit % Test),
-      webpack / version := "5.88.2",
-      webpackCliVersion := "5.1.4",
-      startWebpackDevServer / version := "4.15.1",
-      webpackEmitSourceMaps := false,
-      scalaJSUseMainModuleInitializer := true,
-      webpackBundlingMode := BundlingMode.LibraryOnly(),
-      Compile / npmDependencies ++= Seq(
-        "popper.js" -> "1.14.6",
-        "bootstrap" -> "4.2.1"
-      ),
-      Compile / npmDevDependencies ++= Seq(
-        "autoprefixer" -> "9.4.3",
-        "cssnano" -> "4.1.8",
-        "css-loader" -> "6.8.1",
-        "file-loader" -> "6.2.0",
-        "less" -> "3.9.0",
-        "less-loader" -> "11.1.3",
-        "mini-css-extract-plugin" -> "2.7.6",
-        "postcss-import" -> "12.0.1",
-        "postcss-loader" -> "3.0.0",
-        "postcss-preset-env" -> "6.5.0",
-        "style-loader" -> "3.3.3",
-        "url-loader" -> "4.1.1",
-        "webpack-merge" -> "4.1.5"
-      ),
-      Compile / additionalNpmConfig := Map(
-        "private" -> JSON.bool(true),
-        "license" -> JSON.str("BSD")
-      ),
-      fastOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.dev.config.js"),
-      fullOptJS / webpackConfigFile := Some(baseDirectory.value / "webpack.prod.config.js"),
       libraryDependencies ++= Seq(
         "org.scala-js" %%% "scalajs-dom" % versions.scalaJsDom,
-        "com.lihaoyi" %%% "scalatags" % versions.scalatags
+        "com.lihaoyi" %%% "scalatags" % versions.scalatags,
+        "org.scalameta" %%% "munit" % versions.munit % Test
       )
     )
 

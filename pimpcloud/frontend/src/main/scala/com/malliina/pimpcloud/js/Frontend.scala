@@ -1,19 +1,20 @@
 package com.malliina.pimpcloud.js
 
-import org.musicpimp.js.{MyJQuery, ScriptHelpers}
+import org.musicpimp.js.ScriptHelpers
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
-object Frontend extends ScriptHelpers {
+object Frontend extends ScriptHelpers:
   var app: Option[SocketJS] = None
-  private val jq = MyJQuery
-  private val jqui = MyJQueryUI
-  private val p = Popper
-  private val b = Bootstrap
+  private val _ = AppCss
+//  private val jq = MyJQuery
+//  private val jqui = MyJQueryUI
+  private val _ = Popper
+  private val _ = Bootstrap
 
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
     val path = dom.window.location.pathname
     val jsImpl: PartialFunction[String, SocketJS] = {
       case "/admin/logs"                                          => new LogsJS
@@ -22,17 +23,19 @@ object Frontend extends ScriptHelpers {
     }
 
     app = jsImpl.lift(path)
-  }
-}
 
 @js.native
 @JSImport("jquery-ui", JSImport.Namespace)
 object MyJQueryUI extends js.Object
 
 @js.native
-@JSImport("popper.js", JSImport.Namespace)
+@JSImport("@popperjs/core", JSImport.Namespace)
 object Popper extends js.Object
 
 @js.native
 @JSImport("bootstrap", JSImport.Namespace)
 object Bootstrap extends js.Object
+
+@js.native
+@JSImport("./css/app", JSImport.Namespace)
+object AppCss extends js.Object

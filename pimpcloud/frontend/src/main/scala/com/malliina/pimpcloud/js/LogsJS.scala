@@ -49,11 +49,11 @@ class LogsJS extends SocketJS("/admin/ws?f=json"):
       .getOrElse(level)
 
     entry.stackTrace.foreach: stackTrace =>
-      val errorRow = tr(`class` := hideClass, id := s"$rowId")(
+      val errorRow = tr(cls := hideClass, id := s"$rowId")(
         td(colspan := "5")(pre(stackTrace))
       )
       tableContent.prepend(errorRow.render)
-    val row = tr(`class` := rowClass)(
+    val row = tr(cls := rowClass)(
       cell(entry.timeFormatted),
       td(`class` := s"$CellContent $CellWide", id := msgCellId)(entry.message),
       cell(lastName(entry.loggerName)),
@@ -67,7 +67,7 @@ class LogsJS extends SocketJS("/admin/ws?f=json"):
       elem(msgCellId).toggleClass(CellContent)
 //      false
 
-  def cell = td(`class` := CellContent)
+  private def cell = td(cls := CellContent)
 
   private def lastName(path: String) =
     val lastDot = path.lastIndexOf('.')

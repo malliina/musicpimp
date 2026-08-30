@@ -1,20 +1,10 @@
-/* Bootstrap */
-
-/* Override Bootstrap default variable */
-@icon-font-path: "../fonts/";
-
 @font-face {
   font-family: 'Icons';
-  src: ~"url('@{icon-font-path}open-iconic.eot')";
-  src: ~"url('@{icon-font-path}open-iconic.eot?#iconic-sm') format('embedded-opentype')",
-       ~"url('@{icon-font-path}open-iconic.woff') format('woff')",
-       ~"url('@{icon-font-path}open-iconic.ttf') format('truetype')",
-       ~"url('@{icon-font-path}open-iconic.svg#iconic-sm') format('svg')";
+  src: url('../fonts/open-iconic.woff') format('woff');
   font-weight: normal;
   font-style: normal;
 }
 
-// Catchall baseclass
 .oi {
   position: relative;
   top: 2px;

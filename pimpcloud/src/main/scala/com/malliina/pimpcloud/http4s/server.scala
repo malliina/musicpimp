@@ -41,7 +41,6 @@ trait CloudServerResources extends ServerResources:
 
   private def staticAssets[F[_]: { Async, Files }] = StaticService.paths[F](
     BuildInfo.assetsDir.toPath,
-    BuildInfo.publicDir.toPath,
     BuildInfo.publicFolder,
     BuildInfo.isProd
   )
