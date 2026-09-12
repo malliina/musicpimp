@@ -32,7 +32,7 @@ class Tests extends munit.FunSuite:
       def isA(input: String) = input == "a"
 
       val maybeV = Some(in)
-      for (actual <- maybeV if isA(actual)) yield actual
+      for actual <- maybeV if isA(actual) yield actual
 
     assert(eval("a").contains("a"))
     assert(eval("b").isEmpty)

@@ -17,7 +17,7 @@ import scala.concurrent.duration.DurationInt
 object StaticService:
   private val log = AppLogger(getClass)
 
-  def paths[F[_]: { Async, Files }](
+  def paths[F[_]: {Async, Files}](
     assetsDir: JPath,
     assetsPrefix: String,
     isProd: Boolean
@@ -28,7 +28,7 @@ object StaticService:
       isProd
     )
 
-class StaticService[F[_]: { Async, Files }](
+class StaticService[F[_]: {Async, Files}](
   assetsDir: Path,
   assetsPrefix: String,
   isProd: Boolean

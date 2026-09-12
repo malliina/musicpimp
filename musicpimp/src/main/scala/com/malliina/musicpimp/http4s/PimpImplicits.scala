@@ -25,7 +25,7 @@ trait PimpImplicits[F[_]: Concurrent] extends AppImplicits[F] with PimpDecoders[
         case MediaType.text.html => html
         case MediaRanges.JSONv17 => json17
         case MediaRanges.JSONv18 => latest
-        case other =>
+        case other               =>
           val msg = s"Unknown response format: '$other'."
           log.warn(msg)
           notAcceptable(msg)

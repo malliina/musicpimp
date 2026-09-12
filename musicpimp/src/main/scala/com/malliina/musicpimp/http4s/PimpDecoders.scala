@@ -9,7 +9,7 @@ import com.malliina.musicpimp.http4s.Cloud.ToggleCloudId
 import com.malliina.musicpimp.models.{NewUser, TrackID}
 import com.malliina.musicpimp.scheduler.web.{AlarmStrings, SchedulerStrings}
 import com.malliina.musicpimp.scheduler.{ClockPlaybackConf, ClockSchedule}
-import com.malliina.auth.{BasicCredentials, RememberMeCredentials}
+import com.malliina.auth.{BasicUserPassCredentials, RememberMeCredentials}
 import com.malliina.auth.PasswordChange
 import com.malliina.values.{ErrorMessage, NonBlank, Password, Readable, Username}
 import org.http4s.UrlForm
@@ -27,11 +27,11 @@ trait FormReaders:
 
   private val reader = FormReadableT.reader
 
-  given loginForm: FormReadableT[BasicCredentials] = reader.emap: form =>
+  given loginForm: FormReadableT[BasicUserPassCredentials] = reader.emap: form =>
     for
       user <- form.read[Username](userFormKey)
       pass <- form.read[Password](passFormKey)
-    yield BasicCredentials(user, pass)
+    yield BasicUserPassCredentials(user, pass)
 
   given rememberMeForm: FormReadableT[RememberMeCredentials] = reader.emap: form =>
     for

@@ -2,7 +2,7 @@ package com.malliina.beam.http4s
 
 import cats.effect.Async
 import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
-import com.malliina.auth.BasicCredentials
+import com.malliina.auth.BasicUserPassCredentials
 import com.malliina.beam.BeamStrings.{BEAM_HOST, PORT, SSL_PORT, SUPPORTS_PLAINTEXT, SUPPORTS_TLS, USER}
 import com.malliina.beam.http4s.Service.log
 import com.malliina.beam.{BeamConf, BeamMessage, BeamMessages, BeamState, BeamTags, BuildMeta, DiscoGs, PhoneClient, PlayerClient}
@@ -35,7 +35,7 @@ import scala.concurrent.duration.DurationInt
 object Service:
   private val log = AppLogger(getClass)
 
-class Service[F[_]: { Async, Files }](
+class Service[F[_]: {Async, Files}](
   state: BeamState[F],
   disco: DiscoGs[F],
   cookies: Http4sAuth[F],
@@ -251,7 +251,7 @@ class Service[F[_]: { Async, Files }](
       .getOrElse:
         unauthorizedNoCacheWithErrors(Errors.single("Credentials missing."))
 
-  def validateCredentials(creds: BasicCredentials): Boolean =
+  def validateCredentials(creds: BasicUserPassCredentials): Boolean =
     val user = creds.username
     // the password is not really a secret
     val credsOk = user.name.nonEmpty && Password.build("beam").exists(_ == creds.password)

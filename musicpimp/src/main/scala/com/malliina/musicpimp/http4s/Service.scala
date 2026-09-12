@@ -69,7 +69,7 @@ object Service:
     def unapply(str: String): Option[T] =
       build(str).toOption
 
-class Service[F[_]: { Async, Files }](
+class Service[F[_]: {Async, Files}](
   player: MusicPlayer[F],
   userManager: UserManager[F, Username, Password],
   auth: PimpAuthenticator[F],

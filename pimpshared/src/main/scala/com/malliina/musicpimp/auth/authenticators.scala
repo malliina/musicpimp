@@ -4,7 +4,7 @@ import cats.Functor
 import cats.effect.Sync
 import cats.syntax.all.toFunctorOps
 import com.malliina.musicpimp.auth.Authenticator.AuthOutcome
-import com.malliina.auth.{BasicCredentials, Token}
+import com.malliina.auth.{BasicUserPassCredentials, Token}
 import com.malliina.concurrent.FutureUtils
 import io.circe.Json
 import org.http4s.Request
@@ -24,21 +24,21 @@ type UserAuthenticator[F[_]] = Authenticator[F, UserPayload]
 
 object UserAuthenticator:
   def default[F[_]: Sync](preferred: UserAuthenticator[F])(
-    isValid: BasicCredentials => F[Option[UserPayload]]
+    isValid: BasicUserPassCredentials => F[Option[UserPayload]]
   ): UserAuthenticator[F] =
     anyOne(preferred, header[F](isValid), query[F](isValid))
 
   def header[F[_]: Sync](
-    isValid: BasicCredentials => F[Option[UserPayload]]
+    isValid: BasicUserPassCredentials => F[Option[UserPayload]]
   ): UserAuthenticator[F] =
     basic[F](req => Auth2.basicCredentials(req.headers), creds => isValid(creds))
 
-  def query[F[_]: Sync](isValid: BasicCredentials => F[Option[UserPayload]]) =
+  def query[F[_]: Sync](isValid: BasicUserPassCredentials => F[Option[UserPayload]]) =
     basic[F](req => Auth2.credentialsFromQuery(req.uri), creds => isValid(creds))
 
   def basic[F[_]: Sync](
-    read: Request[F] => Option[BasicCredentials],
-    isValid: BasicCredentials => F[Option[UserPayload]]
+    read: Request[F] => Option[BasicUserPassCredentials],
+    isValid: BasicUserPassCredentials => F[Option[UserPayload]]
   ): UserAuthenticator[F] =
     Authenticator.make[F, UserPayload]: req =>
       read(req)

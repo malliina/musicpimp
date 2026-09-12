@@ -22,7 +22,7 @@ object JavaSoundPlayer:
 
   val DefaultRwBufferSize: StorageSize = 4096.bytes
 
-  def default[F[_]: { Async }](media: OneShotStream, d: Dispatcher[F]) =
+  def default[F[_]: {Async}](media: OneShotStream, d: Dispatcher[F]) =
     for
       states <- Topic[F, PlayerStates]
       timeUpdates <- Topic[F, PlaybackEvents.TimeUpdated]

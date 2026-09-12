@@ -1,6 +1,6 @@
 package com.malliina.musicpimp.auth
 
-import com.malliina.auth.BasicCredentials
+import com.malliina.auth.BasicUserPassCredentials
 import com.malliina.values.{Password, Username}
 import org.apache.commons.codec.binary.Base64
 import org.http4s.{Headers, Uri}
@@ -11,14 +11,14 @@ object Auth2 extends Auth2
 trait Auth2:
   val Authorization: CIString = ci"Authorization"
 
-  def basicCredentials(headers: Headers): Option[BasicCredentials] =
+  def basicCredentials(headers: Headers): Option[BasicUserPassCredentials] =
     authHeaderParser(headers): decoded =>
       decoded.split(":", 2) match
         case Array(user, pass) =>
           val result = for
             user <- Username.build(user)
             pass <- Password.build(pass)
-          yield BasicCredentials(user, pass)
+          yield BasicUserPassCredentials(user, pass)
           result.toOption
         case _ => None
 
@@ -37,11 +37,11 @@ trait Auth2:
     request: Uri,
     userKey: String = "u",
     passKey: String = "p"
-  ): Option[BasicCredentials] =
+  ): Option[BasicUserPassCredentials] =
     val qString = request.query.params
     for
       user <- qString.get(userKey)
       pass <- qString.get(passKey)
       username <- Username.build(user).toOption
       password <- Password.build(pass).toOption
-    yield BasicCredentials(username, password)
+    yield BasicUserPassCredentials(username, password)

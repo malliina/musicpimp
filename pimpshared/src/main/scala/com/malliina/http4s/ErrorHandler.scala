@@ -11,7 +11,7 @@ import scala.util.control.NonFatal
 object ErrorHandler:
   private val log = AppLogger(getClass)
 
-class ErrorHandler[F[_]: { Async, Concurrent }] extends AppImplicits[F]:
+class ErrorHandler[F[_]: {Async, Concurrent}] extends AppImplicits[F]:
   def handler: Request[F] => PartialFunction[Throwable, F[Response[F]]] =
     _ => partial
 

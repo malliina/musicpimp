@@ -26,7 +26,7 @@ trait ServerResources:
   val serverPort: Port =
     Sys.env.readOpt[Port]("SERVER_PORT").getOrElse(port"9001")
 
-  def emberServer[F[_]: { Async, Compression, Files, Network, Parallel }](port: Port)(
+  def emberServer[F[_]: {Async, Compression, Files, Network, Parallel}](port: Port)(
     appBuilder: WebSocketBuilder2[F] => HttpRoutes[F]
   ): Resource[F, Server] =
     for server <- EmberServerBuilder
@@ -41,7 +41,7 @@ trait ServerResources:
         .build
     yield server
 
-  private def makeApp[F[_]: { Async, Files, Parallel, Compression }](
+  private def makeApp[F[_]: {Async, Files, Parallel, Compression}](
     routes: HttpRoutes[F]
   ): Http[F, F] =
     GZip[F, F]:

@@ -18,7 +18,7 @@ object CloudPushClient:
 
 class CloudPushClient[F[_]: Async](host: FullUrl, http: HttpClientF2[F]):
   val F = Async[F]
-  private val pushUrl = host append "/push"
+  private val pushUrl = host.append("/push")
 
   def push(pushTask: PushTask): F[PushResult] =
     http

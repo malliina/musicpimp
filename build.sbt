@@ -26,25 +26,6 @@ val release = taskKey[Unit]("Uploads native msi, deb and rpm packages to azure")
 val buildAndMove = taskKey[Path]("builds and moves the package")
 val bootClasspath = taskKey[String]("bootClasspath")
 
-val versions = new {
-  val catsEffect = "3.7.0"
-  val circe = "0.14.9"
-  val fs2 = "3.13.0"
-  val http = "4.5.14"
-  val logstreams = "6.14.3"
-  val mariadb = "3.5.7"
-  val mobilePush = "3.17.1"
-  val munit = "1.3.5"
-  val munitCats = "2.2.0"
-  val mysql = "8.0.33"
-  val nvWebSocket = "2.14"
-  val scalaJsDom = "2.8.1"
-  val primitives = "6.14.3"
-  val scala3 = "3.8.3"
-  val scalatags = "0.13.1"
-  val slf4j = "2.0.17"
-}
-
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.logstreams
@@ -66,15 +47,15 @@ val cross = portableProject(JSPlatform, JVMPlatform)
   .settings(
     organization := "org.musicpimp",
     libraryDependencies ++= Seq("generic", "parser")
-      .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-      malliinaGroup %%% "primitives" % versions.primitives
+      .map(m => "io.circe" %% s"circe-$m" % versions.circe) ++ Seq(
+      malliinaGroup %% "primitives" % versions.primitives
     )
   )
 val crossJvm = cross.jvm
 val crossJs = cross.js
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % versions.scalaJsDom
+      "org.scala-js" %% "scalajs-dom" % versions.scalaJsDom
     )
   )
 
@@ -124,9 +105,9 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
   .dependsOn(crossJs)
   .settings(
     libraryDependencies ++= Seq("generic", "parser")
-      .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-      malliinaGroup %%% "primitives" % versions.primitives,
-      malliinaGroup %%% "util-html" % versions.primitives,
+      .map(m => "io.circe" %% s"circe-$m" % versions.circe) ++ Seq(
+      malliinaGroup %% "primitives" % versions.primitives,
+      malliinaGroup %% "util-html" % versions.primitives,
     ),
     assetsPrefix := "assets/"
   )
@@ -179,26 +160,28 @@ val musicpimp = project
         "com.malliina.musicpimp.licenses.LicenseFiles"
       )
     ),
-    libs := libs.value.filter { lib =>
-      !lib.toFile.getAbsolutePath
-        .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
-    },
+    libs := Def.uncached:
+      libs.value.filter { lib =>
+        !lib.toFile.getAbsolutePath
+          .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
+      },
     Compile / fullClasspath := (Compile / fullClasspath).value.filter { af =>
-      !af.data.getAbsolutePath
+      !fileConverter.value.toPath(af.data).toFile.getAbsolutePath
         .endsWith(s"bundles\\nv-websocket-client-${versions.nvWebSocket}.jar")
     },
     useTerminateProcess := true,
-    Windows / msiMappings := (Windows / msiMappings).value.map { case (src, dest) =>
-      (
-        src,
-        Paths.get(
-          dest.toString
-            .replace('[', '_')
-            .replace(']', '_')
-            .replace(',', '_')
+    Windows / msiMappings := Def.uncached:
+      (Windows / msiMappings).value.map { case (src, dest) =>
+        (
+          src,
+          Paths.get(
+            dest.toString
+              .replace('[', '_')
+              .replace(']', '_')
+              .replace(',', '_')
+          )
         )
-      )
-    },
+      },
     minJavaVersion := None,
     Compile / packageDoc / publishArtifact := false,
     packageDoc / publishArtifact := false,
@@ -209,8 +192,8 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
   .dependsOn(crossJs)
   .settings(
     libraryDependencies ++= Seq("generic", "parser")
-      .map(m => "io.circe" %%% s"circe-$m" % versions.circe) ++ Seq(
-      malliinaGroup %%% "primitives" % versions.primitives
+      .map(m => "io.circe" %% s"circe-$m" % versions.circe) ++ Seq(
+      malliinaGroup %% "primitives" % versions.primitives
     ),
     assetsPrefix := "assets/"
   )
@@ -357,7 +340,7 @@ lazy val pimpWindowsSettings = WinPlugin.windowsSettings ++ windowsConfSettings 
 
 lazy val windowsConfSettings = inConfig(Windows)(
   Seq(
-    prettyMappings := {
+    prettyMappings := Def.uncached {
       val out: String = WinKeys.msiMappings.value.map { case (src, dest) =>
         s"$dest\t\t$src"
       }.sorted
@@ -365,7 +348,7 @@ lazy val windowsConfSettings = inConfig(Windows)(
       logger.value.log(Level.Info, out)
     },
     appIcon := Some(pkgHome.value.resolve("guitar-128x128-np.ico")),
-    buildAndMove := {
+    buildAndMove := Def.uncached {
       val src = WinKeys.msi.value
       val dest = Files.move(
         src,
@@ -381,23 +364,26 @@ lazy val windowsConfSettings = inConfig(Windows)(
 lazy val pimpMacSettings = macSettings ++ Seq(
   mainClass := Some("com.malliina.musicpimp.http4s.PimpServer"),
   jvmOptions ++= Seq("-Dhttp.port=8456"),
-  launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths get "/Library/LaunchDaemons")),
+  launchdConf := Some(defaultLaunchd.value.copy(plistDir = Paths.get("/Library/LaunchDaemons"))),
   Mac / appIcon := Some((Mac / pkgHome).value.resolve("guitar.icns")),
   pkgIcon := Some((Mac / pkgHome).value.resolve("guitar.png")),
   hideDock := true,
   extraDmgFiles := Seq(
-    FileMapping((Mac / pkgHome).value.resolve("guitar.png"), Paths get ".background/.bg.png"),
-    FileMapping((Mac / pkgHome).value.resolve("DS_Store"), Paths get ".DS_Store")
+    FileMapping((Mac / pkgHome).value.resolve("guitar.png"), Paths.get(".background/.bg.png")),
+    FileMapping((Mac / pkgHome).value.resolve("DS_Store"), Paths.get(".DS_Store"))
   )
 )
 
 lazy val artifactSettings = Seq(
-  libs ++= Seq(
-//    (Assets / packageBin).value.toPath,
-    (shared / Compile / packageBin).value.toPath,
-    (crossJvm / Compile / packageBin).value.toPath,
-    (utilAudio / Compile / packageBin).value.toPath
-  )
+  libs ++= Def.uncached:
+    Seq(
+  //    (Assets / packageBin).value.toPath,
+      (shared / Compile / packageBin).value,
+      (crossJvm / Compile / packageBin).value,
+      (utilAudio / Compile / packageBin).value
+    ).map { vf =>
+      fileConverter.value.toPath(vf)
+    }
 )
 
 def serverSettings = LinusPlugin.playSettings ++ Seq(
@@ -423,16 +409,18 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "org.slf4j" % "slf4j-api" % "2.0.17",
     "org.scalameta" %% "munit" % versions.munit % Test
   ),
-  Debian / packageAndCopy := {
-    val deb = (Debian / packageBin).value
-    val artifact = (Debian / packageBin).value
+  Debian / packageAndCopy := Def.uncached {
+    val conv = fileConverter.value
+    val deb = conv.toPath((Debian / packageBin).value)
+    val artifact = conv.toPath((Debian / packageBin).value)
     val destName = (Linux / name).value
     val dest = target.value / s"$destName.deb"
-    sbt.IO.copyFile(artifact, dest)
+    sbt.IO.copyFile(artifact.toFile, dest)
     streams.value.log.info(s"Copied '$artifact' to '$dest'.")
     dest
   },
-  Debian / packageAndCopy := (Debian / packageAndCopy).dependsOn(Debian / packageBin).value
+  Debian / packageAndCopy := Def.uncached:
+    (Debian / packageAndCopy).dependsOn(Debian / packageBin).value
 )
 
 lazy val http4sServerSettings = serverSettings ++ baseSettings ++ Seq(
@@ -452,13 +440,13 @@ def scalajsProject(name: String, path: File) =
     .disablePlugins(RevolverPlugin)
     .settings(
       libraryDependencies ++= Seq(
-        "org.scala-js" %%% "scalajs-dom" % versions.scalaJsDom,
-        "com.lihaoyi" %%% "scalatags" % versions.scalatags,
-        "org.scalameta" %%% "munit" % versions.munit % Test
+        "org.scala-js" %% "scalajs-dom" % versions.scalaJsDom,
+        "com.lihaoyi" %% "scalatags" % versions.scalatags,
+        "org.scalameta" %% "munit" % versions.munit % Test
       )
     )
 
 def gitHash: String =
-  Try(Process("git rev-parse --short HEAD").lineStream.head).toOption.getOrElse("unknown")
+  Try(Process("git rev-parse --short HEAD").lazyLines.head).toOption.getOrElse("unknown")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges

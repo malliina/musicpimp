@@ -46,7 +46,7 @@ trait PimpServerResources extends ServerResources:
       s"Starting MusicPimp $version, app dir: ${FileUtil.pimpHomeDir}, user dir: ${FileUtilities.userDir}, log dir: ${PimpLog.logDir.toAbsolutePath}, indexing ${opts.indexer}, clouds ${opts.cloud}"
     )
 
-  def appResources[F[+_]: { Async, Files, Parallel, Compression }](
+  def appResources[F[+_]: {Async, Files, Parallel, Compression}](
     conf: PimpConf
   ): Resource[F, Service[F]] =
     val F = Async[F]
@@ -117,7 +117,7 @@ trait PimpServerResources extends ServerResources:
         html
       )
 
-  def pimpServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
+  def pimpServer[F[+_]: {Async, Files, Parallel, Compression, Network}](
     service: Service[F],
     port: Port = serverPort
   ): Resource[F, Server] =

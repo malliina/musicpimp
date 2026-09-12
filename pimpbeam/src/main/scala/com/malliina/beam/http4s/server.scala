@@ -19,7 +19,7 @@ import java.nio.file.Paths
 trait BeamServerResources extends ServerResources:
   private val userAgent = s"pimpbeam/${BuildInfo.version} (${BuildInfo.gitHash.take(7)})"
 
-  def app[F[_]: { Async, Files }](conf: BeamConf): Resource[F, Service[F]] =
+  def app[F[_]: {Async, Files}](conf: BeamConf): Resource[F, Service[F]] =
     for
       dispatcher <- Dispatcher.parallel[F]
       http <- HttpClientIO.resource[F]
@@ -29,13 +29,13 @@ trait BeamServerResources extends ServerResources:
       val cookies = Http4sAuth[F](JWT(conf.secret))
       Service[F](players, DiscoGs[F](http), cookies, conf)
 
-  private def staticAssets[F[_]: { Async, Files }] = StaticService.paths[F](
+  private def staticAssets[F[_]: {Async, Files}] = StaticService.paths[F](
     Paths.get("assets"),
     "public",
     false
   )
 
-  def beamServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
+  def beamServer[F[+_]: {Async, Files, Parallel, Compression, Network}](
     service: Service[F]
   ): Resource[F, Server] =
     emberServer[F](serverPort): b =>

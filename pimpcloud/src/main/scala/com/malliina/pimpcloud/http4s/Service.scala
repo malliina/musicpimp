@@ -33,7 +33,7 @@ import org.http4s.{EntityDecoder, HttpRoutes, MediaType, Request, Response}
 object Service:
   private val log = AppLogger(getClass)
 
-class Service[F[_]: { Async, Files }](
+class Service[F[_]: {Async, Files}](
   sockets: Sockets[F],
   html: CloudTags,
   auth: CloudAuthentication[F],

@@ -20,7 +20,7 @@ import org.http4s.server.{Router, Server}
 trait CloudServerResources extends ServerResources:
   private val userAgent = s"pimpcloud/${BuildInfo.version} (${BuildInfo.gitHash.take(7)})"
 
-  def app[F[_]: { Async, Files }](conf: CloudConf): Resource[F, Service[F]] =
+  def app[F[_]: {Async, Files}](conf: CloudConf): Resource[F, Service[F]] =
     val jwt = JWT(conf.secret)
     val cookies = Http4sAuth[F](jwt)
     for
@@ -39,13 +39,13 @@ trait CloudServerResources extends ServerResources:
       sockets <- Resource.eval(Sockets.default(auth, servers, google, appender))
     yield Service[F](sockets, CloudTags.default, auth, cookies, google)
 
-  private def staticAssets[F[_]: { Async, Files }] = StaticService.paths[F](
+  private def staticAssets[F[_]: {Async, Files}] = StaticService.paths[F](
     BuildInfo.assetsDir.toPath,
     BuildInfo.assetsPrefix,
     BuildInfo.isProd
   )
 
-  def cloudServer[F[+_]: { Async, Files, Parallel, Compression, Network }](
+  def cloudServer[F[+_]: {Async, Files, Parallel, Compression, Network}](
     service: Service[F]
   ): Resource[F, Server] =
     emberServer[F](serverPort): b =>

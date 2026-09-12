@@ -45,7 +45,7 @@ trait CloudMessageParser:
         case FolderKey       => body.as[GetFolder]
         case SearchKey       => body.as[Search]
         case PlaylistsGet    => user.map(u => GetPlaylists(u))
-        case PlaylistGet => withUser(u => body.downField(Id).as[PlaylistID].map(GetPlaylist(_, u)))
+        case PlaylistGet  => withUser(u => body.downField(Id).as[PlaylistID].map(GetPlaylist(_, u)))
         case PlaylistSave =>
           withUser(u => body.downField(PlaylistKey).as[PlaylistSubmission].map(SavePlaylist(_, u)))
         case PlaylistDelete =>
