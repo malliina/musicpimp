@@ -28,7 +28,7 @@ val bootClasspath = taskKey[String]("bootClasspath")
 
 val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
-val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.logstreams
+val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.primitives
 val jacksonDep =
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.18.0" // Fixes some dep hell
 val httpGroup = "org.apache.httpcomponents"

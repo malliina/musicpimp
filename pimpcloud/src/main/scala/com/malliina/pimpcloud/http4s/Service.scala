@@ -102,7 +102,7 @@ class Service[F[_]: {Async, Files}](
     case req @ GET -> Root / "search" =>
       Search(req.uri.query).fold(
         err => badRequestWithErrors(err),
-        s => proxiedFolder(req, SearchKey, s)
+        s => proxiedMusic[Search, Seq[Track]](req, SearchKey, s, ts => Directory(Nil, ts))
       )
     case req @ GET -> Root / "alarms" =>
       proxiedCommand(req, AlarmsKey)
@@ -258,13 +258,21 @@ class Service[F[_]: {Async, Files}](
         badRequest(err.message.message)
 
   private def proxiedFolder[T: Encoder](req: Request[F], cmd: String, body: T) =
+    proxiedMusic[T, Directory](req, cmd, body, identity)
+
+  private def proxiedMusic[T: Encoder, R: Decoder](
+    req: Request[F],
+    cmd: String,
+    body: T,
+    build: R => Directory
+  ) =
     proxiedBasic[T](req, cmd, body): json =>
       pimpResult(req)(
         html = json
-          .as[Directory]
+          .as[R]
           .fold(
             err => onGatewayParseErrorResult(err),
-            dir => ok(html.index(dir, None))
+            r => ok(html.index(build(r), None))
           ),
         json = ok(json)
       )
