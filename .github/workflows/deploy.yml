@@ -38,9 +38,9 @@ jobs:
         run: sbt "mode prod" Test/compile
       - name: Build deb packages
         run: |
-          sbt "mode prod" compile
-          sbt "mode prod" Deb/packageBin
+          sbt "mode prod;compile"
+          sbt "mode prod;Deb/packageBin"
       - name: Deploy pimpcloud
         run: |
-          scp pimpcloud/target/pimpcloud.deb server:/home/mle/pimpcloud.deb
+          scp target/out/jvm/scala-3.9.0/pimpcloud/pimpcloud.deb server:/home/mle/pimpcloud.deb
           ssh server 'sudo dpkg --force-confold -i /home/mle/pimpcloud.deb'
