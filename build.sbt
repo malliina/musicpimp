@@ -1,3 +1,5 @@
+import FixedDebPlugin.generateDebianMaintainerScripts
+
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import com.malliina.appbundler.FileMapping
 import com.malliina.sbt.GenericKeys.*
@@ -10,7 +12,7 @@ import com.malliina.sbt.unix.LinuxPlugin as LinusPlugin
 import com.malliina.sbt.win.WinKeys.{minJavaVersion, msiMappings, useTerminateProcess, winSwExe}
 import com.malliina.sbt.win.{WinKeys, WinPlugin}
 import com.typesafe.sbt.SbtNativePackager.Windows
-import com.typesafe.sbt.packager.Keys.{maintainer, packageSummary, rpmVendor}
+import com.typesafe.sbt.packager.Keys.{debianMaintainerScripts, maintainer, packageSummary, rpmVendor}
 import sbt.Keys.scalaVersion
 import sbtbuildinfo.BuildInfoKey
 import sbtbuildinfo.BuildInfoKeys.{buildInfoKeys, buildInfoPackage}
@@ -30,7 +32,7 @@ val malliinaGroup = "com.malliina"
 val soundGroup = "com.googlecode.soundlibs"
 val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.primitives
 val jacksonDep =
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.18.0" // Fixes some dep hell
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % versions.jackson // Fixes some dep hell
 val httpGroup = "org.apache.httpcomponents"
 
 inThisBuild(
@@ -67,13 +69,13 @@ val utilAudio = Project("util-audio", file("util-audio"))
     developerName := "Michael Skogberg",
     libraryDependencies ++= Seq(
       "co.fs2" %% "fs2-core" % versions.fs2,
-      "commons-io" % "commons-io" % "2.18.0",
-      "org.slf4j" % "slf4j-api" % "2.0.17",
+      "commons-io" % "commons-io" % versions.commonsIo,
+      "org.slf4j" % "slf4j-api" % versions.slf4j,
       malliinaGroup %% "primitives" % versions.primitives,
-      "org" % "jaudiotagger" % "2.0.3",
-      soundGroup % "tritonus-share" % "0.3.7.4",
-      soundGroup % "jlayer" % "1.0.1.4",
-      soundGroup % "mp3spi" % "1.9.5.4",
+      "org" % "jaudiotagger" % versions.jaudiotagger,
+      soundGroup % "tritonus-share" % versions.tritonus,
+      soundGroup % "jlayer" % versions.jlayer,
+      soundGroup % "mp3spi" % versions.mp3spi,
       "org.typelevel" %% "cats-effect" % versions.catsEffect,
       "org.scalameta" %% "munit" % versions.munit % Test,
       "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test,
@@ -114,7 +116,7 @@ val musicpimpFrontend = scalajsProject("musicpimp-frontend", file("musicpimp") /
 
 val musicpimp = project
   .in(file("musicpimp"))
-  .enablePlugins(ServerPlugin, DebPlugin)
+  .enablePlugins(ServerPlugin, FixedDebPlugin)
   .dependsOn(shared, crossJvm, utilAudio)
   .settings((http4sServerSettings ++
     nativeMusicPimpSettings ++
@@ -135,17 +137,17 @@ val musicpimp = project
     libraryDependencies ++= Seq(
       malliinaGroup %% "database" % versions.primitives,
       malliinaGroup %% "okclient-io" % versions.primitives,
-      "net.glxn" % "qrgen" % "1.4",
-      "it.sauronsoftware.cron4j" % "cron4j" % "2.2.5",
+      "net.glxn" % "qrgen" % versions.qrgen,
+      "it.sauronsoftware.cron4j" % "cron4j" % versions.cron4j,
       "mysql" % "mysql-connector-java" % versions.mysql,
       "org.mariadb.jdbc" % "mariadb-java-client" % versions.mariadb,
       "com.neovisionaries" % "nv-websocket-client" % versions.nvWebSocket,
       httpGroup % "httpclient" % versions.http,
       httpGroup % "httpmime" % versions.http,
-      "org.scala-stm" %% "scala-stm" % "0.11.1",
-      "ch.vorburger.mariaDB4j" % "mariaDB4j" % "2.4.0",
+      "org.scala-stm" %% "scala-stm" % versions.stm,
+      "ch.vorburger.mariaDB4j" % "mariaDB4j" % versions.mariadb4j,
       "co.fs2" %% "fs2-io" % versions.fs2,
-      "com.dimafeng" %% "testcontainers-scala-mysql" % "0.41.8" % Test,
+      "com.dimafeng" %% "testcontainers-scala-mysql" % versions.testcontainers % Test,
       "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
     ).map(dep => dep.withSources()),
     buildInfoPackage := "com.malliina.musicpimp",
@@ -200,7 +202,7 @@ val pimpcloudFrontend = scalajsProject("pimpcloud-frontend", file("pimpcloud") /
 
 val pimpcloud = project
   .in(file("pimpcloud"))
-  .enablePlugins(ServerPlugin, DebPlugin)
+  .enablePlugins(ServerPlugin, FixedDebPlugin)
   .dependsOn(
     shared,
     shared % Test,
@@ -237,9 +239,10 @@ val pimpcloud = project
     },
     Linux / packageSummary := "This is the pimpcloud summary.",
     rpmVendor := "Skogberg Labs",
+    Deb / packageBin := (Deb / packageBin).dependsOn(Deb / stage).value,
     libraryDependencies ++= Seq("server", "client").map { module =>
-      "org.eclipse.jetty" % s"jetty-alpn-java-$module" % "9.4.20.v20190813"
-    }
+      "org.eclipse.jetty" % s"jetty-alpn-java-$module" % versions.jettyAlpn
+    },
   )
 
 val it = project
@@ -405,8 +408,8 @@ def serverSettings = LinusPlugin.playSettings ++ Seq(
     "gitHash" -> gitHash
   ),
   libraryDependencies ++= Seq(
-    "ch.qos.logback" % "logback-classic" % "1.5.17",
-    "org.slf4j" % "slf4j-api" % "2.0.17",
+    "ch.qos.logback" % "logback-classic" % versions.logback,
+    "org.slf4j" % "slf4j-api" % versions.slf4j,
     "org.scalameta" %% "munit" % versions.munit % Test
   ),
   Debian / packageAndCopy := Def.uncached {
