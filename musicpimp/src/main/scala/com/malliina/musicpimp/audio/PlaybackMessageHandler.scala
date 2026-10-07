@@ -23,11 +23,11 @@ class PlaybackMessageHandler[F[_]: Sync](
 
   val playlist = player.playlist
 
-  def updateUser(user: Username): Unit = statsPlayer.updateUser(user)
+  def updateUser(user: Username): F[Unit] = statsPlayer.updateUser(user)
 
   override def handleMessage(msg: Json, src: RemoteInfo[F]): F[Unit] =
-    statsPlayer.updateUser(src.user)
-    super.handleMessage(msg, src)
+    statsPlayer.updateUser(src.user) >>
+      super.handleMessage(msg, src)
 
   override def fulfillMessage(message: PlayerMessage, src: RemoteInfo[F]): F[Unit] =
     message match

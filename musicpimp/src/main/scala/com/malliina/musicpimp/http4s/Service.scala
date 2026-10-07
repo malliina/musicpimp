@@ -551,49 +551,49 @@ class Service[F[_]: {Async, Files}](
         metaOrError.fold(
           err => badRequest(err),
           meta =>
-            statsPlayer.updateUser(user.username)
-            lib
-              .meta(meta.id)
-              .flatMap: opt =>
-                opt
-                  .map: track =>
-                    player.setPlaylistAndPlay(track)
-                    log.info(s"Play local file of: ${track.id}")
-                    ok(SimpleMessage("Playing local file."))
-                  .getOrElse:
-                    val relative = meta.path
-                    val fileOpt = files
-                      .findAbsoluteNew(relative)
-                      .filter(Rest.canWriteNewFile)
-                      .orElse(
-                        Option(FileUtilities.tempDir.resolve(meta.relativePath))
-                          .filter(Rest.canWriteNewFile)
-                      )
-                    val msg =
-                      fileOpt.fold(s"Streaming: $relative")(path =>
-                        s"Streaming: $relative and saving to: $path"
-                      )
-                    log.info(msg)
-                    // TODO limit to 1024.megs
-                    req
-                      .as[Multipart[F]]
-                      .flatMap: mp =>
-                        mp.parts
-                          .flatMap(p => p.filename.map(n => (p, n)))
-                          .headOption
-                          .map: (part, name) =>
-                            for
-                              inStream <- part.body
-                                .through(fs2.io.toInputStream[F])
-                                .compile
-                                .toList
-                                .map(_.head)
-                              track = StreamedTrack.fromTrack(meta, inStream)
-                              _ <- player.setPlaylistAndPlay(track)
-                              res <- ok(SimpleMessage("Thanks."))
-                            yield res
-                          .getOrElse:
-                            badRequest("No file to stream.")
+            statsPlayer.updateUser(user.username) >>
+              lib
+                .meta(meta.id)
+                .flatMap: opt =>
+                  opt
+                    .map: track =>
+                      player.setPlaylistAndPlay(track)
+                      log.info(s"Play local file of: ${track.id}")
+                      ok(SimpleMessage("Playing local file."))
+                    .getOrElse:
+                      val relative = meta.path
+                      val fileOpt = files
+                        .findAbsoluteNew(relative)
+                        .filter(Rest.canWriteNewFile)
+                        .orElse(
+                          Option(FileUtilities.tempDir.resolve(meta.relativePath))
+                            .filter(Rest.canWriteNewFile)
+                        )
+                      val msg =
+                        fileOpt.fold(s"Streaming: $relative")(path =>
+                          s"Streaming: $relative and saving to: $path"
+                        )
+                      log.info(msg)
+                      // TODO limit to 1024.megs
+                      req
+                        .as[Multipart[F]]
+                        .flatMap: mp =>
+                          mp.parts
+                            .flatMap(p => p.filename.map(n => (p, n)))
+                            .headOption
+                            .map: (part, name) =>
+                              for
+                                inStream <- part.body
+                                  .through(fs2.io.toInputStream[F])
+                                  .compile
+                                  .toList
+                                  .map(_.head)
+                                track = StreamedTrack.fromTrack(meta, inStream)
+                                _ <- player.setPlaylistAndPlay(track)
+                                res <- ok(SimpleMessage("Thanks."))
+                              yield res
+                            .getOrElse:
+                              badRequest("No file to stream.")
         )
     case req @ GET -> Root / "cloud" =>
       authed(req): user =>
@@ -835,7 +835,7 @@ class Service[F[_]: {Async, Files}](
                 meta <- readMetadata(file)
                 _ <- F.delay(log.info(s"User ${user.username} uploaded ${meta.meta.media.size}."))
                 _ <- action(meta)
-                _ = statsPlayer.updateUser(user.username)
+                _ <- statsPlayer.updateUser(user.username)
                 res <- accepted(SimpleMessage("Thanks."))
               yield res
             .getOrElse:

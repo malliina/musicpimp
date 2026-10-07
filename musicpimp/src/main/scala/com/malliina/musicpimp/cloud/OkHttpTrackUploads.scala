@@ -3,6 +3,7 @@ package com.malliina.musicpimp.cloud
 import cats.effect.Async
 import cats.effect.implicits.genTemporalOps_
 import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
+import com.malliina.http.io.HttpClientF2
 import com.malliina.http.{FullUrl, HttpHeaders, HttpResponse}
 import com.malliina.musicpimp.cloud.OkHttpTrackUploads.log
 import com.malliina.musicpimp.http.{HttpConstants, MultipartRequests}
@@ -23,16 +24,16 @@ object OkHttpTrackUploads:
 
   val uploadPath = "/track"
 
-  def apply[F[_]: Async](lib: MusicLibrary[F], host: FullUrl) =
-    new OkHttpTrackUploads(lib, host + uploadPath)
+  def withHost[F[_]: Async](lib: MusicLibrary[F], host: FullUrl, http: HttpClientF2[F]) =
+    new OkHttpTrackUploads(lib, host + uploadPath, http)
 
 class OkHttpTrackUploads[F[_]: Async](
   lib: MusicLibrary[F],
-  uploadUri: FullUrl
+  uploadUri: FullUrl,
+  http: HttpClientF2[F]
 ) extends AutoCloseable:
   val F = Async[F]
-  val uploader: MultipartRequests[F] =
-    ??? // = new MultipartRequests(uploadUri.url.startsWith("https"))
+  val uploader: MultipartRequests[F] = MultipartRequests(http)
 
   /** Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's
     * ID as the username.
@@ -87,16 +88,12 @@ class OkHttpTrackUploads[F[_]: Async](
               .getOrElse:
                 log.info(s"Uploading entire $file, request $request to $uploadUri")
                 uploader.file(uploadUri, headers, file, request)
-            uploadRequest.map: _ =>
-              log.info(s"Upload of $request complete.")
             logUpload(trackID, request, uploadRequest, totalSize)
           .getOrElse:
             val msg = s"Unable to find track: $trackID"
             log.warn(msg)
             F.raiseError(new FileNotFoundException(msg))
 
-  /** Blocks until the upload completes.
-    */
   private def logUpload(
     track: TrackID,
     request: RequestID,
@@ -124,13 +121,10 @@ class OkHttpTrackUploads[F[_]: Async](
           )
       .handleError:
         case se: SocketException if Option(se.getMessage) contains "Socket closed" =>
-          // thrown when the upload is cancelled, see method cancel
+          // thrown when the upload is canceled, see method cancel
           // we cancel uploads at the request of the server if the recipient (mobile client) has disconnected
           log.info(s"Aborted upload of $request")
         case e: Exception =>
           log.warn(s"Upload of track $track with request ID $request terminated exceptionally", e)
 
   def close(): Unit = ()
-//    scheduler.awaitTermination(3, TimeUnit.SECONDS)
-//    scheduler.shutdown()
-//    Try(uploader.close())

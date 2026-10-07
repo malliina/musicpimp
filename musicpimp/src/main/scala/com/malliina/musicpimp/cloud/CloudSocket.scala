@@ -5,7 +5,7 @@ import cats.effect.implicits.genTemporalOps_
 import cats.effect.implicits.genTemporalOps
 import cats.effect.kernel.Deferred
 import cats.effect.std.Dispatcher
-import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxApplicativeId, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.http.FullUrl
 import com.malliina.http.io.HttpClientF2
 import com.malliina.musicpimp.audio.*
@@ -117,8 +117,8 @@ class CloudSocket[F[_]: Async](
 //  val cloudHost = FullUrl("http", "10.0.0.2:9000", "")
   private val uploadHost = cloudHost
   val lib = deps.lib
-  val uploader = ApacheTrackUploads(lib, uploadHost)
-//  val uploader = OkHttpTrackUploads(lib, cloudHost)
+//  val uploader = ApacheTrackUploads(lib, uploadHost)
+  val uploader = OkHttpTrackUploads(lib, cloudHost, deps.http)
   val handler = deps.handler
   val stats = deps.stats
   val playlists = deps.playlists
@@ -344,7 +344,7 @@ class CloudSocket[F[_]: Async](
         F.delay(log.warn(s"Unknown event: '$other'."))
 
   private def handlePlayerMessage(message: PlayerMessage, user: Username): F[Unit] =
-    F.delay(handler.updateUser(user)) >>
+    handler.updateUser(user) >>
       handler.fulfillMessage(message, RemoteInfo.cloud(user, cloudHost))
 
   private def sendSuccess[T: Encoder](request: RequestID, response: T) =

@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters.ListHasAsScala
 object MultipartRequests:
   private val log = AppLogger(getClass)
 
-class MultipartRequests[F[_]: Async](client: HttpClientF2[F]) extends AutoCloseable:
+class MultipartRequests[F[_]: Async](client: HttpClientF2[F]):
   val F = Async[F]
 
   def rangedFile(
@@ -47,7 +47,7 @@ class MultipartRequests[F[_]: Async](client: HttpClientF2[F]) extends AutoClosea
   /** @param tag
     *   request tag
     * @return
-    *   true if anything was cancelled, false otherwise
+    *   true if anything was canceled, false otherwise
     */
   def cancel(tag: RequestID): Boolean =
     val dispatcher = client.client.dispatcher()
@@ -72,4 +72,4 @@ class MultipartRequests[F[_]: Async](client: HttpClientF2[F]) extends AutoClosea
     headers.foldLeft(new Request.Builder().url(url.url)):
       case (r, (key, value)) => r.addHeader(key, value)
 
-  def close(): Unit = client.close()
+  def close(): Unit = ()

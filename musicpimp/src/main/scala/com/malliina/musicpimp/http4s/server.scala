@@ -68,7 +68,7 @@ trait PimpServerResources extends ServerResources:
       alarmHandler = JsonHandler(player, scheduler)
       playlists = DoobiePlaylists(db)
       stats = DatabaseStats(db)
-      statsPlayer = StatsPlayer(player, stats)
+      statsPlayer <- Resource.eval(StatsPlayer.default(player, stats))
       messageHandler = PlaybackMessageHandler(player, fileLibrary, lib, statsPlayer)
       deps = Deps(playlists, userManager, messageHandler, lib, stats, scheduler, http, dispatcher)
       fullText = FullText(db)

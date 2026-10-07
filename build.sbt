@@ -33,7 +33,6 @@ val soundGroup = "com.googlecode.soundlibs"
 val logstreamsDep = malliinaGroup %% "logstreams-client" % versions.primitives
 val jacksonDep =
   "com.fasterxml.jackson.module" %% "jackson-module-scala" % versions.jackson // Fixes some dep hell
-val httpGroup = "org.apache.httpcomponents"
 
 inThisBuild(
   Seq(
@@ -142,10 +141,7 @@ val musicpimp = project
       "mysql" % "mysql-connector-java" % versions.mysql,
       "org.mariadb.jdbc" % "mariadb-java-client" % versions.mariadb,
       "com.neovisionaries" % "nv-websocket-client" % versions.nvWebSocket,
-      httpGroup % "httpclient" % versions.http,
-      httpGroup % "httpmime" % versions.http,
       "org.scala-stm" %% "scala-stm" % versions.stm,
-      "ch.vorburger.mariaDB4j" % "mariaDB4j" % versions.mariadb4j,
       "co.fs2" %% "fs2-io" % versions.fs2,
       "com.dimafeng" %% "testcontainers-scala-mysql" % versions.testcontainers % Test,
       "org.typelevel" %% "munit-cats-effect" % versions.munitCats % Test
