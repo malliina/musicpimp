@@ -163,14 +163,18 @@ class Service[F[_]: {Async, Files}](
                               ok(Json.obj("message" -> "ok".asJson))
                           yield result
                 .getOrElse:
-                  notFound(s"Request not found '${server.request}'.")
+                  val msg = s"Request not found '${server.request}'."
+                  F.delay(log.info(msg)).flatMap(_ => notFound(msg))
                 .handleErrorWith: t =>
-                  server
-                    .cleanup(false)
+                  F.delay(log.warn("Errored.", t))
                     .flatMap: _ =>
-                      F.raiseError(t)
+                      server
+                        .cleanup(false)
+                        .flatMap: _ =>
+                          F.raiseError(t)
             .handleLeft: err =>
-              unauthorized(err)
+              F.delay(log.warn(s"Auth failure at $req.", err))
+                .flatMap(_ => unauthorized(err))
     case req @ GET -> Root / "login" =>
       ok(loginPage(None, req))
     case req @ POST -> Root / "authenticate" =>
