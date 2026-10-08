@@ -106,7 +106,7 @@ class OkHttpTrackUploads[F[_]: Async](
       .map: response =>
         if response.isSuccess then
           val prefix = s"Uploaded $totalSize of $track"
-          log.info(appendMeta(s"$prefix with response ${response.code}."))
+          log.info(appendMeta(s"$prefix with response ${response.code}"))
         else
           val len = response.body.length
           val contentType =
@@ -116,7 +116,7 @@ class OkHttpTrackUploads[F[_]: Async](
               .getOrElse("unknown")
           log.error(
             appendMeta(
-              s"Non-success response code ${response.code} len $len type $contentType for track $track."
+              s"Non-success response code ${response.code} len $len type $contentType for track $track"
             )
           )
       .handleError:

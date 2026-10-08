@@ -117,8 +117,7 @@ class CloudSocket[F[_]: Async](
 //  val cloudHost = FullUrl("http", "10.0.0.2:9000", "")
   private val uploadHost = cloudHost
   val lib = deps.lib
-//  val uploader = ApacheTrackUploads(lib, uploadHost)
-  val uploader = OkHttpTrackUploads(lib, cloudHost, deps.http)
+  val uploader = OkHttpTrackUploads.withHost(lib, cloudHost, deps.http)
   val handler = deps.handler
   val stats = deps.stats
   val playlists = deps.playlists
