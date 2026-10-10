@@ -45,9 +45,9 @@ jobs:
           sbt "mode prod;Deb/packageBin"
       - name: Deploy pimpcloud
         run: |
-          scp target/out/jvm/scala-3.9.0/pimpcloud/pimpcloud.deb server:/home/mle/pimpcloud.deb
+          scp target/out/jvm/scala-3.10.0/pimpcloud/pimpcloud.deb server:/home/mle/pimpcloud.deb
           ssh server 'sudo dpkg --force-confold -i /home/mle/pimpcloud.deb'
       - name: Deploy musicpimp
         run: |
-          scp target/out/jvm/scala-3.9.0/musicpimp/musicpimp.deb server:/home/mle/musicpimp.deb
+          scp target/out/jvm/scala-3.10.0/musicpimp/musicpimp.deb server:/home/mle/musicpimp.deb
           ssh server 'sudo dpkg --force-confold -i /home/mle/musicpimp.deb'

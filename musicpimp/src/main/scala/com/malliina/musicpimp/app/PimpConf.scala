@@ -56,6 +56,9 @@ object PimpConf:
       password,
       DefaultDriver,
       5,
+      Conf.DefaultMaxLifetime,
+      Conf.DefaultKeepaliveTime,
+      Conf.DefaultIdleTimeout,
       true
     )
 

@@ -30,7 +30,10 @@ object DatabaseUtils:
       "testmusicpimp",
       password,
       "org.mariadb.jdbc.Driver",
-      maxPoolSize = 2,
+      2,
+      Conf.DefaultMaxLifetime,
+      Conf.DefaultKeepaliveTime,
+      Conf.DefaultIdleTimeout,
       autoMigrate = true
     )
 

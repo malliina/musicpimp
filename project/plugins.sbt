@@ -1,4 +1,4 @@
-val utilsVersion = "2.0.5"
+val utilsVersion = "2.0.8"
 
 Seq(
   "com.malliina" % "sbt-utils-maven" % utilsVersion,

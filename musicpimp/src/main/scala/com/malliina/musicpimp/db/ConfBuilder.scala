@@ -11,7 +11,10 @@ object ConfBuilder:
       user,
       pass,
       driver,
-      maxPoolSize = 5,
+      5,
+      Conf.DefaultMaxLifetime,
+      Conf.DefaultKeepaliveTime,
+      Conf.DefaultIdleTimeout,
       autoMigrate = true,
       schemaTable = "flyway_schema_history"
     )
