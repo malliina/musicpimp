@@ -34,7 +34,7 @@ object ContentRange:
       "isAll" -> range.isAll.asJson,
       "description" -> range.description.asJson
     )
-  implicit val json: Codec[ContentRange] = Codec.from(deriveDecoder[ContentRange], writer)
+  given json: Codec[ContentRange] = Codec.from(deriveDecoder[ContentRange], writer)
 
   def all(size: StorageSize) = ContentRange(0, size.toBytes.toInt - 1, size)
 
