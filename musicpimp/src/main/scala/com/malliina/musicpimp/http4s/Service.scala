@@ -6,6 +6,7 @@ import cats.implicits.{catsSyntaxApplicativeId, catsSyntaxFlatMapOps, toFlatMapO
 import cats.syntax.all.catsSyntaxApplicativeError
 import ch.qos.logback.classic.Level
 import com.malliina.audio.meta.{SongMeta, SongTags, StreamSource}
+import com.malliina.auth.{PasswordChange, RememberMeCredentials}
 import com.malliina.file.FileUtilities
 import com.malliina.html.UserFeedback
 import com.malliina.http.Errors
@@ -18,8 +19,9 @@ import com.malliina.musicpimp.beam.BeamCommand
 import com.malliina.musicpimp.cloud.Clouds
 import com.malliina.musicpimp.db.{DataTrack, DatabaseLibrary, FullText, Indexer}
 import com.malliina.musicpimp.exception.{PimpException, UnauthorizedException}
-import com.malliina.musicpimp.html.{AlarmContent, ChangeLogLevel, InField, LibraryContent, LoginContent, PimpHtml, UsersContent}
+import com.malliina.musicpimp.html.{AccountKeys, AlarmContent, ChangeLogLevel, InField, LibraryContent, LoginContent, PimpHtml, UsersContent}
 import com.malliina.musicpimp.http.Rest
+import com.malliina.musicpimp.http4s.Cloud.ToggleCloudId
 import com.malliina.musicpimp.http4s.Service.log
 import com.malliina.musicpimp.js.SearchStrings
 import com.malliina.musicpimp.json.{JsonMessages, JsonStrings}
@@ -35,15 +37,11 @@ import com.malliina.musicpimp.scheduler.{ClockPlaybackConf, ScheduledPlaybackSer
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularList, RecentList}
 import com.malliina.musicpimp.{BuildInfo, BuildMeta}
 import com.malliina.play.ContentRange
-import com.malliina.auth.RememberMeCredentials
-import com.malliina.musicpimp.html.AccountKeys
 import com.malliina.play.http.FullUrls2
-import com.malliina.auth.PasswordChange
 import com.malliina.storage.StorageLong
 import com.malliina.util.{AppLogger, Logging}
 import com.malliina.values.{ErrorMessage, Password, UnixPath, Username}
 import com.malliina.web.Utils
-import Cloud.ToggleCloudId
 import fs2.io.file.Files
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
@@ -53,11 +51,12 @@ import org.http4s.multipart.Multipart
 import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.{Header, Headers, HttpRoutes, MediaType, Request, Response, StaticFile, Status}
 import org.slf4j.{Logger, LoggerFactory}
-import org.typelevel.ci.CIString
+import org.typelevel.ci.CIStringSyntax
 
 import java.net.{URLDecoder, UnknownHostException}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files as JFiles, Paths as JPaths}
+import java.time.Instant
 import javax.sound.sampled.AudioSystem
 
 object Service:
@@ -544,9 +543,9 @@ class Service[F[_]: {Async, Files}](
       authed(req): user =>
         val metaOrError =
           req.headers
-            .get(CIString(JsonStrings.TrackHeader))
+            .get(JsonStrings.TrackHeader)
             .map(_.head.value)
-            .toRight("No Track header is defined.")
+            .toRight(s"No ${JsonStrings.TrackHeader} header is defined.")
             .flatMap(v => decode[Track](v).left.map(err => s"Invalid JSON: $err"))
         metaOrError.fold(
           err => badRequest(err),
@@ -700,7 +699,7 @@ class Service[F[_]: {Async, Files}](
           log.info(s"Opening logs socket for '${user.username}'...")
           ssb.socket(user, builder)
 
-  private def download(id: TrackID, req: Request[F]) =
+  private def download(id: TrackID, req: Request[F]): F[Response[F]] =
     authed(req): user =>
       lib
         .findFile(id)
@@ -709,7 +708,7 @@ class Service[F[_]: {Async, Files}](
             .map: path =>
               val size = JFiles.size(path).bytes
               val rangeOpt = req.headers
-                .get(CIString("Range"))
+                .get(ci"Range")
                 .flatMap(h => ContentRange.fromHeader(h.head.value, size).toOption)
               val fs2Path = fs2.io.file.Path.fromNioPath(path)
               rangeOpt
@@ -736,7 +735,10 @@ class Service[F[_]: {Async, Files}](
                   StaticFile
                     .fromPath(fs2Path, Option(req))
                     .map: res =>
-                      res.withHeaders(Header.Raw(CIString("Accept-Ranges"), ContentRange.BYTES))
+                      res
+                        .withHeaders(Header.Raw(ci"Accept-Ranges", ContentRange.BYTES))
+                    .semiflatTap: _ =>
+                      stats.playedTrack(id, user.username, Instant.now())
                     .getOrElseF(notFound(s"Track not found: $id"))
             .getOrElse:
               notFound(s"Track not found: $id")

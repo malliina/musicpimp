@@ -1,7 +1,10 @@
 package com.malliina.musicpimp.db
 
+import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.db.DoobieMappings.{finiteDurationMeta, playlistIdMeta}
 import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID}
 import com.malliina.values.Username
+import fs2.io.file.Path
 
 import java.time.Instant
 import scala.concurrent.duration.FiniteDuration
@@ -18,7 +21,6 @@ case class NewPlaylistInfo(
   duration: FiniteDuration,
   track: Option[IndexedPlaylistTrack]
 )
-
 case class PlaylistInfo(
   id: PlaylistID,
   name: String,
@@ -26,7 +28,7 @@ case class PlaylistInfo(
   duration: FiniteDuration,
   track: Option[DataTrack],
   idx: Option[Int]
-)
+) derives doobie.Read
 case class PlaybackRecord(track: TrackID, started: Instant, who: Username)
 case class TrackRecord(record: PlaybackRecord, track: DataTrack)
 case class IndexedPlaylistTrack(playlist: PlaylistID, track: DataTrack, idx: Int)

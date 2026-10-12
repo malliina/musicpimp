@@ -3,9 +3,10 @@ package com.malliina.musicpimp.db
 import cats.effect.Async
 import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularEntry, RecentEntry}
 import com.malliina.values.Username
-import doobie.implicits.*
+import doobie.implicits.toSqlInterpolator
 
 import java.time.Instant
 
@@ -13,9 +14,8 @@ class DatabaseStats[F[_]: Async](db: DoobieDatabase[F])
   extends PlaybackStats[F]
   with DoobieMappings:
 
-  def played(track: TrackMeta, user: Username): F[Unit] = db.run:
-    val now: Instant = Instant.now()
-    sql"""insert into PLAYS(TRACK, STARTED, WHO) values (${track.id}, $now, $user)""".update.run
+  def playedTrack(track: TrackID, user: Username, when: Instant): F[Unit] = db.run:
+    sql"""insert into PLAYS(TRACK, STARTED, WHO) values ($track, $when, $user)""".update.run
       .map(_ => ())
 
   def mostRecent(request: DataRequest): F[List[RecentEntry]] = db.run:

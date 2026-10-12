@@ -11,5 +11,6 @@ trait PopularLike extends TopEntry:
 case class FullPopularEntry(track: FullTrack, playbackCount: Int) extends PopularLike
   derives Codec.AsObject
 
-case class PopularEntry(track: DataTrack, playbackCount: Int) extends PopularLike:
+case class PopularEntry(track: DataTrack, playbackCount: Int) extends PopularLike
+  derives doobie.Read:
   def toFull(host: FullUrl) = FullPopularEntry(TrackJson.toFull(track, host), playbackCount)

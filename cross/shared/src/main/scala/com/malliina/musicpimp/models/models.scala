@@ -52,24 +52,24 @@ case class PlayTrack(track: TrackID) extends TrackLike
 
 object PlayTrack:
   val json = deriveCodec[PlayTrack]
-  implicit val cmd: Codec[PlayTrack] = CrossFormats.cmd(Play, json)
+  given cmd: Codec[PlayTrack] = CrossFormats.cmd(Play, json)
 
 case class AddTrack(track: TrackID) extends TrackLike
 
 object AddTrack:
   val json = deriveCodec[AddTrack]
-  implicit val cmd: Codec[AddTrack] = CrossFormats.cmd(Add, json)
+  given cmd: Codec[AddTrack] = CrossFormats.cmd(Add, json)
 
 case class PlayItems(tracks: Seq[TrackID], folders: Seq[FolderID])
 
 object PlayItems:
-  implicit val cmd: Codec[PlayItems] = CrossFormats.cmd(PlayItemsKey, deriveCodec[PlayItems])
+  given cmd: Codec[PlayItems] = CrossFormats.cmd(PlayItemsKey, deriveCodec[PlayItems])
 
   def folder(id: FolderID) = PlayItems(Nil, Seq(id))
 
 case class AddItems(tracks: Seq[TrackID], folders: Seq[FolderID])
 
 object AddItems:
-  implicit val cmd: Codec[AddItems] = CrossFormats.cmd(AddItemsKey, deriveCodec[AddItems])
+  given cmd: Codec[AddItems] = CrossFormats.cmd(AddItemsKey, deriveCodec[AddItems])
 
   def folder(id: FolderID) = AddItems(Nil, Seq(id))

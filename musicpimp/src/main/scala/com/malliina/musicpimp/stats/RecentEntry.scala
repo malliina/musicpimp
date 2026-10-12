@@ -3,6 +3,7 @@ package com.malliina.musicpimp.stats
 import com.malliina.http.FullUrl
 import com.malliina.musicpimp.audio.{FullTrack, TrackJson}
 import com.malliina.musicpimp.db.DataTrack
+import com.malliina.musicpimp.db.DoobieMappings.instantMeta
 import io.circe.generic.semiauto.deriveCodec
 import io.circe.syntax.EncoderOps
 import io.circe.{Codec, Encoder, Json}
@@ -29,5 +30,5 @@ object FullRecentEntry:
       base(r).deepMerge(extras)
     Codec.from(base, writer)
 
-case class RecentEntry(track: DataTrack, timestamp: Instant) extends RecentLike:
+case class RecentEntry(track: DataTrack, timestamp: Instant) extends RecentLike derives doobie.Read:
   def toFull(host: FullUrl) = FullRecentEntry(TrackJson.toFull(track, host), timestamp)

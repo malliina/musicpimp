@@ -1,5 +1,7 @@
 package com.malliina.musicpimp.json
 
+import org.typelevel.ci.{CIString, CIStringSyntax}
+
 object JsonStrings extends JsonStrings
 
 trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings:
@@ -31,7 +33,7 @@ trait JsonStrings extends PimpStrings with PlaybackStrings with CommonStrings:
   val Msg = "msg"
   val ThankYou = "thank you"
 
-  val TrackHeader = "Track"
+  val TrackHeader: CIString = ci"Track"
 
   val Job = "job"
   val When = "when"

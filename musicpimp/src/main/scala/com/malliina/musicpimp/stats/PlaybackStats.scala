@@ -1,7 +1,10 @@
 package com.malliina.musicpimp.stats
 
 import com.malliina.musicpimp.audio.TrackMeta
+import com.malliina.musicpimp.models.TrackID
 import com.malliina.values.Username
+
+import java.time.Instant
 
 trait PlaybackStats[F[_]]:
 
@@ -14,7 +17,10 @@ trait PlaybackStats[F[_]]:
     * @return
     *   success on successful registration, failure otherwise
     */
-  def played(track: TrackMeta, user: Username): F[Unit]
+  def played(track: TrackMeta, user: Username): F[Unit] =
+    playedTrack(track.id, user, Instant.now())
+
+  def playedTrack(track: TrackID, user: Username, when: Instant): F[Unit]
 
   /** Returns the most played tracks.
     *

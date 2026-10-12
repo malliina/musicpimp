@@ -3,7 +3,7 @@ package com.malliina.musicpimp.db
 import com.malliina.database.DoobieDatabase
 import com.malliina.musicpimp.db.FullText.log
 import com.malliina.util.AppLogger
-import doobie.implicits.*
+import doobie.implicits.toSqlInterpolator
 
 object FullText:
   private val log = AppLogger(getClass)

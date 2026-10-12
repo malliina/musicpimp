@@ -8,7 +8,7 @@ import com.malliina.musicpimp.audio.{PimpEnc, TrackMeta}
 import com.malliina.musicpimp.library.{Library, LocalTrack, MusicFolder, MusicLibrary}
 import com.malliina.musicpimp.models.{FolderID, Identifier, TrackID}
 import com.malliina.values.UnixPath
-import doobie.implicits.*
+import doobie.implicits.toSqlInterpolator
 import doobie.util.fragments.{in, or}
 
 import java.nio.file.Path
