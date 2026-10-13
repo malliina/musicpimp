@@ -8,19 +8,20 @@ import java.time.Instant
 
 trait PlaybackStats[F[_]]:
 
-  /** Increments the playback count of `track` by one.
+  /** Increments the playback count of `track` by one. Multiple increments in quick succession are
+    * not counted.
     *
     * @param track
     *   track being played
     * @param user
     *   playing user
     * @return
-    *   success on successful registration, failure otherwise
+    *   true if incremented, false if ignored (rate limited)
     */
-  def played(track: TrackMeta, user: Username): F[Unit] =
+  def played(track: TrackMeta, user: Username): F[Boolean] =
     playedTrack(track.id, user, Instant.now())
 
-  def playedTrack(track: TrackID, user: Username, when: Instant): F[Unit]
+  def playedTrack(track: TrackID, user: Username, when: Instant): F[Boolean]
 
   /** Returns the most played tracks.
     *

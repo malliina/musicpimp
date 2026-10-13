@@ -7,6 +7,7 @@ import com.malliina.musicpimp.models.TrackID
 import com.malliina.musicpimp.stats.{DataRequest, PlaybackStats, PopularEntry, RecentEntry}
 import com.malliina.util.AppLogger
 import com.malliina.values.Username
+import doobie.free.connection.pure
 import doobie.implicits.toSqlInterpolator
 import DatabaseStats.log
 import java.time.Instant
@@ -18,9 +19,17 @@ class DatabaseStats[F[_]: Async](db: DoobieDatabase[F])
   extends PlaybackStats[F]
   with DoobieMappings:
 
-  def playedTrack(track: TrackID, user: Username, when: Instant): F[Unit] = db.run:
-    sql"""insert into PLAYS(TRACK, STARTED, WHO) values ($track, $when, $user)""".update.run
-      .map(_ => log.info(s"Added track $track by $user to playback history."))
+  def playedTrack(track: TrackID, user: Username, when: Instant): F[Boolean] = db.run:
+    sql"""select exists(select TRACK from PLAYS where TRACK = $track and WHO = $user and timestampdiff(second, STARTED, now()) < 120)"""
+      .query[Boolean]
+      .unique
+      .flatMap: shouldThrottle =>
+        if shouldThrottle then pure(false)
+        else
+          sql"""insert into PLAYS(TRACK, STARTED, WHO) values ($track, $when, $user)""".update.run
+            .map: _ =>
+              log.info(s"Added track $track by $user to playback history.")
+              true
 
   def mostRecent(request: DataRequest): F[List[RecentEntry]] = db.run:
     sql"""select T.ID, T.TITLE, T.ARTIST, T.ALBUM, T.DURATION, T.SIZE, T.PATH, T.FOLDER, P.STARTED
