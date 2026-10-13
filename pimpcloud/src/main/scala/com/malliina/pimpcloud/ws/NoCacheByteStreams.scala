@@ -4,16 +4,18 @@ import cats.effect.Async
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.musicpimp.audio.Track
 import com.malliina.musicpimp.auth.Proxies2
-import com.malliina.musicpimp.cloud.{PimpServerSocket, UserRequest}
+import com.malliina.musicpimp.cloud.{GetTrack, PimpServerSocket, RangedTrack, UserRequest}
 import com.malliina.musicpimp.json.PlaybackStrings.TrackKey
 import com.malliina.musicpimp.json.SocketStrings.Cancel
 import com.malliina.musicpimp.json.Target
-import com.malliina.musicpimp.models.{CloudID, RangedRequest, RequestID, WrappedID}
+import com.malliina.musicpimp.models.{CloudID, RequestID}
 import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.streams.{ChannelInfo, StreamEndpoint}
 import com.malliina.pimpcloud.ws.NoCacheByteStreams.{DetachedMessage, log}
 import com.malliina.play.ContentRange
+import com.malliina.play.http.AuthInfo
 import com.malliina.util.AppLogger
+import com.malliina.values.Username
 import com.malliina.ws.Streamer
 import fs2.Stream
 import fs2.concurrent.Topic
@@ -61,9 +63,9 @@ class NoCacheByteStreams[F[_]: Async](
     * @see
     *   https://groups.google.com/forum/#!searchin/akka-user/source.queue/akka-user/zzGSuRG4YVA/NEjwAT76CAAJ
     */
-  def requestTrack(track: Track, range: ContentRange, req: Request[?]): F[Response[F]] =
+  def requestTrack(track: Track, range: ContentRange, req: AuthInfo): F[Response[F]] =
     val request = RequestID.random()
-    val userAgent = req.headers
+    val userAgent = req.rh.headers
       .get(ci"User-Agent")
       .map(ua => s"user agent ${ua.head.value}")
       .getOrElse("unknown user agent")
@@ -72,11 +74,11 @@ class NoCacheByteStreams[F[_]: Async](
         topic.subscribe(100).takeWhile(_.isDefined).flatMap(bs => Stream.emits(bs.getOrElse(Nil)))
       ongoing += (request -> ChannelInfo(topic, id, track, range))
       onUpdate.flatMap: _ =>
-        val address = Proxies2.realAddress(req)
+        val address = Proxies2.realAddress(req.rh)
         log.info(
           s"Created stream '$request' of track '${track.title}' with range '${range.description}' for '$userAgent' from '$address'."
         )
-        connectSource(request, source, track, range)
+        connectSource(request, source, track, range, req.user)
 
   def exists(request: RequestID): Boolean = ongoing.contains(request)
 
@@ -111,7 +113,8 @@ class NoCacheByteStreams[F[_]: Async](
     request: RequestID,
     source: Stream[F, Byte],
     track: Track,
-    range: ContentRange
+    range: ContentRange,
+    username: Username
   ): F[Response[F]] =
     val result =
       if range.isAll then
@@ -125,12 +128,12 @@ class NoCacheByteStreams[F[_]: Async](
             `Content-Length`(range.contentLength),
             `Content-Range`(SubRange(range.start, range.endInclusive), Option(range.size.toBytes))
           )
-    connect(request, track, range).map: _ =>
+    val requestJson =
+      if range.isAll then GetTrack(track.id).asJson
+      else RangedTrack(track.id, range).asJson
+    val ur = UserRequest(TrackKey, requestJson, request, username)
+    sendMessage(ur).map: _ =>
       result
-
-  private def connect(request: RequestID, track: Track, range: ContentRange): F[Unit] =
-    val req = buildTrackRequest(request, track, range)
-    sendMessage(req)
 
   /** Transfer complete.
     *
@@ -142,12 +145,6 @@ class NoCacheByteStreams[F[_]: Async](
       .remove(request)
       .map: e =>
         onUpdate >> e.close
-
-  private def buildTrackRequest(request: RequestID, track: Track, range: ContentRange) =
-    val requestJson =
-      if range.isAll then WrappedID.forId(track.id).asJson
-      else RangedRequest(track.id, range).asJson
-    UserRequest(TrackKey, requestJson, request, PimpServerSocket.nobody)
 
   // Sends `msg` to the MusicPimp server
   private def sendMessage[M: Encoder](msg: M): F[Unit] =

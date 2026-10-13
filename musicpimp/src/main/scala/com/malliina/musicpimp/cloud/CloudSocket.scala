@@ -67,7 +67,6 @@ object CloudSocket:
       connPromise,
       regPromise,
       eventHub,
-      deps.d,
       player,
       url,
       id.filter(_.id.nonEmpty).getOrElse(CloudID.empty),
@@ -96,7 +95,6 @@ class CloudSocket[F[_]: Async](
   connectPromise: Deferred[F, Option[Throwable]],
   registrationPromise: Deferred[F, Either[Exception, CloudID]],
   registrationsHub: Topic[F, CloudID],
-  d: Dispatcher[F],
   player: MusicPlayer[F],
   uri: FullUrl,
   username: CloudID,
@@ -107,19 +105,20 @@ class CloudSocket[F[_]: Async](
 ) extends JsonSocket8[F](
     uri,
     connectPromise,
-    d,
+    deps.d,
     CustomSSLSocketFactory.forHost("cloud.musicpimp.org"),
     HttpConstants.AUTHORIZATION -> HttpUtil.authorizationValue(username.id, password.pass)
   ):
+  val d = deps.d
   private val messageParser = CloudMessageParser
   private val httpProto = if uri.proto == "ws" then "http" else "https"
   val cloudHost = FullUrl(httpProto, uri.hostAndPort, "")
 //  val cloudHost = FullUrl("http", "10.0.0.2:9000", "")
   private val uploadHost = cloudHost
   val lib = deps.lib
-  val uploader = OkHttpTrackUploads.withHost(lib, cloudHost, deps.http)
-  val handler = deps.handler
   val stats = deps.stats
+  val uploader = OkHttpTrackUploads.withHost(lib, stats, cloudHost, deps.http)
+  val handler = deps.handler
   val playlists = deps.playlists
 
   val registrations = registrationsHub.subscribe(100)
@@ -190,16 +189,12 @@ class CloudSocket[F[_]: Async](
           .status(cloudHost)
           .flatMap: status =>
             sendSuccess(request, StatusMessage(status))
-      case GetTrack(id) =>
+      case GetTrackByUser(id, range, user) =>
         uploader
-          .upload(id, request)
+          .performUpload(id, request, range.filter(r => !r.isAll), user)
           .handleError: t =>
-            log.error(s"Upload failed for $request", t)
-      case rt: RangedTrack =>
-        uploader
-          .rangedUpload(rt, request)
-          .handleError: t =>
-            log.error(s"Ranged upload failed for $request", t)
+            val prefix = range.fold("Upload")(_ => "Ranged upload")
+            log.error(s"$prefix failed for $request", t)
       case CancelStream(req) =>
         uploader.cancelSoon(req)
       case RootFolder =>

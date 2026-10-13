@@ -5,6 +5,7 @@ import com.malliina.musicpimp.models.RequestID
 import com.malliina.pimpcloud.PimpStream
 import com.malliina.pimpcloud.streams.StreamEndpoint
 import com.malliina.play.ContentRange
+import com.malliina.play.http.AuthInfo
 import com.malliina.storage.{StorageInt, StorageSize}
 import org.http4s.{Request, Response}
 
@@ -17,7 +18,7 @@ trait Streamer[F[_]]:
   def find(request: RequestID): Option[StreamEndpoint[F]]
   def snapshot: Seq[PimpStream]
   def exists(uuid: RequestID): Boolean
-  def requestTrack(track: Track, range: ContentRange, req: Request[?]): F[Response[F]]
+  def requestTrack(track: Track, range: ContentRange, req: AuthInfo): F[Response[F]]
 
   /** @param uuid
     *   request ID

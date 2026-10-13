@@ -5,6 +5,7 @@ import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.values.Username
 import io.circe.syntax.EncoderOps
 import io.circe.{Codec, Encoder, Json}
+import org.http4s.Request
 
 case class UserRequest(cmd: String, body: Json, request: RequestID, username: Username)
   derives Codec.AsObject

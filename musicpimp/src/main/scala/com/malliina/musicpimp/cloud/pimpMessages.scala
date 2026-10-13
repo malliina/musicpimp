@@ -11,15 +11,13 @@ import com.malliina.values.Username
 import io.circe.generic.semiauto.deriveDecoder
 import io.circe.{Codec, Decoder, Encoder}
 
-trait UserMessage extends PimpMessage:
-  def username: Username
+case class GetTrackByUser(id: TrackID, range: Option[ContentRange], username: Username)
+  extends UserMessage
 
 trait RequestMessage extends PimpMessage:
   def request: RequestID
 
 case class RegisteredMessage(id: CloudID) extends PimpMessage derives Codec.AsObject
-
-case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage derives Codec.AsObject
 
 case class GetPlaylists(username: Username) extends UserMessage derives Codec.AsObject
 
@@ -49,8 +47,8 @@ object PlaybackMessage:
 
 case object GetVersion extends PimpMessage:
   val Key = "version"
-  implicit val json: Codec[GetVersion.type] = singleCmd(Key, GetVersion)
+  given json: Codec[GetVersion.type] = singleCmd(Key, GetVersion)
 
 case object GetStatus extends PimpMessage:
   val Key = "status"
-  implicit val json: Codec[GetStatus.type] = singleCmd(Key, GetStatus)
+  given json: Codec[GetStatus.type] = singleCmd(Key, GetStatus)

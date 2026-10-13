@@ -5,9 +5,9 @@ import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
 import com.malliina.http.Errors
 import com.malliina.musicpimp.audio.{Directory, PimpEnc, Track}
 import com.malliina.musicpimp.auth.{Http4sAuth, Http4sAuthFailure, Proxies2, UserPayload}
-import com.malliina.musicpimp.cloud.Search
+import com.malliina.musicpimp.cloud.{DeletePlaylistById, GetFolder, GetPlaylistById, Search}
 import com.malliina.musicpimp.json.PimpStrings
-import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID, Version, WrappedID, WrappedLong}
+import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID, Version}
 import com.malliina.musicpimp.stats.ItemLimits
 import com.malliina.pimpcloud.auth.{CloudAuthentication, CloudCredentials}
 import com.malliina.pimpcloud.html.CloudTags
@@ -58,7 +58,7 @@ class Service[F[_]: {Async, Files}](
     case req @ (GET -> Root | GET -> Root / "folders") =>
       proxiedFolder[Json](req, RootFolderKey, Json.obj())
     case req @ GET -> Root / "folders" / FolderID(id) =>
-      proxiedFolder[WrappedID](req, FolderKey, WrappedID.forId(PimpEnc.folder(id)))
+      proxiedFolder[GetFolder](req, FolderKey, GetFolder(PimpEnc.folder(id)))
     case req @ GET -> Root / "playback" =>
       proxiedCommand(req, StatusKey)
     case req @ POST -> Root / "playback" / "stream" =>
@@ -87,7 +87,7 @@ class Service[F[_]: {Async, Files}](
           .flatMap(v => ContentRange.fromHeader(Range.headerInstance.value(v), track.size).toOption)
         val range = rangeOpt.getOrElse(ContentRange.all(track.size))
         phone.server
-          .requestTrack(track, range, req)
+          .requestTrack(track, range, phone)
           .map: res =>
             rangeOpt
               .map: r =>
@@ -115,9 +115,9 @@ class Service[F[_]: {Async, Files}](
     case req @ POST -> Root / "playlists" =>
       proxiedBody(req, PlaylistSave)
     case req @ GET -> Root / "playlists" / PlaylistID(id) =>
-      proxiedBasic(req, PlaylistGet, WrappedLong(id.id))(json => ok(json))
+      proxiedBasic(req, PlaylistGet, GetPlaylistById(id))(json => ok(json))
     case req @ POST -> Root / "playlists" / "delete" / PlaylistID(id) =>
-      proxiedBasic(req, PlaylistDelete, WrappedLong(id.id))(json => ok(json))
+      proxiedBasic(req, PlaylistDelete, DeletePlaylistById(id))(json => ok(json))
     case req @ POST -> Root / "proxied" / cmd =>
       proxiedBody(req, cmd)
     case req @ POST -> Root / "track" =>

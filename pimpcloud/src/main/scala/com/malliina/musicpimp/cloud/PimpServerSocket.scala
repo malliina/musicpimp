@@ -10,6 +10,7 @@ import com.malliina.pimpcloud.json.JsonStrings.*
 import com.malliina.pimpcloud.models.PhoneRequest
 import com.malliina.pimpcloud.ws.NoCacheByteStreams
 import com.malliina.play.ContentRange
+import com.malliina.play.http.AuthInfo
 import com.malliina.values.Literals.user
 import com.malliina.values.{Password, Username}
 import com.malliina.ws.{JsonFutureSocket, Streamer}
@@ -36,7 +37,7 @@ class PimpServerSocket[F[_]: Async](
 
   override def send(payload: Json): F[Boolean] = jsonOut.send(payload).as(true)
 
-  def requestTrack(track: Track, contentRange: ContentRange, req: Request[?]): F[Response[F]] =
+  def requestTrack(track: Track, contentRange: ContentRange, req: AuthInfo): F[Response[F]] =
     fileTransfers.requestTrack(track, contentRange, req)
 
   /** @param user
@@ -52,5 +53,5 @@ class PimpServerSocket[F[_]: Async](
       .handleError(_ => false)
 
   private def authenticateWithVersion(user: Username, pass: Password): F[Decoder.Result[Version]] =
-    val req = PhoneRequest(AuthenticateKey, PimpServerSocket.nobody, Authenticate(user, pass))
+    val req = PhoneRequest(AuthenticateKey, user, Authenticate(user, pass))
     proxyValidated[Authenticate, Version](req)

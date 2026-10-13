@@ -3,13 +3,17 @@ package com.malliina.musicpimp.cloud
 import com.malliina.http.Errors
 import com.malliina.http4s.QueryParsers
 import com.malliina.musicpimp.json.PimpStrings
-import com.malliina.musicpimp.models.{FolderID, TrackID}
+import com.malliina.musicpimp.models.{FolderID, PlaylistID, TrackID}
+import com.malliina.play.ContentRange
+import com.malliina.values.Literals.nonNeg
 import com.malliina.values.{NonNeg, Password, Username}
 import io.circe.Codec
 import org.http4s.{ParseFailure, Query, QueryParamDecoder}
-import com.malliina.values.Literals.nonNeg
 
 trait PimpMessage
+
+trait UserMessage extends PimpMessage:
+  def username: Username
 
 case object PingMessage extends PimpMessage
 case object PongMessage extends PimpMessage
@@ -19,6 +23,15 @@ case object RootFolder extends PimpMessage
 case class GetFolder(id: FolderID) extends PimpMessage derives Codec.AsObject
 
 case class GetTrack(id: TrackID) extends PimpMessage derives Codec.AsObject
+
+case class GetPlaylistById(id: PlaylistID) extends PimpMessage derives Codec.AsObject
+
+case class DeletePlaylistById(id: PlaylistID) extends PimpMessage derives Codec.AsObject
+
+case class RangedTrack(id: TrackID, range: ContentRange) extends PimpMessage derives Codec.AsObject
+
+case class TrackRequest(id: TrackID, range: Option[ContentRange]) extends PimpMessage
+  derives Codec.AsObject
 
 case class Search(term: String, limit: Int) extends PimpMessage derives Codec.AsObject
 

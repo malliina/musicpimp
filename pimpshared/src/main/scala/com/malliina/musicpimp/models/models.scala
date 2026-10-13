@@ -13,15 +13,6 @@ case class Version(version: String) extends PimpMessage derives Codec.AsObject
 
 case class FailReason(reason: String) extends PimpMessage derives Codec.AsObject
 
-case class WrappedID(id: String) derives Codec.AsObject
-
-object WrappedID:
-  def forId(id: Identifier): WrappedID = WrappedID(id.id)
-
-case class WrappedLong(id: Long) derives Codec.AsObject
-
-case class RangedRequest(id: TrackID, range: ContentRange) derives Codec.AsObject
-
 sealed trait RequestID extends Identifier:
   def toId = RequestIdentifier(id)
 

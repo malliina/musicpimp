@@ -710,7 +710,6 @@ class Service[F[_]: {Async, Files}](
               val rangeOpt = req.headers
                 .get(ci"Range")
                 .flatMap(h => ContentRange.fromHeader(h.head.value, size).toOption)
-              val isEntireFile = rangeOpt.forall(r => r.size >= JFiles.size(path).bytes)
               val fs2Path = fs2.io.file.Path.fromNioPath(path)
               rangeOpt
                 .map: range =>
@@ -739,9 +738,6 @@ class Service[F[_]: {Async, Files}](
                       res
                         .withHeaders(Header.Raw(ci"Accept-Ranges", ContentRange.BYTES))
                     .getOrElseF(notFound(s"Track not found: $id"))
-                .flatTap: _ =>
-                  if isEntireFile then stats.playedTrack(id, user.username, Instant.now())
-                  else F.unit
             .getOrElse:
               notFound(s"Track not found: $id")
 

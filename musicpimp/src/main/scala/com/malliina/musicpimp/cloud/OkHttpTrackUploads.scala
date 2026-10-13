@@ -2,21 +2,24 @@ package com.malliina.musicpimp.cloud
 
 import cats.effect.Async
 import cats.effect.implicits.genTemporalOps_
-import cats.implicits.{catsSyntaxApplicativeError, toFlatMapOps, toFunctorOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxFlatMapOps, toFlatMapOps, toFunctorOps}
 import com.malliina.http.io.HttpClientF2
 import com.malliina.http.{FullUrl, HttpHeaders, HttpResponse}
 import com.malliina.musicpimp.cloud.OkHttpTrackUploads.log
 import com.malliina.musicpimp.http.{HttpConstants, MultipartRequests}
 import com.malliina.musicpimp.library.MusicLibrary
 import com.malliina.musicpimp.models.{RequestID, TrackID}
+import com.malliina.musicpimp.stats.PlaybackStats
 import com.malliina.play.ContentRange
 import com.malliina.storage.{StorageLong, StorageSize}
 import com.malliina.util.AppLogger
+import com.malliina.values.Username
 import com.malliina.ws.HttpUtil
 
 import java.io.FileNotFoundException
 import java.net.SocketException
 import java.nio.file.Files
+import java.time.Instant
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 object OkHttpTrackUploads:
@@ -24,34 +27,22 @@ object OkHttpTrackUploads:
 
   val uploadPath = "/track"
 
-  def withHost[F[_]: Async](lib: MusicLibrary[F], host: FullUrl, http: HttpClientF2[F]) =
-    new OkHttpTrackUploads(lib, host + uploadPath, http)
+  def withHost[F[_]: Async](
+    lib: MusicLibrary[F],
+    stats: PlaybackStats[F],
+    host: FullUrl,
+    http: HttpClientF2[F]
+  ): OkHttpTrackUploads[F] =
+    new OkHttpTrackUploads(lib, stats, host + uploadPath, http)
 
 class OkHttpTrackUploads[F[_]: Async](
   lib: MusicLibrary[F],
+  stats: PlaybackStats[F],
   uploadUri: FullUrl,
   http: HttpClientF2[F]
 ) extends AutoCloseable:
   val F = Async[F]
   val uploader: MultipartRequests[F] = MultipartRequests(http)
-
-  /** Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's
-    * ID as the username.
-    *
-    * @param track
-    *   track to upload
-    * @param request
-    *   request id
-    * @return
-    *   a Future that completes when the upload completes
-    */
-  def upload(track: TrackID, request: RequestID): F[Unit] =
-    performUpload(track, request, None)
-
-  def rangedUpload(rangedTrack: RangedTrack, request: RequestID): F[Unit] =
-    val range = rangedTrack.range
-    val requestRange = if range.isAll then None else Option(range)
-    performUpload(rangedTrack.id, request, requestRange)
 
   def cancelSoon(request: RequestID) = cancelIn(request, 5.seconds)
 
@@ -63,10 +54,21 @@ class OkHttpTrackUploads[F[_]: Async](
       .map: wasCancelled =>
         if wasCancelled then log.info(s"Cancelled $request")
 
-  private def performUpload(
+  /** Uploads `track` to the cloud. Sets `request` in the `REQUEST_ID` header and uses this server's
+    * ID as the username.
+    *
+    * @param track
+    *   track to upload
+    * @param request
+    *   request id
+    * @return
+    *   a task that completes when the upload completes
+    */
+  def performUpload(
     trackID: TrackID,
     request: RequestID,
-    range: Option[ContentRange]
+    range: Option[ContentRange],
+    username: Username
   ): F[Unit] =
     lib
       .findFile(trackID)
@@ -87,7 +89,8 @@ class OkHttpTrackUploads[F[_]: Async](
                 uploader.rangedFile(uploadUri, headers, file, r, request)
               .getOrElse:
                 log.info(s"Uploading entire $file, request $request to $uploadUri")
-                uploader.file(uploadUri, headers, file, request)
+                stats.playedTrack(trackID, username, Instant.now()) >>
+                  uploader.file(uploadUri, headers, file, request)
             logUpload(trackID, request, uploadRequest, totalSize)
           .getOrElse:
             val msg = s"Unable to find track: $trackID"

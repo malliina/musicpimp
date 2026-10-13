@@ -20,7 +20,7 @@ class DatabaseStats[F[_]: Async](db: DoobieDatabase[F])
 
   def playedTrack(track: TrackID, user: Username, when: Instant): F[Unit] = db.run:
     sql"""insert into PLAYS(TRACK, STARTED, WHO) values ($track, $when, $user)""".update.run
-      .map(_ => log.info(s"Added $track by $user to play history."))
+      .map(_ => log.info(s"Added track $track by $user to playback history."))
 
   def mostRecent(request: DataRequest): F[List[RecentEntry]] = db.run:
     sql"""select T.ID, T.TITLE, T.ARTIST, T.ALBUM, T.DURATION, T.SIZE, T.PATH, T.FOLDER, P.STARTED

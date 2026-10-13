@@ -35,8 +35,9 @@ trait CloudMessageParser:
 
     request.flatMap: req =>
       val message: Decoder.Result[PimpMessage] = cmd.flatMap:
-        case VersionKey      => Right(GetVersion)
-        case TrackKey        => body.as[RangedTrack] orElse body.as[GetTrack]
+        case VersionKey => Right(GetVersion)
+        case TrackKey   =>
+          withUser(u => body.as[TrackRequest].map(tr => GetTrackByUser(tr.id, tr.range, u)))
         case Cancel          => Right(CancelStream(req))
         case Meta            => body.as[GetMeta]
         case Ping            => Right(PingMessage)
@@ -45,11 +46,12 @@ trait CloudMessageParser:
         case FolderKey       => body.as[GetFolder]
         case SearchKey       => body.as[Search]
         case PlaylistsGet    => user.map(u => GetPlaylists(u))
-        case PlaylistGet  => withUser(u => body.downField(Id).as[PlaylistID].map(GetPlaylist(_, u)))
+        case PlaylistGet     =>
+          withUser(u => body.as[GetPlaylistById].map(byId => GetPlaylist(byId.id, u)))
         case PlaylistSave =>
           withUser(u => body.downField(PlaylistKey).as[PlaylistSubmission].map(SavePlaylist(_, u)))
         case PlaylistDelete =>
-          withUser(u => body.downField(Id).as[PlaylistID].map(DeletePlaylist(_, u)))
+          withUser(u => body.as[DeletePlaylistById].map(byId => DeletePlaylist(byId.id, u)))
         case AlarmsKey  => Right(GetAlarms)
         case AlarmsEdit => body.as[AlarmCommand].map(AlarmEdit.apply)
         case AlarmsAdd  => body.as[AlarmCommand].map(AlarmAdd.apply)
